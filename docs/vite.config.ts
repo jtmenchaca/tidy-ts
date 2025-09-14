@@ -59,7 +59,6 @@ export default defineConfig({
           'shiki-themes': ['@shikijs/transformers'],
           // Separate large UI libraries
           'recharts': ['recharts'],
-          'vega': ['react-vega', 'vega-embed'],
           // Separate Radix UI components
           'radix': [
             '@radix-ui/react-accordion',

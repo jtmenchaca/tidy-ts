@@ -1,4 +1,3 @@
-// import { VegaChart } from "../components/ui/vega-chart.tsx";
 // import { createDataFrame, graphReact } from "../../../src/dataframe/mod.ts";
 // import type { DataFrame } from "../../../src/dataframe/mod.ts";
 
