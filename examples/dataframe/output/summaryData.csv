@@ -1,5 +1,0 @@
-region,total_sales,total_quantity,avg_price,transaction_count,success_rate
-West,199.99,3,199.99,1,100
-East,79.99,1,79.99,1,0
-North,59.98,15,29.99,2,100
-South,49.99,2,49.99,1,100

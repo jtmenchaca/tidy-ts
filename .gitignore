@@ -6,6 +6,8 @@ node_modules/
 */node_modules/*
 **/node_modules/*
 
+examples/dataframe/output/
+
 # Build artifacts
 **/.tanstack
 target/
