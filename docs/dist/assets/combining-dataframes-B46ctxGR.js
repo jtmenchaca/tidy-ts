@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-VWZqGNaa.js";import{D as i}from"./DocPageLayout-BVhEn_Lu.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-DaRITcZu.js";import"./index-JIUj4hnf.js";import"./shiki-themes-BheiPiei.js";const t={basicBindRows:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-C4N44aqm.js";import{D as i}from"./DocPageLayout-CLxyTYjg.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-D_eKwmfx.js";import"./index-DmXvPVKG.js";import"./shiki-themes-BheiPiei.js";const t={basicBindRows:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const df1 = createDataFrame([
   { id: 1, name: "Alice", age: 25 },
