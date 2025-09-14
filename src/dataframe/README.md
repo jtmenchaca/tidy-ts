@@ -1,6 +1,9 @@
 # Tidy-TS
 
-Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety that prevents 15-38% of production bugs.
+[![JSR](https://jsr.io/badges/@tidy-ts/dataframe)](https://jsr.io/@tidy-ts/dataframe)
+[![JSR Score](https://jsr.io/badges/@tidy-ts/dataframe/score)](https://jsr.io/@tidy-ts/dataframe)
+
+Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
 
 ## Key Features
 
