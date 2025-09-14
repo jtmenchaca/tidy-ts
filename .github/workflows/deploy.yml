@@ -29,7 +29,11 @@ jobs:
           cache-dependency-path: docs/package-lock.json
 
       - name: Install dependencies
-        run: cd docs && npm ci
+        run: |
+          cd docs
+          npm ci
+          # Install the missing rollup platform package for Linux
+          npm install @rollup/rollup-linux-x64-gnu --save-dev
 
       - name: Build static site
         run: cd docs && npm run build
