@@ -30,14 +30,15 @@ const routes = [
 async function prerender() {
   console.log('🚀 Starting prerendering with Playwright...');
   
-  // Start a local server
-  const { createServer } = await import('vite');
-  const vite = await createServer({
-    server: { port: 5173 },
+  // Start a local server serving the built dist folder
+  const { preview } = await import('vite');
+  const server = await preview({
     root: path.join(__dirname, '..'),
+    preview: {
+      port: 5173,
+      host: true
+    }
   });
-  
-  await vite.listen();
   
   const browser = await chromium.launch();
   const page = await browser.newPage();
@@ -77,7 +78,7 @@ async function prerender() {
   }
   
   await browser.close();
-  await vite.close();
+  await server.close();
   
   console.log('🎉 Prerendering complete!');
 }
