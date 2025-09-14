@@ -21,21 +21,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
 
       - name: Install dependencies
-        run: |
-          cd docs
-          rm -rf node_modules bun.lock
-          bun install
-          # Force install the missing rollup platform package
-          bun add @rollup/rollup-linux-x64-gnu
+        run: cd docs && npm ci
 
       - name: Build static site
-        run: cd docs && bun run build
+        run: cd docs && npm run build
+
+      - name: Prerender for AI crawlers
+        run: cd docs && npm run prerender
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
