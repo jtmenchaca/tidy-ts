@@ -1,0 +1,127 @@
+// Code examples for async operations
+export const asyncOperationsExamples = {
+  asyncMutateOperations: `import { createDataFrame } from "@tidy-ts/dataframe";
+
+const people = createDataFrame([
+  { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
+  { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
+  { id: 3, name: "R2-D2", species: "Droid", mass: 32, height: 96 },
+  { id: 4, name: "Darth Vader", species: "Human", mass: 136, height: 202 },
+  { id: 5, name: "Chewbacca", species: "Wookiee", mass: 112, height: 228 },
+]);
+
+// Simulate async API enrichment - more realistic example
+async function enrichWithExternalData(mass: number): Promise<string> {
+  await new Promise((resolve) => setTimeout(resolve, 1)); // Simulate API delay
+  if (mass > 100) return "🦣 Heavy Class";
+  if (mass > 50) return "🐘 Medium Class";
+  return "🐧 Light Class";
+}
+
+// Mix sync and async operations
+const withAsyncData = await people
+  .mutate({
+    name_upper: (row) => row.name.toUpperCase(), // Sync operation
+    classification: async (row) => await enrichWithExternalData(row.mass), // Async operation
+    size_category: (row) => {
+      if (row.height > 200) return "Very Tall";
+      if (row.height > 170) return "Tall";
+      if (row.height > 150) return "Average";
+      return "Short";
+    },
+  });
+
+withAsyncData.print("DataFrame with async operations:");`,
+
+  asyncFiltering: `// Async validation function - more realistic example
+async function validateCharacter(species: string): Promise<boolean> {
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  // Simulate API validation - exclude droids
+  return !species.includes("Droid");
+}
+
+// Async filter with external validation
+const validatedCharacters = await people
+  .filter(async (row) => await validateCharacter(row.species));
+
+validatedCharacters.print("Validated characters (excluding droids):");
+
+// Multiple async conditions
+const heavyValidatedCharacters = await people
+  .filter(async (row) => {
+    const isValid = await validateCharacter(row.species);
+    const isHeavy = row.mass > 50;
+    return isValid && isHeavy;
+  });
+
+heavyValidatedCharacters.print("Heavy validated characters:");`,
+
+  asyncAggregation: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+
+// Async function to fetch species metadata - more realistic example
+async function fetchSpeciesMetadata(species: string): Promise<number> {
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  const metadata = { "Human": 79, "Droid": 200, "Wookiee": 400 };
+  return metadata[species as keyof typeof metadata] || 100;
+}
+
+// Async aggregation
+const speciesAnalysis = await people
+  .groupBy("species")
+  .summarise({
+    count: (group) => group.nrows(),
+    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
+    total_mass: (group) => stats.sum(group.mass),
+    expected_lifespan: async (group) => {
+      const species = group.extractHead("species", 1) || "";
+      return await fetchSpeciesMetadata(species);
+    },
+  });
+
+speciesAnalysis.print("Species analysis with lifespan metadata:");`,
+
+  concurrencyAndRetries: `// Simple retry with defaults
+const result = await data
+  .mutate({
+    fetched_data: async (row) => await fetchData(row.id),
+  }, {
+    retry: { backoff: "exponential" }
+  });
+
+// With concurrency control and custom settings
+const advancedResult = await data
+  .mutate({
+    api_call: async (row) => await fetchData(row.id),
+  }, {
+    concurrency: 2,
+    retry: {
+      backoff: "exponential",
+      maxRetries: 3,
+      baseDelay: 100,
+      maxDelay: 500,
+    },
+  });`,
+
+  errorHandling: `// Async function that might fail - more realistic example
+async function fetchUserRating(mass: number): Promise<string> {
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  if (mass < 30) {
+    throw new Error("Mass too low for rating");
+  }
+  if (mass > 100) return "⭐ Heavyweight";
+  if (mass > 50) return "⭐ Medium";
+  return "⭐ Lightweight";
+}
+
+// This should handle the error gracefully
+try {
+  const result = await people
+    .mutate({
+      rating: async (row) => await fetchUserRating(row.mass),
+    });
+  
+  result.print("DataFrame with ratings:");
+} catch (error) {
+  console.error("Error occurred:", error);
+}`,
+};

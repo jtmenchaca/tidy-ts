@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello World Test</title>
+</head>
+<body>
+    <h1>Hello World</h1>
+    <p>This is a basic test page.</p>
+    <button id="test-button">Click me</button>
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <script>
+        document.getElementById('test-button').addEventListener('click', function() {
+            document.getElementById('result').textContent = 'Button clicked!';
+        });
+    </script>
+</body>
+</html>

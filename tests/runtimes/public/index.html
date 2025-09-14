@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Browser Test - @tidy-ts/dataframe</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin: 20px 0;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Minimal Browser Test - @tidy-ts/dataframe</h1>
+        <p>This test replicates the same operations as <code>minimal.test.ts</code> in the browser.</p>
+        
+        <div id="status" class="status">Running test...</div>
+        <div id="output" class="output">Loading @tidy-ts/dataframe...</div>
+    </div>
+
+    <script type="module">
+        const statusDiv = document.getElementById('status');
+        const outputDiv = document.getElementById('output');
+        
+        function log(message) {
+            outputDiv.textContent += message + '\n';
+            console.log(message);
+        }
+        
+        function setStatus(message, type = 'success') {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+        
+        try {
+            log("Minimal runtime test");
+            
+            // Import the library
+            const { createDataFrame, stats } = await import('@tidy-ts/dataframe');
+            log("✅ Library imported successfully");
+            
+            // Create a DataFrame - exact same as minimal.test.ts
+            const sales = createDataFrame([
+                { product: "Widget", quantity: 10, price: 100, region: "North" },
+                { product: "Gadget", quantity: 5, price: 200, region: "South" },
+                { product: "Widget", quantity: 20, price: 100, region: "South" },
+            ]);
+            log("✅ DataFrame created");
+            
+            // Analyze data with type-safe operations - exact same as minimal.test.ts
+            const analysis = sales
+                .mutate({ revenue: (r) => r.quantity * r.price })
+                .groupBy("region")
+                .summarize({
+                    total_revenue: (df) => stats.sum(df.revenue),
+                    avg_quantity: (df) => stats.mean(df.quantity),
+                    product_count: (df) => df.nrows(),
+                })
+                .arrange("total_revenue", "desc");
+            
+            log("✅ Analysis completed");
+            
+            // Output results (instead of print, we'll manually format)
+            log("\nRegional sales analysis:");
+            const results = analysis.toArray();
+            
+            // Simple table formatting
+            log("┌────────┬───────────────┬──────────────┬───────────────┐");
+            log("│ region │ total_revenue │ avg_quantity │ product_count │");
+            log("├────────┼───────────────┼──────────────┼───────────────┤");
+            
+            results.forEach(row => {
+                const region = row.region.padEnd(6);
+                const revenue = String(row.total_revenue).padEnd(13);
+                const avgQty = String(row.avg_quantity).padEnd(12);
+                const count = String(row.product_count).padEnd(13);
+                log(`│ ${region} │ ${revenue} │ ${avgQty} │ ${count} │`);
+            });
+            
+            log("└────────┴───────────────┴──────────────┴───────────────┘");
+            log("✅ Minimal test completed successfully");
+            
+            setStatus("✅ Test passed! All operations completed successfully.", "success");
+            
+        } catch (error) {
+            log(`❌ Error: ${error.message}`);
+            log(`Stack: ${error.stack}`);
+            setStatus("❌ Test failed!", "error");
+        }
+    </script>
+</body>
+</html>

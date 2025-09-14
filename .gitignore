@@ -1,0 +1,47 @@
+# Environment
+/.env
+
+# Dependencies
+node_modules/
+*/node_modules/*
+**/node_modules/*
+
+# Build artifacts
+**/dist
+**/.tanstack
+target/
+**/*.rs.bk
+
+# Lock files
+Cargo.lock
+Bun.lock
+package-lock.json
+
+# Temporary files
+/tmp/*
+*.pem
+
+# IDE and system files
+.DS_Store
+**/.DS_Store
+.cargo/
+.claude/
+.obsidian/
+
+# Python
+**/.venv
+**/__pycache__
+
+# AWS
+.aws/
+.aws/*
+
+# Project-specific exclusions
+z-other/
+vendor/
+sources/
+proposal/
+
+Claude.md/
+.claude/
+

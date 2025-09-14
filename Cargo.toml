@@ -1,0 +1,61 @@
+[package]
+name         = "tidy-ts-dataframe"
+version      = "0.1.0"
+edition      = "2024"
+description  = "High-performance data frame operations and statistical functions with WebAssembly support"
+authors      = ["Tidy-TS Contributors"]
+license      = "MIT"
+repository   = "https://github.com/tidy-ts/tidy-ts"
+keywords     = ["dataframe", "data-analysis", "statistics", "webassembly", "rust"]
+categories   = ["data-structures", "science", "web-programming"]
+
+[lib]
+name = "tidy_ts_dataframe"
+path = "src/lib.rs"
+crate-type = ["cdylib", "rlib"]
+
+# Test binaries removed - files were deleted
+
+[dependencies]
+# `wasm-bindgen` only when you compile for wasm
+wasm-bindgen = { version = "=0.2.100", optional = true }
+js-sys = { version = "=0.3", optional = true }
+web-sys = { version = "=0.3.77", optional = true, features = ["console"] }
+# serde-wasm-bindgen = { version = "0.6", optional = true }  # Not used in current code
+
+# Pure Rust linear algebra dependencies (works for both native and WASM)
+# faer = "0.22.0"
+# faer-core = "0.17.1"
+# faer-qr = "0.7.0"
+# statrs = "0.17.1"
+# serde = { version = "1.0.219", features = ["derive"] }  # Only used in tidy-stats, not main dataframe
+# rand = "0.8.5"
+# regex = "1.11.1"  # Not used in current Rust code
+
+# High-performance data structures for WASM kernels
+smallvec = "1.13.2"
+hashbrown = "0.14.0"
+# ahash = "0.8.0"
+# rayon = "1.8.0"
+# lazy_static = "1.4.0"  # Not used in current Rust code
+
+# Polars for high-performance DataFrame operations (removed for faster compilation)
+# polars = { version = "0.45.0", features = ["lazy", "strings"] }
+
+# Alternative pure-Rust linear algebra for WASM (temporarily removed for debugging)
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
+# nalgebra = { version = "0.33", default-features = false, features = ["alloc"] }
+
+[features]
+wasm = ["wasm-bindgen", "js-sys", "web-sys"]
+default = []
+
+# [target.'cfg(target_arch = "wasm32")'.dependencies]
+# hashbrown = "0.14.0"  # Already included in main dependencies
+
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"

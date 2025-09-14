@@ -1,0 +1,5 @@
+region,segment,total_revenue,avg_order_value,customer_count,product_variety
+West,Premium,599.97,599.97,1,1
+North,Premium,299.9,299.9,1,1
+North,Standard,149.95,149.95,1,1
+South,Basic,99.98,99.98,1,1

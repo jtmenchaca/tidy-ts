@@ -1,0 +1,25 @@
+{
+  "name": "@tidy-ts/runtime-tests",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test:bun": "bun minimal.test.ts",
+    "playwright-setup": "bun server.js",
+    "serve": "bun server.js",
+    "test:browser": "playwright test",
+    "test:browser-headed": "playwright test --headed",
+    "test:browser-ui": "playwright test --ui",
+    "test:all": "npm run test:node && npm run test:bun && npm run test:browser",
+    "test:sh": "bash test-runner.sh",
+    "install:jsr": "npx jsr add @tidy-ts/dataframe",
+    "install:jsr:bun": "bunx jsr add @tidy-ts/dataframe"
+  },
+  "dependencies": {
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "playwright": "^1.55.0"
+  }
+}

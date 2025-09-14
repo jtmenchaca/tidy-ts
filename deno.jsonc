@@ -1,0 +1,66 @@
+{
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "exports": ".src/mod.ts",
+  "compilerOptions": {
+    "lib": [
+      "deno.ns",
+      "dom",
+      "deno.unstable"
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "jsxImportSourceTypes": "npm:@types/react@^19.1.1"
+  },
+  "tasks": {
+    "ci": "deno fmt --check && deno lint && deno task testp && deno task testex",
+    "benchmark:runner": "cd /Users/jtmenchaca/tidy-ts/examples/benchmarksV2 && deno run -A runner.ts & cd ../..",
+    "benchmark:analyze": "cd /Users/jtmenchaca/tidy-ts/examples/benchmarksV2 && deno run -A analyze.ts & cd ../..",
+    "benchmark": "deno task benchmark:runner && deno task benchmark:analyze",
+    "benchmark-python": "cd /Users/jtmenchaca/tidy-ts/examples/benchmarksV2 && .venv/bin/python python.py & cd ../..",
+    "benchmark-r": "cd /Users/jtmenchaca/tidy-ts/examples/benchmarksV2 && Rscript r.R & cd ../..",
+    "benchmark-ts": "deno run -A examples/benchmarksV2/typescript.ts",
+    "benchmark-tidy": "deno run -A examples/benchmarksV2/tidy-ts-only.ts",
+    "benchmark-tidy-p": "deno run -A examples/benchmarksV2/tidy-ts-only-parallel.ts",
+    "benchmark-rust-distinct": "cargo run --release --bin test_ultra_optimized_distinct",
+    "testp": "deno test -A --parallel src/dataframe",
+    "testex": "deno test -A --parallel examples/dataframe",
+    "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib"
+  },
+  "importMap": "import_map.json",
+  "nodeModulesDir": "auto",
+  "vendor": true,
+  "fmt": {
+    "exclude": [
+      "node_modules/",
+      "**/*.md",
+      "**/*.mdc",
+      ".claude/",
+      ".cargo/",
+      "target/",
+      "vendor/",
+      "z-other/"
+    ]
+  },
+  "exclude": [
+    "node_modules",
+    "vendor",
+    "z-other",
+    "sources",
+    "examples/docs-tests",
+    "sources/**",
+    ".cargo/",
+    "tests/runtimes/**",
+    "target/",
+    "docs/",
+    "docs/**",
+    "tidy-stats/",
+    "src/tidy-stats/rust",
+    "tests/tidy-stats/__pycache__",
+    "tests/tidy-stats/.venv",
+    "/Users/jtmenchaca/tidy-ts/docs/src/routeTree.gen.ts"
+  ],
+  "workspace": [
+    "src/dataframe"
+  ]
+}

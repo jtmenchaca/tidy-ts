@@ -1,0 +1,69 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { CodeBlock } from "../components/ui/code-block.tsx";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card.tsx";
+import { DocPageLayout } from "../components/layout/DocPageLayout.tsx";
+import { asyncOperationsExamples } from "./async-operations.examples.ts";
+
+export const Route = createFileRoute("/async-operations" as any)({
+  component: AsyncOperationsComponent,
+});
+
+function AsyncOperationsComponent() {
+  return (
+    <DocPageLayout
+      title="Async Operations"
+      description="Handle asynchronous operations seamlessly across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization."
+      currentPath="/async-operations"
+    >
+      <CodeBlock
+        title="Async Mutate Operations"
+        description="Add calculated columns using asynchronous functions"
+        explanation="You can mix synchronous and asynchronous operations in the same mutate() call. Perfect for API enrichment, data validation, and external service integration."
+        code={asyncOperationsExamples.asyncMutateOperations}
+      />
+
+      <CodeBlock
+        title="Async Filtering"
+        description="Filter rows based on asynchronous conditions"
+        explanation="Async filtering is perfect for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations."
+        code={asyncOperationsExamples.asyncFiltering}
+      />
+
+      <CodeBlock
+        title="Async Aggregation"
+        description="Handle asynchronous operations in group summaries"
+        explanation="Group summaries can include async operations to enrich your data with external information while maintaining type safety."
+        code={asyncOperationsExamples.asyncAggregation}
+      />
+
+      <CodeBlock
+        title="Error Handling"
+        description="Gracefully handle async operation failures"
+        explanation="Async operations can fail, and tidy-ts provides clean error handling patterns for managing these scenarios in your data pipelines."
+        code={asyncOperationsExamples.errorHandling}
+      />
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Concurrency and Retries</CardTitle>
+          <CardDescription>
+            Tidy-ts has baked-in concurrency control and retry mechanisms
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div>
+            <CodeBlock
+              code={asyncOperationsExamples.concurrencyAndRetries}
+            />
+          </div>
+        </CardContent>
+      </Card>
+    </DocPageLayout>
+  );
+}

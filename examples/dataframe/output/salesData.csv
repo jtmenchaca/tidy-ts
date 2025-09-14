@@ -1,0 +1,6 @@
+id,date,product,price,quantity,customer,region,sold,notes
+1,"""2023-01-15T00:00:00.000Z""",Widget Pro,29.99,5,Alice Johnson,North,true,"Excellent customer, repeat buyer"
+2,"""2023-01-20T00:00:00.000Z""",Gadget Max,49.99,2,Bob Smith,South,true,First-time buyer
+3,"""2023-02-01T00:00:00.000Z""",Tool Kit,79.99,1,Carol Davis,East,false,Returned due to defect
+4,"""2023-02-15T00:00:00.000Z""",Device Elite,199.99,3,Dave Wilson,West,true,
+5,"""2023-03-01T00:00:00.000Z""",Widget Pro,29.99,10,Eve Brown,North,true,"Bulk order, discount applied"

@@ -1,0 +1,699 @@
+import {
+  createColumnarDataFrameFromStore,
+  type DataFrame,
+  type GroupedDataFrame,
+  withGroups,
+} from "../../dataframe/index.ts";
+import { tracer } from "../../telemetry/tracer.ts";
+import {
+  group_ids_codes_all,
+  pivot_wider_dense_f64_all,
+} from "../../wasm-loader.ts";
+
+// Dictionary encoding utility functions
+function dictionaryEncodeStrings(
+  strings: string[],
+): { codes: Uint32Array; dict: string[] } {
+  const dict: string[] = [];
+  const stringToCode = new Map<string, number>();
+
+  const codes = new Uint32Array(strings.length);
+
+  for (let i = 0; i < strings.length; i++) {
+    const s = strings[i];
+    if (!stringToCode.has(s)) {
+      const code = dict.length;
+      dict.push(s);
+      stringToCode.set(s, code);
+    }
+    codes[i] = stringToCode.get(s)!;
+  }
+
+  return { codes, dict };
+}
+
+// Fast generic dict-encode that works on existing column arrays
+function dictEncode(col: unknown[]): { codes: Uint32Array; dict: string[] } {
+  const dict: string[] = [];
+  const map = new Map<string, number>();
+  const n = col.length;
+  const codes = new Uint32Array(n);
+  for (let i = 0; i < n; i++) {
+    const s = col[i] === undefined ? "__UNDEFINED__" : String(col[i]);
+    let code = map.get(s);
+    if (code === undefined) {
+      code = dict.length;
+      dict.push(s);
+      map.set(s, code);
+    }
+    codes[i] = code;
+  }
+  return { codes, dict };
+}
+
+// Policy mapping for aggregation functions
+type Policy = "first" | "last" | "sum" | "mean";
+
+function mapValuesFnToPolicy(values_fn?: (values: any[]) => unknown): Policy {
+  if (!values_fn) return "first";
+
+  // Get the function name to identify common aggregation functions
+  const fnName = values_fn.name;
+
+  // Map common aggregation functions to policies
+  if (fnName === "sum" || fnName.includes("sum")) return "sum";
+  if (fnName === "mean" || fnName.includes("mean")) return "mean";
+  if (fnName === "min" || fnName.includes("min")) return "first"; // min is like first
+  if (fnName === "max" || fnName.includes("max")) return "last"; // max is like last
+
+  // Check function body for common patterns
+  const fnStr = values_fn.toString();
+  if (fnStr.includes("stats.mean") || fnStr.includes("mean")) return "mean";
+  if (fnStr.includes("stats.sum") || fnStr.includes("sum")) return "sum";
+  if (fnStr.includes("reduce") && fnStr.includes("+") && fnStr.includes("/")) {
+    return "mean";
+  }
+  if (fnStr.includes("reduce") && fnStr.includes("+") && !fnStr.includes("/")) {
+    return "sum";
+  }
+
+  // For other functions, default to first
+  return "first";
+}
+
+function policyToCode(policy: Policy): number {
+  switch (policy) {
+    case "first":
+      return 0;
+    case "last":
+      return 1;
+    case "sum":
+      return 2;
+    case "mean":
+      return 3;
+    default:
+      return 0;
+  }
+}
+
+// Helper functions for policy detection (kept for potential external use)
+function _sum(values: number[]): number {
+  return values.reduce((a, b) => a + b, 0);
+}
+
+function _mean(values: number[]): number {
+  return values.reduce((a, b) => a + b, 0) / values.length;
+}
+
+/**
+ * Generate the result type for pivot_wider
+ */
+type PivotWiderResult<
+  T extends Record<string, unknown>,
+  NamesFrom extends keyof T,
+  ValuesFrom extends keyof T,
+  Cols extends readonly string[],
+  ValuesFn,
+  Prefix extends string = "",
+> =
+  & {
+    // Keep all columns except names_from and values_from
+    [K in keyof T as K extends NamesFrom | ValuesFrom ? never : K]: T[K];
+  }
+  & {
+    // Add expected columns with proper types and prefix
+
+    [K in Cols[number] as `${Prefix}${K}`]: ValuesFn extends // deno-lint-ignore no-explicit-any
+    (values: any) => infer R ? R
+      : T[ValuesFrom];
+  };
+
+/** Utility that makes `A & B` show up as `{ … }` instead of an
+ *  ugly intersection in IntelliSense tool-tips. */
+// deno-lint-ignore ban-types
+type Prettify<T> = { [K in keyof T]: T[K] } & {};
+
+/**
+ * Pivot data from long to wide format.
+ * Similar to R's tidyverse pivot_wider() function.
+ *
+ * @param config - Configuration for the pivot operation
+ * @returns A function that takes a DataFrame and returns the pivoted DataFrame
+ *
+ * @example
+ * ```ts
+ * const df = createDataFrame([
+ *   { group: "A", variable: "x", value: 1 },
+ *   { group: "A", variable: "y", value: 2 },
+ *   { group: "B", variable: "x", value: 3 },
+ *   { group: "B", variable: "y", value: 4 }
+ * ]);
+ *
+ * // Basic usage with expected columns
+ * // IMPORTANT: expected_columns should only contain values from the names_from column!
+ * const result = pipe(
+ *   df,
+ *   pivot_wider({
+ *     names_from: "variable",
+ *     values_from: "value",
+ *     expected_columns: ["x", "y"]  // Values from 'variable' column, NOT 'group'!
+ *   })
+ * );
+ * // Result: { group: ["A", "B"], x: [1, 3], y: [2, 4] }
+ *
+ * // Using .unique() to get expected columns automatically
+ * const result2 = pipe(
+ *   df,
+ *   pivot_wider({
+ *     names_from: "variable",
+ *     values_from: "value",
+ *     expected_columns: df.variable.unique()  // Automatically gets ["x", "y"]
+ *   })
+ * );
+ *
+ * // With aggregation function (no type casting needed!)
+ * const result3 = pipe(
+ *   df,
+ *   pivot_wider({
+ *     names_from: "variable",
+ *     values_from: "value",
+ *     expected_columns: ["x", "y"],
+ *     values_fn: (values) => sum(values) // values automatically typed as number[]
+ *   })
+ * );
+ *
+ * // Without expected_columns (returns Record<string, unknown>)
+ * const result4 = pipe(
+ *   df,
+ *   pivot_wider({
+ *     names_from: "variable",
+ *     values_from: "value"
+ *   })
+ * );
+ * ```
+ *
+ * @remarks
+ * - Converts long format data to wide format
+ * - Groups by all columns except names_from and values_from
+ * - Handles duplicate combinations by using values_fn if provided
+ * - **IMPORTANT**: expected_columns should ONLY contain the unique values from the names_from column
+ *   that will become new column names. Do NOT include preserved columns (like 'id', 'group', etc.)
+ * - Validates that expected_columns exactly match unique values in names_from column
+ * - Use `df.columnName.unique()` to automatically get correct expected_columns
+ * - Omit expected_columns to skip validation (returns Record<string, unknown>)
+ * - values_fn parameter is automatically typed based on values_from column type
+ * - Preserves the original dataframe (does not mutate)
+ * - Column matching uses String() coercion, so mixed types (e.g., 1 and "1") will collide
+ */
+
+// Overload with explicit expected_columns for type inference
+export function pivot_wider<
+  Row extends Record<string, unknown>,
+  NamesFrom extends keyof Row,
+  ValuesFrom extends keyof Row,
+  const ExpectedCols extends readonly string[],
+  ValuesFn extends ((values: Row[ValuesFrom][]) => unknown) | undefined =
+    undefined,
+  const Prefix extends string = "",
+>(
+  config: {
+    names_from: NamesFrom;
+    values_from: ValuesFrom;
+    expected_columns: ExpectedCols;
+    values_fn?: ValuesFn;
+    names_prefix?: Prefix;
+  },
+): (df: DataFrame<Row>) => DataFrame<
+  Prettify<
+    PivotWiderResult<
+      Row,
+      NamesFrom,
+      ValuesFrom,
+      ExpectedCols,
+      ValuesFn,
+      Prefix
+    >
+  >
+>;
+
+// Overload without expected_columns (preserves original types with dynamic columns)
+export function pivot_wider<
+  Row extends Record<string, unknown>,
+  NamesFrom extends keyof Row,
+  ValuesFrom extends keyof Row,
+>(
+  config: {
+    names_from: NamesFrom;
+    values_from: ValuesFrom;
+    values_fn?: (values: Row[ValuesFrom][]) => unknown;
+    names_prefix?: string;
+  },
+): (df: DataFrame<Row>) => DataFrame<
+  Prettify<
+    & {
+      // Keep all columns except names_from and values_from
+      [K in keyof Row as K extends NamesFrom | ValuesFrom ? never : K]: Row[K];
+    }
+    & {
+      // Add dynamic columns as unknown
+      [key: string]: unknown;
+    }
+  >
+>;
+
+// Implementation
+// Implementation (make return type `any` so it's compatible with both overloads)
+export function pivot_wider<Row extends Record<string, unknown>>(
+  config: {
+    names_from: keyof Row;
+    values_from: keyof Row;
+    expected_columns?: readonly string[];
+    // deno-lint-ignore no-explicit-any
+    values_fn?: (values: any[]) => unknown;
+    names_prefix?: string;
+  },
+) {
+  // Return a function whose type is `any` at the implementation level.
+  // Overloads above provide precise types to callers.
+  // deno-lint-ignore no-explicit-any
+  return (df: DataFrame<Row>): any => {
+    const span = tracer.startSpan(df, "pivot_wider", config);
+
+    try {
+      const {
+        names_from,
+        values_from,
+        expected_columns,
+        values_fn,
+        names_prefix = "",
+      } = config;
+
+      // Get columnar store to avoid redundant scans
+      const store = (df as any).__store;
+
+      // id columns: all columns except names_from and values_from
+      const id_cols = store.columnNames.filter(
+        (col: string) =>
+          col !== String(names_from) && col !== String(values_from),
+      ) as (keyof Row)[];
+
+      // Extract unique names early for validation (will be replaced by namesDict)
+      const unique_names = tracer.withSpan(df, "extract-unique-names", () => {
+        const namesSet = new Set<string>();
+        for (let i = 0; i < store.length; i++) {
+          namesSet.add(String(store.columns[String(names_from)][i]));
+        }
+        return Array.from(namesSet);
+      }, {
+        names_from: String(names_from),
+        uniqueCount: 0,
+      });
+
+      // Update metadata with actual unique count
+      if (span?.metadata) {
+        span.metadata.uniqueNamesCount = unique_names.length;
+      }
+
+      if (expected_columns) {
+        tracer.withSpan(df, "validate-expected-columns", () => {
+          const expectedNames = [...expected_columns].sort();
+          const actualNames = [...unique_names].sort();
+          if (
+            expectedNames.length !== actualNames.length ||
+            !expectedNames.every((name, i) => name === actualNames[i])
+          ) {
+            throw new Error(
+              `Pivot wider validation failed:\n` +
+                `  expected_columns should only contain values from the '${
+                  String(names_from)
+                }' column.\n` +
+                `  You provided: [${expectedNames.join(", ")}]\n` +
+                `  Actual values in '${String(names_from)}' column: [${
+                  actualNames.join(", ")
+                }]`,
+            );
+          }
+        }, {
+          expectedCount: expected_columns.length,
+          actualCount: unique_names.length,
+        });
+      }
+
+      // High-performance pivot using dictionary-coded keys and WASM kernels
+      const result = tracer.withSpan(df, "optimized-pivot", () => {
+        const n_rows = store.length;
+
+        // Step 1: ID columns (no row iteration, just read column arrays)
+        const n_key_cols = id_cols.length;
+        const keyColDicts: string[][] = new Array(n_key_cols);
+        const keysCodes = new Uint32Array(n_rows * n_key_cols);
+
+        for (let c = 0; c < n_key_cols; c++) {
+          const { codes, dict } = dictEncode(store.columns[String(id_cols[c])]);
+          keysCodes.set(codes, c * n_rows);
+          keyColDicts[c] = dict;
+        }
+
+        // Step 2: names_from dictionary (this *is* your list of pivot columns)
+        const { codes: namesCodes, dict: namesDict } = dictEncode(
+          store.columns[String(names_from)],
+        );
+
+        // Step 3: values column as f64 (read from column array)
+        const srcVals = store.columns[String(values_from)] as unknown[];
+        const values = new Float64Array(n_rows);
+        for (let i = 0; i < n_rows; i++) {
+          const v = srcVals[i];
+          values[i] = typeof v === "number" ? v : NaN;
+        }
+
+        // Step 4: group once (returns gid_per_row, unique_keys, n_groups)
+        const grp = group_ids_codes_all(keysCodes, n_rows, n_key_cols);
+
+        // Extract arrays once to avoid cloning on every access
+        const gidPerRow = grp.takeGidPerRow();
+        const uniqueKeys = grp.takeUniqueKeys();
+        const nGroups = grp.n_groups;
+        const nKeyCols = grp.n_key_cols;
+
+        // Step 5: pivot once (values + seen in one go)
+        const policyCode = policyToCode(mapValuesFnToPolicy(values_fn));
+        const dense = pivot_wider_dense_f64_all(
+          gidPerRow,
+          namesCodes,
+          values,
+          nGroups,
+          namesDict.length,
+          policyCode,
+        );
+
+        // Pull arrays once, then index locally (avoid cloning on every access)
+        const seen = dense.takeSeen(); // Uint8Array
+        const vals = dense.takeValues(); // Float64Array
+        const G = dense.n_groups as number;
+        const C = dense.n_cats as number;
+
+        // Step 6: Build a *columnar* result store (no array-of-objects)
+        const outCols: Record<string, unknown[]> = {};
+
+        // Step 6a: materialize ID columns from unique_keys
+        for (let c = 0; c < n_key_cols; c++) {
+          const dict = keyColDicts[c];
+          const col = new Array(G);
+          for (let g = 0; g < G; g++) {
+            const code = uniqueKeys[g * nKeyCols + c];
+            const s = dict[code];
+            col[g] = (s === "__UNDEFINED__") ? undefined : s;
+          }
+          outCols[String(id_cols[c])] = col;
+        }
+
+        // Step 6b: pivot columns from dense.values/seen (optimized indexing)
+        for (let ci = 0; ci < C; ci++) {
+          const name = names_prefix + namesDict[ci];
+          const col = new Array(G);
+          let base = ci; // row-major index trick
+          for (let g = 0; g < G; g++, base += C) {
+            col[g] = seen[base] ? vals[base] : undefined;
+          }
+          outCols[name] = col;
+        }
+
+        // Validate expected columns if provided
+        if (expected_columns) {
+          const actualPivotColumns = namesDict.map((name) =>
+            names_prefix + name
+          );
+          const expectedPivotColumns = expected_columns.map((name) =>
+            names_prefix + name
+          );
+          const missing = expectedPivotColumns.filter((col) =>
+            !actualPivotColumns.includes(col)
+          );
+          if (missing.length > 0) {
+            // Add missing columns with undefined values
+            for (const missingCol of missing) {
+              outCols[missingCol] = new Array(G).fill(undefined);
+            }
+          }
+        }
+
+        const columnNames = Object.keys(outCols);
+        return createColumnarDataFrameFromStore({
+          columns: outCols,
+          columnNames,
+          length: G,
+        });
+      }, {
+        idColumns: id_cols.length,
+        outputColumnCount: (expected_columns || unique_names).length,
+      });
+
+      // Result is already a DataFrame from createColumnarDataFrameFromStore
+      // Cast to `any` so the implementation stays compatible with both overloads.
+      // deno-lint-ignore no-explicit-any
+      const resultDf = result as any;
+
+      // Copy trace context to new DataFrame
+      tracer.copyContext(df, resultDf);
+
+      return resultDf;
+    } finally {
+      tracer.endSpan(df, span);
+    }
+  };
+}
+/**
+ * Result type for pivot_longer
+ */
+type PivotLongerResult<
+  T extends Record<string, unknown>,
+  Cols extends readonly (keyof T)[],
+  NamesTo extends string,
+  ValuesTo extends string,
+> =
+  & {
+    // Keep all columns except the pivoted ones
+    [K in keyof T as K extends Cols[number] ? never : K]: T[K];
+  }
+  & {
+    // Add the new name and value columns
+    [K in NamesTo]: string;
+  }
+  & {
+    [K in ValuesTo]: T[Cols[number]];
+  };
+
+/**
+ * Pivot data from wide to long format.
+ * Similar to R's tidyverse pivot_longer() function.
+ *
+ * @param config - Configuration for the pivot operation
+ * @returns A function that takes a DataFrame and returns the pivoted DataFrame
+ *
+ * @example
+ * ```ts
+ * const df = createDataFrame([
+ *   { id: 1, x: 10, y: 20 },
+ *   { id: 2, x: 15, y: 25 }
+ * ]);
+ *
+ * const result = pipe(
+ *   df,
+ *   pivot_longer({
+ *     cols: ["x", "y"],
+ *     names_to: "variable",
+ *     values_to: "value"
+ *   })
+ * );
+ * // Result: { id: [1, 1, 2, 2], variable: ["x", "y", "x", "y"], value: [10, 20, 15, 25] }
+ * ```
+ *
+ * @remarks
+ * - Converts wide format data to long format
+ * - Validates that specified columns exist in the data
+ * - Preserves the original dataframe (does not mutate)
+ * - Provides full type safety for result columns
+ * - When the input DataFrame is grouped, the output DataFrame will also be grouped,
+ *   and the pivoted columns will be added to the group keys.
+ * - Column matching uses String() coercion, so mixed types (e.g., 1 and "1") will collide
+ */
+export function pivot_longer<
+  Row extends Record<string, unknown>,
+  const Cols extends readonly (keyof Row)[],
+  const NamesTo extends string,
+  const ValuesTo extends string,
+>(
+  config: {
+    cols: Cols;
+    names_to: NamesTo;
+    values_to: ValuesTo;
+    names_prefix?: string;
+    names_pattern?: RegExp;
+  },
+): (
+  df: DataFrame<Row> | GroupedDataFrame<Row>,
+) =>
+  | DataFrame<Prettify<PivotLongerResult<Row, Cols, NamesTo, ValuesTo>>>
+  | GroupedDataFrame<
+    Prettify<PivotLongerResult<Row, Cols, NamesTo, ValuesTo>>
+  > {
+  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
+    const span = tracer.startSpan(df, "pivot_longer", config);
+
+    try {
+      const { cols, names_to, values_to } = config;
+      const groupedDf = df as GroupedDataFrame<Row>;
+
+      // Validate that all specified columns exist in the data
+      tracer.withSpan(df, "validate-columns", () => {
+        if (df.nrows() > 0) {
+          const availableColumns = Object.keys(df[0]);
+          const missingColumns = cols.filter((col) =>
+            !availableColumns.includes(String(col))
+          );
+
+          if (missingColumns.length > 0) {
+            throw new Error(
+              `Columns [${
+                missingColumns.join(", ")
+              }] not found in data. Available columns: [${
+                availableColumns.join(", ")
+              }]`,
+            );
+          }
+        }
+      }, {
+        foldColumns: cols.length,
+        columnNames: cols.map(String),
+      });
+
+      // OPTIMIZED: Use columnar operations instead of row-by-row processing
+      const store = tracer.withSpan(df, "extract-columnar-store", () => {
+        return (df as unknown as {
+          __store: {
+            columns: Record<string, unknown[]>;
+            length: number;
+            columnNames: string[];
+          };
+        }).__store;
+      });
+
+      const inputRowCount = store.length;
+      const foldColumnCount = cols.length;
+      const outputRowCount = inputRowCount * foldColumnCount;
+
+      // Identify columns to keep (not being folded)
+      const keepColumns = tracer.withSpan(df, "identify-keep-columns", () => {
+        return store.columnNames.filter(
+          (name) => !cols.includes(name as keyof Row),
+        );
+      }, {
+        totalColumns: store.columnNames.length,
+        foldColumns: foldColumnCount,
+        keepColumns: 0, // Will be updated after filtering
+      });
+
+      // Update metadata with actual keep column count
+      if (span?.metadata) {
+        span.metadata.keepColumns = keepColumns.length;
+        span.metadata.inputRowCount = inputRowCount;
+        span.metadata.outputRowCount = outputRowCount;
+      }
+
+      // Pre-allocate output columns
+      const outputColumns = tracer.withSpan(
+        df,
+        "allocate-output-columns",
+        () => {
+          const outputCols: Record<string, unknown[]> = {};
+
+          // Allocate arrays for kept columns
+          for (const colName of keepColumns) {
+            outputCols[colName] = new Array(outputRowCount);
+          }
+
+          // Allocate arrays for new columns
+          outputCols[String(names_to)] = new Array(outputRowCount);
+          outputCols[String(values_to)] = new Array(outputRowCount);
+
+          return outputCols;
+        },
+        {
+          outputRowCount,
+          totalOutputColumns: keepColumns.length + 2,
+        },
+      );
+
+      // Fill output columns efficiently
+      tracer.withSpan(df, "fill-output-columns", () => {
+        let outputIndex = 0;
+
+        for (let rowIdx = 0; rowIdx < inputRowCount; rowIdx++) {
+          // For each fold column, create an output row
+          for (let foldIdx = 0; foldIdx < foldColumnCount; foldIdx++) {
+            // Copy kept column values (these repeat for each fold)
+            for (const colName of keepColumns) {
+              outputColumns[colName][outputIndex] =
+                store.columns[colName][rowIdx];
+            }
+
+            // Add the name column (the column being folded)
+            const foldColName = String(cols[foldIdx]);
+            const processedName = config.names_prefix
+              ? foldColName.replace(
+                new RegExp(
+                  "^" +
+                    config.names_prefix.replace(
+                      /[.*+?^${}()|[\]\\]/g,
+                      "\\$&",
+                    ),
+                ),
+                "",
+              )
+              : foldColName;
+
+            outputColumns[String(names_to)][outputIndex] = config.names_pattern
+              ? (processedName.match(config.names_pattern)?.slice(1)
+                .join(
+                  "_",
+                ) ?? processedName)
+              : processedName;
+
+            // Add the value column
+            outputColumns[String(values_to)][outputIndex] =
+              store.columns[foldColName][rowIdx];
+
+            outputIndex++;
+          }
+        }
+      }, {
+        inputRowCount,
+        foldColumnCount,
+        outputRowCount,
+      });
+
+      // Return columnar DataFrame directly (no row conversion)
+      const columnNames = [...keepColumns, String(names_to), String(values_to)];
+      const outDf = createColumnarDataFrameFromStore({
+        columns: outputColumns,
+        columnNames,
+        length: outputRowCount,
+      }) as unknown as DataFrame<
+        Prettify<PivotLongerResult<Row, Cols, NamesTo, ValuesTo>>
+      >;
+
+      // Copy trace context to new DataFrame
+      tracer.copyContext(df, outDf);
+
+      // Preserve groups if they exist and id columns contain group keys
+      if (groupedDf.__groups) {
+        return withGroups(groupedDf as GroupedDataFrame<Row, keyof Row>, outDf);
+      }
+
+      return outDf;
+    } finally {
+      tracer.endSpan(df, span);
+    }
+  };
+}

@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "stat-tests"
+version = "0.1.0"
+description = "Statistical reference implementations for tidy-ts"
+authors = ["Claude"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "2.3.2"
+polars = "1.32.3"
+numpy = ">=1.24.0,<2.0.0"
+pyarrow = ">=15.0.0,<16.0.0"
+statsmodels = ">=0.14.0,<0.15.0"
+scipy = ">=1.10.0,<2.0.0"
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

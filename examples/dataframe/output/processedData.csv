@@ -1,0 +1,6 @@
+id,product,total_value,month,customer_category,has_notes
+1,Widget Pro,149.95,2023-01,Standard,Yes
+2,Gadget Max,99.98,2023-01,Basic,Yes
+3,Tool Kit,79.99,2023-02,Basic,Yes
+4,Device Elite,599.97,2023-02,Premium,No
+5,Widget Pro,299.9,2023-03,Premium,Yes

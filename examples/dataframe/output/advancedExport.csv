@@ -1,0 +1,3 @@
+quarter,customer_type,total_revenue,avg_order_size,customer_count
+Q1,Individual,849.9000000000001,3.3,3
+Q1,Bulk,299.9,10,1

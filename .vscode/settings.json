@@ -1,0 +1,58 @@
+{
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.config": "./deno.jsonc",
+  "deno.enablePaths": [
+    "src/dataframe",
+    "src/tidy-utils",
+    "tests",
+    "examples"
+  ],
+  // This is the only reliable way to completely ignore a file for the Deno language server
+  // Exclude does not "ignore" the file it just makes it so it's not checked for errors
+  "deno.disablePaths": [
+    "tests/tidy-stats/.venv",
+    "tests/tidy-stats/__pycache__",
+    "examples/benchmarks/python-and-R/.venv",
+    "examples/benchmarks/python-and-R/__pycache__",
+    "node_modules",
+    "node_modules/**",
+    "docs/node_modules",
+    "docs/node_modules/**",
+    "**/node_modules/**",
+    "$node_modules/**",
+    "docs/dist/**",
+    "docs/.tanstack/**",
+    "z-other/sources/arquero-main/**",
+    "vendor/",
+    "sources/",
+    "proposal/",
+    "target/",
+    "z-other/**",
+    ".obsidian/",
+    ".cargo/",
+    ".claude/",
+    "tests/runtimes/",
+    "tests/runtimes/**"
+  ],
+  "editor.formatOnSave": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "editor.quickSuggestions": {
+    "strings": "on"
+  },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true
+  },
+
+  "typescript.suggest.autoImports": false,
+  "deno.documentPreloadLimit": 2000
+  // "files.readonlyInclude": { "**/routeTree.gen.ts": true },
+  // "files.watcherExclude": { "**/routeTree.gen.ts": true },
+  // "search.exclude": { "**/routeTree.gen.ts": true }
+}

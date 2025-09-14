@@ -1,0 +1,63 @@
+{
+	"folders": [
+		{
+			"name": "tidy-ts",
+			"path": "."
+		}
+	],
+	"extensions": {
+		"recommendations": [
+			"denoland.vscode-deno",
+			"PKief.material-icon-theme",
+			"anthropic.claude-code",
+			"amazonwebservices.aws-toolkit-vscode"
+			
+		]
+	},
+	"settings": {
+		"workbench.colorTheme": "Visual Studio Light",
+		"workbench.iconTheme": "material-icon-theme",
+"workbench.colorCustomizations": {
+  // editor squiggles
+  "editorError.foreground": "#FF4C4C",         // Red for errors
+  "editorWarning.foreground": "#B0B0B0",       // Light gray for linter warnings
+
+  // Problems panel icons
+  "problemsErrorIcon.foreground": "#FF4C4C",
+  "problemsWarningIcon.foreground": "#B0B0B0",
+
+  // Overview ruler markers
+  "editorOverviewRuler.errorForeground": "#FF4C4C",
+  "editorOverviewRuler.warningForeground": "#B0B0B0"
+},
+		"material-icon-theme.folders.associations": {
+			"experiments": "test",
+			"pipelines": "pipe",
+			"pipeline": "pipe",
+			"prompts": "content",
+			"topics": "helper",
+			"workflows": "context",
+			"roles": "helper",
+			"celery": "queue",
+			"venv": "environment",
+			"collections": "interface",
+			"llm": "core",
+			"references": "docs",
+			"modeling": "generator",
+			"migrations": "drizzle",
+			"embeddings": "mappings",
+			"chat_completion": "messages",
+			"vector": "graphql",
+			"infra": "docker",
+			"cdk": "docker"
+		},
+		"typescript.tsdk": "node_modules/typescript/lib",
+		"deno.enable": true,
+		"deno.codeLens.implementations": true,
+		"deno.codeLens.references": true,
+		"deno.codeLens.referencesAllFunctions": true,
+		"deno.codeLens.test": true,
+		"deno.documentPreloadLimit": 2000
+	}
+	
+}

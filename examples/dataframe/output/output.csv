@@ -1,0 +1,4 @@
+id,product,price,sold,date
+1,Widget,19.99,true,2023-01-15
+2,Gadget,29.99,false,2023-02-20
+3,Doohickey,15.5,true,2023-03-10

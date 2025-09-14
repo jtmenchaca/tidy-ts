@@ -1,0 +1,6 @@
+id,created_at,updated_at,product,price,quantity,customer,region,status,revenue
+1,2023-01-15T00:00:00.000Z,2025-09-14T01:37:15.632Z,Widget Pro,29.99,5,Alice Johnson,North,completed,149.95
+2,2023-01-20T00:00:00.000Z,2025-09-14T01:37:15.632Z,Gadget Max,49.99,2,Bob Smith,South,completed,99.98
+3,2023-02-01T00:00:00.000Z,2025-09-14T01:37:15.632Z,Tool Kit,79.99,1,Carol Davis,East,cancelled,79.99
+4,2023-02-15T00:00:00.000Z,2025-09-14T01:37:15.632Z,Device Elite,199.99,3,Dave Wilson,West,completed,599.97
+5,2023-03-01T00:00:00.000Z,2025-09-14T01:37:15.632Z,Widget Pro,29.99,10,Eve Brown,North,completed,299.9
