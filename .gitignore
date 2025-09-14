@@ -13,10 +13,6 @@ examples/dataframe/output/
 target/
 **/*.rs.bk
 
-# Lock files
-Cargo.lock
-Bun.lock
-package-lock.json
 
 # Temporary files
 /tmp/*
