@@ -31,6 +31,8 @@ jobs:
           cd docs
           rm -rf node_modules bun.lock
           bun install
+          # Force install the missing rollup platform package
+          bun add @rollup/rollup-linux-x64-gnu
 
       - name: Build static site
         run: cd docs && bun run build
