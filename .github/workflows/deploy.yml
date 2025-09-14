@@ -21,27 +21,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: docs/package-lock.json
-
-      - name: Install dependencies
-        run: |
-          cd docs
-          npm ci
-          # Install missing platform-specific packages for Linux
-          npm install @rollup/rollup-linux-x64-gnu --save-dev
-          npm install lightningcss-linux-x64-gnu --save-dev
-
-      - name: Build static site
-        run: cd docs && npm run build
-
-      - name: Prerender for AI crawlers
-        run: cd docs && npm run prerender
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
