@@ -72,6 +72,7 @@ import {
 } from "../../verbs/utility/for-each.verb.ts";
 import { print } from "../../verbs/utility/print.verb.ts";
 import { writeCSV } from "../../verbs/utility/writeCSV.verb.ts";
+import { writeParquet, toParquetBuffer } from "../../verbs/utility/writeParquet.verb.ts";
 
 // Row binding
 import { bind_rows } from "../../verbs/reshape/bind-rows.verb.ts";
@@ -469,6 +470,18 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (...a: unknown[]) => {
       // writeCSV always returns the same df for reference equality
       return (writeCSV as any)(...a)(df);
+    };
+  }
+  if (prop === "writeParquet") {
+    return (...a: unknown[]) => {
+      // writeParquet always returns the same df for reference equality
+      return (writeParquet as any)(...a)(df);
+    };
+  }
+  if (prop === "toParquetBuffer") {
+    return (...a: unknown[]) => {
+      // toParquetBuffer returns ArrayBuffer
+      return (toParquetBuffer as any)(...a)(df);
     };
   }
   if (prop === "ungroup") {

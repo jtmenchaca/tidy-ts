@@ -22,6 +22,7 @@ import { Route as GroupingAggregationRouteImport } from "./routes/grouping-aggre
 import { Route as GettingStartedRouteImport } from "./routes/getting-started.tsx"
 import { Route as FilteringRowsRouteImport } from "./routes/filtering-rows.tsx"
 import { Route as DataframeBasicsRouteImport } from "./routes/dataframe-basics.tsx"
+import { Route as DataIoRouteImport } from "./routes/data-io.tsx"
 import { Route as CreatingDataframesRouteImport } from "./routes/creating-dataframes.tsx"
 import { Route as CombiningDataframesRouteImport } from "./routes/combining-dataframes.tsx"
 import { Route as AsyncOperationsRouteImport } from "./routes/async-operations.tsx"
@@ -94,6 +95,11 @@ const DataframeBasicsRoute = DataframeBasicsRouteImport.update({
   path: "/dataframe-basics",
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataIoRoute = DataIoRouteImport.update({
+  id: "/data-io",
+  path: "/data-io",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CreatingDataframesRoute = CreatingDataframesRouteImport.update({
   id: "/creating-dataframes",
   path: "/creating-dataframes",
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   "/async-operations": typeof AsyncOperationsRoute
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
+  "/data-io": typeof DataIoRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   "/async-operations": typeof AsyncOperationsRoute
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
+  "/data-io": typeof DataIoRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   "/async-operations": typeof AsyncOperationsRoute
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
+  "/data-io": typeof DataIoRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | "/async-operations"
     | "/combining-dataframes"
     | "/creating-dataframes"
+    | "/data-io"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | "/async-operations"
     | "/combining-dataframes"
     | "/creating-dataframes"
+    | "/data-io"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | "/async-operations"
     | "/combining-dataframes"
     | "/creating-dataframes"
+    | "/data-io"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -262,6 +274,7 @@ export interface RootRouteChildren {
   AsyncOperationsRoute: typeof AsyncOperationsRoute
   CombiningDataframesRoute: typeof CombiningDataframesRoute
   CreatingDataframesRoute: typeof CreatingDataframesRoute
+  DataIoRoute: typeof DataIoRoute
   DataframeBasicsRoute: typeof DataframeBasicsRoute
   FilteringRowsRoute: typeof FilteringRowsRoute
   GettingStartedRoute: typeof GettingStartedRoute
@@ -372,6 +385,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DataframeBasicsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/data-io": {
+      id: "/data-io"
+      path: "/data-io"
+      fullPath: "/data-io"
+      preLoaderRoute: typeof DataIoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/creating-dataframes": {
       id: "/creating-dataframes"
       path: "/creating-dataframes"
@@ -422,6 +442,7 @@ const rootRouteChildren: RootRouteChildren = {
   AsyncOperationsRoute: AsyncOperationsRoute,
   CombiningDataframesRoute: CombiningDataframesRoute,
   CreatingDataframesRoute: CreatingDataframesRoute,
+  DataIoRoute: DataIoRoute,
   DataframeBasicsRoute: DataframeBasicsRoute,
   FilteringRowsRoute: FilteringRowsRoute,
   GettingStartedRoute: GettingStartedRoute,

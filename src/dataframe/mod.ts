@@ -8,4 +8,4 @@ export {
   type PromisedDataFrame,
   type PromisedGroupedDataFrame,
 } from "./ts/dataframe/index.ts";
-export { read_csv } from "./ts/io/index.ts";
+export { read_csv, read_parquet, read_arrow } from "./ts/io/index.ts";

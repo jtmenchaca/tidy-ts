@@ -1,4 +1,9 @@
-import { createDataFrame, read_csv, stats } from "@tidy-ts/dataframe";
+import {
+  createDataFrame,
+  type DataFrame,
+  read_csv,
+  stats,
+} from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 Deno.test("Data Input/output/ Operations - Progressive Examples", async () => {
@@ -105,7 +110,18 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log(`Total rows: ${penguins.nrows()}`);
 
   // Type check: Schema ensures proper typing
-  const _penguinsTypeCheck: typeof penguins = penguins;
+  const _penguinsTypeCheck: DataFrame<
+    {
+      species: string;
+      island: string;
+      bill_length_mm: number | null;
+      bill_depth_mm: number | null;
+      flipper_length_mm: number | null;
+      body_mass_g: number | null;
+      sex: string | null;
+      year: number;
+    }
+  > = penguins;
 
   // ============================================================================
   // 3. HANDLING MISSING DATA - Working with nulls and NAs

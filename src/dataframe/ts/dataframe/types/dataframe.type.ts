@@ -165,6 +165,10 @@ export type DataFrame<Row extends object = object> =
 
     /** Write DataFrame to CSV file and return DataFrame for chaining */
     writeCSV(filePath: string): DataFrame<Row>;
+    /** Write DataFrame to Parquet file and return DataFrame for chaining */
+    writeParquet(filePath: string): DataFrame<Row>;
+    /** Convert DataFrame to Parquet ArrayBuffer */
+    toParquetBuffer(): ArrayBuffer;
 
     /** Get table-friendly representation for console.table */
     toTable(

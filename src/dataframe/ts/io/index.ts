@@ -3,6 +3,8 @@
 
 // Data I/O functions for reading and writing different formats
 export * from "./read_csv.ts";
+export * from "./read_parquet.ts";
+export * from "./read_arrow.ts";
 export * from "./read_json.ts";
 export * from "./write_json.ts";
 
