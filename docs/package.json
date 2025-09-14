@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "bun run scripts/vite-ssg.ts",
+    "build": "vite build",
+    "prerender": "node scripts/prerender-with-content.js",
+    "build:full": "vite build && npm run prerender",
     "serve": "cd dist && python3 -m http.server 8080",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check": "bunx tsc --noEmit -p src/tsconfig.app.json"
@@ -82,6 +84,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "playwright": "^1.55.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
     "vite": "^7.0.4"

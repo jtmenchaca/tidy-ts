@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as r}from"./code-block-DNUA8yAL.js";import{C as t,a as s,b as n,c as o,d as i}from"./card-D6qSYb-Q.js";import{D as c}from"./DocPageLayout--7ETJJNL.js";import"./recharts-BW8nexKl.js";import"./shiki-DNKhRY_9.js";import"./shiki-themes-BheiPiei.js";import"./index-Jbd7axXK.js";const a={basicSorting:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as r}from"./code-block-VWZqGNaa.js";import{C as t,a as s,b as n,c as o,d as i}from"./card-DaRITcZu.js";import{D as c}from"./DocPageLayout-BVhEn_Lu.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-JIUj4hnf.js";const a={basicSorting:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const students = createDataFrame([
   { id: 1, name: "Charlie", age: 35, score: 78 },
