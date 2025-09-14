@@ -1,4 +1,4 @@
-import{j as e}from"./vega-DaDS7kWN.js";import{C as a}from"./code-block-B9d36udg.js";import{D as s}from"./DocPageLayout-r87ErOYz.js";import"./recharts-BW8nexKl.js";import"./shiki-BpdrxAJG.js";import"./card-BE-SfOYi.js";import"./index-CejWlMk4.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const t={dataframeProperties:`import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import{j as e}from"./vega-DaDS7kWN.js";import{C as a}from"./code-block-DNrkRg0G.js";import{D as s}from"./DocPageLayout-DA3oHHtz.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BHRuJ_3B.js";import"./index-Bn-fflGs.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const t={dataframeProperties:`import { createDataFrame, stats } from "@tidy-ts/dataframe";
 
 const jediKnights = createDataFrame([
   { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
