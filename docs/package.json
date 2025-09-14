@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsx scripts/vite-ssg.ts",
+    "serve": "cd dist && python3 -m http.server 8080",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite build && vite preview --port 5173",
     "check": "npx tsc --noEmit -p src/tsconfig.app.json"
   },
   "dependencies": {
@@ -89,6 +89,8 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "puppeteer": "^23.9.0",
+    "tsx": "^4.19.2",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2",
     "vite": "^7.0.4"
