@@ -1,4 +1,4 @@
-import{j as e}from"./vega-DaDS7kWN.js";import{C as a}from"./code-block-DNrkRg0G.js";import{D as n}from"./DocPageLayout-DA3oHHtz.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BHRuJ_3B.js";import"./index-Bn-fflGs.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const i={selectSpecificColumns:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./vega-DaDS7kWN.js";import{C as a}from"./code-block-DiQW49M1.js";import{D as n}from"./DocPageLayout-CfKsBfK4.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-DEO3CS5P.js";import"./index-CMR82d_W.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const i={selectSpecificColumns:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const jedi = createDataFrame([
   { id: 1, name: "Luke Skywalker", age: 19, planet: "Tatooine", midichlorianCount: 15000 },

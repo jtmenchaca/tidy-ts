@@ -21,6 +21,7 @@ const queryClient = new QueryClient({
 // Create a new router instance with query client context
 const router = createRouter({
   routeTree,
+  basepath: "/tidy-ts",
   context: {
     queryClient,
   },

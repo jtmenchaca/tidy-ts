@@ -1,4 +1,4 @@
-import{j as e}from"./vega-DaDS7kWN.js";import{C as s}from"./code-block-DNrkRg0G.js";import{D as o}from"./DocPageLayout-DA3oHHtz.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BHRuJ_3B.js";import"./index-Bn-fflGs.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const a={basicTranspose:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./vega-DaDS7kWN.js";import{C as s}from"./code-block-DiQW49M1.js";import{D as o}from"./DocPageLayout-CfKsBfK4.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-DEO3CS5P.js";import"./index-CMR82d_W.js";import"./radix-CNB_C82Z.js";import"./shiki-themes-BheiPiei.js";const a={basicTranspose:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const sales = createDataFrame([
   { product: "Widget A", q1: 100, q2: 120, q3: 110, q4: 130 },

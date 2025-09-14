@@ -1,4 +1,4 @@
-import{j as e}from"./vega-DaDS7kWN.js";import{C as r}from"./code-block-DNrkRg0G.js";import{C as o,a as n,b as a,c as i,d}from"./card-BHRuJ_3B.js";import{D as s}from"./DocPageLayout-DA3oHHtz.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-Bn-fflGs.js";import"./radix-CNB_C82Z.js";const t={innerJoin:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./vega-DaDS7kWN.js";import{C as r}from"./code-block-DiQW49M1.js";import{C as o,a as n,b as a,c as i,d}from"./card-DEO3CS5P.js";import{D as s}from"./DocPageLayout-CfKsBfK4.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-CMR82d_W.js";import"./radix-CNB_C82Z.js";const t={innerJoin:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const employees = createDataFrame([
   { emp_id: 1, name: "Alice", dept_id: 10 },
