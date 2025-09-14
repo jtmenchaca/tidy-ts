@@ -27,7 +27,10 @@ jobs:
           bun-version: latest
 
       - name: Install dependencies
-        run: cd docs && bun install
+        run: |
+          cd docs
+          rm -rf node_modules bun.lock
+          bun install
 
       - name: Build static site
         run: cd docs && bun run build
