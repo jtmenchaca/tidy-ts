@@ -35,7 +35,7 @@ export function SidebarProvider(
                 className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-2 flex-shrink-0"
                 aria-label="Toggle sidebar"
               >
-                <MenuIcon className="h-5 w-5" aria-hidden="true" />
+                <MenuIcon className="h-7 w-7" aria-hidden="true" />
               </SidebarTrigger>
 
               {/* Logo and Brand */}
@@ -48,7 +48,7 @@ export function SidebarProvider(
                   <img 
                     src={TidyTsLogo} 
                     alt="Tidy-TS Logo" 
-                    className="h-12 w-12"
+                    className="h-10 w-10"
                   />
                 </div>
                 <div className="hidden md:block">
@@ -80,7 +80,7 @@ export function SidebarProvider(
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 lg:gap-2"
                 >
-                  <GithubIcon className="w-4 h-4" />
+                  <GithubIcon className="w-5 h-5" />
                   <span className="hidden lg:inline">GitHub</span>
                 </a>
               </Button>
