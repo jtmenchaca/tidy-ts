@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-B0XYfMng.js";import{C as i,a as r,b as n,c as o,d as s}from"./card-BIm9p5cD.js";import{D as d}from"./DocPageLayout-CwA4bbf5.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-BVriQQBm.js";const t={csvReading:`import { read_csv, type DataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-BI5ZJb3a.js";import{C as i,a as r,b as n,c as o,d as s}from"./card-BQg-nQJZ.js";import{D as d}from"./DocPageLayout-CubtEZbD.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-Cq5Y5JWB.js";const t={csvReading:`import { read_csv, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schema for CSV data validation

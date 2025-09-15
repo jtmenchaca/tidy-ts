@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-B0XYfMng.js";import{D as s}from"./DocPageLayout-CwA4bbf5.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BIm9p5cD.js";import"./index-BVriQQBm.js";import"./shiki-themes-BheiPiei.js";const t={dataframeProperties:`import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-BI5ZJb3a.js";import{D as s}from"./DocPageLayout-CubtEZbD.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BQg-nQJZ.js";import"./index-Cq5Y5JWB.js";import"./shiki-themes-BheiPiei.js";const t={dataframeProperties:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const jediKnights = createDataFrame([
   { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
@@ -29,15 +29,15 @@ const species = jediKnights.species; // readonly string[] - all species
 
 console.log("All names:", names);
 console.log("All masses:", masses);
-console.log("Unique species:", stats.unique(species));
+console.log("Unique species:", s.unique(species));
 
 // Use with any array function for quick analysis
 const avgMass = masses.reduce((sum, mass) => sum + mass, 0) / masses.length;
 const maxHeight = Math.max(...jediKnights.height);
 
 // or use the stats module
-const avgMassTidy = stats.mean(masses);
-const maxHeightTidy = stats.max(jediKnights.height);
+const avgMassTidy = s.mean(masses);
+const maxHeightTidy = s.max(jediKnights.height);
 
   console.log("Average mass:", avgMass);
   console.log("Max height:", maxHeight);

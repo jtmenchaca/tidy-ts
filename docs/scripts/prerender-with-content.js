@@ -23,6 +23,7 @@ const routes = [
   '/performance-benchmarks',
   '/combining-dataframes',
   '/transposing-data',
+  '/data-io',
   '/examples/jupyter-notebooks',
   '/examples/comprehensive-workflows'
 ];

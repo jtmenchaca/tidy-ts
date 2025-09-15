@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-B0XYfMng.js";import{D as r}from"./DocPageLayout-CwA4bbf5.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BIm9p5cD.js";import"./index-BVriQQBm.js";import"./shiki-themes-BheiPiei.js";const t={basicDataFrame:`import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-BI5ZJb3a.js";import{D as r}from"./DocPageLayout-CubtEZbD.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BQg-nQJZ.js";import"./index-Cq5Y5JWB.js";import"./shiki-themes-BheiPiei.js";const t={basicDataFrame:`import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 
 // DataFrames are created from arrays of objects
 // Each object represents a row, keys become column names

@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-B0XYfMng.js";import{C as s,a as r,b as t,c as o,d as n}from"./card-BIm9p5cD.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-BVriQQBm.js";function p(){return e.jsx("div",{className:"flex-1 p-8 overflow-y-auto",children:e.jsxs("div",{className:"max-w-4xl mx-auto space-y-8",children:[e.jsxs("div",{className:"mb-8",children:[e.jsx("h1",{className:"text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4",children:"Comprehensive Workflows"}),e.jsx("p",{className:"text-lg text-gray-600 dark:text-gray-400",children:"Real-world data analysis workflows that combine all tidy-ts features. These examples show how to use the library effectively."})]}),e.jsx(a,{title:"Complete Data Analysis Pipeline",description:"A complete workflow combining all major tidy-ts operations",explanation:"This example demonstrates a complete data analysis workflow from data loading through transformation, filtering, grouping, and summarization.",code:`import { createDataFrame, stats, read_csv } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-BI5ZJb3a.js";import{C as s,a as r,b as o,c as t,d as n}from"./card-BQg-nQJZ.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-Cq5Y5JWB.js";function p(){return e.jsx("div",{className:"flex-1 p-8 overflow-y-auto",children:e.jsxs("div",{className:"max-w-4xl mx-auto space-y-8",children:[e.jsxs("div",{className:"mb-8",children:[e.jsx("h1",{className:"text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4",children:"Comprehensive Workflows"}),e.jsx("p",{className:"text-lg text-gray-600 dark:text-gray-400",children:"Real-world data analysis workflows that combine all tidy-ts features. These examples show how to use the library effectively."})]}),e.jsx(a,{title:"Complete Data Analysis Pipeline",description:"A complete workflow combining all major tidy-ts operations",explanation:"This example demonstrates a complete data analysis workflow from data loading through transformation, filtering, grouping, and summarization.",code:`import { createDataFrame, stats as s, read_csv } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // 1. Load and validate data
@@ -33,9 +33,9 @@ const analysis = people
       return "Poor";
     },
     z_score: (row, _index, df) => {
-      const mean = stats.mean(df.score);
-      const std = stats.stdev(df.score);
-      return stats.round((row.score - mean) / std, 3);
+      const mean = s.mean(df.score);
+      const std = s.stdev(df.score);
+      return s.round((row.score - mean) / std, 3);
     },
   })
   // Filter data
@@ -44,10 +44,10 @@ const analysis = people
   .groupBy("age_group")
   .summarise({
     count: (group) => group.nrows(),
-    avg_score: (group) => stats.round(stats.mean(group.score), 2),
-    max_score: (group) => stats.max(group.score),
-    min_score: (group) => stats.min(group.score),
-    score_std: (group) => stats.round(stats.stdev(group.score), 2),
+    avg_score: (group) => s.round(s.mean(group.score), 2),
+    max_score: (group) => s.max(group.score),
+    min_score: (group) => s.min(group.score),
+    score_std: (group) => s.round(s.stdev(group.score), 2),
   })
   // Sort results
   .arrange("avg_score", "desc");
@@ -93,9 +93,9 @@ const enrichedAnalysis = await salesData
   })
   .groupBy("region")
   .summarise({
-    total_sales: (group) => stats.sum(group.sales),
-    total_adjusted: (group) => stats.sum(group.adjusted_sales),
-    avg_bonus: (group) => stats.round(stats.mean(group.regional_bonus), 3),
+    total_sales: (group) => s.sum(group.sales),
+    total_adjusted: (group) => s.sum(group.adjusted_sales),
+    avg_bonus: (group) => s.round(s.mean(group.regional_bonus), 3),
     high_performance_count: (group) => 
       group.filter((row) => row.performance_tier === "High").nrows(),
   })
@@ -123,18 +123,18 @@ const qualityAnalysis = messyData
   })
   .summarise({
     total_rows: (df) => df.nrows(),
-    name_missing: (df) => stats.sum(df.name_missing),
-    age_missing: (df) => stats.sum(df.age_missing),
-    score_missing: (df) => stats.sum(df.score_missing),
-    active_missing: (df) => stats.sum(df.active_missing),
-    notes_missing: (df) => stats.sum(df.notes_missing),
+    name_missing: (df) => s.sum(df.name_missing),
+    age_missing: (df) => s.sum(df.age_missing),
+    score_missing: (df) => s.sum(df.score_missing),
+    active_missing: (df) => s.sum(df.active_missing),
+    notes_missing: (df) => s.sum(df.notes_missing),
   })
   .mutate({
-    name_missing_pct: (row) => stats.round((row.name_missing / row.total_rows) * 100, 1),
-    age_missing_pct: (row) => stats.round((row.age_missing / row.total_rows) * 100, 1),
-    score_missing_pct: (row) => stats.round((row.score_missing / row.total_rows) * 100, 1),
-    active_missing_pct: (row) => stats.round((row.active_missing / row.total_rows) * 100, 1),
-    notes_missing_pct: (row) => stats.round((row.notes_missing / row.total_rows) * 100, 1),
+    name_missing_pct: (row) => s.round((row.name_missing / row.total_rows) * 100, 1),
+    age_missing_pct: (row) => s.round((row.age_missing / row.total_rows) * 100, 1),
+    score_missing_pct: (row) => s.round((row.score_missing / row.total_rows) * 100, 1),
+    active_missing_pct: (row) => s.round((row.active_missing / row.total_rows) * 100, 1),
+    notes_missing_pct: (row) => s.round((row.notes_missing / row.total_rows) * 100, 1),
   });
 
 qualityAnalysis.print("Data quality analysis:");
@@ -154,14 +154,14 @@ const cleanedData = messyData
       }
       // Use median for missing scores
       const validScores = messyData.score.filter(x => x !== null && x !== undefined && !isNaN(x));
-      return stats.median(validScores, true);
+      return s.median(validScores, true);
     },
     active_cleaned: (row) => row.active ?? true,
     notes_cleaned: (row) => row.notes || "No additional notes",
   })
   .select("id", "name_cleaned", "age_cleaned", "score_cleaned", "active_cleaned", "notes_cleaned");
 
-cleanedData.print("Cleaned data:");`}),e.jsxs(s,{children:[e.jsxs(r,{children:[e.jsx(t,{children:"Advanced Joining and Reshaping"}),e.jsx(o,{children:"Complex data integration and reshaping workflows"})]}),e.jsx(n,{children:e.jsxs("div",{className:"space-y-4",children:[e.jsxs("div",{children:[e.jsx("h4",{className:"font-medium mb-2",children:"Multi-Table Analysis"}),e.jsx(a,{code:`// Employee and department data
+cleanedData.print("Cleaned data:");`}),e.jsxs(s,{children:[e.jsxs(r,{children:[e.jsx(o,{children:"Advanced Joining and Reshaping"}),e.jsx(t,{children:"Complex data integration and reshaping workflows"})]}),e.jsx(n,{children:e.jsxs("div",{className:"space-y-4",children:[e.jsxs("div",{children:[e.jsx("h4",{className:"font-medium mb-2",children:"Multi-Table Analysis"}),e.jsx(a,{code:`// Employee and department data
 const employees = createDataFrame([
   { emp_id: 1, name: "Alice", dept_id: 10, year: 2023, salary: 50000 },
   { emp_id: 2, name: "Bob", dept_id: 20, year: 2023, salary: 60000 },
@@ -179,17 +179,17 @@ const departments = createDataFrame([
 const departmentAnalysis = employees
   .innerJoin(departments, ["dept_id", "year"])
   .mutate({
-    salary_rank: (row, _index, df) => stats.rank(df.salary, row.salary),
-    salary_percentile: (row, _index, df) => stats.percentileRank(df.salary, row.salary),
+    salary_rank: (row, _index, df) => s.rank(df.salary, row.salary),
+    salary_percentile: (row, _index, df) => s.percentileRank(df.salary, row.salary),
   })
   .groupBy("dept_name")
   .summarise({
     employee_count: (group) => group.nrows(),
-    avg_salary: (group) => stats.round(stats.mean(group.salary), 0),
-    median_salary: (group) => stats.median(group.salary),
-    salary_range: (group) => \`\${stats.min(group.salary)}-\${stats.max(group.salary)}\`,
+    avg_salary: (group) => s.round(s.mean(group.salary), 0),
+    median_salary: (group) => s.median(group.salary),
+    salary_range: (group) => \`\${s.min(group.salary)}-\${s.max(group.salary)}\`,
     top_earner: (group) => {
-      const maxSalary = stats.max(group.salary);
+      const maxSalary = s.max(group.salary);
       return group.find(row => row.salary === maxSalary)?.name || "N/A";
     },
   })
@@ -214,12 +214,12 @@ const pivotAnalysis = salesLong
   })
   .mutate({
     total_sales: (row) => row["Widget A"] + row["Widget B"],
-    widget_a_share: (row) => stats.round((row["Widget A"] / row.total_sales) * 100, 1),
-    widget_b_share: (row) => stats.round((row["Widget B"] / row.total_sales) * 100, 1),
+    widget_a_share: (row) => s.round((row["Widget A"] / row.total_sales) * 100, 1),
+    widget_b_share: (row) => s.round((row["Widget B"] / row.total_sales) * 100, 1),
     growth_rate: (row, index, df) => {
       if (index === 0) return 0;
       const prevRow = df[index - 1];
-      return stats.round(((row.total_sales - prevRow.total_sales) / prevRow.total_sales) * 100, 1);
+      return s.round(((row.total_sales - prevRow.total_sales) / prevRow.total_sales) * 100, 1);
     },
   })
   .arrange("year", "quarter");

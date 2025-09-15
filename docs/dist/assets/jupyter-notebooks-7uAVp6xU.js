@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-B0XYfMng.js";import{D as a}from"./DocPageLayout-CwA4bbf5.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BIm9p5cD.js";import"./index-BVriQQBm.js";import"./shiki-themes-BheiPiei.js";const s="/tidy-ts/assets/deno-vscode-ext-ytcApPCR.png",o="/tidy-ts/assets/jupyter-vscode-ext-Cg8h8q6O.png",r="/tidy-ts/assets/ipynb-deno-notebook-DLXER-Rk.png";function y(){return e.jsxs(a,{title:"Jupyter Notebooks with Tidy-TS",description:"Interactive data analysis and visualization with Tidy-TS in Jupyter notebooks. Create rich, interactive visualizations and explore data with TypeScript.",currentPath:"/examples/jupyter-notebooks",children:[e.jsx(t,{title:"Setup: Deno with Jupyter",description:"Tidy-TS works seamlessly with Deno's built-in Jupyter kernel",explanation:"As long as you have Deno installed, your VSCode or Cursor editor should automatically detect and use the Deno kernel for .ipynb files. No configuration files needed!",code:`// 1. Install Deno (if not already installed)
+import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-BI5ZJb3a.js";import{D as a}from"./DocPageLayout-CubtEZbD.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-BQg-nQJZ.js";import"./index-Cq5Y5JWB.js";import"./shiki-themes-BheiPiei.js";const o="/tidy-ts/assets/deno-vscode-ext-ytcApPCR.png",s="/tidy-ts/assets/jupyter-vscode-ext-Cg8h8q6O.png",r="/tidy-ts/assets/ipynb-deno-notebook-DLXER-Rk.png";function y(){return e.jsxs(a,{title:"Jupyter Notebooks with Tidy-TS",description:"Interactive data analysis and visualization with Tidy-TS in Jupyter notebooks. Create rich, interactive visualizations and explore data with TypeScript.",currentPath:"/examples/jupyter-notebooks",children:[e.jsx(t,{title:"Setup: Deno with Jupyter",description:"Tidy-TS works seamlessly with Deno's built-in Jupyter kernel",explanation:"As long as you have Deno installed, your VSCode or Cursor editor should automatically detect and use the Deno kernel for .ipynb files. No configuration files needed!",code:`// 1. Install Deno (if not already installed)
 // Visit: https://docs.deno.com/runtime/getting_started/installation/
 
 // 2. Install required VSCode extensions:
@@ -6,7 +6,7 @@ import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-B0XYfMng
 // - ms-toolsai.jupyter (for notebook support)
 
 // 3. Create a .ipynb file and select the Deno kernel
-// The kernel selector appears in the top-right corner`}),e.jsxs("div",{className:"my-8 p-6 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800",children:[e.jsx("h3",{className:"text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4",children:"Required Extensions"}),e.jsxs("div",{className:"grid md:grid-cols-2 gap-6",children:[e.jsxs("div",{children:[e.jsx("p",{className:"font-medium text-blue-900 dark:text-blue-100 mb-2",children:"Deno Extension"}),e.jsx("img",{src:s,alt:"Deno extension in VSCode",className:"w-full max-w-2xl rounded border shadow-sm mb-2"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300",children:["Install the ",e.jsx("code",{children:"denoland.vscode-deno"})," extension for TypeScript support and Deno integration."]})]}),e.jsxs("div",{children:[e.jsx("p",{className:"font-medium text-blue-900 dark:text-blue-100 mb-2",children:"Jupyter Extension"}),e.jsx("img",{src:o,alt:"Jupyter extension in VSCode",className:"w-full max-w-2xl rounded border shadow-sm mb-2"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300",children:["Install the ",e.jsx("code",{children:"ms-toolsai.jupyter"})," extension for notebook support and interactive cells."]})]})]}),e.jsxs("div",{className:"mt-4",children:[e.jsx("img",{src:r,alt:"Deno notebook in VSCode",className:"w-full max-w-3xl rounded border shadow-sm"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300 mt-2",children:["Once both extensions are installed, create a ",e.jsx("code",{children:".ipynb"})," file and select the Deno kernel."]})]})]}),e.jsx(t,{title:"Basic DataFrame Operations",description:"Create and manipulate DataFrames in Jupyter cells",explanation:"Jupyter notebooks provide an interactive environment perfect for data exploration. Each cell can contain code that runs independently, making it easy to experiment and iterate.",code:`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
+// The kernel selector appears in the top-right corner`}),e.jsxs("div",{className:"my-8 p-6 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800",children:[e.jsx("h3",{className:"text-lg font-semibold text-blue-900 dark:text-blue-100 mb-4",children:"Required Extensions"}),e.jsxs("div",{className:"grid md:grid-cols-2 gap-6",children:[e.jsxs("div",{children:[e.jsx("p",{className:"font-medium text-blue-900 dark:text-blue-100 mb-2",children:"Deno Extension"}),e.jsx("img",{src:o,alt:"Deno extension in VSCode",className:"w-full max-w-2xl rounded border shadow-sm mb-2"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300",children:["Install the ",e.jsx("code",{children:"denoland.vscode-deno"})," extension for TypeScript support and Deno integration."]})]}),e.jsxs("div",{children:[e.jsx("p",{className:"font-medium text-blue-900 dark:text-blue-100 mb-2",children:"Jupyter Extension"}),e.jsx("img",{src:s,alt:"Jupyter extension in VSCode",className:"w-full max-w-2xl rounded border shadow-sm mb-2"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300",children:["Install the ",e.jsx("code",{children:"ms-toolsai.jupyter"})," extension for notebook support and interactive cells."]})]})]}),e.jsxs("div",{className:"mt-4",children:[e.jsx("img",{src:r,alt:"Deno notebook in VSCode",className:"w-full max-w-3xl rounded border shadow-sm"}),e.jsxs("p",{className:"text-sm text-blue-700 dark:text-blue-300 mt-2",children:["Once both extensions are installed, create a ",e.jsx("code",{children:".ipynb"})," file and select the Deno kernel."]})]})]}),e.jsx(t,{title:"Basic DataFrame Operations",description:"Create and manipulate DataFrames in Jupyter cells",explanation:"Jupyter notebooks provide an interactive environment perfect for data exploration. Each cell can contain code that runs independently, making it easy to experiment and iterate.",code:`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
 
 // Create a DataFrame from sample data
 const df = createDataFrame([
@@ -48,7 +48,7 @@ const monthlyTotals = salesData.groupBy("month").summarise({
   totalProfit: "profit"
 });
 
-console.log("Monthly totals:", monthlyTotals);`}),e.jsx(t,{title:"Interactive Data Exploration",description:"Real-time interactive visualizations in Jupyter",explanation:"Jupyter notebooks with Tidy-TS enable instant, interactive data exploration. Every graph is live and responsive - zoom, pan, hover for details, and see your data come alive!",code:`import { createDataFrame, stats } from "@jsr/tidy-ts__dataframe";
+console.log("Monthly totals:", monthlyTotals);`}),e.jsx(t,{title:"Interactive Data Exploration",description:"Real-time interactive visualizations in Jupyter",explanation:"Jupyter notebooks with Tidy-TS enable instant, interactive data exploration. Every graph is live and responsive - zoom, pan, hover for details, and see your data come alive!",code:`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
 
 // Galactic fleet data - explore the Star Wars universe!
 const fleetData = createDataFrame([
@@ -122,7 +122,7 @@ console.log("JSON data:", jsonData);
 
 // Or get the raw data
 const rawData = results.toArray();
-console.log("Raw data:", rawData);`}),e.jsx(t,{title:"Statistical Analysis",description:"Perform statistical calculations and summaries",explanation:"Jupyter notebooks are perfect for statistical analysis. You can easily calculate descriptive statistics, correlations, and other metrics while keeping your data and results organized.",code:`import { createDataFrame, stats } from "@jsr/tidy-ts__dataframe";
+console.log("Raw data:", rawData);`}),e.jsx(t,{title:"Statistical Analysis",description:"Perform statistical calculations and summaries",explanation:"Jupyter notebooks are perfect for statistical analysis. You can easily calculate descriptive statistics, correlations, and other metrics while keeping your data and results organized.",code:`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
 
 // Sample dataset for analysis
 const data = createDataFrame([
@@ -135,20 +135,20 @@ const data = createDataFrame([
 
 // Calculate descriptive statistics
 const ageStats = data.summarise({
-  meanAge: stats.mean("age"),
-  medianAge: stats.median("age"),
-  minAge: stats.min("age"),
-  maxAge: stats.max("age"),
-  stdAge: stats.std("age")
+  meanAge: s.mean("age"),
+  medianAge: s.median("age"),
+  minAge: s.min("age"),
+  maxAge: s.max("age"),
+  stdAge: s.std("age")
 });
 
 console.log("Age statistics:", ageStats);
 
 // Group by department and calculate salary statistics
 const deptStats = data.groupBy("department").summarise({
-  avgSalary: stats.mean("salary"),
-  medianSalary: stats.median("salary"),
-  count: stats.count()
+  avgSalary: s.mean("salary"),
+  medianSalary: s.median("salary"),
+  count: s.count()
 });
 
 console.log("Department salary statistics:", deptStats);`})]})}export{y as component};
