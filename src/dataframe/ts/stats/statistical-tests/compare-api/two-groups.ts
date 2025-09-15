@@ -17,8 +17,24 @@ import type {
 } from "../../helpers.ts";
 
 /**
- * Compares central tendencies between two groups.
- * Automatically selects between parametric (t-test) and non-parametric (Mann-Whitney) tests.
+ * Compare the central tendencies of two independent groups.
+ * 
+ * Tests whether the mean (parametric) or median (non-parametric) values of two
+ * unrelated groups are statistically different.
+ * 
+ * Assumptions:
+ * - Samples are independent and randomly drawn
+ * - For parametric: Data in each group is approximately normally distributed
+ * - For parametric: Optionally assumes equal variance (use `equalVar: false` for Welch's test)
+ * - For non-parametric: Data is continuous (Mann-Whitney U test)
+ * 
+ * @param x - First group's values
+ * @param y - Second group's values
+ * @param parametric - Use t-test (true) or Mann-Whitney U test (false)
+ * @param equalVar - Assume equal variances for t-test (default: true)
+ * @param alternative - Direction of the test ("two-sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test results with statistic, p-value, and effect size
  */
 export function centralTendencyToEachOther({
   x,
@@ -150,8 +166,23 @@ export function centralTendencyToEachOther({
 }
 
 /**
- * Compares proportions between two groups.
- * Can use either two-proportion z-test or chi-squared test.
+ * Compare proportions between two independent groups.
+ * 
+ * Tests whether the proportion of successes differs between two groups using
+ * either a two-proportion z-test or chi-squared test of independence.
+ * 
+ * Assumptions:
+ * - Samples are independent between and within groups
+ * - Sample sizes are large enough (at least 5 expected in each cell)
+ * - For z-test: Can test directional hypotheses
+ * - For chi-squared: Tests association only (always two-sided)
+ * 
+ * @param data1 - First group's binary data (0/1 or boolean)
+ * @param data2 - Second group's binary data (0/1 or boolean)
+ * @param useChiSquare - Use chi-squared test (true) or z-test (false)
+ * @param alternative - Direction for z-test ("two-sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test results with statistic, p-value, and effect size measures
  */
 export function proportionsToEachOther({
   data1,
@@ -272,8 +303,24 @@ export function proportionsToEachOther({
 }
 
 /**
- * Tests association between two continuous variables.
- * Supports Pearson (parametric) and Spearman (non-parametric) correlation.
+ * Test association between two continuous variables.
+ * 
+ * Measures and tests the strength of linear (Pearson) or monotonic (Spearman)
+ * relationship between two continuous variables.
+ * 
+ * Assumptions:
+ * - For Pearson: Variables are continuous and approximately bivariate normal
+ * - For Pearson: Relationship is linear
+ * - For Spearman: Variables are at least ordinal
+ * - For Spearman: Relationship is monotonic
+ * - Observations are independent
+ * 
+ * @param x - First variable's values
+ * @param y - Second variable's values  
+ * @param method - Correlation method ("pearson" or "spearman")
+ * @param alternative - Test direction ("two.sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Correlation coefficient, test statistic, p-value, and confidence intervals
  */
 export function associationToEachOther({
   x,
@@ -325,9 +372,22 @@ export function associationToEachOther({
 }
 
 /**
- * Compares distributions between two groups.
- * Uses Mann-Whitney test as a distribution comparison.
- * Note: A proper KS test could be implemented if needed.
+ * Compare the distributions of two independent groups.
+ * 
+ * Tests whether two samples come from the same distribution using the
+ * Mann-Whitney U test (equivalent to testing for stochastic dominance).
+ * 
+ * Assumptions:
+ * - Samples are independent
+ * - Data is continuous or ordinal
+ * - Under null hypothesis: distributions are identical
+ * - Alternative: one distribution is stochastically larger/smaller
+ * 
+ * @param x - First group's values
+ * @param y - Second group's values
+ * @param alternative - Direction of the test ("two-sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Mann-Whitney U statistic, p-value, and effect size
  */
 export function distributionsToEachOther({
   x,

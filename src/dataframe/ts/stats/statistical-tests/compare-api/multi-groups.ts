@@ -8,8 +8,22 @@ import type {
 } from "../types.ts";
 
 /**
- * Compares central tendencies across multiple groups.
- * Automatically selects between parametric (ANOVA) and non-parametric (Kruskal-Wallis) tests.
+ * Compare central tendencies across three or more independent groups.
+ * 
+ * Tests whether the means (ANOVA) or medians (Kruskal-Wallis) differ
+ * significantly among multiple groups.
+ * 
+ * Assumptions:
+ * - Groups are independent
+ * - For ANOVA: Data in each group is approximately normally distributed
+ * - For ANOVA: Variances are approximately equal across groups
+ * - For Kruskal-Wallis: Data is continuous or ordinal
+ * - Null hypothesis: All groups have the same central tendency
+ * 
+ * @param groups - Array of arrays, each containing values for one group
+ * @param parametric - Use ANOVA (true) or Kruskal-Wallis (false)
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test statistic (F or H), p-value, degrees of freedom, and effect size
  */
 export function centralTendencyToEachOther({
   groups,
@@ -81,7 +95,20 @@ export function centralTendencyToEachOther({
 }
 
 /**
- * Compares proportions across multiple groups using chi-squared test.
+ * Test independence of categorical variables across multiple groups.
+ * 
+ * Uses chi-squared test to determine if there's a significant association
+ * between row and column variables in a contingency table.
+ * 
+ * Assumptions:
+ * - Observations are independent
+ * - Expected frequency in each cell ≥ 5 (for valid chi-squared approximation)
+ * - Categories are mutually exclusive and exhaustive
+ * - Null hypothesis: Variables are independent (no association)
+ * 
+ * @param contingencyTable - 2D array of observed frequencies
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Chi-squared statistic, p-value, degrees of freedom, and effect sizes (Cramér's V, phi)
  */
 export function proportionsToEachOther({
   contingencyTable,

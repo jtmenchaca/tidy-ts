@@ -15,9 +15,22 @@ import type {
 } from "../../helpers.ts";
 
 /**
- * Tests if the central tendency of a single group differs from a hypothesized value.
- * - For parametric tests: Tests if the sample mean differs from the hypothesized value using a t-test
- * - For non-parametric tests: Tests if the sample median differs from the hypothesized value using Wilcoxon signed-rank test
+ * Test if a single group's central tendency differs from a hypothesized value.
+ * 
+ * Compares the center of a single sample against a known or expected value,
+ * using either parametric (one-sample t-test) or non-parametric (Wilcoxon signed-rank) methods.
+ * 
+ * Assumptions:
+ * - For parametric: Data is approximately normally distributed
+ * - For non-parametric: Data is continuous and symmetric around the median
+ * - Set `parametric: "auto"` to automatically choose based on Shapiro-Wilk normality test
+ * 
+ * @param data - Sample values to test
+ * @param hypothesizedValue - The value to compare against (population mean/median)
+ * @param alternative - Direction of the test ("two-sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @param parametric - Test type selection (true, false, or "auto")
+ * @returns Test results with statistic, p-value, and confidence intervals
  */
 export function centralTendencyToValue({
   data,
@@ -139,7 +152,21 @@ export function centralTendencyToValue({
 }
 
 /**
- * Tests if a proportion differs from an expected value.
+ * Test if a sample proportion differs from a hypothesized population proportion.
+ * 
+ * Compares the proportion of successes in a binary sample against an expected proportion,
+ * using the one-sample proportion z-test.
+ * 
+ * Assumptions:
+ * - Sample is randomly drawn from the population
+ * - Observations are independent
+ * - Sample size is large enough (np ≥ 5 and n(1-p) ≥ 5)
+ * 
+ * @param data - Binary data (0/1 or boolean values)
+ * @param p - Hypothesized population proportion (default: 0.5)
+ * @param alternative - Direction of the test ("two-sided", "less", "greater")
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test results with z-statistic, p-value, and confidence intervals
  */
 export function proportionsToValue({
   data,
@@ -181,8 +208,19 @@ export function proportionsToValue({
 }
 
 /**
- * Tests if data follows a normal distribution.
- * Uses Shapiro-Wilk test for normality.
+ * Test if data follows a normal distribution (Shapiro-Wilk test).
+ * 
+ * Assesses whether a sample comes from a normally distributed population.
+ * Most reliable for small to medium sample sizes (n < 5000).
+ * 
+ * Assumptions:
+ * - Data is continuous
+ * - Observations are independent and identically distributed
+ * - Null hypothesis: Data is normally distributed
+ * 
+ * @param data - Sample values to test for normality
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test results with W statistic and p-value (reject null if p < alpha)
  */
 export function distributionToNormal({
   data,
