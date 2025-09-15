@@ -3,6 +3,52 @@
 import * as wasmInternal from "../../lib/tidy_ts_dataframe.internal.js";
 import { initWasm } from "./wasm-init.ts";
 
+// Test type name mapping
+const TEST_TYPE_NAMES = {
+  1: "One-sample z-test",
+  2: "Two-sample z-test",
+  3: "Paired z-test",
+  4: "One-sample proportion test",
+  5: "Two-sample proportion test",
+  6: "One-sample t-test",
+  7: "Two-sample t-test",
+  8: "Paired t-test",
+  9: "Wilcoxon signed-rank test",
+  10: "Mann-Whitney U test",
+  11: "One-way ANOVA",
+  12: "Two-way ANOVA",
+  13: "Chi-square test of independence",
+  14: "Chi-square goodness of fit test",
+  15: "Fisher's exact test",
+  16: "Kruskal-Wallis test",
+  17: "Friedman test",
+  18: "Pearson correlation test",
+  19: "Spearman correlation test",
+  20: "Kendall correlation test",
+  21: "Shapiro-Wilk normality test",
+  22: "Kolmogorov-Smirnov test",
+  23: "Anderson-Darling test",
+  24: "Levene's test",
+  25: "Bartlett's test",
+} as const;
+
+export type TestName = typeof TEST_TYPE_NAMES[keyof typeof TEST_TYPE_NAMES];
+
+/**
+ * Add test name to result
+ */
+function addName(
+  result: wasmInternal.TestResult,
+): wasmInternal.TestResult & { test_name: TestName } {
+  const testName =
+    TEST_TYPE_NAMES[result.test_type as keyof typeof TEST_TYPE_NAMES] ||
+    `Unknown test (type ${result.test_type})` as TestName;
+  // Add test_name property to the existing result object
+  // deno-lint-ignore no-explicit-any
+  (result as any).test_name = testName;
+  return result as wasmInternal.TestResult & { test_name: TestName };
+}
+
 // ANOVA Tests
 export function anova_one_way(
   data: Float64Array,
@@ -10,7 +56,7 @@ export function anova_one_way(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.anova_one_way(data, group_sizes, alpha);
+  return addName(wasmInternal.anova_one_way(data, group_sizes, alpha));
 }
 
 export function anova_two_way(
@@ -21,13 +67,13 @@ export function anova_two_way(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.anova_two_way(
+  return addName(wasmInternal.anova_two_way(
     data,
     a_levels,
     b_levels,
     cell_sizes,
     alpha,
-  );
+  ));
 }
 
 export function anova_two_way_factor_a_wasm(
@@ -38,13 +84,13 @@ export function anova_two_way_factor_a_wasm(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.anova_two_way_factor_a_wasm(
+  return addName(wasmInternal.anova_two_way_factor_a_wasm(
     data,
     a_levels,
     b_levels,
     cell_sizes,
     alpha,
-  );
+  ));
 }
 
 export function anova_two_way_factor_b_wasm(
@@ -55,13 +101,13 @@ export function anova_two_way_factor_b_wasm(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.anova_two_way_factor_b_wasm(
+  return addName(wasmInternal.anova_two_way_factor_b_wasm(
     data,
     a_levels,
     b_levels,
     cell_sizes,
     alpha,
-  );
+  ));
 }
 
 export function anova_two_way_interaction_wasm(
@@ -72,13 +118,13 @@ export function anova_two_way_interaction_wasm(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.anova_two_way_interaction_wasm(
+  return addName(wasmInternal.anova_two_way_interaction_wasm(
     data,
     a_levels,
     b_levels,
     cell_sizes,
     alpha,
-  );
+  ));
 }
 
 // Chi-Square Tests
@@ -89,7 +135,9 @@ export function chi_square_independence(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.chi_square_independence(observed, n_rows, n_cols, alpha);
+  return addName(
+    wasmInternal.chi_square_independence(observed, n_rows, n_cols, alpha),
+  );
 }
 
 // T-Tests
@@ -100,7 +148,7 @@ export function t_test_one_sample(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.t_test_one_sample(x, mu, alpha, alternative);
+  return addName(wasmInternal.t_test_one_sample(x, mu, alpha, alternative));
 }
 
 export function t_test_two_sample_independent(
@@ -111,13 +159,13 @@ export function t_test_two_sample_independent(
   pooled: boolean,
 ) {
   initWasm();
-  return wasmInternal.t_test_two_sample_independent(
+  return addName(wasmInternal.t_test_two_sample_independent(
     x,
     y,
     alpha,
     alternative,
     pooled,
-  );
+  ));
 }
 
 export function t_test_paired(
@@ -127,7 +175,7 @@ export function t_test_paired(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.t_test_paired(x, y, alpha, alternative);
+  return addName(wasmInternal.t_test_paired(x, y, alpha, alternative));
 }
 
 // Z-Tests
@@ -139,7 +187,9 @@ export function z_test_one_sample(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.z_test_one_sample(x, mu, sigma, alpha, alternative);
+  return addName(
+    wasmInternal.z_test_one_sample(x, mu, sigma, alpha, alternative),
+  );
 }
 
 export function z_test_two_sample(
@@ -151,14 +201,14 @@ export function z_test_two_sample(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.z_test_two_sample(
+  return addName(wasmInternal.z_test_two_sample(
     x,
     y,
     sigma_x,
     sigma_y,
     alpha,
     alternative,
-  );
+  ));
 }
 
 // Proportion Tests
@@ -170,7 +220,9 @@ export function proportion_test_one_sample(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.proportion_test_one_sample(x, n, p0, alpha, alternative);
+  return addName(
+    wasmInternal.proportion_test_one_sample(x, n, p0, alpha, alternative),
+  );
 }
 
 export function proportion_test_two_sample(
@@ -183,7 +235,7 @@ export function proportion_test_two_sample(
   pooled: boolean,
 ) {
   initWasm();
-  return wasmInternal.proportion_test_two_sample(
+  return addName(wasmInternal.proportion_test_two_sample(
     x1,
     n1,
     x2,
@@ -191,7 +243,7 @@ export function proportion_test_two_sample(
     alpha,
     alternative,
     pooled,
-  );
+  ));
 }
 
 // Non-parametric Tests
@@ -202,7 +254,7 @@ export function mann_whitney_test(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.mann_whitney_test(x, y, alpha, alternative);
+  return addName(wasmInternal.mann_whitney_test(x, y, alpha, alternative));
 }
 
 export function mann_whitney_test_with_config(
@@ -214,14 +266,14 @@ export function mann_whitney_test_with_config(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.mann_whitney_test_with_config(
+  return addName(wasmInternal.mann_whitney_test_with_config(
     x,
     y,
     exact,
     continuity_correction,
     alpha,
     alternative,
-  );
+  ));
 }
 
 export function wilcoxon_w_test(
@@ -231,12 +283,12 @@ export function wilcoxon_w_test(
   alternative: string,
 ) {
   initWasm();
-  return wasmInternal.wilcoxon_w_test(x, y, alpha, alternative);
+  return addName(wasmInternal.wilcoxon_w_test(x, y, alpha, alternative));
 }
 
 export function shapiro_wilk_test(x: Float64Array, alpha: number) {
   initWasm();
-  return wasmInternal.shapiro_wilk_test(x, alpha);
+  return addName(wasmInternal.shapiro_wilk_test(x, alpha));
 }
 
 // Fisher's Exact Test
@@ -250,7 +302,7 @@ export function fishers_exact_test_wasm(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.fishers_exact_test_wasm(
+  return addName(wasmInternal.fishers_exact_test_wasm(
     a,
     b,
     c,
@@ -258,7 +310,7 @@ export function fishers_exact_test_wasm(
     alternative,
     odds_ratio,
     alpha,
-  );
+  ));
 }
 
 // Kruskal-Wallis Test
@@ -268,7 +320,9 @@ export function kruskal_wallis_test_wasm(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.kruskal_wallis_test_wasm(data, group_sizes, alpha);
+  return addName(
+    wasmInternal.kruskal_wallis_test_wasm(data, group_sizes, alpha),
+  );
 }
 
 // Correlation Tests
@@ -279,7 +333,9 @@ export function pearson_correlation_test(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.pearson_correlation_test(x, y, alternative, alpha);
+  return addName(
+    wasmInternal.pearson_correlation_test(x, y, alternative, alpha),
+  );
 }
 
 export function spearman_correlation_test(
@@ -289,7 +345,9 @@ export function spearman_correlation_test(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.spearman_correlation_test(x, y, alternative, alpha);
+  return addName(
+    wasmInternal.spearman_correlation_test(x, y, alternative, alpha),
+  );
 }
 
 export function kendall_correlation_test(
@@ -299,5 +357,7 @@ export function kendall_correlation_test(
   alpha: number,
 ) {
   initWasm();
-  return wasmInternal.kendall_correlation_test(x, y, alternative, alpha);
+  return addName(
+    wasmInternal.kendall_correlation_test(x, y, alternative, alpha),
+  );
 }

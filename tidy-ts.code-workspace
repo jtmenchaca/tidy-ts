@@ -17,19 +17,22 @@
 	"settings": {
 		"workbench.colorTheme": "Visual Studio Light",
 		"workbench.iconTheme": "material-icon-theme",
-"workbench.colorCustomizations": {
-  // editor squiggles
-  "editorError.foreground": "#FF4C4C",         // Red for errors
-  "editorWarning.foreground": "#B0B0B0",       // Light gray for linter warnings
-
-  // Problems panel icons
-  "problemsErrorIcon.foreground": "#FF4C4C",
-  "problemsWarningIcon.foreground": "#B0B0B0",
-
-  // Overview ruler markers
-  "editorOverviewRuler.errorForeground": "#FF4C4C",
-  "editorOverviewRuler.warningForeground": "#B0B0B0"
-},
+		"workbench.colorCustomizations": {
+			// Editor squiggles
+			"editorError.foreground": "#FF4C4C",
+			"editorWarning.foreground": "#B0B0B0",
+	  
+			// Problems panel icons
+			"problemsErrorIcon.foreground": "#FF4C4C",
+			"problemsWarningIcon.foreground": "#B0B0B0",
+	  
+			// Overview ruler markers (rightmost vertical bar)
+			"editorOverviewRuler.errorForeground": "#FF4C4C",
+			"editorOverviewRuler.warningForeground": "#B0B0B0",
+			"editorOverviewRuler.addedForeground": "#0B84FF",       // 🔵 Blue for added lines
+			"editorOverviewRuler.modifiedForeground": "#0B84FF",    // 🔵 Blue for modified lines
+			"editorOverviewRuler.deletedForeground": "#0B84FF",    
+		  },
 		"material-icon-theme.folders.associations": {
 			"experiments": "test",
 			"pipelines": "pipe",

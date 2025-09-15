@@ -8,7 +8,7 @@ import {
   DatabaseIcon,
   HomeIcon,
 } from "lucide-react";
-import TidyTsLogo from "../../assets/tidy-ts-logo.svg";
+import TidyTsLogo from "../../assets/tidy-ts-logo-v2.svg";
 import {
   Sidebar,
   SidebarContent,

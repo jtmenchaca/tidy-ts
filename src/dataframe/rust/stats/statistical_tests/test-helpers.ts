@@ -4,9 +4,9 @@
 import {
   chiSquareTest,
   fishersExactTest,
-  kruskalWallisTest,
+  kruskalWallisTestWithOptions,
   mannWhitneyTest,
-  oneWayAnova,
+  oneWayAnovaWithOptions,
   proportion_test,
   proportionTestTwoSample,
   shapiroWilkTest,
@@ -66,31 +66,47 @@ export async function callRust(testName: string, ...args: any[]): Promise<any> {
     case "t.test.one": {
       // One-sample t-test
       const data = JSON.parse(args[0]);
-      return t_test(data, parseFloat(args[1]), args[2], parseFloat(args[3]));
+      return t_test({
+        data,
+        mu: parseFloat(args[1]),
+        alternative: args[2],
+        alpha: parseFloat(args[3]),
+      });
     }
     case "t.test.two": {
       // Two-sample t-test
       const data1 = JSON.parse(args[0]);
       const data2 = JSON.parse(args[1]);
-      return tTestIndependent(data1, data2, true, args[2], parseFloat(args[3]));
+      return tTestIndependent({
+        x: data1,
+        y: data2,
+        alpha: parseFloat(args[3]),
+        alternative: args[2],
+        equalVar: true,
+      });
     }
     case "t.test.paired": {
       // Paired t-test
       const dataX = JSON.parse(args[0]);
       const dataY = JSON.parse(args[1]);
-      return tTestPaired(dataX, dataY, args[2], parseFloat(args[3]));
+      return tTestPaired({
+        x: dataX,
+        y: dataY,
+        alpha: parseFloat(args[3]),
+        alternative: args[2],
+      });
     }
     // Z-tests
     case "z.test.one": {
       // One-sample z-test
       const data = JSON.parse(args[0]);
-      return zTestOneSample(
+      return zTestOneSample({
         data,
-        parseFloat(args[1]),
-        parseFloat(args[2]),
-        args[3],
-        parseFloat(args[4]),
-      );
+        popMean: parseFloat(args[1]),
+        popStd: parseFloat(args[2]),
+        alternative: args[3],
+        alpha: parseFloat(args[4]),
+      });
     }
     case "z.test.two": {
       // Two-sample z-test
@@ -109,36 +125,43 @@ export async function callRust(testName: string, ...args: any[]): Promise<any> {
           return sum + Math.pow(x - mean, 2);
         }, 0) / (data2.length - 1),
       );
-      return zTestTwoSample(
+      return zTestTwoSample({
         data1,
         data2,
-        sampleStd1,
-        sampleStd2,
-        args[2],
-        parseFloat(args[3]),
-      );
+        popStd1: sampleStd1,
+        popStd2: sampleStd2,
+        alternative: args[2],
+        alpha: parseFloat(args[3]),
+      });
     }
     // Proportion tests
     case "prop.test.one": {
       // One-sample proportion test
       const data = JSON.parse(args[0]);
-      return proportion_test(
+      return proportion_test({
         data,
-        parseFloat(args[1]),
-        args[2],
-        parseFloat(args[3]),
-      );
+        p0: parseFloat(args[1]),
+        alternative: args[2],
+        alpha: parseFloat(args[3]),
+      });
     }
     case "prop.test.two": {
       // Two-sample proportion test
       const data1 = JSON.parse(args[0]);
       const data2 = JSON.parse(args[1]);
-      return proportionTestTwoSample(data1, data2, true);
+      return proportionTestTwoSample({
+        data1,
+        data2,
+        pooled: true,
+      });
     }
     // ANOVA
     case "aov.one": {
       const anovaGroups = JSON.parse(args[0]);
-      return oneWayAnova(anovaGroups, parseFloat(args[1]));
+      return oneWayAnovaWithOptions({
+        groups: anovaGroups,
+        alpha: parseFloat(args[1]),
+      });
     }
     // Chi-square test
     case "chisq.test.independence": {
@@ -155,30 +178,33 @@ export async function callRust(testName: string, ...args: any[]): Promise<any> {
       const altFormatted = alternative === "two.sided"
         ? "two-sided"
         : alternative;
-      return mannWhitneyTest(
-        mwData1,
-        mwData2,
-        true,
-        true,
-        altFormatted as "two-sided" | "less" | "greater",
+      return mannWhitneyTest({
+        x: mwData1,
+        y: mwData2,
+        exact: true,
+        continuityCorrection: true,
+        alternative: altFormatted as "two-sided" | "less" | "greater",
         alpha,
-      );
+      });
     }
     // Wilcoxon signed-rank test
     case "wilcox.test.signedrank": {
       const wsData1 = JSON.parse(args[0]);
       const wsData2 = JSON.parse(args[1]);
-      return wilcoxonSignedRankTest(
-        wsData1,
-        wsData2,
-        args[2],
-        parseFloat(args[3]),
-      );
+      return wilcoxonSignedRankTest({
+        x: wsData1,
+        y: wsData2,
+        alternative: args[2],
+        alpha: parseFloat(args[3]),
+      });
     }
     // Kruskal-Wallis test
     case "kruskal.test.one": {
       const kwGroups = JSON.parse(args[0]);
-      return kruskalWallisTest(kwGroups, parseFloat(args[1]));
+      return kruskalWallisTestWithOptions({
+        groups: kwGroups,
+        alpha: parseFloat(args[1]),
+      });
     }
     // Fisher's exact test
     case "fisher.test.exact": {
@@ -201,7 +227,12 @@ export async function callRust(testName: string, ...args: any[]): Promise<any> {
           const { pearsonTest } = await import(
             "../../../ts/stats/statistical-tests/correlation-tests.ts"
           );
-          const result = pearsonTest(x, y, "two.sided", 0.05);
+          const result = pearsonTest({
+            x,
+            y,
+            alternative: "two.sided",
+            alpha: 0.05,
+          });
           return {
             test_statistic: result.test_statistic,
             p_value: result.p_value,
@@ -223,7 +254,12 @@ export async function callRust(testName: string, ...args: any[]): Promise<any> {
           const { spearmanTest } = await import(
             "../../../ts/stats/statistical-tests/correlation-tests.ts"
           );
-          const result = spearmanTest(x, y, "two.sided", 0.05);
+          const result = spearmanTest({
+            x,
+            y,
+            alternative: "two.sided",
+            alpha: 0.05,
+          });
           return {
             test_statistic: result.test_statistic,
             p_value: result.p_value,

@@ -11,68 +11,126 @@ import {
 
 /**
  * Normal distribution density function
- * @param x Value at which to evaluate density
- * @param mean Mean of the distribution (default: 0)
- * @param sd Standard deviation (default: 1)
- * @param giveLog If true, return log density (default: false)
+ * @param at - Point where density is evaluated
+ * @param mean - Mean of the distribution (default: 0)
+ * @param standardDeviation - Standard deviation (default: 1)
+ * @param returnLog - If true, return log density (default: false)
  * @returns Density value or log density
  */
-export function dnorm(
-  x: number,
-  mean: number = 0,
-  sd: number = 1,
-  giveLog: boolean = false,
-): number {
-  return wasm_dnorm(x, mean, sd, giveLog);
+export function dnorm({
+  at,
+  mean = 0,
+  standardDeviation = 1,
+  returnLog = false,
+}: {
+  at: number;
+  mean?: number;
+  standardDeviation?: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dnorm(at, mean, standardDeviation, returnLog);
 }
 
 /**
  * Normal distribution cumulative distribution function
- * @param q Quantile value
- * @param mean Mean of the distribution (default: 0)
- * @param sd Standard deviation (default: 1)
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated
+ * @param mean - Mean of the distribution (default: 0)
+ * @param standardDeviation - Standard deviation (default: 1)
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function pnorm(
-  q: number,
-  mean: number = 0,
-  sd: number = 1,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_pnorm(q, mean, sd, lowerTail, logP);
+export function pnorm({
+  at,
+  mean = 0,
+  standardDeviation = 1,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  mean?: number;
+  standardDeviation?: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_pnorm(at, mean, standardDeviation, lowerTail, returnLog);
 }
 
 /**
  * Normal distribution quantile function
- * @param p Probability
- * @param mean Mean of the distribution (default: 0)
- * @param sd Standard deviation (default: 1)
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param mean - Mean of the distribution (default: 0)
+ * @param standardDeviation - Standard deviation (default: 1)
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qnorm(
-  p: number,
-  mean: number = 0,
-  sd: number = 1,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qnorm(p, mean, sd, lowerTail, logP);
+export function qnorm({
+  probability,
+  mean = 0,
+  standardDeviation = 1,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  mean?: number;
+  standardDeviation?: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qnorm(
+    probability,
+    mean,
+    standardDeviation,
+    lowerTail,
+    probabilityIsLog,
+  );
 }
 
 /**
  * Normal distribution random number generation
- * @param mean Mean of the distribution (default: 0)
- * @param sd Standard deviation (default: 1)
- * @returns A random sample from the normal distribution
+ * @param mean - Mean of the distribution (default: 0)
+ * @param standardDeviation - Standard deviation (default: 1)
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the normal distribution
  */
-export function rnorm(
-  mean: number = 0,
-  sd: number = 1,
-): number {
-  return wasm_rnorm(mean, sd);
+export function rnorm(): number;
+export function rnorm({
+  mean,
+  standardDeviation,
+  sampleSize,
+}: {
+  mean?: number;
+  standardDeviation?: number;
+  sampleSize?: number;
+}): number;
+export function rnorm({
+  mean,
+  standardDeviation,
+  sampleSize,
+}: {
+  mean?: number;
+  standardDeviation?: number;
+  sampleSize: number;
+}): number[];
+export function rnorm({
+  mean = 0,
+  standardDeviation = 1,
+  sampleSize = 1,
+}: {
+  mean?: number;
+  standardDeviation?: number;
+  sampleSize?: number;
+} = {}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rnorm(mean, standardDeviation);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rnorm(mean, standardDeviation));
+  }
+  return results;
 }

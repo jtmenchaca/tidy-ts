@@ -9,6 +9,29 @@ export interface SearchResult {
 
 // Comprehensive search index for all documentation content
 export const searchIndex: SearchResult[] = [
+  // Home
+  {
+    title: "Tidy-TS Documentation",
+    path: "/",
+    content:
+      "TypeScript data manipulation and statistics library. Fast, type-safe, and intuitive data analysis with DataFrames, statistical functions, and comprehensive data processing capabilities.",
+    category: "Home",
+    type: "page",
+    keywords: [
+      "home",
+      "documentation",
+      "typescript",
+      "data",
+      "analysis",
+      "dataframe",
+      "statistics",
+      "manipulation",
+      "library",
+      "tutorial",
+      "guide",
+    ],
+  },
+
   // Getting Started
   {
     title: "Getting Started",
@@ -100,20 +123,22 @@ export const searchIndex: SearchResult[] = [
     keywords: ["sort", "arrange", "order", "ascending", "descending", "rank"],
   },
   {
-    title: "Column Access & Extract",
-    path: "/column-access",
+    title: "DataFrame Basics",
+    path: "/dataframe-basics",
     content:
-      "Access and extract data from columns. Get column values, iterate over data, and extract specific values.",
+      "DataFrame properties, column access, and TypeScript integration. Learn the fundamentals before diving into data operations.",
     category: "Core",
     type: "page",
     keywords: [
+      "basics",
+      "properties",
       "access",
       "extract",
       "get",
       "column",
       "values",
-      "iterate",
-      "data",
+      "typescript",
+      "fundamentals",
     ],
   },
 
@@ -205,39 +230,50 @@ export const searchIndex: SearchResult[] = [
     ],
   },
 
-  // DataFrame Properties
+  // Data I/O
   {
-    title: "DataFrame Properties",
-    path: "/dataframe-properties",
+    title: "Data I/O Operations",
+    path: "/data-io",
     content:
-      "Basic properties and methods of DataFrames. Length, shape, columns, and basic information.",
-    category: "Properties",
-    type: "page",
-    keywords: ["properties", "length", "shape", "columns", "info", "basic"],
-  },
-  {
-    title: "Iterating Over Rows",
-    path: "/iterating-rows",
-    content:
-      "Iterate through DataFrame rows. Use for...of loops and other iteration methods to process data.",
-    category: "Properties",
-    type: "page",
-    keywords: ["iterate", "loop", "rows", "foreach", "map", "process"],
-  },
-  {
-    title: "TypeScript Types",
-    path: "/typescript-types",
-    content:
-      "TypeScript integration and type safety. Automatic type inference, custom types, and type-safe operations.",
-    category: "Properties",
+      "Read and write data from various formats including CSV, Parquet, and Arrow files with full type safety and schema validation.",
+    category: "Data I/O",
     type: "page",
     keywords: [
-      "typescript",
-      "types",
-      "safety",
-      "inference",
-      "generic",
-      "interface",
+      "data",
+      "io",
+      "input",
+      "output",
+      "csv",
+      "parquet",
+      "arrow",
+      "read",
+      "write",
+      "file",
+      "import",
+      "export",
+      "schema",
+      "validation",
+    ],
+  },
+  {
+    title: "Async Operations",
+    path: "/async-operations",
+    content:
+      "Handle asynchronous operations seamlessly across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization.",
+    category: "Advanced",
+    type: "page",
+    keywords: [
+      "async",
+      "asynchronous",
+      "await",
+      "promise",
+      "api",
+      "concurrent",
+      "parallel",
+      "performance",
+      "error",
+      "handling",
+      "retry",
     ],
   },
 

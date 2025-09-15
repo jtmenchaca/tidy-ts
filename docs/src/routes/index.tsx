@@ -16,7 +16,7 @@ import {
   ShieldIcon,
 } from "lucide-react";
 import { starWarsExample } from "./index.example.ts";
-import TidyTsLogo from "../assets/tidy-ts-logo.svg";
+import TidyTsLogo from "../assets/tidy-ts-logo-v2.svg";
 // deno-lint-ignore no-explicit-any
 export const Route = createFileRoute("/" as any)({
   component: HomeComponent,

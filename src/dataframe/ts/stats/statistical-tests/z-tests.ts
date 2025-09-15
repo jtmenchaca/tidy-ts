@@ -3,26 +3,29 @@ import {
   z_test_one_sample,
   z_test_two_sample,
 } from "../../wasm/wasm-loader.ts";
+import type { TestName } from "../../wasm/statistical-tests.ts";
 
 /** Z-test specific result with only relevant fields */
-export type ZTestResult = Pick<
-  TestResult,
-  | "test_type"
-  | "test_statistic"
-  | "p_value"
-  | "confidence_interval_lower"
-  | "confidence_interval_upper"
-  | "confidence_level"
-  | "effect_size"
-  | "cohens_d"
-  | "sample_size"
-  | "mean_difference"
-  | "standard_error"
-  | "margin_of_error"
-  | "sample_means"
-  | "sample_std_devs"
-  | "error_message"
->;
+export type ZTestResult =
+  & Pick<
+    TestResult,
+    | "test_type"
+    | "test_statistic"
+    | "p_value"
+    | "confidence_interval_lower"
+    | "confidence_interval_upper"
+    | "confidence_level"
+    | "effect_size"
+    | "cohens_d"
+    | "sample_size"
+    | "mean_difference"
+    | "standard_error"
+    | "margin_of_error"
+    | "sample_means"
+    | "sample_std_devs"
+    | "error_message"
+  >
+  & { test_name: TestName };
 
 /**
  * Calculate sample standard deviation
@@ -47,12 +50,17 @@ function calculateSampleStd(data: number[]): number {
  * @param alternative - Alternative hypothesis (default: "two-sided")
  * @returns Z-test results (technically a t-test approximation)
  */
-export function z_test(
-  data: number[],
-  hypothesizedMean: number = 0,
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ZTestResult {
+export function z_test({
+  data,
+  hypothesizedMean = 0,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data: number[];
+  hypothesizedMean?: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ZTestResult {
   // Filter out non-finite values
   const cleanData = data.filter((x) => isFinite(x));
 
@@ -81,12 +89,17 @@ export function z_test(
  * @param alternative - Alternative hypothesis (default: "two-sided")
  * @returns Z-test results
  */
-export function z_test_ind(
-  data1: number[],
-  data2: number[],
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ZTestResult {
+export function z_test_ind({
+  data1,
+  data2,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data1: number[];
+  data2: number[];
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ZTestResult {
   // Filter out non-finite values
   const cleanData1 = data1.filter((x) => isFinite(x));
   const cleanData2 = data2.filter((x) => isFinite(x));
@@ -112,13 +125,19 @@ export function z_test_ind(
 /**
  * One-sample Z-test for means (WASM implementation)
  */
-export function zTestOneSample(
-  data: number[],
-  popMean: number,
-  popStd: number,
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ZTestResult {
+export function zTestOneSample({
+  data,
+  popMean,
+  popStd,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data: number[];
+  popMean: number;
+  popStd: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ZTestResult {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length === 0) {
@@ -141,14 +160,21 @@ export function zTestOneSample(
 /**
  * Two-sample Z-test for means (WASM implementation)
  */
-export function zTestTwoSample(
-  data1: number[],
-  data2: number[],
-  popStd1: number,
-  popStd2: number,
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ZTestResult {
+export function zTestTwoSample({
+  data1,
+  data2,
+  popStd1,
+  popStd2,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data1: number[];
+  data2: number[];
+  popStd1: number;
+  popStd2: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ZTestResult {
   const cleanData1 = data1.filter((x) => isFinite(x));
   const cleanData2 = data2.filter((x) => isFinite(x));
 

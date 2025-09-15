@@ -11,68 +11,117 @@ import {
 
 /**
  * Weibull distribution density function
- * @param x Value at which to evaluate density
- * @param shape Shape parameter (k > 0)
- * @param scale Scale parameter (λ > 0)
- * @param giveLog If true, return log density (default: false)
+ * @param at - Point where density is evaluated
+ * @param shape - Shape parameter (k > 0)
+ * @param scale - Scale parameter (λ > 0, default: 1)
+ * @param returnLog - If true, return log density (default: false)
  * @returns Density value or log density
  */
-export function dweibull(
-  x: number,
-  shape: number,
-  scale: number = 1,
-  giveLog: boolean = false,
-): number {
-  return wasm_dweibull(x, shape, scale, giveLog);
+export function dweibull({
+  at,
+  shape,
+  scale = 1,
+  returnLog = false,
+}: {
+  at: number;
+  shape: number;
+  scale?: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dweibull(at, shape, scale, returnLog);
 }
 
 /**
  * Weibull distribution cumulative distribution function
- * @param q Quantile value
- * @param shape Shape parameter (k > 0)
- * @param scale Scale parameter (λ > 0)
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated
+ * @param shape - Shape parameter (k > 0)
+ * @param scale - Scale parameter (λ > 0, default: 1)
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function pweibull(
-  q: number,
-  shape: number,
-  scale: number = 1,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_pweibull(q, shape, scale, lowerTail, logP);
+export function pweibull({
+  at,
+  shape,
+  scale = 1,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  shape: number;
+  scale?: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_pweibull(at, shape, scale, lowerTail, returnLog);
 }
 
 /**
  * Weibull distribution quantile function
- * @param p Probability
- * @param shape Shape parameter (k > 0)
- * @param scale Scale parameter (λ > 0)
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param shape - Shape parameter (k > 0)
+ * @param scale - Scale parameter (λ > 0, default: 1)
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qweibull(
-  p: number,
-  shape: number,
-  scale: number = 1,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qweibull(p, shape, scale, lowerTail, logP);
+export function qweibull({
+  probability,
+  shape,
+  scale = 1,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  shape: number;
+  scale?: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qweibull(probability, shape, scale, lowerTail, probabilityIsLog);
 }
 
 /**
- * Weibull distribution random number generator
- * @param shape Shape parameter (k > 0)
- * @param scale Scale parameter (λ > 0, default: 1)
- * @returns Random value from Weibull distribution
+ * Weibull distribution random number generation
+ * @param shape - Shape parameter (k > 0)
+ * @param scale - Scale parameter (λ > 0, default: 1)
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the Weibull distribution
  */
-export function rweibull(
-  shape: number,
-  scale: number = 1,
-): number {
-  return wasm_rweibull(shape, scale);
+export function rweibull({
+  shape,
+  scale,
+}: {
+  shape: number;
+  scale?: number;
+}): number;
+export function rweibull({
+  shape,
+  scale,
+  sampleSize,
+}: {
+  shape: number;
+  scale?: number;
+  sampleSize: number;
+}): number[];
+export function rweibull({
+  shape,
+  scale = 1,
+  sampleSize = 1,
+}: {
+  shape: number;
+  scale?: number;
+  sampleSize?: number;
+}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rweibull(shape, scale);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rweibull(shape, scale));
+  }
+  return results;
 }

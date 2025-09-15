@@ -11,60 +11,101 @@ import {
 
 /**
  * Poisson distribution probability mass function
- * @param x Value at which to evaluate probability
- * @param lambda Rate parameter (λ > 0)
- * @param giveLog If true, return log probability (default: false)
+ * @param at - Point where PMF is evaluated (count k)
+ * @param rateLambda - Rate parameter (λ > 0)
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Probability value or log probability
  */
-export function dpois(
-  x: number,
-  lambda: number,
-  giveLog: boolean = false,
-): number {
-  return wasm_dpois(x, lambda, giveLog);
+export function dpois({
+  at,
+  rateLambda,
+  returnLog = false,
+}: {
+  at: number;
+  rateLambda: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dpois(at, rateLambda, returnLog);
 }
 
 /**
  * Poisson distribution cumulative distribution function
- * @param q Quantile value
- * @param lambda Rate parameter (λ > 0)
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated (count k)
+ * @param rateLambda - Rate parameter (λ > 0)
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function ppois(
-  q: number,
-  lambda: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_ppois(q, lambda, lowerTail, logP);
+export function ppois({
+  at,
+  rateLambda,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  rateLambda: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_ppois(at, rateLambda, lowerTail, returnLog);
 }
 
 /**
  * Poisson distribution quantile function
- * @param p Probability
- * @param lambda Rate parameter (λ > 0)
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param rateLambda - Rate parameter (λ > 0)
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qpois(
-  p: number,
-  lambda: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qpois(p, lambda, lowerTail, logP);
+export function qpois({
+  probability,
+  rateLambda,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  rateLambda: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qpois(probability, rateLambda, lowerTail, probabilityIsLog);
 }
 
 /**
- * Poisson distribution random number generator
- * @param lambda Rate parameter (λ > 0)
- * @returns Random value from Poisson distribution
+ * Poisson distribution random number generation
+ * @param rateLambda - Rate parameter (λ > 0)
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the Poisson distribution (integers)
  */
-export function rpois(
-  lambda: number,
-): number {
-  return wasm_rpois(lambda);
+export function rpois({
+  rateLambda,
+}: {
+  rateLambda: number;
+}): number;
+export function rpois({
+  rateLambda,
+  sampleSize,
+}: {
+  rateLambda: number;
+  sampleSize: number;
+}): number[];
+export function rpois({
+  rateLambda,
+  sampleSize = 1,
+}: {
+  rateLambda: number;
+  sampleSize?: number;
+}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rpois(rateLambda);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rpois(rateLambda));
+  }
+  return results;
 }

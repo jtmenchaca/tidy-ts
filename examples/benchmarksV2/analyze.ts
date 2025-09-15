@@ -1,5 +1,10 @@
 import { z } from "zod";
-import { createDataFrame, read_csv, stats, writeCSV } from "@tidy-ts/dataframe";
+import {
+  createDataFrame,
+  read_csv,
+  stats,
+  write_csv as writeCSV,
+} from "@tidy-ts/dataframe";
 
 // ============================================================================
 // BENCHMARK ANALYSIS TOOL

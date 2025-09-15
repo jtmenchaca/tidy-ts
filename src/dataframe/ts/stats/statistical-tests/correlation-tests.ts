@@ -4,35 +4,43 @@ import {
   spearman_correlation_test,
   type TestResult,
 } from "../../wasm/wasm-loader.ts";
+import type { TestName } from "../../wasm/statistical-tests.ts";
 
 /** Correlation test specific result with only relevant fields */
-export type CorrelationTestResult = Pick<
-  TestResult,
-  | "test_type"
-  | "test_statistic"
-  | "p_value"
-  | "confidence_interval_lower"
-  | "confidence_interval_upper"
-  | "confidence_level"
-  | "effect_size"
-  | "correlation"
-  | "degrees_of_freedom"
-  | "sample_size"
-  | "standard_error"
-  | "sample_means"
-  | "sample_std_devs"
-  | "error_message"
->;
+export type CorrelationTestResult =
+  & Pick<
+    TestResult,
+    | "test_type"
+    | "test_statistic"
+    | "p_value"
+    | "confidence_interval_lower"
+    | "confidence_interval_upper"
+    | "confidence_level"
+    | "effect_size"
+    | "correlation"
+    | "degrees_of_freedom"
+    | "sample_size"
+    | "standard_error"
+    | "sample_means"
+    | "sample_std_devs"
+    | "error_message"
+  >
+  & { test_name: TestName };
 
 /**
  * Pearson correlation test
  */
-export function pearsonTest(
-  x: number[],
-  y: number[],
-  alternative: "two.sided" | "less" | "greater" = "two.sided",
-  alpha: number = 0.05,
-): CorrelationTestResult {
+export function pearsonTest({
+  x,
+  y,
+  alternative = "two.sided",
+  alpha = 0.05,
+}: {
+  x: number[];
+  y: number[];
+  alternative?: "two.sided" | "less" | "greater";
+  alpha?: number;
+}): CorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }
@@ -62,12 +70,17 @@ export function pearsonTest(
 /**
  * Spearman rank correlation test
  */
-export function spearmanTest(
-  x: number[],
-  y: number[],
-  alternative: "two.sided" | "less" | "greater" = "two.sided",
-  alpha: number = 0.05,
-): CorrelationTestResult {
+export function spearmanTest({
+  x,
+  y,
+  alternative = "two.sided",
+  alpha = 0.05,
+}: {
+  x: number[];
+  y: number[];
+  alternative?: "two.sided" | "less" | "greater";
+  alpha?: number;
+}): CorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }
@@ -97,12 +110,17 @@ export function spearmanTest(
 /**
  * Kendall rank correlation test
  */
-export function kendallTest(
-  x: number[],
-  y: number[],
-  alternative: "two.sided" | "less" | "greater" = "two.sided",
-  alpha: number = 0.05,
-): CorrelationTestResult {
+export function kendallTest({
+  x,
+  y,
+  alternative = "two.sided",
+  alpha = 0.05,
+}: {
+  x: number[];
+  y: number[];
+  alternative?: "two.sided" | "less" | "greater";
+  alpha?: number;
+}): CorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }

@@ -7,36 +7,54 @@ import {
   kruskal_wallis_test_wasm,
   type TestResult,
 } from "../../wasm/wasm-loader.ts";
+import type { TestName } from "../../wasm/statistical-tests.ts";
 
 /** Kruskal-Wallis test specific result with only relevant fields */
-export type KruskalWallisTestResult = Pick<
-  TestResult,
-  | "test_type"
-  | "test_statistic"
-  | "p_value"
-  | "confidence_interval_lower"
-  | "confidence_interval_upper"
-  | "confidence_level"
-  | "effect_size"
-  | "degrees_of_freedom"
-  | "sample_size"
-  | "sample_means"
-  | "sample_std_devs"
-  | "ranks"
-  | "tie_correction"
-  | "error_message"
->;
+export type KruskalWallisTestResult =
+  & Pick<
+    TestResult,
+    | "test_type"
+    | "confidence_interval_lower"
+    | "confidence_interval_upper"
+    | "confidence_level"
+    | "sample_size"
+    | "sample_means"
+    | "sample_std_devs"
+    | "ranks"
+    | "tie_correction"
+    | "error_message"
+  >
+  & {
+    test_statistic: number;
+    p_value: number;
+    effect_size: number;
+    eta_squared: number;
+    degrees_of_freedom: number;
+    test_name: TestName;
+  };
 
 /**
  * Perform Kruskal-Wallis test using Rust WASM implementation
- * @param groups Array of groups, each group is an array of numbers
- * @param alpha Significance level (default: 0.05)
+ * @param groups Variadic groups, each group is an array of numbers
  * @returns Test result with statistic, p-value, and degrees of freedom
  */
 export function kruskalWallisTest(
   groups: number[][],
-  alpha: number = 0.05,
+  alpha: number,
 ): KruskalWallisTestResult {
+  return kruskalWallisTestWithOptions({ groups, alpha });
+}
+
+/**
+ * Kruskal-Wallis test with options
+ */
+export function kruskalWallisTestWithOptions({
+  groups,
+  alpha = 0.05,
+}: {
+  groups: number[][];
+  alpha?: number;
+}): KruskalWallisTestResult {
   // Validate input
   if (groups.length < 2) {
     throw new Error("Need at least 2 groups for Kruskal-Wallis test");
@@ -72,11 +90,15 @@ export function kruskalWallisTest(
 /**
  * Alternative interface that accepts data and group labels
  */
-export function kruskalWallisTestByGroup(
-  data: number[],
-  groups: (string | number)[],
-  alpha: number = 0.05,
-): KruskalWallisTestResult {
+export function kruskalWallisTestByGroup({
+  data,
+  groups,
+  alpha = 0.05,
+}: {
+  data: number[];
+  groups: (string | number)[];
+  alpha?: number;
+}): KruskalWallisTestResult {
   if (data.length !== groups.length) {
     throw new Error("Data and groups must have the same length");
   }

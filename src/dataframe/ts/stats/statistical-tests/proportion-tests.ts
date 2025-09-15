@@ -10,25 +10,30 @@ import {
   proportion_test_two_sample,
   type TestResult,
 } from "../../wasm/wasm-loader.ts";
+import type { TestName } from "../../wasm/statistical-tests.ts";
 
 /** Proportion test specific result with only relevant fields */
-export type ProportionTestResult = Pick<
-  TestResult,
-  | "test_type"
-  | "test_statistic"
-  | "p_value"
-  | "confidence_interval_lower"
-  | "confidence_interval_upper"
-  | "confidence_level"
-  | "effect_size"
-  | "sample_size"
-  | "mean_difference"
-  | "standard_error"
-  | "margin_of_error"
-  | "sample_means"
-  | "sample_std_devs"
-  | "error_message"
->;
+export type ProportionTestResult =
+  & Pick<
+    TestResult,
+    | "test_type"
+    | "sample_size"
+    | "mean_difference"
+    | "standard_error"
+    | "margin_of_error"
+    | "sample_means"
+    | "sample_std_devs"
+    | "error_message"
+  >
+  & {
+    test_statistic: number;
+    p_value: number;
+    confidence_interval_lower: number;
+    confidence_interval_upper: number;
+    confidence_level: number;
+    effect_size: number;
+    test_name: TestName;
+  };
 
 /**
  * One-sample proportion test
@@ -39,12 +44,17 @@ export type ProportionTestResult = Pick<
  * @param options - Test options including the null hypothesis proportion
  * @returns Test result with statistic, p-value, and other relevant information
  */
-export function proportion_test(
-  data: number[],
-  p0: number = 0.5,
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ProportionTestResult {
+export function proportion_test({
+  data,
+  p0 = 0.5,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data: number[];
+  p0?: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ProportionTestResult {
   const cleanData = data.filter((x) => x === 0 || x === 1);
   const n = cleanData.length;
 
@@ -60,7 +70,6 @@ export function proportion_test(
 
   // Calculate sample proportion
   const successes = cleanData.reduce((sum, val) => sum + val, 0 as number);
-  const _sampleProportion = successes / n;
 
   // Use WASM for the test
   return proportion_test_one_sample(
@@ -82,13 +91,19 @@ export function proportion_test(
  * @param options - Test options including whether to use pooled variance
  * @returns Test result with statistic, p-value, and other relevant information
  */
-export function proportion_test_ind(
-  x: number[],
-  y: number[],
-  pooled: boolean = true,
-  alternative: "two-sided" | "less" | "greater" = "two-sided",
-  alpha: number = 0.05,
-): ProportionTestResult {
+export function proportion_test_ind({
+  x,
+  y,
+  pooled = true,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  x: number[];
+  y: number[];
+  pooled?: boolean;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ProportionTestResult {
   const cleanX = x.filter((val) => val === 0 || val === 1);
   const cleanY = y.filter((val) => val === 0 || val === 1);
 
@@ -104,9 +119,6 @@ export function proportion_test_ind(
   // Calculate sample proportions
   const successes1 = cleanX.reduce((sum, val) => sum + val, 0 as number);
   const successes2 = cleanY.reduce((sum, val) => sum + val, 0 as number);
-  const proportion1 = successes1 / n1;
-  const proportion2 = successes2 / n2;
-  const _proportionDifference = proportion1 - proportion2;
 
   // Use WASM for the test
   return proportion_test_two_sample(
@@ -123,10 +135,17 @@ export function proportion_test_ind(
 /**
  * One-sample proportion test (WASM implementation)
  */
-export function proportionTestOneSample(
-  data: number[],
-  popProportion: number,
-): ProportionTestResult {
+export function proportionTestOneSample({
+  data,
+  popProportion,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data: number[];
+  popProportion: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ProportionTestResult {
   const cleanData = data.filter((x) => x === 0 || x === 1);
   const n = cleanData.length;
 
@@ -146,19 +165,27 @@ export function proportionTestOneSample(
     successes,
     n,
     popProportion,
-    0.05,
-    "two-sided",
+    alpha,
+    alternative,
   ) as ProportionTestResult;
 }
 
 /**
  * Two-sample proportion test (WASM implementation)
  */
-export function proportionTestTwoSample(
-  data1: number[],
-  data2: number[],
-  pooled: boolean = true,
-): ProportionTestResult {
+export function proportionTestTwoSample({
+  data1,
+  data2,
+  pooled = true,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  data1: number[];
+  data2: number[];
+  pooled?: boolean;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): ProportionTestResult {
   const cleanData1 = data1.filter((x) => x === 0 || x === 1);
   const cleanData2 = data2.filter((x) => x === 0 || x === 1);
   const n1 = cleanData1.length;
@@ -178,8 +205,8 @@ export function proportionTestTwoSample(
     n1,
     successes2,
     n2,
-    0.05,
-    "two-sided",
+    alpha,
+    alternative,
     pooled,
   ) as ProportionTestResult;
 }

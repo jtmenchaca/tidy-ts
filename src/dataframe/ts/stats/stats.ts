@@ -37,6 +37,9 @@ import * as statisticalTests from "./statistical-tests/index.ts";
 // Import distribution functions
 import { dist } from "./distributions/index.ts";
 
+// Import new hierarchical test API
+import { compare } from "./statistical-tests/compare-api/index.ts";
+
 /**
  * Comprehensive statistical functions for data analysis.
  *
@@ -57,8 +60,8 @@ import { dist } from "./distributions/index.ts";
  * const normalCDF = stats.dist.pnorm(0, 0, 1);
  *
  * // Statistical tests
- * const tTest = stats.test.t_test(df.value, 0, "two-sided", 0.05);
- * const anova = stats.test.anovaOneWay([df.value, [5, 15, 25]], 0.05);
+ * const tTest = stats.test.t.oneSample({ data: df.value, mu: 0, alternative: "two-sided", alpha: 0.05 });
+ * const anova = stats.test.anova.oneWay(df.value, [5, 15, 25]);
  * ```
  */
 export const stats: {
@@ -154,6 +157,9 @@ export const stats: {
       readonly shapiroWilk: typeof statisticalTests.shapiroWilkTest;
     };
   };
+
+  // Hierarchical statistical test API
+  readonly compare: typeof compare;
 } = {
   // Basic statistics
   sum,
@@ -254,6 +260,9 @@ export const stats: {
       shapiroWilk: statisticalTests.shapiroWilkTest,
     },
   },
+
+  // Hierarchical statistical test API
+  compare: compare,
 };
 
 // Export stats with alias 's' for convenience

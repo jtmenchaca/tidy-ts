@@ -145,3 +145,273 @@ Deno.test("Advanced Operations and Chaining - Progressive Examples", () => {
   analysisResult2.print();
   console.log("\n\n\n");
 });
+
+Deno.test("Statistical Testing with New Compare API", () => {
+  console.log("=== 2. Statistical Testing with New Compare API ===");
+
+  // Create sample datasets for testing
+  const controlGroup = [
+    12.1,
+    13.4,
+    11.8,
+    14.2,
+    12.9,
+    13.1,
+    12.5,
+    13.8,
+    12.3,
+    13.6,
+  ];
+  const treatmentGroup = [
+    15.2,
+    16.1,
+    14.8,
+    17.3,
+    15.9,
+    16.4,
+    15.7,
+    16.8,
+    15.5,
+    16.2,
+  ];
+  const placeboGroup = [
+    12.3,
+    13.1,
+    12.8,
+    13.5,
+    12.9,
+    13.2,
+    12.7,
+    13.4,
+    12.6,
+    13.3,
+  ];
+
+  // Binary outcomes (success/failure)
+  const successRates = [
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+    true,
+  ];
+  const controlSuccess = [
+    true,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    true,
+    false,
+    true,
+  ];
+  const treatmentSuccess = [
+    true,
+    true,
+    true,
+    false,
+    true,
+    true,
+    true,
+    true,
+    false,
+    true,
+  ];
+
+  console.log("\n--- One Group Tests ---");
+
+  // 1. One Group: Central Tendency vs. Hypothesized Value
+  console.log("\n1.1 Testing if control group mean differs from 13.0");
+  const oneGroupTest = stats.compare.oneGroup.centralTendency.toValue({
+    data: controlGroup,
+    hypothesizedValue: 13.0,
+    alternative: "two-sided",
+    alpha: 0.05,
+    parametric: "auto", // Auto-selects parametric vs non-parametric
+  });
+  console.log(`Test: ${oneGroupTest.test_name}`);
+  console.log(`Statistic: ${oneGroupTest.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${oneGroupTest.p_value?.toFixed(4)}`);
+  console.log(
+    `Significant: ${(oneGroupTest.p_value || 0) < 0.05 ? "Yes" : "No"}`,
+  );
+
+  // 1.2 One Group: Proportions vs. Expected Value
+  console.log("\n1.2 Testing if success rate differs from 50%");
+  const proportionTest = stats.compare.oneGroup.proportions.toValue({
+    data: successRates,
+    p: 0.5,
+    alternative: "two-sided",
+    alpha: 0.05,
+  });
+  console.log(`Test: ${proportionTest.test_name}`);
+  console.log(`Statistic: ${proportionTest.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${proportionTest.p_value?.toFixed(4)}`);
+
+  // 1.3 One Group: Distribution Normality
+  console.log("\n1.3 Testing if control group is normally distributed");
+  const normalityTest = stats.compare.oneGroup.distribution.toNormal({
+    data: controlGroup,
+    alpha: 0.05,
+  });
+  console.log(`Test: ${normalityTest.test_name}`);
+  console.log(`Statistic: ${normalityTest.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${normalityTest.p_value?.toFixed(4)}`);
+  console.log(`Normal: ${(normalityTest.p_value || 0) > 0.05 ? "Yes" : "No"}`);
+
+  console.log("\n--- Two Groups Tests ---");
+
+  // 2.1 Two Groups: Central Tendency Comparison
+  console.log("\n2.1 Comparing means between control and treatment groups");
+  const twoGroupTest = stats.compare.twoGroups.centralTendency.toEachOther({
+    x: controlGroup,
+    y: treatmentGroup,
+    parametric: true, // Force parametric test
+    equalVar: true,
+    alternative: "two-sided",
+    alpha: 0.05,
+  });
+  console.log(`Test: ${twoGroupTest.test_name}`);
+  console.log(`Statistic: ${twoGroupTest.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${twoGroupTest.p_value?.toFixed(4)}`);
+  console.log(`Effect size (Cohen's d): ${twoGroupTest.cohens_d?.toFixed(4)}`);
+
+  // 2.2 Two Groups: Proportions Comparison
+  console.log("\n2.2 Comparing success rates between control and treatment");
+  const twoGroupProportion = stats.compare.twoGroups.proportions.toEachOther({
+    data1: controlSuccess,
+    data2: treatmentSuccess,
+    alternative: "two-sided",
+    alpha: 0.05,
+    useChiSquare: false, // Use z-test instead of chi-square
+  });
+  console.log(`Test: ${twoGroupProportion.test_name}`);
+  console.log(`Statistic: ${twoGroupProportion.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${twoGroupProportion.p_value?.toFixed(4)}`);
+
+  // 2.3 Two Groups: Association/Correlation
+  console.log("\n2.3 Testing correlation between two continuous variables");
+  const correlationTest = stats.compare.twoGroups.association.toEachOther({
+    x: controlGroup,
+    y: treatmentGroup,
+    method: "pearson", // or "spearman" for non-parametric
+    alternative: "two.sided",
+    alpha: 0.05,
+  });
+  console.log(`Test: ${correlationTest.test_name}`);
+  console.log(`Correlation: ${correlationTest.correlation?.toFixed(4)}`);
+  console.log(`P-value: ${correlationTest.p_value?.toFixed(4)}`);
+
+  // 2.4 Two Groups: Distribution Comparison
+  console.log("\n2.4 Comparing distributions between control and placebo");
+  const distributionTest = stats.compare.twoGroups.distributions.toEachOther({
+    x: controlGroup,
+    y: placeboGroup,
+    alternative: "two-sided",
+    alpha: 0.05,
+  });
+  console.log(`Test: ${distributionTest.test_name}`);
+  console.log(`Statistic: ${distributionTest.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${distributionTest.p_value?.toFixed(4)}`);
+
+  console.log("\n--- Multiple Groups Tests ---");
+
+  // 3.1 Multiple Groups: Central Tendency (ANOVA)
+  console.log("\n3.1 Comparing means across all three groups (ANOVA)");
+  const multiGroupTest = stats.compare.multiGroups.centralTendency.toEachOther({
+    groups: [controlGroup, treatmentGroup, placeboGroup],
+    parametric: true,
+    alpha: 0.05,
+  });
+  console.log(`Test: ${multiGroupTest.test_name}`);
+  console.log(`F-statistic: ${multiGroupTest.f_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${multiGroupTest.p_value?.toFixed(4)}`);
+  console.log(`Eta-squared: ${multiGroupTest.eta_squared?.toFixed(4)}`);
+
+  // 3.2 Multiple Groups: Proportions (Chi-square)
+  console.log("\n3.2 Comparing success rates across groups (Chi-square)");
+  const multiGroupProportion = stats.compare.multiGroups.proportions
+    .toEachOther({
+      contingencyTable: [
+        [6, 4], // Control: 6 successes, 4 failures
+        [8, 2], // Treatment: 8 successes, 2 failures
+        [5, 5], // Placebo: 5 successes, 5 failures
+      ],
+      alpha: 0.05,
+    });
+  console.log(`Test: ${multiGroupProportion.test_name}`);
+  console.log(`Chi-square: ${multiGroupProportion.test_statistic?.toFixed(4)}`);
+  console.log(`P-value: ${multiGroupProportion.p_value?.toFixed(4)}`);
+  console.log(`Cramer's V: ${multiGroupProportion.cramers_v?.toFixed(4)}`);
+
+  console.log("\n--- Real-world Analysis Example ---");
+
+  // 4. Complete Analysis Workflow
+  console.log("\n4. Complete A/B Test Analysis Workflow");
+
+  // Step 1: Check normality assumptions
+  const controlNormality = stats.compare.oneGroup.distribution.toNormal({
+    data: controlGroup,
+    alpha: 0.05,
+  });
+  const treatmentNormality = stats.compare.oneGroup.distribution.toNormal({
+    data: treatmentGroup,
+    alpha: 0.05,
+  });
+
+  console.log(
+    `Control group normal: ${
+      (controlNormality.p_value || 0) > 0.05 ? "Yes" : "No"
+    }`,
+  );
+  console.log(
+    `Treatment group normal: ${
+      (treatmentNormality.p_value || 0) > 0.05 ? "Yes" : "No"
+    }`,
+  );
+
+  // Step 2: Choose appropriate test based on normality
+  const useParametric = (controlNormality.p_value || 0) > 0.05 &&
+    (treatmentNormality.p_value || 0) > 0.05;
+
+  // Step 3: Perform the comparison
+  const finalComparison = stats.compare.twoGroups.centralTendency.toEachOther({
+    x: controlGroup,
+    y: treatmentGroup,
+    parametric: useParametric,
+    alternative: "two-sided",
+    alpha: 0.05,
+  });
+
+  console.log(`\nFinal Analysis Results:`);
+  console.log(`Test used: ${finalComparison.test_name}`);
+  console.log(`P-value: ${finalComparison.p_value?.toFixed(4)}`);
+  console.log(
+    `Significant difference: ${
+      (finalComparison.p_value || 0) < 0.05 ? "Yes" : "No"
+    }`,
+  );
+
+  if ("cohens_d" in finalComparison && finalComparison.cohens_d) {
+    const effectSize = Math.abs(finalComparison.cohens_d);
+    let effectInterpretation = "negligible";
+    if (effectSize >= 0.8) effectInterpretation = "large";
+    else if (effectSize >= 0.5) effectInterpretation = "medium";
+    else if (effectSize >= 0.2) effectInterpretation = "small";
+
+    console.log(
+      `Effect size (Cohen's d): ${
+        finalComparison.cohens_d.toFixed(4)
+      } (${effectInterpretation})`,
+    );
+  }
+
+  console.log("\n✅ All statistical tests completed successfully!");
+});

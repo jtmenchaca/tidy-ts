@@ -11,68 +11,123 @@ import {
 
 /**
  * Binomial distribution probability mass function
- * @param x Number of successes
- * @param size Number of trials
- * @param prob Probability of success
- * @param giveLog If true, return log probability (default: false)
+ * @param at - Point where PMF is evaluated (number of successes)
+ * @param trials - Number of trials
+ * @param probabilityOfSuccess - Probability of success
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Probability value or log probability
  */
-export function dbinom(
-  x: number,
-  size: number,
-  prob: number,
-  giveLog: boolean = false,
-): number {
-  return wasm_dbinom(x, size, prob, giveLog);
+export function dbinom({
+  at,
+  trials,
+  probabilityOfSuccess,
+  returnLog = false,
+}: {
+  at: number;
+  trials: number;
+  probabilityOfSuccess: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dbinom(at, trials, probabilityOfSuccess, returnLog);
 }
 
 /**
  * Binomial distribution cumulative distribution function
- * @param q Quantile value (number of successes)
- * @param size Number of trials
- * @param prob Probability of success
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated (number of successes)
+ * @param trials - Number of trials
+ * @param probabilityOfSuccess - Probability of success
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function pbinom(
-  q: number,
-  size: number,
-  prob: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_pbinom(q, size, prob, lowerTail, logP);
+export function pbinom({
+  at,
+  trials,
+  probabilityOfSuccess,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  trials: number;
+  probabilityOfSuccess: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_pbinom(at, trials, probabilityOfSuccess, lowerTail, returnLog);
 }
 
 /**
  * Binomial distribution quantile function
- * @param p Probability
- * @param size Number of trials
- * @param prob Probability of success
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param trials - Number of trials
+ * @param probabilityOfSuccess - Probability of success
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qbinom(
-  p: number,
-  size: number,
-  prob: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qbinom(p, size, prob, lowerTail, logP);
+export function qbinom({
+  probability,
+  trials,
+  probabilityOfSuccess,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  trials: number;
+  probabilityOfSuccess: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qbinom(
+    probability,
+    trials,
+    probabilityOfSuccess,
+    lowerTail,
+    probabilityIsLog,
+  );
 }
 
 /**
- * Binomial distribution random number generator
- * @param size Number of trials
- * @param prob Probability of success
- * @returns Random value from binomial distribution
+ * Binomial distribution random number generation
+ * @param trials - Number of trials
+ * @param probabilityOfSuccess - Probability of success
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the binomial distribution (integers)
  */
-export function rbinom(
-  size: number,
-  prob: number,
-): number {
-  return wasm_rbinom(size, prob);
+export function rbinom({
+  trials,
+  probabilityOfSuccess,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+}): number;
+export function rbinom({
+  trials,
+  probabilityOfSuccess,
+  sampleSize,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  sampleSize: number;
+}): number[];
+export function rbinom({
+  trials,
+  probabilityOfSuccess,
+  sampleSize = 1,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  sampleSize?: number;
+}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rbinom(trials, probabilityOfSuccess);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rbinom(trials, probabilityOfSuccess));
+  }
+  return results;
 }

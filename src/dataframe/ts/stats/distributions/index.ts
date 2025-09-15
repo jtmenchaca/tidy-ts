@@ -83,7 +83,7 @@ export const dist = {
   },
 
   f: {
-    density: fDist.df_dist,
+    density: fDist.df,
     probability: fDist.pf,
     quantile: fDist.qf,
     random: fDist.rf,

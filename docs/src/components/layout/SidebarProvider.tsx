@@ -11,7 +11,7 @@ import { SearchTrigger } from "../search/SearchTrigger.tsx";
 import { useSearch } from "../search/SearchProvider.tsx";
 import { Link } from "@tanstack/react-router";
 import React from "react";
-import TidyTsLogo from "../../assets/tidy-ts-logo.svg";
+import TidyTsLogo from "../../assets/tidy-ts-logo-v2.svg";
 
 interface SidebarProviderProps {
   children: React.ReactNode;

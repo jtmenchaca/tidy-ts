@@ -6,60 +6,101 @@ import { wasm_dt, wasm_pt, wasm_qt, wasm_rt } from "../../wasm/wasm-loader.ts";
 
 /**
  * Student's t distribution density function
- * @param x Value at which to evaluate density
- * @param df Degrees of freedom (> 0)
- * @param giveLog If true, return log density (default: false)
+ * @param at - Point where density is evaluated
+ * @param degreesOfFreedom - Degrees of freedom (> 0)
+ * @param returnLog - If true, return log density (default: false)
  * @returns Density value or log density
  */
-export function dt(
-  x: number,
-  df: number,
-  giveLog: boolean = false,
-): number {
-  return wasm_dt(x, df, giveLog);
+export function dt({
+  at,
+  degreesOfFreedom,
+  returnLog = false,
+}: {
+  at: number;
+  degreesOfFreedom: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dt(at, degreesOfFreedom, returnLog);
 }
 
 /**
  * Student's t distribution cumulative distribution function
- * @param q Quantile value
- * @param df Degrees of freedom (> 0)
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated
+ * @param degreesOfFreedom - Degrees of freedom (> 0)
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function pt(
-  q: number,
-  df: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_pt(q, df, lowerTail, logP);
+export function pt({
+  at,
+  degreesOfFreedom,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  degreesOfFreedom: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_pt(at, degreesOfFreedom, lowerTail, returnLog);
 }
 
 /**
  * Student's t distribution quantile function
- * @param p Probability
- * @param df Degrees of freedom (> 0)
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param degreesOfFreedom - Degrees of freedom (> 0)
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qt(
-  p: number,
-  df: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qt(p, df, lowerTail, logP);
+export function qt({
+  probability,
+  degreesOfFreedom,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  degreesOfFreedom: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qt(probability, degreesOfFreedom, lowerTail, probabilityIsLog);
 }
 
 /**
- * Student's t distribution random number generator
- * @param df Degrees of freedom (> 0)
- * @returns Random value from t distribution
+ * Student's t distribution random number generation
+ * @param degreesOfFreedom - Degrees of freedom (> 0)
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the t distribution
  */
-export function rt(
-  df: number,
-): number {
-  return wasm_rt(df);
+export function rt({
+  degreesOfFreedom,
+}: {
+  degreesOfFreedom: number;
+}): number;
+export function rt({
+  degreesOfFreedom,
+  sampleSize,
+}: {
+  degreesOfFreedom: number;
+  sampleSize: number;
+}): number[];
+export function rt({
+  degreesOfFreedom,
+  sampleSize = 1,
+}: {
+  degreesOfFreedom: number;
+  sampleSize?: number;
+}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rt(degreesOfFreedom);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rt(degreesOfFreedom));
+  }
+  return results;
 }

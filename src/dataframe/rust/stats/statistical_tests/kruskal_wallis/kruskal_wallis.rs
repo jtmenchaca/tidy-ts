@@ -144,13 +144,23 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
 
     let reject_null = p_value < alpha;
 
+    // Calculate eta-squared effect size for Kruskal-Wallis
+    // eta² = (H - k + 1) / (n - k) where k = number of groups
+    let k = non_empty_groups.len() as f64;
+    let eta_squared = if n_f64 - k > 0.0 {
+        (h - k + 1.0) / (n_f64 - k)
+    } else {
+        0.0
+    };
+
     TestResult {
         test_type: TestType::OneWayAnova, // Using OneWayAnova as closest equivalent
         test_statistic: Some(h),
         p_value: Some(p_value),
         confidence_interval_lower: Some(0.0),
         confidence_interval_upper: Some(0.0),
-        effect_size: Some(0.0), // Effect size calculation not implemented
+        effect_size: Some(eta_squared),
+        eta_squared: Some(eta_squared),
         sample_size: Some(n),
         degrees_of_freedom: Some(df),
         tie_correction: Some(tie_correction),

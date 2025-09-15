@@ -10,61 +10,107 @@ import {
 // ===============================================================================
 
 /**
- * Geometric distribution density function
- * @param x Value at which to evaluate density (number of failures before first success)
- * @param prob Probability of success on each trial (0 < prob ≤ 1)
- * @param giveLog If true, return log density (default: false)
- * @returns Density value or log density
+ * Geometric distribution probability mass function
+ * @param at - Point where PMF is evaluated
+ * @param probabilityOfSuccess - Probability of success on each trial (0 < prob ≤ 1)
+ * @param returnLog - If true, return log probability (default: false)
+ * @returns Probability value or log probability
  */
-export function dgeom(
-  x: number,
-  prob: number,
-  giveLog: boolean = false,
-): number {
-  return wasm_dgeom(x, prob, giveLog);
+export function dgeom({
+  at,
+  probabilityOfSuccess,
+  returnLog = false,
+}: {
+  at: number;
+  probabilityOfSuccess: number;
+  returnLog?: boolean;
+}): number {
+  return wasm_dgeom(at, probabilityOfSuccess, returnLog);
 }
 
 /**
  * Geometric distribution cumulative distribution function
- * @param q Quantile value
- * @param prob Probability of success on each trial (0 < prob ≤ 1)
- * @param lowerTail If true, return P(X ≤ q), otherwise P(X > q) (default: true)
- * @param logP If true, return log probability (default: false)
+ * @param at - Point where CDF is evaluated
+ * @param probabilityOfSuccess - Probability of success on each trial (0 < prob ≤ 1)
+ * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
+ * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
  */
-export function pgeom(
-  q: number,
-  prob: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_pgeom(q, prob, lowerTail, logP);
+export function pgeom({
+  at,
+  probabilityOfSuccess,
+  direction = "below",
+  returnLog = false,
+}: {
+  at: number;
+  probabilityOfSuccess: number;
+  direction?: "below" | "above";
+  returnLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_pgeom(at, probabilityOfSuccess, lowerTail, returnLog);
 }
 
 /**
  * Geometric distribution quantile function
- * @param p Probability
- * @param prob Probability of success on each trial (0 < prob ≤ 1)
- * @param lowerTail If true, p is P(X ≤ x), otherwise P(X > x) (default: true)
- * @param logP If true, p is log probability (default: false)
+ * @param probability - Probability value (0..1)
+ * @param probabilityOfSuccess - Probability of success on each trial (0 < prob ≤ 1)
+ * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
+ * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
  */
-export function qgeom(
-  p: number,
-  prob: number,
-  lowerTail: boolean = true,
-  logP: boolean = false,
-): number {
-  return wasm_qgeom(p, prob, lowerTail, logP);
+export function qgeom({
+  probability,
+  probabilityOfSuccess,
+  direction = "below",
+  probabilityIsLog = false,
+}: {
+  probability: number;
+  probabilityOfSuccess: number;
+  direction?: "below" | "above";
+  probabilityIsLog?: boolean;
+}): number {
+  const lowerTail = direction === "below";
+  return wasm_qgeom(
+    probability,
+    probabilityOfSuccess,
+    lowerTail,
+    probabilityIsLog,
+  );
 }
 
 /**
- * Geometric distribution random number generator
- * @param prob Probability of success on each trial (0 < prob ≤ 1)
- * @returns Random value from geometric distribution
+ * Geometric distribution random number generation
+ * @param probabilityOfSuccess - Probability of success on each trial (0 < prob ≤ 1)
+ * @param sampleSize - Number of random draws (default: 1)
+ * @returns Random sample(s) from the geometric distribution (integers)
  */
-export function rgeom(
-  prob: number,
-): number {
-  return wasm_rgeom(prob);
+export function rgeom({
+  probabilityOfSuccess,
+}: {
+  probabilityOfSuccess: number;
+}): number;
+export function rgeom({
+  probabilityOfSuccess,
+  sampleSize,
+}: {
+  probabilityOfSuccess: number;
+  sampleSize: number;
+}): number[];
+export function rgeom({
+  probabilityOfSuccess,
+  sampleSize = 1,
+}: {
+  probabilityOfSuccess: number;
+  sampleSize?: number;
+}): number | number[] {
+  if (sampleSize === 1) {
+    return wasm_rgeom(probabilityOfSuccess);
+  }
+
+  const results: number[] = [];
+  for (let i = 0; i < sampleSize; i++) {
+    results.push(wasm_rgeom(probabilityOfSuccess));
+  }
+  return results;
 }

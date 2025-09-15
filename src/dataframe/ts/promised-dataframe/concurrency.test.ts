@@ -22,23 +22,32 @@ function _mockAsyncApiCall(
 // Track concurrent operations
 let activeCalls = 0;
 let maxConcurrentCalls = 0;
+const activeTimers: number[] = [];
 
 function trackingAsyncCall(value: number): Promise<number> {
   activeCalls++;
   maxConcurrentCalls = Math.max(maxConcurrentCalls, activeCalls);
 
   return new Promise((resolve) => {
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
       activeCalls--;
       resolve(value * 2);
     }, 50);
+    activeTimers.push(timerId);
   });
+}
+
+// Cleanup function to clear all active timers
+function cleanupTimers() {
+  activeTimers.forEach((timerId) => clearTimeout(timerId));
+  activeTimers.length = 0;
 }
 
 Deno.test("DataFrame Async Concurrency Control", async () => {
   // Reset tracking
   activeCalls = 0;
   maxConcurrentCalls = 0;
+  cleanupTimers();
 
   console.log("=== Testing DataFrame Async Concurrency Control ===");
 
@@ -80,6 +89,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   // Reset for next test
   activeCalls = 0;
   maxConcurrentCalls = 0;
+  cleanupTimers();
 
   // Test 2: Limited concurrency (proposed API)
   console.log("\n--- Test 2: Limited Concurrency (concurrency: 3) ---");
@@ -102,6 +112,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   // Reset for next test
   activeCalls = 0;
   maxConcurrentCalls = 0;
+  cleanupTimers();
 
   // Test 3: DataFrame-level concurrency defaults
   console.log("\n--- Test 3: DataFrame-level Concurrency Defaults ---");
@@ -126,6 +137,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   // Reset for next test
   activeCalls = 0;
   maxConcurrentCalls = 0;
+  cleanupTimers();
 
   // Test 4: Explicit options override DataFrame defaults
   console.log("\n--- Test 4: Explicit Options Override DataFrame Defaults ---");
@@ -145,4 +157,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   expect(maxConcurrentCalls).toBeLessThanOrEqual(5);
   expect(maxConcurrentCalls).toBeGreaterThan(2);
   expect(result4.nrows()).toBe(20);
+
+  // Final cleanup
+  cleanupTimers();
 });

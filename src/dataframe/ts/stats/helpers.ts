@@ -6,10 +6,15 @@
 import { isNA } from "../utilities/mod.ts";
 
 // Type aliases for clear overload signatures
-export type CleanNumberArray = number[];
-export type NumbersWithNullable = (number | null | undefined)[];
-export type CleanNumberIterable = Iterable<number>;
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+export type NumberIterable = Iterable<number>;
 export type NumbersWithNullableIterable = Iterable<number | null | undefined>;
+
+// Backward compatibility aliases
+export type CleanNumberArray = readonly number[];
+export type CleanNumberIterable = NumberIterable;
 
 /**
  * Checks if an array contains mixed types (non-numeric values)
