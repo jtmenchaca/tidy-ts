@@ -41,13 +41,14 @@ const jediData = createDataFrame([
 ]);
 
 // Write to CSV file
-const csvResult = jediData.writeCSV("./output/jedi_roster.csv");
+import { writeCSV } from "@tidy-ts/dataframe";
+writeCSV(jediData, "./output/jedi_roster.csv");
 
 // Chain with other operations
 const processedData = jediData
   .mutate({ power_level: (row) => row.force_sensitivity * 10 })
-  .filter((row) => row.power_level > 90)
-  .writeCSV("./output/powerful_jedi.csv");
+  .filter((row) => row.power_level > 90);
+writeCSV(processedData, "./output/powerful_jedi.csv");
 
 console.log("CSV written successfully");`,
 
@@ -112,7 +113,8 @@ const jediAnalytics = createDataFrame([
 ]);
 
 // Write to Parquet file
-const parquetResult = jediAnalytics.writeParquet("./output/jedi_analytics.parquet");
+import { writeParquet } from "@tidy-ts/dataframe";
+writeParquet(jediAnalytics, "./output/jedi_analytics.parquet");
 
 // Chain with transformations
 const processedJedi = jediAnalytics
@@ -120,12 +122,85 @@ const processedJedi = jediAnalytics
     power_level: (row) => row.force_sensitivity >= 9.5 ? "Master" : "Knight",
     days_since_created: (row) => 
       Math.floor((Date.now() - row.created_at.getTime()) / (1000 * 60 * 60 * 24))
-  })
-  .writeParquet("./output/processed_jedi.parquet");
+  });
+writeParquet(processedJedi, "./output/processed_jedi.parquet");
 
 console.log("Parquet written successfully");`,
 
-  schemaValidation: `import { read_csv, read_parquet } from "@tidy-ts/dataframe";
+  arrowReading: `import { read_arrow, type DataFrame } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+// Define schema for Arrow data
+const JediSchema = z.object({
+  id: z.number().int(),
+  name: z.string(),
+  species: z.string(),
+  homeworld: z.string(),
+  lightsaber_color: z.string(),
+  rank: z.string(),
+  force_sensitivity: z.number(),
+  is_master: z.boolean(),
+  padawan_count: z.number().nullable(),
+  created_at: z.date(),
+});
+
+// Read Arrow buffer with schema validation
+const jediOrder = await read_arrow(arrowBuffer, JediSchema, {
+  columns: ["name", "species", "force_sensitivity", "rank"], // Select specific columns
+  naValues: ["", "NA", "NULL"],
+  useDate: true, // Convert timestamps to Date objects
+  useBigInt: false, // Convert BigInt to number
+});
+
+jediOrder.print("Jedi Order data loaded from Arrow:");`,
+
+  arrowWriting: `import { createDataFrame } from "@tidy-ts/dataframe";
+import { tableFromArrays, tableToIPC, int32, utf8, float32, bool } from "@uwdata/flechette";
+
+// Create sample Jedi data
+const jediData = createDataFrame([
+  {
+    id: 1,
+    name: "Luke Skywalker",
+    species: "Human",
+    force_sensitivity: 9.2,
+    is_master: false,
+    created_at: new Date("2023-01-15"),
+  },
+  {
+    id: 2,
+    name: "Obi-Wan Kenobi", 
+    species: "Human",
+    force_sensitivity: 9.5,
+    is_master: true,
+    created_at: new Date("2023-02-20"),
+  },
+]);
+
+// Convert to Arrow format
+const arrowTable = tableFromArrays({
+  id: jediData.id,
+  name: jediData.name,
+  species: jediData.species,
+  force_sensitivity: jediData.force_sensitivity,
+  is_master: jediData.is_master,
+  created_at: jediData.created_at.map(d => d.getTime()), // Convert dates to timestamps
+}, {
+  types: {
+    id: int32(),
+    name: utf8(),
+    species: utf8(),
+    force_sensitivity: float32(),
+    is_master: bool(),
+    created_at: int32(),
+  },
+});
+
+// Convert to ArrayBuffer for storage or transmission
+const arrowBuffer = tableToIPC(arrowTable);
+console.log("Arrow data created successfully");`,
+
+  schemaValidation: `import { read_csv, read_parquet, read_arrow } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Comprehensive schema with various data types
@@ -217,7 +292,7 @@ try {
   }
 }`,
 
-  performanceOptimization: `import { read_csv, read_parquet } from "@tidy-ts/dataframe";
+  performanceOptimization: `import { read_csv, read_parquet, read_arrow } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Optimize CSV reading for large files
@@ -246,6 +321,20 @@ const optimizedJediData = await read_parquet(
   }
 );
 
+// Optimize Arrow reading with advanced options
+const optimizedArrowData = await read_arrow(
+  largeArrowBuffer,
+  jediSchema,
+  {
+    // Only read needed columns
+    columns: ["id", "name", "force_sensitivity"],
+    
+    // Arrow-specific optimizations
+    useDate: true, // Convert timestamps to Date objects
+    useBigInt: false, // Convert BigInt to number for better performance
+  }
+);
+
 // Process data in chunks for very large datasets
 const chunkSize = 1000;
 const chunks = [];
@@ -260,10 +349,10 @@ for (let i = 0; i < largeJediData.nrows(); i += chunkSize) {
     .mutate({ power_level: (row) => row.force_sensitivity * 10 });
     
   // Write chunk to separate files
-  processedChunk.writeCSV(\`./output/jedi_chunk_\${i}.csv\`);
+  writeCSV(processedChunk, \`./output/jedi_chunk_\${i}.csv\`);
 }`,
 
-  dataTransformation: `import { createDataFrame, read_csv, stats } from "@tidy-ts/dataframe";
+  dataTransformation: `import { createDataFrame, read_csv, read_parquet, read_arrow, stats as s } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Load and transform data
@@ -273,7 +362,7 @@ const rawJediData = await read_csv(csvContent, jediSchema);
 const transformedJedi = rawJediData
   // Clean missing data
   .replaceNA({
-    force_sensitivity: stats.mean(rawJediData.force_sensitivity.filter(x => x !== null)),
+    force_sensitivity: s.mean(rawJediData.force_sensitivity.filter(x => x !== null)),
     name: "Unknown Jedi",
   })
   
@@ -293,20 +382,22 @@ const transformedJedi = rawJediData
   .select("id", "full_title", "rank_category", "force_sensitivity", "is_powerful")
   
   // Sort and export
-  .arrange("force_sensitivity", "desc")
-  .writeCSV("./output/transformed_jedi.csv");
+  .arrange("force_sensitivity", "desc");
+
+writeCSV(transformedJedi, "./output/transformed_jedi.csv");
 
 // Export summary statistics
 const summary = transformedJedi
   .groupBy("rank_category")
   .summarise({
     count: (group) => group.nrows(),
-    avg_force: (group) => stats.mean(group.force_sensitivity),
-    max_force: (group) => stats.max(group.force_sensitivity),
-  })
-  .writeParquet("./output/jedi_summary.parquet");`,
+    avg_force: (group) => s.mean(group.force_sensitivity),
+    max_force: (group) => s.max(group.force_sensitivity),
+  });
 
-  integrationExample: `import { createDataFrame, read_csv, read_parquet } from "@tidy-ts/dataframe";
+writeParquet(summary, "./output/jedi_summary.parquet");`,
+
+  integrationExample: `import { createDataFrame, read_csv, read_parquet, read_arrow, writeParquet } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schemas for different data sources
@@ -326,9 +417,17 @@ const MissionSchema = z.object({
   mission_date: z.date(),
 });
 
+const TrainingSchema = z.object({
+  jedi_id: z.number(),
+  training_type: z.string(),
+  completion_date: z.date(),
+  score: z.number().min(0).max(100),
+});
+
 // Load data from multiple sources
 const jediOrder = await read_csv(jediCsv, JediSchema);
 const missions = await read_parquet("./data/missions.parquet", MissionSchema);
+const jediTraining = await read_arrow(trainingArrowBuffer, TrainingSchema);
 
 // Join and analyze data
 const jediAnalysis = jediOrder
@@ -337,10 +436,10 @@ const jediAnalysis = jediOrder
   .summarise({
     jedi_name: (group) => group.name[0],
     total_missions: (group) => group.nrows(),
-    avg_success_rate: (group) => stats.mean(group.success_rate),
-    total_success_rate: (group) => stats.sum(group.success_rate),
-    first_mission: (group) => stats.min(group.mission_date),
-    last_mission: (group) => stats.max(group.mission_date),
+    avg_success_rate: (group) => s.mean(group.success_rate),
+    total_success_rate: (group) => s.sum(group.success_rate),
+    first_mission: (group) => s.min(group.mission_date),
+    last_mission: (group) => s.max(group.mission_date),
   })
   .mutate({
     jedi_rank: (row) => {
@@ -353,8 +452,8 @@ const jediAnalysis = jediOrder
   .arrange("avg_success_rate", "desc");
 
 // Export results
-jediAnalysis.writeCSV("./output/jedi_analysis.csv");
-jediAnalysis.writeParquet("./output/jedi_analysis.parquet");
+writeCSV(jediAnalysis, "./output/jedi_analysis.csv");
+writeParquet(jediAnalysis, "./output/jedi_analysis.parquet");
 
 console.log("Jedi analysis completed");`,
 };

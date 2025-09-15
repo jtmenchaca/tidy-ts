@@ -695,6 +695,7 @@ export function createDataFrame<
       store,
       options,
     ) as unknown as DataFrame<z.infer<S>>;
+
     return result;
   }
 
@@ -703,5 +704,6 @@ export function createDataFrame<
     store,
     options,
   ) as unknown as DataFrame<R[number]>;
+
   return result;
 }

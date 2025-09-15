@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import { right_join_typed_multi_u32 } from "../../wasm-loader.ts";
+import { right_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import {
   type ColumnarStore,

@@ -11,6 +11,7 @@ import { SearchTrigger } from "../search/SearchTrigger.tsx";
 import { useSearch } from "../search/SearchProvider.tsx";
 import { Link } from "@tanstack/react-router";
 import React from "react";
+import TidyTsLogo from "../../assets/tidy-ts-logo.svg";
 
 interface SidebarProviderProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ export function SidebarProvider(
         <SidebarInset className="flex flex-col">
           {/* Header with search and controls */}
           <header className="flex h-[60px] items-center justify-between bg-white dark:bg-gray-900 px-3 lg:px-4 border-b min-w-0 sticky top-0 z-40">
-            <div className="flex items-center flex-1 min-w-0 gap-2 lg:gap-3">
+            <div className="flex items-center flex-1 min-w-0 gap-4 lg:gap-6">
               <SidebarTrigger
                 className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-2 flex-shrink-0"
                 aria-label="Toggle sidebar"
@@ -44,10 +45,11 @@ export function SidebarProvider(
                 className="hover:opacity-75 transition-opacity flex items-center gap-2 lg:gap-3 flex-shrink-0"
               >
                 <div className="flex items-center gap-1">
-                  {/* Bee-stripe hex */}
-                  <div className="hexagon-logo hex-bee" aria-hidden="true">
-                    <span className="stripes" />
-                  </div>
+                  <img 
+                    src={TidyTsLogo} 
+                    alt="Tidy-TS Logo" 
+                    className="h-12 w-12"
+                  />
                 </div>
                 <div className="hidden md:block">
                   <h1 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">

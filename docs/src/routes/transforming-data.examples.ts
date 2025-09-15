@@ -1,6 +1,6 @@
 // Code examples for transforming data
 export const transformingExamples = {
-  basicMutate: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  basicMutate: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
@@ -28,7 +28,7 @@ const withParameters = people
     in_first_half: (_row, index, df) => index < df.nrows() / 2,
     
     // df: Access the entire DataFrame for calculations across all rows
-    is_above_average: (row, _index, df) => row.mass > stats.mean(df.mass)
+    is_above_average: (row, _index, df) => row.mass > s.mean(df.mass)
   });
 
 withParameters.print("Using all three parameters:");`,
@@ -75,18 +75,18 @@ const withStats = people
   .mutate({
     // Calculate z-score for mass
     mass_zscore: (row, _index, df) => {
-      const mean = stats.mean(df.mass);
-      const std = stats.stdev(df.mass);
-      return stats.round((row.mass - mean) / std, 3);
+      const mean = s.mean(df.mass);
+      const std = s.stdev(df.mass);
+      return s.round((row.mass - mean) / std, 3);
     },
     
     // Calculate percentile rank
     mass_percentile: (row, _index, df) => {
-      return stats.round(stats.percentileRank(df.mass, row.mass), 1);
+      return s.round(s.percentileRank(df.mass, row.mass), 1);
     },
     
     // Use cumulative functions
-    cumulative_mass: (_row, index, df) => stats.cumsum(df.mass)[index],
+    cumulative_mass: (_row, index, df) => s.cumsum(df.mass)[index],
   });
 
 withStats.print("Added columns using stats functions:");`,

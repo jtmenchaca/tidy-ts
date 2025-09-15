@@ -39,7 +39,6 @@ import {
   createPrintMethodHandler, // Handles print() method specially
   createSymbolPropertyHandler, // Handles Symbol properties
   createSyncMethodsHandler, // Handles sync methods like nrows(), toArray()
-  createWriteCSVMethodHandler, // Handles writeCSV() method specially
 } from "./handlers/shared-handler-utils.ts";
 // Import async method forwarding handler
 import { handleMethodForwarding } from "./handlers/method-forwarding-handler.ts";
@@ -132,16 +131,6 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
       const printResult = printHandler(prop, dfOrPromise, p);
       if (printResult !== null) {
         return printResult; // Return chainable thenable after printing
-      }
-
-      // Special handling for writeCSV method - it should return the thenable for chaining
-      // Rather than returning void, writeCSV() returns the thenable so you can do df.writeCSV().mutate(...)
-      const writeCSVHandler = createWriteCSVMethodHandler<DataFrame<Row>>(
-        thenableDataFrame, // Function to wrap result back in thenable
-      );
-      const writeCSVResult = writeCSVHandler(prop, dfOrPromise, p);
-      if (writeCSVResult !== null) {
-        return writeCSVResult; // Return chainable thenable after writeCSV
       }
 
       // Method forwarding: handle DataFrame verbs (mutate, filter, select, etc.)

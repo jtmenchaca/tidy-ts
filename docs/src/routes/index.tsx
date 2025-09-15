@@ -16,6 +16,7 @@ import {
   ShieldIcon,
 } from "lucide-react";
 import { starWarsExample } from "./index.example.ts";
+import TidyTsLogo from "../assets/tidy-ts-logo.svg";
 // deno-lint-ignore no-explicit-any
 export const Route = createFileRoute("/" as any)({
   component: HomeComponent,
@@ -23,45 +24,56 @@ export const Route = createFileRoute("/" as any)({
 function HomeComponent() {
   return (
     <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
-      <div className="container mx-auto max-w-4xl space-y-6 md:space-y-8">
+      <div className="container mx-auto max-w-4xl space-y-6 md:space-y-8 relative">
         {/* Hero Section */}
-        <section className="text-center py-12 sm:py-20">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-orange-600 mb-6">
-            Tidy-TS
-          </h1>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-tight">
-            Data analytics framework
-          </h2>
-          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Type-safe data analytics and statistics in TypeScript. Research
-            shows static typing prevents 15-38% of production
-            bugs<sup className="text-blue-600 dark:text-blue-400">
-              <a
-                href="#research-evidence"
-                className="hover:underline"
-                title="View research details and sources"
+        <section className="relative text-center py-12 sm:py-20">
+          {/* Large background logo */}
+          <div className="absolute -left-25 -top-30 opacity-4 dark:opacity-10 pointer-events-none">
+            <img 
+              src={TidyTsLogo} 
+              alt="" 
+              className="w-96 h-96 sm:w-[600px] sm:h-[600px] md:w-[600px] md:h-[600px] lg:w-[600px] lg:h-[600px] xl:w-[600px] xl:h-[600px]"
+            />
+          </div>
+          
+          <div className="relative z-10">
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-orange-600 mb-6">
+              Tidy-TS
+            </h1>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-8 leading-tight">
+              Data analytics framework
+            </h2>
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
+              Type-safe data analytics and statistics in TypeScript. Research
+              shows static typing prevents 15-38% of production
+              bugs<sup className="text-blue-600 dark:text-blue-400">
+                <a
+                  href="#research-evidence"
+                  className="hover:underline"
+                  title="View research details and sources"
+                >
+                  1,2,3
+                </a>
+              </sup>. Built for modern data science workflows.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 px-8 py-3 text-lg font-semibold rounded-lg"
               >
-                1,2,3
-              </a>
-            </sup>. Built for modern data science workflows.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800 px-8 py-3 text-lg font-semibold rounded-lg"
-            >
-              <a
-                href="https://github.com/jtmenchaca/tidy-ts"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <GithubIcon className="h-5 w-5" />
-                View on GitHub
-              </a>
-            </Button>
+                <a
+                  href="https://github.com/jtmenchaca/tidy-ts"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <GithubIcon className="h-5 w-5" />
+                  View on GitHub
+                </a>
+              </Button>
+            </div>
           </div>
         </section>
         {/* Key Features */}
@@ -101,13 +113,13 @@ function HomeComponent() {
                 Advanced Analytics
               </CardTitle>
               <CardDescription className="text-base">
-                Statistical functions and comprehensive data analysis
+                80+ statistical functions including probability distributions and hypothesis testing
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Group, aggregate, join, reshape, and analyze data with
-                comprehensive statistical functions and missing data handling.
+                Complete statistical analysis with descriptive statistics, 16 probability distributions (DPQR functions), 
+                and comprehensive hypothesis testing rigorously tested against R. 
               </p>
               <Button
                 asChild

@@ -1,0 +1,175 @@
+{
+  "timestamp": "2025-09-14T22:12:09.629Z",
+  "suites": [
+    {
+      "name": "T-Tests",
+      "summary": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 3.3800820000000016
+      },
+      "tests": [
+        {
+          "name": "One-sample t-test",
+          "status": "✅ PASS",
+          "duration": 3.0870409999999993
+        },
+        {
+          "name": "Independent t-test",
+          "status": "✅ PASS",
+          "duration": 0.17150000000000176
+        },
+        {
+          "name": "Paired t-test",
+          "status": "✅ PASS",
+          "duration": 0.12154100000000057
+        }
+      ]
+    },
+    {
+      "name": "ANOVA Tests",
+      "summary": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 2.463250000000002
+      },
+      "tests": [
+        {
+          "name": "One-way ANOVA",
+          "status": "✅ PASS",
+          "duration": 0.793375000000001
+        },
+        {
+          "name": "ANOVA One Way",
+          "status": "✅ PASS",
+          "duration": 0.08295900000000245
+        },
+        {
+          "name": "Two-way ANOVA Factor A",
+          "status": "✅ PASS",
+          "duration": 0.46687499999999815
+        },
+        {
+          "name": "Two-way ANOVA Factor B",
+          "status": "✅ PASS",
+          "duration": 0.5335830000000001
+        },
+        {
+          "name": "Two-way ANOVA Interaction",
+          "status": "✅ PASS",
+          "duration": 0.5864580000000004
+        }
+      ]
+    },
+    {
+      "name": "Non-Parametric Tests",
+      "summary": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 2.2416669999999996
+      },
+      "tests": [
+        {
+          "name": "Mann-Whitney U Test",
+          "status": "✅ PASS",
+          "duration": 0.8546249999999986
+        },
+        {
+          "name": "Wilcoxon Signed-Rank Test",
+          "status": "✅ PASS",
+          "duration": 0.6352919999999997
+        },
+        {
+          "name": "Kruskal-Wallis Test",
+          "status": "✅ PASS",
+          "duration": 0.6140830000000008
+        },
+        {
+          "name": "Kruskal-Wallis by Group",
+          "status": "✅ PASS",
+          "duration": 0.13766700000000043
+        }
+      ]
+    },
+    {
+      "name": "Correlation Tests",
+      "summary": {
+        "total": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 0.7905410000000046
+      },
+      "tests": [
+        {
+          "name": "Pearson Correlation",
+          "status": "✅ PASS",
+          "duration": 0.270583000000002
+        },
+        {
+          "name": "Spearman Correlation",
+          "status": "✅ PASS",
+          "duration": 0.19108300000000256
+        },
+        {
+          "name": "Kendall Correlation",
+          "status": "✅ PASS",
+          "duration": 0.32887500000000003
+        }
+      ]
+    },
+    {
+      "name": "Other Statistical Tests",
+      "summary": {
+        "total": 7,
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "duration": 7.347375000000003
+      },
+      "tests": [
+        {
+          "name": "Chi-square Test",
+          "status": "✅ PASS",
+          "duration": 0.22254099999999966
+        },
+        {
+          "name": "Fisher's Exact Test",
+          "status": "✅ PASS",
+          "duration": 5.6760410000000014
+        },
+        {
+          "name": "Shapiro-Wilk Test",
+          "status": "✅ PASS",
+          "duration": 0.7231669999999966
+        },
+        {
+          "name": "One-sample Z-test",
+          "status": "✅ PASS",
+          "duration": 0.16587499999999977
+        },
+        {
+          "name": "Two-sample Z-test",
+          "status": "✅ PASS",
+          "duration": 0.17195900000000108
+        },
+        {
+          "name": "One-sample Proportion Test",
+          "status": "✅ PASS",
+          "duration": 0.1634170000000026
+        },
+        {
+          "name": "Two-sample Proportion Test",
+          "status": "✅ PASS",
+          "duration": 0.224375000000002
+        }
+      ]
+    }
+  ]
+}

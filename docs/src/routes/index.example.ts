@@ -1,4 +1,4 @@
-export const starWarsExample = `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+export const starWarsExample = `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // 1. Create a DataFrame from your data
 const characters = createDataFrame([
@@ -26,8 +26,8 @@ const analysis = characters
 
   // Calculate summary statistics by groups
   .summarize({
-    avg_mass_lbs: (group) => stats.mean(group.mass_lbs),
-    avg_height_in: (group) => stats.mean(group.height_in),
+    avg_mass_lbs: (group) => s.mean(group.mass_lbs),
+    avg_height_in: (group) => s.mean(group.height_in),
     character_count: (group) => group.nrows()
   })
 
@@ -35,4 +35,21 @@ const analysis = characters
   .arrange("avg_mass_lbs", "desc");
 
 // 3. View your results
-analysis.print("Character analysis by Homeworld:");`;
+analysis.print("Character analysis by Homeworld:");
+
+// 4. Advanced statistical analysis
+const heightData = characters.height_cm;
+
+// Descriptive statistics
+console.log("Height mean:", s.mean(heightData));
+console.log("Height std:", s.stdev(heightData));
+
+// Probability distributions
+const normalSample = s.dist.normal.random(170, 15);  // Random height sample
+const heightPercentile = s.dist.normal.probability(180, 170, 15);  // P(Height ≤ 180)
+console.log("Height percentile for 180cm:", heightPercentile);
+
+// Statistical testing
+const humanHeights = characters.filter("species", "Human").height_cm;
+const tTest = s.test.t.oneSample(humanHeights, 170, "two-sided", 0.05);
+console.log("T-test p-value:", tTest.pValue);`;

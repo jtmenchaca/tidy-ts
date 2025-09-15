@@ -60,6 +60,10 @@ pub mod sum;
 #[path = "unique.wasm.rs"]
 pub mod unique;
 
+// Statistics module
+#[path = "stats/mod.rs"]
+pub mod stats;
+
 // Re-export shared types
 pub use shared_types::*;
 
@@ -92,6 +96,10 @@ pub use pivot_longer::*;
 pub use quantile::*;
 #[cfg(feature = "wasm")]
 pub use right_join::*;
+#[cfg(feature = "wasm")]
+pub use stats::distributions::distributions_wasm::*;
+#[cfg(feature = "wasm")]
+pub use stats::statistical_tests::*;
 #[cfg(feature = "wasm")]
 pub use sum::*;
 #[cfg(feature = "wasm")]

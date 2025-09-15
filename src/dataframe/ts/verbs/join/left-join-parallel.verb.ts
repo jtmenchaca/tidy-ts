@@ -13,7 +13,7 @@ import { tracer } from "../../telemetry/tracer.ts";
 import {
   // Helper that returns the bytes of the already-built wasm (ArrayBufferLike is fine).
   getWasmBytes,
-} from "../../wasm-loader.ts";
+} from "../../wasm/wasm-loader.ts";
 import type { JoinKey, ObjectJoinOptions } from "./types/index.ts";
 
 /**

@@ -11,7 +11,7 @@ import {
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-import { left_join_typed_multi_u32 } from "../../wasm-loader.ts";
+import { left_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
 import type {
   JoinKey,
   ObjectJoinOptions,

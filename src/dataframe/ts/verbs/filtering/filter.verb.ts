@@ -14,7 +14,7 @@ import { withMask } from "../../dataframe/implementation/row-cursor.ts";
 import {
   // numeric/date WASM only; string WASM stays disabled (too much overhead)
   batch_filter_numbers,
-} from "../../wasm-loader.ts";
+} from "../../wasm/wasm-loader.ts";
 import {
   returnsPromise,
   shouldUseAsyncForFilter,

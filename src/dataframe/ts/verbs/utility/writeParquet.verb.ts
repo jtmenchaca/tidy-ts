@@ -1,6 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
-import { parquetWriteBuffer, parquetWriteFile, type BasicType } from "hyparquet-writer";
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
+import {
+  type BasicType,
+  parquetWriteBuffer,
+  parquetWriteFile,
+} from "hyparquet-writer";
+import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Convert a DataFrame to Parquet column-oriented format for hyparquet-writer
@@ -54,66 +58,63 @@ function dataFrameToColumnData<T extends Record<string, unknown>>(
 }
 
 /**
- * Write DataFrame to Parquet file and return the original DataFrame for chaining.
+ * Write a DataFrame to a Parquet file
+ *
+ * @param dataFrame - The DataFrame to write
+ * @param filePath - The file path where to save the Parquet file
+ * @returns The original DataFrame for chaining
+ *
+ * @example
+ * ```ts
+ * import { createDataFrame } from "tidy-ts/dataframe";
+ *
+ * const df = createDataFrame([
+ *   { id: 1, name: "Alice", age: 30 },
+ *   { id: 2, name: "Bob", age: 25 }
+ * ]);
+ *
+ * // Write to file
+ * writeParquet(df, "./data.parquet");
+ *
+ * // In browser, this will trigger a download
+ * writeParquet(df, "data.parquet");
+ * ```
  */
-
-// Grouped overload: preserve grouping type
-export function writeParquet<
-  Row extends Record<string, unknown>,
-  GroupName extends keyof Row,
->(
+export function write_parquet<Row extends Record<string, unknown>>(
+  dataFrame: DataFrame<Row>,
   filePath: string,
-): (df: GroupedDataFrame<Row, GroupName>) => GroupedDataFrame<Row, GroupName>;
+): DataFrame<Row> {
+  const columnData = dataFrameToColumnData(dataFrame);
 
-// Ungrouped overload
-export function writeParquet<Row extends Record<string, unknown>>(
-  filePath: string,
-): (df: DataFrame<Row>) => DataFrame<Row>;
-
-// Implementation
-export function writeParquet<Row extends Record<string, unknown>>(
-  filePath: string,
-) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>): any => {
-    const columnData = dataFrameToColumnData(df as DataFrame<Row>);
-
-    // Use hyparquet-writer for file writing
-    try {
-      parquetWriteFile({
-        filename: filePath,
-        columnData,
+  // Use hyparquet-writer for file writing
+  try {
+    parquetWriteFile({
+      filename: filePath,
+      columnData,
+    });
+  } catch (error) {
+    // Browser environment fallback - create ArrayBuffer and trigger download
+    if (
+      typeof globalThis !== "undefined" && globalThis.navigator &&
+      globalThis.document
+    ) {
+      const arrayBuffer = parquetWriteBuffer({ columnData });
+      const blob = new Blob([arrayBuffer], {
+        type: "application/octet-stream",
       });
-    } catch (error) {
-      // Browser environment fallback - create ArrayBuffer and trigger download
-      if (typeof globalThis !== "undefined" && globalThis.navigator && globalThis.document) {
-        const arrayBuffer = parquetWriteBuffer({ columnData });
-        const blob = new Blob([arrayBuffer], {
-          type: "application/octet-stream",
-        });
-        const url = URL.createObjectURL(blob);
-        const a = globalThis.document.createElement("a");
-        a.href = url;
-        a.download = filePath.split("/").pop() || "data.parquet";
-        globalThis.document.body.appendChild(a);
-        a.click();
-        globalThis.document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } else {
-        throw new Error(`Failed to write file: ${error}`);
-      }
+      const url = URL.createObjectURL(blob);
+      const a = globalThis.document.createElement("a");
+      a.href = url;
+      a.download = filePath.split("/").pop() || "data.parquet";
+      globalThis.document.body.appendChild(a);
+      a.click();
+      globalThis.document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } else {
+      throw new Error(`Failed to write file: ${error}`);
     }
+  }
 
-    // Return the same DataFrame for chaining
-    return df;
-  };
-}
-
-/**
- * Convert DataFrame to Parquet ArrayBuffer
- */
-export function toParquetBuffer<Row extends Record<string, unknown>>() {
-  return (df: DataFrame<Row>): ArrayBuffer => {
-    const columnData = dataFrameToColumnData(df);
-    return parquetWriteBuffer({ columnData });
-  };
+  // Return the same DataFrame for chaining
+  return dataFrame;
 }

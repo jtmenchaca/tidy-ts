@@ -1,0 +1,41 @@
+<svg
+  width="1494"
+  height="1664"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xml:space="preserve"
+  overflow="hidden"
+>
+  <defs><linearGradient
+      x1="1644"
+      y1="738.969"
+      x2="0"
+      y2="738.969"
+      gradientUnits="userSpaceOnUse"
+      spreadMethod="reflect"
+      id="fill0"
+    ><stop offset="0" stop-color="#F0F8FD" stop-opacity="1" /><stop
+        offset="0.16"
+        stop-color="#B2DEF3"
+        stop-opacity="1"
+      /><stop offset="0.45" stop-color="#74C4E9" stop-opacity="1" /><stop
+        offset="0.59"
+        stop-color="#4E8C80"
+        stop-opacity="1"
+      /><stop
+        offset="1"
+        stop-color="#275317"
+        stop-opacity="1"
+      /></linearGradient></defs><g transform="translate(-1434 -270)"><g><path
+        d="M0 738.97 369.485 0 1274.52 0 1644 738.97 1274.52 1477.94 369.485 1477.94Z"
+        stroke="#275317"
+        stroke-width="13.75"
+        stroke-linecap="butt"
+        stroke-linejoin="miter"
+        stroke-miterlimit="8"
+        stroke-opacity="1"
+        fill="url(#fill0)"
+        fill-rule="evenodd"
+        transform="matrix(-6.12323e-17 -1 -1 6.12323e-17 2920 1923)"
+      /></g></g>
+</svg>

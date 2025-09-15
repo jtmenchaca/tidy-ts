@@ -1,5 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
-import { initWasmFromBytes, left_join_typed_multi_u32 } from "./wasm-loader.ts";
+import {
+  initWasmFromBytes,
+  left_join_typed_multi_u32,
+} from "./wasm/wasm-loader.ts";
 
 type MsgIn = {
   wasmBytes: ArrayBuffer; // provided by main thread

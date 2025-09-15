@@ -61,10 +61,10 @@ function GroupingAggregationComponent() {
                   • <code>group.length</code> - Same as nrows()
                 </li>
                 <li>
-                  • <code>stats.countValue()</code> - Count specific values
+                  • <code>s.countValue()</code> - Count specific values
                 </li>
                 <li>
-                  • <code>stats.uniqueCount()</code> - Count unique values
+                  • <code>s.uniqueCount()</code> - Count unique values
                 </li>
               </ul>
             </div>
@@ -72,16 +72,16 @@ function GroupingAggregationComponent() {
               <h4 className="font-medium mb-2">Central Tendency</h4>
               <ul className="text-sm space-y-1">
                 <li>
-                  • <code>stats.mean()</code> - Arithmetic mean
+                  • <code>s.mean()</code> - Arithmetic mean
                 </li>
                 <li>
-                  • <code>stats.median()</code> - Median value
+                  • <code>s.median()</code> - Median value
                 </li>
                 <li>
-                  • <code>stats.mode()</code> - Most frequent value
+                  • <code>s.mode()</code> - Most frequent value
                 </li>
                 <li>
-                  • <code>stats.quantile()</code> - Specific quantiles
+                  • <code>s.quantile()</code> - Specific quantiles
                 </li>
               </ul>
             </div>
@@ -89,16 +89,16 @@ function GroupingAggregationComponent() {
               <h4 className="font-medium mb-2">Spread and Variation</h4>
               <ul className="text-sm space-y-1">
                 <li>
-                  • <code>stats.stdev()</code> - Standard deviation
+                  • <code>s.stdev()</code> - Standard deviation
                 </li>
                 <li>
-                  • <code>stats.variance()</code> - Variance
+                  • <code>s.variance()</code> - Variance
                 </li>
                 <li>
-                  • <code>stats.range()</code> - Range (max - min)
+                  • <code>s.range()</code> - Range (max - min)
                 </li>
                 <li>
-                  • <code>stats.iqr()</code> - Interquartile range
+                  • <code>s.iqr()</code> - Interquartile range
                 </li>
               </ul>
             </div>
@@ -106,16 +106,16 @@ function GroupingAggregationComponent() {
               <h4 className="font-medium mb-2">Extremes</h4>
               <ul className="text-sm space-y-1">
                 <li>
-                  • <code>stats.min()</code> - Minimum value
+                  • <code>s.min()</code> - Minimum value
                 </li>
                 <li>
-                  • <code>stats.max()</code> - Maximum value
+                  • <code>s.max()</code> - Maximum value
                 </li>
                 <li>
-                  • <code>stats.first()</code> - First value
+                  • <code>s.first()</code> - First value
                 </li>
                 <li>
-                  • <code>stats.last()</code> - Last value
+                  • <code>s.last()</code> - Last value
                 </li>
               </ul>
             </div>

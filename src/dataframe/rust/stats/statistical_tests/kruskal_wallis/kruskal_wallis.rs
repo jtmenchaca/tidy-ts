@@ -1,0 +1,160 @@
+//! Kruskal-Wallis test implementation
+//! Non-parametric alternative to one-way ANOVA
+
+use crate::stats::core::{TestResult, TestType};
+use crate::stats::distributions::pchisq;
+use crate::stats::helpers::create_error_result;
+
+/// Calculate ranks for a combined array with tie handling
+fn rank(values: &[f64]) -> (Vec<f64>, f64) {
+    let n = values.len();
+    let mut indexed: Vec<(f64, usize)> = values
+        .iter()
+        .enumerate()
+        .map(|(i, &val)| (val, i))
+        .collect();
+    indexed.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
+
+    let mut ranks = vec![0.0; n];
+    let mut i = 0;
+    let mut tie_correction = 0.0;
+
+    while i < n {
+        let mut j = i;
+        // Find all tied values
+        while j < n && indexed[j].0 == indexed[i].0 {
+            j += 1;
+        }
+
+        // Calculate average rank for tied values
+        let avg_rank = (i + 1 + j) as f64 / 2.0;
+
+        // Assign average rank to all tied values
+        for k in i..j {
+            ranks[indexed[k].1] = avg_rank;
+        }
+
+        // Calculate tie correction
+        let tie_count = j - i;
+        if tie_count > 1 {
+            tie_correction += (tie_count * (tie_count * tie_count - 1)) as f64;
+        }
+
+        i = j;
+    }
+
+    (ranks, tie_correction)
+}
+
+/// Perform Kruskal-Wallis test
+///
+/// # Arguments
+/// * `groups` - Vector of groups, each group is a vector of numbers
+/// * `alpha` - Significance level (default: 0.05)
+///
+/// # Returns
+/// TestResult containing the test statistic, p-value, and degrees of freedom
+pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
+    // Validate input
+    if groups.len() < 2 {
+        return create_error_result(
+            "Kruskal-Wallis test",
+            "Need at least 2 groups for Kruskal-Wallis test",
+        );
+    }
+
+    // Remove any empty groups
+    let non_empty_groups: Vec<&Vec<f64>> = groups.iter().filter(|g| !g.is_empty()).collect();
+    if non_empty_groups.len() < 2 {
+        return create_error_result("Kruskal-Wallis test", "Need at least 2 non-empty groups");
+    }
+
+    // Combine all observations
+    let mut combined = Vec::new();
+    let mut group_indices = Vec::new();
+
+    for (i, group) in non_empty_groups.iter().enumerate() {
+        for &val in *group {
+            combined.push(val);
+            group_indices.push(i);
+        }
+    }
+
+    let n = combined.len();
+    if n < 2 {
+        return create_error_result("Kruskal-Wallis test", "Not enough observations");
+    }
+
+    // Calculate ranks
+    let (ranks, tie_correction) = rank(&combined);
+
+    // Calculate rank sums for each group
+    let mut rank_sums = vec![0.0; non_empty_groups.len()];
+    let mut group_sizes = vec![0; non_empty_groups.len()];
+
+    for i in 0..n {
+        let group_idx = group_indices[i];
+        rank_sums[group_idx] += ranks[i];
+        group_sizes[group_idx] += 1;
+    }
+
+    // Calculate H statistic following R's exact algorithm
+    // STATISTIC <- sum(tapply(r, g, sum)^2 / tapply(r, g, length))
+    let mut statistic = 0.0;
+    for i in 0..non_empty_groups.len() {
+        let ni = group_sizes[i] as f64;
+        if ni > 0.0 {
+            statistic += (rank_sums[i] * rank_sums[i]) / ni;
+        }
+    }
+
+    // STATISTIC <- ((12 * STATISTIC / (n * (n + 1)) - 3 * (n + 1)) /
+    //               (1 - sum(TIES^3 - TIES) / (n^3 - n)))
+
+    // First calculate the main H statistic
+    let n_f64 = n as f64;
+    let mut h = (12.0 * statistic / (n_f64 * (n_f64 + 1.0))) - 3.0 * (n_f64 + 1.0);
+
+    // Apply tie correction using R's exact formula
+    let denominator = n_f64 * n_f64 * n_f64 - n_f64;
+    let df = (non_empty_groups.len() - 1) as f64;
+    if tie_correction == denominator {
+        // All values are identical, H = 0, p = 1
+        return TestResult {
+            test_type: TestType::OneWayAnova, // Using OneWayAnova as closest equivalent
+            test_statistic: Some(0.0),
+            p_value: Some(1.0),
+            confidence_interval_lower: Some(0.0),
+            confidence_interval_upper: Some(0.0),
+            effect_size: Some(0.0),
+            sample_size: Some(n),
+            degrees_of_freedom: Some(df),
+            tie_correction: Some(tie_correction),
+            ..Default::default()
+        };
+    }
+
+    // Apply tie correction: H_adjusted = H / (1 - sum(TIES^3 - TIES) / (n^3 - n))
+    if tie_correction > 0.0 {
+        h = h / (1.0 - tie_correction / denominator);
+    }
+
+    // Calculate p-value using chi-squared distribution
+    let p_value = pchisq(h, df, false, false); // upper tail probability
+
+    let reject_null = p_value < alpha;
+
+    TestResult {
+        test_type: TestType::OneWayAnova, // Using OneWayAnova as closest equivalent
+        test_statistic: Some(h),
+        p_value: Some(p_value),
+        confidence_interval_lower: Some(0.0),
+        confidence_interval_upper: Some(0.0),
+        effect_size: Some(0.0), // Effect size calculation not implemented
+        sample_size: Some(n),
+        degrees_of_freedom: Some(df),
+        tie_correction: Some(tie_correction),
+        ranks: Some(ranks),
+        ..Default::default()
+    }
+}

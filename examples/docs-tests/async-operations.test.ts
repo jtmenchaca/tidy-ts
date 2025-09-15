@@ -172,3 +172,31 @@ describe("Async Operations", () => {
     expect(result.columns()).toContain("fetched_data");
   });
 });
+
+
+Deno.test("Error example", async () => {
+  const people = createDataFrame([
+    { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
+    { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
+    { id: 3, name: "R2-D2", species: "Droid", mass: 32, height: 96 },
+    { id: 4, name: "Darth Vader", species: "Human", mass: 136, height: 202 },
+    { id: 5, name: "Chewbacca", species: "Wookiee", mass: 112, height: 228 },
+  ]);
+    // Async function that might fail - more realistic example
+  async function fetchUserRating(mass: number): Promise<string> {
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    if (mass < 30) {
+      throw new Error("Mass too low for rating");
+    }
+    if (mass > 100) return "⭐ Heavyweight";
+    if (mass > 50) return "⭐ Medium";
+    return "⭐ Lightweight";
+  }
+
+  const result = await people
+    .mutate({
+      rating: async (row) => await fetchUserRating(row.mass),
+    });
+  
+  result.print("DataFrame with ratings:");
+}

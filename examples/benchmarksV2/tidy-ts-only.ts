@@ -22,7 +22,7 @@ interface DataRow {
 
 // Boolean flags to enable/disable specific operations
 const OPTIONS = {
-  creation: false,
+  creation: true,
   filter: false,
   select: false,
   sort: false,
@@ -31,7 +31,7 @@ const OPTIONS = {
   groupBy: false,
   summarize: false,
   innerJoin: false,
-  leftJoin: true,
+  leftJoin: false,
   outerJoin: false,
   pivotLonger: false,
   pivotWider: false,

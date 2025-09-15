@@ -1,0 +1,54 @@
+//! # Chi Square Tests
+//!
+//! The `chi_square` module provides functions for performing Chi-Square tests,
+//! including tests for independence in categorical data and tests for variance.
+//!
+//! The Chi-Square Test for Independence evaluates whether two categorical variables
+//! are independent of each other based on a contingency table.
+//!
+//! The Chi-Square Goodness
+//! of Fit Test assesses whether observed frequencies match expected frequencies.
+//!
+//! The Chi-Square Test for Variance tests whether the variance of a sample differs
+//! significantly from a specified population variance.
+//!
+//! ## Sample Size Calculation
+//!
+//! To calculate the required sample size for Chi-Square tests, you can use the following functions:
+//! - `chi2_sample_size_gof`: Calculates the required sample size for the Chi-Square Goodness of Fit Test.
+//! - `chi2_sample_size_ind`: Calculates the required sample size for the Chi-Square Test for Independence.
+//! - `chi2_sample_size_variance`: Calculates the required sample size for the Chi-Square Test for Variance.
+//!
+//! ## Submodules
+//!
+//! - `goodness_of_fit`: Performs a Chi-Square Goodness of Fit Test.
+//! - `independence`: Performs a Chi-Square Test for Independence.
+//! - `variance`: Performs a Chi-Square Test for Variance.
+//!
+//! ## Exports
+//!
+//! The following functions are made available for use:
+//! - `goodness_of_fit`: Performs a Chi-Square Goodness of Fit Test.
+//! - `independence`: Performs a Chi-Square Test for Independence.
+//! - `variance`: Performs a Chi-Square Test for Variance.
+//! - `chi2_sample_size_gof`: Calculates the required sample size for the Chi-Square Goodness of Fit Test.
+//! - `chi2_sample_size_ind`: Calculates the required sample size for the Chi-Square Test for Independence.
+//! - `chi2_sample_size_variance`: Calculates the required sample size for the Chi-Square Test for Variance.
+//!
+//! ## Example
+//!
+//! ```rust
+//! use tidy_ts_dataframe::stats::statistical_tests::chi_square::{goodness_of_fit, independence, variance, chi2_sample_size_gof, chi2_sample_size_ind, chi2_sample_size_variance};
+//! ```
+
+pub mod categorical;
+pub mod sample_size;
+pub mod variance;
+
+// WASM bindings (when compiled for WASM)
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
+pub use categorical::{goodness_of_fit, independence};
+pub use sample_size::{chi2_sample_size_gof, chi2_sample_size_ind, chi2_sample_size_variance};
+pub use variance::variance;

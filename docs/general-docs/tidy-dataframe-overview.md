@@ -85,10 +85,10 @@ const users = await read_csv(csvString, UserSchema, { naValues: [""] });
 ### 6. Rich Statistics Module
 
 ```typescript
-import { stats } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const values = df.value;                // typed array
-const mean = stats.mean(values);        // number
-const q = stats.quantile(values, 0.25); // number | number[] for arrays
+const mean = s.mean(values);            // number
+const q = s.quantile(values, 0.25);     // number | number[] for arrays
 ```
 
 - 25+ functions: mean, median, quantile, rank, corr, covariance, cumsum, lag/lead, and more

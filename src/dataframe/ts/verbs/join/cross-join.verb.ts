@@ -6,7 +6,7 @@ import {
   type Prettify,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
-import { cross_join_u32 } from "../../wasm-loader.ts";
+import { cross_join_u32 } from "../../wasm/wasm-loader.ts";
 
 function getStoreAndIndex<T extends Record<string, unknown>>(df: DataFrame<T>) {
   const api: any = df as any;

@@ -1,6 +1,7 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { parquetReadObjects } from "hyparquet";
+import { write_parquet as writeParquet } from "./writeParquet.verb.ts";
 
 Deno.test("writeParquet() basic functionality", async () => {
   const df = createDataFrame([
@@ -9,13 +10,16 @@ Deno.test("writeParquet() basic functionality", async () => {
   ]);
 
   const tempFile = "./test-basic.parquet";
-  df.writeParquet(tempFile);
+  writeParquet(df, tempFile);
 
   // Read back the file to verify
   const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  const buffer = uint8Array.buffer.slice(
+    uint8Array.byteOffset,
+    uint8Array.byteOffset + uint8Array.byteLength,
+  );
   const data = await parquetReadObjects({ file: buffer });
-  
+
   expect(data.length).toBe(2);
   expect(data[0].id).toBe(1);
   expect(data[0].name).toBe("Alice");
@@ -34,13 +38,16 @@ Deno.test("writeParquet() no options needed", async () => {
   ]);
 
   const tempFile = "./test-simple.parquet";
-  df.writeParquet(tempFile);
+  writeParquet(df, tempFile);
 
   // Read back and verify
   const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  const buffer = uint8Array.buffer.slice(
+    uint8Array.byteOffset,
+    uint8Array.byteOffset + uint8Array.byteLength,
+  );
   const data = await parquetReadObjects({ file: buffer });
-  
+
   expect(data.length).toBe(2);
   expect(data[0].id).toBe(1);
   expect(data[0].name).toBe("Alice");
@@ -58,8 +65,9 @@ Deno.test("writeParquet() chaining works", async () => {
 
   const tempFile = "./test-chaining.parquet";
 
+  writeParquet(df, tempFile);
+
   const result = df
-    .writeParquet(tempFile)
     .mutate({ doubleAge: (row) => row.age * 2 })
     .filter((row) => row.doubleAge > 50);
 
@@ -69,10 +77,13 @@ Deno.test("writeParquet() chaining works", async () => {
 
   // Verify file was written
   expect((await Deno.stat(tempFile)).isFile).toBe(true);
-  
+
   // Verify file contents
   const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  const buffer = uint8Array.buffer.slice(
+    uint8Array.byteOffset,
+    uint8Array.byteOffset + uint8Array.byteLength,
+  );
   const data = await parquetReadObjects({ file: buffer });
   expect(data.length).toBe(2); // Original data before mutation
 
@@ -84,7 +95,7 @@ Deno.test("writeParquet() empty DataFrame", () => {
   const tempFile = "./test-empty.parquet";
 
   // Should not throw, but create empty/minimal file
-  emptyDf.writeParquet(tempFile);
+  writeParquet(emptyDf, tempFile);
 
   // For empty DataFrame, hyparquet-writer will create a minimal parquet file or throw
   // We'll just verify it doesn't crash the operation
@@ -100,34 +111,37 @@ Deno.test("writeParquet() empty DataFrame", () => {
 
 Deno.test("writeParquet() with different data types", async () => {
   const df = createDataFrame([
-    { 
-      name: "Alice", 
-      score: 95.5, 
-      passed: true, 
-      count: 42 
+    {
+      name: "Alice",
+      score: 95.5,
+      passed: true,
+      count: 42,
     },
-    { 
-      name: "Bob", 
-      score: 87.2, 
-      passed: false, 
-      count: 38 
+    {
+      name: "Bob",
+      score: 87.2,
+      passed: false,
+      count: 38,
     },
   ]);
 
   const tempFile = "./test-types.parquet";
-  df.writeParquet(tempFile);
+  writeParquet(df, tempFile);
 
   // Read back and verify types are preserved
   const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  const buffer = uint8Array.buffer.slice(
+    uint8Array.byteOffset,
+    uint8Array.byteOffset + uint8Array.byteLength,
+  );
   const data = await parquetReadObjects({ file: buffer });
-  
+
   expect(data.length).toBe(2);
   expect(typeof data[0].name).toBe("string");
   expect(typeof data[0].score).toBe("number");
   expect(typeof data[0].passed).toBe("boolean");
   expect(typeof data[0].count).toBe("number");
-  
+
   expect(data[0].name).toBe("Alice");
   expect(data[0].score).toBe(95.5);
   expect(data[0].passed).toBe(true);
@@ -144,29 +158,20 @@ Deno.test("writeParquet() with null values", async () => {
   ]);
 
   const tempFile = "./test-nulls.parquet";
-  df.writeParquet(tempFile);
+  writeParquet(df, tempFile);
 
   // Read back and verify nulls are preserved
   const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(uint8Array.byteOffset, uint8Array.byteOffset + uint8Array.byteLength);
+  const buffer = uint8Array.buffer.slice(
+    uint8Array.byteOffset,
+    uint8Array.byteOffset + uint8Array.byteLength,
+  );
   const data = await parquetReadObjects({ file: buffer });
-  
+
   expect(data.length).toBe(3);
   expect(data[0].score).toBe(95.5);
   expect(data[1].score).toBeNull();
   expect(data[2].name).toBeNull();
 
   await Deno.remove(tempFile);
-});
-
-Deno.test("writeParquet() toParquetBuffer function", () => {
-  const df = createDataFrame([
-    { id: 1, name: "Alice", age: 30 },
-    { id: 2, name: "Bob", age: 25 },
-  ]);
-
-  const buffer = df.toParquetBuffer();
-  
-  expect(buffer).toBeInstanceOf(ArrayBuffer);
-  expect(buffer.byteLength).toBeGreaterThan(0);
 });

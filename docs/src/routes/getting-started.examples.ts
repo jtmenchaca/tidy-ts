@@ -1,6 +1,6 @@
 // Code examples for getting started
 export const gettingStartedExamples = {
-  quickTutorial: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  quickTutorial: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // 1. Create a DataFrame from your data
 const sales = createDataFrame([
@@ -25,8 +25,8 @@ const analysis = sales
 
   // Calculate summary statistics
   .summarize({
-    total_revenue: (group) => stats.sum(group.revenue),
-    avg_quantity: (group) => stats.mean(group.quantity),
+    total_revenue: (group) => s.sum(group.revenue),
+    avg_quantity: (group) => s.mean(group.quantity),
     product_count: (group) => group.nrows()
   })
 
@@ -56,7 +56,7 @@ const people = createDataFrame([
     row_number: (_r, idx) => idx + 1,
     // Access the entire DataFrame for calculations across all rows
     cumulative_mass: (_r, _idx, df) => {
-      return stats.sum(df.mass);
+      return s.sum(df.mass);
     },
     // Return constant values for all rows
     constant: () => "fixed_value",
@@ -74,7 +74,7 @@ const masses = people.mass; // number[] - all masses as an array
 const species = people.species; // string[] - all species as an array
 console.log("All names:", names);
 console.log("All masses:", masses);
-console.log("Unique species:", stats.unique(species));`,
+console.log("Unique species:", s.unique(species));`,
 
   typescriptIntegration: `type Character = {
   id: number;
@@ -117,7 +117,7 @@ const result = data
   .groupBy("name")
   .summarize({
     count: group => group.nrows(),
-    total: group => stats.sum(group.doubled),
+    total: group => s.sum(group.doubled),
   });
 
 result.print("Chained operations result:");`,
@@ -135,5 +135,5 @@ result.print("Chained operations result:");`,
     pnpmLegacy: `pnpm dlx jsr add @tidy-ts/dataframe`,
   },
 
-  importStatement: `import { createDataFrame, stats } from "@tidy-ts/dataframe";`,
+  importStatement: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";`,
 };

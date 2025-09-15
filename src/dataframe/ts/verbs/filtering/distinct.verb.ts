@@ -8,7 +8,7 @@ import {
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-import { distinct_rows_generic_typed } from "../../wasm-loader.ts";
+import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
 
 // API: allow column subset; default = all
 export function distinct<Row extends object>(

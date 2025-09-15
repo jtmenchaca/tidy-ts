@@ -29,7 +29,7 @@ const navigationFlow: NavigationItem[] = [
   {
     title: "Data I/O Operations",
     path: "/data-io",
-    description: "Read and write CSV and Parquet files with type safety",
+    description: "Read and write CSV, Parquet, and Arrow files with type safety",
   },
   {
     title: "Transforming Data",

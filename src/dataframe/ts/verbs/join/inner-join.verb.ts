@@ -8,7 +8,7 @@ import {
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-import { inner_join_typed_multi_u32 } from "../../wasm-loader.ts";
+import { inner_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
 import type { Prettify, UnifyUnion } from "../../dataframe/index.ts";
 import type {
   JoinKey,

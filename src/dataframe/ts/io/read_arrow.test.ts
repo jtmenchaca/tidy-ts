@@ -2,7 +2,15 @@
 import { expect } from "@std/expect";
 import { z } from "zod";
 import { type DataFrame, read_arrow } from "@tidy-ts/dataframe";
-import { tableToIPC, tableFromArrays, int32, utf8, float32, bool, type Table } from "@uwdata/flechette";
+import {
+  bool,
+  float32,
+  int32,
+  type Table,
+  tableFromArrays,
+  tableToIPC,
+  utf8,
+} from "@uwdata/flechette";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · test helper - create arrow buffer from data                          │
@@ -103,7 +111,7 @@ Deno.test("read_arrow · NA handling for nullable / optional", async () => {
   const df = await read_arrow(buffer, Row);
 
   console.log("NA handling test:", JSON.stringify(df, null, 2));
-  
+
   expect(df[0].score).toBe(85.5);
   expect(df[1].score).toBeNull(); // nullable field gets null
   expect(df[1].rating).toBeUndefined(); // optional field gets undefined
@@ -250,23 +258,37 @@ Deno.test("read_arrow · type inference with complex schema", async () => {
   const jediAcademyData = {
     name: [
       "Luke Skywalker",
-      "Obi-Wan Kenobi", 
+      "Obi-Wan Kenobi",
       "Yoda",
       "Mace Windu",
       "Ahsoka Tano",
       "Anakin Skywalker",
     ],
     species: ["Human", "Human", "Unknown", "Human", "Togruta", "Human"],
-    homeworld: ["Tatooine", "Stewjon", "Unknown", "Haruun Kal", "Shili", "Tatooine"],
+    homeworld: [
+      "Tatooine",
+      "Stewjon",
+      "Unknown",
+      "Haruun Kal",
+      "Shili",
+      "Tatooine",
+    ],
     lightsaber_color: ["blue", "blue", "green", "purple", "white", "blue"],
-    rank: ["Jedi Knight", "Jedi Master", "Grand Master", "Jedi Master", "Jedi Padawan", "Jedi Knight"],
+    rank: [
+      "Jedi Knight",
+      "Jedi Master",
+      "Grand Master",
+      "Jedi Master",
+      "Jedi Padawan",
+      "Jedi Knight",
+    ],
     force_sensitivity: [9.2, 9.5, 10.0, 9.3, 8.7, 9.8],
   };
 
   const table = tableFromArrays(jediAcademyData, {
     types: {
       name: utf8(),
-      species: utf8(), 
+      species: utf8(),
       homeworld: utf8(),
       lightsaber_color: utf8(),
       rank: utf8(),

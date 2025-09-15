@@ -1,6 +1,6 @@
 // Code examples for DataFrame basics
 export const dataframeBasicsExamples = {
-  dataframeProperties: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  dataframeProperties: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const jediKnights = createDataFrame([
   { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
@@ -33,15 +33,15 @@ const species = jediKnights.species; // readonly string[] - all species
 
 console.log("All names:", names);
 console.log("All masses:", masses);
-console.log("Unique species:", stats.unique(species));
+console.log("Unique species:", s.unique(species));
 
 // Use with any array function for quick analysis
 const avgMass = masses.reduce((sum, mass) => sum + mass, 0) / masses.length;
 const maxHeight = Math.max(...jediKnights.height);
 
 // or use the stats module
-const avgMassTidy = stats.mean(masses);
-const maxHeightTidy = stats.max(jediKnights.height);
+const avgMassTidy = s.mean(masses);
+const maxHeightTidy = s.max(jediKnights.height);
 
   console.log("Average mass:", avgMass);
   console.log("Max height:", maxHeight);

@@ -8,7 +8,7 @@ import {
   // stable single-key sorters used per pass (last→first) for mixed/string/grouped
   stable_sort_indices_f64_wasm,
   stable_sort_indices_u32_wasm,
-} from "../../wasm-loader.ts";
+} from "../../wasm/wasm-loader.ts";
 type SortDirection = "asc" | "desc";
 
 // Rank assigned to string "NA" (null/undefined) values; ensures they sort last.

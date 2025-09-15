@@ -8,6 +8,7 @@ import {
   DatabaseIcon,
   HomeIcon,
 } from "lucide-react";
+import TidyTsLogo from "../../assets/tidy-ts-logo.svg";
 import {
   Sidebar,
   SidebarContent,
@@ -21,6 +22,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "../ui/sidebar.tsx";
 import {
   Collapsible,
@@ -35,6 +37,7 @@ interface AppSidebarProps {
 }
 
 export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
+  const { isMobile, setOpenMobile } = useSidebar();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     "core-operations": true,
     "advanced-operations": true,
@@ -49,8 +52,12 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
     }));
   };
 
-  // Function to handle navigation with scroll to top
+  // Function to handle navigation with scroll to top and close mobile sidebar
   const handleNavigation = () => {
+    // Close mobile sidebar if on mobile
+    if (isMobile) {
+      setOpenMobile(false);
+    }
     // Scroll to top immediately, then again after a short delay to ensure it works
     window.scrollTo({ top: 0, behavior: "smooth" });
     setTimeout(() => {
@@ -135,9 +142,11 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
           className="flex items-center gap-2 hover:opacity-75 transition-opacity"
           onClick={handleNavigation}
         >
-          <div className="hexagon-logo hex-bee" aria-hidden="true">
-            <span className="stripes" />
-          </div>
+          <img 
+            src={TidyTsLogo} 
+            alt="Tidy-TS Logo" 
+            className="h-10 w-10"
+          />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             Tidy-TS
           </h2>

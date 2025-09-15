@@ -28,8 +28,10 @@ web-sys = { version = "=0.3.77", optional = true, features = ["console"] }
 # faer-core = "0.17.1"
 # faer-qr = "0.7.0"
 # statrs = "0.17.1"
-# serde = { version = "1.0.219", features = ["derive"] }  # Only used in tidy-stats, not main dataframe
-# rand = "0.8.5"
+serde = { version = "1.0.219", features = ["derive"] }  # Used in stats module
+rand = "0.8.5"
+statrs = "0.17.1"
+getrandom = { version = "0.2", features = ["js"] }
 # regex = "1.11.1"  # Not used in current Rust code
 
 # High-performance data structures for WASM kernels

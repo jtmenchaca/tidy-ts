@@ -3,6 +3,7 @@ import {
   type DataFrame,
   read_csv,
   stats,
+  write_csv,
 } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
@@ -179,12 +180,9 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
   // Write basic CSV
   // Start with the simplest case: basic CSV export
-  const basicCsv = salesData.writeCSV(
-    "./examples/dataframe/output/salesData.csv",
-  );
+  write_csv(salesData, "./examples/dataframe/output/salesData.csv");
 
-  console.log("Basic CSV output:");
-  console.log(basicCsv);
+  console.log("Basic CSV written successfully");
 
   // ============================================================================
   // 5. CSV WITH CUSTOM OPTIONS - Handling missing values
@@ -193,12 +191,11 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
   // Custom CSV formatting
   // This shows how to handle null values and customize output
-  const customCsv = salesData.writeCSV(
-    "./examples/dataframe/output/salesData.csv",
-  );
+  write_csv(salesData, "./examples/dataframe/output/salesData.csv");
 
-  console.log("Custom formatted CSV (null values replaced with N/A):");
-  console.log(customCsv);
+  console.log(
+    "Custom formatted CSV (null values replaced with N/A) written successfully",
+  );
 
   // ============================================================================
   // 6. WORKING WITH PROCESSED DATA - Transform before export
@@ -233,11 +230,8 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Processed data for export:");
   processedData.print();
 
-  const processedCsv = processedData.writeCSV(
-    "./examples/dataframe/output/processedData.csv",
-  );
-  console.log("\nProcessed data as CSV:");
-  console.log(processedCsv);
+  write_csv(processedData, "./examples/dataframe/output/processedData.csv");
+  console.log("\nProcessed data as CSV written successfully");
 
   // ============================================================================
   // 7. EXPORTING AGGREGATED DATA - Summary statistics
@@ -263,11 +257,8 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Regional summary data:");
   summaryData.print();
 
-  const summaryCsv = summaryData.writeCSV(
-    "./examples/dataframe/output/summaryData.csv",
-  );
-  console.log("\nSummary data as CSV:");
-  console.log(summaryCsv);
+  write_csv(summaryData, "./examples/dataframe/output/summaryData.csv");
+  console.log("\nSummary data as CSV written successfully");
 
   // ============================================================================
   // 8. EXPORTING FOR DATABASE IMPORT - Database-ready format
@@ -301,9 +292,8 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Database-ready export:");
   dbExport.print();
 
-  const dbCsv = dbExport.writeCSV("./examples/dataframe/output/dbExport.csv");
-  console.log("\nDatabase export as CSV:");
-  console.log(dbCsv);
+  write_csv(dbExport, "./examples/dataframe/output/dbExport.csv");
+  console.log("\nDatabase export as CSV written successfully");
 
   // ============================================================================
   // 9. EXPORTING FOR ANALYTICS/ML - Machine learning format
@@ -416,11 +406,11 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Efficiently processed summary:");
   efficientProcessing.print();
 
-  const efficientCsv = efficientProcessing.writeCSV(
+  write_csv(
+    efficientProcessing,
     "./examples/dataframe/output/efficientProcessing.csv",
   );
-  console.log("\nEfficient processing result as CSV:");
-  console.log(efficientCsv);
+  console.log("\nEfficient processing result as CSV written successfully");
 
   // ============================================================================
   // 13. ADVANCED EXPORT PATTERNS - Complex workflows
@@ -453,11 +443,8 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Advanced export pattern (quarterly analysis):");
   advancedExport.print();
 
-  const advancedCsv = advancedExport.writeCSV(
-    "./examples/dataframe/output/advancedExport.csv",
-  );
-  console.log("\nAdvanced export as CSV:");
-  console.log(advancedCsv);
+  write_csv(advancedExport, "./examples/dataframe/output/advancedExport.csv");
+  console.log("\nAdvanced export as CSV written successfully");
 
   // ============================================================================
   // 14. PUTTING IT ALL TOGETHER - Complete export workflow
@@ -502,9 +489,6 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Complete export workflow combining all concepts:");
   finalResult.print();
 
-  const finalCsv = finalResult.writeCSV(
-    "./examples/dataframe/output/finalResult.csv",
-  );
-  console.log("\nFinal workflow result as CSV:");
-  console.log(finalCsv);
+  write_csv(finalResult, "./examples/dataframe/output/finalResult.csv");
+  console.log("\nFinal workflow result as CSV written successfully");
 });

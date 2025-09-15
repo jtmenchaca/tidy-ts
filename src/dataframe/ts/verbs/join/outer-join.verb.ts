@@ -2,7 +2,7 @@
 // Columnar-first outer join: gather/merge by index, undefined for unmatched.
 // Adaptive path (JS hash for big inputs; WASM for small), and precomputed bases.
 
-import { outer_join_typed_multi_u32 } from "../../wasm-loader.ts";
+import { outer_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import {
   type ColumnarStore,

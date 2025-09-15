@@ -1,6 +1,6 @@
 // Code examples for grouping and aggregation
 export const groupingExamples = {
-  basicGroupBy: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  basicGroupBy: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172, year: 2023 },
@@ -15,10 +15,10 @@ const speciesAnalysis = people
   .groupBy("species")
   .summarise({
     count: (group) => group.nrows(),
-    avg_height: (group) => stats.round(stats.mean(group.height), 1),
-    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
-    max_height: (group) => stats.max(group.height),
-    min_mass: (group) => stats.min(group.mass),
+    avg_height: (group) => s.round(s.mean(group.height), 1),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
+    max_height: (group) => s.max(group.height),
+    min_mass: (group) => s.min(group.mass),
   })
   .arrange("avg_mass", "desc");
 
@@ -29,9 +29,9 @@ const multiGroupAnalysis = people
   .groupBy("species", "year")
   .summarise({
     count: (group) => group.nrows(),
-    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
-    avg_height: (group) => stats.round(stats.mean(group.height), 1),
-    total_mass: (group) => stats.sum(group.mass),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
+    avg_height: (group) => s.round(s.mean(group.height), 1),
+    total_mass: (group) => s.sum(group.mass),
   })
   .arrange("species", "year");
 
@@ -54,8 +54,8 @@ const categoryAnalysis = people
   .groupBy(["mass_category", "height_category"])
   .summarise({
     count: (group) => group.nrows(),
-    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
-    avg_height: (group) => stats.round(stats.mean(group.height), 1),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
+    avg_height: (group) => s.round(s.mean(group.height), 1),
   })
   .arrange("count", "desc");
 
@@ -67,7 +67,7 @@ const basicAnalysis = people
   .summarise({
     total_count: (group) => group.nrows(),
     heavy_count: (group) => group.filter((row) => row.mass > 100).nrows(),
-    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
     top_performer: (group) => {
       return group.sliceMax("mass", 1).extractHead("name", 1) || "N/A";
     },

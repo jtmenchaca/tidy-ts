@@ -22,25 +22,25 @@ export function StatsModuleReference() {
             <h4 className="font-medium mb-2">Basic Statistics</h4>
             <ul className="text-sm space-y-1">
               <li>
-                • <code>stats.sum()</code> - Sum of values
+                • <code>s.sum()</code> - Sum of values
               </li>
               <li>
-                • <code>stats.mean()</code> - Arithmetic mean
+                • <code>s.mean()</code> - Arithmetic mean
               </li>
               <li>
-                • <code>stats.median()</code> - Median value
+                • <code>s.median()</code> - Median value
               </li>
               <li>
-                • <code>stats.mode()</code> - Most frequent value
+                • <code>s.mode()</code> - Most frequent value
               </li>
               <li>
-                • <code>stats.min()</code> - Minimum value
+                • <code>s.min()</code> - Minimum value
               </li>
               <li>
-                • <code>stats.max()</code> - Maximum value
+                • <code>s.max()</code> - Maximum value
               </li>
               <li>
-                • <code>stats.product()</code> - Product of values
+                • <code>s.product()</code> - Product of values
               </li>
             </ul>
           </div>
@@ -49,27 +49,27 @@ export function StatsModuleReference() {
             <h4 className="font-medium mb-2">Spread & Distribution</h4>
             <ul className="text-sm space-y-1">
               <li>
-                • <code>stats.range()</code> - Range (max - min)
+                • <code>s.range()</code> - Range (max - min)
               </li>
               <li>
-                • <code>stats.variance()</code> - Variance
+                • <code>s.variance()</code> - Variance
               </li>
               <li>
-                • <code>stats.stdev()</code> - Standard deviation
+                • <code>s.stdev()</code> - Standard deviation
               </li>
               <li>
-                • <code>stats.iqr()</code> - Interquartile range
+                • <code>s.iqr()</code> - Interquartile range
               </li>
               <li>
-                • <code>stats.quantile()</code>{" "}
+                • <code>s.quantile()</code>{" "}
                 - Quantiles and percentiles
               </li>
               <li>
-                • <code>stats.quartiles()</code>{" "}
+                • <code>s.quartiles()</code>{" "}
                 - First, second, third quartiles
               </li>
               <li>
-                • <code>stats.percentileRank()</code> - Percentile rank
+                • <code>s.percentileRank()</code> - Percentile rank
               </li>
             </ul>
           </div>
@@ -78,43 +78,43 @@ export function StatsModuleReference() {
             <h4 className="font-medium mb-2">Advanced Functions</h4>
             <ul className="text-sm space-y-1">
               <li>
-                • <code>stats.rank()</code> - Ranking values
+                • <code>s.rank()</code> - Ranking values
               </li>
               <li>
-                • <code>stats.denseRank()</code> - Dense ranking
+                • <code>s.denseRank()</code> - Dense ranking
               </li>
               <li>
-                • <code>stats.cumsum()</code> - Cumulative sum
+                • <code>s.cumsum()</code> - Cumulative sum
               </li>
               <li>
-                • <code>stats.cummean()</code> - Cumulative mean
+                • <code>s.cummean()</code> - Cumulative mean
               </li>
               <li>
-                • <code>stats.cumprod()</code> - Cumulative product
+                • <code>s.cumprod()</code> - Cumulative product
               </li>
               <li>
-                • <code>stats.cummin()</code> - Cumulative minimum
+                • <code>s.cummin()</code> - Cumulative minimum
               </li>
               <li>
-                • <code>stats.cummax()</code> - Cumulative maximum
+                • <code>s.cummax()</code> - Cumulative maximum
               </li>
               <li>
-                • <code>stats.lag()</code> - Lag values
+                • <code>s.lag()</code> - Lag values
               </li>
               <li>
-                • <code>stats.lead()</code> - Lead values
+                • <code>s.lead()</code> - Lead values
               </li>
               <li>
-                • <code>stats.normalize()</code> - Normalize values
+                • <code>s.normalize()</code> - Normalize values
               </li>
               <li>
-                • <code>stats.round()</code> - Round to decimal places
+                • <code>s.round()</code> - Round to decimal places
               </li>
               <li>
-                • <code>stats.floor()</code> - Floor values
+                • <code>s.floor()</code> - Floor values
               </li>
               <li>
-                • <code>stats.ceiling()</code> - Ceiling values
+                • <code>s.ceiling()</code> - Ceiling values
               </li>
             </ul>
           </div>
@@ -123,10 +123,10 @@ export function StatsModuleReference() {
             <h4 className="font-medium mb-2">Bivariate Statistics</h4>
             <ul className="text-sm space-y-1">
               <li>
-                • <code>stats.covariance()</code> - Covariance
+                • <code>s.covariance()</code> - Covariance
               </li>
               <li>
-                • <code>stats.corr()</code> - Correlation coefficient
+                • <code>s.corr()</code> - Correlation coefficient
               </li>
             </ul>
           </div>
@@ -135,14 +135,14 @@ export function StatsModuleReference() {
             <h4 className="font-medium mb-2">Count & Unique</h4>
             <ul className="text-sm space-y-1">
               <li>
-                • <code>stats.unique()</code> - Unique values
+                • <code>s.unique()</code> - Unique values
               </li>
               <li>
-                • <code>stats.uniqueCount()</code>{" "}
+                • <code>s.uniqueCount()</code>{" "}
                 - Count of unique values
               </li>
               <li>
-                • <code>stats.countValue()</code> - Count specific value
+                • <code>s.countValue()</code> - Count specific value
               </li>
             </ul>
           </div>

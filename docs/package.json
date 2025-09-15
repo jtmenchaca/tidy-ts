@@ -8,7 +8,6 @@
     "build": "vite build",
     "prerender": "node scripts/prerender-with-content.js",
     "build:full": "vite build && npm run prerender",
-    "serve": "cd dist && python3 -m http.server 8080",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check": "bunx tsc --noEmit -p src/tsconfig.app.json"
   },

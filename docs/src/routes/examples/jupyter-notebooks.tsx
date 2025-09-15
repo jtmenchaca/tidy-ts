@@ -133,7 +133,7 @@ console.log("Monthly totals:", monthlyTotals);`}
         title="Interactive Data Exploration"
         description="Real-time interactive visualizations in Jupyter"
         explanation="Jupyter notebooks with Tidy-TS enable instant, interactive data exploration. Every graph is live and responsive - zoom, pan, hover for details, and see your data come alive!"
-        code={`import { createDataFrame, stats } from "@jsr/tidy-ts__dataframe";
+        code={`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
 
 // Galactic fleet data - explore the Star Wars universe!
 const fleetData = createDataFrame([
@@ -228,7 +228,7 @@ console.log("Raw data:", rawData);`}
         title="Statistical Analysis"
         description="Perform statistical calculations and summaries"
         explanation="Jupyter notebooks are perfect for statistical analysis. You can easily calculate descriptive statistics, correlations, and other metrics while keeping your data and results organized."
-        code={`import { createDataFrame, stats } from "@jsr/tidy-ts__dataframe";
+        code={`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
 
 // Sample dataset for analysis
 const data = createDataFrame([
@@ -241,20 +241,20 @@ const data = createDataFrame([
 
 // Calculate descriptive statistics
 const ageStats = data.summarise({
-  meanAge: stats.mean("age"),
-  medianAge: stats.median("age"),
-  minAge: stats.min("age"),
-  maxAge: stats.max("age"),
-  stdAge: stats.std("age")
+  meanAge: s.mean("age"),
+  medianAge: s.median("age"),
+  minAge: s.min("age"),
+  maxAge: s.max("age"),
+  stdAge: s.std("age")
 });
 
 console.log("Age statistics:", ageStats);
 
 // Group by department and calculate salary statistics
 const deptStats = data.groupBy("department").summarise({
-  avgSalary: stats.mean("salary"),
-  medianSalary: stats.median("salary"),
-  count: stats.count()
+  avgSalary: s.mean("salary"),
+  medianSalary: s.median("salary"),
+  count: s.count()
 });
 
 console.log("Department salary statistics:", deptStats);`}

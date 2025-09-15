@@ -56,7 +56,7 @@ const heavyValidatedCharacters = await people
 
 heavyValidatedCharacters.print("Heavy validated characters:");`,
 
-  asyncAggregation: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  asyncAggregation: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Async function to fetch species metadata - more realistic example
 async function fetchSpeciesMetadata(species: string): Promise<number> {
@@ -70,8 +70,8 @@ const speciesAnalysis = await people
   .groupBy("species")
   .summarise({
     count: (group) => group.nrows(),
-    avg_mass: (group) => stats.round(stats.mean(group.mass), 1),
-    total_mass: (group) => stats.sum(group.mass),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
+    total_mass: (group) => s.sum(group.mass),
     expected_lifespan: async (group) => {
       const species = group.extractHead("species", 1) || "";
       return await fetchSpeciesMetadata(species);
@@ -102,7 +102,7 @@ const advancedResult = await data
     },
   });`,
 
-  errorHandling: `// Async function that might fail - more realistic example
+  errorHandling: `// Pattern 1: Try/catch for unexpected errors that should stop execution
 async function fetchUserRating(mass: number): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   if (mass < 30) {
@@ -113,7 +113,7 @@ async function fetchUserRating(mass: number): Promise<string> {
   return "⭐ Lightweight";
 }
 
-// This should handle the error gracefully
+// Handle unexpected errors that should stop the pipeline
 try {
   const result = await people
     .mutate({
@@ -122,6 +122,36 @@ try {
   
   result.print("DataFrame with ratings:");
 } catch (error) {
-  console.error("Error occurred:", error);
-}`,
+  console.error("Unexpected error occurred:", error);
+  // Handle the error - maybe fallback data or user notification
+}
+
+// Pattern 2: Clean error value handling - return errors as values
+async function fetchUserRatingSafe(mass: number): Promise<string | Error> {
+  await new Promise((resolve) => setTimeout(resolve, 1));
+  if (mass < 30) {
+    return new Error("Mass too low for rating");
+  }
+  if (mass > 100) return "⭐ Heavyweight";
+  if (mass > 50) return "⭐ Medium";
+  return "⭐ Lightweight";
+}
+
+// Clean error handling - errors become part of the data
+const resultWithErrors = await people
+  .mutate({
+    rating: async (row) => await fetchUserRatingSafe(row.mass),
+  });
+
+// Now you can filter, analyze, or handle errors as data
+const successfulRatings = resultWithErrors.filter(row => 
+  typeof row.rating === 'string'
+);
+
+const errorRows = resultWithErrors.filter(row => 
+  row.rating instanceof Error
+);
+
+console.log("Successful ratings:", successfulRatings.nrows());
+console.log("Failed ratings:", errorRows.nrows());`,
 };

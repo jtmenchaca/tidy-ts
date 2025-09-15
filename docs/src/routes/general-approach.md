@@ -85,7 +85,7 @@ export const topicExamples = {
 const df = createDataFrame([...]);
 df.print("Result:");`,
 
-  advancedExample: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  advancedExample: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // More complex example with additional features
 const result = df

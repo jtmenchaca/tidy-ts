@@ -42,7 +42,7 @@ Deno.test("read_parquet · NA handling for nullable / optional", async () => {
   expect(df[0].String).toBe("Hello");
   expect(df[1].String).toBe("This is");
 
-  // Test that we can handle the data properly  
+  // Test that we can handle the data properly
   expect(df.String.length).toBe(14);
 });
 

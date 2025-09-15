@@ -23,7 +23,7 @@ interface DataRow {
 
 // Boolean flags to enable/disable specific operations
 const OPTIONS = {
-  creation: false,
+  creation: true,
   filter: false,
   select: false,
   sort: false,
@@ -32,9 +32,9 @@ const OPTIONS = {
   groupBy: false,
   summarize: false,
   innerJoin: false,
-  leftJoin: true,
+  leftJoin: false,
   outerJoin: false,
-  pivotLonger: true,
+  pivotLonger: false,
   pivotWider: false,
   bindRows: false,
   stats: false,
@@ -126,7 +126,7 @@ export function runTypeScriptBenchmarks() {
 
     // Prebuild DataFrames for consistent performance
     console.log("    - Prebuilding DataFrames...");
-    const tidyDf = createDataFrame(data, { trace: true });
+    const tidyDf = createDataFrame(data); // Remove tracing overhead
     const arqueroDf = aq.from(data);
 
     // Prebuild specialized dataframes for specific operations
@@ -154,27 +154,24 @@ export function runTypeScriptBenchmarks() {
     }));
 
     // Prebuild all DataFrames for consistent performance
-    const tidyNumericDf = createDataFrame(numericData, { trace: true });
+    const tidyNumericDf = createDataFrame(numericData); // Remove tracing overhead
     const arqueroNumericDf = aq.from(numericData);
-    const tidyMixedDf = createDataFrame(mixedData, { trace: true });
+    const tidyMixedDf = createDataFrame(mixedData); // Remove tracing overhead
     const arqueroMixedDf = aq.from(mixedData);
-    const tidyGroupedDf = createDataFrame(groupedData, { trace: true });
+    const tidyGroupedDf = createDataFrame(groupedData); // Remove tracing overhead
     const arqueroGroupedDf = aq.from(groupedData);
-    const tidyPivotDf = createDataFrame(pivotData, { trace: true });
+    const tidyPivotDf = createDataFrame(pivotData); // Remove tracing overhead
     const arqueroPivotDf = aq.from(pivotData);
-    const leftTidyDf = createDataFrame(leftData, { trace: true });
-    const rightTidyDf = createDataFrame(rightData, { trace: true });
+    const leftTidyDf = createDataFrame(leftData); // Remove tracing overhead
+    const rightTidyDf = createDataFrame(rightData); // Remove tracing overhead
     const leftArqueroDf = aq.from(leftData);
     const rightArqueroDf = aq.from(rightData);
 
     // Prebuild split dataframes for bindRows operations
     const df1Tidy = createDataFrame(
       data.slice(0, Math.floor(data.length / 2)),
-      { trace: true },
     );
-    const df2Tidy = createDataFrame(data.slice(Math.floor(data.length / 2)), {
-      trace: true,
-    });
+    const df2Tidy = createDataFrame(data.slice(Math.floor(data.length / 2)));
     const df1Arquero = aq.from(data.slice(0, Math.floor(data.length / 2)));
     const df2Arquero = aq.from(data.slice(Math.floor(data.length / 2)));
 
@@ -184,7 +181,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.creation) {
       console.log("    - Starting creation benchmark...");
       const tidyTime = measure(
-        () => createDataFrame(data, { trace: true }),
+        () => createDataFrame(data), // Remove tracing overhead
         ITERATIONS,
         WARMUP_RUNS,
       );

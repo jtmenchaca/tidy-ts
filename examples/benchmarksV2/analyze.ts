@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createDataFrame, read_csv, stats } from "@tidy-ts/dataframe";
+import { createDataFrame, read_csv, stats, writeCSV } from "@tidy-ts/dataframe";
 
 // ============================================================================
 // BENCHMARK ANALYSIS TOOL
@@ -208,7 +208,7 @@ async function main() {
     // EXPORT DETAILED RESULTS
     // ============================================================================
     // Export detailed CSV
-    metrics.writeCSV("results/analysis_detailed.csv");
+    writeCSV(metrics, "results/analysis_detailed.csv");
 
     console.log("💾 Detailed analysis saved to: results/analysis_detailed.csv");
     console.log(
