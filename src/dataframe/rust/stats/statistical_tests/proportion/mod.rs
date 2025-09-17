@@ -6,6 +6,7 @@
 //! between the proportions of two groups or to test a single proportion against a known value.
 //!
 
+pub mod chi_square_test;
 pub mod one_sample;
 pub mod sample_size;
 pub mod two_sample;
@@ -14,6 +15,7 @@ pub mod two_sample;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
+pub use chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample};
 pub use one_sample::z_test;
 pub use sample_size::prop_sample_size;
 pub use two_sample::z_test_ind;

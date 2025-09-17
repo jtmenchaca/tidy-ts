@@ -598,6 +598,41 @@ pub struct FishersExactTestResult {
     pub alpha: f64,
     pub error_message: Option<String>,
     pub confidence_interval: ConfidenceInterval,
-    pub odds_ratio: f64,
+    pub effect_size: EffectSize,
     pub method: String,
+}
+
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
+#[derive(Debug)]
+pub struct KolmogorovSmirnovTestResult {
+    pub(crate) test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub(crate) test_name: String,
+    pub alpha: f64,
+    pub sample1_size: usize,
+    pub sample2_size: usize,
+    pub critical_value: f64,
+    pub d_statistic: f64,
+    pub d_plus: f64,
+    pub d_minus: f64,
+    pub(crate) alternative: String,
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+impl KolmogorovSmirnovTestResult {
+    #[wasm_bindgen(getter)]
+    pub fn test_statistic(&self) -> TestStatistic {
+        self.test_statistic.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn test_name(&self) -> String {
+        self.test_name.clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn alternative(&self) -> String {
+        self.alternative.clone()
+    }
 }

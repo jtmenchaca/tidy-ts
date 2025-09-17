@@ -2254,6 +2254,73 @@ export function fishers_exact_test_wasm(
 }
 
 /**
+ * WASM export for two-sample Kolmogorov-Smirnov test
+ * @param {Float64Array} x
+ * @param {Float64Array} y
+ * @param {string} alternative
+ * @param {number} alpha
+ * @returns {KolmogorovSmirnovTestResult}
+ */
+export function kolmogorov_smirnov_test_wasm(x, y, alternative, alpha) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len2 = WASM_VECTOR_LEN;
+  const ret = wasm.kolmogorov_smirnov_test_wasm(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    alpha,
+  );
+  return KolmogorovSmirnovTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
+ * @param {Float64Array} x
+ * @param {number} min
+ * @param {number} max
+ * @param {string} alternative
+ * @param {number} alpha
+ * @returns {KolmogorovSmirnovTestResult}
+ */
+export function kolmogorov_smirnov_uniform_wasm(
+  x,
+  min,
+  max,
+  alternative,
+  alpha,
+) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.kolmogorov_smirnov_uniform_wasm(
+    ptr0,
+    len0,
+    min,
+    max,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return KolmogorovSmirnovTestResult.__wrap(ret);
+}
+
+/**
  * WASM export for Kruskal-Wallis test
  * @param {Float64Array} data
  * @param {Uint32Array} group_sizes
@@ -2436,7 +2503,7 @@ export function dunn_test_wasm(data, group_sizes, alpha) {
 }
 
 /**
- * WASM export for one-sample proportion test
+ * WASM export for one-sample proportion test (chi-square approach, matches R)
  * @param {number} x
  * @param {number} n
  * @param {number} p0
@@ -2456,14 +2523,14 @@ export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
 }
 
 /**
- * WASM export for two-sample proportion test
+ * WASM export for two-sample proportion test (chi-square approach, matches R)
  * @param {number} x1
  * @param {number} n1
  * @param {number} x2
  * @param {number} n2
  * @param {number} alpha
  * @param {string} alternative
- * @param {boolean} pooled
+ * @param {boolean} _pooled
  * @returns {TwoSampleProportionTestResult}
  */
 export function proportion_test_two_sample(
@@ -2473,7 +2540,7 @@ export function proportion_test_two_sample(
   n2,
   alpha,
   alternative,
-  pooled,
+  _pooled,
 ) {
   const ptr0 = passStringToWasm0(
     alternative,
@@ -2489,7 +2556,7 @@ export function proportion_test_two_sample(
     alpha,
     ptr0,
     len0,
-    pooled,
+    _pooled,
   );
   return TwoSampleProportionTestResult.__wrap(ret);
 }
@@ -3883,14 +3950,14 @@ export class FishersExactTestResult {
    * @returns {number}
    */
   get p_value() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set p_value(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -3919,24 +3986,22 @@ export class FishersExactTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
@@ -3964,7 +4029,7 @@ export class FishersExactTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+    wasm.__wbg_set_fishersexacttestresult_error_message(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -3991,17 +4056,19 @@ export class FishersExactTestResult {
     );
   }
   /**
-   * @returns {number}
+   * @returns {EffectSize}
    */
-  get odds_ratio() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
-    return ret;
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
   }
   /**
-   * @param {number} arg0
+   * @param {EffectSize} arg0
    */
-  set odds_ratio(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {string}
@@ -4238,11 +4305,7 @@ export class KendallCorrelationTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
@@ -4295,7 +4358,7 @@ export class KendallCorrelationTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -4306,7 +4369,7 @@ export class KendallCorrelationTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4325,6 +4388,197 @@ export class KendallCorrelationTestResult {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
     wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const KolmogorovSmirnovTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_kolmogorovsmirnovtestresult_free(ptr >>> 0, 1)
+    );
+
+export class KolmogorovSmirnovTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(KolmogorovSmirnovTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    KolmogorovSmirnovTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    KolmogorovSmirnovTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_kolmogorovsmirnovtestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_p_value(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_alpha(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_alpha(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample1_size() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample1_size(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1_size(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get sample2_size() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample2_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample2_size(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample2_size(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get critical_value() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_critical_value(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set critical_value(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_critical_value(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get d_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set d_statistic(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get d_plus() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set d_plus(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get d_minus() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set d_minus(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.kolmogorovsmirnovtestresult_test_statistic(this.__wbg_ptr);
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.kolmogorovsmirnovtestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @returns {string}
+   */
+  get alternative() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.kolmogorovsmirnovtestresult_alternative(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
   }
 }
 
@@ -4499,7 +4753,7 @@ export class KruskalWallisTestResult {
    * @returns {number}
    */
   get sample_size() {
-    const ret = wasm.__wbg_get_kruskalwallistestresult_sample_size(
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1_size(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -4508,7 +4762,10 @@ export class KruskalWallisTestResult {
    * @param {number} arg0
    */
   set sample_size(arg0) {
-    wasm.__wbg_set_kruskalwallistestresult_sample_size(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1_size(
+      this.__wbg_ptr,
+      arg0,
+    );
   }
 }
 
@@ -4741,14 +4998,16 @@ export class OneSampleProportionTestResult {
    * @returns {number}
    */
   get p_value() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_p_value(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set p_value(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_p_value(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -4787,14 +5046,16 @@ export class OneSampleProportionTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_alpha(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
@@ -4832,9 +5093,10 @@ export class OneSampleProportionTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
-      this.__wbg_ptr,
-    );
+    const ret = wasm
+      .__wbg_get_onesampleproportiontestresult_confidence_interval(
+        this.__wbg_ptr,
+      );
     return ConfidenceInterval.__wrap(ret);
   }
   /**
@@ -4843,7 +5105,7 @@ export class OneSampleProportionTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+    wasm.__wbg_set_onesampleproportiontestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5004,7 +5266,7 @@ export class OneSampleTTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5015,7 +5277,7 @@ export class OneSampleTTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5139,11 +5401,7 @@ export class OneSampleZTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
@@ -5196,7 +5454,7 @@ export class OneSampleZTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5207,7 +5465,7 @@ export class OneSampleZTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5315,11 +5573,7 @@ export class OneWayAnovaTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
@@ -5646,7 +5900,7 @@ export class PairedTTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5657,7 +5911,7 @@ export class PairedTTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5868,7 +6122,7 @@ export class PearsonCorrelationTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5879,7 +6133,7 @@ export class PearsonCorrelationTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6211,14 +6465,16 @@ export class ShapiroWilkTestResult {
    * @returns {number}
    */
   get p_value() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_p_value(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set p_value(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_p_value(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -6253,14 +6509,16 @@ export class ShapiroWilkTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_alpha(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
@@ -6454,7 +6712,7 @@ export class SpearmanCorrelationTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -6465,7 +6723,7 @@ export class SpearmanCorrelationTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6625,14 +6883,16 @@ export class TwoSampleProportionTestResult {
    * @returns {number}
    */
   get p_value() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_p_value(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set p_value(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_p_value(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -6671,14 +6931,16 @@ export class TwoSampleProportionTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_alpha(
+      this.__wbg_ptr,
+    );
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
@@ -6716,9 +6978,10 @@ export class TwoSampleProportionTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
-      this.__wbg_ptr,
-    );
+    const ret = wasm
+      .__wbg_get_onesampleproportiontestresult_confidence_interval(
+        this.__wbg_ptr,
+      );
     return ConfidenceInterval.__wrap(ret);
   }
   /**
@@ -6727,7 +6990,7 @@ export class TwoSampleProportionTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+    wasm.__wbg_set_onesampleproportiontestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6880,7 +7143,7 @@ export class TwoSampleTTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -6891,7 +7154,7 @@ export class TwoSampleTTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7096,7 +7359,7 @@ export class TwoSampleZTestResult {
    * @returns {ConfidenceInterval}
    */
   get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -7107,7 +7370,7 @@ export class TwoSampleZTestResult {
   set confidence_interval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
       this.__wbg_ptr,
       ptr0,
     );

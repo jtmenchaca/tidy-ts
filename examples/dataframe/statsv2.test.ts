@@ -98,7 +98,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     x: group1,
     y: group2,
     parametric: "parametric",
-    equalVar: true,
+    assumeEqualVariances: true,
     alternative: "two-sided",
     alpha: 0.05,
   });
@@ -132,10 +132,11 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   console.log(`  Complete test result:`, JSON.stringify(corrTest, null, 2));
 
   // Compare distributions between two groups
-  console.log("\n8. Comparing distributions (Mann-Whitney):");
+  console.log("\n8. Comparing distributions (Kolmogorov-Smirnov):");
   const distTest = s.compare.twoGroups.distributions.toEachOther({
     x: group1,
     y: group2,
+    method: "ks",
     alternative: "two-sided",
     alpha: 0.05,
   });

@@ -2,12 +2,12 @@
 
 #![cfg(feature = "wasm")]
 
-use super::{one_sample::z_test, sample_size::prop_sample_size, two_sample::z_test_ind};
+use super::{chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample}, sample_size::prop_sample_size};
 use crate::stats::core::types::{OneSampleProportionTestResult, TwoSampleProportionTestResult, TestStatistic, TestStatisticName, ConfidenceInterval};
 use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 
-/// WASM export for one-sample proportion test
+/// WASM export for one-sample proportion test (chi-square approach, matches R)
 #[wasm_bindgen]
 pub fn proportion_test_one_sample(
     x: f64,
@@ -18,21 +18,12 @@ pub fn proportion_test_one_sample(
 ) -> OneSampleProportionTestResult {
     let alternative_type = parse_alternative(alternative);
 
-    // For one-sample proportion test, we need to create a simple data vector
-    // representing the successes and failures
-    let successes = x as usize;
-    let failures = (n - x) as usize;
-
-    let mut data = Vec::new();
-    data.extend(vec![1.0; successes]); // 1.0 for successes
-    data.extend(vec![0.0; failures]); // 0.0 for failures
-
-    match z_test(data, p0, alternative_type, alpha) {
+    match chi_square_test_one_sample(x, n, p0, alternative_type, alpha, true) {
         Ok(result) => result,
         Err(e) => OneSampleProportionTestResult {
             test_statistic: TestStatistic {
                 value: f64::NAN,
-                name: TestStatisticName::ZStatistic.as_str().to_string(),
+                name: "X-squared".to_string(),
             },
             p_value: f64::NAN,
             test_name: "One-sample proportion test".to_string(),
@@ -48,7 +39,7 @@ pub fn proportion_test_one_sample(
     }
 }
 
-/// WASM export for two-sample proportion test
+/// WASM export for two-sample proportion test (chi-square approach, matches R)
 #[wasm_bindgen]
 pub fn proportion_test_two_sample(
     x1: f64,
@@ -57,31 +48,16 @@ pub fn proportion_test_two_sample(
     n2: f64,
     alpha: f64,
     alternative: &str,
-    pooled: bool,
+    _pooled: bool, // R's prop.test always uses pooled approach
 ) -> TwoSampleProportionTestResult {
     let alternative_type = parse_alternative(alternative);
 
-    // For two-sample proportion test, we need to create data vectors
-    // representing the successes and failures for each group
-    let successes1 = x1 as usize;
-    let failures1 = (n1 - x1) as usize;
-    let successes2 = x2 as usize;
-    let failures2 = (n2 - x2) as usize;
-
-    let mut data1 = Vec::new();
-    data1.extend(vec![1.0; successes1]); // 1.0 for successes
-    data1.extend(vec![0.0; failures1]); // 0.0 for failures
-
-    let mut data2 = Vec::new();
-    data2.extend(vec![1.0; successes2]); // 1.0 for successes
-    data2.extend(vec![0.0; failures2]); // 0.0 for failures
-
-    match z_test_ind(data1, data2, alternative_type, alpha, pooled) {
+    match chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, true) {
         Ok(result) => result,
         Err(e) => TwoSampleProportionTestResult {
             test_statistic: TestStatistic {
                 value: f64::NAN,
-                name: TestStatisticName::ZStatistic.as_str().to_string(),
+                name: "X-squared".to_string(),
             },
             p_value: f64::NAN,
             test_name: "Two-sample proportion test".to_string(),

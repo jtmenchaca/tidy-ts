@@ -13,51 +13,51 @@
 // pub mod old;
 
 // Shared types for WASM exports
-#[path = "shared-types.wasm.rs"]
+#[path = "dataframe/shared-types.wasm.rs"]
 pub mod shared_types;
 
 // Core join helper functions (used by join modules)
-#[path = "join-helpers.wasm.rs"]
+#[path = "dataframe/join-helpers.wasm.rs"]
 pub mod join_helpers;
 
 // New standardized WASM exports
-#[path = "aggregates.wasm.rs"]
+#[path = "dataframe/aggregates.wasm.rs"]
 pub mod aggregates;
-#[path = "arrange.wasm.rs"]
+#[path = "dataframe/arrange.wasm.rs"]
 pub mod arrange;
-#[path = "count.wasm.rs"]
+#[path = "dataframe/count.wasm.rs"]
 pub mod count;
-#[path = "cross-join.wasm.rs"]
+#[path = "dataframe/cross-join.wasm.rs"]
 pub mod cross_join;
-#[path = "distinct.wasm.rs"]
+#[path = "dataframe/distinct.wasm.rs"]
 pub mod distinct;
-#[path = "filter.wasm.rs"]
+#[path = "dataframe/filter.wasm.rs"]
 pub mod filter_wasm;
-#[path = "grouping.wasm.rs"]
+#[path = "dataframe/grouping.wasm.rs"]
 pub mod grouping;
-#[path = "inner-join.wasm.rs"]
+#[path = "dataframe/inner-join.wasm.rs"]
 pub mod inner_join;
-#[path = "iqr.wasm.rs"]
+#[path = "dataframe/iqr.wasm.rs"]
 pub mod iqr;
-#[path = "left-join.wasm.rs"]
+#[path = "dataframe/left-join.wasm.rs"]
 pub mod left_join;
-#[path = "median.wasm.rs"]
+#[path = "dataframe/median.wasm.rs"]
 pub mod median;
-#[path = "outer-join.wasm.rs"]
+#[path = "dataframe/outer-join.wasm.rs"]
 pub mod outer_join;
-#[path = "pivot.wasm.rs"]
+#[path = "dataframe/pivot.wasm.rs"]
 pub mod pivot;
-#[path = "pivot_longer.wasm.rs"]
+#[path = "dataframe/pivot_longer.wasm.rs"]
 pub mod pivot_longer;
-#[path = "pivot_wider.wasm.rs"]
+#[path = "dataframe/pivot_wider.wasm.rs"]
 pub mod pivot_wider;
-#[path = "quantile.wasm.rs"]
+#[path = "dataframe/quantile.wasm.rs"]
 pub mod quantile;
-#[path = "right-join.wasm.rs"]
+#[path = "dataframe/right-join.wasm.rs"]
 pub mod right_join;
-#[path = "sum.wasm.rs"]
+#[path = "dataframe/sum.wasm.rs"]
 pub mod sum;
-#[path = "unique.wasm.rs"]
+#[path = "dataframe/unique.wasm.rs"]
 pub mod unique;
 
 // Statistics module

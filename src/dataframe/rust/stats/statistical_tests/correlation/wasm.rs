@@ -1,6 +1,8 @@
 use wasm_bindgen::prelude::*;
 use crate::stats::core::{AlternativeType, types::{PearsonCorrelationTestResult, SpearmanCorrelationTestResult, KendallCorrelationTestResult}};
-use super::correlation_tests::{pearson_test, spearman_test, kendall_test};
+use super::pearson_correlation_test::pearson_test;
+use super::spearman_correlation_test::spearman_test;
+use super::kendall_correlation_test::kendall_test;
 
 #[wasm_bindgen]
 pub fn pearson_correlation_test(

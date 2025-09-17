@@ -27,6 +27,7 @@
     "test-examples": "deno test -A --parallel examples/dataframe",
     "test-rust-dist": "cd /Users/jtmenchaca/tidy-ts/src/dataframe/rust/stats/distributions && deno run --allow-read --allow-run run_all_tests.ts",
     "test-rust-stat": "cd /Users/jtmenchaca/tidy-ts/src/dataframe/rust/stats/statistical_tests && deno run --allow-read --allow-run run_all_tests.ts",
+    "test-stat-tests": "deno run -A src/dataframe/rust/stats/statistical_tests/tests/comprehensive-runner.ts 3",
     "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib"
   },
   "importMap": "import_map.json",

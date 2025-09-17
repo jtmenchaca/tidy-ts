@@ -89,7 +89,7 @@ Deno.test("Example Test", async () => {
       x: adelieData,
       y: chinstrapData,
       parametric: "parametric", // Use t-test
-      equalVar: true, // Assume equal variances
+      assumeEqualVariances: true, // Assume equal variances
       alternative: "two-sided",
       alpha: 0.05,
     });
@@ -213,6 +213,7 @@ Deno.test("Example Test", async () => {
   const distributionComparison = s.compare.twoGroups.distributions.toEachOther({
     x: torgersenData,
     y: biscoeData,
+    method: "ks", // Explicitly use KS test for distribution equality
     alternative: "two-sided",
     alpha: 0.05,
   });
@@ -224,7 +225,7 @@ Deno.test("Example Test", async () => {
   );
   console.log(`P-value: ${distributionComparison.p_value.toFixed(4)}`);
   console.log(
-    `Effect Size: ${distributionComparison.effect_size?.value?.toFixed(4)}`,
+    `D Statistic: ${distributionComparison.d_statistic?.toFixed(4)}`,
   );
 
   // 7. Multiple group comparison using groupBy and summarize

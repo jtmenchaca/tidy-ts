@@ -1,6 +1,6 @@
-import { oneGroup } from "./one-group.ts";
-import { twoGroups } from "./two-groups.ts";
-import { multiGroups } from "./multi-groups.ts";
+import { oneGroup } from "./one-group/index.ts";
+import { twoGroups } from "./two-group/index.ts";
+import { multiGroups } from "./multi-group/index.ts";
 import { postHoc } from "./post-hoc.ts";
 
 /**
@@ -11,8 +11,8 @@ import { postHoc } from "./post-hoc.ts";
  * import { testsV2 } from "@tidy-ts/dataframe/stats";
  *
  * // One group comparisons
- * testsV2.compare.oneGroup.centralTendency.toValue({ data, mu: 0 });
- * testsV2.compare.oneGroup.proportions.toValue({ successes: 10, n: 20, p: 0.5 });
+ * testsV2.compare.oneGroup.centralTendency.toValue({ data, hypothesizedValue: 0 });
+ * testsV2.compare.oneGroup.proportions.toValue({ data: [true, false, true], p: 0.5 });
  * testsV2.compare.oneGroup.distribution.toNormal({ data });
  *
  * // Two groups comparisons
@@ -35,6 +35,6 @@ export const compare = {
 };
 
 // Re-export individual components for flexibility
-export { oneGroup } from "./one-group.ts";
-export { twoGroups } from "./two-groups.ts";
-export { multiGroups } from "./multi-groups.ts";
+export { oneGroup } from "./one-group/index.ts";
+export { twoGroups } from "./two-group/index.ts";
+export { multiGroups } from "./multi-group/index.ts";

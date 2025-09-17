@@ -9,6 +9,7 @@ import type {
   ChiSquareVarianceTestResult,
   FishersExactTestResult,
   KendallCorrelationTestResult,
+  KolmogorovSmirnovTestResult,
   KruskalWallisTestResult,
   MannWhitneyTestResult,
   OneSampleProportionTestResult,
@@ -453,5 +454,40 @@ export function dunn_test_wasm(
 ): string {
   initWasm();
   const result = wasmInternal.dunn_test_wasm(data, group_sizes, alpha);
+  return result;
+}
+
+// Kolmogorov-Smirnov Tests
+export function kolmogorov_smirnov_test_wasm(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult {
+  initWasm();
+  const result = wasmInternal.kolmogorov_smirnov_test_wasm(
+    x,
+    y,
+    alternative,
+    alpha,
+  );
+  return result;
+}
+
+export function kolmogorov_smirnov_uniform_wasm(
+  x: Float64Array,
+  min: number,
+  max: number,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult {
+  initWasm();
+  const result = wasmInternal.kolmogorov_smirnov_uniform_wasm(
+    x,
+    min,
+    max,
+    alternative,
+    alpha,
+  );
   return result;
 }

@@ -1,7 +1,7 @@
 // Fisher's exact test implementation - pure computational functions
 // WASM binding is handled in wasm_bindings.rs
 
-use crate::stats::core::{AlternativeType, types::{FishersExactTestResult, TestStatistic, TestStatisticName, ConfidenceInterval}};
+use crate::stats::core::{AlternativeType, types::{FishersExactTestResult, TestStatistic, TestStatisticName, ConfidenceInterval, EffectSize, EffectSizeType}};
 
 /// Fisher's exact test result structure
 pub struct FisherResult {
@@ -87,7 +87,10 @@ pub fn fishers_exact_test(
             upper: f64::NAN,
             confidence_level: 1.0 - alpha,
         },
-        odds_ratio: estimate,
+        effect_size: EffectSize {
+            value: estimate,
+            effect_type: EffectSizeType::OddsRatio.as_str().to_string(),
+        },
         method: match alternative_type {
             AlternativeType::TwoSided => "two-sided",
             AlternativeType::Less => "less",

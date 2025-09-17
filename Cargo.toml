@@ -24,7 +24,7 @@ web-sys = { version = "=0.3.77", optional = true, features = ["console"] }
 # serde-wasm-bindgen = { version = "0.6", optional = true }  # Not used in current code
 
 # Pure Rust linear algebra dependencies (works for both native and WASM)
-# faer = "0.22.0"
+faer = "0.22.0"
 # faer-core = "0.17.1"
 # faer-qr = "0.7.0"
 # statrs = "0.17.1"

@@ -254,6 +254,35 @@ export function serializeTestResult(result: any): any {
       serialized.grand_mean = result.grand_mean;
     }
     
+    // Kolmogorov-Smirnov test properties
+    if (result.d_statistic !== undefined) {
+      serialized.d_statistic = result.d_statistic;
+    }
+    
+    if (result.d_plus !== undefined) {
+      serialized.d_plus = result.d_plus;
+    }
+    
+    if (result.d_minus !== undefined) {
+      serialized.d_minus = result.d_minus;
+    }
+    
+    if (result.critical_value !== undefined) {
+      serialized.critical_value = result.critical_value;
+    }
+    
+    if (result.sample1_size !== undefined) {
+      serialized.sample1_size = result.sample1_size;
+    }
+    
+    if (result.sample2_size !== undefined) {
+      serialized.sample2_size = result.sample2_size;
+    }
+    
+    if (result.alternative !== undefined) {
+      serialized.alternative = result.alternative;
+    }
+    
     return serialized;
   }
   

@@ -2,7 +2,8 @@ use super::signed_rank::SignedRank;
 use statrs::distribution::ContinuousCDF;
 
 use super::super::super::core::types::{
-    EffectSize, EffectSizeType, TestStatistic, TestStatisticName, WilcoxonMethod, WilcoxonSignedRankTestResult,
+    EffectSize, EffectSizeType, TestStatistic, TestStatisticName, WilcoxonMethod,
+    WilcoxonSignedRankTestResult,
 };
 
 // Helper trait for statistical operations
@@ -62,45 +63,53 @@ impl WilcoxonWTest {
         alpha: f64,
         alternative: &str,
     ) -> Result<WilcoxonSignedRankTestResult, String> {
-        let d: Vec<_> = x.iter().zip(y).map(|(x, y)| (x - y).abs()).collect();
-        let (ranks, tie_correction) = (&d).ranks();
-        let mut estimate = (0.0, 0.0);
-        let mut zeroes = 0;
-
-        for ((x, y), rank) in x.iter().zip(y).zip(ranks.clone()) {
-            if x < y {
-                estimate.0 += rank;
-            } else if x > y {
-                estimate.1 += rank;
-            } else {
-                zeroes += 1;
-            }
+        // Calculate differences and remove zeros (like R does)
+        let diffs: Vec<f64> = x.iter().zip(y).map(|(x, y)| x - y).filter(|&d| d != 0.0).collect();
+        let n = diffs.len() as f64;
+        
+        if diffs.is_empty() {
+            return Err("No non-zero differences found".to_string());
         }
-
-        let estimate_small = if estimate.0 < estimate.1 {
-            estimate.0
-        } else {
-            estimate.1
-        };
-        let distribution = SignedRank::new(d.len(), zeroes, tie_correction)
+        
+        // Get absolute values for ranking (but keep original signs)
+        let abs_diffs: Vec<f64> = diffs.iter().map(|&d| d.abs()).collect();
+        let (ranks, tie_correction) = (&abs_diffs).ranks();
+        
+        // Calculate V statistic: sum of ranks for positive differences (like R)
+        let v_statistic: f64 = diffs.iter().zip(ranks.iter())
+            .filter_map(|(&diff, &rank)| if diff > 0.0 { Some(rank) } else { None })
+            .sum();
+        
+        let zeroes = x.len() - diffs.len();
+        let distribution = SignedRank::new(diffs.len(), zeroes, tie_correction)
             .map_err(|e| format!("Failed to create distribution: {}", e))?;
-        let p_raw = distribution.cdf(estimate_small);
-
-        // Apply alternative hypothesis
+        
+        // Use R's exact p-value calculation method
         let p_value = match alternative {
-            "less" => p_raw,
-            "greater" => 1.0 - p_raw,
-            _ => 2.0 * p_raw.min(1.0 - p_raw), // two-sided
+            "less" => distribution.cdf(v_statistic),
+            "greater" => {
+                // R uses: psignrank(STATISTIC - 1, n, lower.tail = FALSE)
+                1.0 - distribution.cdf(v_statistic - 1.0)
+            },
+            _ => {
+                // Two-sided: R logic
+                let expected = n * (n + 1.0) / 4.0;
+                let p_raw = if v_statistic > expected {
+                    1.0 - distribution.cdf(v_statistic - 1.0)
+                } else {
+                    distribution.cdf(v_statistic)
+                };
+                (2.0 * p_raw).min(1.0)
+            }
         };
 
-        let n = d.len() as f64;
         let rank_sum = n * (n + 1.0) / 2.0;
-        let effect_size = estimate_small / rank_sum;
+        let effect_size = v_statistic / rank_sum;
 
         Ok(WilcoxonSignedRankTestResult {
             test_statistic: TestStatistic {
-                value: estimate_small,
-                name: TestStatisticName::WStatistic.as_str().to_string(),
+                value: v_statistic,
+                name: TestStatisticName::VStatistic.as_str().to_string(),
             },
             p_value,
             test_name: "Wilcoxon Signed-Rank Test".to_string(),
@@ -135,7 +144,10 @@ mod tests {
         let y = vec![151.0, 168.0, 147.0, 164.0, 166.0, 163.0, 176.0, 188.0];
         let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
         // Our implementation returns 0.078125 vs R's 0.0390625 - allow tolerance
-        println!("Paired test 2: our p-value={}, R p-value=0.0390625", test.p_value);
+        println!(
+            "Paired test 2: our p-value={}, R p-value=0.0390625",
+            test.p_value
+        );
         assert!((test.p_value - 0.078125).abs() < 1e-10);
         assert_eq!(test.effect_size.value, 0.08333333333333333);
     }

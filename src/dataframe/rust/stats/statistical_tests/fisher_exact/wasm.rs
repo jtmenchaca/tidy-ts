@@ -3,7 +3,7 @@
 #![cfg(feature = "wasm")]
 
 use super::fishers_exact::fishers_exact_test;
-use crate::stats::core::types::{FishersExactTestResult, TestStatistic, ConfidenceInterval};
+use crate::stats::core::types::{FishersExactTestResult, TestStatistic, ConfidenceInterval, EffectSize, EffectSizeType};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for Fisher's exact test
@@ -33,7 +33,10 @@ pub fn fishers_exact_test_wasm(
                 upper: f64::NAN,
                 confidence_level: 1.0 - alpha,
             },
-            odds_ratio: f64::NAN,
+            effect_size: EffectSize {
+                value: f64::NAN,
+                effect_type: EffectSizeType::OddsRatio.as_str().to_string(),
+            },
             method: alternative.to_string(),
         }
     })

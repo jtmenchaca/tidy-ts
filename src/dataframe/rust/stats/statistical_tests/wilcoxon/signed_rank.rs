@@ -36,7 +36,8 @@ impl SignedRank {
     /// assert!(result.is_ok());
     /// ```
     pub fn new(n: usize, zeroes: usize, tie_correction: usize) -> Result<SignedRank> {
-        if zeroes > 0 || tie_correction > 0 || (n - zeroes) >= 20 {
+        // Use approximation for larger samples, ties, or zeroes (like R does)
+        if zeroes > 0 || tie_correction > 0 || (n - zeroes) >= 50 {
             SignedRank::approximate(n - zeroes, tie_correction)
         } else {
             SignedRank::exact(n)
@@ -111,22 +112,44 @@ impl rand::prelude::Distribution<f64> for SignedRank {
 impl ContinuousCDF<f64, f64> for SignedRank {
     fn cdf(&self, x: f64) -> f64 {
         match self.approximation {
-            Approximation::Normal(normal) => 2.0 * normal.cdf(x),
+            Approximation::Normal(normal) => normal.cdf(x),
             Approximation::Exact => {
-                let r = x.round() as usize;
-                let mut sum = 1;
-
-                for n in 1..=self.n {
-                    let n_choose_2 = binomial(n as u64, 2) as usize;
-                    if n_choose_2 > r {
-                        continue;
-                    }
-                    for i in n..=(r - n_choose_2) {
-                        sum += partitions(i, n, self.n - n + 1);
+                // Simple exact calculation using dynamic programming
+                // This calculates P(W <= x) for the signed rank statistic
+                let r = x.floor() as i32;
+                let n = self.n as i32;
+                
+                if r < 0 {
+                    return 0.0;
+                }
+                
+                let max_sum = n * (n + 1) / 2;
+                if r >= max_sum {
+                    return 1.0;
+                }
+                
+                // Dynamic programming: dp[i][s] = number of ways to get sum s using ranks 1..i
+                let mut dp = vec![vec![0u64; (max_sum + 1) as usize]; (n + 1) as usize];
+                dp[0][0] = 1;
+                
+                for i in 1..=n {
+                    for s in 0..=max_sum {
+                        // Don't include rank i
+                        dp[i as usize][s as usize] = dp[(i-1) as usize][s as usize];
+                        // Include rank i (if possible)
+                        if s >= i {
+                            dp[i as usize][s as usize] += dp[(i-1) as usize][(s-i) as usize];
+                        }
                     }
                 }
-
-                sum as f64 / 2_f64.powi(self.n as i32 - 1)
+                
+                // Sum all ways to get sum <= r
+                let mut total = 0u64;
+                for s in 0..=r.min(max_sum) {
+                    total += dp[n as usize][s as usize];
+                }
+                
+                total as f64 / 2_f64.powi(n)
             }
         }
     }

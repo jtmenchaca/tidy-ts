@@ -925,6 +925,25 @@ export function fishers_exact_test_wasm(
   alpha: number,
 ): FishersExactTestResult;
 /**
+ * WASM export for two-sample Kolmogorov-Smirnov test
+ */
+export function kolmogorov_smirnov_test_wasm(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult;
+/**
+ * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
+ */
+export function kolmogorov_smirnov_uniform_wasm(
+  x: Float64Array,
+  min: number,
+  max: number,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult;
+/**
  * WASM export for Kruskal-Wallis test
  */
 export function kruskal_wallis_test_wasm(
@@ -998,7 +1017,7 @@ export function dunn_test_wasm(
   alpha: number,
 ): string;
 /**
- * WASM export for one-sample proportion test
+ * WASM export for one-sample proportion test (chi-square approach, matches R)
  */
 export function proportion_test_one_sample(
   x: number,
@@ -1008,7 +1027,7 @@ export function proportion_test_one_sample(
   alternative: string,
 ): OneSampleProportionTestResult;
 /**
- * WASM export for two-sample proportion test
+ * WASM export for two-sample proportion test (chi-square approach, matches R)
  */
 export function proportion_test_two_sample(
   x1: number,
@@ -1017,7 +1036,7 @@ export function proportion_test_two_sample(
   n2: number,
   alpha: number,
   alternative: string,
-  pooled: boolean,
+  _pooled: boolean,
 ): TwoSampleProportionTestResult;
 /**
  * WASM export for proportion sample size calculation
@@ -1314,7 +1333,7 @@ export class FishersExactTestResult {
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
   confidence_interval: ConfidenceInterval;
-  odds_ratio: number;
+  effect_size: EffectSize;
   method: string;
 }
 /**
@@ -1357,6 +1376,21 @@ export class KendallCorrelationTestResult {
   set error_message(value: string | null | undefined);
   confidence_interval: ConfidenceInterval;
   effect_size: EffectSize;
+}
+export class KolmogorovSmirnovTestResult {
+  private constructor();
+  free(): void;
+  p_value: number;
+  alpha: number;
+  sample1_size: number;
+  sample2_size: number;
+  critical_value: number;
+  d_statistic: number;
+  d_plus: number;
+  d_minus: number;
+  readonly test_statistic: TestStatistic;
+  readonly test_name: string;
+  readonly alternative: string;
 }
 /**
  * Kruskal-Wallis test result
