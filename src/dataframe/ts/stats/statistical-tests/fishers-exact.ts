@@ -1,30 +1,11 @@
-import {
-  fishers_exact_test_wasm,
-  type TestResult,
-} from "../../wasm/wasm-loader.ts";
-import type { TestName } from "../../wasm/statistical-tests.ts";
-
-/** Fisher's Exact test specific result with only relevant fields */
-export type FishersExactTestResult =
-  & Pick<
-    TestResult,
-    | "test_type"
-    | "test_statistic"
-    | "p_value"
-    | "confidence_interval_lower"
-    | "confidence_interval_upper"
-    | "confidence_level"
-    | "effect_size"
-    | "odds_ratio"
-    | "relative_risk"
-    | "sample_size"
-    | "exact_p_value"
-    | "error_message"
-  >
-  & { test_name: TestName };
+import { fishers_exact_test_wasm, serializeTestResult } from "../../wasm/statistical-tests.ts";
+import type { FishersExactTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
 
 /**
- * Fisher's exact test for 2x2 contingency tables
+ * Fisher's exact test for 2x2 contingency tables.
+ *
+ * Note: Both p_value and exact_p_value are provided by WASM and contain identical values
+ * since Fisher's exact test always computes exact p-values (no asymptotic approximation).
  */
 export function fishersExactTest({
   contingencyTable,
@@ -56,7 +37,7 @@ export function fishersExactTest({
   const c = contingencyTable[1][0];
   const d = contingencyTable[1][1];
 
-  return fishers_exact_test_wasm(
+  const result = fishers_exact_test_wasm(
     a,
     b,
     c,
@@ -64,5 +45,6 @@ export function fishersExactTest({
     alternative,
     oddsRatio,
     alpha,
-  ) as FishersExactTestResult;
+  );
+  return serializeTestResult(result) as FishersExactTestResult;
 }

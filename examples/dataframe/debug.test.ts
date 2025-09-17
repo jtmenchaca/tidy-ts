@@ -236,12 +236,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     alpha: 0.05,
     parametric: "auto", // Auto-selects parametric vs non-parametric
   });
-  console.log(`Test: ${oneGroupTest.test_name}`);
-  console.log(`Statistic: ${oneGroupTest.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${oneGroupTest.p_value?.toFixed(4)}`);
-  console.log(
-    `Significant: ${(oneGroupTest.p_value || 0) < 0.05 ? "Yes" : "No"}`,
-  );
+  console.log(`One Group Test: ${oneGroupTest}`);
 
   // 1.2 One Group: Proportions vs. Expected Value
   console.log("\n1.2 Testing if success rate differs from 50%");
@@ -251,9 +246,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`Test: ${proportionTest.test_name}`);
-  console.log(`Statistic: ${proportionTest.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${proportionTest.p_value?.toFixed(4)}`);
+  console.log(`Proportion Test: ${proportionTest}`);
 
   // 1.3 One Group: Distribution Normality
   console.log("\n1.3 Testing if control group is normally distributed");
@@ -261,10 +254,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     data: controlGroup,
     alpha: 0.05,
   });
-  console.log(`Test: ${normalityTest.test_name}`);
-  console.log(`Statistic: ${normalityTest.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${normalityTest.p_value?.toFixed(4)}`);
-  console.log(`Normal: ${(normalityTest.p_value || 0) > 0.05 ? "Yes" : "No"}`);
+  console.log(`Normality Test: ${normalityTest}`);
 
   console.log("\n--- Two Groups Tests ---");
 
@@ -273,15 +263,12 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const twoGroupTest = stats.compare.twoGroups.centralTendency.toEachOther({
     x: controlGroup,
     y: treatmentGroup,
-    parametric: true, // Force parametric test
+    parametric: "parametric", // Force parametric test
     equalVar: true,
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`Test: ${twoGroupTest.test_name}`);
-  console.log(`Statistic: ${twoGroupTest.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${twoGroupTest.p_value?.toFixed(4)}`);
-  console.log(`Effect size (Cohen's d): ${twoGroupTest.cohens_d?.toFixed(4)}`);
+  console.log(`Two Group Test: ${twoGroupTest}`);
 
   // 2.2 Two Groups: Proportions Comparison
   console.log("\n2.2 Comparing success rates between control and treatment");
@@ -292,9 +279,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     alpha: 0.05,
     useChiSquare: false, // Use z-test instead of chi-square
   });
-  console.log(`Test: ${twoGroupProportion.test_name}`);
-  console.log(`Statistic: ${twoGroupProportion.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${twoGroupProportion.p_value?.toFixed(4)}`);
+  console.log(`Two Group Proportion: ${twoGroupProportion}`);
 
   // 2.3 Two Groups: Association/Correlation
   console.log("\n2.3 Testing correlation between two continuous variables");
@@ -302,12 +287,10 @@ Deno.test("Statistical Testing with New Compare API", () => {
     x: controlGroup,
     y: treatmentGroup,
     method: "pearson", // or "spearman" for non-parametric
-    alternative: "two.sided",
+    alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`Test: ${correlationTest.test_name}`);
-  console.log(`Correlation: ${correlationTest.correlation?.toFixed(4)}`);
-  console.log(`P-value: ${correlationTest.p_value?.toFixed(4)}`);
+  console.log(`Correlation Test: ${correlationTest}`);
 
   // 2.4 Two Groups: Distribution Comparison
   console.log("\n2.4 Comparing distributions between control and placebo");
@@ -318,7 +301,9 @@ Deno.test("Statistical Testing with New Compare API", () => {
     alpha: 0.05,
   });
   console.log(`Test: ${distributionTest.test_name}`);
-  console.log(`Statistic: ${distributionTest.test_statistic?.toFixed(4)}`);
+  console.log(
+    `Statistic: ${distributionTest.test_statistic?.value?.toFixed(4)}`,
+  );
   console.log(`P-value: ${distributionTest.p_value?.toFixed(4)}`);
 
   console.log("\n--- Multiple Groups Tests ---");
@@ -327,13 +312,10 @@ Deno.test("Statistical Testing with New Compare API", () => {
   console.log("\n3.1 Comparing means across all three groups (ANOVA)");
   const multiGroupTest = stats.compare.multiGroups.centralTendency.toEachOther({
     groups: [controlGroup, treatmentGroup, placeboGroup],
-    parametric: true,
+    parametric: "parametric",
     alpha: 0.05,
   });
-  console.log(`Test: ${multiGroupTest.test_name}`);
-  console.log(`F-statistic: ${multiGroupTest.f_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${multiGroupTest.p_value?.toFixed(4)}`);
-  console.log(`Eta-squared: ${multiGroupTest.eta_squared?.toFixed(4)}`);
+  console.log(`Multiple Groups Tet: ${multiGroupTest}`);
 
   // 3.2 Multiple Groups: Proportions (Chi-square)
   console.log("\n3.2 Comparing success rates across groups (Chi-square)");
@@ -346,10 +328,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
       ],
       alpha: 0.05,
     });
-  console.log(`Test: ${multiGroupProportion.test_name}`);
-  console.log(`Chi-square: ${multiGroupProportion.test_statistic?.toFixed(4)}`);
-  console.log(`P-value: ${multiGroupProportion.p_value?.toFixed(4)}`);
-  console.log(`Cramer's V: ${multiGroupProportion.cramers_v?.toFixed(4)}`);
+  console.log(`Multiple Groups Proportion: ${multiGroupProportion}`);
 
   console.log("\n--- Real-world Analysis Example ---");
 
@@ -385,33 +364,11 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const finalComparison = stats.compare.twoGroups.centralTendency.toEachOther({
     x: controlGroup,
     y: treatmentGroup,
-    parametric: useParametric,
+    parametric: useParametric ? "parametric" : "nonparametric",
     alternative: "two-sided",
     alpha: 0.05,
   });
 
   console.log(`\nFinal Analysis Results:`);
-  console.log(`Test used: ${finalComparison.test_name}`);
-  console.log(`P-value: ${finalComparison.p_value?.toFixed(4)}`);
-  console.log(
-    `Significant difference: ${
-      (finalComparison.p_value || 0) < 0.05 ? "Yes" : "No"
-    }`,
-  );
-
-  if ("cohens_d" in finalComparison && finalComparison.cohens_d) {
-    const effectSize = Math.abs(finalComparison.cohens_d);
-    let effectInterpretation = "negligible";
-    if (effectSize >= 0.8) effectInterpretation = "large";
-    else if (effectSize >= 0.5) effectInterpretation = "medium";
-    else if (effectSize >= 0.2) effectInterpretation = "small";
-
-    console.log(
-      `Effect size (Cohen's d): ${
-        finalComparison.cohens_d.toFixed(4)
-      } (${effectInterpretation})`,
-    );
-  }
-
-  console.log("\n✅ All statistical tests completed successfully!");
+  console.log(finalComparison);
 });

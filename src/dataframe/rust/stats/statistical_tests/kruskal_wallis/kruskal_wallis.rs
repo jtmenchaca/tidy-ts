@@ -1,9 +1,10 @@
 //! Kruskal-Wallis test implementation
 //! Non-parametric alternative to one-way ANOVA
 
-use crate::stats::core::{TestResult, TestType};
+use crate::stats::core::types::{
+    EffectSize, EffectSizeType, KruskalWallisTestResult, TestStatistic, TestStatisticName,
+};
 use crate::stats::distributions::pchisq;
-use crate::stats::helpers::create_error_result;
 
 /// Calculate ranks for a combined array with tie handling
 fn rank(values: &[f64]) -> (Vec<f64>, f64) {
@@ -54,19 +55,16 @@ fn rank(values: &[f64]) -> (Vec<f64>, f64) {
 ///
 /// # Returns
 /// TestResult containing the test statistic, p-value, and degrees of freedom
-pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
+pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> Result<KruskalWallisTestResult, String> {
     // Validate input
     if groups.len() < 2 {
-        return create_error_result(
-            "Kruskal-Wallis test",
-            "Need at least 2 groups for Kruskal-Wallis test",
-        );
+        return Err("Need at least 2 groups for Kruskal-Wallis test".to_string());
     }
 
     // Remove any empty groups
     let non_empty_groups: Vec<&Vec<f64>> = groups.iter().filter(|g| !g.is_empty()).collect();
     if non_empty_groups.len() < 2 {
-        return create_error_result("Kruskal-Wallis test", "Need at least 2 non-empty groups");
+        return Err("Need at least 2 non-empty groups".to_string());
     }
 
     // Combine all observations
@@ -82,7 +80,7 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
 
     let n = combined.len();
     if n < 2 {
-        return create_error_result("Kruskal-Wallis test", "Not enough observations");
+        return Err("Not enough observations".to_string());
     }
 
     // Calculate ranks
@@ -120,18 +118,22 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
     let df = (non_empty_groups.len() - 1) as f64;
     if tie_correction == denominator {
         // All values are identical, H = 0, p = 1
-        return TestResult {
-            test_type: TestType::OneWayAnova, // Using OneWayAnova as closest equivalent
-            test_statistic: Some(0.0),
-            p_value: Some(1.0),
-            confidence_interval_lower: Some(0.0),
-            confidence_interval_upper: Some(0.0),
-            effect_size: Some(0.0),
-            sample_size: Some(n),
-            degrees_of_freedom: Some(df),
-            tie_correction: Some(tie_correction),
-            ..Default::default()
-        };
+        return Ok(KruskalWallisTestResult {
+            test_statistic: TestStatistic {
+                value: 0.0,
+                name: TestStatisticName::HStatistic.as_str().to_string(),
+            },
+            p_value: 1.0,
+            test_name: "Kruskal-Wallis Test".to_string(),
+            alpha,
+            error_message: None,
+            degrees_of_freedom: df,
+            effect_size: EffectSize {
+                value: 0.0,
+                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            },
+            sample_size: n,
+        });
     }
 
     // Apply tie correction: H_adjusted = H / (1 - sum(TIES^3 - TIES) / (n^3 - n))
@@ -142,7 +144,7 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
     // Calculate p-value using chi-squared distribution
     let p_value = pchisq(h, df, false, false); // upper tail probability
 
-    let reject_null = p_value < alpha;
+    let _reject_null = p_value < alpha;
 
     // Calculate eta-squared effect size for Kruskal-Wallis
     // eta² = (H - k + 1) / (n - k) where k = number of groups
@@ -153,18 +155,20 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> TestResult {
         0.0
     };
 
-    TestResult {
-        test_type: TestType::OneWayAnova, // Using OneWayAnova as closest equivalent
-        test_statistic: Some(h),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(0.0),
-        confidence_interval_upper: Some(0.0),
-        effect_size: Some(eta_squared),
-        eta_squared: Some(eta_squared),
-        sample_size: Some(n),
-        degrees_of_freedom: Some(df),
-        tie_correction: Some(tie_correction),
-        ranks: Some(ranks),
-        ..Default::default()
-    }
+    Ok(KruskalWallisTestResult {
+        test_statistic: TestStatistic {
+            value: h,
+            name: TestStatisticName::HStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Kruskal-Wallis Test".to_string(),
+        alpha,
+        error_message: None,
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: eta_squared,
+            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+        },
+        sample_size: n,
+    })
 }

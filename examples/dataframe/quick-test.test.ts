@@ -490,7 +490,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
     alpha: 0.05,
   });
   console.log("One-sample t-test result:");
-  console.log(`Test statistic: ${oneSampleResult.test_statistic?.toFixed(4)}`);
+  console.log(
+    `Test statistic: ${oneSampleResult.test_statistic?.value?.toFixed(4)}`,
+  );
   console.log(`P-value: ${oneSampleResult.p_value?.toFixed(4)}`);
   console.log(
     `Significant: ${(oneSampleResult.p_value! < 0.05) ? "Yes" : "No"}`,
@@ -508,7 +510,7 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
   });
   console.log("\nIndependent t-test result:");
   console.log(
-    `Test statistic: ${independentResult.test_statistic?.toFixed(4)}`,
+    `Test statistic: ${independentResult.test_statistic?.value?.toFixed(4)}`,
   );
   console.log(`P-value: ${independentResult.p_value?.toFixed(4)}`);
 
@@ -522,7 +524,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
     alpha: 0.05,
   });
   console.log("\nPaired t-test result:");
-  console.log(`Test statistic: ${pairedResult.test_statistic?.toFixed(4)}`);
+  console.log(
+    `Test statistic: ${pairedResult.test_statistic?.value?.toFixed(4)}`,
+  );
   console.log(`P-value: ${pairedResult.p_value?.toFixed(4)}`);
 
   // ============================================================================
@@ -536,7 +540,7 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
 
   const anovaResult = s.test.anova.oneWay([groupA, groupB, groupC], 0.05);
   console.log("One-way ANOVA result:");
-  console.log(`F-statistic: ${anovaResult.f_statistic?.toFixed(4)}`);
+  console.log(`F-statistic: ${anovaResult.test_statistic?.value?.toFixed(4)}`);
   console.log(`P-value: ${anovaResult.p_value?.toFixed(4)}`);
   console.log(`Significant: ${(anovaResult.p_value! < 0.05) ? "Yes" : "No"}`);
 
@@ -551,21 +555,21 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
   const pearsonResult = s.test.correlation.pearson({
     x: x,
     y: y,
-    alternative: "two.sided",
+    alternative: "two-sided",
     alpha: 0.05,
   });
   console.log("Pearson correlation result:");
-  console.log(`Correlation: ${pearsonResult.correlation?.toFixed(4)}`);
+  console.log(`Correlation: ${pearsonResult.effect_size?.value?.toFixed(4)}`);
   console.log(`P-value: ${pearsonResult.p_value?.toFixed(4)}`);
 
   const spearmanResult = s.test.correlation.spearman({
     x: x,
     y: y,
-    alternative: "two.sided",
+    alternative: "two-sided",
     alpha: 0.05,
   });
   console.log("\nSpearman correlation result:");
-  console.log(`Correlation: ${spearmanResult.correlation?.toFixed(4)}`);
+  console.log(`Correlation: ${spearmanResult.effect_size?.value?.toFixed(4)}`);
   console.log(`P-value: ${spearmanResult.p_value?.toFixed(4)}`);
 
   // ============================================================================
@@ -582,7 +586,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
     alpha: 0.05,
   });
   console.log("Mann-Whitney U test result:");
-  console.log(`U-statistic: ${mannWhitneyResult.u_statistic?.toFixed(4)}`);
+  console.log(
+    `U-statistic: ${mannWhitneyResult.test_statistic?.value?.toFixed(4)}`,
+  );
   console.log(`P-value: ${mannWhitneyResult.p_value?.toFixed(4)}`);
 
   const kruskalWallisResult = s.test.nonparametric.kruskalWallis(
@@ -591,7 +597,7 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
   );
   console.log("\nKruskal-Wallis test result:");
   console.log(
-    `Test statistic: ${kruskalWallisResult.test_statistic?.toFixed(4)}`,
+    `Test statistic: ${kruskalWallisResult.test_statistic?.value?.toFixed(4)}`,
   );
   console.log(`P-value: ${kruskalWallisResult.p_value?.toFixed(4)}`);
 
@@ -607,7 +613,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
   });
   console.log("Chi-square test result:");
   console.log(
-    `Chi-square statistic: ${chiSquareResult.test_statistic?.toFixed(4)}`,
+    `Chi-square statistic: ${
+      chiSquareResult.test_statistic?.value?.toFixed(4)
+    }`,
   );
   console.log(`P-value: ${chiSquareResult.p_value?.toFixed(4)}`);
 
@@ -632,7 +640,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
     alpha: 0.05,
   });
   console.log("Shapiro-Wilk normality test result:");
-  console.log(`Test statistic: ${shapiroResult.test_statistic?.toFixed(4)}`);
+  console.log(
+    `Test statistic: ${shapiroResult.test_statistic?.value?.toFixed(4)}`,
+  );
   console.log(`P-value: ${shapiroResult.p_value?.toFixed(4)}`);
   console.log(`Normal: ${(shapiroResult.p_value! > 0.05) ? "Yes" : "No"}`);
 

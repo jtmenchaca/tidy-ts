@@ -2,30 +2,13 @@ import {
   kendall_correlation_test,
   pearson_correlation_test,
   spearman_correlation_test,
-  type TestResult,
-} from "../../wasm/wasm-loader.ts";
-import type { TestName } from "../../wasm/statistical-tests.ts";
-
-/** Correlation test specific result with only relevant fields */
-export type CorrelationTestResult =
-  & Pick<
-    TestResult,
-    | "test_type"
-    | "test_statistic"
-    | "p_value"
-    | "confidence_interval_lower"
-    | "confidence_interval_upper"
-    | "confidence_level"
-    | "effect_size"
-    | "correlation"
-    | "degrees_of_freedom"
-    | "sample_size"
-    | "standard_error"
-    | "sample_means"
-    | "sample_std_devs"
-    | "error_message"
-  >
-  & { test_name: TestName };
+  serializeTestResult,
+} from "../../wasm/statistical-tests.ts";
+import type {
+  PearsonCorrelationTestResult,
+  SpearmanCorrelationTestResult,
+  KendallCorrelationTestResult,
+} from "../../../lib/tidy_ts_dataframe.internal.js";
 
 /**
  * Pearson correlation test
@@ -33,14 +16,14 @@ export type CorrelationTestResult =
 export function pearsonTest({
   x,
   y,
-  alternative = "two.sided",
+  alternative = "two-sided",
   alpha = 0.05,
 }: {
   x: number[];
   y: number[];
-  alternative?: "two.sided" | "less" | "greater";
+  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): CorrelationTestResult {
+}): PearsonCorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }
@@ -54,17 +37,16 @@ export function pearsonTest({
     );
   }
 
-  // Convert alternative hypothesis format for WASM function
-  const wasmAlternative = alternative === "two.sided"
-    ? "two-sided"
-    : alternative;
+  // Pass alternative directly to WASM
+  const wasmAlternative = alternative;
 
-  return pearson_correlation_test(
+  const result = pearson_correlation_test(
     new Float64Array(cleanX),
     new Float64Array(cleanY),
     wasmAlternative,
     alpha,
-  ) as CorrelationTestResult;
+  );
+  return serializeTestResult(result) as PearsonCorrelationTestResult;
 }
 
 /**
@@ -73,14 +55,14 @@ export function pearsonTest({
 export function spearmanTest({
   x,
   y,
-  alternative = "two.sided",
+  alternative = "two-sided",
   alpha = 0.05,
 }: {
   x: number[];
   y: number[];
-  alternative?: "two.sided" | "less" | "greater";
+  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): CorrelationTestResult {
+}): SpearmanCorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }
@@ -94,17 +76,16 @@ export function spearmanTest({
     );
   }
 
-  // Convert alternative hypothesis format for WASM function
-  const wasmAlternative = alternative === "two.sided"
-    ? "two-sided"
-    : alternative;
+  // Pass alternative directly to WASM
+  const wasmAlternative = alternative;
 
-  return spearman_correlation_test(
+  const result = spearman_correlation_test(
     new Float64Array(cleanX),
     new Float64Array(cleanY),
     wasmAlternative,
     alpha,
-  ) as CorrelationTestResult;
+  );
+  return serializeTestResult(result) as SpearmanCorrelationTestResult;
 }
 
 /**
@@ -113,14 +94,14 @@ export function spearmanTest({
 export function kendallTest({
   x,
   y,
-  alternative = "two.sided",
+  alternative = "two-sided",
   alpha = 0.05,
 }: {
   x: number[];
   y: number[];
-  alternative?: "two.sided" | "less" | "greater";
+  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): CorrelationTestResult {
+}): KendallCorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }
@@ -134,15 +115,14 @@ export function kendallTest({
     );
   }
 
-  // Convert alternative hypothesis format for WASM function
-  const wasmAlternative = alternative === "two.sided"
-    ? "two-sided"
-    : alternative;
+  // Pass alternative directly to WASM
+  const wasmAlternative = alternative;
 
-  return kendall_correlation_test(
+  const result = kendall_correlation_test(
     new Float64Array(cleanX),
     new Float64Array(cleanY),
     wasmAlternative,
     alpha,
-  ) as CorrelationTestResult;
+  );
+  return serializeTestResult(result) as KendallCorrelationTestResult;
 }

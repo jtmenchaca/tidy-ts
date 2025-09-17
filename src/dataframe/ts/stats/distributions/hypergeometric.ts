@@ -14,7 +14,7 @@ import {
  * @param at - Point where PMF is evaluated (successes in sample)
  * @param populationSuccesses - Number of success items in population (m)
  * @param populationFailures - Number of failure items in population (n)
- * @param sampleSize - Sample size (k)
+ * @param drawSize - Sample size (k)
  * @param returnLog - If true, return log probability (default: false)
  * @returns Probability value or log probability
  */
@@ -22,20 +22,20 @@ export function dhyper({
   at,
   populationSuccesses,
   populationFailures,
-  sampleSize,
+  drawSize,
   returnLog = false,
 }: {
   at: number;
   populationSuccesses: number;
   populationFailures: number;
-  sampleSize: number;
+  drawSize: number;
   returnLog?: boolean;
 }): number {
   return wasm_dhyper(
     at,
     populationSuccesses,
     populationFailures,
-    sampleSize,
+    drawSize,
     returnLog,
   );
 }
@@ -45,7 +45,7 @@ export function dhyper({
  * @param at - Point where CDF is evaluated
  * @param populationSuccesses - Number of success items in population (m)
  * @param populationFailures - Number of failure items in population (n)
- * @param sampleSize - Sample size (k)
+ * @param drawSize - Sample size (k)
  * @param direction - "below" for P(X ≤ at) or "above" for P(X > at) (default: "below")
  * @param returnLog - If true, return log probability (default: false)
  * @returns Cumulative probability or log cumulative probability
@@ -54,14 +54,14 @@ export function phyper({
   at,
   populationSuccesses,
   populationFailures,
-  sampleSize,
+  drawSize,
   direction = "below",
   returnLog = false,
 }: {
   at: number;
   populationSuccesses: number;
   populationFailures: number;
-  sampleSize: number;
+  drawSize: number;
   direction?: "below" | "above";
   returnLog?: boolean;
 }): number {
@@ -70,7 +70,7 @@ export function phyper({
     at,
     populationSuccesses,
     populationFailures,
-    sampleSize,
+    drawSize,
     lowerTail,
     returnLog,
   );
@@ -81,7 +81,7 @@ export function phyper({
  * @param probability - Probability value (0..1)
  * @param populationSuccesses - Number of success items in population (m)
  * @param populationFailures - Number of failure items in population (n)
- * @param sampleSize - Sample size (k)
+ * @param drawSize - Sample size (k)
  * @param direction - "below" for P(X ≤ x) or "above" for P(X > x) (default: "below")
  * @param probabilityIsLog - If true, probability is given as log-probability (default: false)
  * @returns Quantile value
@@ -90,14 +90,14 @@ export function qhyper({
   probability,
   populationSuccesses,
   populationFailures,
-  sampleSize,
+  drawSize,
   direction = "below",
   probabilityIsLog = false,
 }: {
   probability: number;
   populationSuccesses: number;
   populationFailures: number;
-  sampleSize: number;
+  drawSize: number;
   direction?: "below" | "above";
   probabilityIsLog?: boolean;
 }): number {
@@ -106,7 +106,7 @@ export function qhyper({
     probability,
     populationSuccesses,
     populationFailures,
-    sampleSize,
+    drawSize,
     lowerTail,
     probabilityIsLog,
   );
@@ -116,49 +116,49 @@ export function qhyper({
  * Hypergeometric distribution random number generation
  * @param populationSuccesses - Number of success items in population (m)
  * @param populationFailures - Number of failure items in population (n)
- * @param sampleSize - Sample size (k)
- * @param sampleSizeOutput - Number of random draws (default: 1)
+ * @param drawSize - Sample size (k)
+ * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the hypergeometric distribution (integers)
  */
 export function rhyper({
   populationSuccesses,
   populationFailures,
-  sampleSize,
+  drawSize,
 }: {
   populationSuccesses: number;
   populationFailures: number;
-  sampleSize: number;
+  drawSize: number;
 }): number;
 export function rhyper({
   populationSuccesses,
   populationFailures,
+  drawSize,
   sampleSize,
-  sampleSizeOutput,
 }: {
   populationSuccesses: number;
   populationFailures: number;
+  drawSize: number;
   sampleSize: number;
-  sampleSizeOutput: number;
 }): number[];
 export function rhyper({
   populationSuccesses,
   populationFailures,
-  sampleSize,
-  sampleSizeOutput = 1,
+  drawSize,
+  sampleSize = 1,
 }: {
   populationSuccesses: number;
   populationFailures: number;
-  sampleSize: number;
-  sampleSizeOutput?: number;
+  drawSize: number;
+  sampleSize?: number;
 }): number | number[] {
-  if (sampleSizeOutput === 1) {
-    return wasm_rhyper(populationSuccesses, populationFailures, sampleSize);
+  if (sampleSize === 1) {
+    return wasm_rhyper(populationSuccesses, populationFailures, drawSize);
   }
 
   const results: number[] = [];
-  for (let i = 0; i < sampleSizeOutput; i++) {
+  for (let i = 0; i < sampleSize; i++) {
     results.push(
-      wasm_rhyper(populationSuccesses, populationFailures, sampleSize),
+      wasm_rhyper(populationSuccesses, populationFailures, drawSize),
     );
   }
   return results;

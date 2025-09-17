@@ -1,30 +1,30 @@
-use super::super::super::core::{TailType, TestResult, TestType, calculate_p};
-use super::super::super::helpers::create_error_result;
+use super::super::super::core::types::{
+    ChiSquareGoodnessOfFitTestResult, ChiSquareIndependenceTestResult, EffectSize, EffectSizeType,
+    TestStatistic, TestStatisticName,
+};
+use super::super::super::core::{TailType, calculate_p};
 use statrs::distribution::ChiSquared;
 use std::f64;
 
 /// Perform a Chi-Square Test for Independence using a contingency table.
 
-pub fn independence(contingency_table: &[Vec<f64>], alpha: f64) -> TestResult {
+pub fn independence(
+    contingency_table: &[Vec<f64>],
+    alpha: f64,
+) -> Result<ChiSquareIndependenceTestResult, String> {
     let num_rows = contingency_table.len();
     if num_rows < 2 {
-        return create_error_result("Chi-square independence", "At least two rows required");
+        return Err("At least two rows required".to_string());
     }
 
     let num_cols = contingency_table[0].len();
     if num_cols < 2 || !contingency_table.iter().all(|row| row.len() == num_cols) {
-        return create_error_result(
-            "Chi-square independence",
-            "All rows must have equal and ≥2 columns",
-        );
+        return Err("All rows must have equal and ≥2 columns".to_string());
     }
 
     let total: f64 = contingency_table.iter().flatten().sum();
     if total == 0.0 {
-        return create_error_result(
-            "Chi-square independence",
-            "Total frequency must be greater than zero",
-        );
+        return Err("Total frequency must be greater than zero".to_string());
     }
 
     let mut expected = vec![vec![0.0; num_cols]; num_rows];
@@ -71,14 +71,10 @@ pub fn independence(contingency_table: &[Vec<f64>], alpha: f64) -> TestResult {
     let chi_distribution = match ChiSquared::new(df as f64) {
         Ok(dist) => dist,
         Err(e) => {
-            return create_error_result(
-                "Chi-square independence",
-                &format!("Chi-squared distribution error: {e}"),
-            );
+            return Err(format!("Chi-squared distribution error: {e}"));
         }
     };
     let p_value = calculate_p(test_statistic, TailType::Right, &chi_distribution);
-    let reject_null = p_value < alpha;
 
     // Calculate Cramér's V effect size
     let n = contingency_table.iter().flatten().sum::<f64>();
@@ -91,7 +87,7 @@ pub fn independence(contingency_table: &[Vec<f64>], alpha: f64) -> TestResult {
 
     // Calculate expected frequencies as a flat vector
     let expected_flat: Vec<f64> = expected.iter().flatten().cloned().collect();
-    
+
     // Calculate residuals
     let residuals: Vec<f64> = contingency_table
         .iter()
@@ -118,19 +114,25 @@ pub fn independence(contingency_table: &[Vec<f64>], alpha: f64) -> TestResult {
         None
     };
 
-    TestResult {
-        test_type: TestType::ChiSquareIndependence,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        degrees_of_freedom: Some(df as f64),
-        sample_size: Some(n as usize),
-        effect_size: Some(cramers_v),
-        cramers_v: Some(cramers_v),
-        phi_coefficient: phi,
-        chi_square_expected: Some(expected_flat),
-        residuals: Some(residuals),
-        ..Default::default()
-    }
+    Ok(ChiSquareIndependenceTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ChiSquare.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Chi-square test of independence".to_string(),
+        alpha,
+        error_message: None,
+        degrees_of_freedom: df as f64,
+        effect_size: EffectSize {
+            value: cramers_v,
+            effect_type: EffectSizeType::CramersV.as_str().to_string(),
+        },
+        sample_size: n as usize,
+        phi_coefficient: phi.unwrap_or(0.0),
+        chi_square_expected: expected_flat,
+        residuals,
+    })
 }
 
 /// Perform a Chi-Square Goodness of Fit Test.
@@ -159,7 +161,11 @@ pub fn independence(contingency_table: &[Vec<f64>], alpha: f64) -> TestResult {
 /// - Inputs have different lengths or contain fewer than two categories.
 /// - Invalid values are detected (e.g., expected = 0).
 ///
-pub fn goodness_of_fit<O, E, T, U>(observed: O, expected: E, alpha: f64) -> TestResult
+pub fn goodness_of_fit<O, E, T, U>(
+    observed: O,
+    expected: E,
+    alpha: f64,
+) -> Result<ChiSquareGoodnessOfFitTestResult, String>
 where
     O: IntoIterator<Item = T>,
     E: IntoIterator<Item = U>,
@@ -170,16 +176,10 @@ where
     let expected: Vec<f64> = expected.into_iter().map(|x| x.into()).collect();
 
     if observed.len() != expected.len() {
-        return create_error_result(
-            "Chi-square goodness of fit",
-            "Observed and expected lengths must match",
-        );
+        return Err("Observed and expected lengths must match".to_string());
     }
     if observed.len() < 2 {
-        return create_error_result(
-            "Chi-square goodness of fit",
-            "At least two categories required",
-        );
+        return Err("At least two categories required".to_string());
     }
 
     let test_statistic: f64 = observed
@@ -198,14 +198,10 @@ where
     let chi_distribution = match ChiSquared::new(df) {
         Ok(dist) => dist,
         Err(e) => {
-            return create_error_result(
-                "Chi-square goodness of fit",
-                &format!("Chi-squared distribution error: {e}"),
-            );
+            return Err(format!("Chi-squared distribution error: {e}"));
         }
     };
     let p_value = calculate_p(test_statistic, TailType::Right, &chi_distribution);
-    let reject_null = p_value < alpha;
 
     // Calculate effect size (Cramér's V for goodness of fit)
     let n: f64 = observed.iter().sum();
@@ -215,14 +211,21 @@ where
         0.0
     };
 
-    TestResult {
-        test_type: TestType::ChiSquareIndependence,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        degrees_of_freedom: Some(df),
-        sample_size: Some(observed.len()),
-        effect_size: Some(effect_size),
-        chi_square_expected: Some(expected.clone()),
-        ..Default::default()
-    }
+    Ok(ChiSquareGoodnessOfFitTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ChiSquare.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Chi-square goodness of fit test".to_string(),
+        alpha,
+        error_message: None,
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: effect_size,
+            effect_type: EffectSizeType::CramersV.as_str().to_string(),
+        },
+        sample_size: observed.len(),
+        chi_square_expected: expected.clone(),
+    })
 }

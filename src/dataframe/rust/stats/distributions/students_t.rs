@@ -3,7 +3,8 @@
 //! This module provides Student's t-distribution functions used by t-tests and other statistical tests.
 //! It wraps the statrs StudentsT distribution to provide a consistent interface.
 
-use super::super::core::{TailType, TestResult, TestType, calculate_ci, calculate_p};
+use super::super::core::{TailType, calculate_ci, calculate_p};
+use super::normal::TestResultData;
 use rand::Rng;
 use statrs::distribution::{Continuous, ContinuousCDF, StudentsT};
 
@@ -53,21 +54,15 @@ pub fn t_test_result(
     sample_mean: f64,
     std_error: f64,
     alpha: f64,
-) -> TestResult {
+) -> TestResultData {
     let t_dist = standard_students_t(df);
 
     let p_value = calculate_p(test_statistic, tail.clone(), &t_dist);
     let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &t_dist);
 
-    TestResult {
-        test_type: TestType::OneSampleTTest, // Default, will be overridden by caller
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        degrees_of_freedom: Some(df),
-        ..Default::default()
+    TestResultData {
+        p_value,
+        confidence_interval,
     }
 }
 
@@ -242,8 +237,8 @@ mod tests {
     #[test]
     fn test_t_test_result() {
         let result = t_test_result(2.0, 10.0, TailType::Two, 100.0, 1.0, 0.05);
-        assert!(result.p_value() < 0.1); // Should be significant
-        assert!(result.reject_null());
+        assert!(result.p_value < 0.1); // Should be significant
+        assert!(result.p_value < 0.05); // reject_null logic: p_value < alpha
     }
 
     #[test]

@@ -3,8 +3,8 @@
 #![cfg(feature = "wasm")]
 
 use super::{one_sample::z_test, sample_size::prop_sample_size, two_sample::z_test_ind};
-use crate::stats::core::TestResult;
-use crate::stats::helpers::{create_error_result, parse_alternative};
+use crate::stats::core::types::{OneSampleProportionTestResult, TwoSampleProportionTestResult, TestStatistic, TestStatisticName, ConfidenceInterval};
+use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 
 /// WASM export for one-sample proportion test
@@ -15,7 +15,7 @@ pub fn proportion_test_one_sample(
     p0: f64,
     alpha: f64,
     alternative: &str,
-) -> TestResult {
+) -> OneSampleProportionTestResult {
     let alternative_type = parse_alternative(alternative);
 
     // For one-sample proportion test, we need to create a simple data vector
@@ -29,7 +29,22 @@ pub fn proportion_test_one_sample(
 
     match z_test(data, p0, alternative_type, alpha) {
         Ok(result) => result,
-        Err(e) => create_error_result("One-sample proportion test", &format!("Test failed: {}", e)),
+        Err(e) => OneSampleProportionTestResult {
+            test_statistic: TestStatistic {
+                value: f64::NAN,
+                name: TestStatisticName::ZStatistic.as_str().to_string(),
+            },
+            p_value: f64::NAN,
+            test_name: "One-sample proportion test".to_string(),
+            alpha,
+            error_message: Some(format!("Test failed: {}", e)),
+            confidence_interval: ConfidenceInterval {
+                lower: f64::NAN,
+                upper: f64::NAN,
+                confidence_level: 1.0 - alpha,
+            },
+            sample_proportion: f64::NAN,
+        },
     }
 }
 
@@ -43,7 +58,7 @@ pub fn proportion_test_two_sample(
     alpha: f64,
     alternative: &str,
     pooled: bool,
-) -> TestResult {
+) -> TwoSampleProportionTestResult {
     let alternative_type = parse_alternative(alternative);
 
     // For two-sample proportion test, we need to create data vectors
@@ -63,7 +78,22 @@ pub fn proportion_test_two_sample(
 
     match z_test_ind(data1, data2, alternative_type, alpha, pooled) {
         Ok(result) => result,
-        Err(e) => create_error_result("Two-sample proportion test", &format!("Test failed: {}", e)),
+        Err(e) => TwoSampleProportionTestResult {
+            test_statistic: TestStatistic {
+                value: f64::NAN,
+                name: TestStatisticName::ZStatistic.as_str().to_string(),
+            },
+            p_value: f64::NAN,
+            test_name: "Two-sample proportion test".to_string(),
+            alpha,
+            error_message: Some(format!("Test failed: {}", e)),
+            confidence_interval: ConfidenceInterval {
+                lower: f64::NAN,
+                upper: f64::NAN,
+                confidence_level: 1.0 - alpha,
+            },
+            proportion_difference: f64::NAN,
+        },
     }
 }
 

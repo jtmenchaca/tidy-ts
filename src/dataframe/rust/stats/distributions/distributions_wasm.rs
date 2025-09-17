@@ -3,8 +3,8 @@
 #![cfg(feature = "wasm")]
 
 use super::*;
+use rand::thread_rng;
 use wasm_bindgen::prelude::*;
-use rand::{thread_rng, Rng};
 
 // ============================================================================
 // BETA DISTRIBUTION

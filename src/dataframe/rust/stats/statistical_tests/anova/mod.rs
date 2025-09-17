@@ -35,7 +35,7 @@ pub mod two_way;
 #[cfg(feature = "wasm")]
 pub mod wasm;
 
-pub use one_way::anova;
+pub use one_way::{anova, welch_anova};
 pub use sample_size::f_sample_size;
 pub use two_way::{
     TwoWayAnovaResult, anova_two_way, anova_two_way_factor_a, anova_two_way_factor_b,

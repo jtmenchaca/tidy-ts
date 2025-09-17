@@ -1,9 +1,9 @@
 use super::super::super::core::{
-    AlternativeType, TestResult, TestType,
+    AlternativeType,
     effect_sizes::{cohens_d_z_test_independent, cohens_d_z_test_paired},
+    types::{TwoSampleZTestResult, TestStatistic, TestStatisticName, EffectSize, EffectSizeType, ConfidenceInterval},
 };
 use super::super::super::distributions::normal;
-use super::super::super::helpers::create_error_result;
 
 pub fn z_test_paired<I1, I2, T1, T2>(
     data1: I1,
@@ -11,7 +11,7 @@ pub fn z_test_paired<I1, I2, T1, T2>(
     pop_std_diff: f64,
     alternative: AlternativeType,
     alpha: f64,
-) -> TestResult
+) -> Result<TwoSampleZTestResult, String>
 where
     I1: IntoIterator<Item = T1>,
     I2: IntoIterator<Item = T2>,
@@ -23,10 +23,7 @@ where
 
     // Validate population standard deviation
     if pop_std_diff <= 0.0 {
-        return create_error_result(
-            "Paired two-sample Z-test",
-            &format!("Population standard deviation must be positive, got: {pop_std_diff}"),
-        );
+        return Err(format!("Population standard deviation must be positive, got: {pop_std_diff}"));
     }
 
     // Convert iterators to Vec<f64>
@@ -35,19 +32,16 @@ where
 
     // Check for empty data
     if sample1.is_empty() || sample2.is_empty() {
-        return create_error_result("Paired two-sample Z-test", "Empty data");
+        return Err("Empty data".to_string());
     }
 
     // Check for equal lengths
     if sample1.len() != sample2.len() {
-        return create_error_result(
-            "Paired two-sample Z-test",
-            &format!(
-                "Sample sizes must be equal: {} vs {}",
-                sample1.len(),
-                sample2.len()
-            ),
-        );
+        return Err(format!(
+            "Sample sizes must be equal: {} vs {}",
+            sample1.len(),
+            sample2.len()
+        ));
     }
 
     let n = sample1.len() as f64;
@@ -77,41 +71,47 @@ where
         alpha,
     );
 
-    let p_value = test_result.p_value.unwrap_or(0.0);
-    let confidence_interval = test_result.get_confidence_interval().unwrap_or((0.0, 0.0));
+    let p_value = test_result.p_value;
+    let confidence_interval = test_result.confidence_interval;
 
-    let reject_null = p_value < alpha;
+    let _reject_null = p_value < alpha;
 
-    let null_hypothesis = match alternative {
+    let _null_hypothesis = match alternative {
         AlternativeType::Less => "H0: µ1 >= µ2".to_string(),
         AlternativeType::Greater => "H0: µ1 <= µ2".to_string(),
         AlternativeType::TwoSided => "H0: µ1 = µ2".to_string(),
     };
 
-    let alt_hypothesis = match alternative {
+    let _alt_hypothesis = match alternative {
         AlternativeType::Less => "Ha: µ1 < µ2".to_string(),
         AlternativeType::Greater => "Ha: µ1 > µ2".to_string(),
         AlternativeType::TwoSided => "Ha: µ1 ≠ µ2".to_string(),
     };
 
     // Calculate Cohen's d effect size
-    let effect_size = cohens_d_z_test_paired(sample_mean_diff, pop_std_diff);
+    let _effect_size = cohens_d_z_test_paired(sample_mean_diff, pop_std_diff);
 
-    TestResult {
-        test_type: TestType::TwoSampleZTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        cohens_d: Some(effect_size),
-        effect_size: Some(effect_size),
-        sample_size: Some(sample1.len() + sample2.len()),
-        degrees_of_freedom: Some(n),
-        standard_error: Some(std_error),
-        mean_difference: Some(sample_mean_diff),
-        ..Default::default()
-    }
+    Ok(TwoSampleZTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ZStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Paired two-sample Z-test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
+        effect_size: EffectSize {
+            value: _effect_size,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+        mean_difference: sample_mean_diff,
+        standard_error: std_error,
+    })
 }
 
 /// Performs an independent two-sample Z-test on two unrelated samples.
@@ -127,7 +127,7 @@ pub fn z_test_ind<I1, I2, T1, T2>(
     pop_std2: f64,
     alternative: AlternativeType,
     alpha: f64,
-) -> TestResult
+) -> Result<TwoSampleZTestResult, String>
 where
     I1: IntoIterator<Item = T1>,
     I2: IntoIterator<Item = T2>,
@@ -139,16 +139,10 @@ where
 
     // Validate population standard deviations
     if pop_std1 <= 0.0 {
-        return create_error_result(
-            "Independent two-sample Z-test",
-            &format!("Population standard deviation 1 must be positive, got: {pop_std1}"),
-        );
+        return Err(format!("Population standard deviation 1 must be positive, got: {pop_std1}"));
     }
     if pop_std2 <= 0.0 {
-        return create_error_result(
-            "Independent two-sample Z-test",
-            &format!("Population standard deviation 2 must be positive, got: {pop_std2}"),
-        );
+        return Err(format!("Population standard deviation 2 must be positive, got: {pop_std2}"));
     }
 
     // Convert iterators to Vec<f64>
@@ -157,10 +151,10 @@ where
 
     // Check for empty data
     if sample1.is_empty() {
-        return create_error_result("Independent two-sample Z-test", "Empty data for sample 1");
+        return Err("Empty data for sample 1".to_string());
     }
     if sample2.is_empty() {
-        return create_error_result("Independent two-sample Z-test", "Empty data for sample 2");
+        return Err("Empty data for sample 2".to_string());
     }
 
     let n1 = sample1.len() as f64;
@@ -185,18 +179,18 @@ where
         alpha,
     );
 
-    let p_value = test_result.p_value.unwrap_or(0.0);
-    let confidence_interval = test_result.get_confidence_interval().unwrap_or((0.0, 0.0));
+    let p_value = test_result.p_value;
+    let confidence_interval = test_result.confidence_interval;
 
-    let reject_null = p_value < alpha;
+    let _reject_null = p_value < alpha;
 
-    let null_hypothesis = match alternative {
+    let _null_hypothesis = match alternative {
         AlternativeType::Less => "H0: µ1 >= µ2".to_string(),
         AlternativeType::Greater => "H0: µ1 <= µ2".to_string(),
         AlternativeType::TwoSided => "H0: µ1 = µ2".to_string(),
     };
 
-    let alt_hypothesis = match alternative {
+    let _alt_hypothesis = match alternative {
         AlternativeType::Less => "Ha: µ1 < µ2".to_string(),
         AlternativeType::Greater => "Ha: µ1 > µ2".to_string(),
         AlternativeType::TwoSided => "Ha: µ1 ≠ µ2".to_string(),
@@ -205,20 +199,25 @@ where
     // Calculate Cohen's d effect size
     let effect_size = cohens_d_z_test_independent(mean1, mean2, pop_std1, pop_std2);
 
-    TestResult {
-        test_type: TestType::TwoSampleZTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        cohens_d: Some(effect_size),
-        effect_size: Some(effect_size),
-        sample_size: Some((n1 as usize) + (n2 as usize)),
-        standard_error: Some(std_error),
-        mean_difference: Some(mean1 - mean2),
-        sample_means: Some(vec![mean1, mean2]),
-        sample_std_devs: Some(vec![pop_std1, pop_std2]),
-        ..Default::default()
-    }
+    Ok(TwoSampleZTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ZStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Independent two-sample Z-test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
+        effect_size: EffectSize {
+            value: effect_size,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+        mean_difference: mean1 - mean2,
+        standard_error: std_error,
+    })
 }

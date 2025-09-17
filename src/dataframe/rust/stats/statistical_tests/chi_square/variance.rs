@@ -1,4 +1,8 @@
-use super::super::super::core::{TailType, TestResult, TestType, calculate_chi2_ci, calculate_p};
+use super::super::super::core::types::{
+    ChiSquareVarianceTestResult, ConfidenceInterval, EffectSize, EffectSizeType, TestStatistic,
+    TestStatisticName,
+};
+use super::super::super::core::{TailType, calculate_chi2_ci, calculate_p};
 use statrs::distribution::ChiSquared;
 use std::f64;
 
@@ -9,7 +13,7 @@ pub fn variance<I, T>(
     pop_variance: f64,
     tail: TailType,
     alpha: f64,
-) -> Result<TestResult, String>
+) -> Result<ChiSquareVarianceTestResult, String>
 where
     I: IntoIterator<Item = T>,
     T: Into<f64>,
@@ -36,15 +40,8 @@ where
     let chi_distribution = ChiSquared::new(df).map_err(|e| format!("Chi-squared error: {e}"))?;
 
     let p_value = calculate_p(test_statistic, tail.clone(), &chi_distribution);
-    let reject_null = p_value < alpha;
 
     let confidence_interval = calculate_chi2_ci(pop_variance, alpha, &chi_distribution);
-
-    let alt_hypothesis = match tail {
-        TailType::Two => format!("Ha: σ² ≠ {pop_variance}"),
-        TailType::Left => format!("Ha: σ² < {pop_variance}"),
-        TailType::Right => format!("Ha: σ² > {pop_variance}"),
-    };
 
     // Calculate effect size as the ratio of sample variance to population variance
     // This gives us a measure of how much the sample variance deviates from the expected
@@ -54,16 +51,25 @@ where
         0.0
     };
 
-    Ok(TestResult {
-        test_type: TestType::ChiSquareIndependence,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        effect_size: Some(effect_size),
-        degrees_of_freedom: Some(df),
-        sample_size: Some(n),
-        sample_std_devs: Some(vec![sample_variance.sqrt()]),
-        ..Default::default()
+    Ok(ChiSquareVarianceTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ChiSquare.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Chi-square test for variance".to_string(),
+        alpha,
+        error_message: None,
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: effect_size,
+            effect_type: EffectSizeType::CramersV.as_str().to_string(), // Using CramersV as closest match for variance ratio
+        },
+        sample_size: n,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
     })
 }

@@ -5,8 +5,7 @@ use statrs::statistics::Statistics;
 use std::cmp;
 use std::f64::consts::{FRAC_1_SQRT_2, FRAC_PI_3};
 
-use super::super::super::core::{TestResult, TestType};
-use super::super::super::helpers::create_error_result;
+use super::super::super::core::types::{ShapiroWilkTestResult, TestStatistic, TestStatisticName};
 
 /// Implements the [Shapiro-Wilk test](https://en.wikipedia.org/wiki/Shapiro%E2%80%93Wilk_test)
 /// (Shapiro & Wilk, 1965). A simplified port of the algorithm
@@ -68,7 +67,7 @@ static G: [f64; 2] = [-2.273, 0.459];
 
 impl ShapiroWilkTest {
     /// Run the Shapiro-Wilk test on the sample `x`.
-    pub fn new(x: &[f64], alpha: f64) -> TestResult {
+    pub fn new(x: &[f64], alpha: f64) -> Result<ShapiroWilkTestResult, String> {
         let n = x.len();
         let mut sorted = x.to_owned();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(cmp::Ordering::Equal));
@@ -76,9 +75,9 @@ impl ShapiroWilkTest {
         let range = sorted.last().unwrap() - sorted[0];
 
         if range.lt(&SMALL) {
-            return create_error_result("Shapiro-Wilk test", "Data has zero range");
+            return Err("Data has zero range".to_string());
         } else if n < 3 {
-            return create_error_result("Shapiro-Wilk test", "Insufficient data (n < 3)");
+            return Err("Insufficient data (n < 3)".to_string());
         }
 
         let weights = Self::get_weights(n);
@@ -113,10 +112,7 @@ impl ShapiroWilkTest {
             let distribution = match ShapiroWilk::new(n) {
                 Ok(distribution) => distribution,
                 Err(_) => {
-                    return create_error_result(
-                        "Shapiro-Wilk test",
-                        "Failed to create distribution",
-                    );
+                    return Err("Failed to create distribution".to_string());
                 }
             };
             1.0 - distribution.cdf(if n <= 11 {
@@ -127,33 +123,22 @@ impl ShapiroWilkTest {
             })
         };
 
-        // Create TestResult
-        let test_statistic = estimate; // W statistic
-        let confidence_interval = (0.0, 1.0); // Not applicable for normality test
-        let null_hypothesis = "H0: Data is normally distributed".to_string();
-        let alt_hypothesis = "Ha: Data is not normally distributed".to_string();
-        let reject_null = p_value < alpha;
-
         println!(
             "Debug TestResult creation: test_statistic={}, p_value={}",
-            test_statistic, p_value
+            estimate, p_value
         );
 
-        TestResult {
-            test_type: TestType::ShapiroWilk,
-            test_statistic: Some(test_statistic),
-            p_value: Some(p_value),
-            sample_size: Some(n),
-            normality_test_p_value: Some(p_value),
-            missing_values: None,
-            outliers_detected: None,
-            assumptions_violated: if p_value < alpha {
-                Some(vec!["Normality assumption violated".to_string()])
-            } else {
-                None
+        Ok(ShapiroWilkTestResult {
+            test_statistic: TestStatistic {
+                value: estimate,
+                name: TestStatisticName::WStatistic.as_str().to_string(),
             },
-            ..Default::default()
-        }
+            p_value,
+            test_name: "Shapiro-Wilk Test".to_string(),
+            alpha,
+            error_message: None,
+            sample_size: n,
+        })
     }
 
     fn get_weights(n: usize) -> Vec<f64> {
@@ -217,16 +202,16 @@ mod tests {
             1.557, 1.648, 1.690, 1.994, 2.174, 2.206, 3.245, 3.510, 3.571, 4.354, 4.980, 6.084,
             8.351,
         ];
-        let test = ShapiroWilkTest::new(&x, 0.05);
+        let test = ShapiroWilkTest::new(&x, 0.05).unwrap();
         println!(
             "Debug test result: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic(),
-            test.p_value(),
-            test.effect_size()
+            test.test_statistic.value,
+            test.p_value,
+            test.test_statistic.value // Effect size not applicable for normality test
         );
-        assert_eq!(test.test_statistic(), 0.8346662753181684);
-        assert_eq!(test.p_value(), 0.0009134904817755807);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        assert_eq!(test.test_statistic.value, 0.8346662753181684);
+        assert_eq!(test.p_value, 0.0009134904817755807);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 
     #[test]
@@ -234,31 +219,31 @@ mod tests {
         let x = vec![
             134.0, 146.0, 104.0, 119.0, 124.0, 161.0, 107.0, 83.0, 113.0, 129.0, 97.0, 123.0,
         ];
-        let test = ShapiroWilkTest::new(&x, 0.05);
+        let test = ShapiroWilkTest::new(&x, 0.05).unwrap();
         println!(
             "Debug test result 1: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic(),
-            test.p_value(),
-            test.effect_size()
+            test.test_statistic.value,
+            test.p_value,
+            test.test_statistic.value // Effect size not applicable for normality test
         );
-        assert_eq!(test.test_statistic(), 0.9923657326481632);
-        assert_eq!(test.p_value(), 0.9999699312420669);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        assert_eq!(test.test_statistic.value, 0.9923657326481632);
+        assert_eq!(test.p_value, 0.9999699312420669);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 
     #[test]
     fn shapiro_wilk_2() {
         let x = vec![70.0, 118.0, 101.0, 85.0, 107.0, 132.0, 94.0];
-        let test = super::ShapiroWilkTest::new(&x, 0.05);
+        let test = super::ShapiroWilkTest::new(&x, 0.05).unwrap();
         println!(
             "Debug test result 2: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic(),
-            test.p_value(),
-            test.effect_size()
+            test.test_statistic.value,
+            test.p_value,
+            test.test_statistic.value // Effect size not applicable for normality test
         );
-        assert_eq!(test.test_statistic(), 0.9980061683004456);
-        assert_eq!(test.p_value(), 0.9999411393249124);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        assert_eq!(test.test_statistic.value, 0.9980061683004456);
+        assert_eq!(test.p_value, 0.9999411393249124);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 
     #[test]
@@ -269,10 +254,10 @@ mod tests {
             2.174E100, 2.206E100, 3.245E100, 3.510E100, 3.571E100, 4.354E100, 4.980E100, 6.084E100,
             8.351E100,
         ];
-        let test = super::ShapiroWilkTest::new(&x, 0.05);
-        assert_eq!(test.test_statistic(), 0.8346662753181684);
-        assert_eq!(test.p_value(), 0.0009134904817755807);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        let test = super::ShapiroWilkTest::new(&x, 0.05).unwrap();
+        assert_eq!(test.test_statistic.value, 0.8346662753181684);
+        assert_eq!(test.p_value, 0.0009134904817755807);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 
     #[test]
@@ -281,10 +266,10 @@ mod tests {
             -0.44, -0.31, -0.25, -0.21, -0.18, -0.15, -0.12, -0.10, -0.08, -0.06, -0.04, -0.02,
             0.0, 0.02, 0.04, 0.06, 0.08, 0.10, 0.12, 0.15, 0.18, 0.21, 0.25, 0.31, 0.44,
         ];
-        let test = super::ShapiroWilkTest::new(&x, 0.05);
-        assert_eq!(test.test_statistic(), 0.9997987717271388);
-        assert_eq!(test.p_value(), 1.0);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        let test = super::ShapiroWilkTest::new(&x, 0.05).unwrap();
+        assert_eq!(test.test_statistic.value, 0.9997987717271388);
+        assert_eq!(test.p_value, 1.0);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 
     #[test]
@@ -316,9 +301,9 @@ mod tests {
             0.310841224215176,
             0.4417998157703872,
         ];
-        let test = super::ShapiroWilkTest::new(&x, 0.05);
-        assert_eq!(test.test_statistic(), 0.9999999999999999);
-        assert_eq!(test.p_value(), 1.0);
-        assert_eq!(test.effect_size(), 0.0); // Effect size not applicable for normality test
+        let test = super::ShapiroWilkTest::new(&x, 0.05).unwrap();
+        assert_eq!(test.test_statistic.value, 0.9999999999999999);
+        assert_eq!(test.p_value, 1.0);
+        assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
     }
 }

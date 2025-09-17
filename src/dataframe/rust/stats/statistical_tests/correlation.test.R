@@ -11,7 +11,7 @@ if (length(args) < 1) {
 
 function_name <- args[1]
 
-if (function_name == "cor.test.pearson" || function_name == "cor.test.spearman") {
+if (function_name == "cor.test.pearson" || function_name == "cor.test.spearman" || function_name == "cor.test.kendall") {
   # Correlation test
   x_str <- gsub("^\\[|\\]$", "", args[2])
   x <- as.numeric(strsplit(x_str, ",")[[1]])

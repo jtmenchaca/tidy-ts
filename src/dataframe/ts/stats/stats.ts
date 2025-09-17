@@ -105,7 +105,7 @@ export const stats: {
   readonly test: {
     // T-tests
     readonly t: {
-      readonly oneSample: typeof statisticalTests.t_test;
+      readonly oneSample: typeof statisticalTests.tTestOneSample;
       readonly independent: typeof statisticalTests.tTestIndependent;
       readonly paired: typeof statisticalTests.tTestPaired;
     };
@@ -210,7 +210,7 @@ export const stats: {
   test: {
     // T-tests
     t: {
-      oneSample: statisticalTests.t_test,
+      oneSample: statisticalTests.tTestOneSample,
       independent: statisticalTests.tTestIndependent,
       paired: statisticalTests.tTestPaired,
     },

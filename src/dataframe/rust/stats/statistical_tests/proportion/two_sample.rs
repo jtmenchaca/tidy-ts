@@ -1,5 +1,6 @@
 use super::super::super::core::{
-    AlternativeType, StatError, TestResult, TestType, effect_sizes::cohens_h,
+    AlternativeType, effect_sizes::cohens_h,
+    types::{TwoSampleProportionTestResult, TestStatistic, TestStatisticName},
 };
 use super::super::super::distributions::normal;
 
@@ -11,7 +12,7 @@ pub fn z_test_ind<I1, I2, T>(
     alternative: AlternativeType,
     alpha: f64,
     pooled: bool,
-) -> Result<TestResult, StatError>
+) -> Result<TwoSampleProportionTestResult, String>
 where
     I1: IntoIterator<Item = T>,
     I2: IntoIterator<Item = T>,
@@ -24,7 +25,7 @@ where
     let sample2: Vec<f64> = data2.into_iter().map(|x| x.into()).collect();
 
     if sample1.is_empty() || sample2.is_empty() {
-        return Err(StatError::EmptyData);
+        return Err("Sample data cannot be empty".to_string());
     }
 
     let n1 = sample1.len() as f64;
@@ -44,9 +45,7 @@ where
     };
 
     if std_error == 0.0 {
-        return Err(StatError::ComputeError(
-            "Standard error is zero; cannot compute test statistic".to_string(),
-        ));
+        return Err("Standard error is zero; cannot compute test statistic".to_string());
     }
 
     let test_statistic = (p1 - p2) / std_error;
@@ -55,37 +54,39 @@ where
     let test_result =
         normal::z_test_result(test_statistic, tail.clone(), p1 - p2, std_error, alpha);
 
-    let p_value = test_result.p_value.unwrap_or(0.0);
-    let confidence_interval = test_result.get_confidence_interval().unwrap_or((0.0, 0.0));
-    let reject_null = p_value < alpha;
+    let p_value = test_result.p_value;
+    let confidence_interval = test_result.confidence_interval;
+    let _reject_null = p_value < alpha;
 
-    let null_hypothesis = match alternative {
+    let _null_hypothesis = match alternative {
         AlternativeType::Less => "H0: p1 >= p2".to_string(),
         AlternativeType::Greater => "H0: p1 <= p2".to_string(),
         AlternativeType::TwoSided => "H0: p1 = p2".to_string(),
     };
 
-    let alt_hypothesis = match alternative {
+    let _alt_hypothesis = match alternative {
         AlternativeType::Less => "Ha: p1 < p2".to_string(),
         AlternativeType::Greater => "Ha: p1 > p2".to_string(),
         AlternativeType::TwoSided => "Ha: p1 ≠ p2".to_string(),
     };
 
     // Calculate Cohen's h effect size
-    let effect_size = cohens_h(p1, p2);
+    let _effect_size = cohens_h(p1, p2);
 
-    Ok(TestResult {
-        test_type: TestType::TwoSampleProportionTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        effect_size: Some(effect_size),
-        sample_size: Some((n1 as usize) + (n2 as usize)),
-        standard_error: Some(std_error),
-        mean_difference: Some(p1 - p2),
-        sample_means: Some(vec![p1, p2]),
-        ..Default::default()
+    Ok(TwoSampleProportionTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ZStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Two-sample proportion test".to_string(),
+        alpha,
+        error_message: None,
+        proportion_difference: p1 - p2,
+        confidence_interval: crate::stats::core::types::ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
     })
 }

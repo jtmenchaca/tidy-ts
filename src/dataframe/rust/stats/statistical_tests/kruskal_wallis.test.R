@@ -32,10 +32,17 @@ kruskal_wallis_test_one <- function(groups_json, alpha) {
   )
 }
 
+# Define Kruskal-Wallis test by group function (same as above, different name)
+kruskal_wallis_test_by_group <- function(groups_json, alpha) {
+  # This is the same as kruskal_wallis_test_one but with different function name
+  kruskal_wallis_test_one(groups_json, alpha)
+}
+
 # Override the call function for Kruskal-Wallis tests
 call_stat_test_function <- function(args, test_functions) {
   switch(args$func,
     "kruskal.test.one" = kruskal_wallis_test_one(args$args[1], args$args[2]),
+    "kruskal.test.bygroup" = kruskal_wallis_test_by_group(args$args[1], args$args[2]),
     NA
   )
 }

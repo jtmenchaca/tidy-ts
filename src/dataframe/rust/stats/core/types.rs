@@ -14,6 +14,17 @@ pub enum TailType {
     Two,
 }
 
+impl TailType {
+    /// Convert to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TailType::Left => "Left",
+            TailType::Right => "Right",
+            TailType::Two => "Two",
+        }
+    }
+}
+
 /// Represents the type of alternative hypothesis for statistical tests.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen)]
@@ -49,9 +60,9 @@ impl AlternativeType {
     /// Get string representation
     pub fn as_str(self) -> &'static str {
         match self {
-            AlternativeType::TwoSided => "two-sided",
-            AlternativeType::Less => "less",
-            AlternativeType::Greater => "greater",
+            AlternativeType::TwoSided => "Two-Sided",
+            AlternativeType::Less => "Less",
+            AlternativeType::Greater => "Greater",
         }
     }
 }
@@ -76,187 +87,517 @@ pub enum TestType {
     ChiSquareIndependence,
     MannWhitneyU,
     WilcoxonSignedRank,
+    KruskalWallis,
     OneSampleZTest,
     TwoSampleZTest,
     OneSampleProportionTest,
     TwoSampleProportionTest,
     ShapiroWilk,
+    FishersExact,
     PearsonCorrelation,
     SpearmanCorrelation,
     KendallCorrelation,
     Error,
 }
 
+impl TestType {
+    /// Convert to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TestType::OneWayAnova => "One-Way ANOVA",
+            TestType::TwoWayAnovaFactorA => "Two-Way ANOVA Factor A",
+            TestType::TwoWayAnovaFactorB => "Two-Way ANOVA Factor B",
+            TestType::TwoWayAnovaInteraction => "Two-Way ANOVA Interaction",
+            TestType::IndependentTTest => "Independent T-Test",
+            TestType::PairedTTest => "Paired T-Test",
+            TestType::OneSampleTTest => "One-Sample T-Test",
+            TestType::ChiSquareIndependence => "Chi-Square Independence",
+            TestType::MannWhitneyU => "Mann-Whitney U",
+            TestType::WilcoxonSignedRank => "Wilcoxon Signed Rank",
+            TestType::KruskalWallis => "Kruskal-Wallis",
+            TestType::OneSampleZTest => "One-Sample Z-Test",
+            TestType::TwoSampleZTest => "Two-Sample Z-Test",
+            TestType::OneSampleProportionTest => "One-Sample Proportion Test",
+            TestType::TwoSampleProportionTest => "Two-Sample Proportion Test",
+            TestType::ShapiroWilk => "Shapiro-Wilk",
+            TestType::FishersExact => "Fisher's Exact Test",
+            TestType::PearsonCorrelation => "Pearson Correlation",
+            TestType::SpearmanCorrelation => "Spearman Correlation",
+            TestType::KendallCorrelation => "Kendall Correlation",
+            TestType::Error => "Error",
+        }
+    }
+}
+
+
+/// Test statistic names that can be returned by statistical tests
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
+pub enum TestStatisticName {
+    TStatistic,
+    FStatistic,
+    ChiSquare,
+    ZStatistic,
+    UStatistic,
+    WStatistic,
+    HStatistic,
+    RStatistic,
+    TauStatistic,
+    RhoStatistic,
+    DStatistic,
+    GStatistic,
+    QStatistic,
+    VStatistic,
+    AStatistic,
+    BStatistic,
+    LStatistic,
+    SStatistic,
+}
+
+impl TestStatisticName {
+    /// Convert to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            TestStatisticName::TStatistic => "T-Statistic",
+            TestStatisticName::FStatistic => "F-Statistic",
+            TestStatisticName::ChiSquare => "Chi-Square",
+            TestStatisticName::ZStatistic => "Z-Statistic",
+            TestStatisticName::UStatistic => "U-Statistic",
+            TestStatisticName::WStatistic => "W-Statistic",
+            TestStatisticName::HStatistic => "H-Statistic",
+            TestStatisticName::RStatistic => "R-Statistic",
+            TestStatisticName::TauStatistic => "Tau-Statistic",
+            TestStatisticName::RhoStatistic => "Rho-Statistic",
+            TestStatisticName::DStatistic => "D-Statistic",
+            TestStatisticName::GStatistic => "G-Statistic",
+            TestStatisticName::QStatistic => "Q-Statistic",
+            TestStatisticName::VStatistic => "V-Statistic",
+            TestStatisticName::AStatistic => "A-Statistic",
+            TestStatisticName::BStatistic => "B-Statistic",
+            TestStatisticName::LStatistic => "L-Statistic",
+            TestStatisticName::SStatistic => "S-Statistic",
+        }
+    }
+}
+
+/// Effect size types that can be returned by statistical tests
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
+pub enum EffectSizeType {
+    CohensD,
+    HedgesG,
+    EtaSquared,
+    PartialEtaSquared,
+    OmegaSquared,
+    CramersV,
+    PhiCoefficient,
+    PointBiserialCorrelation,
+    RankBiserialCorrelation,
+    KendallsTau,
+    SpearmansRho,
+    PearsonsR,
+    GlassDelta,
+    CohensF,
+    CohensH,
+    OddsRatio,
+    RelativeRisk,
+    RiskDifference,
+    NumberNeededToTreat,
+}
+
+impl EffectSizeType {
+    /// Convert to string representation
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            EffectSizeType::CohensD => "Cohen's D",
+            EffectSizeType::HedgesG => "Hedges' G",
+            EffectSizeType::EtaSquared => "Eta Squared",
+            EffectSizeType::PartialEtaSquared => "Partial Eta Squared",
+            EffectSizeType::OmegaSquared => "Omega Squared",
+            EffectSizeType::CramersV => "Cramer's V",
+            EffectSizeType::PhiCoefficient => "Phi Coefficient",
+            EffectSizeType::PointBiserialCorrelation => "Point Biserial Correlation",
+            EffectSizeType::RankBiserialCorrelation => "Rank Biserial Correlation",
+            EffectSizeType::KendallsTau => "Kendall's Tau",
+            EffectSizeType::SpearmansRho => "Spearman's Rho",
+            EffectSizeType::PearsonsR => "Pearson's R",
+            EffectSizeType::GlassDelta => "Glass's Delta",
+            EffectSizeType::CohensF => "Cohen's F",
+            EffectSizeType::CohensH => "Cohen's H",
+            EffectSizeType::OddsRatio => "Odds Ratio",
+            EffectSizeType::RelativeRisk => "Relative Risk",
+            EffectSizeType::RiskDifference => "Risk Difference",
+            EffectSizeType::NumberNeededToTreat => "Number Needed to Treat",
+        }
+    }
+}
+
+/// Effect size with type information
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
-/// Result of a statistical test containing all relevant information
-pub struct TestResult {
-    /// Type of statistical test performed
-    pub test_type: TestType,
-    // === CORE TEST RESULTS ===
-    /// The calculated test statistic value
-    pub test_statistic: Option<f64>,
-    /// The p-value of the test
-    pub p_value: Option<f64>,
+pub struct EffectSize {
+    pub value: f64,
+    pub effect_type: String,
+}
 
-    // === CONFIDENCE INTERVALS ===
-    /// Confidence interval lower bound
-    pub confidence_interval_lower: Option<f64>,
-    /// Confidence interval upper bound
-    pub confidence_interval_upper: Option<f64>,
-    /// Confidence level used (e.g., 0.95 for 95%)
-    pub confidence_level: Option<f64>,
+/// Confidence interval structure
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct ConfidenceInterval {
+    pub lower: f64,
+    pub upper: f64,
+    pub confidence_level: f64,
+}
 
-    // === EFFECT SIZES ===
-    /// General effect size measure
-    pub effect_size: Option<f64>,
-    /// Cohen's d (for t-tests)
-    pub cohens_d: Option<f64>,
-    /// Eta squared (for ANOVA)
-    pub eta_squared: Option<f64>,
-    /// Cramer's V (for chi-square)
-    pub cramers_v: Option<f64>,
-    /// Phi coefficient (for 2x2 chi-square)
-    pub phi_coefficient: Option<f64>,
-    /// Odds ratio (for categorical tests)
-    pub odds_ratio: Option<f64>,
-    /// Relative risk (for categorical tests)
-    pub relative_risk: Option<f64>,
+/// Test statistic with name
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct TestStatistic {
+    pub value: f64,
+    pub name: String,
+}
 
-    // === TEST-SPECIFIC STATISTICS ===
-    /// Degrees of freedom
-    pub degrees_of_freedom: Option<f64>,
-    /// Sample size
-    pub sample_size: Option<usize>,
-    /// Correlation coefficient (for correlation tests)
-    pub correlation: Option<f64>,
-    /// U statistic (for Mann-Whitney)
-    pub u_statistic: Option<f64>,
-    /// W statistic (for Wilcoxon)
-    pub w_statistic: Option<f64>,
-    /// F statistic (for ANOVA)
-    pub f_statistic: Option<f64>,
-
-    // === DESCRIPTIVE STATISTICS ===
-    /// Mean difference between groups
-    pub mean_difference: Option<f64>,
-    /// Standard error
-    pub standard_error: Option<f64>,
-    /// Margin of error
-    pub margin_of_error: Option<f64>,
-    /// Sample means for each group
-    pub sample_means: Option<Vec<f64>>,
-    /// Sample standard deviations for each group
-    pub sample_std_devs: Option<Vec<f64>>,
-
-    // === TEST-SPECIFIC DETAILS ===
-    /// Expected frequencies (for chi-square)
-    pub chi_square_expected: Option<Vec<f64>>,
-    /// Residuals (for chi-square)
-    pub residuals: Option<Vec<f64>>,
-    /// Ranks (for non-parametric tests)
-    pub ranks: Option<Vec<f64>>,
-    /// Tie correction factor
-    pub tie_correction: Option<f64>,
-    /// Exact p-value (when available)
-    pub exact_p_value: Option<f64>,
-    /// Asymptotic p-value (for large samples)
-    pub asymptotic_p_value: Option<f64>,
-
-    // === MODEL INFORMATION (for regression/ANOVA) ===
-    /// R-squared value
-    pub r_squared: Option<f64>,
-    /// Adjusted R-squared value
-    pub adjusted_r_squared: Option<f64>,
-    /// Akaike Information Criterion
-    pub aic: Option<f64>,
-    /// Bayesian Information Criterion
-    pub bic: Option<f64>,
-    /// Sum of squares breakdown
-    pub sum_of_squares: Option<Vec<f64>>,
-
-    // === DATA QUALITY ===
-    /// Number of missing values
-    pub missing_values: Option<usize>,
-    /// Number of outliers detected
-    pub outliers_detected: Option<usize>,
-    /// List of violated assumptions
-    pub assumptions_violated: Option<Vec<String>>,
-    /// P-value from normality test
-    pub normality_test_p_value: Option<f64>,
-
-    // === ERROR HANDLING ===
-    /// Error message if the test failed
+/// One-way ANOVA test result with guaranteed properties
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct OneWayAnovaTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
     pub error_message: Option<String>,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
+    pub sample_means: Vec<f64>,
+    pub sample_std_devs: Vec<f64>,
+    pub sum_of_squares: Vec<f64>,
+    pub r_squared: f64,
+    pub adjusted_r_squared: f64,
 }
 
-impl TestResult {
-    /// Get confidence interval as a tuple (for internal use)
-    pub fn get_confidence_interval(&self) -> Option<(f64, f64)> {
-        match (
-            self.confidence_interval_lower,
-            self.confidence_interval_upper,
-        ) {
-            (Some(lower), Some(upper)) => Some((lower, upper)),
-            _ => None,
-        }
-    }
+/// Two-way ANOVA test result with guaranteed properties for all three tests
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct TwoWayAnovaTestResult {
+    // Factor A main effect
+    pub factor_a: AnovaTestComponent,
+    // Factor B main effect
+    pub factor_b: AnovaTestComponent,
+    // A×B interaction effect
+    pub interaction: AnovaTestComponent,
+    // Common properties
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub sample_size: usize,
+    pub sample_means: Vec<f64>,
+    pub sample_std_devs: Vec<f64>,
+    pub sum_of_squares: Vec<f64>, // [ss_a, ss_b, ss_ab, ss_error]
+    pub grand_mean: f64,
+}
 
-    /// Create an error TestResult
-    pub fn error(method: &str, error_msg: &str) -> Self {
-        Self {
-            test_type: TestType::Error,
-            error_message: Some(format!("{}: {}", method, error_msg)),
-            ..Default::default()
+/// Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct AnovaTestComponent {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub mean_square: f64,
+    pub sum_of_squares: f64,
+}
+
+/// Chi-square test of independence result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct ChiSquareIndependenceTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
+    pub phi_coefficient: f64,
+    pub chi_square_expected: Vec<f64>,
+    pub residuals: Vec<f64>,
+}
+
+/// Chi-square goodness of fit test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct ChiSquareGoodnessOfFitTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
+    pub chi_square_expected: Vec<f64>,
+}
+
+/// Chi-square test for variance result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct ChiSquareVarianceTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
+    pub confidence_interval: ConfidenceInterval,
+}
+
+
+/// Mann-Whitney test method type
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
+pub enum MannWhitneyMethod {
+    Exact,
+    Asymptotic,
+}
+
+impl MannWhitneyMethod {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            MannWhitneyMethod::Exact => "Exact",
+            MannWhitneyMethod::Asymptotic => "Asymptotic",
         }
     }
 }
 
-impl Default for TestResult {
-    fn default() -> Self {
-        Self {
-            test_statistic: None,
-            p_value: None,
-            test_type: TestType::IndependentTTest,
-            confidence_interval_lower: None,
-            confidence_interval_upper: None,
-            confidence_level: None,
-            effect_size: None,
-            degrees_of_freedom: None,
-            correlation: None,
-            u_statistic: None,
-            w_statistic: None,
-            sample_size: None,
-            cohens_d: None,
-            eta_squared: None,
-            cramers_v: None,
-            phi_coefficient: None,
-            odds_ratio: None,
-            relative_risk: None,
-            mean_difference: None,
-            standard_error: None,
-            margin_of_error: None,
-            sample_means: None,
-            sample_std_devs: None,
-            chi_square_expected: None,
-            residuals: None,
-            ranks: None,
-            tie_correction: None,
-            exact_p_value: None,
-            asymptotic_p_value: None,
-            r_squared: None,
-            adjusted_r_squared: None,
-            aic: None,
-            bic: None,
-            f_statistic: None,
-            sum_of_squares: None,
-            missing_values: None,
-            outliers_detected: None,
-            assumptions_violated: None,
-            normality_test_p_value: None,
-            error_message: None,
+/// Mann-Whitney test result with method information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct MannWhitneyTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub method: String, // "Exact" or "Asymptotic"
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub effect_size: EffectSize,
+}
+
+
+/// Pearson correlation test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct PearsonCorrelationTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize, // Pearson's r as effect size
+}
+
+/// Spearman correlation test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct SpearmanCorrelationTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize, // Spearman's rho as effect size
+}
+
+/// Kendall correlation test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct KendallCorrelationTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub effect_size: EffectSize, // Kendall's tau as effect size
+}
+
+/// One-sample t-test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct OneSampleTTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+}
+
+/// Two-sample independent t-test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct TwoSampleTTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub mean_difference: f64,
+    pub standard_error: f64,
+}
+
+/// Paired t-test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct PairedTTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub mean_difference: f64,
+    pub standard_error: f64,
+}
+
+
+/// Wilcoxon signed-rank test method type
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen)]
+pub enum WilcoxonMethod {
+    Exact,
+    Asymptotic,
+}
+
+impl WilcoxonMethod {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            WilcoxonMethod::Exact => "Exact",
+            WilcoxonMethod::Asymptotic => "Asymptotic",
         }
     }
 }
 
-// The getters are now automatically generated by the wasm_bindgen(getter_with_clone) attribute on the struct
+/// Wilcoxon signed-rank test result with method information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct WilcoxonSignedRankTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub method: String, // "Exact" or "Asymptotic"
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub effect_size: EffectSize,
+}
+
+
+/// Kruskal-Wallis test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct KruskalWallisTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub degrees_of_freedom: f64,
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
+}
+
+/// One-sample Z-test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct OneSampleZTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub effect_size: EffectSize,
+}
+
+/// Two-sample Z-test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct TwoSampleZTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub effect_size: EffectSize,
+    pub mean_difference: f64,
+    pub standard_error: f64,
+}
+
+/// One-sample proportion test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct OneSampleProportionTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub sample_proportion: f64,
+}
+
+/// Two-sample proportion test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct TwoSampleProportionTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub proportion_difference: f64,
+}
+
+/// Shapiro-Wilk test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct ShapiroWilkTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub sample_size: usize,
+}
+
+
+/// Fisher's exact test result
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct FishersExactTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub confidence_interval: ConfidenceInterval,
+    pub odds_ratio: f64,
+    pub method: String,
+}

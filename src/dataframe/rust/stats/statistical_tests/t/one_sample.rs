@@ -1,13 +1,23 @@
-use super::super::super::core::{AlternativeType, TestResult, TestType};
+use super::super::super::core::{
+    AlternativeType,
+    types::{
+        ConfidenceInterval, EffectSize, EffectSizeType, OneSampleTTestResult, TestStatistic,
+        TestStatisticName,
+    },
+};
 use super::super::super::distributions::students_t;
-use super::super::super::helpers::create_error_result;
 
 /// Performs a one-sample t-test on the provided data.
 ///
 /// This function compares the mean of a sample to a known population mean to determine if there is a statistically significant difference.
 ///
 
-pub fn t_test<I, T>(data: I, pop_mean: f64, alternative: AlternativeType, alpha: f64) -> TestResult
+pub fn t_test<I, T>(
+    data: I,
+    pop_mean: f64,
+    alternative: AlternativeType,
+    alpha: f64,
+) -> Result<OneSampleTTestResult, String>
 where
     I: IntoIterator<Item = T>,
     T: Into<f64>,
@@ -20,15 +30,12 @@ where
 
     // Check for empty data
     if sample_data.is_empty() {
-        return create_error_result("One-sample t-test", "Empty data");
+        return Err("Empty data".to_string());
     }
 
     // Check for insufficient data (need at least 2 points for variance)
     if sample_data.len() < 2 {
-        return create_error_result(
-            "One-sample t-test",
-            "Insufficient data: need at least 2 observations",
-        );
+        return Err("Insufficient data: need at least 2 observations".to_string());
     }
 
     let n = sample_data.len() as f64;
@@ -59,10 +66,8 @@ where
         alpha,
     );
 
-    let p_value = test_result.p_value.unwrap_or(0.0);
-    let confidence_interval = test_result.get_confidence_interval().unwrap_or((0.0, 0.0));
-
-    let reject_null = p_value < alpha;
+    let p_value = test_result.p_value;
+    let confidence_interval = test_result.confidence_interval;
 
     // Calculate Cohen's d effect size
     let sample_std = sample_var.sqrt();
@@ -72,32 +77,24 @@ where
         (sample_mean - pop_mean) / sample_std
     };
 
-    let null_hypothesis = match alternative {
-        AlternativeType::Less => format!("H0: µ >= {pop_mean}"),
-        AlternativeType::Greater => format!("H0: µ <= {pop_mean}"),
-        AlternativeType::TwoSided => format!("H0: µ = {pop_mean}"),
-    };
-
-    let alt_hypothesis = match alternative {
-        AlternativeType::Less => format!("Ha: µ < {pop_mean}"),
-        AlternativeType::Greater => format!("Ha: µ > {pop_mean}"),
-        AlternativeType::TwoSided => format!("Ha: µ ≠ {pop_mean}"),
-    };
-
-    TestResult {
-        test_type: TestType::OneSampleTTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        effect_size: Some(cohens_d),
-        cohens_d: Some(cohens_d),
-        degrees_of_freedom: Some(df),
-        sample_size: Some(n as usize),
-        mean_difference: Some(sample_mean - pop_mean),
-        standard_error: Some(std_error),
-        margin_of_error: Some((confidence_interval.1 - confidence_interval.0) / 2.0),
-        ..Default::default()
-    }
+    Ok(OneSampleTTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::TStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "One-sample t-test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: cohens_d,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+    })
 }

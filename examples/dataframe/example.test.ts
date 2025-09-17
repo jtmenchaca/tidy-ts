@@ -46,7 +46,7 @@ Deno.test("Example Test", async () => {
         s.compare.oneGroup.centralTendency.toValue({
           data: df.culmenLengthMm.filter((x): x is number => x !== null),
           hypothesizedValue: 0,
-          parametric: true,
+          parametric: "parametric",
           alternative: "two-sided",
           alpha: 0.05,
         }),
@@ -88,7 +88,7 @@ Deno.test("Example Test", async () => {
     .toEachOther({
       x: adelieData,
       y: chinstrapData,
-      parametric: true, // Use t-test
+      parametric: "parametric", // Use t-test
       equalVar: true, // Assume equal variances
       alternative: "two-sided",
       alpha: 0.05,
@@ -97,19 +97,23 @@ Deno.test("Example Test", async () => {
   console.log("\nCulmen Length Comparison (Adelie vs Chinstrap):");
   console.log(`Test: ${culmenLengthComparison.test_name}`);
   console.log(
-    `Test Statistic: ${culmenLengthComparison.test_statistic?.toFixed(4)}`,
+    `Test Statistic: ${
+      culmenLengthComparison.test_statistic?.value?.toFixed(4)
+    }`,
   );
   console.log(`P-value: ${culmenLengthComparison.p_value?.toFixed(4)}`);
   console.log(
-    `Effect Size (Cohen's d): ${culmenLengthComparison.cohens_d?.toFixed(4)}`,
+    `Effect Size (Cohen's d): ${
+      culmenLengthComparison.effect_size?.value?.toFixed(4)
+    }`,
   );
   console.log(
     `Mean Difference: ${culmenLengthComparison.mean_difference?.toFixed(4)}`,
   );
   console.log(
     `95% CI: [${
-      culmenLengthComparison.confidence_interval_lower?.toFixed(4)
-    }, ${culmenLengthComparison.confidence_interval_upper?.toFixed(4)}]`,
+      culmenLengthComparison.confidence_interval?.lower?.toFixed(4)
+    }, ${culmenLengthComparison.confidence_interval?.upper?.toFixed(4)}]`,
   );
 
   // 3. Compare body mass between male and female penguins (non-parametric)
@@ -124,7 +128,7 @@ Deno.test("Example Test", async () => {
   const bodyMassComparison = s.compare.twoGroups.centralTendency.toEachOther({
     x: maleData,
     y: femaleData,
-    parametric: false, // Use Mann-Whitney U test
+    parametric: "nonparametric", // Use Mann-Whitney U test
     alternative: "two-sided",
     alpha: 0.05,
   });
@@ -132,33 +136,37 @@ Deno.test("Example Test", async () => {
   console.log("\nBody Mass Comparison (Male vs Female):");
   console.log(`Test: ${bodyMassComparison.test_name}`);
   console.log(
-    `Test Statistic: ${bodyMassComparison.test_statistic?.toFixed(4)}`,
+    `Test Statistic: ${bodyMassComparison.test_statistic?.value?.toFixed(4)}`,
   );
   console.log(`P-value: ${bodyMassComparison.p_value?.toFixed(4)}`);
-  console.log(`Effect Size: ${bodyMassComparison.effect_size?.toFixed(4)}`);
+  console.log(
+    `Effect Size: ${bodyMassComparison.effect_size?.value?.toFixed(4)}`,
+  );
 
   // 4. Test correlation between culmen length and flipper length
   const culmenFlipperCorrelation = s.compare.twoGroups.association.toEachOther({
     x: df.culmenLengthMm.filter((x): x is number => x !== null),
     y: df.flipperLengthMm.filter((x): x is number => x !== null),
     method: "pearson", // Use Pearson correlation
-    alternative: "two.sided",
+    alternative: "two-sided",
     alpha: 0.05,
   });
 
   console.log("\nCulmen Length vs Flipper Length Correlation:");
   console.log(`Test: ${culmenFlipperCorrelation.test_name}`);
   console.log(
-    `Correlation: ${culmenFlipperCorrelation.correlation?.toFixed(4)}`,
+    `Correlation: ${culmenFlipperCorrelation.effect_size?.value?.toFixed(4)}`,
   );
   console.log(
-    `Test Statistic: ${culmenFlipperCorrelation.test_statistic?.toFixed(4)}`,
+    `Test Statistic: ${
+      culmenFlipperCorrelation.test_statistic?.value?.toFixed(4)
+    }`,
   );
   console.log(`P-value: ${culmenFlipperCorrelation.p_value?.toFixed(4)}`);
   console.log(
     `95% CI: [${
-      culmenFlipperCorrelation.confidence_interval_lower?.toFixed(4)
-    }, ${culmenFlipperCorrelation.confidence_interval_upper?.toFixed(4)}]`,
+      culmenFlipperCorrelation.confidence_interval?.lower?.toFixed(4)
+    }, ${culmenFlipperCorrelation.confidence_interval?.upper?.toFixed(4)}]`,
   );
 
   // 5. Compare proportions (e.g., clutch completion rates between species)
@@ -182,11 +190,15 @@ Deno.test("Example Test", async () => {
   console.log("\nClutch Completion Rate Comparison (Adelie vs Gentoo):");
   console.log(`Test: ${clutchCompletionComparison.test_name}`);
   console.log(
-    `Test Statistic: ${clutchCompletionComparison.test_statistic.toFixed(4)}`,
+    `Test Statistic: ${
+      clutchCompletionComparison.test_statistic.value.toFixed(4)
+    }`,
   );
   console.log(`P-value: ${clutchCompletionComparison.p_value.toFixed(4)}`);
   console.log(
-    `Effect Size: ${clutchCompletionComparison.effect_size?.toFixed(4)}`,
+    `Proportion Difference: ${
+      clutchCompletionComparison.proportion_difference?.toFixed(4)
+    }`,
   );
 
   // 6. Compare distributions between islands
@@ -208,10 +220,12 @@ Deno.test("Example Test", async () => {
   console.log("\nCulmen Depth Distribution Comparison (Torgersen vs Biscoe):");
   console.log(`Test: ${distributionComparison.test_name}`);
   console.log(
-    `Test Statistic: ${distributionComparison.test_statistic.toFixed(4)}`,
+    `Test Statistic: ${distributionComparison.test_statistic.value.toFixed(4)}`,
   );
   console.log(`P-value: ${distributionComparison.p_value.toFixed(4)}`);
-  console.log(`Effect Size: ${distributionComparison.effect_size?.toFixed(4)}`);
+  console.log(
+    `Effect Size: ${distributionComparison.effect_size?.value?.toFixed(4)}`,
+  );
 
   // 7. Multiple group comparison using groupBy and summarize
   const multiGroupComparison = df
@@ -224,7 +238,7 @@ Deno.test("Example Test", async () => {
         return s.compare.oneGroup.centralTendency.toValue({
           data,
           hypothesizedValue: 40, // Test if mean culmen length differs from 40mm
-          parametric: true,
+          parametric: "parametric",
           alternative: "two-sided",
           alpha: 0.05,
         });
@@ -236,7 +250,7 @@ Deno.test("Example Test", async () => {
         return s.compare.oneGroup.centralTendency.toValue({
           data,
           hypothesizedValue: 200, // Test if mean flipper length differs from 200mm
-          parametric: true,
+          parametric: "parametric",
           alternative: "two-sided",
           alpha: 0.05,
         });

@@ -1,6 +1,11 @@
-use super::super::super::core::{AlternativeType, TestResult, TestType};
+use super::super::super::core::{
+    AlternativeType,
+    types::{
+        ConfidenceInterval, EffectSize, EffectSizeType, PairedTTestResult, TestStatistic,
+        TestStatisticName, TwoSampleTTestResult,
+    },
+};
 use super::super::super::distributions::students_t;
-use super::super::super::helpers::create_error_result;
 use super::one_sample::t_test;
 
 /// Performs a paired two-sample t-test on two related samples.
@@ -10,7 +15,7 @@ pub fn t_test_paired<I1, I2, T1, T2>(
     data2: I2,
     alternative: AlternativeType,
     alpha: f64,
-) -> TestResult
+) -> Result<PairedTTestResult, String>
 where
     I1: IntoIterator<Item = T1>,
     I2: IntoIterator<Item = T2>,
@@ -23,14 +28,11 @@ where
 
     // Check that both samples have the same length
     if sample1.len() != sample2.len() {
-        return create_error_result(
-            "Paired t-test",
-            &format!(
-                "Sample sizes must be equal for paired t-test. Got {} and {}",
-                sample1.len(),
-                sample2.len()
-            ),
-        );
+        return Err(format!(
+            "Sample sizes must be equal for paired t-test. Got {} and {}",
+            sample1.len(),
+            sample2.len()
+        ));
     }
 
     // Calculate differences
@@ -41,43 +43,36 @@ where
         .collect();
 
     // Perform one-sample t-test on differences against mean of 0
-    let result = t_test(differences.iter().copied(), 0.0, alternative, alpha);
+    let result = t_test(differences.iter().copied(), 0.0, alternative, alpha)?;
+
+    // Calculate mean difference and standard error from differences
+    let mean_diff = differences.iter().sum::<f64>() / differences.len() as f64;
+    let variance_diff = differences
+        .iter()
+        .map(|x| (x - mean_diff).powi(2))
+        .sum::<f64>()
+        / (differences.len() - 1) as f64;
+    let std_error = (variance_diff / differences.len() as f64).sqrt();
 
     // Create new result with updated test type for paired test
-    TestResult {
-        test_type: TestType::PairedTTest,
-        test_statistic: result.test_statistic,
+    Ok(PairedTTestResult {
+        test_statistic: TestStatistic {
+            value: result.test_statistic.value,
+            name: TestStatisticName::TStatistic.as_str().to_string(),
+        },
         p_value: result.p_value,
-        confidence_interval_lower: result.confidence_interval_lower,
-        confidence_interval_upper: result.confidence_interval_upper,
-        confidence_level: result.confidence_level,
-        effect_size: result.effect_size,
-        cohens_d: result.cohens_d,
+        test_name: "Paired T-Test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: result.confidence_interval,
         degrees_of_freedom: result.degrees_of_freedom,
-        sample_size: Some(sample1.len()),
-        mean_difference: result.mean_difference,
-        standard_error: result.standard_error,
-        margin_of_error: result.margin_of_error,
-        sample_means: Some(vec![
-            sample1.iter().sum::<f64>() / sample1.len() as f64,
-            sample2.iter().sum::<f64>() / sample2.len() as f64,
-        ]),
-        sample_std_devs: Some(vec![
-            (sample1
-                .iter()
-                .map(|&v| (v - sample1.iter().sum::<f64>() / sample1.len() as f64).powi(2))
-                .sum::<f64>()
-                / (sample1.len() - 1) as f64)
-                .sqrt(),
-            (sample2
-                .iter()
-                .map(|&v| (v - sample2.iter().sum::<f64>() / sample2.len() as f64).powi(2))
-                .sum::<f64>()
-                / (sample2.len() - 1) as f64)
-                .sqrt(),
-        ]),
-        ..result
-    }
+        effect_size: EffectSize {
+            value: result.effect_size.value,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+        mean_difference: mean_diff,
+        standard_error: std_error,
+    })
 }
 
 /// Convenience function for paired t-test with `Vec<f64>` input
@@ -86,13 +81,35 @@ pub fn t_test_paired_vec(
     data2: &[f64],
     alternative: AlternativeType,
     alpha: f64,
-) -> TestResult {
+) -> PairedTTestResult {
     t_test_paired(
         data1.iter().copied(),
         data2.iter().copied(),
         alternative,
         alpha,
     )
+    .unwrap_or_else(|e| PairedTTestResult {
+        test_statistic: TestStatistic {
+            value: f64::NAN,
+            name: TestStatisticName::TStatistic.as_str().to_string(),
+        },
+        p_value: f64::NAN,
+        test_name: "Paired T-Test".to_string(),
+        alpha,
+        error_message: Some(e),
+        confidence_interval: ConfidenceInterval {
+            lower: f64::NAN,
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        },
+        degrees_of_freedom: f64::NAN,
+        effect_size: EffectSize {
+            value: f64::NAN,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+        mean_difference: f64::NAN,
+        standard_error: f64::NAN,
+    })
 }
 
 /// Performs an independent two-sample t-test on two unrelated samples.
@@ -156,7 +173,7 @@ pub fn t_test_ind<I1, I2, T1, T2>(
     alternative: AlternativeType,
     alpha: f64,
     pooled: bool,
-) -> TestResult
+) -> Result<TwoSampleTTestResult, String>
 where
     I1: IntoIterator<Item = T1>,
     I2: IntoIterator<Item = T2>,
@@ -172,14 +189,14 @@ where
 
     // Check for empty data
     if sample1.is_empty() || sample2.is_empty() {
-        return create_error_result("Independent t-test", "Cannot perform test on empty data");
+        return Err("Cannot perform test on empty data".to_string());
     }
 
     // Check for insufficient data (need at least 2 points per group for variance)
     if sample1.len() < 2 || sample2.len() < 2 {
-        return create_error_result(
-            "Independent t-test",
-            "Insufficient data: need at least 2 points per group for variance estimation",
+        return Err(
+            "Insufficient data: need at least 2 points per group for variance estimation"
+                .to_string(),
         );
     }
 
@@ -222,11 +239,8 @@ where
         alpha,
     );
 
-    let p_value = test_result.p_value.unwrap_or(f64::NAN);
-    let confidence_interval = (
-        test_result.confidence_interval_lower.unwrap_or(f64::NAN),
-        test_result.confidence_interval_upper.unwrap_or(f64::NAN),
-    );
+    let p_value = test_result.p_value;
+    let confidence_interval = test_result.confidence_interval;
 
     // Calculate Cohen's d effect size
     let pooled_var = ((n1 - 1.0) * var1 + (n2 - 1.0) * var2) / (n1 + n2 - 2.0);
@@ -237,22 +251,26 @@ where
         (mean1 - mean2) / pooled_std
     };
 
-    TestResult {
-        test_type: TestType::IndependentTTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        effect_size: Some(cohens_d),
-        cohens_d: Some(cohens_d),
-        degrees_of_freedom: Some(df),
-        sample_size: Some((n1 + n2) as usize),
-        mean_difference: Some(mean1 - mean2),
-        standard_error: Some(std_error),
-        margin_of_error: Some((confidence_interval.1 - confidence_interval.0) / 2.0),
-        sample_means: Some(vec![mean1, mean2]),
-        sample_std_devs: Some(vec![var1.sqrt(), var2.sqrt()]),
-        ..Default::default()
-    }
+    Ok(TwoSampleTTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::TStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Independent T-Test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.0,
+            upper: confidence_interval.1,
+            confidence_level: 1.0 - alpha,
+        },
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: cohens_d,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+        mean_difference: mean1 - mean2,
+        standard_error: std_error,
+    })
 }

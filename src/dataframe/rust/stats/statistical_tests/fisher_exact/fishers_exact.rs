@@ -1,8 +1,7 @@
 // Fisher's exact test implementation - pure computational functions
 // WASM binding is handled in wasm_bindings.rs
 
-use crate::stats::core::{AlternativeType, TestResult, TestType};
-use crate::stats::helpers::create_error_result;
+use crate::stats::core::{AlternativeType, types::{FishersExactTestResult, TestStatistic, TestStatisticName, ConfidenceInterval}};
 
 /// Fisher's exact test result structure
 pub struct FisherResult {
@@ -18,13 +17,10 @@ pub fn fishers_exact_test(
     alternative: &str,
     odds_ratio: f64,
     alpha: f64,
-) -> TestResult {
+) -> Result<FishersExactTestResult, String> {
     let alternative_type = AlternativeType::from_str(alternative);
     if table.len() != 4 {
-        return create_error_result(
-            "Fisher's exact test",
-            "Fisher's exact test requires a 2x2 contingency table (4 values)",
-        );
+        return Err("Fisher's exact test requires a 2x2 contingency table (4 values)".to_string());
     }
 
     // Extract table values
@@ -35,10 +31,7 @@ pub fn fishers_exact_test(
 
     // Validate input
     if [a, b, c, d].iter().any(|&x| x < 0) {
-        return create_error_result(
-            "Fisher's exact test",
-            "All table entries must be non-negative",
-        );
+        return Err("All table entries must be non-negative".to_string());
     }
 
     // Hypergeometric parameters
@@ -80,18 +73,27 @@ pub fn fishers_exact_test(
     // Calculate odds ratio estimate (MLE) - following R's approach
     let estimate = mle_odds_ratio(x, m, n, k);
 
-    TestResult {
-        test_type: TestType::ChiSquareIndependence, // Closest available type
-        test_statistic: Some(estimate), // Using odds ratio as test statistic
-        p_value: Some(p_value.max(0.0).min(1.0)),
-        confidence_interval_lower: Some(f64::NAN),
-        confidence_interval_upper: Some(f64::NAN),
-        effect_size: Some(estimate), // Effect size is the odds ratio
-        odds_ratio: Some(estimate),
-        exact_p_value: Some(p_value.max(0.0).min(1.0)),
-        sample_size: Some((a + b + c + d) as usize),
-        ..Default::default()
-    }
+    Ok(FishersExactTestResult {
+        test_statistic: TestStatistic {
+            value: estimate,
+            name: TestStatisticName::TStatistic.as_str().to_string(), // No specific odds ratio statistic
+        },
+        p_value: p_value.max(0.0).min(1.0),
+        test_name: "Fisher's exact test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: f64::NAN, // TODO: Implement CI for Fisher's exact
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        },
+        odds_ratio: estimate,
+        method: match alternative_type {
+            AlternativeType::TwoSided => "two-sided",
+            AlternativeType::Less => "less",
+            AlternativeType::Greater => "greater",
+        }.to_string(),
+    })
 }
 
 /// Log factorial helper function

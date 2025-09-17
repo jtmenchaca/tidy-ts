@@ -1,7 +1,10 @@
-use super::super::super::core::{AlternativeType, TestResult, TestType};
+use super::super::super::core::{
+    AlternativeType,
+    types::{PearsonCorrelationTestResult, SpearmanCorrelationTestResult, KendallCorrelationTestResult, 
+            TestStatistic, TestStatisticName, EffectSize, EffectSizeType, ConfidenceInterval},
+};
 use super::super::super::distributions::normal;
 use super::super::super::distributions::students_t;
-use super::super::super::helpers::create_error_result;
 use std::collections::HashMap;
 
 /// Calculate ranks for an array with tie handling (average ranks for ties)
@@ -50,20 +53,14 @@ fn pearson_correlation(x: &[f64], y: &[f64]) -> f64 {
 }
 
 /// Pearson correlation test
-pub fn pearson_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> TestResult {
+pub fn pearson_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> Result<PearsonCorrelationTestResult, String> {
     if x.len() != y.len() {
-        return create_error_result(
-            "Pearson correlation test",
-            "x and y must have the same length",
-        );
+        return Err("x and y must have the same length".to_string());
     }
 
     let n = x.len();
     if n < 3 {
-        return create_error_result(
-            "Pearson correlation test",
-            "Not enough observations (need at least 3)",
-        );
+        return Err("Not enough observations (need at least 3)".to_string());
     }
 
     // Calculate correlation
@@ -83,32 +80,37 @@ pub fn pearson_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
         AlternativeType::Less => students_t::pt(t, df, true, false),
     };
 
-    TestResult {
-        test_type: TestType::PearsonCorrelation,
-        test_statistic: Some(t),
-        p_value: Some(p_value),
-        correlation: Some(r),
-        degrees_of_freedom: Some(df),
-        sample_size: Some(n),
-        ..Default::default()
-    }
+    Ok(PearsonCorrelationTestResult {
+        test_statistic: TestStatistic {
+            value: t,
+            name: TestStatisticName::TStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Pearson correlation test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: f64::NAN, // TODO: Implement CI for correlation
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        },
+        degrees_of_freedom: df,
+        effect_size: EffectSize {
+            value: r,
+            effect_type: EffectSizeType::PearsonsR.as_str().to_string(),
+        },
+    })
 }
 
 /// Spearman rank correlation test
-pub fn spearman_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> TestResult {
+pub fn spearman_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> Result<SpearmanCorrelationTestResult, String> {
     if x.len() != y.len() {
-        return create_error_result(
-            "Spearman correlation test",
-            "x and y must have the same length",
-        );
+        return Err("x and y must have the same length".to_string());
     }
 
     let n = x.len();
     if n < 2 {
-        return create_error_result(
-            "Spearman correlation test",
-            "Not enough observations (need at least 2)",
-        );
+        return Err("Not enough observations (need at least 2)".to_string());
     }
 
     // Convert to ranks
@@ -124,19 +126,21 @@ pub fn spearman_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: 
     // Calculate S statistic (sum of squared rank differences)
     let s = calculate_s_statistic(&rank_x, &rank_y);
 
+    // Check for ties upfront for test statistic naming
+    let unique_x = x
+        .iter()
+        .map(|&v| format!("{:.10}", v))
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+    let unique_y = y
+        .iter()
+        .map(|&v| format!("{:.10}", v))
+        .collect::<std::collections::HashSet<_>>()
+        .len();
+    let has_ties = unique_x < n || unique_y < n;
+
     let (test_statistic, p_value) = if n <= 5 {
         // For small samples, use exact test if no ties
-        let unique_x = x
-            .iter()
-            .map(|&v| format!("{:.10}", v))
-            .collect::<std::collections::HashSet<_>>()
-            .len();
-        let unique_y = y
-            .iter()
-            .map(|&v| format!("{:.10}", v))
-            .collect::<std::collections::HashSet<_>>()
-            .len();
-        let has_ties = unique_x < n || unique_y < n;
 
         if !has_ties {
             // Use exact enumeration for small samples without ties
@@ -172,15 +176,26 @@ pub fn spearman_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: 
         (s, p)
     };
 
-    TestResult {
-        test_type: TestType::SpearmanCorrelation,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        correlation: Some(rho),
-        sample_size: Some(n),
-        ranks: Some(rank_x),
-        ..Default::default()
-    }
+    Ok(SpearmanCorrelationTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: if n <= 5 && !has_ties { TestStatisticName::SStatistic.as_str().to_string() } else { TestStatisticName::TStatistic.as_str().to_string() },
+        },
+        p_value,
+        test_name: "Spearman rank correlation test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: f64::NAN, // TODO: Implement CI for correlation
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        },
+        degrees_of_freedom: if n > 5 { 0.0 } else { (n - 2) as f64 },
+        effect_size: EffectSize {
+            value: rho,
+            effect_type: EffectSizeType::SpearmansRho.as_str().to_string(),
+        },
+    })
 }
 
 /// Calculate S statistic for Spearman test
@@ -242,20 +257,14 @@ fn count_pairs(x: &[f64], y: &[f64]) -> (i32, i32, i32, i32, i32) {
 }
 
 /// Kendall rank correlation test
-pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> TestResult {
+pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> Result<KendallCorrelationTestResult, String> {
     if x.len() != y.len() {
-        return create_error_result(
-            "Kendall correlation test",
-            "x and y must have the same length",
-        );
+        return Err("x and y must have the same length".to_string());
     }
 
     let n = x.len();
     if n < 2 {
-        return create_error_result(
-            "Kendall correlation test",
-            "Not enough observations (need at least 2)",
-        );
+        return Err("Not enough observations (need at least 2)".to_string());
     }
 
     // Count concordant and discordant pairs
@@ -336,12 +345,23 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
         AlternativeType::Less => normal::pnorm(z, 0.0, 1.0, true, false),
     };
 
-    TestResult {
-        test_type: TestType::KendallCorrelation,
-        test_statistic: Some(z),
-        p_value: Some(p_value),
-        correlation: Some(tau),
-        sample_size: Some(n),
-        ..Default::default()
-    }
+    Ok(KendallCorrelationTestResult {
+        test_statistic: TestStatistic {
+            value: z,
+            name: TestStatisticName::ZStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "Kendall rank correlation test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: f64::NAN, // TODO: Implement CI for correlation
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        },
+        effect_size: EffectSize {
+            value: tau,
+            effect_type: EffectSizeType::KendallsTau.as_str().to_string(),
+        },
+    })
 }

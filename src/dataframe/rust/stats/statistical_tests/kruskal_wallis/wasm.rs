@@ -3,7 +3,9 @@
 #![cfg(feature = "wasm")]
 
 use super::kruskal_wallis::kruskal_wallis_test;
-use crate::stats::core::TestResult;
+use crate::stats::core::types::{
+    EffectSize, EffectSizeType, KruskalWallisTestResult, TestStatistic, TestStatisticName,
+};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for Kruskal-Wallis test
@@ -12,27 +14,48 @@ pub fn kruskal_wallis_test_wasm(
     data: &[f64],
     group_sizes: &[usize],
     alpha: f64,
-) -> TestResult {
+) -> KruskalWallisTestResult {
     // Reconstruct groups from flattened data
     let mut groups = Vec::new();
     let mut start = 0;
 
     for &size in group_sizes {
         if start + size > data.len() {
-            return TestResult {
-                test_type: crate::stats::core::TestType::OneWayAnova,
-                test_statistic: Some(0.0),
-                p_value: Some(1.0),
-                confidence_interval_lower: Some(0.0),
-                confidence_interval_upper: Some(0.0),
-                effect_size: Some(0.0),
+            return KruskalWallisTestResult {
+                test_statistic: TestStatistic {
+                    value: f64::NAN,
+                    name: TestStatisticName::HStatistic.as_str().to_string(),
+                },
+                p_value: f64::NAN,
+                test_name: "Kruskal-Wallis Test".to_string(),
+                alpha,
                 error_message: Some("Error: Group sizes exceed data length".to_string()),
-                ..Default::default()
+                degrees_of_freedom: f64::NAN,
+                effect_size: EffectSize {
+                    value: f64::NAN,
+                    effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                },
+                sample_size: 0,
             };
         }
         groups.push(data[start..start + size].to_vec());
         start += size;
     }
 
-    kruskal_wallis_test(&groups, alpha)
+    kruskal_wallis_test(&groups, alpha).unwrap_or_else(|e| KruskalWallisTestResult {
+        test_statistic: TestStatistic {
+            value: f64::NAN,
+            name: TestStatisticName::HStatistic.as_str().to_string(),
+        },
+        p_value: f64::NAN,
+        test_name: "Kruskal-Wallis Test".to_string(),
+        alpha,
+        error_message: Some(e),
+        degrees_of_freedom: f64::NAN,
+        effect_size: EffectSize {
+            value: f64::NAN,
+            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+        },
+        sample_size: 0,
+    })
 }

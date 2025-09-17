@@ -3,67 +3,34 @@
  * Non-parametric alternative to one-way ANOVA
  */
 
-import {
-  kruskal_wallis_test_wasm,
-  type TestResult,
-} from "../../wasm/wasm-loader.ts";
-import type { TestName } from "../../wasm/statistical-tests.ts";
-
-/** Kruskal-Wallis test specific result with only relevant fields */
-export type KruskalWallisTestResult =
-  & Pick<
-    TestResult,
-    | "test_type"
-    | "confidence_interval_lower"
-    | "confidence_interval_upper"
-    | "confidence_level"
-    | "sample_size"
-    | "sample_means"
-    | "sample_std_devs"
-    | "ranks"
-    | "tie_correction"
-    | "error_message"
-  >
-  & {
-    test_statistic: number;
-    p_value: number;
-    effect_size: number;
-    eta_squared: number;
-    degrees_of_freedom: number;
-    test_name: TestName;
-  };
+import { kruskal_wallis_test_wasm, serializeTestResult } from "../../wasm/statistical-tests.ts";
+import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
 
 /**
  * Perform Kruskal-Wallis test using Rust WASM implementation
- * @param groups Variadic groups, each group is an array of numbers
+ * @param groups Array of groups, each group is an array of numbers
+ * @param alpha Significance level (default: 0.05)
  * @returns Test result with statistic, p-value, and degrees of freedom
  */
 export function kruskalWallisTest(
   groups: number[][],
-  alpha: number,
-): KruskalWallisTestResult {
-  return kruskalWallisTestWithOptions({ groups, alpha });
-}
-
-/**
- * Kruskal-Wallis test with options
- */
-export function kruskalWallisTestWithOptions({
-  groups,
   alpha = 0.05,
-}: {
-  groups: number[][];
-  alpha?: number;
-}): KruskalWallisTestResult {
+): KruskalWallisTestResult {
   // Validate input
   if (groups.length < 2) {
     throw new Error("Need at least 2 groups for Kruskal-Wallis test");
   }
 
-  // Remove any empty groups
-  const nonEmptyGroups = groups.filter((g) => g.length > 0);
+  // Clean groups: filter out NaN/infinite values
+  const cleanGroups = groups.map(group => 
+    group.filter(v => typeof v === "number" && Number.isFinite(v))
+  );
+  
+  // Remove any empty groups after cleaning
+  const nonEmptyGroups = cleanGroups.filter((g) => g.length > 0);
   if (nonEmptyGroups.length < 2) {
-    throw new Error("Need at least 2 non-empty groups");
+    throw new Error("Need at least 2 non-empty groups with valid values");
   }
 
   // Combine all observations and track group sizes
@@ -80,12 +47,14 @@ export function kruskalWallisTestWithOptions({
   }
 
   // Call Rust WASM implementation
-  return kruskal_wallis_test_wasm(
+  const result = kruskal_wallis_test_wasm(
     new Float64Array(combined),
     new Uint32Array(groupSizes),
     alpha,
-  ) as KruskalWallisTestResult;
+  );
+  return serializeTestResult(result) as KruskalWallisTestResult;
 }
+
 
 /**
  * Alternative interface that accepts data and group labels

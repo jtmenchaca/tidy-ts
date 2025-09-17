@@ -1,29 +1,6 @@
-import { type TestResult, wilcoxon_w_test } from "../../wasm/wasm-loader.ts";
-import type { TestName } from "../../wasm/statistical-tests.ts";
-
-/** Wilcoxon test specific result with only relevant fields */
-export type WilcoxonTestResult =
-  & Pick<
-    TestResult,
-    | "test_type"
-    | "test_statistic"
-    | "p_value"
-    | "confidence_interval_lower"
-    | "confidence_interval_upper"
-    | "confidence_level"
-    | "effect_size"
-    | "w_statistic"
-    | "sample_size"
-    | "mean_difference"
-    | "standard_error"
-    | "margin_of_error"
-    | "ranks"
-    | "tie_correction"
-    | "exact_p_value"
-    | "asymptotic_p_value"
-    | "error_message"
-  >
-  & { test_name: TestName };
+import { wilcoxon_w_test, serializeTestResult } from "../../wasm/statistical-tests.ts";
+import type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+export type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
 
 /**
  * Wilcoxon signed-rank test for paired data
@@ -38,7 +15,7 @@ export function wilcoxonSignedRankTest({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): WilcoxonTestResult {
+}): WilcoxonSignedRankTestResult {
   const cleanX = x.filter((x) => isFinite(x));
   const cleanY = y.filter((x) => isFinite(x));
 
@@ -50,10 +27,11 @@ export function wilcoxonSignedRankTest({
     throw new Error("Must have at least 1 observation");
   }
 
-  return wilcoxon_w_test(
+  const result = wilcoxon_w_test(
     new Float64Array(cleanX),
     new Float64Array(cleanY),
     alpha,
     alternative,
-  ) as WilcoxonTestResult;
+  );
+  return serializeTestResult(result) as WilcoxonSignedRankTestResult;
 }

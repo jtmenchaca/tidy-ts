@@ -1,8 +1,8 @@
 use super::super::super::core::{
-    AlternativeType, TestResult, TestType, effect_sizes::cohens_d_z_test,
+    AlternativeType, effect_sizes::cohens_d_z_test,
+    types::{OneSampleZTestResult, TestStatistic, TestStatisticName, EffectSize, EffectSizeType, ConfidenceInterval},
 };
 use super::super::super::distributions::normal;
-use super::super::super::helpers::create_error_result;
 
 ///
 ///
@@ -16,7 +16,7 @@ pub fn z_test<I, T>(
     pop_std: f64,
     alternative: AlternativeType,
     alpha: f64,
-) -> TestResult
+) -> Result<OneSampleZTestResult, String>
 where
     I: IntoIterator<Item = T>,
     T: Into<f64>,
@@ -26,10 +26,7 @@ where
 
     // Validate population standard deviation
     if pop_std <= 0.0 {
-        return create_error_result(
-            "One-sample Z-test",
-            &format!("Population standard deviation must be positive, got: {pop_std}"),
-        );
+        return Err(format!("Population standard deviation must be positive, got: {pop_std}"));
     }
 
     // Convert iterator to Vec<f64>
@@ -37,7 +34,7 @@ where
 
     // Check for empty data
     if sample_data.is_empty() {
-        return create_error_result("One-sample Z-test", "Empty data");
+        return Err("Empty data".to_string());
     }
 
     let n = sample_data.len() as f64;
@@ -55,26 +52,29 @@ where
     let test_result =
         normal::z_test_result(test_statistic, tail.clone(), sample_mean, std_error, alpha);
 
-    let p_value = test_result.p_value.unwrap_or(f64::NAN);
-    let confidence_interval = test_result.get_confidence_interval();
+    let p_value = test_result.p_value;
+    let confidence_interval = Some(test_result.confidence_interval);
 
     // Calculate Cohen's d effect size
     let effect_size = cohens_d_z_test(sample_mean, pop_mean, pop_std);
 
-    TestResult {
-        test_type: TestType::OneSampleZTest,
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: confidence_interval.map(|ci| ci.0),
-        confidence_interval_upper: confidence_interval.map(|ci| ci.1),
-        confidence_level: Some(1.0 - alpha),
-        effect_size: Some(effect_size),
-        cohens_d: Some(effect_size),
-        sample_size: Some(n as usize),
-        mean_difference: Some(sample_mean - pop_mean),
-        standard_error: Some(std_error),
-        sample_means: Some(vec![sample_mean]),
-        sample_std_devs: Some(vec![pop_std]), // Using population std as it's known
-        ..Default::default()
-    }
+    Ok(OneSampleZTestResult {
+        test_statistic: TestStatistic {
+            value: test_statistic,
+            name: TestStatisticName::ZStatistic.as_str().to_string(),
+        },
+        p_value,
+        test_name: "One-sample Z-test".to_string(),
+        alpha,
+        error_message: None,
+        confidence_interval: ConfidenceInterval {
+            lower: confidence_interval.map(|ci| ci.0).unwrap_or(f64::NAN),
+            upper: confidence_interval.map(|ci| ci.1).unwrap_or(f64::NAN),
+            confidence_level: 1.0 - alpha,
+        },
+        effect_size: EffectSize {
+            value: effect_size,
+            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+        },
+    })
 }

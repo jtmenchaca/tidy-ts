@@ -1,6 +1,7 @@
 import { oneGroup } from "./one-group.ts";
 import { twoGroups } from "./two-groups.ts";
 import { multiGroups } from "./multi-groups.ts";
+import { postHoc } from "./post-hoc.ts";
 
 /**
  * Hierarchical statistical test API that organizes tests by comparison type.
@@ -20,12 +21,17 @@ import { multiGroups } from "./multi-groups.ts";
  *
  * // Multiple groups comparisons
  * testsV2.compare.multiGroups.centralTendency.toEachOther({ groups: [g1, g2, g3] });
+ * testsV2.compare.multiGroups.centralTendency.toEachOther({ data: twoWayData, design: "two-way", testType: "factorA" });
+ *
+ * // Post-hoc analyses after significant omnibus tests
+ * testsV2.compare.postHoc.for({ groups: [g1, g2, g3], originalTest: "anova" });
  * ```
  */
 export const compare = {
   oneGroup,
   twoGroups,
   multiGroups,
+  postHoc,
 };
 
 // Re-export individual components for flexibility

@@ -3,7 +3,13 @@
 //! This module provides normal distribution functions used by z-tests and other statistical tests.
 //! It wraps the statrs Normal distribution to provide a consistent interface.
 
-use super::super::core::{TailType, TestResult, TestType, calculate_ci, calculate_p};
+use super::super::core::{TailType, calculate_ci, calculate_p};
+
+/// Simple test result data structure for distribution calculations
+pub struct TestResultData {
+    pub p_value: f64,
+    pub confidence_interval: (f64, f64),
+}
 use rand::Rng;
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
 
@@ -51,20 +57,15 @@ pub fn z_test_result(
     sample_mean: f64,
     std_error: f64,
     alpha: f64,
-) -> TestResult {
+) -> TestResultData {
     let z_dist = standard_normal();
 
     let p_value = calculate_p(test_statistic, tail.clone(), &z_dist);
     let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &z_dist);
 
-    TestResult {
-        test_type: TestType::OneSampleZTest, // Default, will be overridden by caller
-        test_statistic: Some(test_statistic),
-        p_value: Some(p_value),
-        confidence_interval_lower: Some(confidence_interval.0),
-        confidence_interval_upper: Some(confidence_interval.1),
-        confidence_level: Some(1.0 - alpha),
-        ..Default::default()
+    TestResultData {
+        p_value,
+        confidence_interval,
     }
 }
 
@@ -205,7 +206,7 @@ mod tests {
     #[test]
     fn test_z_test_result() {
         let result = z_test_result(1.96, TailType::Two, 100.0, 1.0, 0.05);
-        assert!(result.p_value() < 0.05);
-        assert!(result.reject_null());
+        assert!(result.p_value < 0.05);
+        assert!(result.p_value < 0.05); // reject_null logic: p_value < alpha
     }
 }

@@ -15,6 +15,7 @@ const statisticalTests = [
   "fishers_exact_tests",
   "shapiro_wilk_tests",
   "correlation_tests",
+  "post_hoc_tests",
 ];
 
 interface TestResult {
@@ -248,7 +249,14 @@ function printSummary(allResults: TestCategoryResults[]): void {
 
   for (const categoryResult of allResults) {
     for (const result of categoryResult.results) {
-      if (result.status === "FAIL" || result.status === "ERROR") {
+      // Consider a test as having issues if:
+      // 1. Status is FAIL or ERROR
+      // 2. Difference is very high (>= 0.1) indicating significant deviation
+      const hasIssues = result.status === "FAIL" ||
+        result.status === "ERROR" ||
+        result.difference >= 0.1;
+
+      if (hasIssues) {
         issues.push({
           category: categoryResult.category,
           testName: result.testName,

@@ -1076,6 +1076,11 @@ export function unique_str(values) {
   return v2;
 }
 
+function _assertClass(instance, klass) {
+  if (!(instance instanceof klass)) {
+    throw new Error(`expected instance of ${klass.name}`);
+  }
+}
 /**
  * WASM export for beta density function
  * @param {number} x
@@ -1897,7 +1902,7 @@ export function wasm_rwilcox(m, n) {
  * @param {Float64Array} data
  * @param {Uint32Array} group_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {OneWayAnovaTestResult}
  */
 export function anova_one_way(data, group_sizes, alpha) {
   const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
@@ -1905,7 +1910,7 @@ export function anova_one_way(data, group_sizes, alpha) {
   const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.anova_one_way(ptr0, len0, ptr1, len1, alpha);
-  return TestResult.__wrap(ret);
+  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -1915,7 +1920,7 @@ export function anova_one_way(data, group_sizes, alpha) {
  * @param {number} b_levels
  * @param {Uint32Array} cell_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {OneWayAnovaTestResult}
  */
 export function anova_two_way_factor_a_wasm(
   data,
@@ -1937,7 +1942,7 @@ export function anova_two_way_factor_a_wasm(
     len1,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -1947,7 +1952,7 @@ export function anova_two_way_factor_a_wasm(
  * @param {number} b_levels
  * @param {Uint32Array} cell_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {OneWayAnovaTestResult}
  */
 export function anova_two_way_factor_b_wasm(
   data,
@@ -1969,7 +1974,7 @@ export function anova_two_way_factor_b_wasm(
     len1,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -1979,7 +1984,7 @@ export function anova_two_way_factor_b_wasm(
  * @param {number} b_levels
  * @param {Uint32Array} cell_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {OneWayAnovaTestResult}
  */
 export function anova_two_way_interaction_wasm(
   data,
@@ -2001,7 +2006,7 @@ export function anova_two_way_interaction_wasm(
     len1,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -2012,7 +2017,7 @@ export function anova_two_way_interaction_wasm(
  * @param {number} b_levels
  * @param {Uint32Array} cell_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {TwoWayAnovaTestResult}
  */
 export function anova_two_way(data, a_levels, b_levels, cell_sizes, alpha) {
   const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
@@ -2028,7 +2033,23 @@ export function anova_two_way(data, a_levels, b_levels, cell_sizes, alpha) {
     len1,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return TwoWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Welch's ANOVA (unequal variances)
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function welch_anova_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.welch_anova_wasm(ptr0, len0, ptr1, len1, alpha);
+  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -2037,13 +2058,57 @@ export function anova_two_way(data, a_levels, b_levels, cell_sizes, alpha) {
  * @param {number} rows
  * @param {number} cols
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {ChiSquareIndependenceTestResult}
  */
 export function chi_square_independence(observed, rows, cols, alpha) {
   const ptr0 = passArrayF64ToWasm0(observed, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.chi_square_independence(ptr0, len0, rows, cols, alpha);
-  return TestResult.__wrap(ret);
+  return ChiSquareIndependenceTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for chi-square goodness of fit test
+ * @param {Float64Array} observed
+ * @param {Float64Array} expected
+ * @param {number} alpha
+ * @returns {ChiSquareGoodnessOfFitTestResult}
+ */
+export function chi_square_goodness_of_fit(observed, expected, alpha) {
+  const ptr0 = passArrayF64ToWasm0(observed, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(expected, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.chi_square_goodness_of_fit(ptr0, len0, ptr1, len1, alpha);
+  return ChiSquareGoodnessOfFitTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for chi-square test for variance
+ * @param {Float64Array} data
+ * @param {number} pop_variance
+ * @param {string} tail
+ * @param {number} alpha
+ * @returns {ChiSquareVarianceTestResult}
+ */
+export function chi_square_variance(data, pop_variance, tail, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    tail,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.chi_square_variance(
+    ptr0,
+    len0,
+    pop_variance,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return ChiSquareVarianceTestResult.__wrap(ret);
 }
 
 /**
@@ -2064,7 +2129,7 @@ export function chi_square_sample_size_wasm(effect_size, alpha, power, _df) {
  * @param {Float64Array} y
  * @param {string} alternative
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {PearsonCorrelationTestResult}
  */
 export function pearson_correlation_test(x, y, alternative, alpha) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2086,7 +2151,7 @@ export function pearson_correlation_test(x, y, alternative, alpha) {
     len2,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return PearsonCorrelationTestResult.__wrap(ret);
 }
 
 /**
@@ -2094,7 +2159,7 @@ export function pearson_correlation_test(x, y, alternative, alpha) {
  * @param {Float64Array} y
  * @param {string} alternative
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {SpearmanCorrelationTestResult}
  */
 export function spearman_correlation_test(x, y, alternative, alpha) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2116,7 +2181,7 @@ export function spearman_correlation_test(x, y, alternative, alpha) {
     len2,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return SpearmanCorrelationTestResult.__wrap(ret);
 }
 
 /**
@@ -2124,7 +2189,7 @@ export function spearman_correlation_test(x, y, alternative, alpha) {
  * @param {Float64Array} y
  * @param {string} alternative
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {KendallCorrelationTestResult}
  */
 export function kendall_correlation_test(x, y, alternative, alpha) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2146,7 +2211,7 @@ export function kendall_correlation_test(x, y, alternative, alpha) {
     len2,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return KendallCorrelationTestResult.__wrap(ret);
 }
 
 /**
@@ -2158,7 +2223,7 @@ export function kendall_correlation_test(x, y, alternative, alpha) {
  * @param {string} alternative
  * @param {number} odds_ratio
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {FishersExactTestResult}
  */
 export function fishers_exact_test_wasm(
   a,
@@ -2185,7 +2250,7 @@ export function fishers_exact_test_wasm(
     odds_ratio,
     alpha,
   );
-  return TestResult.__wrap(ret);
+  return FishersExactTestResult.__wrap(ret);
 }
 
 /**
@@ -2193,7 +2258,7 @@ export function fishers_exact_test_wasm(
  * @param {Float64Array} data
  * @param {Uint32Array} group_sizes
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {KruskalWallisTestResult}
  */
 export function kruskal_wallis_test_wasm(data, group_sizes, alpha) {
   const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
@@ -2201,16 +2266,45 @@ export function kruskal_wallis_test_wasm(data, group_sizes, alpha) {
   const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.kruskal_wallis_test_wasm(ptr0, len0, ptr1, len1, alpha);
-  return TestResult.__wrap(ret);
+  return KruskalWallisTestResult.__wrap(ret);
 }
 
 /**
- * WASM export for Mann-Whitney U test
+ * WASM wrapper for Levene's test for equality of variances
+ *
+ * Tests whether groups have equal variances using the Brown-Forsythe
+ * modification (deviations from medians rather than means).
+ *
+ * # Arguments
+ * * `data` - Flattened array of all group data
+ * * `group_sizes` - Array of group sizes
+ * * `alpha` - Significance level
+ *
+ * # Returns
+ * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
+ *   - p < alpha indicates unequal variances (reject null hypothesis)
+ *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function levene_test_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.levene_test_wasm(ptr0, len0, ptr1, len1, alpha);
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Mann-Whitney U test (automatically chooses exact vs asymptotic)
  * @param {Float64Array} x
  * @param {Float64Array} y
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {MannWhitneyTestResult}
  */
 export function mann_whitney_test(x, y, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2224,7 +2318,7 @@ export function mann_whitney_test(x, y, alpha, alternative) {
   );
   const len2 = WASM_VECTOR_LEN;
   const ret = wasm.mann_whitney_test(ptr0, len0, ptr1, len1, alpha, ptr2, len2);
-  return TestResult.__wrap(ret);
+  return MannWhitneyTestResult.__wrap(ret);
 }
 
 /**
@@ -2235,7 +2329,7 @@ export function mann_whitney_test(x, y, alpha, alternative) {
  * @param {boolean} continuity_correction
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {MannWhitneyTestResult}
  */
 export function mann_whitney_test_with_config(
   x,
@@ -2266,7 +2360,79 @@ export function mann_whitney_test_with_config(
     ptr2,
     len2,
   );
-  return TestResult.__wrap(ret);
+  return MannWhitneyTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Tukey HSD test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {string}
+ */
+export function tukey_hsd_wasm(data, group_sizes, alpha) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.tukey_hsd_wasm(ptr0, len0, ptr1, len1, alpha);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+
+/**
+ * WASM export for Games-Howell test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {string}
+ */
+export function games_howell_wasm(data, group_sizes, alpha) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.games_howell_wasm(ptr0, len0, ptr1, len1, alpha);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+
+/**
+ * WASM export for Dunn's test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {string}
+ */
+export function dunn_test_wasm(data, group_sizes, alpha) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.dunn_test_wasm(ptr0, len0, ptr1, len1, alpha);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
 }
 
 /**
@@ -2276,7 +2442,7 @@ export function mann_whitney_test_with_config(
  * @param {number} p0
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {OneSampleProportionTestResult}
  */
 export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
   const ptr0 = passStringToWasm0(
@@ -2286,7 +2452,7 @@ export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
   );
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.proportion_test_one_sample(x, n, p0, alpha, ptr0, len0);
-  return TestResult.__wrap(ret);
+  return OneSampleProportionTestResult.__wrap(ret);
 }
 
 /**
@@ -2298,7 +2464,7 @@ export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
  * @param {number} alpha
  * @param {string} alternative
  * @param {boolean} pooled
- * @returns {TestResult}
+ * @returns {TwoSampleProportionTestResult}
  */
 export function proportion_test_two_sample(
   x1,
@@ -2325,7 +2491,7 @@ export function proportion_test_two_sample(
     len0,
     pooled,
   );
-  return TestResult.__wrap(ret);
+  return TwoSampleProportionTestResult.__wrap(ret);
 }
 
 /**
@@ -2345,13 +2511,13 @@ export function proportion_sample_size_wasm(p1, p2, alpha, power) {
  * WASM export for Shapiro-Wilk normality test
  * @param {Float64Array} x
  * @param {number} alpha
- * @returns {TestResult}
+ * @returns {ShapiroWilkTestResult}
  */
 export function shapiro_wilk_test(x, alpha) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.shapiro_wilk_test(ptr0, len0, alpha);
-  return TestResult.__wrap(ret);
+  return ShapiroWilkTestResult.__wrap(ret);
 }
 
 /**
@@ -2360,7 +2526,7 @@ export function shapiro_wilk_test(x, alpha) {
  * @param {number} mu
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {OneSampleTTestResult}
  */
 export function t_test_one_sample(x, mu, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2372,7 +2538,7 @@ export function t_test_one_sample(x, mu, alpha, alternative) {
   );
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.t_test_one_sample(ptr0, len0, mu, alpha, ptr1, len1);
-  return TestResult.__wrap(ret);
+  return OneSampleTTestResult.__wrap(ret);
 }
 
 /**
@@ -2382,7 +2548,7 @@ export function t_test_one_sample(x, mu, alpha, alternative) {
  * @param {number} alpha
  * @param {string} alternative
  * @param {boolean} pooled
- * @returns {TestResult}
+ * @returns {TwoSampleTTestResult}
  */
 export function t_test_two_sample_independent(
   x,
@@ -2411,7 +2577,7 @@ export function t_test_two_sample_independent(
     len2,
     pooled,
   );
-  return TestResult.__wrap(ret);
+  return TwoSampleTTestResult.__wrap(ret);
 }
 
 /**
@@ -2420,7 +2586,7 @@ export function t_test_two_sample_independent(
  * @param {Float64Array} y
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {PairedTTestResult}
  */
 export function t_test_paired(x, y, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2434,7 +2600,7 @@ export function t_test_paired(x, y, alpha, alternative) {
   );
   const len2 = WASM_VECTOR_LEN;
   const ret = wasm.t_test_paired(ptr0, len0, ptr1, len1, alpha, ptr2, len2);
-  return TestResult.__wrap(ret);
+  return PairedTTestResult.__wrap(ret);
 }
 
 /**
@@ -2456,7 +2622,7 @@ export function t_sample_size_wasm(effect_size, alpha, power, std_dev) {
  * @param {Float64Array} y
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {WilcoxonSignedRankTestResult}
  */
 export function wilcoxon_w_test(x, y, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2470,7 +2636,7 @@ export function wilcoxon_w_test(x, y, alpha, alternative) {
   );
   const len2 = WASM_VECTOR_LEN;
   const ret = wasm.wilcoxon_w_test(ptr0, len0, ptr1, len1, alpha, ptr2, len2);
-  return TestResult.__wrap(ret);
+  return WilcoxonSignedRankTestResult.__wrap(ret);
 }
 
 /**
@@ -2480,7 +2646,7 @@ export function wilcoxon_w_test(x, y, alpha, alternative) {
  * @param {number} sigma
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {OneSampleZTestResult}
  */
 export function z_test_one_sample(x, mu, sigma, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2492,7 +2658,7 @@ export function z_test_one_sample(x, mu, sigma, alpha, alternative) {
   );
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.z_test_one_sample(ptr0, len0, mu, sigma, alpha, ptr1, len1);
-  return TestResult.__wrap(ret);
+  return OneSampleZTestResult.__wrap(ret);
 }
 
 /**
@@ -2503,7 +2669,7 @@ export function z_test_one_sample(x, mu, sigma, alpha, alternative) {
  * @param {number} sigma_y
  * @param {number} alpha
  * @param {string} alternative
- * @returns {TestResult}
+ * @returns {TwoSampleZTestResult}
  */
 export function z_test_two_sample(x, y, sigma_x, sigma_y, alpha, alternative) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
@@ -2527,7 +2693,7 @@ export function z_test_two_sample(x, y, sigma_x, sigma_y, alpha, alternative) {
     ptr2,
     len2,
   );
-  return TestResult.__wrap(ret);
+  return TwoSampleZTestResult.__wrap(ret);
 }
 
 /**
@@ -2579,8 +2745,104 @@ export const AlternativeType = Object.freeze({
   "2": "Greater",
 });
 /**
- * Represents the type of statistical test performed.
+ * Effect size types that can be returned by statistical tests
  * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18}
+ */
+export const EffectSizeType = Object.freeze({
+  CohensD: 0,
+  "0": "CohensD",
+  HedgesG: 1,
+  "1": "HedgesG",
+  EtaSquared: 2,
+  "2": "EtaSquared",
+  PartialEtaSquared: 3,
+  "3": "PartialEtaSquared",
+  OmegaSquared: 4,
+  "4": "OmegaSquared",
+  CramersV: 5,
+  "5": "CramersV",
+  PhiCoefficient: 6,
+  "6": "PhiCoefficient",
+  PointBiserialCorrelation: 7,
+  "7": "PointBiserialCorrelation",
+  RankBiserialCorrelation: 8,
+  "8": "RankBiserialCorrelation",
+  KendallsTau: 9,
+  "9": "KendallsTau",
+  SpearmansRho: 10,
+  "10": "SpearmansRho",
+  PearsonsR: 11,
+  "11": "PearsonsR",
+  GlassDelta: 12,
+  "12": "GlassDelta",
+  CohensF: 13,
+  "13": "CohensF",
+  CohensH: 14,
+  "14": "CohensH",
+  OddsRatio: 15,
+  "15": "OddsRatio",
+  RelativeRisk: 16,
+  "16": "RelativeRisk",
+  RiskDifference: 17,
+  "17": "RiskDifference",
+  NumberNeededToTreat: 18,
+  "18": "NumberNeededToTreat",
+});
+/**
+ * Mann-Whitney test method type
+ * @enum {0 | 1}
+ */
+export const MannWhitneyMethod = Object.freeze({
+  Exact: 0,
+  "0": "Exact",
+  Asymptotic: 1,
+  "1": "Asymptotic",
+});
+/**
+ * Test statistic names that can be returned by statistical tests
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17}
+ */
+export const TestStatisticName = Object.freeze({
+  TStatistic: 0,
+  "0": "TStatistic",
+  FStatistic: 1,
+  "1": "FStatistic",
+  ChiSquare: 2,
+  "2": "ChiSquare",
+  ZStatistic: 3,
+  "3": "ZStatistic",
+  UStatistic: 4,
+  "4": "UStatistic",
+  WStatistic: 5,
+  "5": "WStatistic",
+  HStatistic: 6,
+  "6": "HStatistic",
+  RStatistic: 7,
+  "7": "RStatistic",
+  TauStatistic: 8,
+  "8": "TauStatistic",
+  RhoStatistic: 9,
+  "9": "RhoStatistic",
+  DStatistic: 10,
+  "10": "DStatistic",
+  GStatistic: 11,
+  "11": "GStatistic",
+  QStatistic: 12,
+  "12": "QStatistic",
+  VStatistic: 13,
+  "13": "VStatistic",
+  AStatistic: 14,
+  "14": "AStatistic",
+  BStatistic: 15,
+  "15": "BStatistic",
+  LStatistic: 16,
+  "16": "LStatistic",
+  SStatistic: 17,
+  "17": "SStatistic",
+});
+/**
+ * Represents the type of statistical test performed.
+ * @enum {0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20}
  */
 export const TestType = Object.freeze({
   OneWayAnova: 0,
@@ -2603,25 +2865,1172 @@ export const TestType = Object.freeze({
   "8": "MannWhitneyU",
   WilcoxonSignedRank: 9,
   "9": "WilcoxonSignedRank",
-  OneSampleZTest: 10,
-  "10": "OneSampleZTest",
-  TwoSampleZTest: 11,
-  "11": "TwoSampleZTest",
-  OneSampleProportionTest: 12,
-  "12": "OneSampleProportionTest",
-  TwoSampleProportionTest: 13,
-  "13": "TwoSampleProportionTest",
-  ShapiroWilk: 14,
-  "14": "ShapiroWilk",
-  PearsonCorrelation: 15,
-  "15": "PearsonCorrelation",
-  SpearmanCorrelation: 16,
-  "16": "SpearmanCorrelation",
-  KendallCorrelation: 17,
-  "17": "KendallCorrelation",
-  Error: 18,
-  "18": "Error",
+  KruskalWallis: 10,
+  "10": "KruskalWallis",
+  OneSampleZTest: 11,
+  "11": "OneSampleZTest",
+  TwoSampleZTest: 12,
+  "12": "TwoSampleZTest",
+  OneSampleProportionTest: 13,
+  "13": "OneSampleProportionTest",
+  TwoSampleProportionTest: 14,
+  "14": "TwoSampleProportionTest",
+  ShapiroWilk: 15,
+  "15": "ShapiroWilk",
+  FishersExact: 16,
+  "16": "FishersExact",
+  PearsonCorrelation: 17,
+  "17": "PearsonCorrelation",
+  SpearmanCorrelation: 18,
+  "18": "SpearmanCorrelation",
+  KendallCorrelation: 19,
+  "19": "KendallCorrelation",
+  Error: 20,
+  "20": "Error",
 });
+/**
+ * Wilcoxon signed-rank test method type
+ * @enum {0 | 1}
+ */
+export const WilcoxonMethod = Object.freeze({
+  Exact: 0,
+  "0": "Exact",
+  Asymptotic: 1,
+  "1": "Asymptotic",
+});
+
+const AnovaTestComponentFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_anovatestcomponent_free(ptr >>> 0, 1)
+    );
+/**
+ * Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
+ */
+export class AnovaTestComponent {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(AnovaTestComponent.prototype);
+    obj.__wbg_ptr = ptr;
+    AnovaTestComponentFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    AnovaTestComponentFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_anovatestcomponent_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get mean_square() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set mean_square(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sum_of_squares() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sum_of_squares(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  }
+}
+
+const ChiSquareGoodnessOfFitTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_chisquaregoodnessoffittestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Chi-square goodness of fit test result
+ */
+export class ChiSquareGoodnessOfFitTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(ChiSquareGoodnessOfFitTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    ChiSquareGoodnessOfFitTestResultFinalization.register(
+      obj,
+      obj.__wbg_ptr,
+      obj,
+    );
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    ChiSquareGoodnessOfFitTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_chisquaregoodnessoffittestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_sample_size(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get chi_square_expected() {
+    const ret = wasm
+      .__wbg_get_chisquaregoodnessoffittestresult_chi_square_expected(
+        this.__wbg_ptr,
+      );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set chi_square_expected(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_chi_square_expected(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+}
+
+const ChiSquareIndependenceTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_chisquareindependencetestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Chi-square test of independence result
+ */
+export class ChiSquareIndependenceTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(ChiSquareIndependenceTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    ChiSquareIndependenceTestResultFinalization.register(
+      obj,
+      obj.__wbg_ptr,
+      obj,
+    );
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    ChiSquareIndependenceTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_chisquareindependencetestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_chisquareindependencetestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquareindependencetestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_chisquareindependencetestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquareindependencetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_chisquareindependencetestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_chisquareindependencetestresult_sample_size(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get phi_coefficient() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set phi_coefficient(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get chi_square_expected() {
+    const ret = wasm
+      .__wbg_get_chisquareindependencetestresult_chi_square_expected(
+        this.__wbg_ptr,
+      );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set chi_square_expected(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquareindependencetestresult_chi_square_expected(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get residuals() {
+    const ret = wasm.__wbg_get_chisquareindependencetestresult_residuals(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set residuals(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquareindependencetestresult_residuals(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+}
+
+const ChiSquareVarianceTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_chisquarevariancetestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Chi-square test for variance result
+ */
+export class ChiSquareVarianceTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(ChiSquareVarianceTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    ChiSquareVarianceTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    ChiSquareVarianceTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_chisquarevariancetestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_chisquarevariancetestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_chisquarevariancetestresult_sample_size(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_chisquarevariancetestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+}
+
+const ConfidenceIntervalFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_confidenceinterval_free(ptr >>> 0, 1)
+    );
+/**
+ * Confidence interval structure
+ */
+export class ConfidenceInterval {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(ConfidenceInterval.prototype);
+    obj.__wbg_ptr = ptr;
+    ConfidenceIntervalFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    ConfidenceIntervalFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_confidenceinterval_free(ptr, 0);
+  }
+  /**
+   * @returns {number}
+   */
+  get lower() {
+    const ret = wasm.__wbg_get_confidenceinterval_lower(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set lower(arg0) {
+    wasm.__wbg_set_confidenceinterval_lower(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get upper() {
+    const ret = wasm.__wbg_get_confidenceinterval_upper(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set upper(arg0) {
+    wasm.__wbg_set_confidenceinterval_upper(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get confidence_level() {
+    const ret = wasm.__wbg_get_confidenceinterval_confidence_level(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set confidence_level(arg0) {
+    wasm.__wbg_set_confidenceinterval_confidence_level(this.__wbg_ptr, arg0);
+  }
+}
+
+const EffectSizeFinalization = (typeof FinalizationRegistry === "undefined")
+  ? { register: () => {}, unregister: () => {} }
+  : new FinalizationRegistry((ptr) => wasm.__wbg_effectsize_free(ptr >>> 0, 1));
+/**
+ * Effect size with type information
+ */
+export class EffectSize {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(EffectSize.prototype);
+    obj.__wbg_ptr = ptr;
+    EffectSizeFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    EffectSizeFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_effectsize_free(ptr, 0);
+  }
+  /**
+   * @returns {number}
+   */
+  get value() {
+    const ret = wasm.__wbg_get_confidenceinterval_lower(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set value(arg0) {
+    wasm.__wbg_set_confidenceinterval_lower(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get effect_type() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_effectsize_effect_type(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set effect_type(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_effectsize_effect_type(this.__wbg_ptr, ptr0, len0);
+  }
+}
+
+const FishersExactTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_fishersexacttestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Fisher's exact test result
+ */
+export class FishersExactTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(FishersExactTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    FishersExactTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    FishersExactTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_fishersexacttestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_fishersexacttestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get odds_ratio() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set odds_ratio(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get method() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_fishersexacttestresult_method(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set method(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_fishersexacttestresult_method(this.__wbg_ptr, ptr0, len0);
+  }
+}
 
 const GroupingFinalization = (typeof FinalizationRegistry === "undefined")
   ? { register: () => {}, unregister: () => {} }
@@ -2740,6 +4149,1773 @@ export class JoinIdxU32 {
     var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
     return v1;
+  }
+}
+
+const KendallCorrelationTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_kendallcorrelationtestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Kendall correlation test result
+ */
+export class KendallCorrelationTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(KendallCorrelationTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    KendallCorrelationTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    KendallCorrelationTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_kendallcorrelationtestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_kendallcorrelationtestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kendallcorrelationtestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const KruskalWallisTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_kruskalwallistestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Kruskal-Wallis test result
+ */
+export class KruskalWallisTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(KruskalWallisTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    KruskalWallisTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    KruskalWallisTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_kruskalwallistestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_kruskalwallistestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_kruskalwallistestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kruskalwallistestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_kruskalwallistestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_kruskalwallistestresult_sample_size(this.__wbg_ptr, arg0);
+  }
+}
+
+const MannWhitneyTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_mannwhitneytestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Mann-Whitney test result with method information
+ */
+export class MannWhitneyTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(MannWhitneyTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    MannWhitneyTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    MannWhitneyTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_mannwhitneytestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_mannwhitneytestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {string}
+   */
+  get method() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_mannwhitneytestresult_method(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set method(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_method(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_mannwhitneytestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const OneSampleProportionTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_onesampleproportiontestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * One-sample proportion test result
+ */
+export class OneSampleProportionTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(OneSampleProportionTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    OneSampleProportionTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    OneSampleProportionTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_onesampleproportiontestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_onesampleproportiontestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_onesampleproportiontestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kruskalwallistestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_proportion() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_proportion(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+}
+
+const OneSampleTTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_onesamplettestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * One-sample t-test result
+ */
+export class OneSampleTTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(OneSampleTTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    OneSampleTTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    OneSampleTTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_onesamplettestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_onesamplettestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_onesamplettestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const OneSampleZTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_onesampleztestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * One-sample Z-test result
+ */
+export class OneSampleZTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(OneSampleZTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    OneSampleZTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    OneSampleZTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_onesampleztestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_onesampleztestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_onesampleztestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kendallcorrelationtestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const OneWayAnovaTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_onewayanovatestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * One-way ANOVA test result with guaranteed properties
+ */
+export class OneWayAnovaTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(OneWayAnovaTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    OneWayAnovaTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    OneWayAnovaTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_onewayanovatestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_onewayanovatestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_onewayanovatestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_onewayanovatestresult_sample_size(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sample_means() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sample_means(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sample_means(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_onewayanovatestresult_sample_means(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sample_std_devs() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sample_std_devs(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sample_std_devs(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_onewayanovatestresult_sample_std_devs(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sum_of_squares() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sum_of_squares(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sum_of_squares(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_onewayanovatestresult_sum_of_squares(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get r_squared() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set r_squared(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get adjusted_r_squared() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_adjusted_r_squared(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set adjusted_r_squared(arg0) {
+    wasm.__wbg_set_onewayanovatestresult_adjusted_r_squared(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+}
+
+const PairedTTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_pairedttestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Paired t-test result
+ */
+export class PairedTTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(PairedTTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    PairedTTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    PairedTTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_pairedttestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_pairedttestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_pairedttestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_pairedttestresult_error_message(this.__wbg_ptr);
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get mean_difference() {
+    const ret = wasm.__wbg_get_pairedttestresult_mean_difference(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set mean_difference(arg0) {
+    wasm.__wbg_set_pairedttestresult_mean_difference(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get standard_error() {
+    const ret = wasm.__wbg_get_pairedttestresult_standard_error(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set standard_error(arg0) {
+    wasm.__wbg_set_pairedttestresult_standard_error(this.__wbg_ptr, arg0);
+  }
+}
+
+const PearsonCorrelationTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_pearsoncorrelationtestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Pearson correlation test result
+ */
+export class PearsonCorrelationTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(PearsonCorrelationTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    PearsonCorrelationTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    PearsonCorrelationTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_pearsoncorrelationtestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_pearsoncorrelationtestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_pearsoncorrelationtestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
   }
 }
 
@@ -2985,813 +6161,114 @@ export class PivotLongerStringResult {
   }
 }
 
-const TestResultFinalization = (typeof FinalizationRegistry === "undefined")
-  ? { register: () => {}, unregister: () => {} }
-  : new FinalizationRegistry((ptr) => wasm.__wbg_testresult_free(ptr >>> 0, 1));
+const ShapiroWilkTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_shapirowilktestresult_free(ptr >>> 0, 1)
+    );
 /**
- * Result of a statistical test containing all relevant information
+ * Shapiro-Wilk test result
  */
-export class TestResult {
+export class ShapiroWilkTestResult {
   static __wrap(ptr) {
     ptr = ptr >>> 0;
-    const obj = Object.create(TestResult.prototype);
+    const obj = Object.create(ShapiroWilkTestResult.prototype);
     obj.__wbg_ptr = ptr;
-    TestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    ShapiroWilkTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
     return obj;
   }
 
   __destroy_into_raw() {
     const ptr = this.__wbg_ptr;
     this.__wbg_ptr = 0;
-    TestResultFinalization.unregister(this);
+    ShapiroWilkTestResultFinalization.unregister(this);
     return ptr;
   }
 
   free() {
     const ptr = this.__destroy_into_raw();
-    wasm.__wbg_testresult_free(ptr, 0);
+    wasm.__wbg_shapirowilktestresult_free(ptr, 0);
   }
   /**
-   * Type of statistical test performed
-   * @returns {TestType}
+   * @returns {TestStatistic}
    */
-  get test_type() {
-    const ret = wasm.__wbg_get_testresult_test_type(this.__wbg_ptr);
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
     return ret;
   }
   /**
-   * Type of statistical test performed
-   * @param {TestType} arg0
-   */
-  set test_type(arg0) {
-    wasm.__wbg_set_testresult_test_type(this.__wbg_ptr, arg0);
-  }
-  /**
-   * The calculated test statistic value
-   * @returns {number | undefined}
-   */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_testresult_test_statistic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * The calculated test statistic value
-   * @param {number | null} [arg0]
-   */
-  set test_statistic(arg0) {
-    wasm.__wbg_set_testresult_test_statistic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * The p-value of the test
-   * @returns {number | undefined}
-   */
-  get p_value() {
-    const ret = wasm.__wbg_get_testresult_p_value(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * The p-value of the test
-   * @param {number | null} [arg0]
+   * @param {number} arg0
    */
   set p_value(arg0) {
-    wasm.__wbg_set_testresult_p_value(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
+    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
   }
   /**
-   * Confidence interval lower bound
-   * @returns {number | undefined}
+   * @returns {string}
    */
-  get confidence_interval_lower() {
-    const ret = wasm.__wbg_get_testresult_confidence_interval_lower(
-      this.__wbg_ptr,
-    );
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Confidence interval lower bound
-   * @param {number | null} [arg0]
-   */
-  set confidence_interval_lower(arg0) {
-    wasm.__wbg_set_testresult_confidence_interval_lower(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Confidence interval upper bound
-   * @returns {number | undefined}
-   */
-  get confidence_interval_upper() {
-    const ret = wasm.__wbg_get_testresult_confidence_interval_upper(
-      this.__wbg_ptr,
-    );
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Confidence interval upper bound
-   * @param {number | null} [arg0]
-   */
-  set confidence_interval_upper(arg0) {
-    wasm.__wbg_set_testresult_confidence_interval_upper(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Confidence level used (e.g., 0.95 for 95%)
-   * @returns {number | undefined}
-   */
-  get confidence_level() {
-    const ret = wasm.__wbg_get_testresult_confidence_level(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Confidence level used (e.g., 0.95 for 95%)
-   * @param {number | null} [arg0]
-   */
-  set confidence_level(arg0) {
-    wasm.__wbg_set_testresult_confidence_level(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * General effect size measure
-   * @returns {number | undefined}
-   */
-  get effect_size() {
-    const ret = wasm.__wbg_get_testresult_effect_size(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * General effect size measure
-   * @param {number | null} [arg0]
-   */
-  set effect_size(arg0) {
-    wasm.__wbg_set_testresult_effect_size(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Cohen's d (for t-tests)
-   * @returns {number | undefined}
-   */
-  get cohens_d() {
-    const ret = wasm.__wbg_get_testresult_cohens_d(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Cohen's d (for t-tests)
-   * @param {number | null} [arg0]
-   */
-  set cohens_d(arg0) {
-    wasm.__wbg_set_testresult_cohens_d(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Eta squared (for ANOVA)
-   * @returns {number | undefined}
-   */
-  get eta_squared() {
-    const ret = wasm.__wbg_get_testresult_eta_squared(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Eta squared (for ANOVA)
-   * @param {number | null} [arg0]
-   */
-  set eta_squared(arg0) {
-    wasm.__wbg_set_testresult_eta_squared(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Cramer's V (for chi-square)
-   * @returns {number | undefined}
-   */
-  get cramers_v() {
-    const ret = wasm.__wbg_get_testresult_cramers_v(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Cramer's V (for chi-square)
-   * @param {number | null} [arg0]
-   */
-  set cramers_v(arg0) {
-    wasm.__wbg_set_testresult_cramers_v(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Phi coefficient (for 2x2 chi-square)
-   * @returns {number | undefined}
-   */
-  get phi_coefficient() {
-    const ret = wasm.__wbg_get_testresult_phi_coefficient(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Phi coefficient (for 2x2 chi-square)
-   * @param {number | null} [arg0]
-   */
-  set phi_coefficient(arg0) {
-    wasm.__wbg_set_testresult_phi_coefficient(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Odds ratio (for categorical tests)
-   * @returns {number | undefined}
-   */
-  get odds_ratio() {
-    const ret = wasm.__wbg_get_testresult_odds_ratio(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Odds ratio (for categorical tests)
-   * @param {number | null} [arg0]
-   */
-  set odds_ratio(arg0) {
-    wasm.__wbg_set_testresult_odds_ratio(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Relative risk (for categorical tests)
-   * @returns {number | undefined}
-   */
-  get relative_risk() {
-    const ret = wasm.__wbg_get_testresult_relative_risk(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Relative risk (for categorical tests)
-   * @param {number | null} [arg0]
-   */
-  set relative_risk(arg0) {
-    wasm.__wbg_set_testresult_relative_risk(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Degrees of freedom
-   * @returns {number | undefined}
-   */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_testresult_degrees_of_freedom(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Degrees of freedom
-   * @param {number | null} [arg0]
-   */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_testresult_degrees_of_freedom(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Sample size
-   * @returns {number | undefined}
-   */
-  get sample_size() {
-    const ret = wasm.__wbg_get_testresult_sample_size(this.__wbg_ptr);
-    return ret === 0x100000001 ? undefined : ret;
-  }
-  /**
-   * Sample size
-   * @param {number | null} [arg0]
-   */
-  set sample_size(arg0) {
-    wasm.__wbg_set_testresult_sample_size(
-      this.__wbg_ptr,
-      isLikeNone(arg0) ? 0x100000001 : arg0 >>> 0,
-    );
-  }
-  /**
-   * Correlation coefficient (for correlation tests)
-   * @returns {number | undefined}
-   */
-  get correlation() {
-    const ret = wasm.__wbg_get_testresult_correlation(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Correlation coefficient (for correlation tests)
-   * @param {number | null} [arg0]
-   */
-  set correlation(arg0) {
-    wasm.__wbg_set_testresult_correlation(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * U statistic (for Mann-Whitney)
-   * @returns {number | undefined}
-   */
-  get u_statistic() {
-    const ret = wasm.__wbg_get_testresult_u_statistic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * U statistic (for Mann-Whitney)
-   * @param {number | null} [arg0]
-   */
-  set u_statistic(arg0) {
-    wasm.__wbg_set_testresult_u_statistic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * W statistic (for Wilcoxon)
-   * @returns {number | undefined}
-   */
-  get w_statistic() {
-    const ret = wasm.__wbg_get_testresult_w_statistic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * W statistic (for Wilcoxon)
-   * @param {number | null} [arg0]
-   */
-  set w_statistic(arg0) {
-    wasm.__wbg_set_testresult_w_statistic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * F statistic (for ANOVA)
-   * @returns {number | undefined}
-   */
-  get f_statistic() {
-    const ret = wasm.__wbg_get_testresult_f_statistic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * F statistic (for ANOVA)
-   * @param {number | null} [arg0]
-   */
-  set f_statistic(arg0) {
-    wasm.__wbg_set_testresult_f_statistic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Mean difference between groups
-   * @returns {number | undefined}
-   */
-  get mean_difference() {
-    const ret = wasm.__wbg_get_testresult_mean_difference(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Mean difference between groups
-   * @param {number | null} [arg0]
-   */
-  set mean_difference(arg0) {
-    wasm.__wbg_set_testresult_mean_difference(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Standard error
-   * @returns {number | undefined}
-   */
-  get standard_error() {
-    const ret = wasm.__wbg_get_testresult_standard_error(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Standard error
-   * @param {number | null} [arg0]
-   */
-  set standard_error(arg0) {
-    wasm.__wbg_set_testresult_standard_error(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Margin of error
-   * @returns {number | undefined}
-   */
-  get margin_of_error() {
-    const ret = wasm.__wbg_get_testresult_margin_of_error(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Margin of error
-   * @param {number | null} [arg0]
-   */
-  set margin_of_error(arg0) {
-    wasm.__wbg_set_testresult_margin_of_error(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Sample means for each group
-   * @returns {Float64Array | undefined}
-   */
-  get sample_means() {
-    const ret = wasm.__wbg_get_testresult_sample_means(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_shapirowilktestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
     }
-    return v1;
   }
   /**
-   * Sample means for each group
-   * @param {Float64Array | null} [arg0]
+   * @param {string} arg0
    */
-  set sample_means(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_sample_means(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Sample standard deviations for each group
-   * @returns {Float64Array | undefined}
-   */
-  get sample_std_devs() {
-    const ret = wasm.__wbg_get_testresult_sample_std_devs(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    }
-    return v1;
-  }
-  /**
-   * Sample standard deviations for each group
-   * @param {Float64Array | null} [arg0]
-   */
-  set sample_std_devs(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_sample_std_devs(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Expected frequencies (for chi-square)
-   * @returns {Float64Array | undefined}
-   */
-  get chi_square_expected() {
-    const ret = wasm.__wbg_get_testresult_chi_square_expected(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    }
-    return v1;
-  }
-  /**
-   * Expected frequencies (for chi-square)
-   * @param {Float64Array | null} [arg0]
-   */
-  set chi_square_expected(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_chi_square_expected(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Residuals (for chi-square)
-   * @returns {Float64Array | undefined}
-   */
-  get residuals() {
-    const ret = wasm.__wbg_get_testresult_residuals(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    }
-    return v1;
-  }
-  /**
-   * Residuals (for chi-square)
-   * @param {Float64Array | null} [arg0]
-   */
-  set residuals(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_residuals(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Ranks (for non-parametric tests)
-   * @returns {Float64Array | undefined}
-   */
-  get ranks() {
-    const ret = wasm.__wbg_get_testresult_ranks(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    }
-    return v1;
-  }
-  /**
-   * Ranks (for non-parametric tests)
-   * @param {Float64Array | null} [arg0]
-   */
-  set ranks(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_ranks(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Tie correction factor
-   * @returns {number | undefined}
-   */
-  get tie_correction() {
-    const ret = wasm.__wbg_get_testresult_tie_correction(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Tie correction factor
-   * @param {number | null} [arg0]
-   */
-  set tie_correction(arg0) {
-    wasm.__wbg_set_testresult_tie_correction(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
     );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_shapirowilktestresult_test_name(this.__wbg_ptr, ptr0, len0);
   }
   /**
-   * Exact p-value (when available)
-   * @returns {number | undefined}
+   * @returns {number}
    */
-  get exact_p_value() {
-    const ret = wasm.__wbg_get_testresult_exact_p_value(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
+  get alpha() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    return ret;
   }
   /**
-   * Exact p-value (when available)
-   * @param {number | null} [arg0]
+   * @param {number} arg0
    */
-  set exact_p_value(arg0) {
-    wasm.__wbg_set_testresult_exact_p_value(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
+  set alpha(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
-   * Asymptotic p-value (for large samples)
-   * @returns {number | undefined}
-   */
-  get asymptotic_p_value() {
-    const ret = wasm.__wbg_get_testresult_asymptotic_p_value(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Asymptotic p-value (for large samples)
-   * @param {number | null} [arg0]
-   */
-  set asymptotic_p_value(arg0) {
-    wasm.__wbg_set_testresult_asymptotic_p_value(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * R-squared value
-   * @returns {number | undefined}
-   */
-  get r_squared() {
-    const ret = wasm.__wbg_get_testresult_r_squared(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * R-squared value
-   * @param {number | null} [arg0]
-   */
-  set r_squared(arg0) {
-    wasm.__wbg_set_testresult_r_squared(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Adjusted R-squared value
-   * @returns {number | undefined}
-   */
-  get adjusted_r_squared() {
-    const ret = wasm.__wbg_get_testresult_adjusted_r_squared(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Adjusted R-squared value
-   * @param {number | null} [arg0]
-   */
-  set adjusted_r_squared(arg0) {
-    wasm.__wbg_set_testresult_adjusted_r_squared(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Akaike Information Criterion
-   * @returns {number | undefined}
-   */
-  get aic() {
-    const ret = wasm.__wbg_get_testresult_aic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Akaike Information Criterion
-   * @param {number | null} [arg0]
-   */
-  set aic(arg0) {
-    wasm.__wbg_set_testresult_aic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Bayesian Information Criterion
-   * @returns {number | undefined}
-   */
-  get bic() {
-    const ret = wasm.__wbg_get_testresult_bic(this.__wbg_ptr);
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * Bayesian Information Criterion
-   * @param {number | null} [arg0]
-   */
-  set bic(arg0) {
-    wasm.__wbg_set_testresult_bic(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Sum of squares breakdown
-   * @returns {Float64Array | undefined}
-   */
-  get sum_of_squares() {
-    const ret = wasm.__wbg_get_testresult_sum_of_squares(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    }
-    return v1;
-  }
-  /**
-   * Sum of squares breakdown
-   * @param {Float64Array | null} [arg0]
-   */
-  set sum_of_squares(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_sum_of_squares(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * Number of missing values
-   * @returns {number | undefined}
-   */
-  get missing_values() {
-    const ret = wasm.__wbg_get_testresult_missing_values(this.__wbg_ptr);
-    return ret === 0x100000001 ? undefined : ret;
-  }
-  /**
-   * Number of missing values
-   * @param {number | null} [arg0]
-   */
-  set missing_values(arg0) {
-    wasm.__wbg_set_testresult_missing_values(
-      this.__wbg_ptr,
-      isLikeNone(arg0) ? 0x100000001 : arg0 >>> 0,
-    );
-  }
-  /**
-   * Number of outliers detected
-   * @returns {number | undefined}
-   */
-  get outliers_detected() {
-    const ret = wasm.__wbg_get_testresult_outliers_detected(this.__wbg_ptr);
-    return ret === 0x100000001 ? undefined : ret;
-  }
-  /**
-   * Number of outliers detected
-   * @param {number | null} [arg0]
-   */
-  set outliers_detected(arg0) {
-    wasm.__wbg_set_testresult_outliers_detected(
-      this.__wbg_ptr,
-      isLikeNone(arg0) ? 0x100000001 : arg0 >>> 0,
-    );
-  }
-  /**
-   * List of violated assumptions
-   * @returns {string[] | undefined}
-   */
-  get assumptions_violated() {
-    const ret = wasm.__wbg_get_testresult_assumptions_violated(this.__wbg_ptr);
-    let v1;
-    if (ret[0] !== 0) {
-      v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
-      wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-    }
-    return v1;
-  }
-  /**
-   * List of violated assumptions
-   * @param {string[] | null} [arg0]
-   */
-  set assumptions_violated(arg0) {
-    var ptr0 = isLikeNone(arg0)
-      ? 0
-      : passArrayJsValueToWasm0(arg0, wasm.__wbindgen_malloc);
-    var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_assumptions_violated(this.__wbg_ptr, ptr0, len0);
-  }
-  /**
-   * P-value from normality test
-   * @returns {number | undefined}
-   */
-  get normality_test_p_value() {
-    const ret = wasm.__wbg_get_testresult_normality_test_p_value(
-      this.__wbg_ptr,
-    );
-    return ret[0] === 0 ? undefined : ret[1];
-  }
-  /**
-   * P-value from normality test
-   * @param {number | null} [arg0]
-   */
-  set normality_test_p_value(arg0) {
-    wasm.__wbg_set_testresult_normality_test_p_value(
-      this.__wbg_ptr,
-      !isLikeNone(arg0),
-      isLikeNone(arg0) ? 0 : arg0,
-    );
-  }
-  /**
-   * Error message if the test failed
    * @returns {string | undefined}
    */
   get error_message() {
-    const ret = wasm.__wbg_get_testresult_error_message(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_shapirowilktestresult_error_message(
+      this.__wbg_ptr,
+    );
     let v1;
     if (ret[0] !== 0) {
       v1 = getStringFromWasm0(ret[0], ret[1]).slice();
@@ -3800,7 +6277,6 @@ export class TestResult {
     return v1;
   }
   /**
-   * Error message if the test failed
    * @param {string | null} [arg0]
    */
   set error_message(arg0) {
@@ -3812,7 +6288,1307 @@ export class TestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_testresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_shapirowilktestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_shapirowilktestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_shapirowilktestresult_sample_size(this.__wbg_ptr, arg0);
+  }
+}
+
+const SpearmanCorrelationTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_spearmancorrelationtestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Spearman correlation test result
+ */
+export class SpearmanCorrelationTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(SpearmanCorrelationTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    SpearmanCorrelationTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    SpearmanCorrelationTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_spearmancorrelationtestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_spearmancorrelationtestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_spearmancorrelationtestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquarevariancetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+}
+
+const TestStatisticFinalization = (typeof FinalizationRegistry === "undefined")
+  ? { register: () => {}, unregister: () => {} }
+  : new FinalizationRegistry((ptr) =>
+    wasm.__wbg_teststatistic_free(ptr >>> 0, 1)
+  );
+/**
+ * Test statistic with name
+ */
+export class TestStatistic {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(TestStatistic.prototype);
+    obj.__wbg_ptr = ptr;
+    TestStatisticFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    TestStatisticFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_teststatistic_free(ptr, 0);
+  }
+  /**
+   * @returns {number}
+   */
+  get value() {
+    const ret = wasm.__wbg_get_confidenceinterval_lower(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set value(arg0) {
+    wasm.__wbg_set_confidenceinterval_lower(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_teststatistic_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_effectsize_effect_type(this.__wbg_ptr, ptr0, len0);
+  }
+}
+
+const TwoSampleProportionTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_twosampleproportiontestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Two-sample proportion test result
+ */
+export class TwoSampleProportionTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(TwoSampleProportionTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    TwoSampleProportionTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    TwoSampleProportionTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_twosampleproportiontestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_twosampleproportiontestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_alpha(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_fishersexacttestresult_alpha(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_twosampleproportiontestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_kruskalwallistestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get proportion_difference() {
+    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set proportion_difference(arg0) {
+    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  }
+}
+
+const TwoSampleTTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_twosamplettestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Two-sample independent t-test result
+ */
+export class TwoSampleTTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(TwoSampleTTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    TwoSampleTTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    TwoSampleTTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_twosamplettestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_twosamplettestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_pairedttestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_twosamplettestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get degrees_of_freedom() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set degrees_of_freedom(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get mean_difference() {
+    const ret = wasm.__wbg_get_pairedttestresult_mean_difference(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set mean_difference(arg0) {
+    wasm.__wbg_set_pairedttestresult_mean_difference(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get standard_error() {
+    const ret = wasm.__wbg_get_pairedttestresult_standard_error(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set standard_error(arg0) {
+    wasm.__wbg_set_pairedttestresult_standard_error(this.__wbg_ptr, arg0);
+  }
+}
+
+const TwoSampleZTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_twosampleztestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Two-sample Z-test result
+ */
+export class TwoSampleZTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(TwoSampleZTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    TwoSampleZTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    TwoSampleZTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_twosampleztestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_twosampleztestresult_test_name(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twosampleztestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_twosampleztestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_chisquareindependencetestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {ConfidenceInterval}
+   */
+  get confidence_interval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+    );
+    return ConfidenceInterval.__wrap(ret);
+  }
+  /**
+   * @param {ConfidenceInterval} arg0
+   */
+  set confidence_interval(arg0) {
+    _assertClass(arg0, ConfidenceInterval);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+      this.__wbg_ptr,
+      ptr0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get mean_difference() {
+    const ret = wasm.__wbg_get_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set mean_difference(arg0) {
+    wasm.__wbg_set_onesamplettestresult_degrees_of_freedom(
+      this.__wbg_ptr,
+      arg0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get standard_error() {
+    const ret = wasm.__wbg_get_pairedttestresult_mean_difference(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set standard_error(arg0) {
+    wasm.__wbg_set_pairedttestresult_mean_difference(this.__wbg_ptr, arg0);
+  }
+}
+
+const TwoWayAnovaTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_twowayanovatestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Two-way ANOVA test result with guaranteed properties for all three tests
+ */
+export class TwoWayAnovaTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(TwoWayAnovaTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    TwoWayAnovaTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    TwoWayAnovaTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_twowayanovatestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {AnovaTestComponent}
+   */
+  get factor_a() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_factor_a(this.__wbg_ptr);
+    return AnovaTestComponent.__wrap(ret);
+  }
+  /**
+   * @param {AnovaTestComponent} arg0
+   */
+  set factor_a(arg0) {
+    _assertClass(arg0, AnovaTestComponent);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_twowayanovatestresult_factor_a(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {AnovaTestComponent}
+   */
+  get factor_b() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_factor_b(this.__wbg_ptr);
+    return AnovaTestComponent.__wrap(ret);
+  }
+  /**
+   * @param {AnovaTestComponent} arg0
+   */
+  set factor_b(arg0) {
+    _assertClass(arg0, AnovaTestComponent);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_twowayanovatestresult_factor_b(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {AnovaTestComponent}
+   */
+  get interaction() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_interaction(
+      this.__wbg_ptr,
+    );
+    return AnovaTestComponent.__wrap(ret);
+  }
+  /**
+   * @param {AnovaTestComponent} arg0
+   */
+  set interaction(arg0) {
+    _assertClass(arg0, AnovaTestComponent);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_twowayanovatestresult_interaction(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_twowayanovatestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twowayanovatestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_alpha(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_alpha(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twowayanovatestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get sample_size() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sample_size(
+      this.__wbg_ptr,
+    );
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set sample_size(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_sample_size(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sample_means() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sample_means(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sample_means(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twowayanovatestresult_sample_means(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sample_std_devs() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sample_std_devs(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sample_std_devs(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twowayanovatestresult_sample_std_devs(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {Float64Array}
+   */
+  get sum_of_squares() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sum_of_squares(
+      this.__wbg_ptr,
+    );
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @param {Float64Array} arg0
+   */
+  set sum_of_squares(arg0) {
+    const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_twowayanovatestresult_sum_of_squares(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {number}
+   */
+  get grand_mean() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_grand_mean(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set grand_mean(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_grand_mean(this.__wbg_ptr, arg0);
+  }
+}
+
+const WilcoxonSignedRankTestResultFinalization =
+  (typeof FinalizationRegistry === "undefined")
+    ? { register: () => {}, unregister: () => {} }
+    : new FinalizationRegistry((ptr) =>
+      wasm.__wbg_wilcoxonsignedranktestresult_free(ptr >>> 0, 1)
+    );
+/**
+ * Wilcoxon signed-rank test result with method information
+ */
+export class WilcoxonSignedRankTestResult {
+  static __wrap(ptr) {
+    ptr = ptr >>> 0;
+    const obj = Object.create(WilcoxonSignedRankTestResult.prototype);
+    obj.__wbg_ptr = ptr;
+    WilcoxonSignedRankTestResultFinalization.register(obj, obj.__wbg_ptr, obj);
+    return obj;
+  }
+
+  __destroy_into_raw() {
+    const ptr = this.__wbg_ptr;
+    this.__wbg_ptr = 0;
+    WilcoxonSignedRankTestResultFinalization.unregister(this);
+    return ptr;
+  }
+
+  free() {
+    const ptr = this.__destroy_into_raw();
+    wasm.__wbg_wilcoxonsignedranktestresult_free(ptr, 0);
+  }
+  /**
+   * @returns {TestStatistic}
+   */
+  get test_statistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_test_statistic(
+      this.__wbg_ptr,
+    );
+    return TestStatistic.__wrap(ret);
+  }
+  /**
+   * @param {TestStatistic} arg0
+   */
+  set test_statistic(arg0) {
+    _assertClass(arg0, TestStatistic);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_test_statistic(this.__wbg_ptr, ptr0);
+  }
+  /**
+   * @returns {number}
+   */
+  get p_value() {
+    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set p_value(arg0) {
+    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string}
+   */
+  get test_name() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_test_name(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set test_name(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_test_name(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {string}
+   */
+  get method() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_method(
+        this.__wbg_ptr,
+      );
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
+   * @param {string} arg0
+   */
+  set method(arg0) {
+    const ptr0 = passStringToWasm0(
+      arg0,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_method(this.__wbg_ptr, ptr0, len0);
+  }
+  /**
+   * @returns {number}
+   */
+  get alpha() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set alpha(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {string | undefined}
+   */
+  get error_message() {
+    const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_error_message(
+      this.__wbg_ptr,
+    );
+    let v1;
+    if (ret[0] !== 0) {
+      v1 = getStringFromWasm0(ret[0], ret[1]).slice();
+      wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    }
+    return v1;
+  }
+  /**
+   * @param {string | null} [arg0]
+   */
+  set error_message(arg0) {
+    var ptr0 = isLikeNone(arg0)
+      ? 0
+      : passStringToWasm0(
+        arg0,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len0 = WASM_VECTOR_LEN;
+    wasm.__wbg_set_mannwhitneytestresult_error_message(
+      this.__wbg_ptr,
+      ptr0,
+      len0,
+    );
+  }
+  /**
+   * @returns {EffectSize}
+   */
+  get effect_size() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+    return EffectSize.__wrap(ret);
+  }
+  /**
+   * @param {EffectSize} arg0
+   */
+  set effect_size(arg0) {
+    _assertClass(arg0, EffectSize);
+    var ptr0 = arg0.__destroy_into_raw();
+    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
   }
 }
 

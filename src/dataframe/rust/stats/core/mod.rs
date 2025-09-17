@@ -14,6 +14,6 @@ pub use effect_sizes::{
     cohens_h, cramers_v, eta_squared, partial_eta_squared,
 };
 pub use errors::StatError;
-pub use types::{AlternativeType, TailType, TestResult, TestType};
+pub use types::{AlternativeType, TailType, TestType};
 
 pub use utils::mean_null_hypothesis;

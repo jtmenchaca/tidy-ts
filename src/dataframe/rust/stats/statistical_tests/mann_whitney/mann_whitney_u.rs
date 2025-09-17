@@ -1,8 +1,10 @@
 use statrs::distribution::{ContinuousCDF, Normal};
 
-use super::super::super::core::{TestResult, TestType};
+use super::super::super::core::types::{
+    EffectSize, EffectSizeType, MannWhitneyMethod, MannWhitneyTestResult, TestStatistic,
+    TestStatisticName,
+};
 use super::super::super::distributions::pwilcox;
-use super::super::super::helpers::create_error_result;
 
 /// Configuration options for Mann-Whitney U test
 #[derive(Debug, Clone)]
@@ -84,7 +86,12 @@ pub struct MannWhitneyUTest {
 
 impl MannWhitneyUTest {
     /// Run Mann-Whitney U test/Wilcoxon rank-sum test on samples `x` and `y`.
-    pub fn independent(x: &[f64], y: &[f64], alpha: f64, alternative: &str) -> TestResult {
+    pub fn independent(
+        x: &[f64],
+        y: &[f64],
+        alpha: f64,
+        alternative: &str,
+    ) -> Result<MannWhitneyTestResult, String> {
         Self::independent_with_config(x, y, MannWhitneyConfig::default(), alpha, alternative)
     }
 
@@ -94,8 +101,8 @@ impl MannWhitneyUTest {
         y: &[f64],
         config: MannWhitneyConfig,
         alpha: f64,
-        alternative: &str,
-    ) -> TestResult {
+        _alternative: &str,
+    ) -> Result<MannWhitneyTestResult, String> {
         let (ranks, tie_correction) = chain_ranks(x, y);
         let n_x = x.len() as f64;
         let n_y = y.len() as f64;
@@ -155,15 +162,8 @@ impl MannWhitneyUTest {
             let z_corrected = (z - correction) / sigma;
 
             // Calculate p-value using normal distribution
-            let normal = match Normal::new(0.0, 1.0) {
-                Ok(n) => n,
-                Err(e) => {
-                    return create_error_result(
-                        "Mann-Whitney U test",
-                        &format!("Failed to create normal distribution: {}", e),
-                    );
-                }
-            };
+            let normal = Normal::new(0.0, 1.0)
+                .map_err(|e| format!("Failed to create normal distribution: {}", e))?;
             match config.alternative.as_str() {
                 "less" => normal.cdf(z_corrected),
                 "greater" => 1.0 - normal.cdf(z_corrected),
@@ -191,45 +191,30 @@ impl MannWhitneyUTest {
             Ok(normal) => normal.inverse_cdf(1.0 - alpha / 2.0),
             Err(_) => 1.96, // Fallback to 95% CI if normal distribution creation fails
         };
-        let ci_lower = estimate_small - z_critical * se;
-        let ci_upper = estimate_small + z_critical * se;
+        let _ci_lower = estimate_small - z_critical * se;
+        let _ci_upper = estimate_small + z_critical * se;
 
-        TestResult {
-            test_type: TestType::MannWhitneyU,
-            test_statistic: Some(test_statistic),
-            p_value: Some(p_value),
-            confidence_interval_lower: Some(ci_lower),
-            confidence_interval_upper: Some(ci_upper),
-            confidence_level: Some(1.0 - alpha),
-            effect_size: Some(effect_size),
-            u_statistic: Some(test_statistic),
-            w_statistic: Some(w_statistic),
-            sample_size: Some((n_x + n_y) as usize),
-            mean_difference: Some(estimate_small - n_xy / 2.0),
-            standard_error: Some(var_u.sqrt()),
-            sample_means: Some(vec![
-                x.iter().sum::<f64>() / n_x,
-                y.iter().sum::<f64>() / n_y,
-            ]),
-            sample_std_devs: Some(vec![
-                (x.iter()
-                    .map(|&v| (v - x.iter().sum::<f64>() / n_x).powi(2))
-                    .sum::<f64>()
-                    / (n_x - 1.0))
-                    .sqrt(),
-                (y.iter()
-                    .map(|&v| (v - y.iter().sum::<f64>() / n_y).powi(2))
-                    .sum::<f64>()
-                    / (n_y - 1.0))
-                    .sqrt(),
-            ]),
-            ranks: Some(ranks),
-            tie_correction: Some(tie_correction),
-            exact_p_value: if use_exact { Some(p_value) } else { None },
-            asymptotic_p_value: if !use_exact { Some(p_value) } else { None },
-            margin_of_error: Some(z_critical * var_u.sqrt()),
-            ..Default::default()
-        }
+        let method = if use_exact {
+            MannWhitneyMethod::Exact
+        } else {
+            MannWhitneyMethod::Asymptotic
+        };
+
+        Ok(MannWhitneyTestResult {
+            test_statistic: TestStatistic {
+                value: test_statistic,
+                name: TestStatisticName::UStatistic.as_str().to_string(),
+            },
+            p_value,
+            test_name: "Mann-Whitney U Test".to_string(),
+            method: method.as_str().to_string(),
+            alpha,
+            error_message: None,
+            effect_size: EffectSize {
+                value: effect_size,
+                effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
+            },
+        })
     }
 }
 
@@ -243,17 +228,17 @@ mod tests {
             134.0, 146.0, 104.0, 119.0, 124.0, 161.0, 107.0, 83.0, 113.0, 129.0, 97.0, 123.0,
         ];
         let y = vec![70.0, 118.0, 101.0, 85.0, 107.0, 132.0, 94.0];
-        let test = MannWhitneyUTest::independent(&x, &y, 0.05, "two-sided");
-        assert!((test.effect_size() - 0.39747795134385916).abs() < 1e-10);
-        assert!((test.p_value() - 0.09082718).abs() < 0.01);
+        let test = MannWhitneyUTest::independent(&x, &y, 0.05, "two-sided").unwrap();
+        assert!((test.effect_size.value - 0.39747795134385916).abs() < 1e-10);
+        assert!((test.p_value - 0.09082718).abs() < 0.01);
     }
 
     #[test]
     fn mann_whitney_u_2() {
         let x = vec![68.0, 68.0, 59.0, 72.0, 64.0, 67.0, 70.0, 74.0];
         let y = vec![60.0, 67.0, 61.0, 62.0, 67.0, 63.0, 56.0, 58.0];
-        let test = MannWhitneyUTest::independent(&x, &y, 0.05, "two-sided");
-        assert!((test.effect_size() - 0.6038707862370792).abs() < 1e-10);
-        assert!((test.p_value() - 0.01770607).abs() < 0.01);
+        let test = MannWhitneyUTest::independent(&x, &y, 0.05, "two-sided").unwrap();
+        assert!((test.effect_size.value - 0.6038707862370792).abs() < 1e-10);
+        assert!((test.p_value - 0.01770607).abs() < 0.01);
     }
 }

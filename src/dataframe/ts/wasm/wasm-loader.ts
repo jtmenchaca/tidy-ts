@@ -6,7 +6,6 @@ export type {
   PivotDenseF64,
   PivotLongerResult,
   PivotLongerStringResult,
-  TestResult,
 } from "../../lib/tidy_ts_dataframe.js";
 
 // Export initialization functions

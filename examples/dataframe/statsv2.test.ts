@@ -21,17 +21,11 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   const oneSampleT = s.compare.oneGroup.centralTendency.toValue({
     data: singleGroup,
     hypothesizedValue: 24,
-    parametric: true,
+    parametric: "parametric",
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`  Test statistic: ${oneSampleT.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${oneSampleT.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: Mean ${
-      oneSampleT.p_value < 0.05 ? "differs from" : "equals"
-    } 24`,
-  );
+  console.log(`  Complete test result:`, JSON.stringify(oneSampleT, null, 2));
 
   // Test if mean of single group equals a specific value (non-parametric)
   console.log(
@@ -42,24 +36,22 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     data: singleGroup,
     hypothesizedValue: 24,
   });
-  console.log(`  Test statistic: ${wilcoxonTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${wilcoxonTest.p_value.toFixed(4)}`);
+  console.log(`  Complete test result:`, JSON.stringify(wilcoxonTest, null, 2));
 
   const _wilcoxonTest1 = s.compare.oneGroup.centralTendency.toValue({
     data: singleGroup,
     hypothesizedValue: 24,
-    parametric: false,
+    parametric: "nonparametric",
   });
 
   // Test auto mode (default)
-  console.log("\\n2b. Testing central tendency with auto detection:");
+  console.log("\n2b. Testing central tendency with auto detection:");
   const autoTest = s.compare.oneGroup.centralTendency.toValue({
     data: singleGroup,
     hypothesizedValue: 24,
   });
-  console.log(`  Auto-selected test: ${autoTest.test_name}`);
-  console.log(`  Test statistic: ${autoTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${autoTest.p_value.toFixed(4)}`);
+
+  console.log(`  Complete test result:`, JSON.stringify(autoTest, null, 2));
 
   // Test auto mode with non-normal data to force Wilcoxon
   const skewedData = [1, 1, 1, 1, 2, 2, 3, 100, 200, 300]; // Highly skewed
@@ -68,12 +60,9 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     hypothesizedValue: 50,
   });
   console.log(
-    `  Auto-selected test for skewed data: ${autoTestSkewed.test_name}`,
+    `  Complete test result:`,
+    JSON.stringify(autoTestSkewed, null, 2),
   );
-  console.log(
-    `  Skewed data test statistic: ${autoTestSkewed.test_statistic.toFixed(4)}`,
-  );
-  console.log(`  Skewed data p-value: ${autoTestSkewed.p_value.toFixed(4)}`);
 
   // Test if proportion meets expected value
   console.log("\n3. Testing proportions against value:");
@@ -85,13 +74,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`  Test statistic: ${propTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${propTest.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: Proportion ${
-      propTest.p_value < 0.05 ? "differs from" : "equals"
-    } 0.5`,
-  );
+  console.log(`  Complete test result:`, JSON.stringify(propTest, null, 2));
 
   // Test if distribution is normal
   console.log("\n4. Testing distribution normality (Shapiro-Wilk):");
@@ -99,12 +82,9 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     data: singleGroup,
     alpha: 0.05,
   });
-  console.log(`  Test statistic: ${normalityTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${normalityTest.p_value.toFixed(4)}`);
   console.log(
-    `  Result: Data is ${
-      normalityTest.p_value > 0.05 ? "normally distributed" : "not normal"
-    }`,
+    `  Complete test result:`,
+    JSON.stringify(normalityTest, null, 2),
   );
 
   // ============================================================================
@@ -117,16 +97,12 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   const twoSampleT = s.compare.twoGroups.centralTendency.toEachOther({
     x: group1,
     y: group2,
-    parametric: true,
+    parametric: "parametric",
     equalVar: true,
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`  Test statistic: ${twoSampleT.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${twoSampleT.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: Groups ${twoSampleT.p_value < 0.05 ? "differ" : "are similar"}`,
-  );
+  console.log(`  Complete test result:`, JSON.stringify(twoSampleT, null, 2));
 
   // Compare proportions between two groups
   console.log("\n6. Comparing proportions (z-test):");
@@ -140,8 +116,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     alpha: 0.05,
     useChiSquare: false,
   });
-  console.log(`  Test statistic: ${twoPropTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${twoPropTest.p_value.toFixed(4)}`);
+  console.log(`  Complete test result:`, JSON.stringify(twoPropTest, null, 2));
 
   // Test association between two continuous variables
   console.log("\n7. Testing association (Pearson correlation):");
@@ -151,16 +126,10 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     x: x,
     y: y,
     method: "pearson",
-    alternative: "two.sided",
+    alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`  Correlation: ${corrTest.correlation.toFixed(4)}`);
-  console.log(`  P-value: ${corrTest.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: ${
-      corrTest.p_value < 0.05 ? "Significant correlation" : "No correlation"
-    }`,
-  );
+  console.log(`  Complete test result:`, JSON.stringify(corrTest, null, 2));
 
   // Compare distributions between two groups
   console.log("\n8. Comparing distributions (Mann-Whitney):");
@@ -170,8 +139,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     alternative: "two-sided",
     alpha: 0.05,
   });
-  console.log(`  U-statistic: ${distTest.u_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${distTest.p_value.toFixed(4)}`);
+  console.log(`  Complete test result:`, JSON.stringify(distTest, null, 2));
 
   // ============================================================================
   // MULTIPLE GROUPS COMPARISONS
@@ -182,16 +150,10 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   console.log("\n9. Comparing central tendencies across groups (ANOVA):");
   const anovaTest = s.compare.multiGroups.centralTendency.toEachOther({
     groups: [group1, group2, group3],
-    parametric: true,
+    parametric: "parametric",
     alpha: 0.05,
   });
-  console.log(`  F-statistic: ${anovaTest.f_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${anovaTest.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: Groups ${
-      anovaTest.p_value < 0.05 ? "differ significantly" : "are similar"
-    }`,
-  );
+  console.log(`  Complete test result:`, JSON.stringify(anovaTest, null, 2));
 
   // Compare central tendencies across multiple groups (non-parametric)
   console.log(
@@ -199,11 +161,75 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   );
   const kwTest = s.compare.multiGroups.centralTendency.toEachOther({
     groups: [group1, group2, group3],
-    parametric: false,
+    parametric: "nonparametric",
     alpha: 0.05,
   });
-  console.log(`  Test statistic: ${kwTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${kwTest.p_value.toFixed(4)}`);
+  console.log(`  Complete test result:`, JSON.stringify(kwTest, null, 2));
+
+  // Test auto-selection for multiple groups
+  console.log("\n10b. Auto-selection for multiple groups:");
+  const autoMultiTest = s.compare.multiGroups.centralTendency.toEachOther({
+    groups: [group1, group2, group3], // Normal data - should pick ANOVA
+  });
+  console.log(
+    `  Complete test result:`,
+    JSON.stringify(autoMultiTest, null, 2),
+  );
+
+  // Test auto-selection with two-groups association
+  console.log("\n10c. Auto-selection for association tests:");
+  const autoAssocTest = s.compare.twoGroups.association.toEachOther({
+    x: x,
+    y: y, // Will auto-select Pearson for normal data
+  });
+  console.log(
+    `  Complete test result:`,
+    JSON.stringify(autoAssocTest, null, 2),
+  );
+  // Test with binary data for point-biserial correlation
+  const binaryData = [true, false, true, false, true, false, true, false];
+  const continuousData = [2, 1, 3, 1, 4, 2, 5, 2];
+  const pointBiserialTest = s.compare.twoGroups.association.toEachOther({
+    x: binaryData,
+    y: continuousData, // Should auto-select point-biserial (Pearson with 0/1)
+  });
+  console.log(
+    `  Complete test result:`,
+    JSON.stringify(pointBiserialTest, null, 2),
+  );
+  // Test two-way ANOVA design
+  console.log("\n10d. Two-way ANOVA design:");
+  // Create 2x2 factorial data: factorA[2] x factorB[2]
+  const twoWayData = [
+    [[5, 6, 7], [8, 9, 10]], // Factor A level 1: [B1, B2]
+    [[15, 16, 17], [18, 19, 20]], // Factor A level 2: [B1, B2]
+  ];
+
+  const twoWayTestA = s.compare.multiGroups.centralTendency.toEachOther({
+    data: twoWayData,
+    parametric: "parametric",
+    design: "two-way",
+    testType: "factorA",
+  });
+  console.log(`  Complete test result:`, JSON.stringify(twoWayTestA, null, 2));
+  const twoWayTestB = s.compare.multiGroups.centralTendency.toEachOther({
+    data: twoWayData,
+    parametric: "parametric",
+    design: "two-way",
+    testType: "factorB",
+  });
+  console.log(`  Complete test result:`, JSON.stringify(twoWayTestB, null, 2));
+
+  const twoWayInteraction = s.compare.multiGroups.centralTendency.toEachOther({
+    data: twoWayData,
+    parametric: "parametric",
+    design: "two-way",
+    testType: "interaction",
+  });
+  console.log(
+    `  Complete test result:`,
+    JSON.stringify(twoWayInteraction, null, 2),
+  );
 
   // Compare proportions across multiple groups
   console.log("\n11. Comparing proportions across groups (Chi-squared):");
@@ -216,13 +242,5 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     contingencyTable: contingencyTable,
     alpha: 0.05,
   });
-  console.log(`  Chi-squared statistic: ${chiTest.test_statistic.toFixed(4)}`);
-  console.log(`  P-value: ${chiTest.p_value.toFixed(4)}`);
-  console.log(
-    `  Result: ${
-      chiTest.p_value < 0.05 ? "Significant association" : "No association"
-    }`,
-  );
-
-  console.log("\n=== Hierarchical Compare API Successfully Tested ===");
+  console.log(`  Complete test result:`, JSON.stringify(chiTest, null, 2));
 });

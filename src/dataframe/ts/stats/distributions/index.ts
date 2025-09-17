@@ -18,6 +18,7 @@ import * as tDist from "./t-distribution.ts";
 import * as uniform from "./uniform.ts";
 import * as weibull from "./weibull.ts";
 import * as wilcoxon from "./wilcoxon.ts";
+import * as studentizedRange from "./studentized-range.ts";
 
 /**
  * Comprehensive probability distributions organized by type.
@@ -117,6 +118,15 @@ export const dist = {
     random: wilcoxon.rwilcox,
   },
 
+  studentizedRange: {
+    density: studentizedRange.dtukey,
+    probability: studentizedRange.ptukey,
+    quantile: studentizedRange.qtukey,
+    random: studentizedRange.rtukey,
+    tukeyPValue: studentizedRange.tukeyPValue,
+    tukeyCritical: studentizedRange.tukeyCritical,
+  },
+
   // Discrete distributions
   binomial: {
     density: binomial.dbinom,
@@ -171,6 +181,7 @@ export * from "./t-distribution.ts";
 export * from "./uniform.ts";
 export * from "./weibull.ts";
 export * from "./wilcoxon.ts";
+export * from "./studentized-range.ts";
 
 // Also export distributions as default
 export default dist;

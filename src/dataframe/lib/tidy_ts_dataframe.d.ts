@@ -809,7 +809,7 @@ export function anova_one_way(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): OneWayAnovaTestResult;
 /**
  * WASM export for two-way ANOVA factor A
  */
@@ -819,7 +819,7 @@ export function anova_two_way_factor_a_wasm(
   b_levels: number,
   cell_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): OneWayAnovaTestResult;
 /**
  * WASM export for two-way ANOVA factor B
  */
@@ -829,7 +829,7 @@ export function anova_two_way_factor_b_wasm(
   b_levels: number,
   cell_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): OneWayAnovaTestResult;
 /**
  * WASM export for two-way ANOVA interaction
  */
@@ -839,7 +839,7 @@ export function anova_two_way_interaction_wasm(
   b_levels: number,
   cell_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): OneWayAnovaTestResult;
 /**
  * WASM export for two-way ANOVA
  * Takes flattened data with group information to reconstruct 2D factorial design
@@ -850,7 +850,15 @@ export function anova_two_way(
   b_levels: number,
   cell_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): TwoWayAnovaTestResult;
+/**
+ * WASM export for Welch's ANOVA (unequal variances)
+ */
+export function welch_anova_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
 /**
  * WASM export for chi-square test of independence
  */
@@ -859,7 +867,24 @@ export function chi_square_independence(
   rows: number,
   cols: number,
   alpha: number,
-): TestResult;
+): ChiSquareIndependenceTestResult;
+/**
+ * WASM export for chi-square goodness of fit test
+ */
+export function chi_square_goodness_of_fit(
+  observed: Float64Array,
+  expected: Float64Array,
+  alpha: number,
+): ChiSquareGoodnessOfFitTestResult;
+/**
+ * WASM export for chi-square test for variance
+ */
+export function chi_square_variance(
+  data: Float64Array,
+  pop_variance: number,
+  tail: string,
+  alpha: number,
+): ChiSquareVarianceTestResult;
 /**
  * WASM export for chi-square sample size calculation
  */
@@ -874,19 +899,19 @@ export function pearson_correlation_test(
   y: Float64Array,
   alternative: string,
   alpha: number,
-): TestResult;
+): PearsonCorrelationTestResult;
 export function spearman_correlation_test(
   x: Float64Array,
   y: Float64Array,
   alternative: string,
   alpha: number,
-): TestResult;
+): SpearmanCorrelationTestResult;
 export function kendall_correlation_test(
   x: Float64Array,
   y: Float64Array,
   alternative: string,
   alpha: number,
-): TestResult;
+): KendallCorrelationTestResult;
 /**
  * WASM export for Fisher's exact test
  */
@@ -898,7 +923,7 @@ export function fishers_exact_test_wasm(
   alternative: string,
   odds_ratio: number,
   alpha: number,
-): TestResult;
+): FishersExactTestResult;
 /**
  * WASM export for Kruskal-Wallis test
  */
@@ -906,16 +931,37 @@ export function kruskal_wallis_test_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): TestResult;
+): KruskalWallisTestResult;
 /**
- * WASM export for Mann-Whitney U test
+ * WASM wrapper for Levene's test for equality of variances
+ *
+ * Tests whether groups have equal variances using the Brown-Forsythe
+ * modification (deviations from medians rather than means).
+ *
+ * # Arguments
+ * * `data` - Flattened array of all group data
+ * * `group_sizes` - Array of group sizes
+ * * `alpha` - Significance level
+ *
+ * # Returns
+ * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
+ *   - p < alpha indicates unequal variances (reject null hypothesis)
+ *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
+ */
+export function levene_test_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for Mann-Whitney U test (automatically chooses exact vs asymptotic)
  */
 export function mann_whitney_test(
   x: Float64Array,
   y: Float64Array,
   alpha: number,
   alternative: string,
-): TestResult;
+): MannWhitneyTestResult;
 /**
  * WASM export for Mann-Whitney U test with configuration
  */
@@ -926,7 +972,31 @@ export function mann_whitney_test_with_config(
   continuity_correction: boolean,
   alpha: number,
   alternative: string,
-): TestResult;
+): MannWhitneyTestResult;
+/**
+ * WASM export for Tukey HSD test
+ */
+export function tukey_hsd_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): string;
+/**
+ * WASM export for Games-Howell test
+ */
+export function games_howell_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): string;
+/**
+ * WASM export for Dunn's test
+ */
+export function dunn_test_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): string;
 /**
  * WASM export for one-sample proportion test
  */
@@ -936,7 +1006,7 @@ export function proportion_test_one_sample(
   p0: number,
   alpha: number,
   alternative: string,
-): TestResult;
+): OneSampleProportionTestResult;
 /**
  * WASM export for two-sample proportion test
  */
@@ -948,7 +1018,7 @@ export function proportion_test_two_sample(
   alpha: number,
   alternative: string,
   pooled: boolean,
-): TestResult;
+): TwoSampleProportionTestResult;
 /**
  * WASM export for proportion sample size calculation
  */
@@ -961,7 +1031,10 @@ export function proportion_sample_size_wasm(
 /**
  * WASM export for Shapiro-Wilk normality test
  */
-export function shapiro_wilk_test(x: Float64Array, alpha: number): TestResult;
+export function shapiro_wilk_test(
+  x: Float64Array,
+  alpha: number,
+): ShapiroWilkTestResult;
 /**
  * WASM export for one-sample t-test
  */
@@ -970,7 +1043,7 @@ export function t_test_one_sample(
   mu: number,
   alpha: number,
   alternative: string,
-): TestResult;
+): OneSampleTTestResult;
 /**
  * WASM export for independent two-sample t-test
  */
@@ -980,7 +1053,7 @@ export function t_test_two_sample_independent(
   alpha: number,
   alternative: string,
   pooled: boolean,
-): TestResult;
+): TwoSampleTTestResult;
 /**
  * WASM export for paired t-test
  */
@@ -989,7 +1062,7 @@ export function t_test_paired(
   y: Float64Array,
   alpha: number,
   alternative: string,
-): TestResult;
+): PairedTTestResult;
 /**
  * WASM export for t-test sample size calculation
  */
@@ -1007,7 +1080,7 @@ export function wilcoxon_w_test(
   y: Float64Array,
   alpha: number,
   alternative: string,
-): TestResult;
+): WilcoxonSignedRankTestResult;
 /**
  * WASM export for one-sample z-test
  */
@@ -1017,7 +1090,7 @@ export function z_test_one_sample(
   sigma: number,
   alpha: number,
   alternative: string,
-): TestResult;
+): OneSampleZTestResult;
 /**
  * WASM export for two-sample z-test
  */
@@ -1028,7 +1101,7 @@ export function z_test_two_sample(
   sigma_y: number,
   alpha: number,
   alternative: string,
-): TestResult;
+): TwoSampleZTestResult;
 /**
  * WASM export for z-test sample size calculation
  */
@@ -1057,6 +1130,60 @@ export enum AlternativeType {
   Greater = 2,
 }
 /**
+ * Effect size types that can be returned by statistical tests
+ */
+export enum EffectSizeType {
+  CohensD = 0,
+  HedgesG = 1,
+  EtaSquared = 2,
+  PartialEtaSquared = 3,
+  OmegaSquared = 4,
+  CramersV = 5,
+  PhiCoefficient = 6,
+  PointBiserialCorrelation = 7,
+  RankBiserialCorrelation = 8,
+  KendallsTau = 9,
+  SpearmansRho = 10,
+  PearsonsR = 11,
+  GlassDelta = 12,
+  CohensF = 13,
+  CohensH = 14,
+  OddsRatio = 15,
+  RelativeRisk = 16,
+  RiskDifference = 17,
+  NumberNeededToTreat = 18,
+}
+/**
+ * Mann-Whitney test method type
+ */
+export enum MannWhitneyMethod {
+  Exact = 0,
+  Asymptotic = 1,
+}
+/**
+ * Test statistic names that can be returned by statistical tests
+ */
+export enum TestStatisticName {
+  TStatistic = 0,
+  FStatistic = 1,
+  ChiSquare = 2,
+  ZStatistic = 3,
+  UStatistic = 4,
+  WStatistic = 5,
+  HStatistic = 6,
+  RStatistic = 7,
+  TauStatistic = 8,
+  RhoStatistic = 9,
+  DStatistic = 10,
+  GStatistic = 11,
+  QStatistic = 12,
+  VStatistic = 13,
+  AStatistic = 14,
+  BStatistic = 15,
+  LStatistic = 16,
+  SStatistic = 17,
+}
+/**
  * Represents the type of statistical test performed.
  */
 export enum TestType {
@@ -1070,15 +1197,125 @@ export enum TestType {
   ChiSquareIndependence = 7,
   MannWhitneyU = 8,
   WilcoxonSignedRank = 9,
-  OneSampleZTest = 10,
-  TwoSampleZTest = 11,
-  OneSampleProportionTest = 12,
-  TwoSampleProportionTest = 13,
-  ShapiroWilk = 14,
-  PearsonCorrelation = 15,
-  SpearmanCorrelation = 16,
-  KendallCorrelation = 17,
-  Error = 18,
+  KruskalWallis = 10,
+  OneSampleZTest = 11,
+  TwoSampleZTest = 12,
+  OneSampleProportionTest = 13,
+  TwoSampleProportionTest = 14,
+  ShapiroWilk = 15,
+  FishersExact = 16,
+  PearsonCorrelation = 17,
+  SpearmanCorrelation = 18,
+  KendallCorrelation = 19,
+  Error = 20,
+}
+/**
+ * Wilcoxon signed-rank test method type
+ */
+export enum WilcoxonMethod {
+  Exact = 0,
+  Asymptotic = 1,
+}
+/**
+ * Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
+ */
+export class AnovaTestComponent {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  mean_square: number;
+  sum_of_squares: number;
+}
+/**
+ * Chi-square goodness of fit test result
+ */
+export class ChiSquareGoodnessOfFitTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  sample_size: number;
+  chi_square_expected: Float64Array;
+}
+/**
+ * Chi-square test of independence result
+ */
+export class ChiSquareIndependenceTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  sample_size: number;
+  phi_coefficient: number;
+  chi_square_expected: Float64Array;
+  residuals: Float64Array;
+}
+/**
+ * Chi-square test for variance result
+ */
+export class ChiSquareVarianceTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  sample_size: number;
+  confidence_interval: ConfidenceInterval;
+}
+/**
+ * Confidence interval structure
+ */
+export class ConfidenceInterval {
+  private constructor();
+  free(): void;
+  lower: number;
+  upper: number;
+  confidence_level: number;
+}
+/**
+ * Effect size with type information
+ */
+export class EffectSize {
+  private constructor();
+  free(): void;
+  value: number;
+  effect_type: string;
+}
+/**
+ * Fisher's exact test result
+ */
+export class FishersExactTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  odds_ratio: number;
+  method: string;
 }
 /**
  * Grouping result that contains all information in one pass
@@ -1105,6 +1342,153 @@ export class JoinIdxU32 {
    * Move out the right indices (no clone)
    */
   takeRight(): Uint32Array;
+}
+/**
+ * Kendall correlation test result
+ */
+export class KendallCorrelationTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  effect_size: EffectSize;
+}
+/**
+ * Kruskal-Wallis test result
+ */
+export class KruskalWallisTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  sample_size: number;
+}
+/**
+ * Mann-Whitney test result with method information
+ */
+export class MannWhitneyTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  method: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  effect_size: EffectSize;
+}
+/**
+ * One-sample proportion test result
+ */
+export class OneSampleProportionTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  sample_proportion: number;
+}
+/**
+ * One-sample t-test result
+ */
+export class OneSampleTTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+}
+/**
+ * One-sample Z-test result
+ */
+export class OneSampleZTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  effect_size: EffectSize;
+}
+/**
+ * One-way ANOVA test result with guaranteed properties
+ */
+export class OneWayAnovaTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  sample_size: number;
+  sample_means: Float64Array;
+  sample_std_devs: Float64Array;
+  sum_of_squares: Float64Array;
+  r_squared: number;
+  adjusted_r_squared: number;
+}
+/**
+ * Paired t-test result
+ */
+export class PairedTTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  mean_difference: number;
+  standard_error: number;
+}
+/**
+ * Pearson correlation test result
+ */
+export class PearsonCorrelationTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
 }
 /**
  * Combined pivot result with values and seen flags
@@ -1142,325 +1526,125 @@ export class PivotLongerStringResult {
   n_keep_cols: number;
 }
 /**
- * Result of a statistical test containing all relevant information
+ * Shapiro-Wilk test result
  */
-export class TestResult {
+export class ShapiroWilkTestResult {
   private constructor();
   free(): void;
-  /**
-   * Type of statistical test performed
-   */
-  test_type: TestType;
-  /**
-   * The calculated test statistic value
-   */
-  get test_statistic(): number | undefined;
-  /**
-   * The calculated test statistic value
-   */
-  set test_statistic(value: number | null | undefined);
-  /**
-   * The p-value of the test
-   */
-  get p_value(): number | undefined;
-  /**
-   * The p-value of the test
-   */
-  set p_value(value: number | null | undefined);
-  /**
-   * Confidence interval lower bound
-   */
-  get confidence_interval_lower(): number | undefined;
-  /**
-   * Confidence interval lower bound
-   */
-  set confidence_interval_lower(value: number | null | undefined);
-  /**
-   * Confidence interval upper bound
-   */
-  get confidence_interval_upper(): number | undefined;
-  /**
-   * Confidence interval upper bound
-   */
-  set confidence_interval_upper(value: number | null | undefined);
-  /**
-   * Confidence level used (e.g., 0.95 for 95%)
-   */
-  get confidence_level(): number | undefined;
-  /**
-   * Confidence level used (e.g., 0.95 for 95%)
-   */
-  set confidence_level(value: number | null | undefined);
-  /**
-   * General effect size measure
-   */
-  get effect_size(): number | undefined;
-  /**
-   * General effect size measure
-   */
-  set effect_size(value: number | null | undefined);
-  /**
-   * Cohen's d (for t-tests)
-   */
-  get cohens_d(): number | undefined;
-  /**
-   * Cohen's d (for t-tests)
-   */
-  set cohens_d(value: number | null | undefined);
-  /**
-   * Eta squared (for ANOVA)
-   */
-  get eta_squared(): number | undefined;
-  /**
-   * Eta squared (for ANOVA)
-   */
-  set eta_squared(value: number | null | undefined);
-  /**
-   * Cramer's V (for chi-square)
-   */
-  get cramers_v(): number | undefined;
-  /**
-   * Cramer's V (for chi-square)
-   */
-  set cramers_v(value: number | null | undefined);
-  /**
-   * Phi coefficient (for 2x2 chi-square)
-   */
-  get phi_coefficient(): number | undefined;
-  /**
-   * Phi coefficient (for 2x2 chi-square)
-   */
-  set phi_coefficient(value: number | null | undefined);
-  /**
-   * Odds ratio (for categorical tests)
-   */
-  get odds_ratio(): number | undefined;
-  /**
-   * Odds ratio (for categorical tests)
-   */
-  set odds_ratio(value: number | null | undefined);
-  /**
-   * Relative risk (for categorical tests)
-   */
-  get relative_risk(): number | undefined;
-  /**
-   * Relative risk (for categorical tests)
-   */
-  set relative_risk(value: number | null | undefined);
-  /**
-   * Degrees of freedom
-   */
-  get degrees_of_freedom(): number | undefined;
-  /**
-   * Degrees of freedom
-   */
-  set degrees_of_freedom(value: number | null | undefined);
-  /**
-   * Sample size
-   */
-  get sample_size(): number | undefined;
-  /**
-   * Sample size
-   */
-  set sample_size(value: number | null | undefined);
-  /**
-   * Correlation coefficient (for correlation tests)
-   */
-  get correlation(): number | undefined;
-  /**
-   * Correlation coefficient (for correlation tests)
-   */
-  set correlation(value: number | null | undefined);
-  /**
-   * U statistic (for Mann-Whitney)
-   */
-  get u_statistic(): number | undefined;
-  /**
-   * U statistic (for Mann-Whitney)
-   */
-  set u_statistic(value: number | null | undefined);
-  /**
-   * W statistic (for Wilcoxon)
-   */
-  get w_statistic(): number | undefined;
-  /**
-   * W statistic (for Wilcoxon)
-   */
-  set w_statistic(value: number | null | undefined);
-  /**
-   * F statistic (for ANOVA)
-   */
-  get f_statistic(): number | undefined;
-  /**
-   * F statistic (for ANOVA)
-   */
-  set f_statistic(value: number | null | undefined);
-  /**
-   * Mean difference between groups
-   */
-  get mean_difference(): number | undefined;
-  /**
-   * Mean difference between groups
-   */
-  set mean_difference(value: number | null | undefined);
-  /**
-   * Standard error
-   */
-  get standard_error(): number | undefined;
-  /**
-   * Standard error
-   */
-  set standard_error(value: number | null | undefined);
-  /**
-   * Margin of error
-   */
-  get margin_of_error(): number | undefined;
-  /**
-   * Margin of error
-   */
-  set margin_of_error(value: number | null | undefined);
-  /**
-   * Sample means for each group
-   */
-  get sample_means(): Float64Array | undefined;
-  /**
-   * Sample means for each group
-   */
-  set sample_means(value: Float64Array | null | undefined);
-  /**
-   * Sample standard deviations for each group
-   */
-  get sample_std_devs(): Float64Array | undefined;
-  /**
-   * Sample standard deviations for each group
-   */
-  set sample_std_devs(value: Float64Array | null | undefined);
-  /**
-   * Expected frequencies (for chi-square)
-   */
-  get chi_square_expected(): Float64Array | undefined;
-  /**
-   * Expected frequencies (for chi-square)
-   */
-  set chi_square_expected(value: Float64Array | null | undefined);
-  /**
-   * Residuals (for chi-square)
-   */
-  get residuals(): Float64Array | undefined;
-  /**
-   * Residuals (for chi-square)
-   */
-  set residuals(value: Float64Array | null | undefined);
-  /**
-   * Ranks (for non-parametric tests)
-   */
-  get ranks(): Float64Array | undefined;
-  /**
-   * Ranks (for non-parametric tests)
-   */
-  set ranks(value: Float64Array | null | undefined);
-  /**
-   * Tie correction factor
-   */
-  get tie_correction(): number | undefined;
-  /**
-   * Tie correction factor
-   */
-  set tie_correction(value: number | null | undefined);
-  /**
-   * Exact p-value (when available)
-   */
-  get exact_p_value(): number | undefined;
-  /**
-   * Exact p-value (when available)
-   */
-  set exact_p_value(value: number | null | undefined);
-  /**
-   * Asymptotic p-value (for large samples)
-   */
-  get asymptotic_p_value(): number | undefined;
-  /**
-   * Asymptotic p-value (for large samples)
-   */
-  set asymptotic_p_value(value: number | null | undefined);
-  /**
-   * R-squared value
-   */
-  get r_squared(): number | undefined;
-  /**
-   * R-squared value
-   */
-  set r_squared(value: number | null | undefined);
-  /**
-   * Adjusted R-squared value
-   */
-  get adjusted_r_squared(): number | undefined;
-  /**
-   * Adjusted R-squared value
-   */
-  set adjusted_r_squared(value: number | null | undefined);
-  /**
-   * Akaike Information Criterion
-   */
-  get aic(): number | undefined;
-  /**
-   * Akaike Information Criterion
-   */
-  set aic(value: number | null | undefined);
-  /**
-   * Bayesian Information Criterion
-   */
-  get bic(): number | undefined;
-  /**
-   * Bayesian Information Criterion
-   */
-  set bic(value: number | null | undefined);
-  /**
-   * Sum of squares breakdown
-   */
-  get sum_of_squares(): Float64Array | undefined;
-  /**
-   * Sum of squares breakdown
-   */
-  set sum_of_squares(value: Float64Array | null | undefined);
-  /**
-   * Number of missing values
-   */
-  get missing_values(): number | undefined;
-  /**
-   * Number of missing values
-   */
-  set missing_values(value: number | null | undefined);
-  /**
-   * Number of outliers detected
-   */
-  get outliers_detected(): number | undefined;
-  /**
-   * Number of outliers detected
-   */
-  set outliers_detected(value: number | null | undefined);
-  /**
-   * List of violated assumptions
-   */
-  get assumptions_violated(): string[] | undefined;
-  /**
-   * List of violated assumptions
-   */
-  set assumptions_violated(value: string[] | null | undefined);
-  /**
-   * P-value from normality test
-   */
-  get normality_test_p_value(): number | undefined;
-  /**
-   * P-value from normality test
-   */
-  set normality_test_p_value(value: number | null | undefined);
-  /**
-   * Error message if the test failed
-   */
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
   get error_message(): string | undefined;
-  /**
-   * Error message if the test failed
-   */
   set error_message(value: string | null | undefined);
+  sample_size: number;
+}
+/**
+ * Spearman correlation test result
+ */
+export class SpearmanCorrelationTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+}
+/**
+ * Test statistic with name
+ */
+export class TestStatistic {
+  private constructor();
+  free(): void;
+  value: number;
+  name: string;
+}
+/**
+ * Two-sample proportion test result
+ */
+export class TwoSampleProportionTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  proportion_difference: number;
+}
+/**
+ * Two-sample independent t-test result
+ */
+export class TwoSampleTTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  degrees_of_freedom: number;
+  effect_size: EffectSize;
+  mean_difference: number;
+  standard_error: number;
+}
+/**
+ * Two-sample Z-test result
+ */
+export class TwoSampleZTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  confidence_interval: ConfidenceInterval;
+  effect_size: EffectSize;
+  mean_difference: number;
+  standard_error: number;
+}
+/**
+ * Two-way ANOVA test result with guaranteed properties for all three tests
+ */
+export class TwoWayAnovaTestResult {
+  private constructor();
+  free(): void;
+  factor_a: AnovaTestComponent;
+  factor_b: AnovaTestComponent;
+  interaction: AnovaTestComponent;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  sample_size: number;
+  sample_means: Float64Array;
+  sample_std_devs: Float64Array;
+  sum_of_squares: Float64Array;
+  grand_mean: number;
+}
+/**
+ * Wilcoxon signed-rank test result with method information
+ */
+export class WilcoxonSignedRankTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  method: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  effect_size: EffectSize;
 }
