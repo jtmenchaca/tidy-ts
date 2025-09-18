@@ -26,7 +26,7 @@ pub fn print_anova(anova: &GlmAnova) {
     println!();
 
     // Print table rows
-    for (i, (row_name, row)) in anova.row_names.iter().zip(anova.table.iter()).enumerate() {
+    for (row_name, row) in anova.row_names.iter().zip(anova.table.iter()) {
         print!("{:>12}", row_name);
 
         // Print df
@@ -117,6 +117,7 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0, // Default dispersion value
         }
     }
 

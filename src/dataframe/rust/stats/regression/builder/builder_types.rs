@@ -1,7 +1,7 @@
 //! Model builder types and structures
 
 use crate::stats::regression::contrasts::ContrastType;
-use crate::stats::regression::model::{ModelFrame, NaAction, Variable};
+use crate::stats::regression::model::{NaAction, Variable};
 
 /// Builder for constructing statistical models
 ///

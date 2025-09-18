@@ -16,6 +16,7 @@
 pub mod model_utilities_types;
 pub mod model_utilities_extractors;
 pub mod model_utilities_validation;
+#[cfg(test)]
 pub mod model_utilities_tests;
 
 // Re-export main types

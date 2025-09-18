@@ -2,7 +2,8 @@
 //!
 //! This file contains the print functions for GLM summary.
 
-use super::glm_summary_core::summary_glm;
+// Unused import removed
+use super::glm_summary::summary_glm;
 use super::types::GlmSummary;
 
 /// Print GLM summary
@@ -18,12 +19,11 @@ use super::types::GlmSummary;
 /// * `show_residuals` - Whether to show residual summary (default: false)
 pub fn print_summary_glm(
     x: &GlmSummary,
-    digits: Option<usize>,
+    _digits: Option<usize>,
     symbolic_cor: Option<bool>,
     signif_stars: Option<bool>,
     show_residuals: Option<bool>,
 ) {
-    let digits = digits.unwrap_or(3);
     let symbolic_cor = symbolic_cor.unwrap_or(false);
     let signif_stars = signif_stars.unwrap_or(true);
     let show_residuals = show_residuals.unwrap_or(false);
@@ -188,7 +188,7 @@ fn print_aic_and_iterations(x: &GlmSummary) {
 }
 
 /// Print correlation matrix if available
-fn print_correlation_matrix(x: &GlmSummary, symbolic_cor: bool) {
+fn print_correlation_matrix(x: &GlmSummary, _symbolic_cor: bool) {
     if let Some(ref correl) = x.correlation {
         let p = correl.len();
         if p > 1 {
@@ -265,13 +265,14 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0,
         }
     }
 
     #[test]
     fn test_print_summary_glm() {
         let result = create_test_glm_result();
-        let summary = summary_glm(&result, None, false, false).unwrap();
+        let summary = summary_glm(&result).unwrap();
         // This test just ensures the function doesn't panic
         print_summary_glm(&summary, None, None, None, None);
     }

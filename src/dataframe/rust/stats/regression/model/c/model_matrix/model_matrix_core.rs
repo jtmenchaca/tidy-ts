@@ -2,7 +2,7 @@
 
 use super::model_matrix_types::{ModelMatrix, ModelMatrixResult};
 use crate::stats::regression::contrasts::ContrastMatrix;
-use crate::stats::regression::{ModelFrame, Term, Terms, Variable};
+use crate::stats::regression::{ModelFrame, Terms, Variable};
 
 /// Creates a model matrix from terms and model frame
 ///

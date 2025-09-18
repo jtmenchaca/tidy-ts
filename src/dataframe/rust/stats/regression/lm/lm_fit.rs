@@ -82,6 +82,9 @@ pub fn lm(
         pivot: qr_result.pivot,
         tol: qr_result.tol,
         pivoted: qr_result.pivoted,
+        weights: None,
+        deviance: 0.0, // TODO: Calculate actual deviance
+        call: None,
     })
 }
 
@@ -195,5 +198,8 @@ pub fn lm_wfit(
         pivot: qr_result.pivot,
         tol: qr_result.tol,
         pivoted: qr_result.pivoted,
+        weights: Some(weights.to_vec()),
+        deviance: 0.0, // TODO: Calculate actual deviance
+        call: None,
     })
 }

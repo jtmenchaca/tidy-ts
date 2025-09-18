@@ -1,9 +1,9 @@
 //! Influence diagnostic measures
-//! 
+//!
 //! This module provides influence diagnostic functions
 //! equivalent to R's influence_diagnostics.R module.
 
-use super::influence_core::{LinearModel, InfluenceResult, lm_influence, weighted_residuals};
+use super::influence_core::{InfluenceResult, LinearModel, lm_influence, weighted_residuals};
 use std::f64;
 
 /// Calculate DFFITS (difference in fits)
@@ -28,26 +28,26 @@ pub fn dffits(
         Some(infl) => infl.clone(),
         None => lm_influence(model, false)?,
     };
-    
+
     let residuals = match residuals {
         Some(res) => res.to_vec(),
         None => weighted_residuals(model, true)?,
     };
 
     let mut dffits_values = vec![0.0; model.n];
-    
+
     for i in 0..model.n {
         let hat_val = influence_result.hat[i];
         let sigma = influence_result.sigma[i];
         let res = residuals[i];
-        
+
         if hat_val == 1.0 {
             dffits_values[i] = f64::NAN;
         } else {
             dffits_values[i] = res * (hat_val.sqrt()) / (sigma * (1.0 - hat_val));
         }
     }
-    
+
     // Handle infinite values
     for val in &mut dffits_values {
         if val.is_infinite() {
@@ -78,7 +78,7 @@ pub fn dfbeta(
         Some(infl) => infl.clone(),
         None => lm_influence(model, true)?,
     };
-    
+
     match &influence_result.coefficients {
         Some(coefs) => Ok(coefs.clone()),
         None => Ok(vec![vec![0.0; model.p]; model.n]),
@@ -143,23 +143,24 @@ pub fn dfbetas_lm(
         Some(infl) => infl.clone(),
         None => lm_influence(model, true)?,
     };
-    
+
     // Get QR decomposition for model (simplified)
     // In a full implementation, we would compute (X'X)^(-1)
     let xxi = vec![1.0; model.p * model.p]; // Placeholder for (X'X)^(-1)
-    
+
     let dfbeta_vals = dfbeta(model, Some(&influence_result))?;
     let mut dfbetas_vals = dfbeta_vals.clone();
-    
+
     // Standardize by sigma values and sqrt of diagonal of (X'X)^(-1)
     for i in 0..model.n {
         for j in 0..model.p {
             if influence_result.sigma[i] != 0.0 {
-                dfbetas_vals[i][j] /= influence_result.sigma[i] * (xxi[j * model.p + j] as f64).sqrt();
+                dfbetas_vals[i][j] /=
+                    influence_result.sigma[i] * (xxi[j * model.p + j] as f64).sqrt();
             }
         }
     }
-    
+
     Ok(dfbetas_vals)
 }
 
@@ -185,21 +186,21 @@ pub fn covratio(
         Some(infl) => infl.clone(),
         None => lm_influence(model, false)?,
     };
-    
+
     let residuals = match residuals {
         Some(res) => res.to_vec(),
         None => weighted_residuals(model, true)?,
     };
-    
+
     let n = model.n;
     let p = model.rank as f64;
     let mut cov_ratios = vec![0.0; n];
-    
+
     for i in 0..n {
         let hat_val = influence_result.hat[i];
         let sigma = influence_result.sigma[i];
         let res = residuals[i];
-        
+
         if hat_val == 1.0 {
             cov_ratios[i] = f64::NAN;
         } else {
@@ -211,7 +212,7 @@ pub fn covratio(
             cov_ratios[i] = 1.0 / (omh * (numerator / denominator).powf(p));
         }
     }
-    
+
     Ok(cov_ratios)
 }
 
@@ -266,17 +267,17 @@ pub fn cooks_distance_lm(
         Some(infl) => infl.clone(),
         None => lm_influence(model, false)?,
     };
-    
+
     let residuals = match residuals {
         Some(res) => res.to_vec(),
         None => weighted_residuals(model, true)?,
     };
-    
+
     let hat_vals = match hat {
         Some(h) => h.to_vec(),
         None => influence_result.hat.clone(),
     };
-    
+
     let p = model.rank as f64;
     let sd_val = sd.unwrap_or_else(|| {
         let df_residual = model.n.saturating_sub(model.rank) as f64;
@@ -287,13 +288,13 @@ pub fn cooks_distance_lm(
             0.0
         }
     });
-    
+
     let mut cooks_vals = vec![0.0; model.n];
-    
+
     for i in 0..model.n {
         let hat_val = hat_vals[i];
         let res = residuals[i];
-        
+
         if hat_val == 1.0 {
             cooks_vals[i] = f64::NAN;
         } else {
@@ -301,14 +302,14 @@ pub fn cooks_distance_lm(
             cooks_vals[i] = (numerator * numerator * hat_val) / p;
         }
     }
-    
+
     // Handle infinite values
     for val in &mut cooks_vals {
         if val.is_infinite() {
             *val = f64::NAN;
         }
     }
-    
+
     Ok(cooks_vals)
 }
 
@@ -338,19 +339,19 @@ pub fn cooks_distance_glm(
         Some(infl) => infl.clone(),
         None => lm_influence(model, false)?,
     };
-    
+
     let hat_vals = match hat {
         Some(h) => h.to_vec(),
         None => influence_result.hat.clone(),
     };
-    
+
     let p = model.rank as f64;
     let mut cooks_vals = vec![0.0; model.n];
-    
+
     for i in 0..model.n {
         let hat_val = hat_vals[i];
         let pear_res = pearson_residuals[i];
-        
+
         if hat_val == 1.0 {
             cooks_vals[i] = f64::NAN;
         } else {
@@ -358,21 +359,21 @@ pub fn cooks_distance_glm(
             cooks_vals[i] = (numerator * numerator * hat_val) / (dispersion * p);
         }
     }
-    
+
     // Handle infinite values
     for val in &mut cooks_vals {
         if val.is_infinite() {
             *val = f64::NAN;
         }
     }
-    
+
     Ok(cooks_vals)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::model::influence_core::LinearModel;
+    use crate::stats::regression::influence::influence_core::LinearModel;
 
     #[test]
     fn test_dffits() {
@@ -390,7 +391,7 @@ mod tests {
             deviance: 0.0,
             df_residual: 1.0,
         };
-        
+
         let dffits_vals = dffits(&model, None, None).unwrap();
         assert_eq!(dffits_vals.len(), 3);
     }
@@ -411,7 +412,7 @@ mod tests {
             deviance: 0.0,
             df_residual: 1.0,
         };
-        
+
         let cooks_vals = cooks_distance(&model, None, None, None, None).unwrap();
         assert_eq!(cooks_vals.len(), 3);
     }

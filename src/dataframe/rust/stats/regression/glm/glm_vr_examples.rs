@@ -39,7 +39,6 @@ pub fn run_detergent_example() -> Result<DetergentResults, String> {
         None,
         None,
         None,
-        None, // contrasts
     )?;
 
     // Model 1: Fr ~ M.user*Temp*Soft + Brand*M.user*Temp (with keep.order = TRUE)
@@ -60,15 +59,14 @@ pub fn run_detergent_example() -> Result<DetergentResults, String> {
         None,
         None,
         None,
-        None, // contrasts
     )?;
 
     // Get summaries
-    let summary_m0 = summary_glm(&detg_m0, None, None, None)?;
-    let summary_mod = summary_glm(&detg_mod, None, None, None)?;
+    let summary_m0 = summary_glm(&detg_m0)?;
+    let summary_mod = summary_glm(&detg_mod)?;
 
     // Get correlation summary for model 1
-    let summary_mod_cor = summary_glm(&detg_mod, None, Some(true), Some(true))?;
+    let summary_mod_cor = summary_glm(&detg_mod)?;
 
     // Compare models with ANOVA
     let anova_result = anova_glm(&detg_m0, None, None)?;
@@ -107,10 +105,9 @@ pub fn run_simple_example() -> Result<SimpleExampleResults, String> {
         None,
         None,
         None,
-        None, // contrasts
     )?;
 
-    let summary = summary_glm(&model, None, None, None)?;
+    let summary = summary_glm(&model)?;
 
     Ok(SimpleExampleResults { model, summary })
 }
@@ -147,9 +144,8 @@ pub fn run_family_comparison_example() -> Result<FamilyComparisonResults, String
         None,
         None,
         None,
-        None, // contrasts
     )?;
-    let gaussian_summary = summary_glm(&gaussian_model, None, None, None)?;
+    let gaussian_summary = summary_glm(&gaussian_model)?;
     results.gaussian = Some(SimpleExampleResults {
         model: gaussian_model,
         summary: gaussian_summary,
@@ -178,9 +174,8 @@ pub fn run_family_comparison_example() -> Result<FamilyComparisonResults, String
         None,
         None,
         None,
-        None, // contrasts
     )?;
-    let binomial_summary = summary_glm(&binomial_model, None, None, None)?;
+    let binomial_summary = summary_glm(&binomial_model)?;
     results.binomial = Some(SimpleExampleResults {
         model: binomial_model,
         summary: binomial_summary,
@@ -205,9 +200,8 @@ pub fn run_family_comparison_example() -> Result<FamilyComparisonResults, String
         None,
         None,
         None,
-        None, // contrasts
     )?;
-    let poisson_summary = summary_glm(&poisson_model, None, None, None)?;
+    let poisson_summary = summary_glm(&poisson_model)?;
     results.poisson = Some(SimpleExampleResults {
         model: poisson_model,
         summary: poisson_summary,
@@ -254,7 +248,6 @@ pub fn run_model_selection_example() -> Result<ModelSelectionResults, String> {
                 None,
                 None,
                 None,
-                None, // contrasts
             )?,
         ),
         (
@@ -276,7 +269,6 @@ pub fn run_model_selection_example() -> Result<ModelSelectionResults, String> {
                 None,
                 None,
                 None,
-                None, // contrasts
             )?,
         ),
         (
@@ -298,7 +290,6 @@ pub fn run_model_selection_example() -> Result<ModelSelectionResults, String> {
                 None,
                 None,
                 None,
-                None, // contrasts
             )?,
         ),
         (
@@ -320,7 +311,6 @@ pub fn run_model_selection_example() -> Result<ModelSelectionResults, String> {
                 None,
                 None,
                 None,
-                None, // contrasts
             )?,
         ),
     ];
@@ -328,7 +318,7 @@ pub fn run_model_selection_example() -> Result<ModelSelectionResults, String> {
     // Get summaries for all models
     let summaries: Result<Vec<_>, String> = models
         .iter()
-        .map(|(_, model)| summary_glm(model, None, None, None))
+        .map(|(_, model)| summary_glm(model))
         .collect();
 
     Ok(ModelSelectionResults {

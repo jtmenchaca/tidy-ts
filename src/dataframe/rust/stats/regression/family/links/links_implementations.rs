@@ -1,9 +1,38 @@
 //! Link function implementations
 
-use super::links_types::{LinkFunction, LinkFunctionType};
-use super::links_utils::{INVEPS, MTHRESH, THRESH, x_d_omx, x_d_opx};
+use super::links_types::LinkFunction;
+// Unused imports removed
+
+// Macro to implement common vector methods for link functions
+macro_rules! impl_link_vector_methods {
+    () => {
+        fn linkfun(&self, mu: &[f64]) -> Vec<f64> {
+            mu.iter().map(|&m| self.link(m).unwrap_or(0.0)).collect()
+        }
+
+        fn linkinv(&self, eta: &[f64]) -> Vec<f64> {
+            eta.iter()
+                .map(|&e| self.link_inverse(e).unwrap_or(0.0))
+                .collect()
+        }
+
+        fn mu_eta_vec(&self, eta: &[f64]) -> Vec<f64> {
+            eta.iter().map(|&e| self.mu_eta(e).unwrap_or(0.0)).collect()
+        }
+
+        fn valideta(&self, eta: &[f64]) -> Result<(), &'static str> {
+            for &e in eta {
+                if !self.valid_eta(e) {
+                    return Err("Invalid eta value");
+                }
+            }
+            Ok(())
+        }
+    };
+}
 
 /// Logit link function
+#[derive(Clone)]
 pub struct LogitLink;
 
 impl LinkFunction for LogitLink {
@@ -41,12 +70,15 @@ impl LinkFunction for LogitLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(LogitLink)
     }
 }
 
 /// Probit link function
+#[derive(Clone)]
 pub struct ProbitLink;
 
 impl LinkFunction for ProbitLink {
@@ -83,12 +115,15 @@ impl LinkFunction for ProbitLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(ProbitLink)
     }
 }
 
 /// Cauchit link function
+#[derive(Clone)]
 pub struct CauchitLink;
 
 impl LinkFunction for CauchitLink {
@@ -125,12 +160,15 @@ impl LinkFunction for CauchitLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(CauchitLink)
     }
 }
 
 /// Log link function
+#[derive(Clone)]
 pub struct LogLink;
 
 impl LinkFunction for LogLink {
@@ -167,12 +205,15 @@ impl LinkFunction for LogLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(LogLink)
     }
 }
 
 /// Identity link function
+#[derive(Clone)]
 pub struct IdentityLink;
 
 impl LinkFunction for IdentityLink {
@@ -200,12 +241,15 @@ impl LinkFunction for IdentityLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(IdentityLink)
     }
 }
 
 /// Inverse link function
+#[derive(Clone)]
 pub struct InverseLink;
 
 impl LinkFunction for InverseLink {
@@ -242,12 +286,15 @@ impl LinkFunction for InverseLink {
         eta != 0.0
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(InverseLink)
     }
 }
 
 /// Square root link function
+#[derive(Clone)]
 pub struct SqrtLink;
 
 impl LinkFunction for SqrtLink {
@@ -283,9 +330,16 @@ impl LinkFunction for SqrtLink {
     fn valid_eta(&self, eta: f64) -> bool {
         eta >= 0.0
     }
+
+    impl_link_vector_methods!();
+    
+    fn clone_box(&self) -> Box<dyn LinkFunction> {
+        Box::new(SqrtLink)
+    }
 }
 
 /// Complementary log-log link function
+#[derive(Clone)]
 pub struct CloglogLink;
 
 impl LinkFunction for CloglogLink {
@@ -323,12 +377,15 @@ impl LinkFunction for CloglogLink {
         true
     }
     
+    impl_link_vector_methods!();
+    
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(CloglogLink)
     }
 }
 
 /// Power link function
+#[derive(Clone)]
 pub struct PowerLink(pub f64);
 
 impl LinkFunction for PowerLink {
@@ -382,6 +439,12 @@ impl LinkFunction for PowerLink {
             eta > 0.0
         }
     }
+
+    impl_link_vector_methods!();
+    
+    fn clone_box(&self) -> Box<dyn LinkFunction> {
+        Box::new(PowerLink(self.0))
+    }
 }
 
 // Helper functions for statistical distributions
@@ -394,7 +457,7 @@ fn normal_quantile(p: f64) -> f64 {
     if p < 0.5 {
         -((-2.0 * p.ln()).sqrt())
     } else {
-        ((-2.0 * (1.0 - p).ln()).sqrt())
+        (-2.0 * (1.0 - p).ln()).sqrt()
     }
 }
 

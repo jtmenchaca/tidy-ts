@@ -113,7 +113,7 @@ pub fn print_model_selection_results(
     println!("=== Model Selection Results ===");
     println!();
 
-    for (i, ((name, model), summary)) in results
+    for (i, ((name, model), _summary)) in results
         .models
         .iter()
         .zip(results.summaries.iter())
@@ -221,7 +221,7 @@ pub fn print_correlation_matrix(results: &DetergentResults) {
     println!("=== Correlation Matrix ===");
     println!();
 
-    if let Some(ref cor_matrix) = results.summary_1_cor.correlation {
+    if let Some(ref _cor_matrix) = results.summary_1_cor.correlation {
         println!("Correlation of Coefficients:");
         println!("            (Intercept)     M.user      Temp       Soft    M.user:Temp");
         println!("(Intercept)     1.0000");

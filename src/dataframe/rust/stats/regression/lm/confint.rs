@@ -6,7 +6,7 @@
 //! The implementation supports different model types (lm, glm, nls) and uses
 //! appropriate methods for each type.
 
-use crate::stats::regression::model::Variable;
+// Unused import removed
 
 /// Confidence interval result
 #[derive(Debug, Clone)]
@@ -109,8 +109,8 @@ pub fn confint_lm(
 /// Confidence interval for GLM models (uses profiling)
 pub fn confint_glm(
     _object: &dyn GlmObject,
-    parm: Option<Vec<String>>,
-    level: f64,
+    _parm: Option<Vec<String>>,
+    _level: f64,
     _trace: bool,
     _test: &str,
 ) -> Result<ConfidenceInterval, &'static str> {
@@ -122,8 +122,8 @@ pub fn confint_glm(
 /// Confidence interval for NLS models
 pub fn confint_nls(
     _object: &dyn NlsObject,
-    parm: Option<Vec<String>>,
-    level: f64,
+    _parm: Option<Vec<String>>,
+    _level: f64,
 ) -> Result<ConfidenceInterval, &'static str> {
     // NLS confidence intervals also require profiling
     Err("NLS confidence intervals require profiling - not yet implemented")

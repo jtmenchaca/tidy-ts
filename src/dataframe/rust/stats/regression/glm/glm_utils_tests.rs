@@ -2,11 +2,13 @@
 //!
 //! This file contains tests for the GLM utility functions.
 
-use super::glm_utils_extractors::*;
-use super::glm_utils_weights::*;
+// Unused imports removed
 use super::types_results::GlmResult;
 use crate::stats::regression::family::gaussian::GaussianFamily;
 use crate::stats::regression::glm::glm_control::glm_control;
+use crate::stats::regression::glm::{
+    deviance_glm, effects_glm, family_glm, formula_glm, weights_glm_prior, weights_glm_working,
+};
 
 fn create_test_glm_result() -> GlmResult {
     let family = Box::new(GaussianFamily::identity());
@@ -53,6 +55,7 @@ fn create_test_glm_result() -> GlmResult {
         contrasts: None,
         xlevels: None,
         na_action: Some("na.omit".to_string()),
+        dispersion: 1.0,
     }
 }
 

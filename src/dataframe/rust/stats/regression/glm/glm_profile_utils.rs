@@ -82,7 +82,7 @@ pub fn chi_square_quantile(p: f64, df: f64) -> f64 {
 }
 
 /// F quantile function
-pub fn f_quantile(p: f64, df1: f64, df2: f64) -> f64 {
+pub fn f_quantile(p: f64, _df1: f64, _df2: f64) -> f64 {
     // TODO: Implement F quantile function
     // For now, return a placeholder
     if p > 0.5 { 2.0 } else { 0.5 }
@@ -129,9 +129,12 @@ mod tests {
             boundary: false,
             model: None,
             x: Some(crate::stats::regression::model::ModelMatrix {
-                matrix: vec![vec![1.0, 1.0], vec![1.0, 2.0], vec![1.0, 3.0]],
-                assign: None,
-                contrasts: None,
+                matrix: vec![1.0, 1.0, 1.0, 1.0, 2.0, 3.0],
+                n_rows: 3,
+                n_cols: 2,
+                column_names: vec!["(Intercept)".to_string(), "x".to_string()],
+                term_assignments: vec![0, 1],
+                row_names: None,
             }),
             call: Some("glm(formula = y ~ x, family = gaussian, data = data)".to_string()),
             formula: Some("y ~ x".to_string()),
@@ -143,6 +146,7 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0,
         }
     }
 

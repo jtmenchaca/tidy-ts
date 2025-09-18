@@ -23,7 +23,7 @@ use super::types::{AnovaRow, GlmAnova, GlmResult};
 /// Returns an error if the ANOVA calculation fails.
 pub fn anova_glm(
     object: &GlmResult,
-    dispersion: Option<f64>,
+    _dispersion: Option<f64>,
     test: Option<String>,
 ) -> Result<GlmAnova, String> {
     // TODO: Implement the full ANOVA calculation

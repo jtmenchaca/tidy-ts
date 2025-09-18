@@ -1898,6 +1898,219 @@ export function wasm_rwilcox(m, n) {
 }
 
 /**
+ * WASM export for GLM fitting
+ *
+ * Fits a generalized linear model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Model formula as string (e.g., "y ~ x1 + x2")
+ * * `family_name` - Name of the family ("gaussian", "binomial", "poisson", etc.)
+ * * `link_name` - Name of the link function ("identity", "logit", "log", etc.)
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted GLM result
+ * @param {string} formula
+ * @param {string} family_name
+ * @param {string} link_name
+ * @param {string} data_json
+ * @param {string | null} [options_json]
+ * @returns {string}
+ */
+export function glm_fit_wasm(
+  formula,
+  family_name,
+  link_name,
+  data_json,
+  options_json,
+) {
+  let deferred6_0;
+  let deferred6_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      formula,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      family_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(
+      link_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passStringToWasm0(
+      data_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len3 = WASM_VECTOR_LEN;
+    var ptr4 = isLikeNone(options_json)
+      ? 0
+      : passStringToWasm0(
+        options_json,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len4 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_fit_wasm(
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+      ptr4,
+      len4,
+    );
+    deferred6_0 = ret[0];
+    deferred6_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred6_0, deferred6_1, 1);
+  }
+}
+
+/**
+ * Simplified GLM fit for testing
+ * Takes vectors directly instead of JSON
+ * @param {Float64Array} y
+ * @param {Float64Array} x
+ * @param {number} n_predictors
+ * @param {string} family_name
+ * @param {string} link_name
+ * @returns {string}
+ */
+export function glm_fit_simple_wasm(
+  y,
+  x,
+  n_predictors,
+  family_name,
+  link_name,
+) {
+  let deferred5_0;
+  let deferred5_1;
+  try {
+    const ptr0 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(
+      family_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passStringToWasm0(
+      link_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len3 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_fit_simple_wasm(
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      n_predictors,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+    );
+    deferred5_0 = ret[0];
+    deferred5_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred5_0, deferred5_1, 1);
+  }
+}
+
+/**
+ * WASM export for LM fitting
+ *
+ * Fits a linear model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Model formula as string (e.g., "y ~ x1 + x2")
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted LM result
+ * @param {string} formula
+ * @param {string} data_json
+ * @param {string | null} [options_json]
+ * @returns {string}
+ */
+export function lm_fit_wasm(formula, data_json, options_json) {
+  let deferred4_0;
+  let deferred4_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      formula,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      data_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    var ptr2 = isLikeNone(options_json)
+      ? 0
+      : passStringToWasm0(
+        options_json,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len2 = WASM_VECTOR_LEN;
+    const ret = wasm.lm_fit_wasm(ptr0, len0, ptr1, len1, ptr2, len2);
+    deferred4_0 = ret[0];
+    deferred4_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+  }
+}
+
+/**
+ * Simplified LM fit for testing
+ * Takes vectors directly instead of JSON
+ * @param {Float64Array} y
+ * @param {Float64Array} x
+ * @param {number} n_predictors
+ * @returns {string}
+ */
+export function lm_fit_simple_wasm(y, x, n_predictors) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.lm_fit_simple_wasm(ptr0, len0, ptr1, len1, n_predictors);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+
+/**
  * WASM export for one-way ANOVA
  * @param {Float64Array} data
  * @param {Uint32Array} group_sizes
@@ -7903,6 +8116,10 @@ export function __wbg_length_a446193dc22c12f8(arg0) {
 export function __wbg_length_c67d5e5c3b83737f(arg0) {
   const ret = arg0.length;
   return ret;
+}
+
+export function __wbg_log_c222819a41e063d3(arg0) {
+  console.log(arg0);
 }
 
 export function __wbg_msCrypto_a61aeb35a24c1329(arg0) {

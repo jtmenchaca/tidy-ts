@@ -1,7 +1,6 @@
 //! Formula utility functions
 
 use super::formula_types::{Formula, FormulaError, FormulaExpr, Terms};
-use std::fmt;
 
 /// Parse a formula string
 pub fn formula(formula: &str) -> Result<Formula, FormulaError> {
@@ -78,7 +77,7 @@ pub fn df2formula(columns: &[String]) -> Result<Formula, FormulaError> {
 }
 
 /// Update an existing formula
-pub fn update_formula(old: &Terms, new_formula: &str) -> Result<Terms, FormulaError> {
+pub fn update_formula(_old: &Terms, new_formula: &str) -> Result<Terms, FormulaError> {
     // Parse the new formula
     let new_terms = super::formula_terms::terms(new_formula)?;
 

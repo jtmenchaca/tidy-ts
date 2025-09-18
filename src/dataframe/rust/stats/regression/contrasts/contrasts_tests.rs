@@ -1,12 +1,17 @@
 //! Contrast tests
 
-use super::contrasts_types::*;
-use super::contrasts_core::*;
-use super::contrasts_utils::*;
+// Unused imports removed - only used in tests
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::stats::regression::{
+        create_contrasts, ContrastType
+    };
+    use crate::stats::regression::contrasts::{
+        apply_contrasts, get_contrast_names, get_level_names, 
+        get_contrast_dimensions, validate_contrast_matrix, contrast_matrix_to_2d,
+        get_contrast_values_for_level, get_contrast_values_for_contrast
+    };
 
     #[test]
     fn test_treatment_contrasts() {
@@ -83,7 +88,12 @@ mod tests {
 
     #[test]
     fn test_helmert_contrasts() {
-        let levels = vec!["A".to_string(), "B".to_string(), "C".to_string(), "D".to_string()];
+        let levels = vec![
+            "A".to_string(),
+            "B".to_string(),
+            "C".to_string(),
+            "D".to_string(),
+        ];
         let contrasts = create_contrasts(&levels, &ContrastType::Helmert).unwrap();
 
         assert_eq!(contrasts.n_levels, 4);
@@ -97,7 +107,12 @@ mod tests {
 
     #[test]
     fn test_polynomial_contrasts() {
-        let levels = vec!["1".to_string(), "2".to_string(), "3".to_string(), "4".to_string()];
+        let levels = vec![
+            "1".to_string(),
+            "2".to_string(),
+            "3".to_string(),
+            "4".to_string(),
+        ];
         let contrasts = create_contrasts(&levels, &ContrastType::Polynomial).unwrap();
 
         assert_eq!(contrasts.n_levels, 4);
@@ -105,10 +120,8 @@ mod tests {
         assert_eq!(contrasts.column_names, vec!["L1", "L2", "L3"]);
 
         // Linear contrast should have evenly spaced values
-        let linear_contrast: Vec<f64> = (0..4)
-            .map(|i| contrasts.matrix[i * 3])
-            .collect();
-        
+        let linear_contrast: Vec<f64> = (0..4).map(|i| contrasts.matrix[i * 3]).collect();
+
         // Check that linear contrast has some structure
         assert!(linear_contrast[1] > linear_contrast[0]);
         assert!(linear_contrast[2] > linear_contrast[1]);
@@ -151,7 +164,7 @@ mod tests {
     #[test]
     fn test_all_contrast_types_consistency() {
         let levels = vec!["Low".to_string(), "Medium".to_string(), "High".to_string()];
-        
+
         // Test all contrast types produce expected dimensions
         for contrast_type in [
             ContrastType::Treatment,
@@ -172,10 +185,10 @@ mod tests {
         // Test with larger number of levels
         let levels: Vec<String> = (0..20).map(|i| format!("Level_{}", i)).collect();
         let contrasts = create_contrasts(&levels, &ContrastType::Treatment).unwrap();
-        
+
         assert_eq!(contrasts.n_levels, 20);
         assert_eq!(contrasts.n_contrasts, 19);
-        
+
         // Test applying contrasts
         let factor_values: Vec<i32> = (1..=20).cycle().take(100).collect();
         let result = apply_contrasts(&factor_values, &contrasts).unwrap();

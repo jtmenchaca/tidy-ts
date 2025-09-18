@@ -128,6 +128,9 @@ impl Clone for GlmResult {
             boundary: self.boundary,
             model: self.model.clone(),
             x: self.x.clone(),
+            call: self.call.clone(),
+            formula: self.formula.clone(),
+            terms: self.terms.clone(),
             data: self.data.clone(),
             offset: self.offset.clone(),
             control: self.control.clone(),
@@ -156,7 +159,6 @@ pub struct QrResult {
 }
 
 /// GLM summary result
-#[derive(Clone)]
 pub struct GlmSummary {
     /// Call information
     pub call: Option<String>,
@@ -263,6 +265,35 @@ impl std::fmt::Debug for GlmResult {
             .field("xlevels", &self.xlevels)
             .field("na_action", &self.na_action)
             .finish()
+    }
+}
+
+impl Clone for GlmSummary {
+    fn clone(&self) -> Self {
+        Self {
+            call: self.call.clone(),
+            terms: self.terms.clone(),
+            family: self.family.clone_box(),
+            deviance: self.deviance,
+            aic: self.aic,
+            contrasts: self.contrasts.clone(),
+            df_residual: self.df_residual,
+            null_deviance: self.null_deviance,
+            df_null: self.df_null,
+            iter: self.iter,
+            na_action: self.na_action.clone(),
+            deviance_residuals: self.deviance_residuals.clone(),
+            coefficients: self.coefficients.clone(),
+            aliased: self.aliased.clone(),
+            dispersion: self.dispersion,
+            df: self.df,
+            cov_unscaled: self.cov_unscaled.clone(),
+            cov_scaled: self.cov_scaled.clone(),
+            correlation: self.correlation.clone(),
+            symbolic_cor: self.symbolic_cor,
+            converged: self.converged,
+            boundary: self.boundary,
+        }
     }
 }
 

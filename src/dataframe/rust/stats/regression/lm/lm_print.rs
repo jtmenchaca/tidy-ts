@@ -4,7 +4,7 @@ use super::lm_types::{LmResult, LmSummary, AnovaTable};
 
 /// Print linear model result
 pub fn print_lm(result: &LmResult, digits: Option<usize>) {
-    let digits = digits.unwrap_or(3);
+    let _digits = digits.unwrap_or(3);
     
     println!("Linear Model Result:");
     println!("Coefficients: {:?}", result.coefficients);
@@ -18,7 +18,7 @@ pub fn print_lm(result: &LmResult, digits: Option<usize>) {
 
 /// Print linear model summary
 pub fn print_summary_lm(summary: &LmSummary, digits: Option<usize>) {
-    let digits = digits.unwrap_or(3);
+    let _digits = digits.unwrap_or(3);
     
     println!("Linear Model Summary:");
     println!("Residual standard error: {:.6} on {} degrees of freedom", 
@@ -35,7 +35,7 @@ pub fn print_summary_lm(summary: &LmSummary, digits: Option<usize>) {
     println!("{:>12} {:>12} {:>12} {:>12} {:>12}", 
              "Estimate", "Std.Error", "t value", "Pr(>|t|)", "Signif.");
     
-    for (i, coef) in summary.coefficients.iter().enumerate() {
+    for (_i, coef) in summary.coefficients.iter().enumerate() {
         let significance = if coef.p_value < 0.001 {
             "***"
         } else if coef.p_value < 0.01 {

@@ -84,6 +84,10 @@ pub mod types_enums;
 pub mod types_profile;
 pub mod types_results;
 
+// WASM bindings
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 // Re-export main functions for easy access
 pub use glm_anova::{anova_glm, anova_glmlist, format_anova, print_anova};
 pub use glm_control::glm_control;

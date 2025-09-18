@@ -1,11 +1,12 @@
 //! Model matrix tests
 
-use super::model_matrix_types::{ModelMatrix, ModelMatrixResult};
 use super::model_matrix_core::create_model_matrix;
 use super::model_matrix_utils::{get_column, get_columns, get_matrix_2d};
-use crate::stats::regression::model::c::formula::parse_formula;
+use crate::stats::regression::model::c::formula::{parse_formula, terms};
 use crate::stats::regression::model::c::model_frame::create_model_frame;
-use crate::stats::regression::{ContrastType, NaAction, create_contrasts, Variable, ModelFrame, Terms};
+use crate::stats::regression::{
+    ContrastType, ModelFrame, NaAction, Terms, Variable, create_contrasts,
+};
 
 #[cfg(test)]
 mod tests {
@@ -25,7 +26,8 @@ mod tests {
             .frame;
 
         // Parse formula
-        let terms = parse_formula("y ~ x1 + x2").unwrap();
+        let formula = parse_formula("y ~ x1 + x2").unwrap();
+        let terms = terms("y ~ x1 + x2").unwrap();
 
         // Create model matrix
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
@@ -52,7 +54,8 @@ mod tests {
             .frame;
 
         // Parse formula
-        let terms = parse_formula("y ~ group").unwrap();
+        let formula = parse_formula("y ~ group").unwrap();
+        let terms = terms("y ~ group").unwrap();
 
         // Create contrasts
         let contrast = create_contrasts(
@@ -82,7 +85,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ x1 * x2").unwrap();
+        let formula = parse_formula("y ~ x1 * x2").unwrap();
+        let terms = terms("y ~ x1 * x2").unwrap();
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
 
         assert_eq!(result.matrix.n_rows, 3);
@@ -104,7 +108,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ x1 - 1").unwrap();
+        let formula = parse_formula("y ~ x1 - 1").unwrap();
+        let terms = terms("y ~ x1 - 1").unwrap();
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
 
         assert_eq!(result.matrix.n_rows, 3);
@@ -123,7 +128,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ flag").unwrap();
+        let formula = parse_formula("y ~ flag").unwrap();
+        let terms = terms("y ~ flag").unwrap();
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
 
         assert_eq!(result.matrix.n_rows, 3);
@@ -154,7 +160,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ group1 + group2").unwrap();
+        let formula = parse_formula("y ~ group1 + group2").unwrap();
+        let terms = terms("y ~ group1 + group2").unwrap();
 
         // Create contrasts for both factors (skip response variable)
         let contrast1 = create_contrasts(
@@ -194,7 +201,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ level").unwrap();
+        let formula = parse_formula("y ~ level").unwrap();
+        let terms = terms("y ~ level").unwrap();
 
         let contrast = create_contrasts(
             &["Low".to_string(), "Medium".to_string(), "High".to_string()],
@@ -223,8 +231,9 @@ mod tests {
             n_rows: 0,
             n_cols: 0,
         };
-        let terms = parse_formula("y ~ x").unwrap();
-        assert!(create_model_matrix(&terms, &empty_frame, &[]).is_err());
+        let formula = parse_formula("y ~ x").unwrap();
+        let terms_result = terms("y ~ x").unwrap();
+        assert!(create_model_matrix(&terms_result, &empty_frame, &[]).is_err());
 
         // Terms with empty variables
         let variables = vec![Variable::Numeric(vec![1.0, 2.0])];
@@ -238,9 +247,7 @@ mod tests {
             terms: vec![],
             intercept: true,
             response: false,
-            term_labels: vec![],
-            factors: vec![],
-            term_orders: vec![],
+            order: vec![],
         };
         assert!(create_model_matrix(&empty_terms, &model_frame, &[]).is_err());
 
@@ -253,7 +260,8 @@ mod tests {
         let char_frame = create_model_frame(char_variables, char_names, None, None, NaAction::Pass)
             .unwrap()
             .frame;
-        let char_terms = parse_formula("y ~ text").unwrap();
+        let char_formula = parse_formula("y ~ text").unwrap();
+        let char_terms = terms("y ~ text").unwrap();
         assert!(create_model_matrix(&char_terms, &char_frame, &[]).is_err());
     }
 
@@ -269,7 +277,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ x1 + x2").unwrap();
+        let formula = parse_formula("y ~ x1 + x2").unwrap();
+        let terms = terms("y ~ x1 + x2").unwrap();
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
 
         // Test get_column
@@ -308,7 +317,8 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = parse_formula("y ~ x").unwrap();
+        let formula = parse_formula("y ~ x").unwrap();
+        let terms = terms("y ~ x").unwrap();
         let result = create_model_matrix(&terms, &model_frame, &[]).unwrap();
 
         assert_eq!(result.matrix.n_rows, n);

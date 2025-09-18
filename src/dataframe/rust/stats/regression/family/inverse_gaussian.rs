@@ -7,11 +7,19 @@ use super::{
     DevianceFunction, GlmFamily, InverseGaussianDeviance, InverseGaussianVariance, LinkFunction,
     VarianceFunction,
 };
-use serde::{Deserialize, Serialize};
+// Unused imports removed
 
 /// Inverse Gaussian family with specified link function
 pub struct InverseGaussianFamily {
     link: Box<dyn LinkFunction>,
+}
+
+impl Clone for InverseGaussianFamily {
+    fn clone(&self) -> Self {
+        Self {
+            link: self.link.clone_box(),
+        }
+    }
 }
 
 impl InverseGaussianFamily {
@@ -139,7 +147,13 @@ impl GlmFamily for InverseGaussianFamily {
             }
         }
 
-        -2.0 * log_lik + 2.0 * (y.len() as f64)
+        -2.0 * log_lik // The +2*df is added by calculate_aic function
+    }
+
+    fn clone_box(&self) -> Box<dyn GlmFamily> {
+        Box::new(InverseGaussianFamily {
+            link: self.link.clone_box(),
+        })
     }
 }
 
@@ -179,6 +193,33 @@ impl LinkFunction for InverseMuSquaredLink {
 
     fn valid_eta(&self, eta: f64) -> bool {
         eta > 0.0
+    }
+
+    fn linkfun(&self, mu: &[f64]) -> Vec<f64> {
+        mu.iter().map(|&m| self.link(m).unwrap_or(0.0)).collect()
+    }
+
+    fn linkinv(&self, eta: &[f64]) -> Vec<f64> {
+        eta.iter()
+            .map(|&e| self.link_inverse(e).unwrap_or(0.0))
+            .collect()
+    }
+
+    fn mu_eta_vec(&self, eta: &[f64]) -> Vec<f64> {
+        eta.iter().map(|&e| self.mu_eta(e).unwrap_or(0.0)).collect()
+    }
+
+    fn valideta(&self, eta: &[f64]) -> Result<(), &'static str> {
+        for &e in eta {
+            if !self.valid_eta(e) {
+                return Err("Invalid eta value");
+            }
+        }
+        Ok(())
+    }
+
+    fn clone_box(&self) -> Box<dyn LinkFunction> {
+        Box::new(InverseMuSquaredLink)
     }
 }
 

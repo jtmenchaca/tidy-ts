@@ -8,6 +8,7 @@
 
 // Module declarations
 pub mod model_frame_core;
+#[cfg(test)]
 pub mod model_frame_tests;
 pub mod model_frame_types;
 

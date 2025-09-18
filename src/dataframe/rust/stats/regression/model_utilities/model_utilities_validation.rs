@@ -1,7 +1,7 @@
 //! Model validation and utility functions
 
 use super::model_utilities_types::{ModelObject, TermsObject};
-use crate::stats::regression::{ModelFrame, Variable, is_empty_model};
+use crate::stats::regression::{Variable, is_empty_model};
 use std::collections::HashMap;
 
 /// Validate model object
@@ -107,7 +107,7 @@ pub fn is_complete_model(model: &ModelObject) -> bool {
                     return false;
                 }
             }
-            Variable::Logical(values) => {
+            Variable::Logical(_values) => {
                 // Logical values are always complete
             }
             Variable::Factor { values, .. } => {

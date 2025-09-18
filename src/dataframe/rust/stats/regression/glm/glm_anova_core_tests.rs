@@ -2,9 +2,9 @@
 //!
 //! This file contains tests for GLM ANOVA core functions.
 
-use super::glm_anova_core_multiple::anova_glmlist;
-use super::glm_anova_core_single::anova_glm;
+// Unused imports removed - only used in tests
 use super::types::GlmResult;
+use super::glm_anova::{anova_glm, anova_glmlist};
 use crate::stats::regression::family::gaussian::GaussianFamily;
 use crate::stats::regression::glm::glm_control::glm_control;
 
@@ -53,6 +53,7 @@ fn create_test_glm_result() -> GlmResult {
         contrasts: None,
         xlevels: None,
         na_action: Some("na.omit".to_string()),
+        dispersion: 1.0, // Default dispersion value
     }
 }
 

@@ -55,10 +55,10 @@ pub fn influence_glm(
     do_coef: bool,
     pearson_residuals: Option<Vec<f64>>,
 ) -> Result<InfluenceResult, &'static str> {
-    let mut res = lm_influence(model, do_coef)?;
+    let res = lm_influence(model, do_coef)?;
 
     // For GLM, we need to handle Pearson residuals
-    if let Some(pear_res) = pearson_residuals {
+    if let Some(_pear_res) = pearson_residuals {
         // In a full implementation, we would add pearson_residuals to the result
         // For now, we just return the basic influence result
     }
@@ -113,7 +113,7 @@ pub fn hatvalues_lm(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::model::influence_core::LinearModel;
+    use crate::stats::regression::influence::influence_core::LinearModel;
 
     #[test]
     fn test_influence_lm() {

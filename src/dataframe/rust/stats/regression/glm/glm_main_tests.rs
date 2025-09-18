@@ -2,8 +2,8 @@
 //!
 //! This file contains tests for the GLM main functions.
 
-use super::glm_main_core::glm;
-use super::glm_main_convenience::{glm_gaussian, glm_binomial, glm_poisson};
+// Unused imports removed
+use super::glm_main::{glm, glm_gaussian};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -17,7 +17,6 @@ mod tests {
             "y ~ x".to_string(),
             None,
             Some(data),
-            None,
             None,
             None,
             None,
@@ -47,7 +46,6 @@ mod tests {
             None,
             Some(data),
             Some(weights),
-            None,
             None,
             None,
             None,

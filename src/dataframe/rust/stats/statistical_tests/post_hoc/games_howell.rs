@@ -50,7 +50,7 @@ where
     
     // Perform pairwise comparisons
     let mut comparisons = Vec::new();
-    let n_comparisons = n_groups * (n_groups - 1) / 2;
+    let _n_comparisons = n_groups * (n_groups - 1) / 2;
     
     for i in 0..n_groups {
         for j in (i + 1)..n_groups {

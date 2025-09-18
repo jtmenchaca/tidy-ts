@@ -2,8 +2,13 @@
 
 #![cfg(feature = "wasm")]
 
-use super::{chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample}, sample_size::prop_sample_size};
-use crate::stats::core::types::{OneSampleProportionTestResult, TwoSampleProportionTestResult, TestStatistic, TestStatisticName, ConfidenceInterval};
+use super::{
+    chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample},
+    sample_size::prop_sample_size,
+};
+use crate::stats::core::types::{
+    ConfidenceInterval, OneSampleProportionTestResult, TestStatistic, TwoSampleProportionTestResult,
+};
 use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 

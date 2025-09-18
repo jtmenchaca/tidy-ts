@@ -2,14 +2,14 @@
 //!
 //! This file contains tests for the formula parser functions.
 
-use super::formula_parser_core::*;
-use super::formula_parser_matrix::*;
-use super::formula_parser_model_frame::*;
-use std::collections::HashMap;
+// Unused imports removed
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::stats::regression::glm::formula_parser_core::parse_formula;
+    use crate::stats::regression::glm::formula_parser_matrix::create_design_matrix;
+    use crate::stats::regression::glm::formula_parser_model_frame::create_model_frame;
+    use std::collections::HashMap;
 
     #[test]
     fn test_parse_formula_simple() {

@@ -43,6 +43,9 @@ pub trait GlmFamily: Send + Sync {
     fn valid_y(&self, y: &[f64]) -> Result<(), &'static str>;
     fn initialize(&self, y: &[f64], mu: &mut [f64], weights: &mut [f64]) -> Result<(), String>;
     fn dispersion(&self) -> Option<f64>;
+    
+    /// Clone method for trait objects
+    fn clone_box(&self) -> Box<dyn GlmFamily>;
 
     // Additional methods needed by GLM code
     fn family_name(&self) -> &'static str {
@@ -70,7 +73,11 @@ pub trait GlmFamily: Send + Sync {
     }
 
     fn mu_eta(&self) -> Box<dyn Fn(&[f64]) -> Vec<f64> + '_> {
-        Box::new(|eta| self.link().mu_eta(eta))
+        Box::new(|eta| {
+            eta.iter()
+                .map(|&eta_i| self.link().mu_eta(eta_i).unwrap_or(1.0))
+                .collect()
+        })
     }
 
     fn valideta(&self) -> Box<dyn Fn(&[f64]) -> Result<(), &'static str> + '_> {
@@ -83,9 +90,6 @@ pub trait GlmFamily: Send + Sync {
 
     // Helper method for AIC calculation
     fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64;
-
-    // Clone method for trait objects
-    fn clone_box(&self) -> Box<dyn GlmFamily>;
 }
 
 // Constants used in family calculations

@@ -37,7 +37,7 @@ pub fn anova_glmlist(
 
     // Check that all models have the same response
     let first_response = &objects[0].y;
-    for (i, obj) in objects.iter().enumerate() {
+    for obj in objects.iter() {
         if obj.y != *first_response {
             return Err(format!(
                 "models with response {:?} removed because response differs from model 1",
@@ -48,7 +48,7 @@ pub fn anova_glmlist(
 
     // Check that all models have the same number of observations
     let first_n = objects[0].y.len();
-    for (i, obj) in objects.iter().enumerate() {
+    for obj in objects.iter() {
         if obj.y.len() != first_n {
             return Err("models were not all fitted to the same size of dataset".to_string());
         }
@@ -128,7 +128,7 @@ pub fn anova_glmlist(
     if let Some(ref test_type) = test {
         if test_type == "Chisq" || test_type == "F" {
             // TODO: Calculate chi-square or F statistics
-            for (i, row) in table.iter_mut().enumerate() {
+            for row in table.iter_mut() {
                 if let Some(df) = row.df {
                     if df > 0.0 {
                         // Placeholder for test statistic calculation

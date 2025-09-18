@@ -6,11 +6,18 @@
 use super::{
     DevianceFunction, GammaDeviance, GammaVariance, GlmFamily, LinkFunction, VarianceFunction,
 };
-use serde::{Deserialize, Serialize};
 
 /// Gamma family with specified link function
 pub struct GammaFamily {
     link: Box<dyn LinkFunction>,
+}
+
+impl Clone for GammaFamily {
+    fn clone(&self) -> Self {
+        Self {
+            link: self.link.clone_box(),
+        }
+    }
 }
 
 impl GammaFamily {
@@ -113,27 +120,25 @@ impl GlmFamily for GammaFamily {
         None // Gamma family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood + 2 * df
-        // For gamma: -2 * sum(w * (log(y/mu) - (y-mu)/mu)) + 2 * df
-        let mut log_lik = 0.0;
-
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        // Use: aic(y, n, mu, wt, dev) = dev + 2 * sum(wt * (log(y) - log(mu)))
+        // calculate_aic() will add + 2*rank.
+        let mut adj = 0.0;
         for i in 0..y.len() {
             let yi = y[i];
             let mui = mu[i];
-            let weight = if weights.len() == 1 {
-                weights[0]
-            } else {
-                weights[i]
-            };
-
-            if weight > 0.0 && yi > 0.0 && mui > 0.0 {
-                let term = (yi / mui).ln() - (yi - mui) / mui;
-                log_lik += weight * term;
+            let w = if weights.len() == 1 { weights[0] } else { weights[i] };
+            if w > 0.0 && yi > 0.0 && mui > 0.0 {
+                adj += w * (yi.ln() - mui.ln());
             }
         }
+        dev + 2.0 * adj
+    }
 
-        -2.0 * log_lik + 2.0 * (y.len() as f64)
+    fn clone_box(&self) -> Box<dyn GlmFamily> {
+        Box::new(GammaFamily {
+            link: self.link.clone_box(),
+        })
     }
 }
 

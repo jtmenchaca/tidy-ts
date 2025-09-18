@@ -1,7 +1,6 @@
 //! Formula parser implementation
 
-use super::formula_types::{BinaryOperator, Formula, FormulaError, FormulaExpr, Term, Terms};
-use std::collections::HashSet;
+use super::formula_types::{BinaryOperator, Formula, FormulaError, FormulaExpr};
 
 /// Formula parser state
 pub struct FormulaParser {

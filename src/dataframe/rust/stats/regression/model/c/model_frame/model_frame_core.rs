@@ -43,7 +43,7 @@ pub fn create_model_frame(
 
     // Check that all variables have the same length
     let n_obs = get_variable_length(&variables[0])?;
-    for (i, variable) in variables.iter().enumerate() {
+    for (_i, variable) in variables.iter().enumerate() {
         let var_length = get_variable_length(variable)?;
         if var_length != n_obs {
             return Err("All variables must have the same length");

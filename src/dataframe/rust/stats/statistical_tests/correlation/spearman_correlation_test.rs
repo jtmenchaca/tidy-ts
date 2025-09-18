@@ -36,6 +36,7 @@ fn calculate_s_statistic(rank_x: &[f64], rank_y: &[f64]) -> f64 {
 }
 
 /// Exact p-value for Spearman test (small samples, no ties)
+#[allow(dead_code)]
 fn exact_spearman_p_value(n: usize, s_observed: f64, alternative: &AlternativeType) -> f64 {
     // For very small samples, we could implement exact enumeration
     // For now, use normal approximation
@@ -97,7 +98,7 @@ pub fn spearman_test(
     // R: q <- (n^3 - n) * (1 - r) / 6
     let n_f = n as f64;
     let s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
-    
+
     let p_value = if n <= 1290 && !has_ties {
         // Use exact test (R uses .Call(C_pRho, ...))
         // For now, use t-approximation as fallback
@@ -118,7 +119,7 @@ pub fn spearman_test(
             AlternativeType::Less => students_t::pt(-t, df, false, false),
         }
     };
-    
+
     let test_statistic = s_statistic;
 
     Ok(SpearmanCorrelationTestResult {

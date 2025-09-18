@@ -2,8 +2,8 @@
 //!
 //! This module contains the lm_wfit() function for fitting weighted linear models.
 
-use crate::stats::regression::lm::lm_types::{LmResult, QrResult};
 use crate::stats::regression::lm::lm_qr::cdqrls;
+use crate::stats::regression::lm::lm_types::{LmResult, QrResult};
 
 /// Weighted linear model fit
 pub fn lm_wfit(
@@ -163,5 +163,8 @@ pub fn lm_wfit(
         pivot: qr_result.pivot,
         tol: qr_result.tol,
         pivoted: qr_result.pivoted,
+        weights: Some(w.to_vec()),
+        deviance: 0.0, // TODO: Calculate actual deviance
+        call: None,
     })
 }

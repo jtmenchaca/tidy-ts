@@ -192,7 +192,7 @@ pub fn weighted_residuals(model: &LinearModel, drop0: bool) -> Result<Vec<f64>, 
 pub fn qr_influence(
     qr: &QrLsResult,
     residuals: &[f64],
-    tol: f64,
+    _tol: f64,
 ) -> Result<QrInfluenceResult, &'static str> {
     let n = qr.residuals.len();
     let p = qr.rank;

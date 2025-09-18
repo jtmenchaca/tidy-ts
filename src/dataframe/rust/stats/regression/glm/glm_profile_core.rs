@@ -2,7 +2,8 @@
 //!
 //! This file contains the core profile calculation logic for GLM.
 
-use serde::{Deserialize, Serialize};
+// Unused imports removed
+
 use std::collections::HashMap;
 
 use super::glm_fit::glm_fit;
@@ -11,8 +12,7 @@ use super::glm_profile_utils::{
     get_coefficient_names, get_design_matrix,
 };
 use super::glm_summary::summary_glm;
-use super::types::{GlmProfile, GlmResult, GlmSummary, ParameterProfile};
-use crate::stats::regression::family::GlmFamily;
+use super::types::{GlmProfile, GlmResult, ParameterProfile};
 
 /// GLM profile function
 ///
@@ -73,7 +73,7 @@ pub fn profile_glm(
     let which = which.unwrap_or_else(|| (0..p).collect());
 
     // Get summary for standard errors
-    let summ = summary_glm(fitted, None, None, None)?;
+    let summ = summary_glm(fitted)?;
     let std_err = summ
         .coefficients
         .iter()
@@ -91,7 +91,7 @@ pub fn profile_glm(
     let family = fitted.family.as_ref();
 
     // Determine zmax and profile name based on family
-    let (zmax, prof_name) = match family.family_name() {
+    let (zmax, _prof_name) = match family.family_name() {
         "binomial" | "poisson" | "Negative Binomial" => {
             let zmax = chi_square_quantile(1.0 - alpha, 1.0).sqrt();
             (zmax, "z")
@@ -153,15 +153,14 @@ pub fn profile_glm(
                     None,
                     Some(lp.clone()),
                     None,
-                    Some(o),
-                    family.clone(),
+                    Some(o.clone()),
+                    family.clone_box(),
                     fitted.control.clone(),
-                    true,
-                    true,
+                    true, // intercept
                 )?;
 
                 // Update linear predictor
-                let new_lp = calculate_linear_predictor(
+                let _new_lp = calculate_linear_predictor(
                     &xi,
                     &fm.coefficients,
                     &vec![true; xi[0].len()],
@@ -201,10 +200,9 @@ pub fn profile_glm(
                         None,
                         None,
                         None,
-                        family.clone(),
+                        family.clone_box(),
                         fitted.control.clone(),
-                        false,
-                        true,
+                        true, // intercept
                     )?;
                     zz = (fml.null_deviance - fml.deviance) / dispersion_parameter;
                     zz = zz.max(0.0);
@@ -280,9 +278,12 @@ mod tests {
             boundary: false,
             model: None,
             x: Some(crate::stats::regression::model::ModelMatrix {
-                matrix: vec![vec![1.0, 1.0], vec![1.0, 2.0], vec![1.0, 3.0]],
-                assign: None,
-                contrasts: None,
+                matrix: vec![1.0, 1.0, 1.0, 1.0, 2.0, 3.0],
+                n_rows: 3,
+                n_cols: 2,
+                column_names: vec!["(Intercept)".to_string(), "x".to_string()],
+                term_assignments: vec![0, 1],
+                row_names: None,
             }),
             call: Some("glm(formula = y ~ x, family = gaussian, data = data)".to_string()),
             formula: Some("y ~ x".to_string()),
@@ -294,6 +295,7 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0,
         }
     }
 

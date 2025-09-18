@@ -28,7 +28,6 @@ pub fn format_summary_glm(
 ) -> String {
     let mut output = String::new();
 
-    let digits = digits.unwrap_or(3);
     let symbolic_cor = symbolic_cor.unwrap_or(false);
     let signif_stars = signif_stars.unwrap_or(true);
     let show_residuals = show_residuals.unwrap_or(false);
@@ -57,7 +56,7 @@ pub fn format_summary_glm(
     output.push_str(&format_aic_and_iterations(x));
 
     // Format correlation matrix if available
-    output.push_str(&format_correlation_matrix(x, symbolic_cor));
+    output.push_str(&format_correlation_matrix(x));
 
     output.push_str("\n");
     output
@@ -205,7 +204,7 @@ fn format_aic_and_iterations(x: &GlmSummary) -> String {
 }
 
 /// Format correlation matrix if available
-fn format_correlation_matrix(x: &GlmSummary, symbolic_cor: bool) -> String {
+fn format_correlation_matrix(x: &GlmSummary) -> String {
     if let Some(ref correl) = x.correlation {
         let p = correl.len();
         if p > 1 {
@@ -289,13 +288,14 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0,
         }
     }
 
     #[test]
     fn test_format_summary_glm() {
         let result = create_test_glm_result();
-        let summary = summary_glm(&result, None, false, false).unwrap();
+        let summary = summary_glm(&result).unwrap();
         let formatted = format_summary_glm(&summary, None, None, None, None);
 
         assert!(formatted.contains("Call:"));

@@ -308,7 +308,7 @@ pub fn rstudent_glm(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::model::influence_core::LinearModel;
+    use crate::stats::regression::influence::influence_core::LinearModel;
 
     #[test]
     fn test_rstandard_lm() {

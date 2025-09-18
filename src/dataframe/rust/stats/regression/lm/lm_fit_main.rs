@@ -2,8 +2,8 @@
 //!
 //! This module contains the main lm() function for fitting linear models.
 
-use crate::stats::regression::lm::lm_types::{LmResult, LmOptions, QrResult};
 use crate::stats::regression::lm::lm_qr::cdqrls;
+use crate::stats::regression::lm::lm_types::{LmOptions, LmResult, QrResult};
 
 /// Main linear model function
 pub fn lm(
@@ -144,5 +144,8 @@ pub fn lm(
         pivot,
         tol: qr_result.tol,
         pivoted: qr_result.pivoted,
+        weights: None,
+        deviance: 0.0, // TODO: Calculate actual deviance
+        call: None,
     })
 }

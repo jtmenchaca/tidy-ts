@@ -3,8 +3,7 @@
 //! This module provides deviance functions for different GLM families,
 //! which are used to compute deviance residuals and overall deviance.
 
-use super::y_log_y;
-use serde::{Deserialize, Serialize};
+// Unused imports removed
 
 /// Trait for deviance functions
 pub trait DevianceFunction: Send + Sync {
@@ -29,6 +28,9 @@ pub trait DevianceFunction: Send + Sync {
         
         residuals
     }
+    
+    /// Clone method for trait objects
+    fn clone_box(&self) -> Box<dyn DevianceFunction>;
 }
 
 /// Gaussian deviance function
@@ -41,6 +43,7 @@ impl DevianceFunction for GaussianDeviance {
             return Ok(0.0);
         }
         
+        // For Gaussian: deviance residual = sqrt(weight) * |y - mu|
         let dev_resid = (y - mu).abs();
         Ok(weight.sqrt() * dev_resid)
     }
@@ -61,8 +64,8 @@ impl DevianceFunction for GaussianDeviance {
             let weight = if weights.len() == 1 { weights[0] } else { weights[i] };
             
             if weight > 0.0 {
-                let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                // For Gaussian: deviance = sum(weight * (y - mu)^2)
+                total_deviance += weight * (yi - mui).powi(2);
             }
         }
         
@@ -71,6 +74,10 @@ impl DevianceFunction for GaussianDeviance {
     
     fn name(&self) -> &'static str {
         "gaussian"
+    }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -88,13 +95,17 @@ impl DevianceFunction for PoissonDeviance {
             return Ok(0.0);
         }
         
+        // Based on R's implementation in family/poisson.c
         let dev_resid = if y == 0.0 {
-            -2.0 * mu
+            2.0 * mu
         } else {
-            -2.0 * (y * (y / mu).ln() - (y - mu))
+            2.0 * (y * (y / mu).ln() - (y - mu))
         };
         
-        Ok(weight.sqrt() * dev_resid.sqrt())
+        #[cfg(feature = "wasm")]
+        web_sys::console::log_1(&format!("Poisson dev_resid: y={}, mu={}, weight={}, dev_resid={}", y, mu, weight, dev_resid).into());
+        
+        Ok(weight * dev_resid)
     }
     
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -113,8 +124,13 @@ impl DevianceFunction for PoissonDeviance {
             let weight = if weights.len() == 1 { weights[0] } else { weights[i] };
             
             if weight > 0.0 {
-                let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                // For Poisson: deviance = sum(weight * dev_resid) where dev_resid is already computed correctly
+                let dev_resid_component = if yi == 0.0 {
+                    2.0 * mui
+                } else {
+                    2.0 * (yi * (yi / mui).ln() - (yi - mui))
+                };
+                total_deviance += weight * dev_resid_component;
             }
         }
         
@@ -123,6 +139,10 @@ impl DevianceFunction for PoissonDeviance {
     
     fn name(&self) -> &'static str {
         "poisson"
+    }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -171,6 +191,10 @@ impl DevianceFunction for GammaDeviance {
     fn name(&self) -> &'static str {
         "gamma"
     }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
+    }
 }
 
 /// Inverse Gaussian deviance function
@@ -217,6 +241,10 @@ impl DevianceFunction for InverseGaussianDeviance {
     
     fn name(&self) -> &'static str {
         "inverse_gaussian"
+    }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -308,6 +336,10 @@ impl DevianceFunction for QuasiDeviance {
     
     fn name(&self) -> &'static str {
         "quasi"
+    }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
     }
 }
 

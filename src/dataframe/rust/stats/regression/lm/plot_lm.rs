@@ -45,7 +45,7 @@ pub fn plot_lm(
     panel: Option<Box<dyn Fn(&[f64], &[f64]) -> Result<(), String>>>,
     sub_caption: Option<String>,
     main: Option<String>,
-    ask: Option<bool>,
+    _ask: Option<bool>,
     id_n: Option<usize>,
     labels_id: Option<Vec<String>>,
     cex_id: Option<f64>,
@@ -53,7 +53,7 @@ pub fn plot_lm(
     cook_levels: Option<Vec<f64>>,
     cook_col: Option<usize>,
     cook_lty: Option<usize>,
-    cook_legend_changes: Option<Vec<String>>,
+    _cook_legend_changes: Option<Vec<String>>,
     add_smooth: Option<bool>,
     iter_smooth: Option<usize>,
     label_pos: Option<Vec<usize>>,
@@ -78,9 +78,9 @@ pub fn plot_lm(
     let cook_levels = cook_levels.unwrap_or_else(|| vec![0.5, 1.0]);
     let cook_col = cook_col.unwrap_or(8);
     let cook_lty = cook_lty.unwrap_or(2);
-    let add_smooth = add_smooth.unwrap_or(true);
-    let iter_smooth = iter_smooth.unwrap_or(3);
-    let label_pos = label_pos.unwrap_or_else(|| vec![4, 2]);
+    let _add_smooth = add_smooth.unwrap_or(true);
+    let _iter_smooth = iter_smooth.unwrap_or(3);
+    let _label_pos = label_pos.unwrap_or_else(|| vec![4, 2]);
     let cex_caption = cex_caption.unwrap_or(1.0);
     let cex_oma_main = cex_oma_main.unwrap_or(1.25);
     let extend_ylim_f = extend_ylim_f.unwrap_or(0.08);
@@ -147,18 +147,18 @@ pub fn plot_lm(
     let n = r.len();
 
     // Calculate additional statistics if needed
-    let (s, hii, cook, rs, rds) = if show.iter().skip(1).any(|&show| show) {
+    let (_s, hii, cook, rs, rds) = if show.iter().skip(1).any(|&show| show) {
         // Calculate scale
-        let s = (x.deviance / x.df_residual).sqrt();
+        let _s = (x.deviance / x.df_residual as f64).sqrt();
 
         // Calculate hat values and influence
         // TODO: Implement proper influence calculations
-        let hii = vec![0.1; n]; // Placeholder
-        let cook = vec![0.01; n]; // Placeholder
-        let rs = vec![0.0; n]; // Placeholder
-        let rds = vec![0.0; n]; // Placeholder
+        let _hii = vec![0.1; n]; // Placeholder
+        let _cook = vec![0.01; n]; // Placeholder
+        let _rs = vec![0.0; n]; // Placeholder
+        let _rds = vec![0.0; n]; // Placeholder
 
-        (Some(s), hii, cook, rs, rds)
+        (Some(_s), _hii, _cook, _rs, _rds)
     } else {
         (None, vec![], vec![], vec![], vec![])
     };
@@ -250,14 +250,14 @@ pub fn plot_lm(
 /// Plot 1: Residuals vs Fitted
 fn plot_residuals_vs_fitted(
     r: &[f64],
-    yh: &[f64],
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _yh: &[f64],
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
     println!("Plot 1: Residuals vs Fitted");
@@ -270,13 +270,13 @@ fn plot_residuals_vs_fitted(
 /// Plot 2: Q-Q Residuals
 fn plot_qq_residuals(
     rds: &[f64],
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
     qqline: bool,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
@@ -291,15 +291,15 @@ fn plot_qq_residuals(
 /// Plot 3: Scale-Location
 fn plot_scale_location(
     rs: &[f64],
-    yh: &[f64],
-    w: &Option<Vec<f64>>,
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _yh: &[f64],
+    _w: &Option<Vec<f64>>,
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
     println!("Plot 3: Scale-Location");
@@ -312,13 +312,13 @@ fn plot_scale_location(
 /// Plot 4: Cook's Distance
 fn plot_cooks_distance(
     cook: &[f64],
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
     println!("Plot 4: Cook's Distance");
@@ -331,18 +331,18 @@ fn plot_cooks_distance(
 /// Plot 5: Residuals vs Leverage
 fn plot_residuals_vs_leverage(
     rs: &[f64],
-    hii: &[f64],
-    cook: &[f64],
+    _hii: &[f64],
+    _cook: &[f64],
     cook_levels: &[f64],
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
-    cook_col: usize,
-    cook_lty: usize,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
+    _cook_col: usize,
+    _cook_lty: usize,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
     println!("Plot 5: Residuals vs Leverage");
@@ -356,16 +356,16 @@ fn plot_residuals_vs_leverage(
 /// Plot 6: Cook's Distance vs Leverage
 fn plot_cooks_vs_leverage(
     cook: &[f64],
-    hii: &[f64],
-    main: &Option<String>,
-    sub_caption: &Option<String>,
+    _hii: &[f64],
+    _main: &Option<String>,
+    _sub_caption: &Option<String>,
     caption: &str,
-    id_n: usize,
-    labels_id: &Option<Vec<String>>,
-    cex_id: Option<f64>,
-    cex_caption: f64,
-    cook_col: usize,
-    cook_lty: usize,
+    _id_n: usize,
+    _labels_id: &Option<Vec<String>>,
+    _cex_id: Option<f64>,
+    _cex_caption: f64,
+    _cook_col: usize,
+    _cook_lty: usize,
 ) -> Result<(), String> {
     // TODO: Implement actual plotting
     println!("Plot 6: Cook's Distance vs Leverage");
@@ -407,13 +407,13 @@ fn create_sub_caption(x: &LmResult) -> String {
 }
 
 /// Check if model is GLM
-fn is_glm(x: &LmResult) -> bool {
+fn is_glm(_x: &LmResult) -> bool {
     // TODO: Implement proper GLM detection
     false
 }
 
 /// Check if model is binomial-like
-fn is_binomial_like(x: &LmResult) -> bool {
+fn is_binomial_like(_x: &LmResult) -> bool {
     // TODO: Implement proper binomial detection
     false
 }
@@ -429,24 +429,18 @@ mod tests {
             coefficients: vec![1.0, 2.0],
             residuals: vec![0.1, -0.1, 0.0],
             fitted_values: vec![1.0, 2.0, 3.0],
-            effects: None,
+            effects: vec![1.0, 2.0],
             rank: 2,
             qr: None,
             df_residual: 1,
-            call: Some("lm(formula = y ~ x, data = data)".to_string()),
-            terms: None,
-            model: None,
-            xlevels: None,
-            na_action: None,
-            offset: None,
-            weights: None,
-            prior_weights: None,
-            y: None,
-            x: None,
-            model_frame: None,
             assign: None,
-            contrasts: None,
-            residual_scale: 1.0,
+            qr_rank: 2,
+            pivot: vec![0, 1],
+            tol: 1e-8,
+            pivoted: false,
+            weights: None,
+            deviance: 0.02,
+            call: Some("lm(formula = y ~ x, data = data)".to_string()),
         };
 
         let result = plot_lm(

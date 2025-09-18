@@ -2,7 +2,7 @@
 //!
 //! This module contains calculation logic for GLM fitting results.
 
-use crate::stats::regression::family::GlmFamily;
+// Unused import removed
 
 /// Calculates residuals for GLM
 pub fn calculate_residuals(

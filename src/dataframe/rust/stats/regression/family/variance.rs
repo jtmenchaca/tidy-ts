@@ -3,18 +3,21 @@
 //! This module provides variance functions for different GLM families,
 //! which describe how the variance depends on the mean.
 
-use serde::{Deserialize, Serialize};
+// Unused imports removed
 
 /// Trait for variance functions
 pub trait VarianceFunction: Send + Sync {
     /// Compute the variance: V(mu)
     fn variance(&self, mu: f64) -> Result<f64, &'static str>;
-    
+
     /// Compute the derivative of the variance function: dV(mu)/dmu
     fn variance_prime(&self, mu: f64) -> Result<f64, &'static str>;
-    
+
     /// Get the name of the variance function
     fn name(&self) -> &'static str;
+
+    /// Clone method for trait objects
+    fn clone_box(&self) -> Box<dyn VarianceFunction>;
 }
 
 /// Gaussian variance function: V(mu) = 1
@@ -25,13 +28,17 @@ impl VarianceFunction for GaussianVariance {
     fn variance(&self, _mu: f64) -> Result<f64, &'static str> {
         Ok(1.0)
     }
-    
+
     fn variance_prime(&self, _mu: f64) -> Result<f64, &'static str> {
         Ok(0.0)
     }
-    
+
     fn name(&self) -> &'static str {
         "gaussian"
+    }
+
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -46,13 +53,17 @@ impl VarianceFunction for PoissonVariance {
         }
         Ok(mu)
     }
-    
+
     fn variance_prime(&self, _mu: f64) -> Result<f64, &'static str> {
         Ok(1.0)
     }
-    
+
     fn name(&self) -> &'static str {
         "poisson"
+    }
+
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -67,16 +78,20 @@ impl VarianceFunction for GammaVariance {
         }
         Ok(mu * mu)
     }
-    
+
     fn variance_prime(&self, mu: f64) -> Result<f64, &'static str> {
         if mu <= 0.0 {
             return Err("mu must be positive for gamma variance");
         }
         Ok(2.0 * mu)
     }
-    
+
     fn name(&self) -> &'static str {
         "gamma"
+    }
+
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -91,16 +106,20 @@ impl VarianceFunction for InverseGaussianVariance {
         }
         Ok(mu * mu * mu)
     }
-    
+
     fn variance_prime(&self, mu: f64) -> Result<f64, &'static str> {
         if mu <= 0.0 {
             return Err("mu must be positive for inverse gaussian variance");
         }
         Ok(3.0 * mu * mu)
     }
-    
+
     fn name(&self) -> &'static str {
         "inverse_gaussian"
+    }
+
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -115,17 +134,17 @@ impl QuasiVariance {
     pub fn new(power: f64) -> Self {
         Self { power }
     }
-    
+
     /// Create a quasi variance function with power 0 (constant variance)
     pub fn constant() -> Self {
         Self::new(0.0)
     }
-    
+
     /// Create a quasi variance function with power 1 (linear variance)
     pub fn linear() -> Self {
         Self::new(1.0)
     }
-    
+
     /// Create a quasi variance function with power 2 (quadratic variance)
     pub fn quadratic() -> Self {
         Self::new(2.0)
@@ -139,7 +158,7 @@ impl VarianceFunction for QuasiVariance {
         }
         Ok(mu.powf(self.power))
     }
-    
+
     fn variance_prime(&self, mu: f64) -> Result<f64, &'static str> {
         if mu <= 0.0 && self.power != 0.0 {
             return Err("mu must be positive for quasi variance with non-zero power");
@@ -150,9 +169,13 @@ impl VarianceFunction for QuasiVariance {
             Ok(self.power * mu.powf(self.power - 1.0))
         }
     }
-    
+
     fn name(&self) -> &'static str {
         "quasi"
+    }
+
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -196,7 +219,7 @@ mod tests {
         let var_fn = QuasiVariance::new(1.5);
         assert_eq!(var_fn.variance(4.0).unwrap(), 8.0);
         assert_eq!(var_fn.variance_prime(4.0).unwrap(), 3.0);
-        
+
         let const_var = QuasiVariance::constant();
         assert_eq!(const_var.variance(5.0).unwrap(), 1.0);
         assert_eq!(const_var.variance_prime(5.0).unwrap(), 0.0);

@@ -1,4 +1,4 @@
-import { tukeyHSD, gamesHowellTest, dunnTest, type PostHocTestResult } from "../post-hoc.ts";
+import { tukeyHSD, gamesHowellTest, dunnTest, type PostHocTestResult } from "../post-hoc/index.ts";
 import {
   cleanNumeric,
   hasEqualVariances,

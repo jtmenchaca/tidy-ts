@@ -1,5 +1,9 @@
 //! Link function types and traits
 
+use crate::stats::regression::family::links::{
+    CauchitLink, CloglogLink, IdentityLink, InverseLink, LogLink, LogitLink, PowerLink, ProbitLink,
+    SqrtLink,
+};
 use serde::{Deserialize, Serialize};
 
 /// Trait for link functions
@@ -24,38 +28,23 @@ pub trait LinkFunction: Send + Sync {
 
     // Additional methods needed by GLM code
     /// Apply the link function to a vector: eta = g(mu)
-    fn linkfun(&self, mu: &[f64]) -> Vec<f64> {
-        mu.iter().map(|&m| self.link(m).unwrap_or(0.0)).collect()
-    }
+    fn linkfun(&self, mu: &[f64]) -> Vec<f64>;
 
     /// Apply the inverse link function to a vector: mu = g^(-1)(eta)
-    fn linkinv(&self, eta: &[f64]) -> Vec<f64> {
-        eta.iter()
-            .map(|&e| self.link_inverse(e).unwrap_or(0.0))
-            .collect()
-    }
+    fn linkinv(&self, eta: &[f64]) -> Vec<f64>;
 
     /// Compute the derivative of the link function for a vector: d eta / d mu
-    fn mu_eta(&self, eta: &[f64]) -> Vec<f64> {
-        eta.iter().map(|&e| self.mu_eta(e).unwrap_or(0.0)).collect()
-    }
+    fn mu_eta_vec(&self, eta: &[f64]) -> Vec<f64>;
 
     /// Check if the link is valid for the given eta vector
-    fn valideta(&self, eta: &[f64]) -> Result<(), &'static str> {
-        for &e in eta {
-            if !self.valid_eta(e) {
-                return Err("Invalid eta value");
-            }
-        }
-        Ok(())
-    }
+    fn valideta(&self, eta: &[f64]) -> Result<(), &'static str>;
 
     /// Clone method for trait objects
     fn clone_box(&self) -> Box<dyn LinkFunction>;
 }
 
 /// Link function type enum
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LinkFunctionType {
     Logit,
     Probit,

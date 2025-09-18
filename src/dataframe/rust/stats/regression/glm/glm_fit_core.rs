@@ -53,7 +53,6 @@ pub fn glm_fit(
     family: Box<dyn GlmFamily>,
     control: GlmControl,
     intercept: bool,
-    singular_ok: bool,
 ) -> Result<GlmResult, String> {
     // Validate control parameters
     validate_control(&control)?;
@@ -74,6 +73,7 @@ pub fn glm_fit(
     let variance = family.variance();
     let linkinv = family.linkinv();
     let dev_resids = family.dev_resids();
+    let deviance_fn = family.deviance();
     let aic = family.aic();
     let mu_eta = family.mu_eta();
     let valideta = family.valideta();
@@ -86,20 +86,20 @@ pub fn glm_fit(
         &weights,
         &offset,
         start.as_deref(),
-        etastart.as_deref(),
         mustart.as_deref(),
         family.as_ref(),
     )?;
 
     let mut eta = starting_values.eta;
     let mut mu = starting_values.mu;
-    let mustart = starting_values.mustart;
 
     // Validate starting values
-    validate_family_start_values(&eta, &mu, &valideta, &validmu)?;
+    validate_family_start_values(&eta, &mu, &|eta| valideta(eta).is_ok(), &|mu| {
+        validmu(mu).is_ok()
+    })?;
 
     // Calculate initial deviance
-    let mut devold = calculate_initial_deviance(&y, &mu, &weights, &dev_resids);
+    let mut devold = calculate_initial_deviance(&y, &mu, &weights, &|y, mu, w| deviance_fn.deviance(y, mu, w));
     let mut boundary = false;
     let mut conv = false;
     let mut iter = 0;
@@ -148,16 +148,21 @@ pub fn glm_fit(
     let residuals = calculate_residuals(&y, &mu, &eta, &mu_eta);
 
     // Calculate working weights for final result
-    let (w, good) = calculate_working_weights(&weights, &mu, &eta, &variance, &mu_eta);
+    let variance_fn = |mu: &[f64]| {
+        mu.iter()
+            .map(|&mu_i| variance.variance(mu_i).unwrap_or(1.0))
+            .collect()
+    };
+    let (w, good) = calculate_working_weights(&weights, &mu, &eta, &variance_fn, &mu_eta);
 
     // Calculate null deviance
     let nulldev = calculate_null_deviance(&y, &weights, &offset, intercept, &linkinv, &dev_resids);
 
     // Calculate degrees of freedom
-    let (n_ok, nulldf, rank, resdf) =
-        calculate_degrees_of_freedom(n, p, &weights, intercept, empty);
+    let (_, nulldf, rank, resdf) = calculate_degrees_of_freedom(n, p, &weights, intercept, empty);
 
     // Calculate AIC
+    // R uses: aic(y, n, mu, weights, dev) + 2*rank
     let aic_model = calculate_aic(&y, &mu, &weights, devold, rank, &aic);
 
     // Create working weights
@@ -166,7 +171,7 @@ pub fn glm_fit(
     Ok(GlmResult {
         coefficients: coef,
         residuals: residuals.clone(),
-        fitted_values: mu,
+        fitted_values: mu.clone(),
         linear_predictors: eta,
         working_residuals: residuals.clone(),
         response_residuals: y
@@ -184,7 +189,7 @@ pub fn glm_fit(
         pivot: (0..p as i32).collect(),
         tol: control.epsilon,
         pivoted: false,
-        family,
+        family: family.clone_box(),
         deviance: devold,
         aic: aic_model,
         null_deviance: nulldev,
@@ -208,5 +213,6 @@ pub fn glm_fit(
         contrasts: None,
         xlevels: None,
         na_action: None,
+        dispersion: 1.0, // Default dispersion value
     })
 }

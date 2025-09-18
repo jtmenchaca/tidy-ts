@@ -1,0 +1,16 @@
+### Name: testit
+### Title: An Rd Regression Test
+### Aliases: {
+
+### ** Examples
+
+\x
+%{}
+
+## Not run: stop("doomed to fail")
+
+foo(x,
+    y)
+
+
+

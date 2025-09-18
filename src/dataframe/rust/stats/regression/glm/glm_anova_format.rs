@@ -32,7 +32,7 @@ pub fn format_anova(anova: &GlmAnova) -> String {
     output.push_str("\n");
 
     // Format table rows
-    for (i, (row_name, row)) in anova.row_names.iter().zip(anova.table.iter()).enumerate() {
+    for (row_name, row) in anova.row_names.iter().zip(anova.table.iter()) {
         output.push_str(&format!("{:>12}", row_name));
 
         // Format df
@@ -125,6 +125,7 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0, // Default dispersion value
         }
     }
 

@@ -2,9 +2,12 @@
 //!
 //! This file contains the core IRLS algorithm implementation.
 
-use super::glm_fit_utils::solve_weighted_ls;
+// Removed solve_weighted_ls import - now using cdqrls from LM
 use super::types_control::GlmControl;
 use crate::stats::regression::family::GlmFamily;
+
+#[cfg(feature = "wasm")]
+use web_sys::console;
 
 /// Result of IRLS iteration
 #[derive(Debug)]
@@ -35,33 +38,51 @@ pub fn run_irls_iteration(
 ) -> Result<IrlsResult, String> {
     let n = y.len();
     let p = x[0].len();
+    let mut coefold: Option<Vec<f64>> = None;
 
     // Get family functions
     let variance = family.variance();
     let linkinv = family.linkinv();
     let dev_resids = family.dev_resids();
+    let deviance_fn = family.deviance();
     let mu_eta = family.mu_eta();
     let valideta = family.valideta();
     let validmu = family.validmu();
 
-    let mut coefold: Option<Vec<f64>> = None;
-
     // Main IRLS iteration
     for iter_count in 1..=control.maxit {
         *iter = iter_count;
+        
+        #[cfg(feature = "wasm")]
+        console::log_1(&format!("GLM IRLS iteration {}", iter_count).into());
 
         // Check for valid observations
         let good: Vec<bool> = weights.iter().map(|&w| w > 0.0).collect();
-        let varmu = variance(mu);
+        let mut varmu: Vec<f64> = mu
+            .iter()
+            .map(|&mu_i| variance.variance(mu_i).unwrap_or(1.0))
+            .collect();
 
         // Check for NAs in variance
         if varmu.iter().any(|&v| !v.is_finite()) {
+            #[cfg(feature = "wasm")]
+            console::log_1(&"Error: NAs in V(mu)".into());
             return Err("NAs in V(mu)".to_string());
         }
 
-        // Check for zeros in variance
-        if varmu.iter().any(|&v| v == 0.0) {
-            return Err("0s in V(mu)".to_string());
+        // Clamp very small variances to tolerance for numerical stability
+        let variance_tolerance = 1e-10;
+        let has_small_variance = varmu.iter().any(|&v| v < variance_tolerance);
+        if has_small_variance {
+            #[cfg(feature = "wasm")]
+            console::log_1(&format!("Warning: Very small variances in V(mu), min = {}", varmu.iter().fold(f64::INFINITY, |a, &b| a.min(b))).into());
+            
+            // Clamp small variances to tolerance
+            for v in varmu.iter_mut() {
+                if *v < variance_tolerance {
+                    *v = variance_tolerance;
+                }
+            }
         }
 
         let mu_eta_val = mu_eta(eta);
@@ -125,8 +146,20 @@ pub fn run_irls_iteration(
             }
         }
 
-        // Solve weighted least squares
-        let qr_result = solve_weighted_ls(&x_weighted, &z_weighted, control.epsilon / 1000.0)?;
+        // Solve weighted least squares using the same QR approach as LM
+        use crate::stats::regression::lm::lm_qr::cdqrls;
+        
+        // Convert to the format expected by cdqrls (column-major)
+        let n_weighted = x_weighted.len();
+        let p_weighted = if n_weighted > 0 { x_weighted[0].len() } else { 0 };
+        let mut x_flat = vec![0.0; n_weighted * p_weighted];
+        for i in 0..n_weighted {
+            for j in 0..p_weighted {
+                x_flat[i + j * n_weighted] = x_weighted[i][j];
+            }
+        }
+        
+        let qr_result = cdqrls(&x_flat, &z_weighted, n_weighted, p_weighted, 1, Some(control.epsilon / 1000.0))?;
 
         if qr_result.coefficients.iter().any(|&c| !c.is_finite()) {
             *conv = false;
@@ -146,17 +179,11 @@ pub fn run_irls_iteration(
             ));
         }
 
-        // Update coefficients using pivot
-        let mut new_coef = vec![0.0; p];
-        for (i, &pivot) in qr_result.pivot.iter().enumerate() {
-            if i < qr_result.coefficients.len() {
-                new_coef[pivot as usize] = qr_result.coefficients[i];
-            }
-        }
-
         // Store old coefficients for step halving
         coefold = Some(coef.clone());
-        *coef = new_coef;
+        
+        // Update coefficients directly (no pivot permutation needed)
+        *coef = qr_result.coefficients.clone();
 
         // Update eta and mu
         *eta = if p == 1 {
@@ -180,8 +207,11 @@ pub fn run_irls_iteration(
         };
         *mu = linkinv(eta);
 
-        // Calculate new deviance
-        let dev = dev_resids(y, mu, weights).iter().sum::<f64>();
+        // Calculate new deviance using the family-specific deviance
+        let dev = deviance_fn.deviance(y, mu, weights).unwrap_or(0.0);
+
+        #[cfg(feature = "wasm")]
+        console::log_1(&format!("Deviance = {} Iterations - {}", dev, iter_count).into());
 
         if control.trace {
             println!("Deviance = {} Iterations - {}", dev, iter_count);
@@ -190,7 +220,12 @@ pub fn run_irls_iteration(
         // Check for divergence - step halving
         *boundary = false;
         if !dev.is_finite() {
+            #[cfg(feature = "wasm")]
+            console::log_1(&format!("Divergence detected: dev = {}", dev).into());
+            
             if coefold.is_none() {
+                #[cfg(feature = "wasm")]
+                console::log_1(&"Error: no valid set of coefficients has been found".into());
                 return Err(
                     "no valid set of coefficients has been found: please supply starting values"
                         .to_string(),
@@ -205,7 +240,12 @@ pub fn run_irls_iteration(
             let mut current_dev = dev;
 
             while !current_dev.is_finite() {
+                #[cfg(feature = "wasm")]
+                console::log_1(&format!("Step halving attempt {}, current_dev = {}", ii, current_dev).into());
+                
                 if ii > control.maxit {
+                    #[cfg(feature = "wasm")]
+                    console::log_1(&format!("Error: inner loop 1; cannot correct step size after {} attempts", ii).into());
                     return Err("inner loop 1; cannot correct step size".to_string());
                 }
                 ii += 1;
@@ -254,7 +294,7 @@ pub fn run_irls_iteration(
         }
 
         // Check for fitted values outside domain - step halving
-        if !valideta(eta) || !validmu(mu) {
+        if valideta(eta).is_err() || validmu(mu).is_err() {
             if coefold.is_none() {
                 return Err(
                     "no valid set of coefficients has been found: please supply starting values"
@@ -268,7 +308,7 @@ pub fn run_irls_iteration(
             let mut current_eta = eta.clone();
             let mut current_mu = mu.clone();
 
-            while !valideta(&current_eta) || !validmu(&current_mu) {
+            while valideta(&current_eta).is_err() || validmu(&current_mu).is_err() {
                 if ii > control.maxit {
                     return Err("inner loop 2; cannot correct step size".to_string());
                 }

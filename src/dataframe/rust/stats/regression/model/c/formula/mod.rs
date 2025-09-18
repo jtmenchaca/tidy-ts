@@ -12,6 +12,7 @@ pub mod formula_parser;
 pub mod formula_terms;
 pub mod formula_utils;
 pub mod formula_display;
+#[cfg(test)]
 pub mod formula_tests;
 
 // Re-export main types

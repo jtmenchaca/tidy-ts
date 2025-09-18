@@ -1,12 +1,10 @@
 //! Model builder utility functions
 
-use crate::stats::regression::model::c::formula::parse_formula;
-use crate::stats::regression::model::c::model_frame::create_model_frame;
-use crate::stats::regression::model::c::model_matrix::{ModelMatrixResult, create_model_matrix};
-use crate::stats::regression::contrasts::create_contrasts;
-use crate::stats::regression::contrasts::{ContrastMatrix, ContrastType};
-use crate::stats::regression::model::{ModelFrame, ModelMatrix, NaAction, Terms, Variable};
 use crate::stats::regression::ModelBuilder;
+use crate::stats::regression::contrasts::ContrastType;
+use crate::stats::regression::model::c::model_frame::model_frame_types::ModelFrame;
+use crate::stats::regression::model::c::model_matrix::ModelMatrixResult;
+use crate::stats::regression::model::{ModelMatrix, Terms, Variable};
 
 /// Quick function to create a model matrix without using the builder
 ///
@@ -19,20 +17,16 @@ pub fn quick_model_matrix(
     contrasts: Option<Vec<ContrastType>>,
 ) -> Result<ModelMatrixResult, &'static str> {
     let mut builder = ModelBuilder::new(formula).data(variables, variable_names);
-    
+
     if let Some(contrasts) = contrasts {
         builder = builder.contrasts(contrasts);
     }
-    
+
     builder.build()
 }
 
 /// Extract the response variable from a model matrix and model frame
-pub fn extract_response(
-    model_matrix: &ModelMatrix,
-    model_frame: &ModelFrame,
-    terms: &Terms,
-) -> Result<Variable, &'static str> {
+pub fn extract_response(model_frame: &ModelFrame, terms: &Terms) -> Result<Variable, &'static str> {
     if !terms.response {
         return Err("No response variable in formula");
     }
@@ -43,7 +37,11 @@ pub fn extract_response(
     }
 
     let response_name = &terms.variables[0];
-    if let Some(var_idx) = model_frame.variable_names.iter().position(|n| n == response_name) {
+    if let Some(var_idx) = model_frame
+        .variable_names
+        .iter()
+        .position(|n| n == response_name)
+    {
         Ok(model_frame.variables[var_idx].clone())
     } else {
         Err("Response variable not found in model frame")
@@ -52,12 +50,11 @@ pub fn extract_response(
 
 /// Extract predictor variables from a model matrix and model frame
 pub fn extract_predictors(
-    model_matrix: &ModelMatrix,
     model_frame: &ModelFrame,
     terms: &Terms,
 ) -> Result<Vec<Variable>, &'static str> {
     let mut predictors = Vec::new();
-    
+
     // Get predictor variable names (exclude response if present)
     let predictor_names = if terms.response && !terms.variables.is_empty() {
         &terms.variables[1..]
@@ -66,7 +63,11 @@ pub fn extract_predictors(
     };
 
     for var_name in predictor_names {
-        if let Some(var_idx) = model_frame.variable_names.iter().position(|n| n == var_name) {
+        if let Some(var_idx) = model_frame
+            .variable_names
+            .iter()
+            .position(|n| n == var_name)
+        {
             predictors.push(model_frame.variables[var_idx].clone());
         }
     }

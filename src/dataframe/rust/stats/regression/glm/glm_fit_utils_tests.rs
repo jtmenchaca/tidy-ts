@@ -2,8 +2,11 @@
 //!
 //! This file contains tests for the GLM fit utility functions.
 
-use super::glm_fit_utils_linear::*;
-use super::glm_fit_utils_weights::*;
+// Unused imports removed - only used in tests
+use super::glm_fit_utils::{
+    apply_step_halving, calculate_linear_predictor, calculate_working_response,
+    calculate_working_weights, get_valid_observations,
+};
 
 #[cfg(test)]
 mod tests {

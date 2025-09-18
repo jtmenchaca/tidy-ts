@@ -39,20 +39,19 @@ pub fn run_simple_linear_example() -> Result<(), String> {
         "y ~ x".to_string(),
         Some(Box::new(GaussianFamily::identity())),
         Some(data),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        None, // weights
+        None, // na_action
+        None, // start
+        None, // etastart
+        None, // mustart
+        None, // offset
+        None, // control
+        None, // model
+        None, // method
+        None, // x
+        None, // y
+        None, // singular_ok
+        None, // contrasts
     )?;
 
     // Print the model
@@ -61,7 +60,7 @@ pub fn run_simple_linear_example() -> Result<(), String> {
     println!();
 
     // Get summary
-    let summary = summary_glm(&model, None, None, None)?;
+    let summary = summary_glm(&model)?;
     println!("Model Summary:");
     println!("Coefficients:");
     for coef in &summary.coefficients {
@@ -115,20 +114,19 @@ pub fn run_multiple_regression_example() -> Result<(), String> {
         "y ~ x1 + x2".to_string(),
         Some(Box::new(GaussianFamily::identity())),
         Some(data),
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
+        None, // weights
+        None, // na_action
+        None, // start
+        None, // etastart
+        None, // mustart
+        None, // offset
+        None, // control
+        None, // model
+        None, // method
+        None, // x
+        None, // y
+        None, // singular_ok
+        None, // contrasts
     )?;
 
     // Print the model
@@ -137,7 +135,7 @@ pub fn run_multiple_regression_example() -> Result<(), String> {
     println!();
 
     // Get summary
-    let summary = summary_glm(&model, None, None, None)?;
+    let summary = summary_glm(&model)?;
     println!("Model Summary:");
     println!("Coefficients:");
     for coef in &summary.coefficients {

@@ -7,7 +7,8 @@ use super::builder_utils::{
 use crate::stats::regression::contrasts::ContrastType;
 use crate::stats::regression::model::c::formula::terms;
 use crate::stats::regression::model::c::model_frame::create_model_frame;
-use crate::stats::regression::model::{ModelFrame, ModelMatrix, NaAction, Variable};
+use crate::stats::regression::model::c::model_frame::model_frame_types::ModelFrame;
+use crate::stats::regression::model::{ModelMatrix, NaAction, Variable};
 
 #[cfg(test)]
 mod tests {
@@ -215,13 +216,13 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = terms("y ~ x1").unwrap();
+        let formula_terms = terms("y ~ x1").unwrap();
         let result = ModelBuilder::new("y ~ x1")
             .model_frame(model_frame.clone())
             .build()
             .unwrap();
 
-        let response = extract_response(&result.matrix, &model_frame, &terms).unwrap();
+        let response = extract_response(&model_frame, &formula_terms).unwrap();
         match response {
             Variable::Numeric(values) => assert_eq!(values, vec![1.0, 2.0, 3.0]),
             _ => panic!("Expected numeric response"),
@@ -229,7 +230,7 @@ mod tests {
 
         // Test error case: no response
         let no_response_terms = terms("~ x1").unwrap();
-        assert!(extract_response(&result.matrix, &model_frame, &no_response_terms).is_err());
+        assert!(extract_response(&model_frame, &no_response_terms).is_err());
     }
 
     #[test]
@@ -245,19 +246,18 @@ mod tests {
             .unwrap()
             .frame;
 
-        let terms = terms("y ~ x1 + x2").unwrap();
+        let formula_terms = terms("y ~ x1 + x2").unwrap();
         let result = ModelBuilder::new("y ~ x1 + x2")
             .model_frame(model_frame.clone())
             .build()
             .unwrap();
 
-        let predictors = extract_predictors(&result.matrix, &model_frame, &terms).unwrap();
+        let predictors = extract_predictors(&model_frame, &formula_terms).unwrap();
         assert_eq!(predictors.len(), 2); // x1 and x2
 
         // Test with no response
         let no_response_terms = terms("~ x1 + x2").unwrap();
-        let predictors_no_response =
-            extract_predictors(&result.matrix, &model_frame, &no_response_terms).unwrap();
+        let predictors_no_response = extract_predictors(&model_frame, &no_response_terms).unwrap();
         assert_eq!(predictors_no_response.len(), 3); // All variables
     }
 

@@ -1,11 +1,14 @@
 //! Link function tests
 
-use super::links_types::*;
-use super::links_implementations::*;
+// Unused imports removed - only used in tests
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::stats::regression::family::links::{
+        LogitLink, ProbitLink, CauchitLink, LogLink, IdentityLink,
+        InverseLink, SqrtLink, CloglogLink, PowerLink,
+        LinkFunction, LinkFunctionType
+    };
 
     #[test]
     fn test_logit_link() {
@@ -13,7 +16,7 @@ mod tests {
 
         // Test link function
         assert!((link.link(0.5).unwrap() - 0.0).abs() < 1e-10);
-        assert!((link.link(0.1).unwrap() - (-2.197224577).abs()) < 1e-6);
+        assert!((link.link(0.1).unwrap() - (-2.197224577_f64).abs()) < 1e-6);
 
         // Test inverse link
         assert!((link.link_inverse(0.0).unwrap() - 0.5).abs() < 1e-10);
@@ -36,9 +39,9 @@ mod tests {
     fn test_log_link() {
         let link = LogLink;
 
-        assert!((link.link(2.0).unwrap() - 2.0.ln()).abs() < 1e-10);
-        assert!((link.link_inverse(1.0).unwrap() - 1.0.exp()).abs() < 1e-10);
-        assert!((link.mu_eta(1.0).unwrap() - 1.0.exp()).abs() < 1e-10);
+        assert!((link.link(2.0).unwrap() - 2.0_f64.ln()).abs() < 1e-10);
+        assert!((link.link_inverse(1.0).unwrap() - 1.0_f64.exp()).abs() < 1e-10);
+        assert!((link.mu_eta(1.0).unwrap() - 1.0_f64.exp()).abs() < 1e-10);
     }
 
     #[test]
@@ -76,7 +79,7 @@ mod tests {
         let mu = 0.5;
         let eta = link.link(mu).unwrap();
         let mu_back = link.link_inverse(eta).unwrap();
-        assert!((mu - mu_back).abs() < 1e-10);
+        assert!((mu - mu_back).abs() < 1e-10_f64);
     }
 
     #[test]
@@ -87,7 +90,7 @@ mod tests {
         let mu = 0.5;
         let eta = link.link(mu).unwrap();
         let mu_back = link.link_inverse(eta).unwrap();
-        assert!((mu - mu_back).abs() < 1e-6);
+        assert!((mu - mu_back).abs() < 1e-6_f64);
     }
 
     #[test]
@@ -98,7 +101,7 @@ mod tests {
         let mu = 0.5;
         let eta = link.link(mu).unwrap();
         let mu_back = link.link_inverse(eta).unwrap();
-        assert!((mu - mu_back).abs() < 1e-6);
+        assert!((mu - mu_back).abs() < 1e-6_f64);
     }
 
     #[test]

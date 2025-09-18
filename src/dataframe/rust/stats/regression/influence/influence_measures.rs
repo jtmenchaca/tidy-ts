@@ -3,7 +3,7 @@
 //! This module provides comprehensive influence measures and analysis
 //! equivalent to R's influence_measures.R module.
 
-use super::influence_core::{LinearModel, InfluenceResult, lm_influence, weighted_residuals};
+use super::influence_core::{LinearModel, InfluenceResult, lm_influence};
 use super::influence_diagnostics::{dfbetas_lm, dffits, covratio, cooks_distance_lm};
 use std::f64;
 
@@ -241,7 +241,7 @@ pub fn summary_influence_measures(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::model::influence_core::LinearModel;
+    use crate::stats::regression::influence::influence_core::LinearModel;
 
     #[test]
     fn test_influence_measures() {

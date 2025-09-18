@@ -20,6 +20,10 @@ pub mod plot_lm;
 pub mod predict;
 pub mod lm_influence_modular;
 
+// WASM bindings
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 // Re-export main functions
 pub use lm_fit::lm;
 pub use lm_print::print_lm;

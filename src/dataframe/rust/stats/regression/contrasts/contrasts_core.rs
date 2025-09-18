@@ -1,6 +1,6 @@
 //! Core contrast matrix creation functions
 
-use super::contrasts_types::{ContrastType, ContrastMatrix};
+use super::contrasts_types::{ContrastMatrix, ContrastType};
 
 /// Creates a contrast matrix for a factor variable
 ///
@@ -104,7 +104,7 @@ fn create_helmert_contrasts(
         }
         // The (i+2)-th level gets negative weight
         if i + 1 < n_levels {
-            matrix[(i + 1) * n_contrasts + i] = -(i + 1) as f64;
+            matrix[(i + 1) * n_contrasts + i] = -((i + 1) as f64);
         }
         column_names.push(levels[i].clone());
     }
@@ -131,13 +131,13 @@ fn create_polynomial_contrasts(
     for i in 0..n_contrasts {
         let degree = i + 1;
         column_names.push(format!("L{}", degree));
-        
+
         // Generate polynomial values for each level
         for j in 0..n_levels {
             let x = j as f64;
             let value = match degree {
                 1 => x - (n_levels - 1) as f64 / 2.0, // Linear
-                2 => x * x - (n_levels - 1) as f64 * (2.0 * n_levels - 1.0) / 6.0, // Quadratic
+                2 => x * x - (n_levels - 1) as f64 * (2.0 * n_levels as f64 - 1.0) / 6.0, // Quadratic
                 _ => {
                     // Higher order polynomials (simplified)
                     let mut result = 1.0;
@@ -173,7 +173,7 @@ fn create_custom_contrasts(
     let n_contrasts = custom_matrix.len();
 
     // Validate matrix dimensions
-    for (i, row) in custom_matrix.iter().enumerate() {
+    for row in custom_matrix.iter() {
         if row.len() != n_levels {
             return Err("Custom contrast matrix rows must have same length as number of levels");
         }

@@ -39,7 +39,10 @@ pub fn residuals_glm(object: &GlmResult, type_: ResidualType) -> Vec<f64> {
         mu.iter()
             .zip(r.iter())
             .zip(eta.iter())
-            .map(|((&mu_i, &r_i), &eta_i)| mu_i + r_i * mu_eta(eta_i))
+            .map(|((&mu_i, &r_i), &eta_i)| {
+                let mu_eta_val = mu_eta(&[eta_i])[0];
+                mu_i + r_i * mu_eta_val
+            })
             .collect()
     } else {
         y.clone()
@@ -48,7 +51,8 @@ pub fn residuals_glm(object: &GlmResult, type_: ResidualType) -> Vec<f64> {
     match type_ {
         ResidualType::Deviance => {
             if object.df_residual > 0 {
-                let dev_resids = object.family.dev_resids(&y, mu, wts);
+                let dev_resids_fn = object.family.dev_resids();
+                let dev_resids = dev_resids_fn(&y, mu, wts);
                 y.iter()
                     .zip(mu.iter())
                     .zip(dev_resids.iter())
@@ -62,12 +66,14 @@ pub fn residuals_glm(object: &GlmResult, type_: ResidualType) -> Vec<f64> {
             }
         }
         ResidualType::Pearson => {
-            let variance = object.family.variance();
+            let variance_fn = object.family.variance();
             y.iter()
                 .zip(mu.iter())
                 .zip(wts.iter())
-                .zip(variance(mu).iter())
-                .map(|(((y_i, mu_i), &wt_i), &var_i)| (y_i - mu_i) * wt_i.sqrt() / var_i.sqrt())
+                .map(|((y_i, mu_i), &wt_i)| {
+                    let var_i = variance_fn.variance(*mu_i).unwrap_or(1.0);
+                    (y_i - mu_i) * wt_i.sqrt() / var_i.sqrt()
+                })
                 .collect()
         }
         ResidualType::Working => r.clone(),
@@ -160,6 +166,7 @@ mod tests {
             contrasts: None,
             xlevels: None,
             na_action: Some("na.omit".to_string()),
+            dispersion: 1.0, // Default dispersion value
         }
     }
 

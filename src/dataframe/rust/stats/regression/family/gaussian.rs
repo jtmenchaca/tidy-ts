@@ -6,11 +6,18 @@
 use super::{
     DevianceFunction, GaussianDeviance, GaussianVariance, GlmFamily, LinkFunction, VarianceFunction,
 };
-use serde::{Deserialize, Serialize};
 
 /// Gaussian family with specified link function
 pub struct GaussianFamily {
     link: Box<dyn LinkFunction>,
+}
+
+impl Clone for GaussianFamily {
+    fn clone(&self) -> Self {
+        Self {
+            link: self.link.clone_box(),
+        }
+    }
 }
 
 impl GaussianFamily {
@@ -96,14 +103,20 @@ impl GlmFamily for GaussianFamily {
         None // Gaussian family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood + 2 * df
-        // For gaussian: -2 * sum(w * log(1/sqrt(2*pi*sigma^2)) - w * (y-mu)^2/(2*sigma^2)) + 2 * df
-        // Simplified: n * log(2*pi*sigma^2) + sum(w * (y-mu)^2/sigma^2) + 2 * df
-        let n = y.len() as f64;
-        let sigma_squared = dev / n; // Assuming equal weights for simplicity
-
-        n * (2.0 * std::f64::consts::PI * sigma_squared).ln() + dev / sigma_squared + 2.0 * n
+    fn aic_calc(&self, y: &[f64], _mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        // Based on R's stats::gaussian()$aic implementation
+        // The formula in R is: nobs*(log(dev/nobs*2*pi)+1)+2 - sum(log(wt))
+        let nobs = y.len() as f64;
+        
+        // Calculate sum of log weights
+        let sum_log_wt: f64 = if weights.len() == 1 {
+            (weights[0].ln()) * nobs
+        } else {
+            weights.iter().map(|&w| w.ln()).sum()
+        };
+        
+        // R's exact formula: nobs*(log(dev/nobs*2*pi)+1)+2 - sum(log(wt))
+        nobs * ((dev / nobs * 2.0 * std::f64::consts::PI).ln() + 1.0) + 2.0 - sum_log_wt
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {
@@ -137,9 +150,10 @@ mod tests {
     fn test_gaussian_family_initialization() {
         let family = GaussianFamily::identity();
         let y = vec![1.0, 2.0, 3.0];
-        let weights = vec![1.0, 1.0, 1.0];
+        let mut mu = vec![0.0; y.len()];
+        let mut weights = vec![1.0, 1.0, 1.0];
 
-        let mu = family.initialize(&y, &weights).unwrap();
+        family.initialize(&y, &mut mu, &mut weights).unwrap();
         assert_eq!(mu, y);
     }
 }

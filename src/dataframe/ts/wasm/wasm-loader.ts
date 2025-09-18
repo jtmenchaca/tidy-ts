@@ -31,3 +31,6 @@ export * from "./statistical-tests.ts";
 
 // Export probability distributions
 export * from "./probability-distributions.ts";
+
+// Export GLM functions
+export * from "./glm-functions.ts";

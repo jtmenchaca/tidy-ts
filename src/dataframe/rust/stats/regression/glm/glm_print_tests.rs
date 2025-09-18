@@ -2,8 +2,8 @@
 //!
 //! This file contains tests for the GLM print functions.
 
-use super::glm_print_core::*;
-use super::glm_print_helpers::*;
+// Unused imports removed
+use super::glm_print::{format_glm, format_glm_default, format_glm_digits, print_glm};
 use super::types_results::GlmResult;
 use crate::stats::regression::family::gaussian::GaussianFamily;
 use crate::stats::regression::glm::glm_control::glm_control;
@@ -53,6 +53,7 @@ fn create_test_glm_result() -> GlmResult {
         contrasts: None,
         xlevels: None,
         na_action: Some("na.omit".to_string()),
+        dispersion: 1.0,
     }
 }
 

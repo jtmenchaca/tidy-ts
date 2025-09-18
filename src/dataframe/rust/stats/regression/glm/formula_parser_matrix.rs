@@ -51,21 +51,51 @@ pub fn create_design_matrix(
             continue; // Already added
         }
 
-        let values = data
-            .get(predictor)
-            .ok_or_else(|| format!("Predictor variable '{}' not found in data", predictor))?;
+        if predictor.contains(':') {
+            // Handle interaction terms
+            let interaction_vars: Vec<&str> = predictor.split(':').collect();
+            let mut interaction_values = vec![1.0; n];
+            
+            // Multiply all variables in the interaction
+            for var in interaction_vars {
+                let var_values = data
+                    .get(var)
+                    .ok_or_else(|| format!("Interaction variable '{}' not found in data", var))?;
 
-        if values.len() != n {
-            return Err(format!(
-                "Predictor variable '{}' has {} observations, expected {}",
-                predictor,
-                values.len(),
-                n
-            ));
+                if var_values.len() != n {
+                    return Err(format!(
+                        "Interaction variable '{}' has {} observations, expected {}",
+                        var,
+                        var_values.len(),
+                        n
+                    ));
+                }
+
+                for i in 0..n {
+                    interaction_values[i] *= var_values[i];
+                }
+            }
+
+            design_matrix.push(interaction_values);
+            variable_names.push(predictor.clone());
+        } else {
+            // Handle main effect terms
+            let values = data
+                .get(predictor)
+                .ok_or_else(|| format!("Predictor variable '{}' not found in data", predictor))?;
+
+            if values.len() != n {
+                return Err(format!(
+                    "Predictor variable '{}' has {} observations, expected {}",
+                    predictor,
+                    values.len(),
+                    n
+                ));
+            }
+
+            design_matrix.push(values.clone());
+            variable_names.push(predictor.clone());
         }
-
-        design_matrix.push(values.clone());
-        variable_names.push(predictor.clone());
     }
 
     // Transpose the design matrix to get the correct shape (n x p)

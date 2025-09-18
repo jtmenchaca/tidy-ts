@@ -4,14 +4,20 @@
 //! including logit, probit, cauchit, log, and cloglog links.
 
 use super::{
-    DevianceFunction, GlmFamily, INVEPS, LinkFunction, MTHRESH, THRESH, VarianceFunction, x_d_omx,
-    x_d_opx, y_log_y,
+    DevianceFunction, GlmFamily, LinkFunction, VarianceFunction,
 };
-use serde::{Deserialize, Serialize};
 
 /// Binomial family with specified link function
 pub struct BinomialFamily {
     link: Box<dyn LinkFunction>,
+}
+
+impl Clone for BinomialFamily {
+    fn clone(&self) -> Self {
+        Self {
+            link: self.link.clone_box(),
+        }
+    }
 }
 
 impl BinomialFamily {
@@ -134,9 +140,9 @@ impl GlmFamily for BinomialFamily {
         None // Binomial family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood + 2 * df
-        // For binomial: -2 * sum(w * (y * log(mu) + (1-y) * log(1-mu))) + 2 * df
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
+        // AIC = -2 * log-likelihood (without the +2*df part, that's added by calculate_aic)
+        // For binomial: -2 * sum(w * (y * log(mu) + (1-y) * log(1-mu)))
         let mut log_lik = 0.0;
 
         for i in 0..y.len() {
@@ -160,11 +166,13 @@ impl GlmFamily for BinomialFamily {
             }
         }
 
-        -2.0 * log_lik + 2.0 * (y.len() as f64) // Simplified df calculation
+        -2.0 * log_lik
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
-        self.aic(y, mu, weights, dev)
+    fn clone_box(&self) -> Box<dyn GlmFamily> {
+        Box::new(BinomialFamily {
+            link: self.link.clone_box(),
+        })
     }
 }
 
@@ -189,6 +197,10 @@ impl VarianceFunction for BinomialVariance {
 
     fn name(&self) -> &'static str {
         "binomial"
+    }
+    
+    fn clone_box(&self) -> Box<dyn VarianceFunction> {
+        Box::new(self.clone())
     }
 }
 
@@ -247,6 +259,10 @@ impl DevianceFunction for BinomialDeviance {
 
     fn name(&self) -> &'static str {
         "binomial"
+    }
+    
+    fn clone_box(&self) -> Box<dyn DevianceFunction> {
+        Box::new(self.clone())
     }
 }
 

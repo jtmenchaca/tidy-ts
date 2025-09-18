@@ -8,6 +8,7 @@
 
 // Module declarations
 pub mod model_matrix_core;
+#[cfg(test)]
 pub mod model_matrix_tests;
 pub mod model_matrix_types;
 pub mod model_matrix_utils;

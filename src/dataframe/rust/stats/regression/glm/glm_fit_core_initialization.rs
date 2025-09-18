@@ -19,7 +19,6 @@ pub fn initialize_starting_values(
     weights: &[f64],
     offset: &[f64],
     start: Option<&[f64]>,
-    etastart: Option<&[f64]>,
     mustart: Option<&[f64]>,
     family: &dyn GlmFamily,
 ) -> Result<StartingValues, String> {
@@ -43,7 +42,7 @@ pub fn initialize_starting_values(
                 p
             ));
         }
-        let eta = if p == 1 {
+        let eta: Vec<f64> = if p == 1 {
             offset
                 .iter()
                 .zip(start.iter())
@@ -65,8 +64,8 @@ pub fn initialize_starting_values(
         let mu = family.linkinv()(&eta);
         Ok(StartingValues {
             eta,
-            mu,
-            mustart: mu.clone(),
+            mu: mu.clone(),
+            mustart: mu,
         })
     } else {
         // Use family initialization
@@ -84,7 +83,8 @@ pub fn calculate_initial_deviance(
     y: &[f64],
     mu: &[f64],
     weights: &[f64],
-    dev_resids: &dyn Fn(&[f64], &[f64], &[f64]) -> Vec<f64>,
+    deviance_fn: &dyn Fn(&[f64], &[f64], &[f64]) -> Result<f64, &'static str>,
 ) -> f64 {
-    dev_resids(y, mu, weights).iter().sum()
+    // Use the family's deviance, not the sum of deviance residual magnitudes
+    deviance_fn(y, mu, weights).unwrap_or_else(|_| 0.0)
 }

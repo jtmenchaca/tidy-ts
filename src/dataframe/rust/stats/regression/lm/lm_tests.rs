@@ -1,9 +1,13 @@
 //! Linear model tests
 
+// Unused imports removed
 use super::lm_fit::{lm, lm_wfit};
-use super::lm_types::LmOptions;
 use super::lm_summary::summary_lm;
-use super::lm_utils::*;
+use super::lm_types::LmOptions;
+use super::lm_utils::{
+    anova_lm, case_names_lm, coef_lm, deviance_lm, fitted_lm, labels_lm, residuals_lm,
+    variable_names_lm,
+};
 
 #[cfg(test)]
 mod tests {

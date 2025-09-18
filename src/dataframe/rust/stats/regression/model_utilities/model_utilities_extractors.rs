@@ -1,6 +1,6 @@
 //! Model component extraction functions
 
-use super::model_utilities_types::{ModelObject, TermsObject, FactorInfo, OffsetInfo};
+use super::model_utilities_types::{ModelObject, TermsObject};
 use crate::stats::regression::{ModelFrame, Variable};
 use std::collections::HashMap;
 
@@ -81,7 +81,7 @@ pub fn is_empty_model(model: &ModelObject) -> bool {
 }
 
 /// Get all variables from formula
-pub fn get_all_vars(formula: &str, data: Option<&ModelFrame>) -> Result<Vec<String>, &'static str> {
+pub fn get_all_vars(formula: &str, _data: Option<&ModelFrame>) -> Result<Vec<String>, &'static str> {
     // Parse formula to extract variable names
     let mut variables = Vec::new();
     

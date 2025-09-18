@@ -803,6 +803,66 @@ export function wasm_qwilcox(
  */
 export function wasm_rwilcox(m: number, n: number): number;
 /**
+ * WASM export for GLM fitting
+ *
+ * Fits a generalized linear model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Model formula as string (e.g., "y ~ x1 + x2")
+ * * `family_name` - Name of the family ("gaussian", "binomial", "poisson", etc.)
+ * * `link_name` - Name of the link function ("identity", "logit", "log", etc.)
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted GLM result
+ */
+export function glm_fit_wasm(
+  formula: string,
+  family_name: string,
+  link_name: string,
+  data_json: string,
+  options_json?: string | null,
+): string;
+/**
+ * Simplified GLM fit for testing
+ * Takes vectors directly instead of JSON
+ */
+export function glm_fit_simple_wasm(
+  y: Float64Array,
+  x: Float64Array,
+  n_predictors: number,
+  family_name: string,
+  link_name: string,
+): string;
+/**
+ * WASM export for LM fitting
+ *
+ * Fits a linear model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Model formula as string (e.g., "y ~ x1 + x2")
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted LM result
+ */
+export function lm_fit_wasm(
+  formula: string,
+  data_json: string,
+  options_json?: string | null,
+): string;
+/**
+ * Simplified LM fit for testing
+ * Takes vectors directly instead of JSON
+ */
+export function lm_fit_simple_wasm(
+  y: Float64Array,
+  x: Float64Array,
+  n_predictors: number,
+): string;
+/**
  * WASM export for one-way ANOVA
  */
 export function anova_one_way(

@@ -1,17 +1,10 @@
 //! GLM VR Test Functions
 
-use crate::stats::regression::glm::glm_vr_data::{
+use super::glm_vr::{
     create_detergent_data, create_family_example_data, create_simple_example_data,
-};
-use crate::stats::regression::glm::glm_vr_examples::{
     run_detergent_example, run_family_comparison_example, run_model_selection_example,
     run_simple_example,
 };
-use crate::stats::regression::glm::glm_vr_results::{
-    print_detergent_results, print_family_comparison_results, print_model_selection_results,
-    print_simple_results,
-};
-use std::collections::HashMap;
 
 /// Test data creation functions
 pub fn test_data_creation() -> Result<(), String> {
@@ -299,22 +292,22 @@ mod tests {
     }
 
     #[test]
-    fn test_printing_functions() {
+    fn test_printing_functions_wrapper() {
         test_printing_functions().unwrap();
     }
 
     #[test]
-    fn test_data_validation() {
+    fn test_data_validation_wrapper() {
         test_data_validation().unwrap();
     }
 
     #[test]
-    fn test_statistical_properties() {
+    fn test_statistical_properties_wrapper() {
         test_statistical_properties().unwrap();
     }
 
     #[test]
-    fn test_data_consistency() {
+    fn test_data_consistency_wrapper() {
         test_data_consistency().unwrap();
     }
 

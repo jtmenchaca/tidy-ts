@@ -4,7 +4,7 @@
 //! which expands a model frame to include additional variables.
 
 use crate::stats::regression::model::c::{
-    formula::Terms,
+    formula::formula_utils::formula_variables,
     model_frame::{ModelFrame, ModelFrameResult, NaAction, Variable},
 };
 
@@ -30,7 +30,7 @@ pub fn expand_model_frame(
     let mut new_variable_names = model_frame.variable_names.clone();
 
     // Add the extra variables
-    for (name, variable) in extras {
+    for (name, variable) in extras.iter() {
         // Check if variable already exists
         if new_variable_names.contains(&name) {
             return Err("variable already exists in model frame");
@@ -41,8 +41,8 @@ pub fn expand_model_frame(
             return Err("extra variable has incompatible length");
         }
 
-        new_variables.push(variable);
-        new_variable_names.push(name);
+        new_variables.push(variable.clone());
+        new_variable_names.push(name.clone());
     }
 
     // Create new model frame
@@ -84,13 +84,13 @@ pub fn expand_model_frame(
 pub fn expand_model_frame_formula(
     model_frame: &ModelFrame,
     formula: &str,
-    na_expand: bool,
+    _na_expand: bool,
 ) -> Result<ModelFrameResult, String> {
     // Parse the formula to get variable names
     let formula = crate::stats::regression::model::c::formula::parse_formula(formula)?;
 
     // Find variables that are not in the original model frame
-    let formula_vars = crate::stats::regression::model::c::formula::formula_variables(&formula);
+    let formula_vars = formula_variables(&formula);
     let missing_vars: Vec<String> = formula_vars
         .iter()
         .filter(|var| !model_frame.variable_names.contains(var))
@@ -109,7 +109,7 @@ pub fn expand_model_frame_formula(
 
     // For now, we can't create variables from thin air
     // In a full implementation, this would need access to the original data
-    Err("cannot expand model frame with variables not in original data")
+    Err("cannot expand model frame with variables not in original data".to_string())
 }
 
 /// Gets the length of a variable
@@ -161,7 +161,7 @@ pub fn update_model_frame(
 
     let updated_frame = ModelFrame {
         variables: updated_variables,
-        variable_names: updated_variable_names,
+        variable_names: updated_variable_names.clone(),
         row_names: model_frame.row_names.clone(),
         n_rows: model_frame.n_rows,
         n_cols: updated_variable_names.len(),
@@ -240,7 +240,7 @@ pub fn merge_model_frames(
 
     let merged_frame = ModelFrame {
         variables: merged_variables,
-        variable_names: merged_variable_names,
+        variable_names: merged_variable_names.clone(),
         row_names: frame1.row_names.clone(),
         n_rows: frame1.n_rows,
         n_cols: merged_variable_names.len(),

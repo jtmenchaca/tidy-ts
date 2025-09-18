@@ -33,6 +33,7 @@ pub mod lm;
 pub mod model;
 // pub mod lm_influence; // TODO: Implement
 pub mod model_utilities;
+pub mod shared;
 
 // Influence diagnostics
 pub mod influence;

@@ -16,9 +16,6 @@ use super::types::{GlmResult, GlmSummary};
 /// A GLM summary object
 pub fn summary_glm(
     model: &GlmResult,
-    correlation: Option<bool>,
-    symbolic_cor: Option<bool>,
-    signif_stars: Option<bool>,
 ) -> Result<GlmSummary, String> {
     // For now, create a basic summary
     // TODO: Implement full summary calculation

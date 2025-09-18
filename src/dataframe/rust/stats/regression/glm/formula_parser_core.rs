@@ -18,10 +18,11 @@ pub struct ParsedFormula {
 /// Parse a formula string
 ///
 /// This function parses a formula string like "y ~ x1 + x2" into its components.
+/// Properly handles interaction terms like "x1 * x2" which expand to "x1 + x2 + x1:x2".
 ///
 /// # Arguments
 ///
-/// * `formula` - Formula string (e.g., "y ~ x1 + x2")
+/// * `formula` - Formula string (e.g., "y ~ x1 + x2", "y ~ x1 * x2")
 ///
 /// # Returns
 ///
@@ -62,17 +63,109 @@ pub fn parse_formula(formula: &str) -> Result<ParsedFormula, String> {
         .filter(|s| !s.is_empty() && *s != "0" && *s != "-1")
         .collect();
 
-    for part in predictor_parts {
-        // Handle interactions (for now, just split on *)
-        let interaction_parts: Vec<&str> = part
-            .split('*')
-            .map(|s| s.trim())
-            .filter(|s| !s.is_empty())
-            .collect();
+    // Pass 1: collect main effects across all parts in appearance order (R-like)
+    for part in &predictor_parts {
+        if part.contains('*') {
+            let interaction_vars: Vec<&str> = part
+                .split('*')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect();
+            for var in &interaction_vars {
+                let v = var.to_string();
+                if !predictors.contains(&v) {
+                    predictors.push(v);
+                }
+            }
+        } else {
+            let v = part.to_string();
+            if !predictors.contains(&v) {
+                predictors.push(v);
+            }
+        }
+    }
 
-        for var in interaction_parts {
-            if !var.is_empty() {
-                predictors.push(var.to_string());
+    // Pass 2: append interaction terms per part, preserving part order (R-like)
+    for part in &predictor_parts {
+        if part.contains('*') {
+            let interaction_vars: Vec<&str> = part
+                .split('*')
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .collect();
+
+            let m = interaction_vars.len();
+            if m >= 2 {
+                // 2-way interactions (R-like order by increasing second index)
+                for b in 1..m {
+                    for a in 0..b {
+                        let combo = format!("{}:{}", interaction_vars[a], interaction_vars[b]);
+                        if !predictors.contains(&combo) {
+                            predictors.push(combo);
+                        }
+                    }
+                }
+                // 3-way interactions
+                if m >= 3 {
+                    for i in 0..m {
+                        for j in (i + 1)..m {
+                            for k in (j + 1)..m {
+                                let combo = format!(
+                                    "{}:{}:{}",
+                                    interaction_vars[i], interaction_vars[j], interaction_vars[k]
+                                );
+                                if !predictors.contains(&combo) {
+                                    predictors.push(combo);
+                                }
+                            }
+                        }
+                    }
+                }
+                // 4-way interactions
+                if m >= 4 {
+                    for i in 0..m {
+                        for j in (i + 1)..m {
+                            for k in (j + 1)..m {
+                                for l in (k + 1)..m {
+                                    let combo = format!(
+                                        "{}:{}:{}:{}",
+                                        interaction_vars[i],
+                                        interaction_vars[j],
+                                        interaction_vars[k],
+                                        interaction_vars[l]
+                                    );
+                                    if !predictors.contains(&combo) {
+                                        predictors.push(combo);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                // 5-way interactions
+                if m >= 5 {
+                    for i in 0..m {
+                        for j in (i + 1)..m {
+                            for k in (j + 1)..m {
+                                for l in (k + 1)..m {
+                                    for r in (l + 1)..m {
+                                        let combo = format!(
+                                            "{}:{}:{}:{}:{}",
+                                            interaction_vars[i],
+                                            interaction_vars[j],
+                                            interaction_vars[k],
+                                            interaction_vars[l],
+                                            interaction_vars[r]
+                                        );
+                                        if !predictors.contains(&combo) {
+                                            predictors.push(combo);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

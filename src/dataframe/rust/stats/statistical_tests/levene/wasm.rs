@@ -1,30 +1,28 @@
 use super::levene_test;
-use crate::stats::core::types::{OneWayAnovaTestResult, TestStatistic, EffectSize, TestStatisticName, EffectSizeType};
+use crate::stats::core::types::{
+    EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic, TestStatisticName,
+};
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
 /// WASM wrapper for Levene's test for equality of variances
-/// 
-/// Tests whether groups have equal variances using the Brown-Forsythe 
+///
+/// Tests whether groups have equal variances using the Brown-Forsythe
 /// modification (deviations from medians rather than means).
-/// 
+///
 /// # Arguments
 /// * `data` - Flattened array of all group data
 /// * `group_sizes` - Array of group sizes
 /// * `alpha` - Significance level
-/// 
+///
 /// # Returns
 /// * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
 ///   - p < alpha indicates unequal variances (reject null hypothesis)
 ///   - p >= alpha suggests equal variances (fail to reject null hypothesis)
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn levene_test_wasm(
-    data: &[f64],
-    group_sizes: &[usize],
-    alpha: f64,
-) -> OneWayAnovaTestResult {
+pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayAnovaTestResult {
     // Validate alpha
     if !(0.0..=1.0).contains(&alpha) {
         return OneWayAnovaTestResult {
