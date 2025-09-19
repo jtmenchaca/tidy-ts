@@ -6,6 +6,7 @@
 use super::{
     DevianceFunction, GaussianDeviance, GaussianVariance, GlmFamily, LinkFunction, VarianceFunction,
 };
+use crate::stats::regression::glm::glm_aic::calculate_gaussian_aic;
 
 /// Gaussian family with specified link function
 pub struct GaussianFamily {
@@ -103,20 +104,8 @@ impl GlmFamily for GaussianFamily {
         None // Gaussian family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], _mu: &[f64], weights: &[f64], dev: f64) -> f64 {
-        // Based on R's stats::gaussian()$aic implementation
-        // The formula in R is: nobs*(log(dev/nobs*2*pi)+1)+2 - sum(log(wt))
-        let nobs = y.len() as f64;
-        
-        // Calculate sum of log weights
-        let sum_log_wt: f64 = if weights.len() == 1 {
-            (weights[0].ln()) * nobs
-        } else {
-            weights.iter().map(|&w| w.ln()).sum()
-        };
-        
-        // R's exact formula: nobs*(log(dev/nobs*2*pi)+1)+2 - sum(log(wt))
-        nobs * ((dev / nobs * 2.0 * std::f64::consts::PI).ln() + 1.0) + 2.0 - sum_log_wt
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        calculate_gaussian_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {

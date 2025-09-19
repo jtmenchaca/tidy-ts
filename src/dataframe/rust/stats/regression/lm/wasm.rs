@@ -4,7 +4,7 @@
 
 use super::lm_fit::lm;
 use super::lm_types::{LmOptions, LmResult};
-use crate::stats::regression::shared::formula_parser::{parse_formula, build_design_matrix};
+use crate::stats::regression::shared::formula_parser::{build_design_matrix, parse_formula};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -21,31 +21,19 @@ use web_sys::console;
 /// # Returns
 /// JSON string containing the fitted LM result
 #[wasm_bindgen]
-pub fn lm_fit_wasm(
-    formula: &str,
-    data_json: &str,
-    options_json: Option<String>,
-) -> String {
-    console::log_1(&format!("LM WASM: Starting with formula: {}", formula).into());
-    console::log_1(&format!("LM WASM: Data JSON length: {}", data_json.len()).into());
-    
+pub fn lm_fit_wasm(formula: &str, data_json: &str, options_json: Option<String>) -> String {
     // Parse data from JSON
     let data = match parse_data_json(data_json) {
         Ok(d) => d,
         Err(e) => {
-            console::log_1(&format!("LM WASM: Error parsing data JSON: {}", e).into());
             return format_error(&e);
         }
     };
 
     // Parse formula to extract response and predictors
     let parsed_formula = match parse_formula(formula) {
-        Ok(pf) => {
-            console::log_1(&format!("LM WASM: Response: {}, Predictors: {:?}", pf.response, pf.predictors).into());
-            pf
-        },
+        Ok(pf) => pf,
         Err(e) => {
-            console::log_1(&format!("LM WASM: Error parsing formula: {}", e).into());
             return format_error(&e);
         }
     };
@@ -56,7 +44,12 @@ pub fn lm_fit_wasm(
     // Get response variable
     let y = match data.get(&response_name) {
         Some(values) => values.clone(),
-        None => return format_error(&format!("Response variable '{}' not found in data", response_name)),
+        None => {
+            return format_error(&format!(
+                "Response variable '{}' not found in data",
+                response_name
+            ));
+        }
     };
 
     let n = y.len();
@@ -85,7 +78,6 @@ pub fn lm_fit_wasm(
     }
 }
 
-
 /// Parse data from JSON string into HashMap
 fn parse_data_json(json: &str) -> Result<HashMap<String, Vec<f64>>, String> {
     // Use serde_json for robust parsing
@@ -107,10 +99,7 @@ fn parse_options_json(json: &str) -> Result<LmOptions, String> {
                 if let Some(weights_array) = weights_value.as_array() {
                     let weights: Result<Vec<f64>, _> = weights_array
                         .iter()
-                        .map(|v| {
-                            v.as_f64()
-                                .ok_or_else(|| "Invalid weight value".to_string())
-                        })
+                        .map(|v| v.as_f64().ok_or_else(|| "Invalid weight value".to_string()))
                         .collect();
                     options.weights = Some(weights?);
                 }
@@ -184,7 +173,10 @@ fn format_lm_result(result: &LmResult, formula: &str) -> String {
     json.push_str(&format!(r#","qr_rank":{}"#, result.qr_rank));
     json.push_str(&format!(r#","tol":{}"#, format_json_number(result.tol)));
     json.push_str(&format!(r#","pivoted":{}"#, result.pivoted));
-    json.push_str(&format!(r#","deviance":{}"#, format_json_number(result.deviance)));
+    json.push_str(&format!(
+        r#","deviance":{}"#,
+        format_json_number(result.deviance)
+    ));
 
     // Add pivot
     json.push_str(r#","pivot":["#);
@@ -206,45 +198,74 @@ fn format_lm_result(result: &LmResult, formula: &str) -> String {
     let r_squared = if let Some(ref weights) = result.weights {
         // Weighted R-squared calculation
         let n = result.residuals.len();
-        let y_values: Vec<f64> = result.residuals.iter().zip(result.fitted_values.iter())
+        let y_values: Vec<f64> = result
+            .residuals
+            .iter()
+            .zip(result.fitted_values.iter())
             .map(|(r, f)| r + f)
             .collect();
-        
+
         // Calculate weighted mean
         let sum_weights: f64 = weights.iter().sum();
-        let weighted_y_mean = y_values.iter().zip(weights.iter())
+        let weighted_y_mean = y_values
+            .iter()
+            .zip(weights.iter())
             .map(|(y, w)| y * w)
-            .sum::<f64>() / sum_weights;
-        
+            .sum::<f64>()
+            / sum_weights;
+
         // Calculate weighted total sum of squares
-        let weighted_ss_tot = y_values.iter().zip(weights.iter())
+        let weighted_ss_tot = y_values
+            .iter()
+            .zip(weights.iter())
             .map(|(y, w)| w * (y - weighted_y_mean).powi(2))
             .sum::<f64>();
-        
+
         // Calculate weighted residual sum of squares
-        let weighted_ss_res = result.residuals.iter().zip(weights.iter())
+        let weighted_ss_res = result
+            .residuals
+            .iter()
+            .zip(weights.iter())
             .map(|(r, w)| w * r.powi(2))
             .sum::<f64>();
-        
-        if weighted_ss_tot > 0.0 { 1.0 - weighted_ss_res / weighted_ss_tot } else { 0.0 }
+
+        if weighted_ss_tot > 0.0 {
+            1.0 - weighted_ss_res / weighted_ss_tot
+        } else {
+            0.0
+        }
     } else {
         // Unweighted R-squared calculation
-        let y_mean = result.residuals.iter().zip(result.fitted_values.iter())
+        let y_mean = result
+            .residuals
+            .iter()
+            .zip(result.fitted_values.iter())
             .map(|(r, f)| r + f)
-            .sum::<f64>() / result.residuals.len() as f64;
-        
-        let ss_tot = result.residuals.iter().zip(result.fitted_values.iter())
+            .sum::<f64>()
+            / result.residuals.len() as f64;
+
+        let ss_tot = result
+            .residuals
+            .iter()
+            .zip(result.fitted_values.iter())
             .map(|(r, f)| {
                 let y = r + f;
                 (y - y_mean).powi(2)
             })
             .sum::<f64>();
-        
+
         let ss_res = result.residuals.iter().map(|r| r.powi(2)).sum::<f64>();
-        if ss_tot > 0.0 { 1.0 - ss_res / ss_tot } else { 0.0 }
+        if ss_tot > 0.0 {
+            1.0 - ss_res / ss_tot
+        } else {
+            0.0
+        }
     };
-    
-    json.push_str(&format!(r#","r_squared":{}"#, format_json_number(r_squared)));
+
+    json.push_str(&format!(
+        r#","r_squared":{}"#,
+        format_json_number(r_squared)
+    ));
 
     // Add adjusted R-squared
     let n = result.residuals.len() as f64;
@@ -254,7 +275,10 @@ fn format_lm_result(result: &LmResult, formula: &str) -> String {
     } else {
         r_squared
     };
-    json.push_str(&format!(r#","adj_r_squared":{}"#, format_json_number(adj_r_squared)));
+    json.push_str(&format!(
+        r#","adj_r_squared":{}"#,
+        format_json_number(adj_r_squared)
+    ));
 
     json.push('}');
     json
@@ -283,11 +307,7 @@ fn format_json_number(value: f64) -> String {
 /// Simplified LM fit for testing
 /// Takes vectors directly instead of JSON
 #[wasm_bindgen]
-pub fn lm_fit_simple_wasm(
-    y: &[f64],
-    x: &[f64],
-    n_predictors: usize,
-) -> String {
+pub fn lm_fit_simple_wasm(y: &[f64], x: &[f64], n_predictors: usize) -> String {
     let n = y.len();
     let ny = 1;
 

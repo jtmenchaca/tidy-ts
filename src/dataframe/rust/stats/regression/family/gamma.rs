@@ -6,6 +6,7 @@
 use super::{
     DevianceFunction, GammaDeviance, GammaVariance, GlmFamily, LinkFunction, VarianceFunction,
 };
+use crate::stats::regression::glm::glm_aic::calculate_gamma_aic;
 
 /// Gamma family with specified link function
 pub struct GammaFamily {
@@ -121,18 +122,7 @@ impl GlmFamily for GammaFamily {
     }
 
     fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
-        // Use: aic(y, n, mu, wt, dev) = dev + 2 * sum(wt * (log(y) - log(mu)))
-        // calculate_aic() will add + 2*rank.
-        let mut adj = 0.0;
-        for i in 0..y.len() {
-            let yi = y[i];
-            let mui = mu[i];
-            let w = if weights.len() == 1 { weights[0] } else { weights[i] };
-            if w > 0.0 && yi > 0.0 && mui > 0.0 {
-                adj += w * (yi.ln() - mui.ln());
-            }
-        }
-        dev + 2.0 * adj
+        calculate_gamma_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {

@@ -2,6 +2,7 @@
 //!
 //! This file contains the main glm_fit function and core fitting logic.
 
+use super::glm_aic::calculate_aic;
 use super::glm_fit_core_calculation::*;
 use super::glm_fit_core_initialization::*;
 use super::glm_fit_core_validation::*;
@@ -99,7 +100,9 @@ pub fn glm_fit(
     })?;
 
     // Calculate initial deviance
-    let mut devold = calculate_initial_deviance(&y, &mu, &weights, &|y, mu, w| deviance_fn.deviance(y, mu, w));
+    let mut devold = calculate_initial_deviance(&y, &mu, &weights, &|y, mu, w| {
+        deviance_fn.deviance(y, mu, w)
+    });
     let mut boundary = false;
     let mut conv = false;
     let mut iter = 0;
@@ -132,6 +135,20 @@ pub fn glm_fit(
         eta = irls_result.eta;
         mu = irls_result.mu;
         coef = irls_result.coef;
+
+        // Update convergence and boundary status from IRLS result
+        conv = irls_result.converged;
+        boundary = irls_result.boundary;
+
+        // Handle convergence and boundary warnings (matching R's behavior)
+        if !conv {
+            // In R: warning("glm.fit: algorithm did not converge", call. = FALSE)
+            println!("Warning: glm.fit: algorithm did not converge");
+        }
+        if boundary {
+            // In R: warning("glm.fit: algorithm stopped at boundary value", call. = FALSE)
+            println!("Warning: glm.fit: algorithm stopped at boundary value");
+        }
     }
 
     // Check for family-specific warnings

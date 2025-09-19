@@ -21,6 +21,7 @@
 //! - `glm.rs` - Main coordination file
 
 // Core GLM modules (in dependency order)
+pub mod glm_aic;
 pub mod glm_anova;
 pub mod glm_anova_core;
 pub mod glm_anova_core_multiple;

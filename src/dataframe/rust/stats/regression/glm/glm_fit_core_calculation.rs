@@ -83,17 +83,7 @@ pub fn calculate_degrees_of_freedom(
     (n_ok, nulldf, rank, resdf)
 }
 
-/// Calculates AIC
-pub fn calculate_aic(
-    y: &[f64],
-    mu: &[f64],
-    weights: &[f64],
-    deviance: f64,
-    rank: usize,
-    aic: &dyn Fn(&[f64], &[f64], &[f64], f64) -> f64,
-) -> f64 {
-    aic(y, mu, weights, deviance) + 2.0 * rank as f64
-}
+// AIC calculation moved to glm_aic module
 
 /// Creates final working weights
 pub fn create_final_working_weights(w: &[f64], good: &[bool]) -> Vec<f64> {

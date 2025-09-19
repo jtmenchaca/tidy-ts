@@ -13,6 +13,9 @@ use crate::stats::regression::shared::formula_parser::{
 };
 use std::collections::HashMap;
 
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
 /// Main GLM function
 ///
 /// This function fits a generalized linear model via iteratively reweighted least squares.
@@ -110,7 +113,11 @@ pub fn glm(
     };
 
     // Parse the formula (shared parser for LM/GLM consistency)
+    #[cfg(feature = "wasm")]
+    console::log_1(&format!("[GLM Core] Parsing formula: {}", formula).into());
     let parsed_formula_shared = parse_formula_shared(&formula)?;
+    #[cfg(feature = "wasm")]
+    console::log_1(&format!("[GLM Core] Formula parsed. Response: {}", parsed_formula_shared.response).into());
 
     // Build response and design matrix using shared builder
     let (y_vec, x_mat, variable_names) = if let Some(ref data) = data {
@@ -196,6 +203,8 @@ pub fn glm(
     }
 
     // Call glm.fit
+    #[cfg(feature = "wasm")]
+    console::log_1(&format!("[GLM Core] Starting glm_fit. Family: {}, n={}, p={}", family.name(), y_vec.len(), x_mat[0].len()).into());
     let mut fit = glm_fit(
         x_mat,
         y_vec,

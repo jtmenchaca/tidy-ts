@@ -37,7 +37,7 @@ result <- switch(test_type,
     model <- glm(as.formula(formula_str), data = df, family = gaussian())
     
     list(
-      coefficients = as.numeric(coef(model)),
+      coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -66,7 +66,7 @@ result <- switch(test_type,
     model <- glm(as.formula(formula_str), data = df, family = binomial())
     
     list(
-      coefficients = as.numeric(coef(model)),
+      coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -94,7 +94,7 @@ result <- switch(test_type,
     model <- glm(as.formula(formula_str), data = df, family = poisson())
     
     list(
-      coefficients = as.numeric(coef(model)),
+      coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -151,7 +151,7 @@ result <- switch(test_type,
     model <- glm(as.formula(formula_str), data = df, family = binomial(link = "probit"))
     
     list(
-      coefficients = as.numeric(coef(model)),
+      coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),

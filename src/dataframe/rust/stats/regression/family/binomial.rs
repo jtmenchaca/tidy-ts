@@ -3,9 +3,8 @@
 //! This module provides the binomial family implementation with various link functions
 //! including logit, probit, cauchit, log, and cloglog links.
 
-use super::{
-    DevianceFunction, GlmFamily, LinkFunction, VarianceFunction,
-};
+use super::{DevianceFunction, GlmFamily, LinkFunction, VarianceFunction};
+use crate::stats::regression::glm::glm_aic::calculate_binomial_aic;
 
 /// Binomial family with specified link function
 pub struct BinomialFamily {
@@ -113,18 +112,8 @@ impl GlmFamily for BinomialFamily {
                 weights[i]
             };
 
-            // Initialize mu based on y and weights
-            let mu_init = if weight > 0.0 {
-                if yi == 0.0 {
-                    0.1
-                } else if yi == 1.0 {
-                    0.9
-                } else {
-                    yi
-                }
-            } else {
-                0.5
-            };
+            // R's initialization: mustart <- (weights * y + 0.5)/(weights + 1)
+            let mu_init = (weight * yi + 0.5) / (weight + 1.0);
 
             mu[i] = mu_init;
         }
@@ -140,33 +129,8 @@ impl GlmFamily for BinomialFamily {
         None // Binomial family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood (without the +2*df part, that's added by calculate_aic)
-        // For binomial: -2 * sum(w * (y * log(mu) + (1-y) * log(1-mu)))
-        let mut log_lik = 0.0;
-
-        for i in 0..y.len() {
-            let yi = y[i];
-            let mui = mu[i];
-            let weight = if weights.len() == 1 {
-                weights[0]
-            } else {
-                weights[i]
-            };
-
-            if weight > 0.0 {
-                let term = if yi == 0.0 {
-                    (1.0 - mui).ln()
-                } else if yi == 1.0 {
-                    mui.ln()
-                } else {
-                    yi * mui.ln() + (1.0 - yi) * (1.0 - mui).ln()
-                };
-                log_lik += weight * term;
-            }
-        }
-
-        -2.0 * log_lik
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        calculate_binomial_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {
@@ -198,7 +162,7 @@ impl VarianceFunction for BinomialVariance {
     fn name(&self) -> &'static str {
         "binomial"
     }
-    
+
     fn clone_box(&self) -> Box<dyn VarianceFunction> {
         Box::new(self.clone())
     }
@@ -218,15 +182,35 @@ impl DevianceFunction for BinomialDeviance {
             return Ok(0.0);
         }
 
-        let dev_resid = if y == 0.0 {
-            -2.0 * (1.0 - mu).ln()
-        } else if y == 1.0 {
-            -2.0 * mu.ln()
-        } else {
-            -2.0 * (y * mu.ln() + (1.0 - y) * (1.0 - mu).ln())
+        // R's implementation: 2 * wt * (y_log_y(y, mu) + y_log_y(1-y, 1-mu))
+        // where y_log_y(y, mu) = (y != 0) ? (y * log(y/mu)) : 0
+        // 
+        // Handle edge cases where mu is 0 or 1:
+        // - If mu = 0 and y = 0, contribution is 0
+        // - If mu = 0 and y > 0, deviance is infinite
+        // - If mu = 1 and y = 1, contribution is 0
+        // - If mu = 1 and y < 1, deviance is infinite
+        let y_log_y = |y: f64, mu: f64| -> f64 { 
+            if y == 0.0 {
+                0.0
+            } else if mu == 0.0 {
+                f64::INFINITY
+            } else {
+                y * (y / mu).ln()
+            }
         };
 
-        Ok(weight.sqrt() * dev_resid.sqrt())
+        let dev_resid = 2.0 * weight * (y_log_y(y, mu) + y_log_y(1.0 - y, 1.0 - mu));
+
+        // R returns sqrt of deviance residual squared, handling infinity
+        if dev_resid.is_infinite() {
+            Ok(f64::INFINITY)
+        } else if dev_resid < 0.0 {
+            // This shouldn't happen mathematically, but handle numerical issues
+            Ok(0.0)
+        } else {
+            Ok(dev_resid.sqrt())
+        }
     }
 
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -249,8 +233,26 @@ impl DevianceFunction for BinomialDeviance {
             };
 
             if weight > 0.0 {
-                let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                // R's implementation: 2 * wt * (y_log_y(y, mu) + y_log_y(1-y, 1-mu))
+                // where y_log_y(y, mu) = (y != 0) ? (y * log(y/mu)) : 0
+                // Handle edge cases where mu is 0 or 1
+                let y_log_y = |y: f64, mu: f64| -> f64 { 
+                    if y == 0.0 {
+                        0.0
+                    } else if mu == 0.0 {
+                        f64::INFINITY
+                    } else {
+                        y * (y / mu).ln()
+                    }
+                };
+
+                let dev_resid = 2.0 * weight * (y_log_y(yi, mui) + y_log_y(1.0 - yi, 1.0 - mui));
+                
+                // Handle infinite deviance (occurs when fitted values are at boundaries)
+                if dev_resid.is_infinite() {
+                    return Ok(f64::INFINITY);
+                }
+                total_deviance += dev_resid;
             }
         }
 
@@ -260,7 +262,7 @@ impl DevianceFunction for BinomialDeviance {
     fn name(&self) -> &'static str {
         "binomial"
     }
-    
+
     fn clone_box(&self) -> Box<dyn DevianceFunction> {
         Box::new(self.clone())
     }

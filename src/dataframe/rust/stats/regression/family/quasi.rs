@@ -6,6 +6,7 @@ use super::links::IdentityLink;
 use super::{
     DevianceFunction, GlmFamily, LinkFunction, QuasiDeviance, QuasiVariance, VarianceFunction,
 };
+use crate::stats::regression::glm::glm_aic::calculate_quasi_aic;
 
 /// Quasi family with specified variance and link functions
 pub struct QuasiFamily {
@@ -175,13 +176,8 @@ impl GlmFamily for QuasiFamily {
         Some(1.0) // Quasi families have dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], _mu: &[f64], _weights: &[f64], dev: f64) -> f64 {
-        // For quasi families, AIC is not well-defined in the traditional sense
-        // We use a modified AIC based on the deviance
-        let n = y.len() as f64;
-
-        // Modified AIC for quasi: just deviance (the +2*df is added by calculate_aic)
-        dev
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        calculate_quasi_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {

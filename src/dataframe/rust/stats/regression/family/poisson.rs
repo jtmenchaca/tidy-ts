@@ -6,6 +6,7 @@
 use super::{
     DevianceFunction, GlmFamily, LinkFunction, PoissonDeviance, PoissonVariance, VarianceFunction,
 };
+use crate::stats::regression::glm::glm_aic::calculate_poisson_aic;
 
 /// Poisson family with specified link function
 pub struct PoissonFamily {
@@ -124,31 +125,8 @@ impl GlmFamily for PoissonFamily {
         None // Poisson family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood (without the +2*df part, that's added by calculate_aic)
-        // For poisson: -2 * sum(w * (y * log(mu) - mu - log(y!)))
-        let mut log_lik = 0.0;
-
-        for i in 0..y.len() {
-            let yi = y[i];
-            let mui = mu[i];
-            let weight = if weights.len() == 1 {
-                weights[0]
-            } else {
-                weights[i]
-            };
-
-            if weight > 0.0 && mui > 0.0 {
-                let term = if yi == 0.0 {
-                    -mui
-                } else {
-                    yi * mui.ln() - mui - log_factorial(yi)
-                };
-                log_lik += weight * term;
-            }
-        }
-
-        -2.0 * log_lik
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        calculate_poisson_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {
@@ -163,11 +141,11 @@ fn log_factorial(n: f64) -> f64 {
     if n < 0.0 || n.fract() != 0.0 {
         return f64::NAN;
     }
-    
+
     if n <= 1.0 {
         return 0.0;
     }
-    
+
     if n <= 12.0 {
         // Use exact calculation for small n
         let mut result = 0.0;

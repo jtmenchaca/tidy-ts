@@ -98,7 +98,14 @@ export async function callRobustR(
   }
 
   const output = new TextDecoder().decode(stdout);
-  return JSON.parse(output);
+
+  try {
+    return JSON.parse(output);
+  } catch (parseError) {
+    console.error("JSON parse error:", parseError);
+    console.error("Raw output:", output);
+    throw new Error(`JSON parse error: ${parseError.message}`);
+  }
 }
 
 // Comprehensive Rust caller for regression tests

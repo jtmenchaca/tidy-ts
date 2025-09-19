@@ -7,6 +7,7 @@ use super::{
     DevianceFunction, GlmFamily, InverseGaussianDeviance, InverseGaussianVariance, LinkFunction,
     VarianceFunction,
 };
+use crate::stats::regression::glm::glm_aic::calculate_inverse_gaussian_aic;
 // Unused imports removed
 
 /// Inverse Gaussian family with specified link function
@@ -127,27 +128,8 @@ impl GlmFamily for InverseGaussianFamily {
         None // Inverse Gaussian family has no dispersion parameter
     }
 
-    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
-        // AIC = -2 * log-likelihood + 2 * df
-        // For inverse gaussian: -2 * sum(w * (-0.5 * (y-mu)^2 / (y*mu^2))) + 2 * df
-        let mut log_lik = 0.0;
-
-        for i in 0..y.len() {
-            let yi = y[i];
-            let mui = mu[i];
-            let weight = if weights.len() == 1 {
-                weights[0]
-            } else {
-                weights[i]
-            };
-
-            if weight > 0.0 && yi > 0.0 && mui > 0.0 {
-                let term = -0.5 * (yi - mui).powi(2) / (yi * mui * mui);
-                log_lik += weight * term;
-            }
-        }
-
-        -2.0 * log_lik // The +2*df is added by calculate_aic function
+    fn aic_calc(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+        calculate_inverse_gaussian_aic(y, mu, weights, dev)
     }
 
     fn clone_box(&self) -> Box<dyn GlmFamily> {

@@ -29,22 +29,30 @@ pub fn glm_fit_wasm(
     data_json: &str,
     options_json: Option<String>,
 ) -> String {
-    console::log_1(&format!("GLM WASM: Starting with formula: {}, family: {}, link: {}", formula, family_name, link_name).into());
-    console::log_1(&format!("GLM WASM: Data JSON length: {}", data_json.len()).into());
-    
     // Parse data from JSON
+    console::log_1(&"[WASM] Parsing data JSON".into());
     let data = match parse_data_json(data_json) {
-        Ok(d) => d,
+        Ok(d) => {
+            console::log_1(&format!("[WASM] Data parsed: {} columns", d.len()).into());
+            d
+        },
         Err(e) => {
-            console::log_1(&format!("GLM WASM: Error parsing data JSON: {}", e).into());
+            console::log_1(&format!("[WASM] Data parsing error: {}", e).into());
             return format_error(&e);
         }
     };
 
     // Create family object
+    console::log_1(&format!("[WASM] Creating family: {}/{}", family_name, link_name).into());
     let family = match create_family(family_name, link_name) {
-        Ok(f) => f,
-        Err(e) => return format_error(&e),
+        Ok(f) => {
+            console::log_1(&"[WASM] Family created successfully".into());
+            f
+        },
+        Err(e) => {
+            console::log_1(&format!("[WASM] Family creation error: {}", e).into());
+            return format_error(&e);
+        },
     };
 
     // Parse options if provided
@@ -68,6 +76,7 @@ pub fn glm_fit_wasm(
     };
 
     // Fit the model
+    console::log_1(&format!("[WASM] Starting GLM fit with formula: {}", formula).into());
     match glm(
         formula.to_string(),
         Some(family),
@@ -86,8 +95,14 @@ pub fn glm_fit_wasm(
         Some(true),                  // singular_ok
         None,                        // contrasts
     ) {
-        Ok(result) => format_glm_result(&result),
-        Err(e) => format_error(&e),
+        Ok(result) => {
+            console::log_1(&"[WASM] GLM fit succeeded".into());
+            format_glm_result(&result)
+        },
+        Err(e) => {
+            console::log_1(&format!("[WASM] GLM fit error: {}", e).into());
+            format_error(&e)
+        },
     }
 }
 

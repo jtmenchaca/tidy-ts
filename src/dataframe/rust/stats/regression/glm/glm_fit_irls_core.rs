@@ -15,6 +15,8 @@ pub struct IrlsResult {
     pub eta: Vec<f64>,
     pub mu: Vec<f64>,
     pub coef: Vec<f64>,
+    pub converged: bool,
+    pub boundary: bool,
 }
 
 /// Run the IRLS iteration algorithm
@@ -52,9 +54,6 @@ pub fn run_irls_iteration(
     // Main IRLS iteration
     for iter_count in 1..=control.maxit {
         *iter = iter_count;
-        
-        #[cfg(feature = "wasm")]
-        console::log_1(&format!("GLM IRLS iteration {}", iter_count).into());
 
         // Check for valid observations
         let good: Vec<bool> = weights.iter().map(|&w| w > 0.0).collect();
@@ -65,8 +64,6 @@ pub fn run_irls_iteration(
 
         // Check for NAs in variance
         if varmu.iter().any(|&v| !v.is_finite()) {
-            #[cfg(feature = "wasm")]
-            console::log_1(&"Error: NAs in V(mu)".into());
             return Err("NAs in V(mu)".to_string());
         }
 
@@ -74,9 +71,6 @@ pub fn run_irls_iteration(
         let variance_tolerance = 1e-10;
         let has_small_variance = varmu.iter().any(|&v| v < variance_tolerance);
         if has_small_variance {
-            #[cfg(feature = "wasm")]
-            console::log_1(&format!("Warning: Very small variances in V(mu), min = {}", varmu.iter().fold(f64::INFINITY, |a, &b| a.min(b))).into());
-            
             // Clamp small variances to tolerance
             for v in varmu.iter_mut() {
                 if *v < variance_tolerance {
@@ -148,18 +142,29 @@ pub fn run_irls_iteration(
 
         // Solve weighted least squares using the same QR approach as LM
         use crate::stats::regression::lm::lm_qr::cdqrls;
-        
+
         // Convert to the format expected by cdqrls (column-major)
         let n_weighted = x_weighted.len();
-        let p_weighted = if n_weighted > 0 { x_weighted[0].len() } else { 0 };
+        let p_weighted = if n_weighted > 0 {
+            x_weighted[0].len()
+        } else {
+            0
+        };
         let mut x_flat = vec![0.0; n_weighted * p_weighted];
         for i in 0..n_weighted {
             for j in 0..p_weighted {
                 x_flat[i + j * n_weighted] = x_weighted[i][j];
             }
         }
-        
-        let qr_result = cdqrls(&x_flat, &z_weighted, n_weighted, p_weighted, 1, Some(control.epsilon / 1000.0))?;
+
+        let qr_result = cdqrls(
+            &x_flat,
+            &z_weighted,
+            n_weighted,
+            p_weighted,
+            1,
+            Some(control.epsilon / 1000.0),
+        )?;
 
         if qr_result.coefficients.iter().any(|&c| !c.is_finite()) {
             *conv = false;
@@ -181,7 +186,7 @@ pub fn run_irls_iteration(
 
         // Store old coefficients for step halving
         coefold = Some(coef.clone());
-        
+
         // Update coefficients directly (no pivot permutation needed)
         *coef = qr_result.coefficients.clone();
 
@@ -210,9 +215,6 @@ pub fn run_irls_iteration(
         // Calculate new deviance using the family-specific deviance
         let dev = deviance_fn.deviance(y, mu, weights).unwrap_or(0.0);
 
-        #[cfg(feature = "wasm")]
-        console::log_1(&format!("Deviance = {} Iterations - {}", dev, iter_count).into());
-
         if control.trace {
             println!("Deviance = {} Iterations - {}", dev, iter_count);
         }
@@ -220,12 +222,7 @@ pub fn run_irls_iteration(
         // Check for divergence - step halving
         *boundary = false;
         if !dev.is_finite() {
-            #[cfg(feature = "wasm")]
-            console::log_1(&format!("Divergence detected: dev = {}", dev).into());
-            
             if coefold.is_none() {
-                #[cfg(feature = "wasm")]
-                console::log_1(&"Error: no valid set of coefficients has been found".into());
                 return Err(
                     "no valid set of coefficients has been found: please supply starting values"
                         .to_string(),
@@ -240,12 +237,7 @@ pub fn run_irls_iteration(
             let mut current_dev = dev;
 
             while !current_dev.is_finite() {
-                #[cfg(feature = "wasm")]
-                console::log_1(&format!("Step halving attempt {}, current_dev = {}", ii, current_dev).into());
-                
                 if ii > control.maxit {
-                    #[cfg(feature = "wasm")]
-                    console::log_1(&format!("Error: inner loop 1; cannot correct step size after {} attempts", ii).into());
                     return Err("inner loop 1; cannot correct step size".to_string());
                 }
                 ii += 1;
@@ -366,17 +358,23 @@ pub fn run_irls_iteration(
         }
     }
 
+    // Note: R continues execution even if convergence fails, just sets converged = FALSE
+    // We'll handle warnings in the calling code, not return errors here
     if !*conv {
-        return Err("glm.fit: algorithm did not converge".to_string());
+        // In R, this would issue a warning: "glm.fit: algorithm did not converge"
+        // We'll let the calling code handle this as a warning, not an error
     }
 
     if *boundary {
-        // Note: In R, this would be a warning, but we'll include it in the result
+        // In R, this would issue a warning: "glm.fit: algorithm stopped at boundary value"
+        // We'll let the calling code handle this as a warning, not an error
     }
 
     Ok(IrlsResult {
         eta: eta.clone(),
         mu: mu.clone(),
         coef: coef.clone(),
+        converged: *conv,
+        boundary: *boundary,
     })
 }

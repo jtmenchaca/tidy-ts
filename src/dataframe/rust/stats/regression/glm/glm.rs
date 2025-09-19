@@ -5,6 +5,12 @@
 // Re-export all GLM functions for easy access
 
 // Re-export main functions
+pub use glm_aic::{
+    calculate_aic, calculate_aic_from_result, calculate_aic_differences, calculate_aic_weights,
+    calculate_binomial_aic, calculate_gamma_aic, calculate_gaussian_aic,
+    calculate_inverse_gaussian_aic, calculate_poisson_aic, calculate_quasi_aic,
+    compare_models_aic, find_best_model_aic, interpret_aic_difference,
+};
 pub use glm_anova::{anova_glm, anova_glmlist, format_anova, print_anova};
 pub use glm_control::glm_control;
 pub use glm_fit::glm_fit;

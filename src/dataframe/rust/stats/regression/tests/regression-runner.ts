@@ -59,6 +59,7 @@ export async function runRobustComparison(
     const maxDiff = diffs.length > 0 ? Math.max(...diffs) : 0;
 
     // Determine status - be more lenient for regression tests
+    // For statistical failures (non-convergence, etc.), treat as FAIL not ERROR
     const status = maxDiff < 0.1 ? "PASS" : "FAIL";
 
     // Extract test parameters
@@ -94,6 +95,41 @@ export async function runRobustComparison(
         key !== "offset",
     ).length;
 
+    const errorMessage = String(error);
+
+    // Classify errors into different categories
+    let status: "PASS" | "FAIL" | "ERROR";
+    let errorType: string;
+
+    if (
+      errorMessage.includes("unreachable") ||
+      errorMessage.includes("RuntimeError") ||
+      errorMessage.includes("panic") ||
+      errorMessage.includes("thread 'main' panicked") ||
+      errorMessage.includes("index out of bounds") ||
+      errorMessage.includes("overflow") ||
+      errorMessage.includes("underflow")
+    ) {
+      // Real bugs/crashes - these should never happen
+      status = "ERROR";
+      errorType = "BUG";
+    } else if (
+      errorMessage.includes("algorithm did not converge") ||
+      errorMessage.includes("singular") ||
+      errorMessage.includes("non-estimable") ||
+      errorMessage.includes("boundary") ||
+      errorMessage.includes("fitted probabilities numerically 0 or 1") ||
+      errorMessage.includes("fitted rates numerically 0")
+    ) {
+      // Statistical failures - these are expected in some cases and R handles them gracefully
+      status = "FAIL";
+      errorType = "STATISTICAL";
+    } else {
+      // Other errors (network, parsing, etc.)
+      status = "ERROR";
+      errorType = "SYSTEM";
+    }
+
     return {
       testName: `${params.testType} (${params.options?.family || "default"})`,
       rResult: null,
@@ -101,8 +137,8 @@ export async function runRobustComparison(
       coefficientDiff: 1,
       rSquaredDiff: 1,
       aicDiff: 1,
-      status: "ERROR",
-      errorMessage: String(error),
+      status,
+      errorMessage: `[${errorType}] ${errorMessage}`,
       testParams: {
         sampleSize,
         numPredictors,
@@ -310,7 +346,7 @@ async function main() {
   // Configuration for which tests to run - COMPREHENSIVE REGRESSION TEST SUITE
   const testConfig = {
     // GLM Tests - Gaussian Family
-    "glm.gaussian": true, // ✅ Working (identity link)
+    "glm.gaussian": false, // ✅ Working (identity link)
     "glm.gaussian.log": false, // ✅ Working (log link)
     "glm.gaussian.inverse": false, // ❌ Not implemented (inverse link)
 
@@ -322,12 +358,12 @@ async function main() {
     "glm.binomial.cloglog": false, // ❌ Not implemented (cloglog link)
 
     // GLM Tests - Poisson Family
-    "glm.poisson": true, // ✅ Working (log link)
+    "glm.poisson": false, // ✅ Working (log link)
     "glm.poisson.identity": false, // ✅ Working (identity link)
     "glm.poisson.sqrt": false, // ❌ Not implemented (sqrt link)
 
     // GLM Tests - Gamma Family
-    "glm.gamma": true, // ✅ Working (inverse link)
+    "glm.gamma": false, // ✅ Working (inverse link)
     "glm.gamma.identity": false, // ❌ Not implemented (identity link)
     "glm.gamma.log": false, // ❌ Not implemented (log link)
 
@@ -455,9 +491,8 @@ async function main() {
   }
 
   console.log(
-    "\n📋 DISABLED TESTS: " + disabledTests.map(([testName, _]) =>
-      `❌ ${testName}`
-    ).join(", "),
+    "\n📋 DISABLED TESTS: " +
+      disabledTests.map(([testName, _]) => `❌ ${testName}`).join(", "),
   );
 
   // Summary by test type

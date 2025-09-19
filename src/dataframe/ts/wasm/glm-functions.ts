@@ -82,13 +82,29 @@ export function glmFit(
 
   // Initialize WASM and call function
   initWasm();
-  const resultJson = wasmInternal.glm_fit_wasm(
-    formula,
-    family,
-    link,
-    dataJson,
-    optionsJson,
-  );
+  
+  let resultJson: string;
+  try {
+    resultJson = wasmInternal.glm_fit_wasm(
+      formula,
+      family,
+      link,
+      dataJson,
+      optionsJson,
+    );
+  } catch (e) {
+    // Log more details about the error
+    console.error(`WASM Error in glmFit for ${family}/${link}:`, e);
+    console.error(`Formula: ${formula}`);
+    console.error(`Data keys: ${Object.keys(data).join(', ')}`);
+    console.error(`Data sample sizes: ${Object.entries(data).map(([k, v]) => `${k}:${v.length}`).join(', ')}`);
+    // Log the actual y values for binomial family
+    if (family === 'binomial' && data.y) {
+      console.error(`Y values: [${data.y.join(', ')}]`);
+      console.error(`Y range: min=${Math.min(...data.y)}, max=${Math.max(...data.y)}`);
+    }
+    throw new Error(`[BUG] ${e}`);
+  }
 
   // Parse result
   const result = JSON.parse(resultJson);
