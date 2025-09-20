@@ -5,6 +5,7 @@
 //! for better organization.
 
 pub mod binomial;
+pub mod binomial_utils;
 pub mod deviance;
 pub mod gamma;
 pub mod gaussian;
@@ -99,11 +100,7 @@ pub const THRESH: f64 = 1e-10;
 
 // Helper functions for family calculations
 pub fn x_d_omx(x: f64) -> f64 {
-    if x <= 0.0 || x >= 1.0 {
-        0.0
-    } else {
-        x * (1.0 - x)
-    }
+    binomial_utils::binomial_variance_safe(x)
 }
 
 pub fn x_d_opx(x: f64) -> f64 {

@@ -7,9 +7,9 @@ Rust (Core) → WASM → TypeScript (Interface) → Deno/Node.js
 
 ## Key Components
 - **Rust**: Statistical algorithms (GLM, LM, tests)
-- **WASM**: Rust compiled to WebAssembly
+- **WASM**: Rust compiled to WebAssembly (requires `deno task wasmbuild`)
 - **TypeScript**: WASM bindings + DataFrame API
-- **R**: Reference implementation for validation
+- **R**: Reference implementation for validation (in `R-stats/` directory)
 
 ## Build Commands
 ```bash
@@ -56,12 +56,17 @@ deno task benchmark
 - **`stats/`**: Statistical algorithms
   - **`distributions/`**: Probability distributions
   - **`regression/`**: GLM, LM, ANOVA models
+    - **`family/`**: GLM family implementations (binomial, gaussian, etc.)
+    - **`glm/`**: GLM fitting algorithms (IRLS, AIC, etc.)
+    - **`lm/`**: Linear model implementations
+    - **`tests/`**: R vs Rust comparison tests
   - **`statistical_tests/`**: Hypothesis testing
 - **WASM bindings** for each module
 
 ## Test Structure
 - **Rust Tests**: Unit tests in `src/dataframe/rust/`
-- **Integration Tests**: R vs Rust comparison
+- **Integration Tests**: R vs Rust comparison in `src/dataframe/rust/stats/regression/tests/`
 - **WASM Tests**: TypeScript interface validation
-- **Regression Tests**: GLM/LM model validation
-- **Statistical Tests**: Hypothesis testing validation
+- **Regression Tests**: GLM/LM model validation via `deno task test-regression`
+- **Statistical Tests**: Hypothesis testing validation via `deno task test-stat-tests`
+- **R Reference**: R code in `R-stats/` directory for validation

@@ -55,7 +55,7 @@ impl LinkFunction for LogitLink {
             return Err("Invalid eta for logit link");
         }
         let mu = self.link_inverse(eta)?;
-        Ok(mu * (1.0 - mu))
+        Ok(crate::stats::regression::family::binomial_utils::binomial_variance_safe(mu))
     }
 
     fn name(&self) -> &'static str {
@@ -69,9 +69,9 @@ impl LinkFunction for LogitLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(LogitLink)
     }
@@ -114,9 +114,9 @@ impl LinkFunction for ProbitLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(ProbitLink)
     }
@@ -159,9 +159,9 @@ impl LinkFunction for CauchitLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(CauchitLink)
     }
@@ -204,9 +204,9 @@ impl LinkFunction for LogLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(LogLink)
     }
@@ -240,9 +240,9 @@ impl LinkFunction for IdentityLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(IdentityLink)
     }
@@ -264,12 +264,18 @@ impl LinkFunction for InverseLink {
         if !self.valid_eta(eta) {
             return Err("Invalid eta for inverse link");
         }
+        if eta.abs() < 1e-15 {
+            return Err("eta too close to zero for inverse link");
+        }
         Ok(1.0 / eta)
     }
 
     fn mu_eta(&self, eta: f64) -> Result<f64, &'static str> {
         if !self.valid_eta(eta) {
             return Err("Invalid eta for inverse link");
+        }
+        if eta.abs() < 1e-15 {
+            return Err("eta too close to zero for inverse link");
         }
         Ok(-1.0 / (eta * eta))
     }
@@ -279,15 +285,15 @@ impl LinkFunction for InverseLink {
     }
 
     fn valid_mu(&self, mu: f64) -> bool {
-        mu != 0.0
+        mu != 0.0 && mu.is_finite() && mu.abs() >= 1e-15
     }
 
     fn valid_eta(&self, eta: f64) -> bool {
-        eta != 0.0
+        eta != 0.0 && eta.is_finite() && eta.abs() >= 1e-15
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(InverseLink)
     }
@@ -332,7 +338,7 @@ impl LinkFunction for SqrtLink {
     }
 
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(SqrtLink)
     }
@@ -362,7 +368,10 @@ impl LinkFunction for CloglogLink {
             return Err("Invalid eta for cloglog link");
         }
         let mu = self.link_inverse(eta)?;
-        Ok(mu * (1.0 - mu) * (-mu).ln())
+        Ok(
+            crate::stats::regression::family::binomial_utils::binomial_variance_safe(mu)
+                * (-mu).ln(),
+        )
     }
 
     fn name(&self) -> &'static str {
@@ -376,9 +385,9 @@ impl LinkFunction for CloglogLink {
     fn valid_eta(&self, _eta: f64) -> bool {
         true
     }
-    
+
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(CloglogLink)
     }
@@ -441,7 +450,7 @@ impl LinkFunction for PowerLink {
     }
 
     impl_link_vector_methods!();
-    
+
     fn clone_box(&self) -> Box<dyn LinkFunction> {
         Box::new(PowerLink(self.0))
     }
@@ -494,12 +503,12 @@ fn erf(x: f64) -> f64 {
     let a4 = -1.453152027;
     let a5 = 1.061405429;
     let p = 0.3275911;
-    
+
     let sign = if x >= 0.0 { 1.0 } else { -1.0 };
     let x = x.abs();
-    
+
     let t = 1.0 / (1.0 + p * x);
     let y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * (-x * x).exp();
-    
+
     sign * y
 }

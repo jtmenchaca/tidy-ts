@@ -4,6 +4,7 @@
 
 use super::glm_main_core::glm;
 use super::types::GlmResult;
+use crate::stats::regression::shared::formula_parser::parse_formula;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use web_sys::console;
@@ -30,29 +31,48 @@ pub fn glm_fit_wasm(
     options_json: Option<String>,
 ) -> String {
     // Parse data from JSON
-    console::log_1(&"[WASM] Parsing data JSON".into());
-    let data = match parse_data_json(data_json) {
-        Ok(d) => {
-            console::log_1(&format!("[WASM] Data parsed: {} columns", d.len()).into());
-            d
-        },
+    let (data, categorical_vars) = match parse_data_json(data_json) {
+        Ok((d, c)) => (d, c),
         Err(e) => {
             console::log_1(&format!("[WASM] Data parsing error: {}", e).into());
             return format_error(&e);
         }
     };
 
+    // Parse formula using existing parser and handle categorical variables
+    let parsed_formula = match parse_formula(formula) {
+        Ok(pf) => pf,
+        Err(e) => {
+            console::log_1(&format!("[WASM] Formula parsing error: {}", e).into());
+            return format_error(&e);
+        }
+    };
+
+    // Update the formula to replace categorical variables with dummy variable names
+    let updated_formula = if !categorical_vars.is_empty() {
+        update_formula_with_dummy_names(&parsed_formula.formula, &categorical_vars)
+    } else {
+        parsed_formula.formula.clone()
+    };
+
+    // Log formula transformation if categorical variables are present
+    if !categorical_vars.is_empty() {
+        console::log_1(
+            &format!(
+                "[WASM] Formula updated for categorical vars: {}",
+                updated_formula
+            )
+            .into(),
+        );
+    }
+
     // Create family object
-    console::log_1(&format!("[WASM] Creating family: {}/{}", family_name, link_name).into());
     let family = match create_family(family_name, link_name) {
-        Ok(f) => {
-            console::log_1(&"[WASM] Family created successfully".into());
-            f
-        },
+        Ok(f) => f,
         Err(e) => {
             console::log_1(&format!("[WASM] Family creation error: {}", e).into());
             return format_error(&e);
-        },
+        }
     };
 
     // Parse options if provided
@@ -76,9 +96,8 @@ pub fn glm_fit_wasm(
     };
 
     // Fit the model
-    console::log_1(&format!("[WASM] Starting GLM fit with formula: {}", formula).into());
     match glm(
-        formula.to_string(),
+        updated_formula,
         Some(family),
         Some(data),
         weights,
@@ -95,75 +114,214 @@ pub fn glm_fit_wasm(
         Some(true),                  // singular_ok
         None,                        // contrasts
     ) {
-        Ok(result) => {
-            console::log_1(&"[WASM] GLM fit succeeded".into());
-            format_glm_result(&result)
-        },
+        Ok(result) => format_glm_result(&result),
         Err(e) => {
             console::log_1(&format!("[WASM] GLM fit error: {}", e).into());
             format_error(&e)
-        },
+        }
     }
 }
 
-/// Parse data from JSON string into HashMap
-fn parse_data_json(json: &str) -> Result<HashMap<String, Vec<f64>>, String> {
-    // Simple JSON parsing for data object
-    // Format expected: {"col1": [1,2,3], "col2": [4,5,6]}
-    let mut data = HashMap::new();
+/// Update formula to replace categorical variable names with dummy variable names.
+///
+/// This function takes a formula that may contain categorical variables and expands it
+/// to use dummy variables instead. For each categorical variable, dummy variables are
+/// created for all levels except the first (which serves as the reference category).
+///
+/// # Arguments
+/// * `formula` - The original formula string (e.g., "y ~ x1 + x2 * x3")
+/// * `categorical_vars` - Map of variable names to their categorical levels
+///
+/// # Returns
+/// A new formula string with categorical variables replaced by dummy variables
+///
+/// # Examples
+/// - `x2` with levels ["A", "B", "C"] becomes `x2B + x2C`
+/// - `x1 * x2` with categorical `x2` becomes `x1 * x2B + x1 * x2C`
+fn update_formula_with_dummy_names(
+    formula: &str,
+    categorical_vars: &HashMap<String, Vec<String>>,
+) -> String {
+    let parsed = match parse_formula(formula) {
+        Ok(p) => p,
+        Err(_) => return formula.to_string(),
+    };
 
-    // Remove outer braces and whitespace
-    let json = json.trim();
-    if !json.starts_with('{') || !json.ends_with('}') {
-        return Err("Invalid JSON: expected object".to_string());
-    }
+    let mut updated_predictors = Vec::new();
 
-    let json_inner = &json[1..json.len() - 1];
-
-    // Split by columns (naive approach, works for simple cases)
-    let parts: Vec<&str> = json_inner.split("],").collect();
-
-    for part in parts {
-        let part = part.trim();
-        if part.is_empty() {
-            continue;
+    for predictor in &parsed.predictors {
+        if predictor == "(Intercept)" {
+            continue; // Skip intercept - handled automatically by GLM core
         }
 
-        // Find the column name and values
-        if let Some(colon_pos) = part.find(':') {
-            let col_name = part[..colon_pos].trim().trim_matches('"');
-            let values_str = part[colon_pos + 1..]
-                .trim()
-                .trim_end_matches(']')
-                .trim_start_matches('[');
-
-            // Parse values
-            let values: Result<Vec<f64>, _> = values_str
-                .split(',')
-                .map(|v| v.trim().parse::<f64>())
+        if predictor.contains(':') {
+            // Handle interaction terms
+            let interaction_vars: Vec<&str> = predictor.split(':').collect();
+            let var_expansions: Vec<Vec<String>> = interaction_vars
+                .iter()
+                .map(|&var| {
+                    if let Some(categories) = categorical_vars.get(var) {
+                        categories
+                            .iter()
+                            .skip(1)
+                            .map(|cat| format!("{}{}", var, cat))
+                            .collect()
+                    } else {
+                        vec![var.to_string()]
+                    }
+                })
                 .collect();
 
-            match values {
-                Ok(v) => {
-                    data.insert(col_name.to_string(), v);
-                }
-                Err(_) => {
-                    return Err(format!("Failed to parse values for column '{}'", col_name));
+            let combinations = generate_interaction_combinations(&var_expansions);
+            updated_predictors.extend(combinations);
+        } else {
+            // Handle simple terms
+            if let Some(categories) = categorical_vars.get(predictor) {
+                let dummies: Vec<String> = categories
+                    .iter()
+                    .skip(1)
+                    .map(|cat| format!("{}{}", predictor, cat))
+                    .collect();
+                updated_predictors.extend(dummies);
+            } else {
+                updated_predictors.push(predictor.clone());
+            }
+        }
+    }
+
+    format!("{} ~ {}", parsed.response, updated_predictors.join(" + "))
+}
+
+/// Generate all combinations for interaction terms with dummy variables.
+///
+/// Takes a list of variable expansions (each variable may expand to multiple dummy variables)
+/// and generates all possible interaction combinations.
+///
+/// # Arguments
+/// * `var_expansions` - Vector where each element is a list of dummy variables for one original variable
+///
+/// # Returns
+/// Vector of all possible interaction combinations joined with ":"
+///
+/// # Examples
+/// Input: `[["x1"], ["x2B", "x2C"]]` → Output: `["x1:x2B", "x1:x2C"]`
+fn generate_interaction_combinations(var_expansions: &[Vec<String>]) -> Vec<String> {
+    match var_expansions.len() {
+        0 => vec![],
+        1 => var_expansions[0].clone(),
+        _ => {
+            let first = &var_expansions[0];
+            let rest_combinations = generate_interaction_combinations(&var_expansions[1..]);
+
+            first
+                .iter()
+                .flat_map(|item| {
+                    if rest_combinations.is_empty() {
+                        vec![item.clone()]
+                    } else {
+                        rest_combinations
+                            .iter()
+                            .map(|combo| format!("{}:{}", item, combo))
+                            .collect()
+                    }
+                })
+                .collect()
+        }
+    }
+}
+
+/// Parse data from JSON string into numeric data and categorical variable information.
+///
+/// Processes JSON data to identify categorical variables (string arrays) and converts them
+/// to dummy variables, while preserving numeric variables as-is.
+///
+/// # Arguments
+/// * `json` - JSON string containing data as object with column names as keys
+///
+/// # Returns
+/// Tuple of:
+/// - HashMap of numeric data (including dummy variables for categoricals)
+/// - HashMap mapping original categorical variable names to their levels
+///
+/// # Examples
+/// Input: `{"x": [1,2,3], "y": ["A","B","A"]}`
+/// Output: `({"x": [1,2,3], "yB": [0,1,0]}, {"y": ["A","B"]})`
+fn parse_data_json(
+    json: &str,
+) -> Result<(HashMap<String, Vec<f64>>, HashMap<String, Vec<String>>), String> {
+    use serde_json::Value;
+
+    // Parse JSON properly using serde_json
+    let parsed: Value =
+        serde_json::from_str(json).map_err(|e| format!("JSON parsing error: {}", e))?;
+
+    let obj = parsed
+        .as_object()
+        .ok_or_else(|| format!("Expected JSON object, got: {:?}", parsed))?;
+
+    let mut data = HashMap::new();
+    let mut categorical_vars = HashMap::new();
+
+    // First pass: identify categorical variables and collect unique values
+    for (key, value) in obj.iter() {
+        if let Some(array) = value.as_array() {
+            if !array.is_empty() {
+                if array[0].is_string() {
+                    // This is a categorical variable
+                    let mut unique_values = std::collections::HashSet::new();
+                    for item in array.iter() {
+                        if let Some(s) = item.as_str() {
+                            unique_values.insert(s.to_string());
+                        }
+                    }
+                    let mut sorted_values: Vec<String> = unique_values.into_iter().collect();
+                    sorted_values.sort();
+                    categorical_vars.insert(key.clone(), sorted_values);
                 }
             }
         }
     }
 
-    if data.is_empty() {
-        return Err("No data columns found".to_string());
+    // Second pass: convert data to numeric, creating dummy variables for categoricals
+    for (key, value) in obj.iter() {
+        if let Some(array) = value.as_array() {
+            if let Some(categories) = categorical_vars.get(key) {
+                // Convert categorical to dummy variables (exclude first category as reference)
+                for (_i, category) in categories.iter().enumerate().skip(1) {
+                    let dummy_name = format!("{}{}", key, category);
+                    let dummy_values: Vec<f64> = array
+                        .iter()
+                        .map(|item| {
+                            if let Some(s) = item.as_str() {
+                                if s == category { 1.0 } else { 0.0 }
+                            } else {
+                                0.0
+                            }
+                        })
+                        .collect();
+                    data.insert(dummy_name, dummy_values);
+                }
+            } else {
+                // Convert numeric array
+                let values: Result<Vec<f64>, String> = array
+                    .iter()
+                    .map(|item| {
+                        item.as_f64().ok_or_else(|| {
+                            format!("Non-numeric value in column '{}': {:?}", key, item)
+                        })
+                    })
+                    .collect();
+                data.insert(key.clone(), values?);
+            }
+        }
     }
 
-    Ok(data)
+    Ok((data, categorical_vars))
 }
 
 /// Parse options from JSON string
 fn parse_options_json(
-    json: &str,
+    _json: &str,
 ) -> Result<
     (
         Option<Vec<f64>>,
@@ -172,10 +330,11 @@ fn parse_options_json(
     ),
     String,
 > {
-    // Simple parsing for options
+    // Simple parsing for options - currently returns defaults
+    // TODO: Implement full options parsing when needed
     // Expected format: {"weights": [1,1,1], "na_action": "na.omit", "epsilon": 1e-8, "max_iter": 25, "trace": false}
 
-    let weights = None; // TODO: Parse weights if needed
+    let weights = None;
     let na_action = Some("na.omit".to_string());
     let control_params = Some((Some(1e-8), Some(25), Some(false)));
 
@@ -187,7 +346,7 @@ fn create_family(
     family_name: &str,
     link_name: &str,
 ) -> Result<Box<dyn crate::stats::regression::family::GlmFamily>, String> {
-    use crate::stats::regression::family::{binomial, gamma, gaussian, poisson};
+    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson};
 
     match family_name {
         "gaussian" => match link_name {
@@ -213,8 +372,20 @@ fn create_family(
         "gamma" => match link_name {
             "inverse" => Ok(Box::new(gamma::GammaFamily::inverse())),
             "identity" => Ok(Box::new(gamma::GammaFamily::identity())),
-            "log" => Ok(Box::new(gamma::GammaFamily::log())),
+            // "log" => Ok(Box::new(gamma::GammaFamily::log())),
             _ => Err(format!("Unknown link '{}' for gamma family", link_name)),
+        },
+        "inverse_gaussian" => match link_name {
+            "inverse_squared" => Ok(Box::new(
+                inverse_gaussian::InverseGaussianFamily::mu_squared(),
+            )),
+            "log" => Ok(Box::new(inverse_gaussian::InverseGaussianFamily::log())),
+            "identity" => Ok(Box::new(inverse_gaussian::InverseGaussianFamily::identity())),
+            "inverse" => Ok(Box::new(inverse_gaussian::InverseGaussianFamily::inverse())),
+            _ => Err(format!(
+                "Unknown link '{}' for inverse_gaussian family",
+                link_name
+            )),
         },
         _ => Err(format!("Unknown family '{}'", family_name)),
     }

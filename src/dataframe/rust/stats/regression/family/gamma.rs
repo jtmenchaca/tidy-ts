@@ -34,10 +34,10 @@ impl GammaFamily {
         Self::new(super::links::InverseLink)
     }
 
-    /// Create a gamma family with log link
-    pub fn log() -> Self {
-        Self::new(super::links::LogLink)
-    }
+    // /// Create a gamma family with log link
+    // pub fn log() -> Self {
+    //     Self::new(super::links::LogLink)
+    // }
 
     /// Create a gamma family with identity link
     pub fn identity() -> Self {

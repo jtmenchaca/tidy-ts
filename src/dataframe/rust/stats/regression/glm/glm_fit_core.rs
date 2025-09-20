@@ -12,6 +12,9 @@ use super::glm_fit_irls::run_irls_iteration;
 use super::types::{GlmControl, GlmResult};
 use crate::stats::regression::family::GlmFamily;
 
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
 /// GLM fit function
 ///
 /// This function fits a generalized linear model via iteratively reweighted least squares.
@@ -113,6 +116,9 @@ pub fn glm_fit(
         start.unwrap_or_else(|| vec![0.0; p])
     };
 
+    // Track rank from IRLS
+    let mut irls_rank: Option<usize> = None;
+
     if !empty {
         // Run IRLS iteration
         let irls_result = run_irls_iteration(
@@ -139,6 +145,7 @@ pub fn glm_fit(
         // Update convergence and boundary status from IRLS result
         conv = irls_result.converged;
         boundary = irls_result.boundary;
+        irls_rank = Some(irls_result.rank);
 
         // Handle convergence and boundary warnings (matching R's behavior)
         if !conv {
@@ -148,6 +155,14 @@ pub fn glm_fit(
         if boundary {
             // In R: warning("glm.fit: algorithm stopped at boundary value", call. = FALSE)
             println!("Warning: glm.fit: algorithm stopped at boundary value");
+        }
+
+        // R's boundary checking for binomial family (lines 198-201)
+        let eps = 10.0 * f64::EPSILON; // R: eps <- 10*.Machine$double.eps
+        if family.name() == "binomial" {
+            if mu.iter().any(|&mu_val| mu_val > 1.0 - eps || mu_val < eps) {
+                println!("Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred");
+            }
         }
     }
 
@@ -176,7 +191,28 @@ pub fn glm_fit(
     let nulldev = calculate_null_deviance(&y, &weights, &offset, intercept, &linkinv, &dev_resids);
 
     // Calculate degrees of freedom
-    let (_, nulldf, rank, resdf) = calculate_degrees_of_freedom(n, p, &weights, intercept, empty);
+    // Use the rank returned by the IRLS weighted least squares solve when available
+    let (_, nulldf, mut rank, mut resdf) =
+        calculate_degrees_of_freedom(n, p, &weights, intercept, empty);
+
+    // If we have a rank estimate from IRLS, prefer it over the naive p
+    if let Some(r) = irls_rank {
+        let n_ok = n - weights.iter().filter(|&&w| w == 0.0).count();
+        rank = r;
+        resdf = n_ok.saturating_sub(rank);
+    }
+
+    // Check for fitted values at boundaries (R's behavior)
+    if family.name() == "binomial" {
+        let eps = 10.0 * f64::EPSILON; // R's definition: 10*.Machine$double.eps
+        let has_boundary_values = mu.iter().any(|&m| m > 1.0 - eps || m < eps);
+        if has_boundary_values {
+            #[cfg(feature = "wasm")]
+            console::log_1(
+                &"[GLM Fit Core] Warning: fitted probabilities numerically 0 or 1 occurred".into(),
+            );
+        }
+    }
 
     // Calculate AIC
     // R uses: aic(y, n, mu, weights, dev) + 2*rank

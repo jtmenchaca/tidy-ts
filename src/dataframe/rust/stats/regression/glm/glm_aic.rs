@@ -247,44 +247,43 @@ pub fn calculate_gamma_aic(y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> 
 
 /// Calculate AIC for Inverse Gaussian family
 ///
-/// Uses R's exact log-likelihood formula:
-/// -0.5 * sum(w * [(y - mu)^2 / (phi * mu^2 * y) + log(2*pi*phi) + 3*log(y)])
-/// where phi is the dispersion parameter (estimated, so s=1)
+/// Uses R's exact AIC formula from stats::inverse.gaussian()$aic:
+/// sum(wt)*(1+log(dev/sum(wt)*2*pi)) + 3*sum(log(y)*wt) + 2
 ///
 /// # Arguments
 ///
 /// * `y` - Response variable values (should be positive)
-/// * `mu` - Fitted values (should be positive)
+/// * `_mu` - Fitted values (not used for Inverse Gaussian AIC)
 /// * `weights` - Observation weights
-/// * `_dev` - Model deviance (not used for Inverse Gaussian)
+/// * `dev` - Model deviance
 ///
 /// # Returns
 ///
 /// The family-specific AIC component (without +2*rank penalty)
-pub fn calculate_inverse_gaussian_aic(y: &[f64], mu: &[f64], weights: &[f64], _dev: f64) -> f64 {
-    let mut log_lik = 0.0;
+pub fn calculate_inverse_gaussian_aic(y: &[f64], _mu: &[f64], weights: &[f64], dev: f64) -> f64 {
+    // Calculate sum of weights
+    let sum_wt: f64 = if weights.len() == 1 {
+        weights[0] * y.len() as f64
+    } else {
+        weights.iter().sum()
+    };
 
-    for i in 0..y.len() {
-        let yi = y[i];
-        let mui = mu[i];
-        let weight = if weights.len() == 1 {
-            weights[0]
-        } else {
-            weights[i]
-        };
+    // Calculate sum of log(y) * weights
+    let sum_log_y_wt: f64 = if weights.len() == 1 {
+        let w = weights[0];
+        w * y
+            .iter()
+            .map(|&yi| if yi > 0.0 { yi.ln() } else { 0.0 })
+            .sum::<f64>()
+    } else {
+        y.iter()
+            .zip(weights.iter())
+            .map(|(&yi, &w)| if yi > 0.0 { w * yi.ln() } else { 0.0 })
+            .sum()
+    };
 
-        if weight > 0.0 && yi > 0.0 && mui > 0.0 {
-            // Corrected inverse Gaussian log-likelihood formula:
-            // -0.5 * [(y-mu)^2/(phi*mu^2*y) + log(2*pi*phi) + 3*log(y)]
-            // We omit log(phi) here (see note); constants handled below.
-            let quad = (yi - mui).powi(2) / (yi * mui * mui);
-            let term = -0.5 * (quad + (2.0 * std::f64::consts::PI).ln() + 3.0 * yi.ln());
-            log_lik += weight * term;
-        }
-    }
-
-    // -2*logLik + 2*s with s=1 for IG (R convention)
-    -2.0 * log_lik + 2.0
+    // R's exact formula: sum(wt)*(1+log(dev/sum(wt)*2*pi)) + 3*sum(log(y)*wt) + 2
+    sum_wt * (1.0 + (dev / sum_wt * 2.0 * std::f64::consts::PI).ln()) + 3.0 * sum_log_y_wt + 2.0
 }
 
 /// Calculate AIC for Quasi families

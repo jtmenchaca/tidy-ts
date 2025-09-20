@@ -28,6 +28,7 @@
 pub mod builder;
 pub mod contrasts;
 pub mod family;
+pub mod gee;
 pub mod glm;
 pub mod lm;
 pub mod model;

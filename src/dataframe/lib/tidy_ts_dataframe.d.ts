@@ -802,6 +802,17 @@ export function wasm_qwilcox(
  * WASM export for Wilcoxon random number generation
  */
 export function wasm_rwilcox(m: number, n: number): number;
+export function geeglm_fit_wasm(
+  formula: string,
+  family_name: string,
+  link_name: string,
+  data_json: string,
+  id_json: string,
+  waves_json: string | null | undefined,
+  corstr: string,
+  std_err: string,
+  options_json?: string | null,
+): string;
 /**
  * WASM export for GLM fitting
  *

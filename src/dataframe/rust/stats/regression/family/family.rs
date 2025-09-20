@@ -11,7 +11,7 @@
 //! - **`binomial`**: Binomial family with logit, probit, cauchit, log, and cloglog links
 //! - **`gaussian`**: Gaussian family with identity, log, and inverse links
 //! - **`poisson`**: Poisson family with log, identity, and sqrt links
-//! - **`gamma`**: Gamma family with inverse, log, and identity links
+//! - **`gamma`**: Gamma family with inverse and identity links
 //! - **`inverse_gaussian`**: Inverse Gaussian family with 1/mu², log, identity, and inverse links
 //! - **`quasi`**: Quasi family for custom variance and link functions
 //! - **`links`**: Common link functions and their derivatives
@@ -43,6 +43,9 @@ pub use poisson::PoissonFamily;
 pub use quasi::QuasiFamily;
 pub use variance::VarianceFunction;
 
+// Re-export the trait from mod.rs
+pub use super::GlmFamily;
+
 // Module declarations
 pub mod binomial;
 pub mod deviance;
@@ -58,36 +61,6 @@ pub mod variance;
 pub const THRESH: f64 = 30.0;
 pub const MTHRESH: f64 = -30.0;
 pub const INVEPS: f64 = 1.0 / f64::EPSILON;
-
-/// Generic GLM Family trait
-pub trait GlmFamily {
-    /// Get the family name
-    fn name(&self) -> &'static str;
-
-    /// Get the link function
-    fn link(&self) -> &dyn LinkFunction;
-
-    /// Get the variance function
-    fn variance(&self) -> &dyn VarianceFunction;
-
-    /// Get the deviance function
-    fn deviance(&self) -> &dyn DevianceFunction;
-
-    /// Check if the family is valid for the given data
-    fn valid_mu(&self, mu: &[f64]) -> Result<(), &'static str>;
-
-    /// Check if the family is valid for the given response
-    fn valid_y(&self, y: &[f64]) -> Result<(), &'static str>;
-
-    /// Initialize the family with data
-    fn initialize(&self, y: &[f64], weights: &[f64]) -> Result<Vec<f64>, &'static str>;
-
-    /// Compute the AIC for the family
-    fn aic(&self, y: &[f64], mu: &[f64], weights: &[f64], dev: f64) -> f64;
-
-    /// Clone the family as a boxed trait object
-    fn clone_box(&self) -> Box<dyn GlmFamily>;
-}
 
 /// Helper function to evaluate x/(1 - x) with bounds checking
 ///

@@ -1898,6 +1898,118 @@ export function wasm_rwilcox(m, n) {
 }
 
 /**
+ * @param {string} formula
+ * @param {string} family_name
+ * @param {string} link_name
+ * @param {string} data_json
+ * @param {string} id_json
+ * @param {string | null | undefined} waves_json
+ * @param {string} corstr
+ * @param {string} std_err
+ * @param {string | null} [options_json]
+ * @returns {string}
+ */
+export function geeglm_fit_wasm(
+  formula,
+  family_name,
+  link_name,
+  data_json,
+  id_json,
+  waves_json,
+  corstr,
+  std_err,
+  options_json,
+) {
+  let deferred10_0;
+  let deferred10_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      formula,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      family_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(
+      link_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passStringToWasm0(
+      data_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len3 = WASM_VECTOR_LEN;
+    const ptr4 = passStringToWasm0(
+      id_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len4 = WASM_VECTOR_LEN;
+    var ptr5 = isLikeNone(waves_json)
+      ? 0
+      : passStringToWasm0(
+        waves_json,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len5 = WASM_VECTOR_LEN;
+    const ptr6 = passStringToWasm0(
+      corstr,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len6 = WASM_VECTOR_LEN;
+    const ptr7 = passStringToWasm0(
+      std_err,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len7 = WASM_VECTOR_LEN;
+    var ptr8 = isLikeNone(options_json)
+      ? 0
+      : passStringToWasm0(
+        options_json,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len8 = WASM_VECTOR_LEN;
+    const ret = wasm.geeglm_fit_wasm(
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+      ptr4,
+      len4,
+      ptr5,
+      len5,
+      ptr6,
+      len6,
+      ptr7,
+      len7,
+      ptr8,
+      len8,
+    );
+    deferred10_0 = ret[0];
+    deferred10_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred10_0, deferred10_1, 1);
+  }
+}
+
+/**
  * WASM export for GLM fitting
  *
  * Fits a generalized linear model using the provided formula and data.

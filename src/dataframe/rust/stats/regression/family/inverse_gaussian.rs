@@ -137,6 +137,16 @@ impl GlmFamily for InverseGaussianFamily {
             link: self.link.clone_box(),
         })
     }
+
+    // Override validmu and valideta to match R's permissive defaults
+    // R: validmu <- family$validmu %||% function(mu) TRUE
+    fn validmu(&self) -> Box<dyn Fn(&[f64]) -> Result<(), &'static str> + '_> {
+        Box::new(|_mu| Ok(())) // Always valid, like R's default
+    }
+
+    fn valideta(&self) -> Box<dyn Fn(&[f64]) -> Result<(), &'static str> + '_> {
+        Box::new(|_eta| Ok(())) // Always valid, like R's default
+    }
 }
 
 /// 1/mu² link function for inverse gaussian family

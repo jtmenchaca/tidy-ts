@@ -31,7 +31,7 @@ export interface GlmFitResult {
 /**
  * GLM family options
  */
-export type GlmFamily = "gaussian" | "binomial" | "poisson" | "gamma";
+export type GlmFamily = "gaussian" | "binomial" | "poisson" | "gamma" | "inverse_gaussian";
 
 /**
  * GLM link options
@@ -44,7 +44,8 @@ export type GlmLink =
   | "log"
   | "cloglog"
   | "inverse"
-  | "sqrt";
+  | "sqrt"
+  | "inverse_squared";
 
 /**
  * GLM options
