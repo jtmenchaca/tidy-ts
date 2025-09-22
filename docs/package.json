@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "preview": "vite build && vite preview --port 5173",
     "prerender": "vite build && node scripts/prerender-with-content.js",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check": "bunx tsc --noEmit -p src/tsconfig.app.json"

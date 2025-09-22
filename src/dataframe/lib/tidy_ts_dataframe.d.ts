@@ -836,44 +836,6 @@ export function glm_fit_wasm(
   options_json?: string | null,
 ): string;
 /**
- * Simplified GLM fit for testing
- * Takes vectors directly instead of JSON
- */
-export function glm_fit_simple_wasm(
-  y: Float64Array,
-  x: Float64Array,
-  n_predictors: number,
-  family_name: string,
-  link_name: string,
-): string;
-/**
- * WASM export for LM fitting
- *
- * Fits a linear model using the provided formula and data.
- *
- * # Arguments
- * * `formula` - Model formula as string (e.g., "y ~ x1 + x2")
- * * `data_json` - JSON string containing the data as an object with column names as keys
- * * `options_json` - JSON string containing optional parameters
- *
- * # Returns
- * JSON string containing the fitted LM result
- */
-export function lm_fit_wasm(
-  formula: string,
-  data_json: string,
-  options_json?: string | null,
-): string;
-/**
- * Simplified LM fit for testing
- * Takes vectors directly instead of JSON
- */
-export function lm_fit_simple_wasm(
-  y: Float64Array,
-  x: Float64Array,
-  n_predictors: number,
-): string;
-/**
  * WASM export for one-way ANOVA
  */
 export function anova_one_way(

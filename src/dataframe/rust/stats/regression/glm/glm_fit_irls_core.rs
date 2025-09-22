@@ -40,7 +40,8 @@ pub fn run_irls_iteration(
     iter: &mut usize,
 ) -> Result<IrlsResult, String> {
     let n = y.len();
-    let p = x[0].len();
+    let _p = x[0].len();
+    #[allow(unused_assignments)]
     let mut coefold: Option<Vec<f64>> = None;
 
     // Get family functions
@@ -157,8 +158,8 @@ pub fn run_irls_iteration(
             }
         }
 
-        // Solve weighted least squares using the same QR approach as LM
-        use crate::stats::regression::lm::lm_qr::cdqrls;
+        // Solve weighted least squares using QR decomposition
+        use super::qr_decomposition::cdqrls;
 
         // Convert to the format expected by cdqrls (column-major)
         let n_weighted = x_weighted.len();
@@ -242,6 +243,15 @@ pub fn run_irls_iteration(
         *mu = linkinv(eta);
 
         // linkinv completed
+
+        // Validate mu values for family
+        if let Err(e) = family.valid_mu(mu) {
+            if coefold.is_none() {
+                return Err(format!("Invalid fitted values: {}", e));
+            }
+            // Use step halving to find valid mu values
+            *boundary = true;
+        }
 
         // Calculating deviance
 

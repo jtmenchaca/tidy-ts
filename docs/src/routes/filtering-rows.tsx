@@ -9,6 +9,7 @@ import {
 } from "../components/ui/card.tsx";
 import { DocPageLayout } from "../components/layout/DocPageLayout.tsx";
 import { filteringExamples } from "./filtering-rows.examples.ts";
+import FilterVideo from "../assets/filter.webm";
 export const Route = createFileRoute("/filtering-rows" as any)({
   component: FilteringRowsComponent,
 });
@@ -26,6 +27,25 @@ function FilteringRowsComponent() {
         explanation="The filter() function creates a new DataFrame containing only rows that match your condition. You can use any combination of column values and logical operators."
         code={filteringExamples.basicFiltering}
       />
+
+      <div className="my-8">
+        <video
+          src={FilterVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="w-full max-w-xl mx-auto h-auto"
+          style={{ 
+            // mixBlendMode: 'multiply', // Commented out for Safari compatibility
+          }}
+          onLoadedData={(e) => {
+            e.currentTarget.playbackRate = 0.5;
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
+      </div>
 
       <CodeBlock
         title="Using (row, index, df) Parameters in Filter"

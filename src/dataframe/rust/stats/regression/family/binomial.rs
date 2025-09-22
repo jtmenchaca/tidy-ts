@@ -286,7 +286,6 @@ impl DevianceFunction for BinomialDeviance {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::links::LogitLink;
 
     #[test]
     fn test_binomial_family_creation() {

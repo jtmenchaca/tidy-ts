@@ -8,7 +8,6 @@ use super::types::GlmResult;
 use crate::stats::distributions::binomial::dbinom;
 use crate::stats::distributions::gamma::dgamma;
 use crate::stats::distributions::poisson::dpois;
-use crate::stats::regression::family::GlmFamily;
 
 /// Calculate AIC for a GLM model
 ///
@@ -468,9 +467,8 @@ pub fn calculate_aic_weights(models: &[(String, GlmResult)]) -> Vec<(String, f64
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::binomial::BinomialFamily;
     use crate::stats::regression::family::gaussian::GaussianFamily;
-    use crate::stats::regression::family::poisson::PoissonFamily;
+    use crate::stats::regression::family::GlmFamily;
     use crate::stats::regression::glm::glm_control::glm_control;
 
     fn create_test_glm_result() -> GlmResult {
@@ -646,7 +644,7 @@ mod tests {
         // Modify the deviance to make model2 worse (higher AIC)
         model2.deviance = model1.deviance + 5.0;
 
-        let (aic1, aic2, delta_aic) = compare_models_aic(&model1, &model2);
+        let (_aic1, _aic2, delta_aic) = compare_models_aic(&model1, &model2);
         // The delta should be positive since model2 has higher deviance
         assert!(delta_aic > 0.0);
     }

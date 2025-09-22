@@ -1,7 +1,6 @@
 //! Model component extraction functions
 
-use super::model_utilities_types::{ModelObject, TermsObject};
-use crate::stats::regression::{ModelFrame, Variable};
+use super::model_utilities_types::{ModelFrame, ModelObject, TermsObject, Variable};
 use std::collections::HashMap;
 
 /// Extract model weights

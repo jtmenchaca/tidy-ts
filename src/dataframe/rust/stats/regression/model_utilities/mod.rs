@@ -21,16 +21,16 @@ pub mod model_utilities_tests;
 
 // Re-export main types
 pub use model_utilities_types::{
-    ModelObject, TermsObject, FactorInfo, OffsetInfo
+    ModelFrame, ModelObject, TermsObject, Variable, FactorInfo, OffsetInfo
 };
 
 // Re-export main functions
 pub use model_utilities_extractors::{
     model_weights, model_offset, model_response, model_extract,
-    is_empty_model, get_all_vars, get_xlevels, make_predict_call, make_predict_call_default
+    get_all_vars, get_xlevels, make_predict_call, make_predict_call_default
 };
 pub use model_utilities_validation::{
-    validate_model_object, validate_terms_object, has_weights, has_offset, has_response,
+    is_empty_model, validate_model_object, validate_terms_object, has_weights, has_offset, has_response,
     get_model_dimensions, get_nobs, get_nvars, get_variable_names, get_row_names,
     is_complete_model, get_model_summary
 };

@@ -136,33 +136,9 @@ impl GlmFamily for PoissonFamily {
     }
 }
 
-/// Calculate log factorial for integers using Stirling's approximation or exact calculation
-fn log_factorial(n: f64) -> f64 {
-    if n < 0.0 || n.fract() != 0.0 {
-        return f64::NAN;
-    }
-
-    if n <= 1.0 {
-        return 0.0;
-    }
-
-    if n <= 12.0 {
-        // Use exact calculation for small n
-        let mut result = 0.0;
-        for i in 2..=(n as usize) {
-            result += (i as f64).ln();
-        }
-        result
-    } else {
-        // Use Stirling's approximation: ln(n!) ≈ n*ln(n) - n + 0.5*ln(2*π*n)
-        n * n.ln() - n + 0.5 * (2.0 * std::f64::consts::PI * n).ln()
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::links::LogLink;
 
     #[test]
     fn test_poisson_family_creation() {

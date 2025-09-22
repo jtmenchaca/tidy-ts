@@ -3,7 +3,7 @@
 use super::model_utilities_types::*;
 use super::model_utilities_extractors::*;
 use super::model_utilities_validation::*;
-use crate::stats::regression::{ModelFrame, Variable};
+use crate::stats::regression::model_utilities::{ModelFrame, Variable};
 use std::collections::HashMap;
 
 #[cfg(test)]
@@ -66,6 +66,7 @@ mod tests {
             offset: None,
             response: None,
             terms: Some(TermsObject {
+                terms: vec![],
                 variables: vec![],
                 response: None,
                 intercept: false,
@@ -75,7 +76,7 @@ mod tests {
             attributes: HashMap::new(),
         };
 
-        assert!(is_empty_model(&model));
+        assert!(crate::stats::regression::model_utilities::model_utilities_validation::is_empty_model(&model.terms));
     }
 
     #[test]

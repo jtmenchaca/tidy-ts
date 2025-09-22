@@ -218,7 +218,6 @@ impl LinkFunction for InverseMuSquaredLink {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::links::LogLink;
 
     #[test]
     fn test_inverse_gaussian_family_creation() {

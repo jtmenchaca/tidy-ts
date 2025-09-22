@@ -4,14 +4,15 @@
 //! working correlation structures and robust variance estimation.
 //! It reuses the existing GLM pipeline for model parsing and IRLS.
 
-pub mod types;
 pub mod control;
-pub mod geese_fit;
 pub mod geeglm;
+pub mod geese_fit;
+pub mod model_impl;
+pub mod types;
 
 pub mod correlation;
-pub mod variance;
 pub mod utils;
+pub mod variance;
 
 #[cfg(feature = "wasm")]
 pub mod wasm;
@@ -19,5 +20,7 @@ pub mod wasm;
 // Re-exports
 pub use control::geese_control;
 pub use geeglm::geeglm;
-pub use types::{CorrelationStructure, GeeglmResult, GeeInfo, GeeParams, ClusterInfo, WorkingCorrelation};
+pub use types::{
+    ClusterInfo, CorrelationStructure, GeeInfo, GeeParams, GeeglmResult, WorkingCorrelation,
+};
 pub use variance::vcov_geeglm;

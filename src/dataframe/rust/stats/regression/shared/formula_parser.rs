@@ -94,7 +94,7 @@ pub fn parse_formula(formula: &str) -> Result<ParsedFormula, String> {
                 .map(|s| s.trim())
                 .filter(|s| !s.is_empty())
                 .collect();
-            
+
             if interaction_vars.len() >= 2 {
                 // Add main effects from this interaction to the list
                 for var in &interaction_vars {
@@ -203,6 +203,7 @@ pub fn parse_formula(formula: &str) -> Result<ParsedFormula, String> {
 }
 
 /// Generate all k-length combinations from a slice of items
+#[allow(dead_code)]
 fn generate_combinations<T: Clone>(items: &[T], k: usize) -> Vec<Vec<T>> {
     if k == 0 || k > items.len() {
         return vec![];
@@ -213,7 +214,7 @@ fn generate_combinations<T: Clone>(items: &[T], k: usize) -> Vec<Vec<T>> {
     }
 
     let mut result = vec![];
-    
+
     // Use indices to generate combinations
     let indices = generate_combination_indices(items.len(), k);
     for idx_combo in indices {
@@ -225,21 +226,23 @@ fn generate_combinations<T: Clone>(items: &[T], k: usize) -> Vec<Vec<T>> {
 }
 
 /// Generate all k-length combinations of indices from 0..n
+#[allow(dead_code)]
 fn generate_combination_indices(n: usize, k: usize) -> Vec<Vec<usize>> {
     if k == 0 || k > n {
         return vec![];
     }
-    
+
     if k == 1 {
         return (0..n).map(|i| vec![i]).collect();
     }
-    
+
     let mut result = vec![];
     generate_combinations_recursive(n, k, 0, &mut vec![], &mut result);
     result
 }
 
 /// Recursive helper for generating combinations
+#[allow(dead_code)]
 fn generate_combinations_recursive(
     n: usize,
     k: usize,
@@ -251,7 +254,7 @@ fn generate_combinations_recursive(
         result.push(current.clone());
         return;
     }
-    
+
     for i in start..n {
         current.push(i);
         generate_combinations_recursive(n, k, i + 1, current, result);
@@ -279,7 +282,7 @@ pub fn build_design_matrix(
             // Handle interaction terms
             let interaction_vars: Vec<&str> = predictor.split(':').collect();
             let mut interaction_values = vec![1.0; n];
-            
+
             // Multiply all variables in the interaction
             for var in interaction_vars {
                 let var_values = data
@@ -350,8 +353,14 @@ mod tests {
         let result = parse_formula("y ~ x1 * x2 * x3").unwrap();
         assert_eq!(result.response, "y");
         let expected = vec![
-            "(Intercept)", "x1", "x2", "x3", 
-            "x1:x2", "x1:x3", "x2:x3", "x1:x2:x3"
+            "(Intercept)",
+            "x1",
+            "x2",
+            "x3",
+            "x1:x2",
+            "x1:x3",
+            "x2:x3",
+            "x1:x2:x3",
         ];
         assert_eq!(result.predictors, expected);
         assert!(result.has_intercept);

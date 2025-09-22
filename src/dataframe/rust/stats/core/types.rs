@@ -129,7 +129,6 @@ impl TestType {
     }
 }
 
-
 /// Test statistic names that can be returned by statistical tests
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen)]
@@ -356,7 +355,6 @@ pub struct ChiSquareVarianceTestResult {
     pub confidence_interval: ConfidenceInterval,
 }
 
-
 /// Mann-Whitney test method type
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen)]
@@ -386,7 +384,6 @@ pub struct MannWhitneyTestResult {
     pub error_message: Option<String>,
     pub effect_size: EffectSize,
 }
-
 
 /// Pearson correlation test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -475,7 +472,6 @@ pub struct PairedTTestResult {
     pub standard_error: f64,
 }
 
-
 /// Wilcoxon signed-rank test method type
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen)]
@@ -505,7 +501,6 @@ pub struct WilcoxonSignedRankTestResult {
     pub error_message: Option<String>,
     pub effect_size: EffectSize,
 }
-
 
 /// Kruskal-Wallis test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -587,7 +582,6 @@ pub struct ShapiroWilkTestResult {
     pub sample_size: usize,
 }
 
-
 /// Fisher's exact test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
@@ -605,8 +599,10 @@ pub struct FishersExactTestResult {
 #[cfg_attr(feature = "wasm", wasm_bindgen)]
 #[derive(Debug)]
 pub struct KolmogorovSmirnovTestResult {
+    #[allow(dead_code)]
     pub(crate) test_statistic: TestStatistic,
     pub p_value: f64,
+    #[allow(dead_code)]
     pub(crate) test_name: String,
     pub alpha: f64,
     pub sample1_size: usize,
@@ -615,6 +611,7 @@ pub struct KolmogorovSmirnovTestResult {
     pub d_statistic: f64,
     pub d_plus: f64,
     pub d_minus: f64,
+    #[allow(dead_code)]
     pub(crate) alternative: String,
 }
 

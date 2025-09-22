@@ -37,7 +37,7 @@ pub fn geese_fit(inputs: GeeseInputs) -> Result<GeeglmResult, String> {
     };
 
     // Initialize params from GLM
-    let beta_start = inputs.glm_result.coefficients.clone();
+    let _beta_start = inputs.glm_result.coefficients.clone();
     let alpha_start = vec![0.0]; // independence/exchangeable start
     let gamma_start = if inputs.scale_fix {
         vec![inputs.scale_value]

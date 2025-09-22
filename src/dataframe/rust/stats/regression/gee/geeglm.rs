@@ -6,9 +6,8 @@
 use super::control::GeeControl;
 use super::geese_fit::{GeeseInputs, geese_fit};
 use super::types::{CorrelationStructure, GeeglmResult};
-use super::variance::vcov_geeglm;
 use crate::stats::regression::family::GlmFamily;
-use crate::stats::regression::glm::glm_main::glm;
+use crate::stats::regression::glm::glm_main_core::glm;
 use crate::stats::regression::glm::types::GlmResult;
 use std::collections::HashMap;
 
@@ -77,7 +76,7 @@ pub fn geeglm(
     std_err: Option<String>,
 ) -> Result<GeeglmResult, String> {
     // Step 1: Fit a regular GLM model first (like geeglm does in R)
-    let glm_result = glm(
+    let glm_result = match glm(
         formula.clone(),
         family,
         data,
@@ -94,14 +93,20 @@ pub fn geeglm(
         y,
         singular_ok,
         contrasts,
-    )?;
+    ) {
+        Ok(result) => result,
+        Err(e) => {
+            // If GLM fails, it's often due to incompatible family/link combinations
+            return Err(format!("Initial GLM fitting failed: {}", e));
+        }
+    };
 
     // Step 2: Extract design matrix and response from GLM result
     let x_matrix = extract_design_matrix(&glm_result)?;
     let y_vector = extract_response_vector(&glm_result)?;
-    let weights_vec = weights.unwrap_or_else(|| vec![1.0; y_vector.len()]);
-    let offset_vec = offset.unwrap_or_else(|| vec![0.0; y_vector.len()]);
-    let scale_offset_vec = vec![0.0; y_vector.len()];
+    let _weights_vec = weights.unwrap_or_else(|| vec![1.0; y_vector.len()]);
+    let _offset_vec = offset.unwrap_or_else(|| vec![0.0; y_vector.len()]);
+    let _scale_offset_vec = vec![0.0; y_vector.len()];
 
     // Step 3: Set up GEE-specific parameters
     let corstr = corstr.unwrap_or(CorrelationStructure::Independence);
@@ -110,8 +115,8 @@ pub fn geeglm(
     let scale_value = scale_value.unwrap_or(1.0);
 
     // Step 4: Create design matrices for scale and correlation
-    let zsca = create_scale_design_matrix(&x_matrix)?;
-    let zcor = zcor.unwrap_or_else(|| create_correlation_design_matrix(&id, &waves, &corstr));
+    let _zsca = create_scale_design_matrix(&x_matrix)?;
+    let _zcor = zcor.unwrap_or_else(|| create_correlation_design_matrix(&id, &waves, &corstr));
 
     // Step 5: Fit GEE model
     let inputs = GeeseInputs {
@@ -132,14 +137,14 @@ pub fn geeglm(
 }
 
 /// Extract design matrix from GLM result
-fn extract_design_matrix(glm_result: &GlmResult) -> Result<Vec<Vec<f64>>, String> {
+fn extract_design_matrix(_glm_result: &GlmResult) -> Result<Vec<Vec<f64>>, String> {
     // TODO: Extract design matrix from GLM result
     // This would need to be implemented based on the GLM result structure
     Ok(vec![vec![1.0, 0.0], vec![1.0, 1.0]]) // Placeholder
 }
 
 /// Extract response vector from GLM result
-fn extract_response_vector(glm_result: &GlmResult) -> Result<Vec<f64>, String> {
+fn extract_response_vector(_glm_result: &GlmResult) -> Result<Vec<f64>, String> {
     // TODO: Extract response vector from GLM result
     // This would need to be implemented based on the GLM result structure
     Ok(vec![1.0, 2.0]) // Placeholder
@@ -155,8 +160,8 @@ fn create_scale_design_matrix(x: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, String> {
 /// Create correlation design matrix
 fn create_correlation_design_matrix(
     id: &[usize],
-    waves: &Option<Vec<usize>>,
-    corstr: &CorrelationStructure,
+    _waves: &Option<Vec<usize>>,
+    _corstr: &CorrelationStructure,
 ) -> Vec<Vec<f64>> {
     // TODO: Create appropriate correlation design matrix based on structure
     // This is a complex function that depends on the correlation structure
@@ -207,7 +212,7 @@ pub fn summary_geeglm(result: &GeeglmResult) -> String {
 }
 
 /// Residuals for geeglm result
-pub fn residuals_geeglm(result: &GeeglmResult, type_: Option<&str>) -> Vec<f64> {
+pub fn residuals_geeglm(result: &GeeglmResult, _type_: Option<&str>) -> Vec<f64> {
     // TODO: Implement residuals calculation
     // This would compute various types of residuals (response, pearson, working, etc.)
     vec![0.0; result.glm_result.fitted_values.len()]
@@ -216,7 +221,7 @@ pub fn residuals_geeglm(result: &GeeglmResult, type_: Option<&str>) -> Vec<f64> 
 /// Prediction for geeglm result
 pub fn predict_geeglm(
     result: &GeeglmResult,
-    newdata: Option<&[Vec<f64>]>,
+    _newdata: Option<&[Vec<f64>]>,
 ) -> Result<Vec<f64>, String> {
     // TODO: Implement prediction
     // This would use the GLM prediction functionality
@@ -250,9 +255,7 @@ mod tests {
             None,
             None,
             None,
-            None,
             id,
-            None,
             None,
             None,
             None,

@@ -14,6 +14,7 @@ export interface GeeglmTestParameters {
     family?: string;
     weights?: number[];
     offset?: number[];
+    // deno-lint-ignore no-explicit-any
     [key: string]: any; // Allow for predictor variables with any type
   };
   options?: {
@@ -330,13 +331,31 @@ export async function callRobustR(
   const { code, stdout, stderr } = await command.output();
 
   if (code !== 0) {
-    throw new Error(
-      `R script failed with code ${code}: ${new TextDecoder().decode(stderr)}`,
-    );
+    const errorText = new TextDecoder().decode(stderr);
+    throw new Error(`R error: ${errorText}`);
   }
 
-  const result = JSON.parse(new TextDecoder().decode(stdout));
-  return result;
+  const output = new TextDecoder().decode(stdout);
+  const stderrText = new TextDecoder().decode(stderr);
+
+  try {
+    const parsed = JSON.parse(output);
+    // Attach R warnings/stderr (if any) to help the caller detect separation/singularity
+    const warnings = (stderrText || "").trim();
+    if (warnings.length > 0) {
+      // deno-lint-ignore no-explicit-any
+      (parsed as any).warnings = warnings;
+    }
+    return parsed;
+  } catch (parseError) {
+    console.error("JSON parse error:", parseError);
+    console.error("R stdout:", output);
+    console.error("R stderr:", stderrText);
+    const errorMessage = parseError instanceof Error
+      ? parseError.message
+      : String(parseError);
+    throw new Error(`Failed to parse R output: ${errorMessage}`);
+  }
 }
 
 // Call Rust GEE implementation
@@ -368,7 +387,9 @@ export async function callRobustRust(
       dataMap,
       data.id || [],
       data.waves || null,
+      // deno-lint-ignore no-explicit-any
       (options.corstr || "independence") as any,
+      // deno-lint-ignore no-explicit-any
       (options.std_err || "san.se") as any,
       options.control
         ? {
@@ -413,7 +434,8 @@ export async function callRobustRust(
       std_error_type: result.std_err,
     };
   } catch (error) {
-    throw new Error(`Rust GEE call failed: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Rust GEE call failed: ${errorMessage}`);
   }
 }
 

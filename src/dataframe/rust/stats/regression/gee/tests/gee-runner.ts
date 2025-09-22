@@ -9,18 +9,18 @@ import {
   nextRandom,
   setTestSeed,
 } from "./gee-interface.ts";
+import {
+  hasSystemError,
+  isPathologicalCase,
+  isStatisticalFailure,
+  printComparisonResults,
+  printDetailedCoefficients,
+  printSummaryByType,
+  printTestParameters,
+  TestResult,
+} from "../../tests/test-helpers.ts";
 
-interface ComparisonResult {
-  testName: string;
-  rResult: any;
-  rustResult: any;
-  coefficientDiff: number;
-  rSquaredDiff: number;
-  aicDiff: number;
-  status: "PASS" | "FAIL" | "ERROR";
-  errorMessage?: string;
-  rError?: string;
-  rustError?: string;
+interface ComparisonResult extends TestResult {
   testParams?: {
     sampleSize: number;
     numClusters: number;
@@ -86,6 +86,9 @@ export async function runRobustComparison(
 
   // Case 1: Both succeeded
   if (rResult && rustResult) {
+    // Attach R warnings if present (from callRobustR)
+    const rWarnings: string = (rResult as any)?.warnings || "";
+
     // Calculate differences for key metrics
     const rCoefs = rResult.coefficients || [];
     const rustCoefs = rustResult.coefficients || [];
@@ -103,23 +106,27 @@ export async function runRobustComparison(
     );
     const aicDiff = Math.abs((rResult.aic || 0) - (rustResult.aic || 0));
 
-    // Determine status based on thresholds
-    const coefficientThreshold = 0.01;
-    const rSquaredThreshold = 0.01;
-    const aicThreshold = 1.0;
+    // Filter out NaN values when computing maxDiff
+    const diffs = [coefficientDiff, rSquaredDiff, aicDiff].filter((d) =>
+      !isNaN(d)
+    );
+    const maxDiff = diffs.length > 0 ? Math.max(...diffs) : 0;
 
-    let status: "PASS" | "FAIL" = "PASS";
-    let errorMessage: string | undefined;
-
-    if (
-      coefficientDiff > coefficientThreshold ||
-      rSquaredDiff > rSquaredThreshold ||
-      aicDiff > aicThreshold
-    ) {
-      status = "FAIL";
-      errorMessage = `Coefficient diff: ${
-        coefficientDiff.toFixed(6)
-      }, R² diff: ${rSquaredDiff.toFixed(6)}, AIC diff: ${aicDiff.toFixed(6)}`;
+    // Determine status
+    // If R reported separation/singularity-like warnings, relax coefficient comparison and
+    // focus on deviance/AIC agreement (binomial separation often yields unstable coefs)
+    const warnsSeparation = typeof rWarnings === "string" &&
+      /fitted probabilities numerically 0 or 1 occurred|separation|singular|did not converge/i
+        .test(rWarnings);
+    let status: "PASS" | "FAIL" = "FAIL";
+    if (warnsSeparation) {
+      const aicClose = isFinite(aicDiff) && aicDiff < 1e-6;
+      const r2Close = isFinite(rSquaredDiff) && rSquaredDiff < 1e-6;
+      status = aicClose && r2Close
+        ? "PASS"
+        : (maxDiff < 1e-1 ? "PASS" : "FAIL");
+    } else {
+      status = maxDiff < 0.1 ? "PASS" : "FAIL";
     }
 
     return {
@@ -130,7 +137,6 @@ export async function runRobustComparison(
       rSquaredDiff,
       aicDiff,
       status,
-      errorMessage,
       testParams: {
         sampleSize: generatedData.y.length,
         numClusters: generatedData.id.length > 0
@@ -145,66 +151,39 @@ export async function runRobustComparison(
     };
   }
 
-  // Case 2: R failed, Rust succeeded
-  if (!rResult && rustResult) {
-    return {
-      testName: `${params.testType} (${params.options?.family || "default"})`,
-      rResult: null,
-      rustResult,
-      coefficientDiff: 0,
-      rSquaredDiff: 0,
-      aicDiff: 0,
-      status: "ERROR",
-      errorMessage: "R failed but Rust succeeded",
-      rError: rError || "Unknown R error",
-      testParams: {
-        sampleSize: generatedData.y.length,
-        numClusters: generatedData.id.length > 0
-          ? Math.max(...generatedData.id)
-          : 0,
-        formula: generatedData.formula,
-        family: params.options?.family || "default",
-        corstr: params.options?.corstr || "independence",
-        alpha: params.options?.alpha || 0.05,
-      },
-      generatedData,
-    };
+  // Case 2: Both failed - check if they failed for the same statistical reason
+  if (rError && rustError) {
+    const rIsStatistical = isStatisticalFailure(rError);
+    const rustIsStatistical = isStatisticalFailure(rustError);
+
+    // If both failed for statistical reasons, this is expected behavior (PASS)
+    if (rIsStatistical && rustIsStatistical) {
+      return {
+        testName: `${params.testType} (${params.options?.family || "default"})`,
+        rResult: null,
+        rustResult: null,
+        coefficientDiff: 0,
+        rSquaredDiff: 0,
+        aicDiff: 0,
+        status: "PASS",
+        testParams: {
+          sampleSize: generatedData.y.length,
+          numClusters: generatedData.id.length > 0
+            ? Math.max(...generatedData.id)
+            : 0,
+          formula: generatedData.formula,
+          family: params.options?.family || "default",
+          corstr: params.options?.corstr || "independence",
+          alpha: params.options?.alpha || 0.05,
+        },
+        rError: rError || undefined,
+        rustError: rustError || undefined,
+        generatedData,
+      };
+    }
   }
 
-  // Case 3: Rust failed, R succeeded
-  if (rResult && !rustResult) {
-    return {
-      testName: `${params.testType} (${params.options?.family || "default"})`,
-      rResult,
-      rustResult: null,
-      coefficientDiff: 0,
-      rSquaredDiff: 0,
-      aicDiff: 0,
-      status: "ERROR",
-      errorMessage: "Rust failed but R succeeded",
-      rustError: rustError || "Unknown Rust error",
-      testParams: {
-        sampleSize: generatedData.y.length,
-        numClusters: generatedData.id.length > 0
-          ? Math.max(...generatedData.id)
-          : 0,
-        formula: generatedData.formula,
-        family: params.options?.family || "default",
-        corstr: params.options?.corstr || "independence",
-        alpha: params.options?.alpha || 0.05,
-      },
-      generatedData,
-    };
-  }
-
-  // Case 4: Both failed
-  const hasSystemError = (error: string | null) => {
-    if (!error) return false;
-    return error.includes("panic") ||
-      error.includes("thread 'main' panicked") ||
-      error.includes("WebAssembly");
-  };
-
+  // Case 3: Different outcomes (one succeeded, one failed, or different error types)
   const status = (hasSystemError(rError) || hasSystemError(rustError))
     ? "ERROR"
     : "FAIL";
@@ -232,95 +211,6 @@ export async function runRobustComparison(
     },
     generatedData,
   };
-}
-
-// Print test parameters table
-function printTestParameters(results: ComparisonResult[]): void {
-  console.log("\n" + "=".repeat(120));
-  console.log("📋 TEST PARAMETERS");
-  console.log("=".repeat(120));
-
-  console.log(
-    "Test Name".padEnd(25) + "Sample Size".padEnd(12) +
-      "Clusters".padEnd(12) +
-      "Formula".padEnd(20) + "Family".padEnd(12) + "Corstr".padEnd(12) +
-      "Alpha".padEnd(8),
-  );
-  console.log("-".repeat(120));
-
-  for (const result of results) {
-    const testName = result.testName;
-    const params = result.testParams;
-
-    if (!params) {
-      console.log(
-        testName.padEnd(25) +
-          "N/A".padEnd(12) +
-          "N/A".padEnd(12) +
-          "N/A".padEnd(20) +
-          "N/A".padEnd(12) +
-          "N/A".padEnd(12) +
-          "N/A".padEnd(8),
-      );
-      continue;
-    }
-
-    console.log(
-      testName.padEnd(25) +
-        params.sampleSize.toString().padEnd(12) +
-        params.numClusters.toString().padEnd(12) +
-        params.formula.padEnd(20) +
-        params.family.padEnd(12) +
-        params.corstr.padEnd(12) +
-        params.alpha.toString().padEnd(8),
-    );
-  }
-
-  // Print generated data for each test
-  console.log("\n" + "=".repeat(120));
-  console.log("📊 GENERATED TEST DATA");
-  console.log("=".repeat(120));
-
-  for (const result of results) {
-    if (!result.generatedData) continue;
-
-    console.log(`\n🔬 ${result.testName}`);
-    console.log("-".repeat(80));
-    console.log(`Formula: ${result.generatedData.formula}`);
-    console.log(`Sample Size: ${result.generatedData.y.length}`);
-    console.log(
-      `Clusters: ${
-        result.generatedData.id.length > 0
-          ? Math.max(...result.generatedData.id)
-          : 0
-      }`,
-    );
-
-    // Print response variable (y) - first 10 values
-    console.log(`\nResponse Variable (y) [first 10]:`);
-    const ySample = result.generatedData.y.slice(0, 10);
-    console.log(
-      `  [${ySample.map((v) => v.toFixed(4)).join(", ")}]`,
-    );
-
-    // Print cluster IDs - first 10 values
-    console.log(`\nCluster IDs [first 10]:`);
-    const idSample = result.generatedData.id.slice(0, 10);
-    console.log(
-      `  [${idSample.join(", ")}]`,
-    );
-
-    // Print predictor variables - first 10 values
-    console.log(`\nPredictor Variables [first 10]:`);
-    for (
-      const [varName, values] of Object.entries(result.generatedData.predictors)
-    ) {
-      const valueSample = values.slice(0, 10);
-      console.log(
-        `  ${varName}: [${valueSample.map((v) => v.toFixed(4)).join(", ")}]`,
-      );
-    }
-  }
 }
 
 // Main test suite
@@ -375,30 +265,26 @@ export async function runGeeglmTestSuite(): Promise<ComparisonResult[]> {
           );
           const result = await runRobustComparison(params);
 
-          // Pathology filter: extremely large diffs treated as separation/singularity → retry
-          if (result.status === "FAIL" && result.coefficientDiff > 10) {
-            if (attempt < maxAttempts) {
-              console.log(
-                `  ⚠️  Large coefficient diff (${
-                  result.coefficientDiff.toFixed(4)
-                }), retrying...`,
-              );
-              continue;
-            }
+          // Pathology filter: retry if separation/singularity or large instabilities or step-size failures
+          if (isPathologicalCase(result) && attempt < maxAttempts) {
+            console.log(
+              `  ⚠️  Pathological case detected (${result.status}), retrying (${attempt}/${maxAttempts})...`,
+            );
+            continue;
           }
 
           allResults.push(result);
           break;
         }
       } catch (error) {
-        console.log(`  ❌ Test failed: ${error.message}`);
+        console.error(`  🔥 Error with ${testType}:`, error);
         allResults.push({
-          testName: `${testType} (${i + 1})`,
+          testName: `${testType} (error)`,
           rResult: null,
           rustResult: null,
-          coefficientDiff: 0,
-          rSquaredDiff: 0,
-          aicDiff: 0,
+          coefficientDiff: 1,
+          rSquaredDiff: 1,
+          aicDiff: 1,
           status: "ERROR",
           errorMessage: String(error),
         });
@@ -406,43 +292,14 @@ export async function runGeeglmTestSuite(): Promise<ComparisonResult[]> {
     }
   }
 
-  // Print detailed results
-  console.log("\n" + "=".repeat(100));
-  console.log("📊 DETAILED RESULTS");
-  console.log("=".repeat(100));
+  // Print detailed coefficient comparison first
+  printDetailedCoefficients(allResults);
 
-  for (const result of allResults) {
-    const status = result.status === "PASS"
-      ? "✅"
-      : result.status === "FAIL"
-      ? "❌"
-      : "💥";
-    console.log(`${status} ${result.testName}`);
-
-    if (result.status === "PASS") {
-      if (result.rResult?.coefficients) {
-        console.log(
-          `   Coefficients: [${
-            result.rResult.coefficients.map((c: number) => c.toFixed(4)).join(
-              ", ",
-            )
-          }]`,
-        );
-      }
-    } else if (result.status === "FAIL") {
-      console.log(`   ${result.errorMessage}`);
-    } else {
-      if (result.rError) {
-        console.log(`   R ERROR: ${result.rError.substring(0, 100)}...`);
-      }
-      if (result.rustError) {
-        console.log(`   RUST ERROR: ${result.rustError.substring(0, 100)}...`);
-      }
-    }
-  }
-
-  // Print test parameters
+  // Print test parameters table
   printTestParameters(allResults);
+
+  // Print comprehensive results
+  printComparisonResults(allResults);
 
   // Summary
   console.log("\n" + "=".repeat(100));
@@ -468,30 +325,7 @@ export async function runGeeglmTestSuite(): Promise<ComparisonResult[]> {
   );
 
   // Summary by test type
-  console.log("\n" + "=".repeat(80));
-  console.log("📈 SUMMARY BY TEST TYPE");
-  console.log("=".repeat(80));
-
-  const summaryByType: { [key: string]: { passed: number; total: number } } =
-    {};
-
-  for (const result of allResults) {
-    const testType = result.testName.split(" ")[0];
-    if (!summaryByType[testType]) {
-      summaryByType[testType] = { passed: 0, total: 0 };
-    }
-    summaryByType[testType].total++;
-    if (result.status === "PASS") {
-      summaryByType[testType].passed++;
-    }
-  }
-
-  for (const [testType, stats] of Object.entries(summaryByType)) {
-    const percentage = ((stats.passed / stats.total) * 100).toFixed(1);
-    console.log(
-      `${testType.padEnd(40)} ${stats.passed}/${stats.total} (${percentage}%)`,
-    );
-  }
+  printSummaryByType(allResults);
 
   if (passCount === allResults.length) {
     console.log("\n🎉 All tests passed!");

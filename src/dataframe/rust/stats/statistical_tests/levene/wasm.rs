@@ -1,10 +1,13 @@
+#[cfg(feature = "wasm")]
 use super::levene_test;
-use crate::stats::core::types::{
-    EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic, TestStatisticName,
-};
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+
+#[cfg(feature = "wasm")]
+use crate::stats::core::types::{
+    EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic, TestStatisticName,
+};
 
 /// WASM wrapper for Levene's test for equality of variances
 ///

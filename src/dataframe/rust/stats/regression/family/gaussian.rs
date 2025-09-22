@@ -118,7 +118,6 @@ impl GlmFamily for GaussianFamily {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::links::IdentityLink;
 
     #[test]
     fn test_gaussian_family_creation() {

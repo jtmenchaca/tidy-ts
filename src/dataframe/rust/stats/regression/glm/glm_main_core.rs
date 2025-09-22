@@ -2,19 +2,14 @@
 //!
 //! This file contains the core GLM function implementation.
 
-use super::formula_parser::{create_model_frame};
 use super::glm_control::glm_control;
-use super::glm_fit::glm_fit;
+use super::glm_fit_core::glm_fit;
 use super::types::{GlmControl, GlmResult};
 use crate::stats::regression::family::GlmFamily;
-use crate::stats::regression::model::ModelMatrix;
 use crate::stats::regression::shared::formula_parser::{
-    parse_formula as parse_formula_shared, build_design_matrix,
+    build_design_matrix, parse_formula as parse_formula_shared,
 };
 use std::collections::HashMap;
-
-#[cfg(feature = "wasm")]
-use web_sys::console;
 
 /// Main GLM function
 ///
@@ -94,11 +89,11 @@ pub fn glm(
     });
     let na_action = na_action.unwrap_or_else(|| "na.omit".to_string());
     let control = control.unwrap_or_else(|| glm_control(None, None, None).unwrap());
-    let model = model.unwrap_or(true);
+    let _model = model.unwrap_or(true);
     let method = method.unwrap_or_else(|| "glm.fit".to_string());
-    let x = x.unwrap_or(false);
+    let _x = x.unwrap_or(false);
     let y = y.unwrap_or(true);
-    let singular_ok = singular_ok.unwrap_or(true);
+    let _singular_ok = singular_ok.unwrap_or(true);
 
     // Validate method
     if method != "glm.fit" {
@@ -112,76 +107,34 @@ pub fn glm(
         control
     };
 
-    // Parse the formula (shared parser for LM/GLM consistency)
-    #[cfg(feature = "wasm")]
-    // Parsing formula
-    let parsed_formula_shared = parse_formula_shared(&formula)?;
-    #[cfg(feature = "wasm")]
-    // Formula parsed
+    // Parse the formula (shared parser)
+    let parsed_formula = parse_formula_shared(&formula)?;
 
     // Build response and design matrix using shared builder
-    let (y_vec, x_mat, variable_names) = if let Some(ref data) = data {
+    let (y_vec, x_mat) = if let Some(ref data) = data {
         // Response
         let y_vec = data
-            .get(&parsed_formula_shared.response)
-            .ok_or_else(|| format!(
-                "Response variable '{}' not found in data",
-                parsed_formula_shared.response
-            ))?
+            .get(&parsed_formula.response)
+            .ok_or_else(|| {
+                format!(
+                    "Response variable '{}' not found in data",
+                    parsed_formula.response
+                )
+            })?
             .clone();
         let n = y_vec.len();
 
         // Design matrix (column-major) then reshape to Vec<Vec<f64>> (n x p)
-        let (x_col_major, p) = build_design_matrix(
-            data,
-            &parsed_formula_shared.predictors,
-            n,
-        )?;
+        let (x_col_major, p) = build_design_matrix(data, &parsed_formula.predictors, n)?;
         let mut x_mat: Vec<Vec<f64>> = vec![vec![0.0; p]; n];
         for j in 0..p {
             for i in 0..n {
                 x_mat[i][j] = x_col_major[i + j * n];
             }
         }
-        (y_vec, x_mat, parsed_formula_shared.predictors.clone())
+        (y_vec, x_mat)
     } else {
         return Err("Data must be provided".to_string());
-    };
-
-    // Create model frame
-    let model_frame = if let Some(ref data) = data {
-        // Use existing model frame creator; predictor ordering used for X comes from shared parser
-        let parsed_formula_for_frame = super::formula_parser::parse_formula(&formula)?;
-        create_model_frame(&parsed_formula_for_frame, data, weights.clone(), offset.clone())?
-    } else {
-        super::formula_parser_model_frame::ModelFrame {
-            variables: HashMap::new(),
-            terms: Some(formula.clone()),
-            na_action: na_action.clone(),
-            weights: weights.clone(),
-            offset: offset.clone(),
-            response_name: Some(parsed_formula_shared.response.clone()),
-            predictor_names: Some(parsed_formula_shared.predictors.clone()),
-        }
-    };
-
-    // Convert Vec<Vec<f64>> to Vec<f64> for ModelMatrix
-    let mut matrix_vec = Vec::new();
-    let n_rows = x_mat.len();
-    let n_cols = if n_rows > 0 { x_mat[0].len() } else { 0 };
-
-    for row in &x_mat {
-        matrix_vec.extend_from_slice(row);
-    }
-
-    // Create model matrix
-    let model_matrix = ModelMatrix {
-        matrix: matrix_vec,
-        n_rows,
-        n_cols,
-        column_names: variable_names.clone(),
-        term_assignments: vec![0; n_cols], // TODO: Calculate actual term assignments
-        row_names: None,
     };
 
     // Validate weights
@@ -203,8 +156,6 @@ pub fn glm(
     }
 
     // Call glm.fit
-    #[cfg(feature = "wasm")]
-    // Starting glm_fit
     let mut fit = glm_fit(
         x_mat,
         y_vec,
@@ -215,29 +166,12 @@ pub fn glm(
         offset,
         family,
         control,
-        parsed_formula_shared.has_intercept, // Use intercept from formula
+        parsed_formula.has_intercept, // Use intercept from formula
     )?;
 
-    // TODO: Recalculate null deviance if offset and intercept
-    // This is done in the original implementation but not yet implemented here
-
     // Add additional information to the result
-    // Convert formula_parser_model_frame::ModelFrame to model_frame_types::ModelFrame
-    let converted_model_frame = if model {
-        Some(crate::stats::regression::model::c::model_frame::model_frame_types::ModelFrame {
-            variables: model_frame.variables.iter().map(|(_, values)| {
-                crate::stats::regression::model::c::model_frame::model_frame_types::Variable::Numeric(values.clone())
-            }).collect(),
-            variable_names: model_frame.variables.keys().cloned().collect(),
-            row_names: None,
-            n_rows: model_frame.variables.values().next().map(|v| v.len()).unwrap_or(0),
-            n_cols: model_frame.variables.len(),
-        })
-    } else {
-        None
-    };
-    fit.model = converted_model_frame;
-    fit.x = if x { Some(model_matrix) } else { None };
+    fit.model = None; // Model frame removed
+    fit.x = None; // Design matrix removed for now
     if !y {
         fit.y = vec![];
     }

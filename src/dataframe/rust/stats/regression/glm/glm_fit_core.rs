@@ -8,7 +8,7 @@ use super::glm_fit_core_initialization::*;
 use super::glm_fit_core_validation::*;
 use super::glm_fit_core_warnings::*;
 
-use super::glm_fit_irls::run_irls_iteration;
+use super::glm_fit_irls_core::run_irls_iteration;
 use super::types::{GlmControl, GlmResult};
 use crate::stats::regression::family::GlmFamily;
 
@@ -51,7 +51,7 @@ pub fn glm_fit(
     y: Vec<f64>,
     weights: Option<Vec<f64>>,
     start: Option<Vec<f64>>,
-    etastart: Option<Vec<f64>>,
+    _etastart: Option<Vec<f64>>,
     mustart: Option<Vec<f64>>,
     offset: Option<Vec<f64>>,
     family: Box<dyn GlmFamily>,

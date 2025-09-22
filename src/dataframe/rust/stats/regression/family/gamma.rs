@@ -135,7 +135,6 @@ impl GlmFamily for GammaFamily {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stats::regression::family::links::InverseLink;
 
     #[test]
     fn test_gamma_family_creation() {

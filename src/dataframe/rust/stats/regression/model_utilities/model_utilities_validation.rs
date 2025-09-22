@@ -1,8 +1,15 @@
 //! Model validation and utility functions
 
-use super::model_utilities_types::{ModelObject, TermsObject};
-use crate::stats::regression::{Variable, is_empty_model};
+use super::model_utilities_types::{ModelObject, TermsObject, Variable};
 use std::collections::HashMap;
+
+/// Check if model is empty
+pub fn is_empty_model(terms: &Option<TermsObject>) -> bool {
+    match terms {
+        Some(t) => t.terms.is_empty(),
+        None => true,
+    }
+}
 
 /// Validate model object
 pub fn validate_model_object(model: &ModelObject) -> Result<(), &'static str> {
@@ -135,7 +142,7 @@ pub fn get_model_summary(model: &ModelObject) -> HashMap<String, String> {
     summary.insert("has_offset".to_string(), has_offset(model).to_string());
     summary.insert("has_response".to_string(), has_response(model).to_string());
     summary.insert("is_complete".to_string(), is_complete_model(model).to_string());
-    summary.insert("is_empty".to_string(), is_empty_model(model).to_string());
+    summary.insert("is_empty".to_string(), is_empty_model(&model.terms).to_string());
     
     summary
 }

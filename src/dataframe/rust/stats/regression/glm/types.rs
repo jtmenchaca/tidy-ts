@@ -16,5 +16,5 @@ pub use super::types_anova::{AnovaRow, GlmAnova};
 // Re-export profile types
 pub use super::types_profile::{GlmProfile, ParameterProfile};
 
-// Re-export enum types
-pub use super::types_enums::{ResidualType, WeightType};
+// Re-export shared enum types
+pub use crate::stats::regression::shared::{ResidualType, WeightType};

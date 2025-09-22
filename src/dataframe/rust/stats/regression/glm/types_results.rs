@@ -7,7 +7,23 @@ use std::collections::HashMap;
 
 use super::types_control::GlmControl;
 use crate::stats::regression::family::GlmFamily;
-use crate::stats::regression::model::{ModelFrame, ModelMatrix};
+
+/// A design matrix for statistical modeling
+#[derive(Debug, Clone)]
+pub struct ModelMatrix {
+    /// The design matrix (column-major order, n_rows x n_cols)
+    pub matrix: Vec<f64>,
+    /// Number of observations (rows)
+    pub n_rows: usize,
+    /// Number of predictor variables (columns)
+    pub n_cols: usize,
+    /// Names of the columns
+    pub column_names: Vec<String>,
+    /// Assignment of columns to model terms
+    pub term_assignments: Vec<i32>,
+    /// Row names (optional)
+    pub row_names: Option<Vec<String>>,
+}
 
 /// GLM fit result
 pub struct GlmResult {
@@ -68,7 +84,7 @@ pub struct GlmResult {
     /// Whether the algorithm stopped at boundary
     pub boundary: bool,
     /// Model frame (if requested)
-    pub model: Option<ModelFrame>,
+    pub model: Option<crate::stats::regression::model_utilities::ModelFrame>,
     /// Design matrix (if requested)
     pub x: Option<ModelMatrix>,
     /// Call information

@@ -1,7 +1,10 @@
 #!/usr/bin/env Rscript
 
-library(jsonlite)
-library(geepack)
+# Suppress warnings about package versions
+suppressWarnings({
+  library(jsonlite)
+  library(geepack)
+})
 
 # Parse the JSON parameter from command line
 args <- commandArgs(trailingOnly = TRUE)
@@ -80,6 +83,21 @@ run_gee_test <- function(data, options) {
       family_obj <- poisson(link = identity)
     } else {
       family_obj <- poisson(link = log)
+    }
+  } else if (family == "gaussian") {
+    if (link == "log") {
+      # Check if response has non-positive values for log link
+      if (any(df$y <= 0)) {
+        # Transform response to ensure positivity
+        df$y <- df$y + abs(min(df$y)) + 1
+      }
+      family_obj <- gaussian(link = log)
+    } else if (link == "identity") {
+      family_obj <- gaussian(link = identity)
+    } else if (link == "inverse") {
+      family_obj <- gaussian(link = "1/mu^2")
+    } else {
+      family_obj <- gaussian(link = identity)
     }
   } else {
     family_obj <- gaussian(link = identity)

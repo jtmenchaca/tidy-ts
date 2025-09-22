@@ -35,7 +35,7 @@ pub use variance::{
 };
 
 // Main GLM family trait
-pub trait GlmFamily: Send + Sync {
+pub trait GlmFamily: Send + Sync + std::fmt::Debug {
     fn name(&self) -> &'static str;
     fn link(&self) -> &dyn LinkFunction;
     fn variance(&self) -> &dyn VarianceFunction;
@@ -44,7 +44,7 @@ pub trait GlmFamily: Send + Sync {
     fn valid_y(&self, y: &[f64]) -> Result<(), &'static str>;
     fn initialize(&self, y: &[f64], mu: &mut [f64], weights: &mut [f64]) -> Result<(), String>;
     fn dispersion(&self) -> Option<f64>;
-    
+
     /// Clone method for trait objects
     fn clone_box(&self) -> Box<dyn GlmFamily>;
 

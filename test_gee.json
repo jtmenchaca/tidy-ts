@@ -1,1 +1,0 @@
-{"testType":"geeglm.gaussian.identity.exchangeable","data":{"y":[1,2,3,4,5,6],"x1":[0.1,0.2,0.3,0.4,0.5,0.6],"x2":[0.7,0.8,0.9,1.0,1.1,1.2],"id":[1,1,2,2,3,3],"formula":"y ~ x1 + x2"},"options":{"family":"gaussian","link":"identity","corstr":"exchangeable","alpha":0.05}}

@@ -16,6 +16,8 @@ target/
 
 # Temporary files
 /tmp/*
+/tmp/**
+tmp/
 *.pem
 
 # IDE and system files
