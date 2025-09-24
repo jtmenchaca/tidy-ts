@@ -1,4 +1,4 @@
-// deno-lint-ignore-file no-explicit-any
+// deno-lint-ignore-file no-explicit-any no-unused-vars require-await
 
 import {
   createColumnarDataFrameFromStore,
@@ -10,10 +10,8 @@ import {
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-import {
-  // Helper that returns the bytes of the already-built wasm (ArrayBufferLike is fine).
-  getWasmBytes,
-} from "../../wasm/wasm-loader.ts";
+// Note: Worker functionality removed - parallel joins disabled
+// import { getWasmBytes } from "../../wasm/wasm-loader.ts";
 import type { JoinKey, ObjectJoinOptions } from "./types/index.ts";
 
 /**
@@ -233,6 +231,10 @@ export function left_join_parallel<
   left: DataFrame<LeftRow>,
 ) => Promise<DataFrame<Prettify<LeftRow & Partial<RightRow>>>> {
   return async (left: DataFrame<LeftRow>) => {
+    throw new Error(
+      "Parallel joins are currently disabled due to worker functionality removal",
+    );
+    /*
     const overallStart = performance.now();
     const span = tracer.startSpan(left as any, "left_join_parallel");
     try {
@@ -319,7 +321,8 @@ export function left_join_parallel<
         left as any,
         "prepare-worker-messages",
         () => {
-          const wasmBytes: ArrayBufferLike = getWasmBytes();
+          // Worker functionality removed - throw error
+          throw new Error("Parallel joins are currently disabled due to worker functionality removal");
           const workerUrl = new URL(
             "../../wasm-join-worker.ts",
             import.meta.url,
@@ -415,6 +418,7 @@ export function left_join_parallel<
     } finally {
       tracer.endSpan(left as any, span);
     }
+    */
   };
 }
 

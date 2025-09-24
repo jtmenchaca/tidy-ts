@@ -13,10 +13,11 @@
     "test:all": "npm run test:node && npm run test:bun && npm run test:browser",
     "test:sh": "bash test-runner.sh",
     "install:jsr": "npx jsr add @tidy-ts/dataframe",
-    "install:jsr:bun": "bunx jsr add @tidy-ts/dataframe"
+    "install:jsr:bun": "bunx jsr add @tidy-ts/dataframe",
+    "test:deno": "deno run --allow-all --no-config --import-map deno.jsonc dist.test.ts"
   },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@latest"
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
