@@ -9,6 +9,7 @@ const normalPDFData = s.dist.normal.data({
   range: [-6, 6],
   points: 100,
 });
+normalPDFData.print();
 
 // Generate CDF data using the new .data() method
 const normalCDFData = s.dist.normal.data({
@@ -19,7 +20,16 @@ const normalCDFData = s.dist.normal.data({
   points: 100,
 });
 
+normalCDFData.print();
+
+type NormalData = {
+  x: number;
+  density: number;
+  probability: number;
+};
+
+
+
 const normalData = normalPDFData.leftJoin(normalCDFData, "x");
 
-console.log("Normal Distribution PDF Data:");
-console.table(normalData.head(10));
+normalData.print();

@@ -17,7 +17,7 @@
     "test:deno": "deno run --allow-all --no-config --import-map deno.jsonc dist.test.ts"
   },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.3"
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

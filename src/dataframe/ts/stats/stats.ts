@@ -35,10 +35,38 @@ import { percentile_rank } from "./ranking/percentile-rank.ts";
 import * as statisticalTests from "./statistical-tests/index.ts";
 
 // Import distribution functions
-import { dist } from "./distributions/index.ts";
+import * as beta from "./distributions/beta.ts";
+import * as binomial from "./distributions/binomial.ts";
+import * as chiSquare from "./distributions/chi-square.ts";
+import * as exponential from "./distributions/exponential.ts";
+import * as fDist from "./distributions/f-distribution.ts";
+import * as gamma from "./distributions/gamma.ts";
+import * as geometric from "./distributions/geometric.ts";
+import * as hypergeometric from "./distributions/hypergeometric.ts";
+import * as logNormal from "./distributions/log-normal.ts";
+import * as negativeBinomial from "./distributions/negative-binomial.ts";
+import * as normal from "./distributions/normal.ts";
+import * as poisson from "./distributions/poisson.ts";
+import * as tDist from "./distributions/t-distribution.ts";
+import * as uniform from "./distributions/uniform.ts";
+import * as weibull from "./distributions/weibull.ts";
+import * as wilcoxon from "./distributions/wilcoxon.ts";
 
-// Import new hierarchical test API
-import { compare } from "./statistical-tests/compare-api/index.ts";
+// Import compare API functions
+import { centralTendencyToValue } from "./statistical-tests/compare-api/one-group/central-tendency.ts";
+import { proportionsToValue } from "./statistical-tests/compare-api/one-group/proportions.ts";
+import { distributionToNormal } from "./statistical-tests/compare-api/one-group/distribution.ts";
+import { centralTendencyToEachOther as twoGroupCentralTendency } from "./statistical-tests/compare-api/two-group/central-tendency.ts";
+import { proportionsToEachOther as twoGroupProportions } from "./statistical-tests/compare-api/two-group/proportions.ts";
+import { associationToEachOther } from "./statistical-tests/compare-api/two-group/association.ts";
+import { distributionsToEachOther } from "./statistical-tests/compare-api/two-group/distributions.ts";
+import { centralTendencyToEachOther as multiGroupCentralTendency } from "./statistical-tests/compare-api/multi-group/central-tendency.ts";
+import { proportionsToEachOther as multiGroupProportions } from "./statistical-tests/compare-api/multi-group/proportions.ts";
+import {
+  dunnTest,
+  gamesHowellTest,
+  tukeyHSD,
+} from "./statistical-tests/post-hoc/index.ts";
 
 /**
  * Comprehensive statistical functions for data analysis.
@@ -99,7 +127,116 @@ export const stats: {
   readonly percentileRank: typeof percentile_rank;
 
   // Distribution Functions
-  readonly dist: typeof dist;
+  readonly dist: {
+    // Continuous distributions
+    readonly normal: {
+      readonly density: typeof normal.dnorm;
+      readonly probability: typeof normal.pnorm;
+      readonly quantile: typeof normal.qnorm;
+      readonly random: typeof normal.rnorm;
+      readonly data: typeof normal.normalData;
+    };
+    readonly beta: {
+      readonly density: typeof beta.dbeta;
+      readonly probability: typeof beta.pbeta;
+      readonly quantile: typeof beta.qbeta;
+      readonly random: typeof beta.rbeta;
+      readonly data: typeof beta.betaData;
+    };
+    readonly gamma: {
+      readonly density: typeof gamma.dgamma;
+      readonly probability: typeof gamma.pgamma;
+      readonly quantile: typeof gamma.qgamma;
+      readonly random: typeof gamma.rgamma;
+      readonly data: typeof gamma.gammaData;
+    };
+    readonly exponential: {
+      readonly density: typeof exponential.dexp;
+      readonly probability: typeof exponential.pexp;
+      readonly quantile: typeof exponential.qexp;
+      readonly random: typeof exponential.rexp;
+      readonly data: typeof exponential.exponentialData;
+    };
+    readonly chiSquare: {
+      readonly density: typeof chiSquare.dchisq;
+      readonly probability: typeof chiSquare.pchisq;
+      readonly quantile: typeof chiSquare.qchisq;
+      readonly random: typeof chiSquare.rchisq;
+      readonly data: typeof chiSquare.chiSquareData;
+    };
+    readonly t: {
+      readonly density: typeof tDist.dt;
+      readonly probability: typeof tDist.pt;
+      readonly quantile: typeof tDist.qt;
+      readonly random: typeof tDist.rt;
+      readonly data: typeof tDist.tData;
+    };
+    readonly f: {
+      readonly density: typeof fDist.df;
+      readonly probability: typeof fDist.pf;
+      readonly quantile: typeof fDist.qf;
+      readonly random: typeof fDist.rf;
+    };
+    readonly uniform: {
+      readonly density: typeof uniform.dunif;
+      readonly probability: typeof uniform.punif;
+      readonly quantile: typeof uniform.qunif;
+      readonly random: typeof uniform.runif;
+      readonly data: typeof uniform.uniformData;
+    };
+    readonly weibull: {
+      readonly density: typeof weibull.dweibull;
+      readonly probability: typeof weibull.pweibull;
+      readonly quantile: typeof weibull.qweibull;
+      readonly random: typeof weibull.rweibull;
+      readonly data: typeof weibull.weibullData;
+    };
+    readonly logNormal: {
+      readonly density: typeof logNormal.dlnorm;
+      readonly probability: typeof logNormal.plnorm;
+      readonly quantile: typeof logNormal.qlnorm;
+      readonly random: typeof logNormal.rlnorm;
+    };
+    readonly wilcoxon: {
+      readonly density: typeof wilcoxon.dwilcox;
+      readonly probability: typeof wilcoxon.pwilcox;
+      readonly quantile: typeof wilcoxon.qwilcox;
+      readonly random: typeof wilcoxon.rwilcox;
+    };
+    // Discrete distributions
+    readonly binomial: {
+      readonly density: typeof binomial.dbinom;
+      readonly probability: typeof binomial.pbinom;
+      readonly quantile: typeof binomial.qbinom;
+      readonly random: typeof binomial.rbinom;
+      readonly data: typeof binomial.binomialData;
+    };
+    readonly poisson: {
+      readonly density: typeof poisson.dpois;
+      readonly probability: typeof poisson.ppois;
+      readonly quantile: typeof poisson.qpois;
+      readonly random: typeof poisson.rpois;
+      readonly data: typeof poisson.poissonData;
+    };
+    readonly geometric: {
+      readonly density: typeof geometric.dgeom;
+      readonly probability: typeof geometric.pgeom;
+      readonly quantile: typeof geometric.qgeom;
+      readonly random: typeof geometric.rgeom;
+    };
+    readonly negativeBinomial: {
+      readonly density: typeof negativeBinomial.dnbinom;
+      readonly probability: typeof negativeBinomial.pnbinom;
+      readonly quantile: typeof negativeBinomial.qnbinom;
+      readonly random: typeof negativeBinomial.rnbinom;
+    };
+    readonly hypergeometric: {
+      readonly density: typeof hypergeometric.dhyper;
+      readonly probability: typeof hypergeometric.phyper;
+      readonly quantile: typeof hypergeometric.qhyper;
+      readonly random: typeof hypergeometric.rhyper;
+    };
+  };
 
   // Statistical Tests
   readonly test: {
@@ -159,7 +296,46 @@ export const stats: {
   };
 
   // Hierarchical statistical test API
-  readonly compare: typeof compare;
+  readonly compare: {
+    readonly oneGroup: {
+      readonly centralTendency: {
+        readonly toValue: typeof centralTendencyToValue;
+      };
+      readonly proportions: {
+        readonly toValue: typeof proportionsToValue;
+      };
+      readonly distribution: {
+        readonly toNormal: typeof distributionToNormal;
+      };
+    };
+    readonly twoGroups: {
+      readonly centralTendency: {
+        readonly toEachOther: typeof twoGroupCentralTendency;
+      };
+      readonly proportions: {
+        readonly toEachOther: typeof twoGroupProportions;
+      };
+      readonly association: {
+        readonly toEachOther: typeof associationToEachOther;
+      };
+      readonly distributions: {
+        readonly toEachOther: typeof distributionsToEachOther;
+      };
+    };
+    readonly multiGroups: {
+      readonly centralTendency: {
+        readonly toEachOther: typeof multiGroupCentralTendency;
+      };
+      readonly proportions: {
+        readonly toEachOther: typeof multiGroupProportions;
+      };
+    };
+    readonly postHoc: {
+      readonly dunn: typeof dunnTest;
+      readonly gamesHowell: typeof gamesHowellTest;
+      readonly tukey: typeof tukeyHSD;
+    };
+  };
 } = {
   // Basic statistics
   sum,
@@ -204,7 +380,116 @@ export const stats: {
   percentileRank: percentile_rank,
 
   // Distribution Functions
-  dist: dist,
+  dist: {
+    // Continuous distributions
+    normal: {
+      density: normal.dnorm,
+      probability: normal.pnorm,
+      quantile: normal.qnorm,
+      random: normal.rnorm,
+      data: normal.normalData,
+    },
+    beta: {
+      density: beta.dbeta,
+      probability: beta.pbeta,
+      quantile: beta.qbeta,
+      random: beta.rbeta,
+      data: beta.betaData,
+    },
+    gamma: {
+      density: gamma.dgamma,
+      probability: gamma.pgamma,
+      quantile: gamma.qgamma,
+      random: gamma.rgamma,
+      data: gamma.gammaData,
+    },
+    exponential: {
+      density: exponential.dexp,
+      probability: exponential.pexp,
+      quantile: exponential.qexp,
+      random: exponential.rexp,
+      data: exponential.exponentialData,
+    },
+    chiSquare: {
+      density: chiSquare.dchisq,
+      probability: chiSquare.pchisq,
+      quantile: chiSquare.qchisq,
+      random: chiSquare.rchisq,
+      data: chiSquare.chiSquareData,
+    },
+    t: {
+      density: tDist.dt,
+      probability: tDist.pt,
+      quantile: tDist.qt,
+      random: tDist.rt,
+      data: tDist.tData,
+    },
+    f: {
+      density: fDist.df,
+      probability: fDist.pf,
+      quantile: fDist.qf,
+      random: fDist.rf,
+    },
+    uniform: {
+      density: uniform.dunif,
+      probability: uniform.punif,
+      quantile: uniform.qunif,
+      random: uniform.runif,
+      data: uniform.uniformData,
+    },
+    weibull: {
+      density: weibull.dweibull,
+      probability: weibull.pweibull,
+      quantile: weibull.qweibull,
+      random: weibull.rweibull,
+      data: weibull.weibullData,
+    },
+    logNormal: {
+      density: logNormal.dlnorm,
+      probability: logNormal.plnorm,
+      quantile: logNormal.qlnorm,
+      random: logNormal.rlnorm,
+    },
+    wilcoxon: {
+      density: wilcoxon.dwilcox,
+      probability: wilcoxon.pwilcox,
+      quantile: wilcoxon.qwilcox,
+      random: wilcoxon.rwilcox,
+    },
+    // Discrete distributions
+    binomial: {
+      density: binomial.dbinom,
+      probability: binomial.pbinom,
+      quantile: binomial.qbinom,
+      random: binomial.rbinom,
+      data: binomial.binomialData,
+    },
+    poisson: {
+      density: poisson.dpois,
+      probability: poisson.ppois,
+      quantile: poisson.qpois,
+      random: poisson.rpois,
+      data: poisson.poissonData,
+    },
+    geometric: {
+      density: geometric.dgeom,
+      probability: geometric.pgeom,
+      quantile: geometric.qgeom,
+      random: geometric.rgeom,
+    },
+    negativeBinomial: {
+      density: negativeBinomial.dnbinom,
+      probability: negativeBinomial.pnbinom,
+      quantile: negativeBinomial.qnbinom,
+      random: negativeBinomial.rnbinom,
+    },
+    hypergeometric: {
+      density: hypergeometric.dhyper,
+      probability: hypergeometric.phyper,
+      quantile: hypergeometric.qhyper,
+      random: hypergeometric.rhyper,
+    },
+  },
 
   // Statistical Tests
   test: {
@@ -262,7 +547,46 @@ export const stats: {
   },
 
   // Hierarchical statistical test API
-  compare: compare,
+  compare: {
+    oneGroup: {
+      centralTendency: {
+        toValue: centralTendencyToValue,
+      },
+      proportions: {
+        toValue: proportionsToValue,
+      },
+      distribution: {
+        toNormal: distributionToNormal,
+      },
+    },
+    twoGroups: {
+      centralTendency: {
+        toEachOther: twoGroupCentralTendency,
+      },
+      proportions: {
+        toEachOther: twoGroupProportions,
+      },
+      association: {
+        toEachOther: associationToEachOther,
+      },
+      distributions: {
+        toEachOther: distributionsToEachOther,
+      },
+    },
+    multiGroups: {
+      centralTendency: {
+        toEachOther: multiGroupCentralTendency,
+      },
+      proportions: {
+        toEachOther: multiGroupProportions,
+      },
+    },
+    postHoc: {
+      dunn: dunnTest,
+      gamesHowell: gamesHowellTest,
+      tukey: tukeyHSD,
+    },
+  },
 };
 
 // Export stats with alias 's' for convenience
