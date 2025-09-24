@@ -7,7 +7,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Import the local resvg JS glue code (v2.6.3-alpha.0)
-const resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js.cjs");
+const resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js");
 
 let resvgWasmModule: any = null;
 let resvgWasmBytesCache: ArrayBuffer | null = null;
@@ -22,7 +22,7 @@ export async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
   const mod = new WebAssembly.Module(new Uint8Array(bytes));
 
   // Use the initWasm function from the glue code
-  const initFunc = resvgGlue.initWasm || resvgGlue.default?.initWasm;
+  const initFunc = resvgGlue.initWasm;
   if (initFunc) {
     await initFunc(mod);
   } else {
@@ -30,7 +30,7 @@ export async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
   }
 
   resvgWasmModule = mod;
-  resvgInstance = resvgGlue.Resvg || resvgGlue.default?.Resvg;
+  resvgInstance = resvgGlue.Resvg;
   initialized = true;
 
   return { module: resvgWasmModule, Resvg: resvgInstance };
@@ -73,7 +73,7 @@ export async function initResvgWasm(): Promise<any> {
   // Use the initWasm function with the file path
   const wasmUrl = new URL(wasmPath, `file://${wasmPath}`);
 
-  const initFunc = resvgGlue.initWasm || resvgGlue.default?.initWasm;
+  const initFunc = resvgGlue.initWasm;
   if (initFunc) {
     await initFunc(wasmUrl);
   } else {
@@ -81,7 +81,7 @@ export async function initResvgWasm(): Promise<any> {
   }
 
   resvgWasmModule = true; // Mark as initialized
-  resvgInstance = resvgGlue.Resvg || resvgGlue.default?.Resvg;
+  resvgInstance = resvgGlue.Resvg;
   initialized = true;
 
   return { module: resvgWasmModule, Resvg: resvgInstance };
