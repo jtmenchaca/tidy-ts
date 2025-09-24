@@ -1,10 +1,9 @@
 import { tTestOneSample } from "../../t-tests.ts";
 import { wilcoxonSignedRankTest } from "../../wilcoxon.ts";
-import type { ParametricChoice } from "../../types.ts";
 import type {
   OneSampleTTestResult,
   WilcoxonSignedRankTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../../lib/tidy_ts_dataframe.js";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -69,7 +68,7 @@ export function centralTendencyToValue({
   hypothesizedValue: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
 }): OneSampleTTestResult | WilcoxonSignedRankTestResult;
 
 export function centralTendencyToValue({
@@ -87,7 +86,7 @@ export function centralTendencyToValue({
   hypothesizedValue: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
 }): OneSampleTTestResult | WilcoxonSignedRankTestResult {
   // Convert data to a regular array for processing and filter out null/undefined values
   const cleanData = cleanNumeric(data);

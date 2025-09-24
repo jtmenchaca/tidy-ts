@@ -4,6 +4,8 @@ import {
   wasm_qweibull,
   wasm_rweibull,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                               WEIBULL DISTRIBUTION
@@ -124,4 +126,99 @@ export function rweibull({
     results.push(wasm_rweibull(shape, scale));
   }
   return results;
+}
+
+/**
+ * Generate data for Weibull distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function weibullData({
+  shape,
+  scale,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  scale: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function weibullData({
+  shape,
+  scale,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  scale: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function weibullData({
+  shape,
+  scale,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  scale: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function weibullData({
+  shape,
+  scale,
+  type,
+  range,
+  points = 100,
+}: {
+  shape: number;
+  scale: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dweibull,
+        probability: pweibull,
+        quantile: qweibull,
+      },
+      params: { shape, scale },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dweibull,
+        probability: pweibull,
+        quantile: qweibull,
+      },
+      params: { shape, scale },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dweibull,
+        probability: pweibull,
+        quantile: qweibull,
+      },
+      params: { shape, scale },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

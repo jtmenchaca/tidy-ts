@@ -52,6 +52,17 @@ where
 
     let std_error = (sample_var / n).sqrt();
 
+    // Handle zero variance case (all values identical)
+    if sample_var == 0.0 {
+        if (sample_mean - pop_mean).abs() < f64::EPSILON {
+            // Sample mean equals hypothesized mean - no difference, cannot reject H0
+            return Err("Cannot perform t-test with zero variance (all values identical and equal to hypothesized mean)".to_string());
+        } else {
+            // Sample mean differs from hypothesized mean with zero variance - perfect evidence
+            return Err("Cannot perform t-test with zero variance (all values identical)".to_string());
+        }
+    }
+
     // Calculate test statistic
     let test_statistic = (sample_mean - pop_mean) / std_error;
     let df = n - 1.0;

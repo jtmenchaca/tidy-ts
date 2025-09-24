@@ -1,5 +1,6 @@
 #!/usr/bin/env -S deno run --allow-all
-
+//
+// deno-lint-ignore-file no-explicit-any
 // Regression test interface for GLM and LM models
 
 export interface RegressionTestParameters {
@@ -90,106 +91,6 @@ export function nextRandom(): number {
   return random();
 }
 
-// Helper function to extract coefficient values
-function extractCoefficients(
-  result: { coefficients?: { value?: number[] } | number[] },
-): number[] {
-  if (
-    typeof result.coefficients === "object" &&
-    !Array.isArray(result.coefficients) &&
-    result.coefficients.value !== undefined
-  ) {
-    return result.coefficients.value;
-  }
-  return result.coefficients as number[] || [];
-}
-
-// Helper function to convert categorical variables to dummy variables
-function convertCategoricalToNumeric(
-  data: { [key: string]: any },
-): { [key: string]: number[] } {
-  const result: { [key: string]: number[] } = {};
-
-  for (const [key, values] of Object.entries(data)) {
-    if (key === "formula" || key === "family") {
-      continue; // Skip non-data fields
-    }
-
-    if (Array.isArray(values) && values.length > 0) {
-      if (typeof values[0] === "string") {
-        // This is a categorical variable - convert to dummy variables
-        const uniqueValues = Array.from(new Set(values)).sort();
-
-        // Create dummy variables for all but the first category (reference level)
-        // This matches R's default behavior
-        for (let i = 1; i < uniqueValues.length; i++) {
-          const dummyKey = `${key}${uniqueValues[i]}`;
-          result[dummyKey] = values.map((v: string) =>
-            v === uniqueValues[i] ? 1 : 0
-          );
-        }
-      } else {
-        // This is already numeric
-        result[key] = values as number[];
-      }
-    }
-  }
-
-  return result;
-}
-
-// Helper function to update formula to include dummy variable names
-function updateFormulaForDummies(
-  formula: string,
-  data: { [key: string]: any },
-): string {
-  let updatedFormula = formula;
-
-  // First, identify all categorical variables and their dummy names
-  const categoricalInfo: { [key: string]: string[] } = {};
-
-  for (const [key, values] of Object.entries(data)) {
-    if (
-      Array.isArray(values) && values.length > 0 &&
-      typeof values[0] === "string"
-    ) {
-      // This is a categorical variable
-      const uniqueValues = Array.from(new Set(values)).sort();
-      const dummyNames = uniqueValues.slice(1).map((v) => `${key}${v}`);
-      categoricalInfo[key] = dummyNames;
-    }
-  }
-
-  // Handle simple replacements first (standalone variables)
-  for (const [key, dummyNames] of Object.entries(categoricalInfo)) {
-    if (dummyNames.length > 0) {
-      // Replace standalone occurrences (not in interactions)
-      const standaloneRegex = new RegExp(`\\b${key}\\b(?![*])`, "g");
-      updatedFormula = updatedFormula.replace(
-        standaloneRegex,
-        dummyNames.join(" + "),
-      );
-    }
-  }
-
-  // Handle interaction terms - this is more complex for categorical variables
-  // For now, we'll avoid complex interactions with categoricals by simplifying
-  // TODO: Implement proper interaction expansion for categorical variables
-
-  // Check if formula still contains categorical variables in interactions
-  for (const key of Object.keys(categoricalInfo)) {
-    if (
-      updatedFormula.includes(`${key} *`) || updatedFormula.includes(`* ${key}`)
-    ) {
-      console.warn(
-        `Warning: Complex interactions with categorical variable ${key} may not be fully supported. Consider simplifying the formula.`,
-      );
-    }
-  }
-
-  return updatedFormula;
-}
-
 // Robust R caller for regression tests
 export async function callRobustR(
   params: RegressionTestParameters,
@@ -238,9 +139,6 @@ export async function callRobustR(
 export async function callRobustRust(
   params: RegressionTestParameters,
 ): Promise<RegressionTestResult> {
-  const alpha = params.options?.alpha || 0.05;
-  const family = params.options?.family || "gaussian";
-
   switch (params.testType) {
     // GLM Tests - Using WASM
     case "glm.gaussian": {
@@ -902,92 +800,6 @@ export async function callRobustRust(
       };
     }
 
-    // LM Tests - Using WASM
-    case "lm.simple": {
-      const { lmFit } = await import(
-        "../../../../ts/wasm/lm-functions.ts"
-      );
-
-      // Convert data to the format expected by WASM LM
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      // Add all predictor variables
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = lmFit(
-        params.data!.formula!,
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        r_squared: result.r_squared,
-        adj_r_squared: result.adj_r_squared,
-        f_statistic: result.f_statistic,
-        p_value: result.p_value,
-        df_residual: result.df_residual,
-        method: "lm.simple",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "lm.weighted": {
-      const { lmFit } = await import(
-        "../../../../ts/wasm/lm-functions.ts"
-      );
-
-      // Convert data to the format expected by WASM LM
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      // Add all predictor variables
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const options = {
-        weights: params.data!.weights || undefined,
-      };
-
-      const result = lmFit(
-        params.data!.formula!,
-        data,
-        options,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        r_squared: result.r_squared,
-        adj_r_squared: result.adj_r_squared,
-        f_statistic: result.f_statistic,
-        p_value: result.p_value,
-        df_residual: result.df_residual,
-        method: "lm.weighted",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
     default:
       throw new Error(`Unknown regression test type: ${params.testType}`);
   }
@@ -1218,52 +1030,6 @@ export function generateRegressionTestCase(
 
     const randomPattern = patterns[Math.floor(random() * patterns.length)];
     return randomPattern();
-  }
-
-  // Estimate number of parameters contributed by RHS of formula (roughly)
-  function estimateParamCount(
-    formula: string,
-    predictorNames: string[],
-  ): number {
-    const rhs = formula.split("~")[1].trim();
-    const termSet = new Set<string>();
-    const addMain = (name: string) => termSet.add(name);
-    const addInteractionCombos = (vars: string[]) => {
-      // add all non-empty subsets
-      const unique = Array.from(new Set(vars));
-      const k = unique.length;
-      // limit to two-way if sample size is small to avoid overcounting
-      const maxOrder = sampleSize < 15 ? 2 : k;
-      for (let r = 1; r <= maxOrder; r++) {
-        const comb = (start: number, chosen: string[]) => {
-          if (chosen.length === r) {
-            const key = chosen.slice().sort().join(":");
-            termSet.add(key);
-            return;
-          }
-          for (let i = start; i < k; i++) {
-            chosen.push(unique[i]);
-            comb(i + 1, chosen);
-            chosen.pop();
-          }
-        };
-        comb(0, []);
-      }
-    };
-
-    const plusGroups = rhs.split("+").map((s) => s.trim()).filter((s) =>
-      s.length
-    );
-    for (const grp of plusGroups) {
-      if (grp.includes("*")) {
-        const vars = grp.split("*").map((s) => s.trim());
-        addInteractionCombos(vars);
-      } else if (predictorNames.includes(grp)) {
-        addMain(grp);
-      }
-    }
-    // Add intercept
-    return termSet.size + 1;
   }
 
   // Helper to generate categorical data (string factors)

@@ -4,6 +4,8 @@ import {
   wasm_qunif,
   wasm_runif,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                               UNIFORM DISTRIBUTION
@@ -118,4 +120,99 @@ export function runif({
     results.push(wasm_runif(minimum, maximum));
   }
   return results;
+}
+
+/**
+ * Generate data for Uniform distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function uniformData({
+  min,
+  max,
+  type,
+  range,
+  points,
+}: {
+  min: number;
+  max: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function uniformData({
+  min,
+  max,
+  type,
+  range,
+  points,
+}: {
+  min: number;
+  max: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function uniformData({
+  min,
+  max,
+  type,
+  range,
+  points,
+}: {
+  min: number;
+  max: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function uniformData({
+  min,
+  max,
+  type,
+  range,
+  points = 100,
+}: {
+  min: number;
+  max: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dunif,
+        probability: punif,
+        quantile: qunif,
+      },
+      params: { min, max },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dunif,
+        probability: punif,
+        quantile: qunif,
+      },
+      params: { min, max },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dunif,
+        probability: punif,
+        quantile: qunif,
+      },
+      params: { min, max },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

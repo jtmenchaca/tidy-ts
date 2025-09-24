@@ -4,6 +4,8 @@ import {
   wasm_qpois,
   wasm_rpois,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                              POISSON DISTRIBUTION
@@ -108,4 +110,91 @@ export function rpois({
     results.push(wasm_rpois(rateLambda));
   }
   return results;
+}
+
+/**
+ * Generate data for Poisson distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function poissonData({
+  rateLambda,
+  type,
+  range,
+  points,
+}: {
+  rateLambda: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function poissonData({
+  rateLambda,
+  type,
+  range,
+  points,
+}: {
+  rateLambda: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function poissonData({
+  rateLambda,
+  type,
+  range,
+  points,
+}: {
+  rateLambda: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function poissonData({
+  rateLambda,
+  type,
+  range,
+  points = 100,
+}: {
+  rateLambda: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dpois,
+        probability: ppois,
+        quantile: qpois,
+      },
+      params: { rateLambda },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dpois,
+        probability: ppois,
+        quantile: qpois,
+      },
+      params: { rateLambda },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dpois,
+        probability: ppois,
+        quantile: qpois,
+      },
+      params: { rateLambda },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

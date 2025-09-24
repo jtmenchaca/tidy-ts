@@ -5,7 +5,7 @@ use super::super::super::core::{
         TestStatistic, TestStatisticName,
     },
 };
-use super::super::super::distributions::students_t;
+use super::super::super::distributions::{students_t, normal};
 
 /// Calculate Pearson correlation coefficient
 fn pearson_correlation(x: &[f64], y: &[f64]) -> f64 {
@@ -39,20 +39,74 @@ pub fn pearson_test(
     }
 
     // Calculate correlation
-    let r_raw = pearson_correlation(x, y);
-    // Clamp to avoid exactly +/-1 which produces infinite t
-    let eps = 1e-15;
-    let r = r_raw.max(-1.0 + eps).min(1.0 - eps);
+    let r = pearson_correlation(x, y);
 
-    // Calculate test statistic
-    let df = (n - 2) as f64;
-    let t = r * (df / (1.0 - r * r)).sqrt();
+    // Handle perfect correlation case
+    let (t, p_value) = if r.abs() >= 1.0 - f64::EPSILON {
+        // Perfect correlation: t → ∞, p → 0
+        (f64::INFINITY.copysign(r), 0.0)
+    } else {
+        // Normal case: calculate test statistic
+        let df = (n - 2) as f64;
+        let t_stat = r * (df / (1.0 - r * r)).sqrt();
+        
+        // Calculate p-value using students_t distribution
+        let p = match alternative {
+            AlternativeType::TwoSided => 2.0 * students_t::pt(t_stat.abs(), df, false, false),
+            AlternativeType::Greater => students_t::pt(t_stat, df, false, false),
+            AlternativeType::Less => students_t::pt(t_stat, df, true, false),
+        };
+        (t_stat, p)
+    };
 
-    // Calculate p-value using students_t distribution
-    let p_value = match alternative {
-        AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
-        AlternativeType::Greater => students_t::pt(t, df, false, false),
-        AlternativeType::Less => students_t::pt(t, df, true, false),
+    // Calculate confidence interval using Fisher z-transformation (like R)
+    // R: if(n > 3) { ## confidence int.
+    let confidence_interval = if r.abs() >= 1.0 - f64::EPSILON {
+        // Perfect correlation: CI is exactly [±1, ±1]
+        let exact_r = if r >= 0.0 { 1.0 } else { -1.0 };
+        ConfidenceInterval {
+            lower: exact_r,
+            upper: exact_r,
+            confidence_level: 1.0 - alpha,
+        }
+    } else if (n as i32) > 3 {
+        // Fisher z-transformation: z = atanh(r)
+        let z = r.atanh();
+        // Standard error: sigma = 1 / sqrt(n - 3)
+        let sigma = 1.0 / (n as f64 - 3.0).sqrt();
+        let conf_level = 1.0 - alpha;
+        
+        let (lower_z, upper_z) = match alternative {
+            AlternativeType::Less => {
+                // One-sided: (-Inf, z + sigma * qnorm(conf.level))
+                let upper_z = z + sigma * normal::qnorm(conf_level, 0.0, 1.0, true, false);
+                (f64::NEG_INFINITY, upper_z)
+            },
+            AlternativeType::Greater => {
+                // One-sided: (z - sigma * qnorm(conf.level), Inf)
+                let lower_z = z - sigma * normal::qnorm(conf_level, 0.0, 1.0, true, false);
+                (lower_z, f64::INFINITY)
+            },
+            AlternativeType::TwoSided => {
+                // Two-sided: z ± sigma * qnorm((1 + conf.level) / 2)
+                let margin = sigma * normal::qnorm((1.0 + conf_level) / 2.0, 0.0, 1.0, true, false);
+                (z - margin, z + margin)
+            }
+        };
+        
+        // Transform back from z-space to correlation space using tanh
+        ConfidenceInterval {
+            lower: lower_z.tanh(),
+            upper: upper_z.tanh(),
+            confidence_level: conf_level,
+        }
+    } else {
+        // Not enough observations for CI (n <= 3)
+        ConfidenceInterval {
+            lower: f64::NAN,
+            upper: f64::NAN,
+            confidence_level: 1.0 - alpha,
+        }
     };
 
     Ok(PearsonCorrelationTestResult {
@@ -64,12 +118,8 @@ pub fn pearson_test(
         test_name: "Pearson correlation test".to_string(),
         alpha,
         error_message: None,
-        confidence_interval: ConfidenceInterval {
-            lower: f64::NAN, // TODO: Implement CI for correlation
-            upper: f64::NAN,
-            confidence_level: 1.0 - alpha,
-        },
-        degrees_of_freedom: df,
+        confidence_interval,
+        degrees_of_freedom: (n - 2) as f64,
         effect_size: EffectSize {
             value: r,
             effect_type: EffectSizeType::PearsonsR.as_str().to_string(),

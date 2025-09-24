@@ -4,7 +4,7 @@ import {
 } from "../../../wasm/statistical-tests.ts";
 import type {
   PearsonCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../lib/tidy_ts_dataframe.js";
 
 /**
  * Pearson correlation test

@@ -151,6 +151,7 @@ pub enum TestStatisticName {
     BStatistic,
     LStatistic,
     SStatistic,
+    ExactTest,
 }
 
 impl TestStatisticName {
@@ -175,6 +176,7 @@ impl TestStatisticName {
             TestStatisticName::BStatistic => "B-Statistic",
             TestStatisticName::LStatistic => "L-Statistic",
             TestStatisticName::SStatistic => "S-Statistic",
+            TestStatisticName::ExactTest => "Exact Test",
         }
     }
 }
@@ -268,11 +270,30 @@ pub struct OneWayAnovaTestResult {
     pub degrees_of_freedom: f64,
     pub effect_size: EffectSize,
     pub sample_size: usize,
+    pub r_squared: f64,
+    pub adjusted_r_squared: f64,
     pub sample_means: Vec<f64>,
     pub sample_std_devs: Vec<f64>,
     pub sum_of_squares: Vec<f64>,
+}
+
+/// Welch's ANOVA test result with proper two degrees of freedom
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct WelchAnovaTestResult {
+    pub test_statistic: TestStatistic,
+    pub p_value: f64,
+    pub test_name: String,
+    pub alpha: f64,
+    pub error_message: Option<String>,
+    pub df1: f64, // Numerator degrees of freedom
+    pub df2: f64, // Denominator degrees of freedom
+    pub effect_size: EffectSize,
+    pub sample_size: usize,
     pub r_squared: f64,
     pub adjusted_r_squared: f64,
+    pub sample_means: Vec<f64>,
+    pub sample_std_devs: Vec<f64>,
 }
 
 /// Two-way ANOVA test result with guaranteed properties for all three tests
@@ -294,6 +315,29 @@ pub struct TwoWayAnovaTestResult {
     pub sample_std_devs: Vec<f64>,
     pub sum_of_squares: Vec<f64>, // [ss_a, ss_b, ss_ab, ss_error]
     pub grand_mean: f64,
+    // Model-level R² (explained variance by the full model)
+    pub r_squared: f64,
+    // Complete ANOVA table components
+    pub anova_table: Vec<AnovaTableComponent>,
+    // Error term information for complete ANOVA table
+    pub df_error: f64,
+    pub ms_error: f64,
+    pub df_total: f64,
+}
+
+/// Complete ANOVA table component (includes Total row)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+pub struct AnovaTableComponent {
+    pub component: String, // "A", "B", "AxB", "Error", "Total"
+    pub ss: f64,
+    pub df: f64,
+    pub ms: Option<f64>, // None for Total
+    pub f_statistic: Option<f64>, // None for Error and Total
+    pub p_value: Option<f64>, // None for Error and Total
+    pub eta_squared: Option<f64>, // Regular eta-squared (SS_effect / SS_total)
+    pub partial_eta_squared: Option<f64>, // Partial eta-squared (SS_effect / (SS_effect + SS_error))
+    pub omega_squared: Option<f64>, // Unbiased omega-squared estimate
 }
 
 /// Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
@@ -383,6 +427,7 @@ pub struct MannWhitneyTestResult {
     pub alpha: f64,
     pub error_message: Option<String>,
     pub effect_size: EffectSize,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
 }
 
 /// Pearson correlation test result
@@ -594,6 +639,9 @@ pub struct FishersExactTestResult {
     pub confidence_interval: ConfidenceInterval,
     pub effect_size: EffectSize,
     pub method: String,
+    pub method_type: String, // "exact" to indicate Fisher's exact method
+    pub mid_p_value: Option<f64>, // Optional mid-p corrected p-value
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
 }
 
 #[cfg_attr(feature = "wasm", wasm_bindgen)]

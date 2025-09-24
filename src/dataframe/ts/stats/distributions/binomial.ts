@@ -4,6 +4,8 @@ import {
   wasm_qbinom,
   wasm_rbinom,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                             BINOMIAL DISTRIBUTION
@@ -130,4 +132,99 @@ export function rbinom({
     results.push(wasm_rbinom(trials, probabilityOfSuccess));
   }
   return results;
+}
+
+/**
+ * Generate data for Binomial distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function binomialData({
+  trials,
+  probabilityOfSuccess,
+  type,
+  range,
+  points,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function binomialData({
+  trials,
+  probabilityOfSuccess,
+  type,
+  range,
+  points,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function binomialData({
+  trials,
+  probabilityOfSuccess,
+  type,
+  range,
+  points,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function binomialData({
+  trials,
+  probabilityOfSuccess,
+  type,
+  range,
+  points = 100,
+}: {
+  trials: number;
+  probabilityOfSuccess: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dbinom,
+        probability: pbinom,
+        quantile: qbinom,
+      },
+      params: { trials, probabilityOfSuccess },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dbinom,
+        probability: pbinom,
+        quantile: qbinom,
+      },
+      params: { trials, probabilityOfSuccess },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dbinom,
+        probability: pbinom,
+        quantile: qbinom,
+      },
+      params: { trials, probabilityOfSuccess },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

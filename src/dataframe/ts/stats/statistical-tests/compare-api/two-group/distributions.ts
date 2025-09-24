@@ -3,7 +3,7 @@ import { mannWhitneyTest } from "../../mann-whitney.ts";
 import type {
   KolmogorovSmirnovTestResult,
   MannWhitneyTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../../lib/tidy_ts_dataframe.js";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -25,6 +25,28 @@ import { cleanNumeric, hasManyTies, smallSample2 } from "../helpers.ts";
  * @param alpha - Significance level (default: 0.05)
  * @returns Test result with appropriate statistic and properties
  */
+export function distributionsToEachOther({
+  x,
+  y,
+  method,
+  alternative,
+  alpha,
+}: {
+  x:
+    | readonly number[]
+    | NumberIterable
+    | NumbersWithNullable
+    | NumbersWithNullableIterable;
+  y:
+    | readonly number[]
+    | NumberIterable
+    | NumbersWithNullable
+    | NumbersWithNullableIterable;
+  method?: "auto" | "ks" | "mann-whitney";
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): MannWhitneyTestResult | KolmogorovSmirnovTestResult;
+
 export function distributionsToEachOther({
   x,
   y,

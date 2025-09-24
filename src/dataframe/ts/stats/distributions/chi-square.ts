@@ -4,6 +4,8 @@ import {
   wasm_qchisq,
   wasm_rchisq,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                            CHI-SQUARED DISTRIBUTION
@@ -113,4 +115,91 @@ export function rchisq({
     results.push(wasm_rchisq(degreesOfFreedom));
   }
   return results;
+}
+
+/**
+ * Generate data for Chi-square distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function chiSquareData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function chiSquareData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function chiSquareData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function chiSquareData({
+  degreesOfFreedom,
+  type,
+  range,
+  points = 100,
+}: {
+  degreesOfFreedom: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dchisq,
+        probability: pchisq,
+        quantile: qchisq,
+      },
+      params: { degreesOfFreedom },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dchisq,
+        probability: pchisq,
+        quantile: qchisq,
+      },
+      params: { degreesOfFreedom },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dchisq,
+        probability: pchisq,
+        quantile: qchisq,
+      },
+      params: { degreesOfFreedom },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

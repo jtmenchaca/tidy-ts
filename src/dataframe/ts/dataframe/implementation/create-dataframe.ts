@@ -1,6 +1,6 @@
 // Columnar DataFrame implementation
 // deno-lint-ignore-file no-explicit-any
-import { stats } from "../../stats/stats.ts";
+// Remove stats import to break circular dependency
 import { buildToMarkdown } from "../printing/print.ts";
 import { ARRAY_METHODS, buildColumnarProxyHandlers } from "./columnar-proxy.ts";
 import type { DataFrame } from "../types/dataframe.type.ts";
@@ -278,8 +278,8 @@ export function createColumnarDataFrameFromStore<
   const kDenoInspect = (globalThis as any).Deno?.customInspect;
   if (kDenoInspect) api[kDenoInspect] = customInspect;
 
-  // Unique helper (reuse existing)
-  const unique = <U>(xs: ReadonlyArray<U>): U[] => stats.unique(Array.from(xs));
+  // Unique helper (simple implementation to avoid circular dependency)
+  const unique = <U>(xs: ReadonlyArray<U>): U[] => Array.from(new Set(xs));
 
   // ---- Columnar Proxy: numeric index, fluent routing, direct column access ----
   const handlers = buildColumnarProxyHandlers({

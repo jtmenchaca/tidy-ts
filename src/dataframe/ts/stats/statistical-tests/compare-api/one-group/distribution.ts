@@ -1,5 +1,5 @@
 import { shapiroWilkTest } from "../../shapiro-wilk.ts";
-import type { ShapiroWilkTestResult } from "../../../../../lib/tidy_ts_dataframe.internal.js";
+import type { ShapiroWilkTestResult } from "../../../../../lib/tidy_ts_dataframe.js";
 import type {
   NumberIterable,
   NumbersWithNullable,

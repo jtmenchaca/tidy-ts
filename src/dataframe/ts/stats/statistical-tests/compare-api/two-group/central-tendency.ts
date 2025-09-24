@@ -1,10 +1,9 @@
 import { tTestIndependent } from "../../t-tests.ts";
 import { mannWhitneyTest } from "../../mann-whitney.ts";
-import type { ParametricChoice } from "../../types.ts";
 import type {
   MannWhitneyTestResult,
   TwoSampleTTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../../lib/tidy_ts_dataframe.js";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -82,7 +81,7 @@ export function centralTendencyToEachOther({
 }: {
   x: readonly number[];
   y: readonly number[];
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
   assumeEqualVariances?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
@@ -106,7 +105,7 @@ export function centralTendencyToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
   assumeEqualVariances?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;

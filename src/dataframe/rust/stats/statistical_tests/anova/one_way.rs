@@ -1,5 +1,5 @@
 use super::super::super::core::types::{
-    EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic, TestStatisticName,
+    EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic, TestStatisticName, WelchAnovaTestResult,
 };
 use super::super::super::core::{TailType, calculate_p, eta_squared};
 use statrs::distribution::FisherSnedecor;
@@ -107,11 +107,11 @@ where
             effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: total_n as usize,
+        r_squared,
+        adjusted_r_squared,
         sample_means,
         sample_std_devs,
         sum_of_squares: vec![ss_between, ss_within, ss_total],
-        r_squared,
-        adjusted_r_squared,
     })
 }
 
@@ -121,7 +121,7 @@ where
 /// References:
 /// - Welch, B. L. (1951). On the comparison of several mean values: an alternative approach.
 /// - Games, P. A., & Howell, J. F. (1976). Pairwise multiple comparison procedures.
-pub fn welch_anova<T, I>(data_groups: &[I], alpha: f64) -> Result<OneWayAnovaTestResult, String>
+pub fn welch_anova<T, I>(data_groups: &[I], alpha: f64) -> Result<WelchAnovaTestResult, String>
 where
     T: Into<f64> + Copy,
     I: AsRef<[T]>,
@@ -223,7 +223,7 @@ where
         0.0
     };
     
-    Ok(OneWayAnovaTestResult {
+    Ok(WelchAnovaTestResult {
         test_statistic: TestStatistic {
             value: f_statistic,
             name: TestStatisticName::FStatistic.as_str().to_string(),
@@ -232,16 +232,16 @@ where
         test_name: "Welch's ANOVA".to_string(),
         alpha,
         error_message: None,
-        degrees_of_freedom: df_num,
+        df1: df_num,
+        df2: df_denom,
         effect_size: EffectSize {
             value: omega_squared,
             effect_type: EffectSizeType::OmegaSquared.as_str().to_string(),
         },
         sample_size: total_n,
-        sample_means,
-        sample_std_devs,
-        sum_of_squares,
         r_squared,
         adjusted_r_squared,
+        sample_means,
+        sample_std_devs,
     })
 }

@@ -1,10 +1,14 @@
 import {
+  serializeTestResult,
   t_test_one_sample,
   t_test_paired,
   t_test_two_sample_independent,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { OneSampleTTestResult, PairedTTestResult, TwoSampleTTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+import type {
+  OneSampleTTestResult,
+  PairedTTestResult,
+  TwoSampleTTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * One-sample t-test for comparing sample mean to hypothesized population mean
@@ -78,7 +82,6 @@ export function tTestIndependent({
   );
   return serializeTestResult(result) as TwoSampleTTestResult;
 }
-
 
 /**
  * Paired t-test for comparing means of two related samples

@@ -263,8 +263,6 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const twoGroupTest = stats.compare.twoGroups.centralTendency.toEachOther({
     x: controlGroup,
     y: treatmentGroup,
-    parametric: "parametric", // Force parametric test
-    equalVar: true,
     alternative: "two-sided",
     alpha: 0.05,
   });
@@ -277,7 +275,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     data2: treatmentSuccess,
     alternative: "two-sided",
     alpha: 0.05,
-    useChiSquare: false, // Use z-test instead of chi-square
+    useChiSquare: "auto", // Auto-select appropriate test based on sample size
   });
   console.log(`Two Group Proportion: ${twoGroupProportion}`);
 

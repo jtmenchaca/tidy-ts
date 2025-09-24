@@ -245,3 +245,31 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   });
   console.log(`  Complete test result:`, JSON.stringify(chiTest, null, 2));
 });
+
+Deno.test("Distribution Functions", () => {
+  const normalSample = s.dist.normal.random({
+    mean: 0,
+    standardDeviation: 1,
+    sampleSize: 100,
+  });
+  console.log(normalSample);
+
+  const binomialSample = s.dist.binomial.random({
+    trials: 100,
+    probabilityOfSuccess: 0.5,
+    sampleSize: 100,
+  });
+  console.log(binomialSample);
+
+  const poissonSample = s.dist.poisson.random({
+    rateLambda: 1,
+    sampleSize: 100,
+  });
+  console.log(poissonSample);
+
+  const _combinedSamples = [
+    normalSample,
+    binomialSample,
+    poissonSample,
+  ] as number[][];
+});

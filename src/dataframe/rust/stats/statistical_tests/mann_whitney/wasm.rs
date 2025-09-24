@@ -32,6 +32,7 @@ pub fn mann_whitney_test(
                 value: f64::NAN,
                 effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
+            alternative: alternative.to_string(),
         }
     })
 }
@@ -67,5 +68,6 @@ pub fn mann_whitney_test_with_config(
                 value: f64::NAN,
                 effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
+            alternative: alternative.to_string(),
         })
 }

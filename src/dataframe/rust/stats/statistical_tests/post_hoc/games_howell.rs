@@ -3,7 +3,7 @@
 //! Non-parametric alternative to Tukey HSD that does not assume equal variances.
 //! Uses Welch's t-test for pairwise comparisons with adjusted degrees of freedom.
 
-use super::types::{PairwiseComparison, PostHocResult};
+use super::types::{PairwiseComparison, GamesHowellTestResult};
 use statrs::distribution::{ContinuousCDF, StudentsT};
 
 /// Performs Games-Howell test for multiple comparisons
@@ -14,17 +14,28 @@ use statrs::distribution::{ContinuousCDF, StudentsT};
 ///
 /// # Returns
 /// A PostHocResult containing all pairwise comparisons
-pub fn games_howell<T, I>(groups: &[I], alpha: f64) -> (PostHocResult, Vec<PairwiseComparison>)
+pub fn games_howell<T, I>(groups: &[I], alpha: f64) -> GamesHowellTestResult
 where
     T: Into<f64> + Copy,
     I: AsRef<[T]>,
 {
     let n_groups = groups.len();
     if n_groups < 2 {
-        let mut result = PostHocResult::default();
-        result.test_name = "Games-Howell".to_string();
-        result.error_message = Some("Games-Howell requires at least 2 groups".to_string());
-        return (result, Vec::new());
+        return GamesHowellTestResult {
+            test_statistic: crate::stats::core::types::TestStatistic {
+                value: 0.0,
+                name: "T-Statistic".to_string(),
+            },
+            p_value: 1.0,
+            test_name: "Games-Howell".to_string(),
+            alpha,
+            error_message: Some("Games-Howell requires at least 2 groups".to_string()),
+            note: None,
+            correction_method: "Games-Howell".to_string(),
+            n_groups: 0,
+            n_total: 0,
+            comparisons: Vec::new(),
+        };
     }
 
     // Calculate group statistics
@@ -34,10 +45,21 @@ where
     for group in groups {
         let values: Vec<f64> = group.as_ref().iter().copied().map(Into::into).collect();
         if values.len() < 2 {
-            let mut result = PostHocResult::default();
-            result.test_name = "Games-Howell".to_string();
-            result.error_message = Some("Each group must have at least 2 observations".to_string());
-            return (result, Vec::new());
+            return GamesHowellTestResult {
+                test_statistic: crate::stats::core::types::TestStatistic {
+                    value: 0.0,
+                    name: "T-Statistic".to_string(),
+                },
+                p_value: 1.0,
+                test_name: "Games-Howell".to_string(),
+                alpha,
+                error_message: Some("Each group must have at least 2 observations".to_string()),
+                note: None,
+                correction_method: "Games-Howell".to_string(),
+                n_groups: 0,
+                n_total: 0,
+                comparisons: Vec::new(),
+            };
         }
         
         let n = values.len();
@@ -96,28 +118,39 @@ where
             let comparison = PairwiseComparison {
                 group1: format!("Group_{}", i + 1),
                 group2: format!("Group_{}", j + 1),
-                mean_difference: Some(mean_diff),
-                std_error: Some(se_diff),
-                test_statistic: Some(t_statistic),
-                p_value: Some(p_value),
-                adjusted_p_value: Some(adjusted_p),
-                ci_lower: Some(ci_lower),
-                ci_upper: Some(ci_upper),
-                significant: Some(adjusted_p < alpha),
+                mean_difference: mean_diff,
+                standard_error: se_diff,
+                test_statistic: crate::stats::core::types::TestStatistic {
+                    value: t_statistic,
+                    name: "T-Statistic".to_string(),
+                },
+                p_value: p_value,
+                adjusted_p_value: adjusted_p,
+                confidence_interval: crate::stats::core::types::ConfidenceInterval {
+                    lower: ci_lower,
+                    upper: ci_upper,
+                    confidence_level: 1.0 - alpha,
+                },
+                significant: adjusted_p < alpha,
             };
             
             comparisons.push(comparison);
         }
     }
     
-    let result = PostHocResult {
+    GamesHowellTestResult {
+        test_statistic: crate::stats::core::types::TestStatistic {
+            value: 0.0, // Post-hoc tests use pairwise comparisons, no single global statistic
+            name: "T-Statistic".to_string(),
+        },
+        p_value: 1.0, // Post-hoc tests use pairwise comparisons, no single global p-value
         test_name: "Games-Howell".to_string(),
-        correction_method: Some("Bonferroni".to_string()),
-        alpha: Some(alpha),
-        n_groups: Some(n_groups),
-        n_total: Some(total_n),
+        alpha,
         error_message: None,
-    };
-    
-    (result, comparisons)
+        note: Some("Post-hoc header has no global test; see pairwise rows".to_string()),
+        correction_method: "Games-Howell".to_string(), // Games-Howell uses its own degrees of freedom adjustment
+        n_groups,
+        n_total: total_n,
+        comparisons,
+    }
 }

@@ -183,7 +183,7 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
             AlternativeType::Less => pkendall(q, n as i32),
         };
         
-        (q, TestStatisticName::TStatistic.as_str().to_string(), p)
+        (q, TestStatisticName::SStatistic.as_str().to_string(), p)
     } else {
         // Asymptotic test: use R's approach with S statistic and z-score
         // R: S <- r * sqrt((T0 - T1) * (T0 - T2)) where T0 = n*(n-1)/2

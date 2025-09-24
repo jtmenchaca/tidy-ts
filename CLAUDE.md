@@ -1,5 +1,12 @@
 # Tidy-TS Architecture
 
+
+## Code Style Guidelines
+- **Function Parameters**: Use destructured named parameters instead of wrapper objects (e.g., `function({ path, width, height })` not `function(opts)`)
+- **No Generic Names**: Avoid generic parameter names like `opts`, `params`, or `config` - use descriptive destructured parameters
+- **File Length**: Try to keep files to less than 200 lines, maximum 300-400 lines. 
+
+
 ## Core Architecture
 ```
 Rust (Core) → WASM → TypeScript (Interface) → Deno/Node.js
@@ -21,6 +28,8 @@ deno task test-regression
 
 # Run statistical tests  
 deno task test-stat-tests
+
+# Run our compare-api for statistics (key api)
 
 # Run all tests
 deno task test-src

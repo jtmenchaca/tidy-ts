@@ -1,6 +1,8 @@
-import { chi_square_independence, serializeTestResult } from "../../wasm/statistical-tests.ts";
-import type { ChiSquareIndependenceTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-export type { ChiSquareIndependenceTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+import {
+  chi_square_independence,
+  serializeTestResult,
+} from "../../wasm/statistical-tests.ts";
+import type { ChiSquareIndependenceTestResult } from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * Chi-square test of independence for categorical data

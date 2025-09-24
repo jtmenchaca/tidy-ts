@@ -4,6 +4,8 @@ import {
   wasm_qexp,
   wasm_rexp,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                            EXPONENTIAL DISTRIBUTION
@@ -104,4 +106,91 @@ export function rexp({
     results.push(wasm_rexp(rate));
   }
   return results;
+}
+
+/**
+ * Generate data for Exponential distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function exponentialData({
+  rate,
+  type,
+  range,
+  points,
+}: {
+  rate: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function exponentialData({
+  rate,
+  type,
+  range,
+  points,
+}: {
+  rate: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function exponentialData({
+  rate,
+  type,
+  range,
+  points,
+}: {
+  rate: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function exponentialData({
+  rate,
+  type,
+  range,
+  points = 100,
+}: {
+  rate: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dexp,
+        probability: pexp,
+        quantile: qexp,
+      },
+      params: { rate },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dexp,
+        probability: pexp,
+        quantile: qexp,
+      },
+      params: { rate },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dexp,
+        probability: pexp,
+        quantile: qexp,
+      },
+      params: { rate },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

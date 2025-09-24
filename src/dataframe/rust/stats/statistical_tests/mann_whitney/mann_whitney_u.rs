@@ -214,6 +214,7 @@ impl MannWhitneyUTest {
                 value: effect_size,
                 effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
+            alternative: config.alternative,
         })
     }
 }

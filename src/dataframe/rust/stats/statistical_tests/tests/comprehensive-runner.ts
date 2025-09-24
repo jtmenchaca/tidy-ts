@@ -1,10 +1,11 @@
 #!/usr/bin/env -S deno run --allow-all
 
+// deno-lint-ignore-file no-explicit-any
 import {
   callRobustR,
   callRobustRust,
   generateComprehensiveTestCase,
-  TestParameters,
+  type TestParameters,
 } from "./comprehensive-interface.ts";
 
 interface ComparisonResult {

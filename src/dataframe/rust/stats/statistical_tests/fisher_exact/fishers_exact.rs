@@ -70,21 +70,39 @@ pub fn fishers_exact_test(
         }
     };
 
-    // Calculate odds ratio estimate (MLE) - following R's approach
-    let estimate = mle_odds_ratio(x, m, n, k);
+    // Calculate sample odds ratio: OR = (a*d)/(b*c)
+    let estimate = if b == 0 && c == 0 {
+        f64::INFINITY
+    } else if a == 0 && d == 0 {
+        0.0
+    } else if b == 0 || c == 0 {
+        f64::INFINITY
+    } else if a == 0 || d == 0 {
+        0.0
+    } else {
+        (a as f64 * d as f64) / (b as f64 * c as f64)
+    };
+    
+    // Calculate mid-p corrected p-value 
+    let obs_prob = dnhyper(x, m, n, k, odds_ratio);
+    let mid_p_corrected = (p_value - 0.5 * obs_prob).max(0.0).min(1.0);
+    let mid_p_value = Some(mid_p_corrected);
+    
+    // Calculate confidence interval for odds ratio
+    let (ci_lower, ci_upper) = odds_ratio_confidence_interval(a, b, c, d, alpha);
 
     Ok(FishersExactTestResult {
         test_statistic: TestStatistic {
-            value: estimate,
-            name: TestStatisticName::TStatistic.as_str().to_string(), // No specific odds ratio statistic
+            value: 0.0, // Fisher's exact test doesn't have a meaningful scalar statistic
+            name: "(none)".to_string(), // No single test statistic for exact tests
         },
         p_value: p_value.max(0.0).min(1.0),
         test_name: "Fisher's exact test".to_string(),
         alpha,
         error_message: None,
         confidence_interval: ConfidenceInterval {
-            lower: f64::NAN, // TODO: Implement CI for Fisher's exact
-            upper: f64::NAN,
+            lower: ci_lower,
+            upper: ci_upper,
             confidence_level: 1.0 - alpha,
         },
         effect_size: EffectSize {
@@ -92,6 +110,13 @@ pub fn fishers_exact_test(
             effect_type: EffectSizeType::OddsRatio.as_str().to_string(),
         },
         method: match alternative_type {
+            AlternativeType::TwoSided => "two-sided",
+            AlternativeType::Less => "less",
+            AlternativeType::Greater => "greater",
+        }.to_string(),
+        method_type: "exact".to_string(), // Indicates Fisher's exact method
+        mid_p_value, // Optional mid-p corrected p-value
+        alternative: match alternative_type {
             AlternativeType::TwoSided => "two-sided",
             AlternativeType::Less => "less",
             AlternativeType::Greater => "greater",
@@ -334,5 +359,97 @@ fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high
         }
     }
 
+    (low + high) / 2.0
+}
+
+/// Calculate confidence interval for odds ratio in Fisher's exact test
+/// Uses the central hypergeometric distribution approach
+fn odds_ratio_confidence_interval(a: i32, b: i32, c: i32, d: i32, alpha: f64) -> (f64, f64) {
+    let m = a + c;
+    let n = b + d;
+    let k = a + b;
+    let x = a;
+    
+    let tail_prob = alpha / 2.0;
+    
+    // Handle edge cases first
+    if a == 0 && d == 0 {
+        return (0.0, f64::INFINITY);
+    }
+    if b == 0 && c == 0 {
+        return (0.0, f64::INFINITY);
+    }
+    if a == 0 || d == 0 {
+        return (0.0, compute_upper_ci_bound(m, n, k, x, tail_prob));
+    }
+    if b == 0 || c == 0 {
+        return (compute_lower_ci_bound(m, n, k, x, tail_prob), f64::INFINITY);
+    }
+    
+    // Normal case: compute both bounds
+    let lower = compute_lower_ci_bound(m, n, k, x, tail_prob);
+    let upper = compute_upper_ci_bound(m, n, k, x, tail_prob);
+    
+    (lower, upper)
+}
+
+/// Compute lower confidence bound for odds ratio
+fn compute_lower_ci_bound(m: i32, n: i32, k: i32, x: i32, tail_prob: f64) -> f64 {
+    if x == 0 {
+        return 0.0;
+    }
+    
+    // Find odds ratio such that P(X >= x) = tail_prob
+    binary_search_ci_bound(m, n, k, x, tail_prob, true, 0.0001, 1000.0)
+}
+
+/// Compute upper confidence bound for odds ratio  
+fn compute_upper_ci_bound(m: i32, n: i32, k: i32, x: i32, tail_prob: f64) -> f64 {
+    let hi = std::cmp::min(k, m);
+    if x == hi {
+        return f64::INFINITY;
+    }
+    
+    // Find odds ratio such that P(X <= x) = tail_prob
+    binary_search_ci_bound(m, n, k, x, tail_prob, false, 0.0001, 1000.0)
+}
+
+/// Binary search for confidence interval bounds
+fn binary_search_ci_bound(m: i32, n: i32, k: i32, x: i32, target_prob: f64, upper_tail: bool, mut low: f64, mut high: f64) -> f64 {
+    const MAX_ITER: usize = 100;
+    const TOL: f64 = 1e-6;
+    
+    for _ in 0..MAX_ITER {
+        let mid = (low + high) / 2.0;
+        
+        let prob = if upper_tail {
+            pnhyper(x, m, n, k, mid, true)  // P(X >= x)
+        } else {
+            pnhyper(x, m, n, k, mid, false) // P(X <= x)  
+        };
+        
+        if (prob - target_prob).abs() < TOL {
+            return mid;
+        }
+        
+        if prob > target_prob {
+            if upper_tail {
+                high = mid;  // If P(X >= x) too high, reduce odds ratio
+            } else {
+                low = mid;   // If P(X <= x) too high, increase odds ratio
+            }
+        } else {
+            if upper_tail {
+                low = mid;   // If P(X >= x) too low, increase odds ratio
+            } else {
+                high = mid;  // If P(X <= x) too low, reduce odds ratio
+            }
+        }
+        
+        if (high - low) < TOL {
+            break;
+        }
+    }
+    
     (low + high) / 2.0
 }

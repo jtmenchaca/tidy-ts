@@ -1,13 +1,15 @@
 // Statistical tests module
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.internal.js";
+import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
 import { initWasm } from "./wasm-init.ts";
 export { serializeTestResult } from "./wasm-serializer.ts";
 import type {
   ChiSquareGoodnessOfFitTestResult,
   ChiSquareIndependenceTestResult,
   ChiSquareVarianceTestResult,
+  DunnTestResult,
   FishersExactTestResult,
+  GamesHowellTestResult,
   KendallCorrelationTestResult,
   KolmogorovSmirnovTestResult,
   KruskalWallisTestResult,
@@ -20,12 +22,14 @@ import type {
   PearsonCorrelationTestResult,
   ShapiroWilkTestResult,
   SpearmanCorrelationTestResult,
+  TukeyHsdTestResult,
   TwoSampleProportionTestResult,
   TwoSampleTTestResult,
   TwoSampleZTestResult,
   TwoWayAnovaTestResult,
+  WelchAnovaTestResult,
   WilcoxonSignedRankTestResult,
-} from "../../lib/tidy_ts_dataframe.internal.js";
+} from "../../lib/tidy_ts_dataframe.js";
 
 // ANOVA Tests
 export function anova_one_way_wasm(
@@ -41,7 +45,7 @@ export function welch_anova_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): OneWayAnovaTestResult {
+): WelchAnovaTestResult {
   initWasm();
   return wasmInternal.welch_anova_wasm(data, group_sizes, alpha);
 }
@@ -426,12 +430,12 @@ export function levene_test_wasm(
   return result;
 }
 
-// Post-hoc Tests (return JSON strings, not TestResult objects)
+// Post-hoc Tests
 export function tukey_hsd_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string {
+): TukeyHsdTestResult {
   initWasm();
   const result = wasmInternal.tukey_hsd_wasm(data, group_sizes, alpha);
   return result;
@@ -441,7 +445,7 @@ export function games_howell_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string {
+): GamesHowellTestResult {
   initWasm();
   const result = wasmInternal.games_howell_wasm(data, group_sizes, alpha);
   return result;
@@ -451,7 +455,7 @@ export function dunn_test_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string {
+): DunnTestResult {
   initWasm();
   const result = wasmInternal.dunn_test_wasm(data, group_sizes, alpha);
   return result;

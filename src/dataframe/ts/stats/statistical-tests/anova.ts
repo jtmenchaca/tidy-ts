@@ -4,14 +4,15 @@ import {
   anova_two_way_factor_b_wasm,
   anova_two_way_interaction_wasm,
   anova_two_way_wasm,
-  welch_anova_wasm,
   serializeTestResult,
+  welch_anova_wasm,
 } from "../../wasm/statistical-tests.ts";
 
 import type {
   OneWayAnovaTestResult,
   TwoWayAnovaTestResult,
-} from "../../../lib/tidy_ts_dataframe.internal.js";
+  WelchAnovaTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * One-way ANOVA (WASM implementation)
@@ -54,7 +55,7 @@ export function anovaOneWay(
 export function welchAnovaOneWay(
   groups: number[][],
   alpha = 0.05,
-): OneWayAnovaTestResult {
+): WelchAnovaTestResult {
   if (groups.length < 2) {
     throw new Error("Welch ANOVA requires at least 2 groups");
   }
@@ -64,7 +65,9 @@ export function welchAnovaOneWay(
   const groupSizes = cleanGroups.map((group) => group.length);
 
   if (groupSizes.some((size) => size < 2)) {
-    throw new Error("Each group must have at least 2 observations for Welch ANOVA");
+    throw new Error(
+      "Each group must have at least 2 observations for Welch ANOVA",
+    );
   }
 
   // Use WASM for the test
@@ -74,7 +77,7 @@ export function welchAnovaOneWay(
     new Uint32Array(groupSizes),
     alpha,
   );
-  return serializeTestResult(result) as OneWayAnovaTestResult;
+  return serializeTestResult(result) as WelchAnovaTestResult;
 }
 
 /**

@@ -7,7 +7,7 @@ import type {
   KendallCorrelationTestResult,
   PearsonCorrelationTestResult,
   SpearmanCorrelationTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../../lib/tidy_ts_dataframe.js";
 import type {
   NumberIterable,
   NumbersWithNullable,

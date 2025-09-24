@@ -257,7 +257,7 @@ where
             name: TestStatisticName::TStatistic.as_str().to_string(),
         },
         p_value,
-        test_name: "Independent T-Test".to_string(),
+        test_name: if pooled { "Independent T-Test".to_string() } else { "Welch's T-Test".to_string() },
         alpha,
         error_message: None,
         confidence_interval: ConfidenceInterval {

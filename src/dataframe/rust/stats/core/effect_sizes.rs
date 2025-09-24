@@ -121,6 +121,52 @@ pub fn partial_eta_squared(ss_effect: f64, ss_error: f64) -> f64 {
     if total == 0.0 { 0.0 } else { ss_effect / total }
 }
 
+/// Calculate omega-squared for ANOVA
+///
+/// Omega-squared = (SS_between - (df_between * MS_error)) / (SS_total + MS_error)
+/// This is a less biased estimate of effect size than eta-squared
+///
+/// # Arguments
+/// * `ss_between` - Sum of squares between groups
+/// * `ss_total` - Total sum of squares
+/// * `df_between` - Degrees of freedom between groups
+/// * `ms_error` - Mean square error
+///
+/// # Returns
+/// Omega-squared effect size
+pub fn omega_squared(ss_between: f64, ss_total: f64, df_between: f64, ms_error: f64) -> f64 {
+    let numerator = ss_between - (df_between * ms_error);
+    let denominator = ss_total + ms_error;
+    if denominator == 0.0 {
+        0.0
+    } else {
+        (numerator / denominator).max(0.0) // Omega-squared cannot be negative
+    }
+}
+
+/// Calculate partial omega-squared for ANOVA
+///
+/// Partial omega-squared = (SS_effect - (df_effect * MS_error)) / (SS_effect + SS_error + MS_error)
+/// This is a less biased estimate of partial effect size than partial eta-squared
+///
+/// # Arguments
+/// * `ss_effect` - Sum of squares for the effect
+/// * `ss_error` - Sum of squares for error
+/// * `df_effect` - Degrees of freedom for the effect
+/// * `ms_error` - Mean square error
+///
+/// # Returns
+/// Partial omega-squared effect size
+pub fn partial_omega_squared(ss_effect: f64, ss_error: f64, df_effect: f64, ms_error: f64) -> f64 {
+    let numerator = ss_effect - (df_effect * ms_error);
+    let denominator = ss_effect + ss_error + ms_error;
+    if denominator == 0.0 {
+        0.0
+    } else {
+        (numerator / denominator).max(0.0) // Partial omega-squared cannot be negative
+    }
+}
+
 /// Calculate Cohen's h for proportion tests
 ///
 /// Cohen's h = 2 * (arcsin(sqrt(p1)) - arcsin(sqrt(p2)))
@@ -230,6 +276,27 @@ mod tests {
         assert_eq!(eta_squared(20.0, 100.0), 0.2);
         assert_eq!(eta_squared(20.0, 0.0), 0.0);
         assert_eq!(eta_squared(0.0, 100.0), 0.0);
+    }
+
+    #[test]
+    fn test_omega_squared() {
+        // Omega-squared should be smaller than eta-squared (less biased)
+        // For SS_between=20, SS_total=100, df_between=2, MS_error=5
+        // omega² = (20 - 2*5) / (100 + 5) = 10/105 ≈ 0.095
+        assert!((omega_squared(20.0, 100.0, 2.0, 5.0) - 0.095238).abs() < 1e-5);
+        assert_eq!(omega_squared(20.0, 0.0, 2.0, 0.0), 0.0);
+        // Test that omega-squared cannot be negative
+        assert_eq!(omega_squared(5.0, 100.0, 10.0, 1.0), 0.0); // (5 - 10*1)/(100+1) < 0, so returns 0
+    }
+
+    #[test]
+    fn test_partial_omega_squared() {
+        // For SS_effect=20, SS_error=60, df_effect=2, MS_error=3
+        // partial omega² = (20 - 2*3) / (20 + 60 + 3) = 14/83 ≈ 0.169
+        assert!((partial_omega_squared(20.0, 60.0, 2.0, 3.0) - 0.168674).abs() < 1e-5);
+        assert_eq!(partial_omega_squared(20.0, 60.0, 2.0, 0.0), 0.25); // 20/(20+60)
+        // Test that partial omega-squared cannot be negative
+        assert_eq!(partial_omega_squared(5.0, 60.0, 10.0, 1.0), 0.0); // (5 - 10*1)/(5+60+1) < 0, so returns 0
     }
 
     #[test]

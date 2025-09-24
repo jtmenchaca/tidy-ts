@@ -627,7 +627,9 @@ Deno.test("Statistical Tests - Using New Named Argument Format", () => {
   });
   console.log("\nFisher's exact test result:");
   console.log(`P-value: ${fishersExactResult.p_value?.toFixed(4)}`);
-  console.log(`Odds ratio: ${fishersExactResult.odds_ratio?.toFixed(4)}`);
+  console.log(
+    `Odds ratio: ${fishersExactResult.effect_size?.value?.toFixed(4)}`,
+  );
 
   // ============================================================================
   // 6. NORMALITY TESTS - Shapiro-Wilk

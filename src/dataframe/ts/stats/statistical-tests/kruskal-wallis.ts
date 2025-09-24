@@ -3,9 +3,12 @@
  * Non-parametric alternative to one-way ANOVA
  */
 
-import { kruskal_wallis_test_wasm, serializeTestResult } from "../../wasm/statistical-tests.ts";
-import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+import {
+  kruskal_wallis_test_wasm,
+  serializeTestResult,
+} from "../../wasm/statistical-tests.ts";
+import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
+export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * Perform Kruskal-Wallis test using Rust WASM implementation
@@ -23,10 +26,10 @@ export function kruskalWallisTest(
   }
 
   // Clean groups: filter out NaN/infinite values
-  const cleanGroups = groups.map(group => 
-    group.filter(v => typeof v === "number" && Number.isFinite(v))
+  const cleanGroups = groups.map((group) =>
+    group.filter((v) => typeof v === "number" && Number.isFinite(v))
   );
-  
+
   // Remove any empty groups after cleaning
   const nonEmptyGroups = cleanGroups.filter((g) => g.length > 0);
   if (nonEmptyGroups.length < 2) {
@@ -54,7 +57,6 @@ export function kruskalWallisTest(
   );
   return serializeTestResult(result) as KruskalWallisTestResult;
 }
-
 
 /**
  * Alternative interface that accepts data and group labels

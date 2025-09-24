@@ -5,11 +5,19 @@
  */
 
 // Import WASM functions
-import { proportion_test_one_sample, proportion_test_two_sample, serializeTestResult } from "../../wasm/statistical-tests.ts";
-import type { OneSampleProportionTestResult, TwoSampleProportionTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-export type { OneSampleProportionTestResult, TwoSampleProportionTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-
-
+import {
+  proportion_test_one_sample,
+  proportion_test_two_sample,
+  serializeTestResult,
+} from "../../wasm/statistical-tests.ts";
+import type {
+  OneSampleProportionTestResult,
+  TwoSampleProportionTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
+export type {
+  OneSampleProportionTestResult,
+  TwoSampleProportionTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * One-sample proportion test (WASM implementation)

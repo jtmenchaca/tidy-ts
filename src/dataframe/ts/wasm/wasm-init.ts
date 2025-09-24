@@ -4,7 +4,8 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.internal.js";
+import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
+import { __wbg_set_wasm } from "../../lib/tidy_ts_dataframe.internal.js";
 
 let wasmModule: any = null;
 let wasmBytesCache: ArrayBuffer | null = null;
@@ -24,7 +25,7 @@ export function initWasmFromBytes(bytes: ArrayBuffer): any {
     "./tidy_ts_dataframe.internal.js": wasmImports,
   });
 
-  wasmInternal.__wbg_set_wasm(instance.exports);
+  __wbg_set_wasm(instance.exports);
   wasmModule = instance.exports;
   return wasmModule;
 }
@@ -72,7 +73,7 @@ export function initWasm(): any {
   });
 
   // Set the WASM instance in the internal module
-  wasmInternal.__wbg_set_wasm(wasmInstance.exports);
+  __wbg_set_wasm(wasmInstance.exports);
 
   wasmModule = wasmInstance.exports;
   return wasmModule;

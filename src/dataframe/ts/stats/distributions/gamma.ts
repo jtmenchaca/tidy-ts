@@ -4,6 +4,8 @@ import {
   wasm_qgamma,
   wasm_rgamma,
 } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                               GAMMA DISTRIBUTION
@@ -124,4 +126,99 @@ export function rgamma({
     results.push(wasm_rgamma(shape, rate));
   }
   return results;
+}
+
+/**
+ * Generate data for Gamma distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function gammaData({
+  shape,
+  rate,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  rate: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function gammaData({
+  shape,
+  rate,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  rate: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function gammaData({
+  shape,
+  rate,
+  type,
+  range,
+  points,
+}: {
+  shape: number;
+  rate: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function gammaData({
+  shape,
+  rate,
+  type,
+  range,
+  points = 100,
+}: {
+  shape: number;
+  rate: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dgamma,
+        probability: pgamma,
+        quantile: qgamma,
+      },
+      params: { shape, rate },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dgamma,
+        probability: pgamma,
+        quantile: qgamma,
+      },
+      params: { shape, rate },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dgamma,
+        probability: pgamma,
+        quantile: qgamma,
+      },
+      params: { shape, rate },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

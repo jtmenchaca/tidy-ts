@@ -1,126 +1,223 @@
-// // deno-lint-ignore-file no-explicit-any
-// import type { DataFrame } from "../dataframe/index.ts";
-// import type { GraphOptions } from "./graph.ts";
-// import { graph } from "./graph.ts";
+// deno-lint-ignore-file no-explicit-any
+import type { DataFrame } from "../dataframe/index.ts";
+import type { GraphOptions } from "./graph.ts";
+import { graphReact } from "./graph.ts";
 
-// /**
-//  * Export a graph as PNG image data URL or save to file
-//  * This function creates the graph and exports it as a PNG
-//  */
-// export async function graphToPng<T extends Record<string, unknown>>(
-//   df: DataFrame<T>,
-//   spec: GraphOptions<T>,
-//   options?: {
-//     scale?: number; // Scale factor for higher resolution (default: 2)
-//     background?: string; // Background color (default: "white")
-//   }
-// ): Promise<string> {
-//   // For server-side rendering, we'll need to use vega-cli or canvas
-//   // For now, let's create a function that generates the Vega-Lite spec
-//   // that can be used with vega-cli to generate PNGs
+// Core render deps (work server-side)
+import * as vegaLite from "npm:vega-lite@6.4.1";
+import * as vega from "npm:vega@6.2.0";
 
-//   const graphFunc = graph(spec);
-//   const widget = graphFunc(df);
+// File system for cross-runtime compatibility
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
-//   // Get the spec and data from the widget
-//   const widgetState = (widget as any)._state;
-//   const vlSpec = JSON.parse(widgetState.spec);
-//   const data = JSON.parse(widgetState.data);
+// PNG rendering using local resvg WASM (no network required)
+import { initResvgWasm } from "./resvg-wasm-init.ts";
 
-//   // Add data back to spec for standalone rendering
-//   vlSpec.data = { values: data };
+let resvgReady: Promise<void> | null = null;
+let Resvg: any | null = null;
+async function ensureResvg() {
+  if (!resvgReady) {
+    resvgReady = (async () => {
+      // Initialize local resvg WASM
+      const { Resvg: ResvgClass } = await initResvgWasm();
+      Resvg = ResvgClass;
+    })();
+  }
+  await resvgReady;
+}
 
-//   // Set default options
-//   vlSpec.background = options?.background || "white";
+/** Ensure width/height are numeric (server renderers can't use "container"). */
+function normalizeSize(spec: any, opts?: { width?: number; height?: number }) {
+  const width = typeof spec.width === "number"
+    ? spec.width
+    : (opts?.width ?? 700);
+  const height = typeof spec.height === "number"
+    ? spec.height
+    : (opts?.height ?? 400);
+  return { width, height };
+}
 
-//   return JSON.stringify(vlSpec, null, 2);
-// }
+/** Replace Date objects with ISO strings for robust server compilation. */
+function normalizeRows(rows: any[]): any[] {
+  const toIso = (v: any) => v instanceof Date ? v.toISOString() : v;
+  return rows.map((r) => {
+    const o: any = {};
+    for (const k in r) o[k] = toIso(r[k]);
+    return o;
+  });
+}
 
-// /**
-//  * Save graph as PNG file using vega-cli
-//  * Requires vega-cli to be installed: npm install -g vega-cli
-//  */
-// export async function saveGraphAsPng<T extends Record<string, unknown>>(
-//   df: DataFrame<T>,
-//   spec: GraphOptions<T>,
-//   outputPath: string,
-//   options?: {
-//     scale?: number;
-//     background?: string;
-//   }
-// ): Promise<void> {
-//   const vlSpec = await graphToPng(df, spec, options);
+/** Build a standalone Vega-Lite spec with inlined data and numeric size. */
+export function buildStandaloneVlSpec<T extends Record<string, unknown>>(
+  df: DataFrame<T>,
+  spec: GraphOptions<T>,
+  opts?: { width?: number; height?: number; background?: string },
+) {
+  // Reuse your existing pipeline to get (specWithoutData, rows)
+  const { spec: specNoData, data } = graphReact(spec)(df);
+  const { width, height } = normalizeSize(specNoData, opts);
 
-//   // Write spec to temp file
-//   const tempSpecFile = `/tmp/vega-spec-${Date.now()}.json`;
-//   await Deno.writeTextFile(tempSpecFile, vlSpec);
+  return {
+    ...specNoData,
+    width,
+    height,
+    data: { values: normalizeRows(data) },
+    background: opts?.background ?? specNoData.background ?? "white",
+  };
+}
 
-//   // Use vega-cli to convert to PNG
-//   const scale = options?.scale || 2;
-//   const command = new Deno.Command("vl2png", {
-//     args: [tempSpecFile, outputPath, "-s", scale.toString()],
-//   });
+/** Render SVG fully in-process (no DOM, no browser). */
+export async function vlToSVG(vlSpec: any): Promise<string> {
+  const vg = vegaLite.compile(vlSpec).spec;
+  const view = new vega.View(vega.parse(vg), { renderer: "none" });
+  return await view.toSVG();
+}
 
-//   const { success, stderr } = await command.output();
+/** Rasterize SVG → PNG using resvg-js WASM. */
+export async function svgToPNG(
+  svg: string,
+  scale: number,
+): Promise<Uint8Array> {
+  await ensureResvg();
 
-//   // Clean up temp file
-//   await Deno.remove(tempSpecFile);
+  // Load Inter font files as buffers
+  const fontBuffers: Uint8Array[] = [];
+  try {
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const fontFiles = [
+      "Inter_18pt-Regular.ttf",
+      "Inter_18pt-Medium.ttf",
+      "Inter_18pt-SemiBold.ttf",
+    ];
 
-//   if (!success) {
-//     const errorText = new TextDecoder().decode(stderr);
-//     throw new Error(`Failed to save graph as PNG: ${errorText}`);
-//   }
-// }
+    for (const fontFile of fontFiles) {
+      const fontFilePath = path.resolve(currentDir, "fonts", fontFile);
+      const fontData = fs.readFileSync(fontFilePath);
+      fontBuffers.push(new Uint8Array(fontData));
+    }
+  } catch (e) {
+    console.warn(
+      "Failed to load Roboto fonts, falling back to system fonts:",
+      e,
+    );
+  }
 
-// /**
-//  * Alternative: Export using a headless browser (puppeteer/playwright)
-//  * This is more reliable but requires additional dependencies
-//  */
-// export async function saveGraphAsPngBrowser<T extends Record<string, unknown>>(
-//   df: DataFrame<T>,
-//   spec: GraphOptions<T>,
-//   outputPath: string,
-//   options?: {
-//     width?: number;
-//     height?: number;
-//     scale?: number;
-//   }
-// ): Promise<void> {
-//   const vlSpec = await graphToPng(df, spec, options);
+  const resvg = new Resvg(svg, {
+    fitTo: { mode: "zoom", value: scale },
+    font: fontBuffers.length > 0
+      ? {
+        fontBuffers: fontBuffers,
+        defaultFontFamily: "Inter, Arial, sans-serif",
+        defaultFontSize: 12,
+        sansSerifFamily: "Inter, Arial, sans-serif",
+        serifFamily: "Times New Roman, serif",
+        monospaceFamily: "Courier New, monospace",
+      }
+      : {
+        loadSystemFonts: true,
+        defaultFontFamily: "Arial, sans-serif",
+      },
+    textRendering: 1, // optimizeLegibility for better text rendering
+    shapeRendering: 2, // geometricPrecision for better shapes
+    imageRendering: 0, // optimizeQuality for better image quality
+    dpi: 144, // Higher DPI for crisp text rendering
+  });
+  const pngData = resvg.render();
+  return pngData.asPng();
+}
 
-//   // Create HTML with embedded Vega-Lite
-//   const html = `
-// <!DOCTYPE html>
-// <html>
-// <head>
-//   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-//   <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-//   <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-//   <style>
-//     body { margin: 0; padding: 20px; background: white; }
-//     #vis { width: 100%; }
-//   </style>
-// </head>
-// <body>
-//   <div id="vis"></div>
-//   <script type="text/javascript">
-//     const spec = ${vlSpec};
-//     vegaEmbed('#vis', spec, { actions: false }).then(result => {
-//       // Signal to puppeteer that rendering is complete
-//       window.VEGA_READY = true;
-//     });
-//   </script>
-// </body>
-// </html>`;
+// ---- Public helpers -------------------------------------------------------
 
-//   // Write HTML to temp file
-//   const tempHtmlFile = `/tmp/vega-html-${Date.now()}.html`;
-//   await Deno.writeTextFile(tempHtmlFile, html);
+export async function saveGraphAsSVG<T extends Record<string, unknown>>(
+  df: DataFrame<T>,
+  spec: GraphOptions<T>,
+  {
+    filename,
+    width,
+    height,
+    background,
+  }: {
+    filename: string;
+    width?: number;
+    height?: number;
+    background?: string;
+  },
+) {
+  // Validate filename
+  if (typeof filename !== "string" || filename.trim() === "") {
+    throw new Error(
+      `Invalid filename: expected non-empty string, got ${typeof filename}. ` +
+        `Usage: saveGraphAsSVG(df, spec, { path: "file.svg", width: 800, height: 600 })`,
+    );
+  }
 
-//   console.log(`HTML file created at: ${tempHtmlFile}`);
-//   console.log(`To convert to PNG, use:`);
-//   console.log(`  1. Install vega-cli: npm install -g vega-cli`);
-//   console.log(`  2. Run: vl2png ${tempHtmlFile} ${outputPath}`);
-//   console.log(`  OR`);
-//   console.log(`  Use puppeteer/playwright to capture screenshot`);
-// }
+  // Validate optional numeric parameters
+  if (width !== undefined && (typeof width !== "number" || width <= 0)) {
+    throw new Error(
+      `Invalid width: expected positive number, got ${typeof width} (${width})`,
+    );
+  }
+  if (height !== undefined && (typeof height !== "number" || height <= 0)) {
+    throw new Error(
+      `Invalid height: expected positive number, got ${typeof height} (${height})`,
+    );
+  }
+
+  const vl = buildStandaloneVlSpec(df, spec, { width, height, background });
+  const svg = await vlToSVG(vl);
+  fs.writeFileSync(filename, svg, "utf8");
+}
+
+export async function saveGraphAsPNG<T extends Record<string, unknown>>(
+  df: DataFrame<T>,
+  spec: GraphOptions<T>,
+  {
+    filename,
+    width,
+    height,
+    background,
+    scale = 3, // PNG resolution multiplier (1-4, default: 3)
+  }: {
+    filename: string;
+    width?: number;
+    height?: number;
+    background?: string;
+    scale?: number;
+  },
+) {
+  // Validate filename
+  if (typeof filename !== "string" || filename.trim() === "") {
+    throw new Error(
+      `Invalid filename: expected non-empty string, got ${typeof filename}. ` +
+        `Usage: saveGraphAsPNG(df, spec, { filename: "file.png", width: 800, height: 600, scale: 2 })`,
+    );
+  }
+
+  // Validate optional numeric parameters
+  if (width !== undefined && (typeof width !== "number" || width <= 0)) {
+    throw new Error(
+      `Invalid width: expected positive number, got ${typeof width} (${width})`,
+    );
+  }
+  if (height !== undefined && (typeof height !== "number" || height <= 0)) {
+    throw new Error(
+      `Invalid height: expected positive number, got ${typeof height} (${height})`,
+    );
+  }
+  if (typeof scale !== "number" || scale <= 0) {
+    throw new Error(
+      `Invalid scale: expected positive number, got ${typeof scale} (${scale})`,
+    );
+  }
+
+  const vl = buildStandaloneVlSpec(df, spec, { width, height, background });
+  const svg = await vlToSVG(vl);
+
+  // Clamp scale to valid range
+  const clampedScale = Math.max(1, Math.min(4, scale));
+  const png = await svgToPNG(svg, clampedScale);
+
+  fs.writeFileSync(filename, png);
+}

@@ -1,5 +1,5 @@
 use super::super::super::core::types::{
-    AnovaTestComponent, EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic,
+    AnovaTableComponent, AnovaTestComponent, EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic,
     TestStatisticName, TwoWayAnovaTestResult,
 };
 use super::super::super::core::{TailType, calculate_p, eta_squared};
@@ -247,8 +247,9 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
 
     // Calculate effect sizes
     let ss_total = ss_a + ss_b + ss_ab + ss_error;
-    let _eta_sq = eta_squared(ss_ab, ss_total);
-    let r_squared = ss_ab / ss_total;
+    
+    // Model-level R² = (SS_model) / SS_total = (SS_A + SS_B + SS_AB) / SS_total
+    let r_squared = (ss_a + ss_b + ss_ab) / ss_total;
     let _adjusted_r_squared = 1.0
         - ((1.0 - r_squared) * (total_n as f64 - 1.0)
             / (total_n as f64 - (a_levels * b_levels) as f64));
@@ -257,6 +258,28 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
     let eta_sq_a = eta_squared(ss_a, ss_total);
     let eta_sq_b = eta_squared(ss_b, ss_total);
     let eta_sq_ab = eta_squared(ss_ab, ss_total);
+    
+    // Calculate partial eta squared for each component
+    let partial_eta_sq_a = ss_a / (ss_a + ss_error);
+    let partial_eta_sq_b = ss_b / (ss_b + ss_error);
+    let partial_eta_sq_ab = ss_ab / (ss_ab + ss_error);
+    
+    // Calculate omega squared for each component (unbiased estimate)
+    let omega_sq_a = if ss_total > 0.0 { 
+        ((ss_a - df_a * ms_error) / (ss_total + ms_error)).max(0.0) 
+    } else { 
+        0.0 
+    };
+    let omega_sq_b = if ss_total > 0.0 { 
+        ((ss_b - df_b * ms_error) / (ss_total + ms_error)).max(0.0) 
+    } else { 
+        0.0 
+    };
+    let omega_sq_ab = if ss_total > 0.0 { 
+        ((ss_ab - df_ab * ms_error) / (ss_total + ms_error)).max(0.0) 
+    } else { 
+        0.0 
+    };
 
     // Return the complete two-way ANOVA result
     Ok(TwoWayAnovaTestResult {
@@ -310,6 +333,67 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
         sample_std_devs,
         sum_of_squares: vec![ss_a, ss_b, ss_ab, ss_error],
         grand_mean,
+        r_squared,
+        anova_table: vec![
+            AnovaTableComponent {
+                component: "A".to_string(),
+                ss: ss_a,
+                df: df_a,
+                ms: Some(ms_a),
+                f_statistic: Some(f_statistic_a),
+                p_value: Some(p_value_a),
+                eta_squared: Some(eta_sq_a),
+                partial_eta_squared: Some(partial_eta_sq_a),
+                omega_squared: Some(omega_sq_a),
+            },
+            AnovaTableComponent {
+                component: "B".to_string(),
+                ss: ss_b,
+                df: df_b,
+                ms: Some(ms_b),
+                f_statistic: Some(f_statistic_b),
+                p_value: Some(p_value_b),
+                eta_squared: Some(eta_sq_b),
+                partial_eta_squared: Some(partial_eta_sq_b),
+                omega_squared: Some(omega_sq_b),
+            },
+            AnovaTableComponent {
+                component: "AxB".to_string(),
+                ss: ss_ab,
+                df: df_ab,
+                ms: Some(ms_ab),
+                f_statistic: Some(f_statistic_ab),
+                p_value: Some(p_value_ab),
+                eta_squared: Some(eta_sq_ab),
+                partial_eta_squared: Some(partial_eta_sq_ab),
+                omega_squared: Some(omega_sq_ab),
+            },
+            AnovaTableComponent {
+                component: "Error".to_string(),
+                ss: ss_error,
+                df: df_error,
+                ms: Some(ms_error),
+                f_statistic: None,
+                p_value: None,
+                eta_squared: None,
+                partial_eta_squared: None,
+                omega_squared: None,
+            },
+            AnovaTableComponent {
+                component: "Total".to_string(),
+                ss: ss_total,
+                df: (total_n - 1) as f64,
+                ms: None,
+                f_statistic: None,
+                p_value: None,
+                eta_squared: None,
+                partial_eta_squared: None,
+                omega_squared: None,
+            },
+        ],
+        df_error,
+        ms_error,
+        df_total: (total_n - 1) as f64,
     })
 }
 
@@ -459,8 +543,37 @@ pub fn anova_two_way_factor_a(
         }
     }
 
+    // Compute ss_b and ss_ab for complete ANOVA table
+    let mut b_means = vec![0.0; b_levels];
+    let mut b_n = vec![0usize; b_levels];
+    for j in 0..b_levels {
+        let mut sum = 0.0;
+        let mut n = 0;
+        for i in 0..a_levels {
+            sum += cell_means[i][j] * cell_n[i][j] as f64;
+            n += cell_n[i][j];
+        }
+        b_means[j] = sum / n as f64;
+        b_n[j] = n;
+    }
+
+    let ss_b: f64 = b_means
+        .iter()
+        .zip(b_n.iter())
+        .map(|(&mean, &n)| n as f64 * (mean - grand_mean).powi(2))
+        .sum();
+
+    let mut ss_ab = 0.0;
+    for i in 0..a_levels {
+        for j in 0..b_levels {
+            let cell_mean = cell_means[i][j];
+            let n_ij = cell_n[i][j] as f64;
+            ss_ab += n_ij * (cell_mean - a_means[i] - b_means[j] + grand_mean).powi(2);
+        }
+    }
+
     // Calculate effect sizes
-    let ss_total = ss_a + ss_error;
+    let ss_total = ss_a + ss_b + ss_ab + ss_error;
     let eta_sq = eta_squared(ss_a, ss_total);
     let r_squared = ss_a / ss_total;
     let adjusted_r_squared = 1.0
@@ -485,7 +598,7 @@ pub fn anova_two_way_factor_a(
         sample_size: total_n,
         sample_means,
         sample_std_devs,
-        sum_of_squares: vec![ss_a, ss_error],
+        sum_of_squares: vec![ss_a, ss_b, ss_ab, ss_error],
         r_squared,
         adjusted_r_squared,
     })
@@ -623,8 +736,37 @@ pub fn anova_two_way_factor_b(
         }
     }
 
+    // Compute ss_a and ss_ab for complete ANOVA table
+    let mut a_means = vec![0.0; a_levels];
+    let mut a_n = vec![0usize; a_levels];
+    for i in 0..a_levels {
+        let mut sum = 0.0;
+        let mut n = 0;
+        for j in 0..b_levels {
+            sum += cell_means[i][j] * cell_n[i][j] as f64;
+            n += cell_n[i][j];
+        }
+        a_means[i] = sum / n as f64;
+        a_n[i] = n;
+    }
+
+    let ss_a: f64 = a_means
+        .iter()
+        .zip(a_n.iter())
+        .map(|(&mean, &n)| n as f64 * (mean - grand_mean).powi(2))
+        .sum();
+
+    let mut ss_ab = 0.0;
+    for i in 0..a_levels {
+        for j in 0..b_levels {
+            let cell_mean = cell_means[i][j];
+            let n_ij = cell_n[i][j] as f64;
+            ss_ab += n_ij * (cell_mean - a_means[i] - b_means[j] + grand_mean).powi(2);
+        }
+    }
+
     // Calculate effect sizes
-    let ss_total = ss_b + ss_error;
+    let ss_total = ss_a + ss_b + ss_ab + ss_error;
     let eta_sq = eta_squared(ss_b, ss_total);
     let r_squared = ss_b / ss_total;
     let adjusted_r_squared = 1.0
@@ -649,7 +791,7 @@ pub fn anova_two_way_factor_b(
         sample_size: total_n,
         sample_means,
         sample_std_devs,
-        sum_of_squares: vec![ss_b, ss_error],
+        sum_of_squares: vec![ss_a, ss_b, ss_ab, ss_error],
         r_squared,
         adjusted_r_squared,
     })
@@ -676,9 +818,11 @@ pub fn anova_two_way_interaction(
         sample_means: full_result.sample_means,
         sample_std_devs: full_result.sample_std_devs,
         sum_of_squares: vec![
-            full_result.interaction.sum_of_squares,
-            full_result.sum_of_squares[3],
-        ], // ss_ab, ss_error
+            full_result.sum_of_squares[0], // ss_a
+            full_result.sum_of_squares[1], // ss_b  
+            full_result.interaction.sum_of_squares, // ss_ab
+            full_result.sum_of_squares[3], // ss_error
+        ],
         r_squared: full_result.interaction.sum_of_squares
             / (full_result.interaction.sum_of_squares + full_result.sum_of_squares[3]),
         adjusted_r_squared: 0.0, // Not meaningful for interaction alone

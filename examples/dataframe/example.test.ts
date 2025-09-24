@@ -225,7 +225,7 @@ Deno.test("Example Test", async () => {
   );
   console.log(`P-value: ${distributionComparison.p_value.toFixed(4)}`);
   console.log(
-    `D Statistic: ${distributionComparison.d_statistic?.toFixed(4)}`,
+    `D Statistic: ${distributionComparison.test_statistic.value.toFixed(4)}`,
   );
 
   // 7. Multiple group comparison using groupBy and summarize

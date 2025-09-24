@@ -6,6 +6,7 @@ import type {
 } from "../dataframe/index.ts";
 import type { TidyGraphWidget } from "./graph-types.ts";
 import { vegaLiteWidget } from "./scatter-widget.ts";
+import { saveGraphAsPNG, saveGraphAsSVG } from "./export-utils.ts";
 
 /* ──────────────────────────────────────────────────────────────────────────
    Typed column selectors & top-level options
@@ -787,7 +788,35 @@ export function graph<T extends Record<string, unknown>>(
     const specForWidget = { ...vlSpec };
     delete specForWidget.data;
 
-    return vegaLiteWidget(data, specForWidget);
+    const widgetInstance = vegaLiteWidget(
+      data,
+      specForWidget,
+    ) as TidyGraphWidget;
+
+    // Jupyter-independent, server-side file saves:
+    widgetInstance.saveSVG = async (
+      { filename, width, height, background },
+    ) => {
+      await saveGraphAsSVG(df, graphSpec, {
+        filename,
+        width,
+        height,
+        background,
+      });
+    };
+    widgetInstance.savePNG = async (
+      { filename, width, height, background, scale },
+    ) => {
+      await saveGraphAsPNG(df, graphSpec, {
+        filename,
+        width,
+        height,
+        background,
+        scale,
+      });
+    };
+
+    return widgetInstance;
   };
 }
 

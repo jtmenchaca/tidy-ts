@@ -4,7 +4,7 @@ import {
 } from "../../../wasm/statistical-tests.ts";
 import type {
   KendallCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.internal.js";
+} from "../../../../lib/tidy_ts_dataframe.js";
 
 /**
  * Kendall rank correlation test

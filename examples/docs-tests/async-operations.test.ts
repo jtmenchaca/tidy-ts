@@ -199,4 +199,4 @@ Deno.test("Error example", async () => {
     });
   
   result.print("DataFrame with ratings:");
-}
+});

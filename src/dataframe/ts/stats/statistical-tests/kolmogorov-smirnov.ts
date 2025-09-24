@@ -4,7 +4,7 @@ import {
   serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
 
-import type { KolmogorovSmirnovTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
+import type { KolmogorovSmirnovTestResult } from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * Two-sample Kolmogorov-Smirnov test

@@ -35,20 +35,47 @@ fn calculate_s_statistic(rank_x: &[f64], rank_y: &[f64]) -> f64 {
         * 6.0
 }
 
-/// Exact p-value for Spearman test (small samples, no ties)
-#[allow(dead_code)]
-fn exact_spearman_p_value(n: usize, s_observed: f64, alternative: &AlternativeType) -> f64 {
-    // For very small samples, we could implement exact enumeration
-    // For now, use normal approximation
-    let n_f = n as f64;
-    let mean = n_f * (n_f * n_f - 1.0) / 6.0;
-    let variance = n_f * (n_f * n_f - 1.0) * (n_f + 1.0) / 36.0;
-    let z = (s_observed - mean) / variance.sqrt();
+/// Factorial function for small integers
+fn factorial(n: usize) -> usize {
+    if n <= 1 { 1 } else { n * factorial(n - 1) }
+}
 
+/// Exact p-value for Spearman test (small samples, no ties)
+fn exact_spearman_p_value(n: usize, rho_observed: f64, alternative: &AlternativeType) -> f64 {
+    if n > 9 {
+        // Fall back to asymptotic method for larger samples
+        let df = (n - 2) as f64;
+        let t = rho_observed * (df / (1.0 - rho_observed * rho_observed)).sqrt();
+        return match alternative {
+            AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
+            AlternativeType::Greater => students_t::pt(t, df, false, false),
+            AlternativeType::Less => students_t::pt(t, df, true, false),
+        };
+    }
+
+    // For perfect correlation cases, use exact formula
+    let abs_rho = rho_observed.abs();
+    if (abs_rho - 1.0).abs() < 1e-10 {
+        // Perfect correlation: only 2 permutations out of n! give ρ = ±1
+        let total_perms = factorial(n) as f64;
+        let extreme_perms = 2.0; // One for +1, one for -1
+        let one_sided_p = extreme_perms / total_perms;
+        
+        return match alternative {
+            AlternativeType::TwoSided => one_sided_p, // Already accounts for both tails
+            AlternativeType::Greater if rho_observed > 0.0 => one_sided_p / 2.0, // Only +1 tail
+            AlternativeType::Less if rho_observed < 0.0 => one_sided_p / 2.0, // Only -1 tail
+            _ => 1.0 - one_sided_p / 2.0, // Opposite tail
+        };
+    }
+
+    // For non-perfect correlations, fall back to asymptotic
+    let df = (n - 2) as f64;
+    let t = rho_observed * (df / (1.0 - rho_observed * rho_observed)).sqrt();
     match alternative {
-        AlternativeType::TwoSided => 2.0 * (1.0 - normal::pnorm(z.abs(), 0.0, 1.0, true, false)),
-        AlternativeType::Greater => 1.0 - normal::pnorm(z, 0.0, 1.0, true, false),
-        AlternativeType::Less => normal::pnorm(z, 0.0, 1.0, true, false),
+        AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
+        AlternativeType::Greater => students_t::pt(t, df, false, false),
+        AlternativeType::Less => students_t::pt(t, df, true, false),
     }
 }
 
@@ -99,33 +126,25 @@ pub fn spearman_test(
     let n_f = n as f64;
     let s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
 
-    let p_value = if n <= 1290 && !has_ties {
-        // Use exact test (R uses .Call(C_pRho, ...))
-        // For now, use t-approximation as fallback
-        let df = (n - 2) as f64;
-        let t = rho * (df / (1.0 - rho * rho)).sqrt();
-        match alternative {
-            AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
-            AlternativeType::Greater => students_t::pt(-t, df, true, false), // Note: negative t for S statistic direction
-            AlternativeType::Less => students_t::pt(-t, df, false, false),
-        }
+    let (p_value, test_statistic_name, test_statistic_value) = if n <= 9 && !has_ties {
+        // Use exact permutation test for small samples without ties - report Rho directly
+        (exact_spearman_p_value(n, rho_raw, &alternative), "Rho".to_string(), rho_raw)
     } else {
-        // Large sample or ties: use t-approximation (R's asymptotic method)
+        // Large sample or ties: use t-approximation - report T-statistic  
         let df = (n - 2) as f64;
         let t = rho * (df / (1.0 - rho * rho)).sqrt();
-        match alternative {
+        let p = match alternative {
             AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
-            AlternativeType::Greater => students_t::pt(-t, df, true, false), // Note: negative t for S statistic direction
-            AlternativeType::Less => students_t::pt(-t, df, false, false),
-        }
+            AlternativeType::Greater => students_t::pt(t, df, false, false),
+            AlternativeType::Less => students_t::pt(t, df, true, false),
+        };
+        (p, "T-Statistic".to_string(), t)
     };
-
-    let test_statistic = s_statistic;
 
     Ok(SpearmanCorrelationTestResult {
         test_statistic: TestStatistic {
-            value: test_statistic,
-            name: TestStatisticName::SStatistic.as_str().to_string(), // Always S statistic like R
+            value: test_statistic_value,
+            name: test_statistic_name,
         },
         p_value,
         test_name: "Spearman's rank correlation rho".to_string(), // Match R's method name

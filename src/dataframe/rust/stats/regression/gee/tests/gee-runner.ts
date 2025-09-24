@@ -1,10 +1,10 @@
 #!/usr/bin/env -S deno run --allow-all
 
+// deno-lint-ignore-file no-explicit-any
 import {
   callRobustR,
   callRobustRust,
-  GeeglmTestParameters,
-  GeeglmTestResult,
+  type GeeglmTestParameters,
   generateGeeglmTestCase,
   nextRandom,
   setTestSeed,
@@ -17,7 +17,7 @@ import {
   printDetailedCoefficients,
   printSummaryByType,
   printTestParameters,
-  TestResult,
+  type TestResult,
 } from "../../tests/test-helpers.ts";
 
 interface ComparisonResult extends TestResult {
@@ -319,10 +319,6 @@ export async function runGeeglmTestSuite(): Promise<ComparisonResult[]> {
   console.log("\n" + "=".repeat(100));
   console.log("🔧 TEST CONFIGURATION STATUS");
   console.log("=".repeat(100));
-
-  const enabledTests = Object.entries(testConfig).filter(([_, enabled]) =>
-    enabled
-  );
 
   // Summary by test type
   printSummaryByType(allResults);

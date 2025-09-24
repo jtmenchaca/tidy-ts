@@ -891,7 +891,7 @@ export function welch_anova_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): OneWayAnovaTestResult;
+): WelchAnovaTestResult;
 /**
  * WASM export for chi-square test of independence
  */
@@ -1032,7 +1032,7 @@ export function tukey_hsd_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string;
+): TukeyHsdTestResult;
 /**
  * WASM export for Games-Howell test
  */
@@ -1040,7 +1040,7 @@ export function games_howell_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string;
+): GamesHowellTestResult;
 /**
  * WASM export for Dunn's test
  */
@@ -1048,7 +1048,7 @@ export function dunn_test_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
-): string;
+): DunnTestResult;
 /**
  * WASM export for one-sample proportion test (chi-square approach, matches R)
  */
@@ -1234,6 +1234,7 @@ export enum TestStatisticName {
   BStatistic = 15,
   LStatistic = 16,
   SStatistic = 17,
+  ExactTest = 18,
 }
 /**
  * Represents the type of statistical test performed.
@@ -1267,6 +1268,28 @@ export enum TestType {
 export enum WilcoxonMethod {
   Exact = 0,
   Asymptotic = 1,
+}
+/**
+ * Complete ANOVA table component (includes Total row)
+ */
+export class AnovaTableComponent {
+  private constructor();
+  free(): void;
+  component: string;
+  ss: number;
+  df: number;
+  get ms(): number | undefined;
+  set ms(value: number | null | undefined);
+  get f_statistic(): number | undefined;
+  set f_statistic(value: number | null | undefined);
+  get p_value(): number | undefined;
+  set p_value(value: number | null | undefined);
+  get eta_squared(): number | undefined;
+  set eta_squared(value: number | null | undefined);
+  get partial_eta_squared(): number | undefined;
+  set partial_eta_squared(value: number | null | undefined);
+  get omega_squared(): number | undefined;
+  set omega_squared(value: number | null | undefined);
 }
 /**
  * Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
@@ -1345,6 +1368,61 @@ export class ConfidenceInterval {
   confidence_level: number;
 }
 /**
+ * Result structure for Dunn's test
+ */
+export class DunnTestResult {
+  private constructor();
+  free(): void;
+  /**
+   * Test statistic for the overall test (if applicable)
+   */
+  test_statistic: TestStatistic;
+  /**
+   * P-value for the overall test (if applicable)
+   */
+  p_value: number;
+  /**
+   * Name of the test performed
+   */
+  test_name: string;
+  /**
+   * Significance level used
+   */
+  alpha: number;
+  /**
+   * Error message if test failed
+   */
+  get error_message(): string | undefined;
+  /**
+   * Error message if test failed
+   */
+  set error_message(value: string | null | undefined);
+  /**
+   * Explanatory note about the header values
+   */
+  get note(): string | undefined;
+  /**
+   * Explanatory note about the header values
+   */
+  set note(value: string | null | undefined);
+  /**
+   * Multiple comparison correction method used
+   */
+  correction_method: string;
+  /**
+   * Number of groups compared
+   */
+  n_groups: number;
+  /**
+   * Total sample size
+   */
+  n_total: number;
+  /**
+   * Individual pairwise comparisons
+   */
+  comparisons: PairwiseComparison[];
+}
+/**
  * Effect size with type information
  */
 export class EffectSize {
@@ -1368,6 +1446,65 @@ export class FishersExactTestResult {
   confidence_interval: ConfidenceInterval;
   effect_size: EffectSize;
   method: string;
+  method_type: string;
+  get mid_p_value(): number | undefined;
+  set mid_p_value(value: number | null | undefined);
+  alternative: string;
+}
+/**
+ * Result structure for Games-Howell test
+ */
+export class GamesHowellTestResult {
+  private constructor();
+  free(): void;
+  /**
+   * Test statistic for the overall test (if applicable)
+   */
+  test_statistic: TestStatistic;
+  /**
+   * P-value for the overall test (if applicable)
+   */
+  p_value: number;
+  /**
+   * Name of the test performed
+   */
+  test_name: string;
+  /**
+   * Significance level used
+   */
+  alpha: number;
+  /**
+   * Error message if test failed
+   */
+  get error_message(): string | undefined;
+  /**
+   * Error message if test failed
+   */
+  set error_message(value: string | null | undefined);
+  /**
+   * Explanatory note about the header values
+   */
+  get note(): string | undefined;
+  /**
+   * Explanatory note about the header values
+   */
+  set note(value: string | null | undefined);
+  /**
+   * Multiple comparison correction method used
+   */
+  correction_method: string;
+  /**
+   * Number of groups compared
+   */
+  n_groups: number;
+  /**
+   * Total sample size
+   */
+  n_total: number;
+  /**
+   * Individual pairwise comparisons
+   */
+  comparisons: PairwiseComparison[];
 }
 /**
  * Grouping result that contains all information in one pass
@@ -1455,6 +1592,7 @@ export class MannWhitneyTestResult {
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
   effect_size: EffectSize;
+  alternative: string;
 }
 /**
  * One-sample proportion test result
@@ -1517,11 +1655,11 @@ export class OneWayAnovaTestResult {
   degrees_of_freedom: number;
   effect_size: EffectSize;
   sample_size: number;
+  r_squared: number;
+  adjusted_r_squared: number;
   sample_means: Float64Array;
   sample_std_devs: Float64Array;
   sum_of_squares: Float64Array;
-  r_squared: number;
-  adjusted_r_squared: number;
 }
 /**
  * Paired t-test result
@@ -1540,6 +1678,49 @@ export class PairedTTestResult {
   effect_size: EffectSize;
   mean_difference: number;
   standard_error: number;
+}
+/**
+ * Result for a single pairwise comparison
+ */
+export class PairwiseComparison {
+  private constructor();
+  free(): void;
+  /**
+   * First group label/index
+   */
+  group1: string;
+  /**
+   * Second group label/index
+   */
+  group2: string;
+  /**
+   * Mean difference between groups
+   */
+  mean_difference: number;
+  /**
+   * Standard error of the difference
+   */
+  standard_error: number;
+  /**
+   * Test statistic with name (q for Tukey, t for Games-Howell, z for Dunn)
+   */
+  test_statistic: TestStatistic;
+  /**
+   * P-value for the comparison
+   */
+  p_value: number;
+  /**
+   * Confidence interval for the difference
+   */
+  confidence_interval: ConfidenceInterval;
+  /**
+   * Whether the difference is significant at the given alpha level
+   */
+  significant: boolean;
+  /**
+   * Adjusted p-value (if applicable)
+   */
+  adjusted_p_value: number;
 }
 /**
  * Pearson correlation test result
@@ -1632,6 +1813,61 @@ export class TestStatistic {
   name: string;
 }
 /**
+ * Result structure for Tukey HSD test
+ */
+export class TukeyHsdTestResult {
+  private constructor();
+  free(): void;
+  /**
+   * Test statistic for the overall test (if applicable)
+   */
+  test_statistic: TestStatistic;
+  /**
+   * P-value for the overall test (if applicable)
+   */
+  p_value: number;
+  /**
+   * Name of the test performed
+   */
+  test_name: string;
+  /**
+   * Significance level used
+   */
+  alpha: number;
+  /**
+   * Error message if test failed
+   */
+  get error_message(): string | undefined;
+  /**
+   * Error message if test failed
+   */
+  set error_message(value: string | null | undefined);
+  /**
+   * Explanatory note about the header values
+   */
+  get note(): string | undefined;
+  /**
+   * Explanatory note about the header values
+   */
+  set note(value: string | null | undefined);
+  /**
+   * Multiple comparison correction method used
+   */
+  correction_method: string;
+  /**
+   * Number of groups compared
+   */
+  n_groups: number;
+  /**
+   * Total sample size
+   */
+  n_total: number;
+  /**
+   * Individual pairwise comparisons
+   */
+  comparisons: PairwiseComparison[];
+}
+/**
  * Two-sample proportion test result
  */
 export class TwoSampleProportionTestResult {
@@ -1699,6 +1935,32 @@ export class TwoWayAnovaTestResult {
   sample_std_devs: Float64Array;
   sum_of_squares: Float64Array;
   grand_mean: number;
+  r_squared: number;
+  anova_table: AnovaTableComponent[];
+  df_error: number;
+  ms_error: number;
+  df_total: number;
+}
+/**
+ * Welch's ANOVA test result with proper two degrees of freedom
+ */
+export class WelchAnovaTestResult {
+  private constructor();
+  free(): void;
+  test_statistic: TestStatistic;
+  p_value: number;
+  test_name: string;
+  alpha: number;
+  get error_message(): string | undefined;
+  set error_message(value: string | null | undefined);
+  df1: number;
+  df2: number;
+  effect_size: EffectSize;
+  sample_size: number;
+  r_squared: number;
+  adjusted_r_squared: number;
+  sample_means: Float64Array;
+  sample_std_devs: Float64Array;
 }
 /**
  * Wilcoxon signed-rank test result with method information

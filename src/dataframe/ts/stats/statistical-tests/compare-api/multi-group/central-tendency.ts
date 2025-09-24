@@ -6,28 +6,29 @@ import {
   welchAnovaOneWay,
 } from "../../anova.ts";
 import { kruskalWallisTest } from "../../kruskal-wallis.ts";
-import { cleanNumeric, isNonNormal } from "../helpers.ts";
-import {
-  dunnTest,
-  gamesHowellTest,
-  type PostHocTestResult,
-  tukeyHSD,
-} from "../../post-hoc.ts";
-import { hasEqualVariances } from "../../levene.ts";
-import type { ParametricChoice } from "../../types.ts";
+import { cleanNumeric, hasEqualVariances, isNonNormal } from "../helpers.ts";
+import { dunnTest, gamesHowellTest, tukeyHSD } from "../../post-hoc/index.ts";
 import type {
+  DunnTestResult,
+  GamesHowellTestResult,
   KruskalWallisTestResult,
   OneWayAnovaTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.internal.js";
+  TukeyHsdTestResult,
+  WelchAnovaTestResult,
+} from "../../../../../lib/tidy_ts_dataframe.js";
 
 // Extended result types that include post-hoc tests
 export interface OneWayAnovaWithPostHocResult extends OneWayAnovaTestResult {
-  post_hoc?: PostHocTestResult;
+  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
+}
+
+export interface WelchAnovaWithPostHocResult extends WelchAnovaTestResult {
+  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
 }
 
 export interface KruskalWallisWithPostHocResult
   extends KruskalWallisTestResult {
-  post_hoc?: PostHocTestResult;
+  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
 }
 
 /**
@@ -36,9 +37,12 @@ export interface KruskalWallisWithPostHocResult
 function runPostHocTest(
   testType: "anova" | "welch_anova" | "kruskal_wallis",
   groups: number[][],
-  mainResult: OneWayAnovaTestResult | KruskalWallisTestResult,
+  mainResult:
+    | OneWayAnovaTestResult
+    | WelchAnovaTestResult
+    | KruskalWallisTestResult,
   alpha: number,
-): PostHocTestResult | undefined {
+): TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult | undefined {
   // Only run post-hoc if main test is significant and we have 3+ groups
   if (groups.length < 3 || (mainResult.p_value || 1) >= alpha) {
     return undefined;
@@ -153,7 +157,7 @@ export function centralTendencyToEachOther({
   assumeEqualVariances,
 }: {
   groups: number[][];
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   assumeEqualVariances?: boolean;
 }): OneWayAnovaWithPostHocResult | KruskalWallisWithPostHocResult;
@@ -169,12 +173,15 @@ export function centralTendencyToEachOther({
 }: {
   groups?: number[][];
   data?: number[][][];
-  parametric?: ParametricChoice;
+  parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   design?: "one-way" | "two-way";
   testType?: "factorA" | "factorB" | "interaction";
   assumeEqualVariances?: boolean;
-}): OneWayAnovaWithPostHocResult | KruskalWallisWithPostHocResult {
+}):
+  | OneWayAnovaWithPostHocResult
+  | WelchAnovaWithPostHocResult
+  | KruskalWallisWithPostHocResult {
   // Handle two-way ANOVA
   if (design === "two-way" && data) {
     if (parametric !== "parametric") {
@@ -203,8 +210,8 @@ export function centralTendencyToEachOther({
   // Determine variance equality if not explicitly specified
   let equalVariances: boolean;
   if (assumeEqualVariances === undefined && parametric !== "nonparametric") {
-    // Use Levene's test to determine variance equality
-    equalVariances = hasEqualVariances(groups, 0.05);
+    // Use simple variance ratio to determine variance equality
+    equalVariances = hasEqualVariances(groups);
   } else {
     // Use the provided value or default to true for nonparametric
     equalVariances = assumeEqualVariances ?? true;
@@ -221,9 +228,10 @@ export function centralTendencyToEachOther({
     } else {
       const result = welchAnovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
+      // Result is already serialized by welchAnovaOneWay, so it's safe to assign
       return Object.assign(result, {
         post_hoc: postHoc,
-      }) as OneWayAnovaWithPostHocResult;
+      }) as WelchAnovaWithPostHocResult;
     }
   } else if (parametric === "nonparametric") {
     // Use Kruskal-Wallis test for non-parametric data
@@ -254,9 +262,10 @@ export function centralTendencyToEachOther({
       } else {
         const result = welchAnovaOneWay(groups, alpha);
         const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
-        return Object.assign(result, {
+        return {
+          ...result,
           post_hoc: postHoc,
-        }) as OneWayAnovaWithPostHocResult;
+        } as WelchAnovaWithPostHocResult;
       }
     }
   } else {
@@ -270,9 +279,10 @@ export function centralTendencyToEachOther({
     } else {
       const result = welchAnovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
+      // Result is already serialized by welchAnovaOneWay, so it's safe to assign
       return Object.assign(result, {
         post_hoc: postHoc,
-      }) as OneWayAnovaWithPostHocResult;
+      }) as WelchAnovaWithPostHocResult;
     }
   }
 }

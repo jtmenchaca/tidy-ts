@@ -6,7 +6,7 @@ use super::{
     anova, anova_two_way as anova_two_way_impl, anova_two_way_factor_a, anova_two_way_factor_b,
     anova_two_way_interaction, welch_anova,
 };
-use crate::stats::core::types::{OneWayAnovaTestResult, TwoWayAnovaTestResult};
+use crate::stats::core::types::{OneWayAnovaTestResult, TwoWayAnovaTestResult, WelchAnovaTestResult};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for one-way ANOVA
@@ -313,6 +313,11 @@ pub fn anova_two_way(
             sample_std_devs: vec![],
             sum_of_squares: vec![],
             grand_mean: 0.0,
+            r_squared: 0.0,
+            anova_table: Vec::new(),
+            df_error: 0.0,
+            ms_error: 0.0,
+            df_total: 0.0,
         };
     }
 
@@ -387,6 +392,11 @@ pub fn anova_two_way(
                     sample_std_devs: vec![],
                     sum_of_squares: vec![],
                     grand_mean: 0.0,
+                    r_squared: 0.0,
+                    anova_table: Vec::new(),
+                    df_error: 0.0,
+                    ms_error: 0.0,
+                    df_total: 0.0,
                 };
             }
             let cell_data: Vec<f64> = data[start..start + cell_size].to_vec();
@@ -461,20 +471,25 @@ pub fn anova_two_way(
             sample_std_devs: vec![],
             sum_of_squares: vec![],
             grand_mean: 0.0,
+            r_squared: 0.0,
+            anova_table: Vec::new(),
+            df_error: 0.0,
+            ms_error: 0.0,
+            df_total: 0.0,
         },
     }
 }
 
 /// WASM export for Welch's ANOVA (unequal variances)
 #[wasm_bindgen]
-pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayAnovaTestResult {
+pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> WelchAnovaTestResult {
     // Reconstruct groups from flattened data
     let mut groups = Vec::new();
     let mut start = 0;
 
     for &size in group_sizes {
         if start + size > data.len() {
-            return OneWayAnovaTestResult {
+            return WelchAnovaTestResult {
                 test_statistic: crate::stats::core::types::TestStatistic {
                     value: 0.0,
                     name: crate::stats::core::types::TestStatisticName::FStatistic
@@ -485,7 +500,8 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
                 test_name: "Welch's ANOVA".to_string(),
                 alpha,
                 error_message: Some("Group sizes exceed data length".to_string()),
-                degrees_of_freedom: 0.0,
+                df1: 0.0,
+                df2: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
                     effect_type: crate::stats::core::types::EffectSizeType::OmegaSquared
@@ -493,11 +509,10 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
                         .to_string(),
                 },
                 sample_size: 0,
-                sample_means: vec![],
-                sample_std_devs: vec![],
-                sum_of_squares: vec![],
                 r_squared: 0.0,
                 adjusted_r_squared: 0.0,
+                sample_means: vec![],
+                sample_std_devs: vec![],
             };
         }
         groups.push(&data[start..start + size]);
@@ -506,7 +521,7 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
 
     match welch_anova(&groups, alpha) {
         Ok(result) => result,
-        Err(error_msg) => OneWayAnovaTestResult {
+        Err(error_msg) => WelchAnovaTestResult {
             test_statistic: crate::stats::core::types::TestStatistic {
                 value: 0.0,
                 name: crate::stats::core::types::TestStatisticName::FStatistic
@@ -517,7 +532,8 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
             test_name: "Welch's ANOVA".to_string(),
             alpha,
             error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
+            df1: 0.0,
+            df2: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
                 effect_type: crate::stats::core::types::EffectSizeType::OmegaSquared
@@ -525,11 +541,10 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
                     .to_string(),
             },
             sample_size: 0,
-            sample_means: vec![],
-            sample_std_devs: vec![],
-            sum_of_squares: vec![],
             r_squared: 0.0,
             adjusted_r_squared: 0.0,
+            sample_means: vec![],
+            sample_std_devs: vec![],
         },
     }
 }

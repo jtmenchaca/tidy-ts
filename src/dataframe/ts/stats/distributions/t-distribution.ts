@@ -1,4 +1,6 @@
 import { wasm_dt, wasm_pt, wasm_qt, wasm_rt } from "../../wasm/wasm-loader.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
+import { createDistributionData } from "./data-helper.ts";
 
 // ===============================================================================
 //                            STUDENT'S T DISTRIBUTION
@@ -103,4 +105,91 @@ export function rt({
     results.push(wasm_rt(degreesOfFreedom));
   }
   return results;
+}
+
+/**
+ * Generate data for t-distribution visualization
+ * @param params - Distribution parameters
+ * @param type - Type of data to generate
+ * @param config - Configuration for data generation
+ * @returns DataFrame with distribution data
+ */
+export function tData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "pdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; density: number }>;
+export function tData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ x: number; probability: number }>;
+export function tData({
+  degreesOfFreedom,
+  type,
+  range,
+  points,
+}: {
+  degreesOfFreedom: number;
+  type: "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}): DataFrame<{ probability: number; quantile: number }>;
+export function tData({
+  degreesOfFreedom,
+  type,
+  range,
+  points = 100,
+}: {
+  degreesOfFreedom: number;
+  type: "pdf" | "cdf" | "inverse_cdf";
+  range?: [number, number];
+  points?: number;
+}) {
+  if (type === "pdf") {
+    return createDistributionData({
+      distribution: {
+        density: dt,
+        probability: pt,
+        quantile: qt,
+      },
+      params: { degreesOfFreedom },
+      type: "pdf",
+      config: { range, points },
+    });
+  } else if (type === "cdf") {
+    return createDistributionData({
+      distribution: {
+        density: dt,
+        probability: pt,
+        quantile: qt,
+      },
+      params: { degreesOfFreedom },
+      type: "cdf",
+      config: { range, points },
+    });
+  } else {
+    return createDistributionData({
+      distribution: {
+        density: dt,
+        probability: pt,
+        quantile: qt,
+      },
+      params: { degreesOfFreedom },
+      type: "inverse_cdf",
+      config: { range, points },
+    });
+  }
 }

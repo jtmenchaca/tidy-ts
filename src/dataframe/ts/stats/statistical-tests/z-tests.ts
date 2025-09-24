@@ -1,18 +1,16 @@
-import { z_test_one_sample, z_test_two_sample, serializeTestResult } from "../../wasm/statistical-tests.ts";
-import type { OneSampleZTestResult, TwoSampleZTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-export type { OneSampleZTestResult, TwoSampleZTestResult } from "../../../lib/tidy_ts_dataframe.internal.js";
-
-/**
- * Calculate sample standard deviation
- */
-function calculateSampleStd(data: number[]): number {
-  const mean = data.reduce((sum, x) => sum + x, 0) / data.length;
-  const variance = data.reduce((sum, x) => sum + Math.pow(x - mean, 2), 0) /
-    (data.length - 1);
-  return Math.sqrt(variance);
-}
-
-
+import {
+  serializeTestResult,
+  z_test_one_sample,
+  z_test_two_sample,
+} from "../../wasm/statistical-tests.ts";
+import type {
+  OneSampleZTestResult,
+  TwoSampleZTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
+export type {
+  OneSampleZTestResult,
+  TwoSampleZTestResult,
+} from "../../../lib/tidy_ts_dataframe.js";
 
 /**
  * One-sample Z-test for means (WASM implementation)

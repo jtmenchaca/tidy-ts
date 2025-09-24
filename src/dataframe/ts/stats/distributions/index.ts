@@ -1,5 +1,4 @@
 // Statistical Distribution Functions
-// Organized hierarchical exports for all probability distributions
 
 // Import all distribution functions
 import * as beta from "./beta.ts";
@@ -45,6 +44,7 @@ export const dist = {
     probability: normal.pnorm,
     quantile: normal.qnorm,
     random: normal.rnorm,
+    data: normal.normalData,
   },
 
   beta: {
@@ -52,6 +52,7 @@ export const dist = {
     probability: beta.pbeta,
     quantile: beta.qbeta,
     random: beta.rbeta,
+    data: beta.betaData,
   },
 
   gamma: {
@@ -59,6 +60,7 @@ export const dist = {
     probability: gamma.pgamma,
     quantile: gamma.qgamma,
     random: gamma.rgamma,
+    data: gamma.gammaData,
   },
 
   exponential: {
@@ -66,6 +68,7 @@ export const dist = {
     probability: exponential.pexp,
     quantile: exponential.qexp,
     random: exponential.rexp,
+    data: exponential.exponentialData,
   },
 
   chiSquare: {
@@ -73,6 +76,7 @@ export const dist = {
     probability: chiSquare.pchisq,
     quantile: chiSquare.qchisq,
     random: chiSquare.rchisq,
+    data: chiSquare.chiSquareData,
   },
 
   t: {
@@ -80,6 +84,7 @@ export const dist = {
     probability: tDist.pt,
     quantile: tDist.qt,
     random: tDist.rt,
+    data: tDist.tData,
   },
 
   f: {
@@ -94,6 +99,7 @@ export const dist = {
     probability: uniform.punif,
     quantile: uniform.qunif,
     random: uniform.runif,
+    data: uniform.uniformData,
   },
 
   weibull: {
@@ -101,6 +107,7 @@ export const dist = {
     probability: weibull.pweibull,
     quantile: weibull.qweibull,
     random: weibull.rweibull,
+    data: weibull.weibullData,
   },
 
   logNormal: {
@@ -117,13 +124,13 @@ export const dist = {
     random: wilcoxon.rwilcox,
   },
 
-
   // Discrete distributions
   binomial: {
     density: binomial.dbinom,
     probability: binomial.pbinom,
     quantile: binomial.qbinom,
     random: binomial.rbinom,
+    data: binomial.binomialData,
   },
 
   poisson: {
@@ -131,6 +138,7 @@ export const dist = {
     probability: poisson.ppois,
     quantile: poisson.qpois,
     random: poisson.rpois,
+    data: poisson.poissonData,
   },
 
   geometric: {

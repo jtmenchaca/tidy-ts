@@ -7,7 +7,7 @@
     "src/tidy-utils",
     "tests",
     "examples",
-    "tmp",
+    "tmp"
   ],
   // This is the only reliable way to completely ignore a file for the Deno language server
   // Exclude does not "ignore" the file it just makes it so it's not checked for errors
