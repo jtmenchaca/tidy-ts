@@ -7,7 +7,7 @@ import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Import the local resvg JS glue code (v2.6.3-alpha.0)
-const resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.cjs");
+const resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js.cjs");
 
 let resvgWasmModule: any = null;
 let resvgWasmBytesCache: ArrayBuffer | null = null;
