@@ -6,8 +6,8 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Import the local resvg JS glue code (v2.6.3-alpha.0)
-const resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js");
+// Lazy import the local resvg JS glue code (v2.6.3-alpha.0) to avoid top-level await
+let resvgGlue: any = null;
 
 let resvgWasmModule: any = null;
 let resvgWasmBytesCache: ArrayBuffer | null = null;
@@ -17,6 +17,11 @@ let initialized = false;
 // Initialize Resvg WASM from bytes (for workers)
 export async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
   if (initialized) return { module: resvgWasmModule, Resvg: resvgInstance };
+
+  // Lazy load the resvg glue code when actually needed
+  if (!resvgGlue) {
+    resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js");
+  }
 
   // Initialize the WASM module using the local implementation
   const mod = new WebAssembly.Module(new Uint8Array(bytes));
@@ -61,6 +66,11 @@ export function getResvgWasmBytes(): ArrayBuffer {
 export async function initResvgWasm(): Promise<any> {
   if (initialized) {
     return { module: resvgWasmModule, Resvg: resvgInstance };
+  }
+
+  // Lazy load the resvg glue code when actually needed
+  if (!resvgGlue) {
+    resvgGlue = await import("./resvg-wasm-2.6.3-alpha.0.js");
   }
 
   // Get path to WASM file

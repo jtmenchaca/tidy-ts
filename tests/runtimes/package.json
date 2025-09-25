@@ -4,11 +4,12 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build:browser": "bun run bundle.js",
     "test:bun": "bun minimal.test.ts",
     "playwright-setup": "bun server.js",
     "serve": "bun server.js",
-    "test:browser": "playwright test",
-    "test:browser-headed": "playwright test --headed",
+    "test:browser": "bun run build:browser && playwright test",
+    "test:browser-headed": "bun run build:browser && playwright test --headed",
     "test:browser-ui": "playwright test --ui",
     "test:all": "npm run test:node && npm run test:bun && npm run test:browser",
     "test:sh": "bash test-runner.sh",
@@ -17,10 +18,11 @@
     "test:deno": "deno run --allow-all --no-config --import-map deno.jsonc dist.test.ts"
   },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.6"
+    "@tidy-ts/dataframe": "file:../../src/dataframe"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "esbuild": "^0.25.10",
     "playwright": "^1.55.0"
   }
 }

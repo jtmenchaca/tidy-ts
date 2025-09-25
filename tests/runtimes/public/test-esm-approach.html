@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ESM Approach Test</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="result">Loading...</div>
+    <script type="module">
+        try {
+            const module = await import('@tidy-ts/dataframe');
+            const availableFunctions = Object.keys(module);
+            document.getElementById('result').textContent = `ESM available: ${availableFunctions.join(', ')}`;
+            console.log('ESM module:', module);
+        } catch (e) {
+            document.getElementById('result').textContent = 'ESM ERROR: ' + e.message;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Local Build</title>
+    <script type="module">
+        // Import directly from the local built files
+        import { createDataFrame, stats } from '../../../src/dataframe/ts/index.ts';
+        
+        try {
+            const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
+            const sum = stats.sum(df.a);
+            document.getElementById('result').textContent = sum === 4 ? 'PASS' : 'FAIL';
+        } catch (e) {
+            document.getElementById('result').textContent = 'ERROR: ' + e.message;
+        }
+    </script>
+</head>
+<body>
+    <div id="result">Loading...</div>
+</body>
+</html>

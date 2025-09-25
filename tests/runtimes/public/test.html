@@ -2,19 +2,13 @@
 <html>
 <head>
     <title>Test</title>
-    <script type="importmap">
-    {
-        "imports": {
-            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe"
-        }
-    }
-    </script>
+    <script src="/dataframe-bundle.js"></script>
 </head>
 <body>
     <div id="result">Loading...</div>
-    <script type="module">
+    <script>
         try {
-            const { createDataFrame, stats } = await import('@tidy-ts/dataframe');
+            const { createDataFrame, stats } = TidyDataFrame;
             const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
             const sum = stats.sum(df.a);
             document.getElementById('result').textContent = sum === 4 ? 'PASS' : 'FAIL';

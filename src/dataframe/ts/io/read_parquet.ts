@@ -1,6 +1,6 @@
 // Parquet reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
-import { asyncBufferFromFile, parquetReadObjects } from "hyparquet";
+import { parquetReadObjects } from "hyparquet";
 import { compressors } from "hyparquet-compressors";
 // const data = await parquetReadObjects({ file, compressors });
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
@@ -308,6 +308,9 @@ export async function read_parquet<S extends z.ZodObject<any>>(
   if (isFilePath(pathOrBuffer)) {
     // It's a file path - read the file
     try {
+      // Dynamically import asyncBufferFromFile only when needed
+      // This prevents the import from breaking browser environments
+      const { asyncBufferFromFile } = await import("hyparquet");
       file = await asyncBufferFromFile(pathOrBuffer as string);
     } catch (error) {
       throw new Error(
