@@ -31,6 +31,10 @@
     "playwright": "npm:playwright@^1.54.1",
     "playwright/": "npm:/playwright@^1.54.1/",
 
+    "vega-lite": "npm:vega-lite@^6.4.1",
+    "vega-lite/": "npm:/vega-lite@^6.4.1/",
+    "vega": "npm:vega@^6.2.0",
+    "vega/": "npm:/vega@^6.2.0/",
     "vega-embed": "npm:vega-embed@^7.0.2",
     "vega-embed/": "npm:/vega-embed@^7.0.2/",
     "react-vega": "npm:react-vega@^8.0.0",

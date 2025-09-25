@@ -4,8 +4,8 @@ import type { GraphOptions } from "./graph.ts";
 import { graphReact } from "./graph.ts";
 
 // Core render deps (work server-side)
-import * as vegaLite from "npm:vega-lite@6.4.1";
-import * as vega from "npm:vega@6.2.0";
+import * as vegaLite from "vega-lite";
+import * as vega from "vega";
 
 // File system for cross-runtime compatibility
 import * as fs from "node:fs";

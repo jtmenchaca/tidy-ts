@@ -1,8 +1,7 @@
 // Stats functions module
 // deno-lint-ignore-file no-explicit-any
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Stats functions
 export function unique_f64(values: any) {

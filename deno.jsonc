@@ -31,6 +31,8 @@
     "test-regression": "deno run -A src/dataframe/rust/stats/regression/tests/regression-runner.ts 10",
     "test-debug": "deno run -A src/dataframe/rust/stats/regression/tests/regression-runner.ts 10 1663613575",
     "test-gee": "deno run -A src/dataframe/rust/stats/regression/gee/tests/run-gee-tests.ts",
+    "test-external-deno": "cd /Users/jtmenchaca/tidy-ts/tests/runtimes && deno run --allow-all --no-config --import-map deno.jsonc dist.test.ts",
+    "test-bun": "bun run examples/dataframe/dist.test.ts",
     "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib"
   },
   "importMap": "import_map.json",

@@ -1,7 +1,6 @@
 // Probability distributions module
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Normal Distribution
 export function wasm_dnorm(

@@ -1,8 +1,7 @@
 // Sorting functions module
 // deno-lint-ignore-file no-explicit-any
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Sorting functions
 export function arrange_multi_f64_wasm(

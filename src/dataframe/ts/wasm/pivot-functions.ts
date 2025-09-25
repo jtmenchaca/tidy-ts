@@ -1,7 +1,6 @@
 // Pivot functions module
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // High-performance pivot_wider functions
 export function pivot_wider_dense_f64(

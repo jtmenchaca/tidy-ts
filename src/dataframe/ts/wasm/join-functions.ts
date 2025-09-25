@@ -1,7 +1,6 @@
 // Join functions module
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Export WASM join functions (streamlined typed array approach)
 export function inner_join_typed_multi_u32(

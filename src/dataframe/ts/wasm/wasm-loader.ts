@@ -9,7 +9,7 @@ export type {
 } from "../../lib/tidy_ts_dataframe.js";
 
 // Export initialization functions
-export { initWasm } from "./wasm-init.ts";
+export { getWasmBytes, initWasm, initWasmFromBytes } from "./wasm-init.ts";
 
 // Export join functions
 export * from "./join-functions.ts";

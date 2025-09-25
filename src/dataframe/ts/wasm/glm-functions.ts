@@ -1,7 +1,6 @@
 // GLM functions for WASM
 
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.js";
-import { initWasm } from "./wasm-init.ts";
+import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 /**
  * GLM fit result interface

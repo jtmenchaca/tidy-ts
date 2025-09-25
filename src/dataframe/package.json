@@ -1,0 +1,9 @@
+{
+  "name": "@tidy-ts/dataframe",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "mod.ts",
+  "exports": {
+    ".": "./mod.ts"
+  }
+}
