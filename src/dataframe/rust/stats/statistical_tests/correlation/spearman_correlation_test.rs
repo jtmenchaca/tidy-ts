@@ -2,10 +2,9 @@ use super::super::super::core::{
     AlternativeType,
     types::{
         ConfidenceInterval, EffectSize, EffectSizeType, SpearmanCorrelationTestResult,
-        TestStatistic, TestStatisticName,
+        TestStatistic,
     },
 };
-use super::super::super::distributions::normal;
 use super::super::super::distributions::students_t;
 use super::utils::rank;
 
@@ -60,12 +59,12 @@ fn exact_spearman_p_value(n: usize, rho_observed: f64, alternative: &Alternative
         let total_perms = factorial(n) as f64;
         let extreme_perms = 2.0; // One for +1, one for -1
         let one_sided_p = extreme_perms / total_perms;
-        
+
         return match alternative {
             AlternativeType::TwoSided => one_sided_p, // Already accounts for both tails
             AlternativeType::Greater if rho_observed > 0.0 => one_sided_p / 2.0, // Only +1 tail
             AlternativeType::Less if rho_observed < 0.0 => one_sided_p / 2.0, // Only -1 tail
-            _ => 1.0 - one_sided_p / 2.0, // Opposite tail
+            _ => 1.0 - one_sided_p / 2.0,             // Opposite tail
         };
     }
 
@@ -124,13 +123,17 @@ pub fn spearman_test(
     // Follow R's approach: always return S statistic and calculate p-value accordingly
     // R: q <- (n^3 - n) * (1 - r) / 6
     let n_f = n as f64;
-    let s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
+    let _s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
 
     let (p_value, test_statistic_name, test_statistic_value) = if n <= 9 && !has_ties {
         // Use exact permutation test for small samples without ties - report Rho directly
-        (exact_spearman_p_value(n, rho_raw, &alternative), "Rho".to_string(), rho_raw)
+        (
+            exact_spearman_p_value(n, rho_raw, &alternative),
+            "Rho".to_string(),
+            rho_raw,
+        )
     } else {
-        // Large sample or ties: use t-approximation - report T-statistic  
+        // Large sample or ties: use t-approximation - report T-statistic
         let df = (n - 2) as f64;
         let t = rho * (df / (1.0 - rho * rho)).sqrt();
         let p = match alternative {

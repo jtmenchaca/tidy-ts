@@ -180,7 +180,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
   // Write basic CSV
   // Start with the simplest case: basic CSV export
-  write_csv(salesData, "./examples/dataframe/output/salesData.csv");
+  await write_csv(salesData, "./examples/dataframe/output/salesData.csv");
 
   console.log("Basic CSV written successfully");
 

@@ -1,5 +1,0 @@
-{
-  "imports": {
-    "@tidy-ts/dataframe": "jsr:@tidy-ts/dataframe@0.1.5"
-  }
-}

@@ -1,7 +1,7 @@
 // Fisher's exact test implementation - pure computational functions
 // WASM binding is handled in wasm_bindings.rs
 
-use crate::stats::core::{AlternativeType, types::{FishersExactTestResult, TestStatistic, TestStatisticName, ConfidenceInterval, EffectSize, EffectSizeType}};
+use crate::stats::core::{AlternativeType, types::{FishersExactTestResult, TestStatistic, ConfidenceInterval, EffectSize, EffectSizeType}};
 
 /// Fisher's exact test result structure
 pub struct FisherResult {
@@ -283,6 +283,7 @@ fn dhyper_central(x: i32, m: i32, n: i32, k: i32) -> f64 {
 
 /// Calculate expectation of non-central hypergeometric distribution
 /// E(X) where X ~ NonCentralHypergeometric(m, n, k, ncp)
+#[allow(dead_code)]
 fn expectation_nhyper(m: i32, n: i32, k: i32, ncp: f64) -> f64 {
     let lo = std::cmp::max(0, k - n);
     let hi = std::cmp::min(k, m);
@@ -303,6 +304,7 @@ fn expectation_nhyper(m: i32, n: i32, k: i32, ncp: f64) -> f64 {
 
 /// Calculate MLE for odds ratio using R's approach
 /// Solves E(X) = x by finding ncp such that expectation equals observed value
+#[allow(dead_code)]
 fn mle_odds_ratio(x: i32, m: i32, n: i32, k: i32) -> f64 {
     let lo = std::cmp::max(0, k - n);
     let hi = std::cmp::min(k, m);
@@ -336,6 +338,7 @@ fn mle_odds_ratio(x: i32, m: i32, n: i32, k: i32) -> f64 {
 }
 
 /// Binary search to find MLE odds ratio
+#[allow(dead_code)]
 fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high: f64) -> f64 {
     const MAX_ITER: usize = 50;
     const TOL: f64 = 1e-6;

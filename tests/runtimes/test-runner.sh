@@ -10,7 +10,6 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
-# Note: Deno tests are handled in the main test suite
 
 # Test Node.js
 echo -e "${BLUE}🟢 Testing with Node.js...${NC}"
