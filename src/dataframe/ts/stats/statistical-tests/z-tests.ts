@@ -6,11 +6,11 @@ import {
 import type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 export type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * One-sample Z-test for means (WASM implementation)

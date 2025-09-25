@@ -5,7 +5,7 @@ import type {
   ChiSquareIndependenceTestResult,
   FishersExactTestResult,
   TwoSampleProportionTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.js";
+} from "../../../../../lib/tidy_ts_dataframe.d.ts";
 import { to01 } from "../helpers.ts";
 
 /**

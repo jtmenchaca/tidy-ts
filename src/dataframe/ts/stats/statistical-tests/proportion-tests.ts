@@ -13,11 +13,11 @@ import {
 import type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 export type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * One-sample proportion test (WASM implementation)

@@ -2,7 +2,7 @@ import {
   serializeTestResult,
   tukey_hsd_wasm,
 } from "../../../wasm/statistical-tests.ts";
-import type { TukeyHsdTestResult } from "../../../../lib/tidy_ts_dataframe.js";
+import type { TukeyHsdTestResult } from "../../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Tukey's Honestly Significant Difference (HSD) test

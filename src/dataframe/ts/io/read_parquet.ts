@@ -4,11 +4,11 @@ import { asyncBufferFromFile, parquetReadObjects } from "hyparquet";
 import { compressors } from "hyparquet-compressors";
 // const data = await parquetReadObjects({ file, compressors });
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
+import type { NAOpts } from "./types.ts";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-type NAOpts = { naValues?: readonly string[]; trim?: boolean };
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 
 const isNA = (s: unknown, na: readonly string[], trim: boolean): boolean =>

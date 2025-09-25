@@ -1,5 +1,5 @@
 import { chiSquareTest } from "../../chi-square.ts";
-import type { ChiSquareIndependenceTestResult } from "../../../../../lib/tidy_ts_dataframe.js";
+import type { ChiSquareIndependenceTestResult } from "../../../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Test independence of categorical variables across multiple groups.

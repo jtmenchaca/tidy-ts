@@ -3,11 +3,11 @@ import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { type CSVOptions, parseCSV } from "./csv-parser.ts";
 import * as fs from "node:fs/promises";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
+import type { NAOpts } from "./types.ts";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-type NAOpts = { naValues?: readonly string[]; trim?: boolean };
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 
 const isNA = (s: unknown, na: readonly string[], trim: boolean): boolean =>

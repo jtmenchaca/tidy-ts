@@ -2,8 +2,8 @@ import {
   serializeTestResult,
   wilcoxon_w_test,
 } from "../../wasm/statistical-tests.ts";
-import type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.js";
-export type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
+export type { WilcoxonSignedRankTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Wilcoxon signed-rank test for paired data

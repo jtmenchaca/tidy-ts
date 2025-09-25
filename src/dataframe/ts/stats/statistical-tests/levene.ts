@@ -1,5 +1,5 @@
 import { levene_test_wasm } from "../../wasm/statistical-tests.ts";
-import type { OneWayAnovaTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { OneWayAnovaTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Levene's test for equality of variances

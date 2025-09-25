@@ -1,5 +1,5 @@
 import { proportionTestOneSample } from "../../proportion-tests.ts";
-import type { OneSampleProportionTestResult } from "../../../../../lib/tidy_ts_dataframe.js";
+import type { OneSampleProportionTestResult } from "../../../../../lib/tidy_ts_dataframe.d.ts";
 import { to01 } from "../helpers.ts";
 
 /**

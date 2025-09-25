@@ -3,7 +3,7 @@ import { mannWhitneyTest } from "../../mann-whitney.ts";
 import type {
   KolmogorovSmirnovTestResult,
   MannWhitneyTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.js";
+} from "../../../../../lib/tidy_ts_dataframe.d.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,

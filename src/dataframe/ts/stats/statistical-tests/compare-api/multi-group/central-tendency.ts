@@ -15,7 +15,7 @@ import type {
   OneWayAnovaTestResult,
   TukeyHsdTestResult,
   WelchAnovaTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.js";
+} from "../../../../../lib/tidy_ts_dataframe.d.ts";
 
 // Extended result types that include post-hoc tests
 export interface OneWayAnovaWithPostHocResult extends OneWayAnovaTestResult {

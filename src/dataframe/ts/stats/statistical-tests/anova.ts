@@ -12,7 +12,7 @@ import type {
   OneWayAnovaTestResult,
   TwoWayAnovaTestResult,
   WelchAnovaTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * One-way ANOVA (WASM implementation)

@@ -8,7 +8,7 @@ import type {
   OneSampleTTestResult,
   PairedTTestResult,
   TwoSampleTTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * One-sample t-test for comparing sample mean to hypothesized population mean

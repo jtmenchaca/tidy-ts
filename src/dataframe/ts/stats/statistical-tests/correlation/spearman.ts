@@ -4,7 +4,7 @@ import {
 } from "../../../wasm/statistical-tests.ts";
 import type {
   SpearmanCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.js";
+} from "../../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Spearman rank correlation test

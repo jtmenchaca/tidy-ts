@@ -7,8 +7,8 @@ import {
   kruskal_wallis_test_wasm,
   serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
-export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
+export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Perform Kruskal-Wallis test using Rust WASM implementation

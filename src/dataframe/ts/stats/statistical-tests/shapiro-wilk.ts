@@ -2,8 +2,8 @@ import {
   serializeTestResult,
   shapiro_wilk_test,
 } from "../../wasm/statistical-tests.ts";
-import type { ShapiroWilkTestResult } from "../../../lib/tidy_ts_dataframe.js";
-export type { ShapiroWilkTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { ShapiroWilkTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
+export type { ShapiroWilkTestResult } from "../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Test for normality using Shapiro-Wilk test

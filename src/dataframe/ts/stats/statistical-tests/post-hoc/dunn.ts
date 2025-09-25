@@ -2,7 +2,7 @@ import {
   dunn_test_wasm,
   serializeTestResult,
 } from "../../../wasm/statistical-tests.ts";
-import type { DunnTestResult } from "../../../../lib/tidy_ts_dataframe.js";
+import type { DunnTestResult } from "../../../../lib/tidy_ts_dataframe.d.ts";
 
 /**
  * Dunn's test for pairwise comparisons
