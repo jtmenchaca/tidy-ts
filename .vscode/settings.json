@@ -29,6 +29,7 @@
     "sources/",
     "proposal/",
     "target/",
+    "tmp/",
     "z-other/**",
     ".obsidian/",
     ".cargo/",

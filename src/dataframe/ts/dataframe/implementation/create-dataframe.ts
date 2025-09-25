@@ -360,6 +360,14 @@ export interface DataFrameOptions extends ConcurrencyOptions {
 }
 
 /**
+ * Options for creating a DataFrame from columns.
+ */
+export interface ColumnBasedDataFrameOptions {
+  /** Column data as record of column names to arrays */
+  columns: Record<string, readonly unknown[]>;
+}
+
+/**
  * Create a new DataFrame from an array of objects.
  *
  * DataFrames provide a fluent API for data manipulation including filtering, grouping,
@@ -412,6 +420,34 @@ export interface DataFrameOptions extends ConcurrencyOptions {
  *   .arrange("avgAge", "desc");
  * ```
  */
+
+/**
+ * Create a DataFrame from columns.
+ *
+ * Create a DataFrame by providing column data as arrays. Each column must have
+ * the same length. This is useful when you have columnar data rather than row-based data.
+ *
+ * @param options - Object with a `columns` property containing column arrays
+ * @returns A new DataFrame with the specified columns
+ *
+ * @example
+ * ```typescript
+ * const df = createDataFrame({
+ *   columns: {
+ *     name: ["Alice", "Bob", "Charlie"],
+ *     age: [25, 30, 28],
+ *     city: ["NYC", "LA", "Chicago"]
+ *   }
+ * });
+ * // Returns DataFrame<{ name: string; age: number; city: string; }>
+ * ```
+ */
+export function createDataFrame<
+  T extends Record<string, readonly unknown[]>,
+>(
+  options: { columns: T },
+  schemaOrOptions?: null | DataFrameOptions,
+): DataFrame<{ [K in keyof T]: T[K][number] }>;
 
 /**
  * Create a DataFrame from an empty array.
@@ -660,10 +696,70 @@ export function createDataFrame<T extends object>(
 export function createDataFrame<
   R extends readonly object[],
   S extends z.ZodObject<any>,
+  T extends Record<string, readonly unknown[]>,
 >(
-  rows: R | readonly object[] | readonly [],
+  rows: R | readonly object[] | readonly [] | { columns: T },
   schemaOrOptions?: S | null | DataFrameOptions,
-): DataFrame<R[number]> | DataFrame<z.infer<S>> | DataFrame<never> {
+):
+  | DataFrame<R[number]>
+  | DataFrame<z.infer<S>>
+  | DataFrame<never>
+  | DataFrame<{ [K in keyof T]: T[K][number] }> {
+  // Check for conflicting rows and columns first
+  if (
+    rows && typeof rows === "object" && !Array.isArray(rows) &&
+    "rows" in rows && "columns" in rows
+  ) {
+    throw new Error(
+      "Cannot specify both 'rows' and 'columns' in createDataFrame. " +
+        "Use either row-based or column-based creation, not both.",
+    );
+  }
+
+  // Check if this is column-based creation
+  if (
+    rows && typeof rows === "object" && !Array.isArray(rows) &&
+    "columns" in rows
+  ) {
+    const columnsData = rows.columns as Record<string, readonly unknown[]>;
+
+    // Validate all columns have the same length
+    const columnNames = Object.keys(columnsData);
+    if (columnNames.length === 0) {
+      // Empty columns - return empty DataFrame
+      const store = toColumnarStorage([]);
+      return createColumnarDataFrameFromStore(store, {}) as DataFrame<never>;
+    }
+
+    const firstLength = columnsData[columnNames[0]].length;
+    for (const colName of columnNames) {
+      if (columnsData[colName].length !== firstLength) {
+        throw new Error(
+          `Column length mismatch: column "${colName}" has ${
+            columnsData[colName].length
+          } elements, ` +
+            `but expected ${firstLength} (same as "${columnNames[0]}")`,
+        );
+      }
+    }
+
+    // Convert columns to rows for compatibility with existing storage
+    const rowsArray: object[] = [];
+    for (let i = 0; i < firstLength; i++) {
+      const row: Record<string, unknown> = {};
+      for (const colName of columnNames) {
+        row[colName] = columnsData[colName][i];
+      }
+      rowsArray.push(row);
+    }
+
+    const store = toColumnarStorage(rowsArray);
+    return createColumnarDataFrameFromStore(store, {}) as any;
+  }
+
+  // Original row-based logic
+  const rowsArray = rows as R | readonly object[] | readonly [];
+
   // Determine what the second parameter is
   const isOptions = schemaOrOptions &&
     typeof schemaOrOptions === "object" &&
@@ -679,7 +775,7 @@ export function createDataFrame<
   if (schema && schema instanceof z.ZodObject) {
     const validatedRows: z.infer<typeof schema>[] = [];
 
-    (rows as readonly object[]).forEach((row, idx) => {
+    (rowsArray as readonly object[]).forEach((row, idx) => {
       const parsed = schema.safeParse(row);
       if (parsed.success) {
         validatedRows.push(parsed.data);
@@ -699,7 +795,7 @@ export function createDataFrame<
     return result;
   }
 
-  const store = toColumnarStorage(rows as R);
+  const store = toColumnarStorage(rowsArray as R);
   const result = createColumnarDataFrameFromStore(
     store,
     options,

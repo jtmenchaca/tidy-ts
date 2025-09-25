@@ -4,7 +4,7 @@
     "": {
       "name": "@tidy-ts/runtime-tests",
       "dependencies": {
-        "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.9",
+        "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.10",
       },
       "devDependencies": {
         "@playwright/test": "^1.55.0",
@@ -74,7 +74,7 @@
 
     "@playwright/test": ["@playwright/test@1.55.1", "", { "dependencies": { "playwright": "1.55.1" }, "bin": { "playwright": "cli.js" } }, "sha512-IVAh/nOJaw6W9g+RJVlIQJ6gSiER+ae6mKQ5CX1bERzQgbC1VSeBlwdvczT7pxb0GWiyrxH4TGKbMfDb4Sq/ig=="],
 
-    "@tidy-ts/dataframe": ["@jsr/tidy-ts__dataframe@0.1.9", "https://npm.jsr.io/~/11/@jsr/tidy-ts__dataframe/0.1.9.tgz", { "dependencies": { "@jsr/std__csv": "^1.0.6", "@uwdata/flechette": "^2.2.3", "hyparquet": "^1.17.8", "hyparquet-compressors": "^1.1.1", "hyparquet-writer": "^0.6.1", "vega": "^6.2.0", "vega-embed": "^7.0.2", "vega-lite": "^6.4.1", "zod": "^4.1.8" } }, "sha512-C58bf4SlMfhFxcf6xJ0rknCqjE5wzDSOTa7cbVWcbzJfNgLg6OAUvgE5PGbyOy/q84ALtMTDsY3JPgl86ISBlQ=="],
+    "@tidy-ts/dataframe": ["@jsr/tidy-ts__dataframe@0.1.10", "https://npm.jsr.io/~/11/@jsr/tidy-ts__dataframe/0.1.10.tgz", { "dependencies": { "@jsr/std__csv": "^1.0.6", "@uwdata/flechette": "^2.2.3", "hyparquet": "^1.17.8", "hyparquet-compressors": "^1.1.1", "hyparquet-writer": "^0.6.1", "vega": "^6.2.0", "vega-embed": "^7.0.2", "vega-lite": "^6.4.1", "zod": "^4.1.8" } }, "sha512-MGi1tbBCLS5AmaWj8bPE29rGU6So7KVFGDBcq8MzHtTZ1AicgoEGiWFkmKJ7jtvAbwQgI4lIVoBv+oBKguhEEA=="],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 

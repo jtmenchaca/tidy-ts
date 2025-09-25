@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Distribution Functions Test</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "@tidy-ts/dataframe": "/dataframe-bundle.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <div id="result">Loading...</div>
+    <div id="detailed-results">
+        <h3>Test Details:</h3>
+        <ul id="test-list"></ul>
+    </div>
+    <script type="module">
+        const resultDiv = document.getElementById('result');
+        const testList = document.getElementById('test-list');
+        
+        function addTestResult(testName, passed, details = '') {
+            const li = document.createElement('li');
+            li.innerHTML = `<strong>${testName}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'} ${details}`;
+            li.style.color = passed ? 'green' : 'red';
+            testList.appendChild(li);
+        }
+        
+        async function runTests() {
+            const tests = [];
+            let allPassed = true;
+            
+            try {
+                // Test 1: Basic import
+                const { createDataFrame, stats } = await import('@tidy-ts/dataframe');
+                addTestResult('Basic Import', true, '- createDataFrame and stats imported');
+                
+                // Test 2: DataFrame creation
+                const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
+                addTestResult('DataFrame Creation', true, '- DataFrame with 2 rows created');
+                
+                // Test 3: Basic stats
+                const sum = stats.sum(df.a);
+                addTestResult('Basic Stats', sum === 4, `- sum(df.a) = ${sum}`);
+                
+                // Test 4: Statistical distributions data generation (the problematic area)
+                try {
+                    console.log('Starting distribution test...');
+                    console.log('import.meta.url:', import.meta.url);
+                    const { s } = await import('@tidy-ts/dataframe');
+                    console.log('Imported s:', typeof s);
+                    console.log('s.dist:', typeof s.dist);
+                    console.log('s.dist.normal:', typeof s.dist.normal);
+                    console.log('About to call s.dist.normal.data...');
+                    const normalData = s.dist.normal.data({
+                        mean: 0,
+                        standardDeviation: 1,
+                        type: "pdf",
+                        range: [-2, 2],
+                        points: 50
+                    });
+                    console.log('normalData result:', normalData);
+                    addTestResult('Normal Distribution Data', normalData && normalData.select, 
+                        `- Generated PDF DataFrame with ${normalData?.nrow || 0} rows`);
+                } catch (e) {
+                    console.error('Full error object:', e);
+                    console.error('Error stack:', e.stack);
+                    addTestResult('Normal Distribution Data', false, `- Error: ${e.message}`);
+                    allPassed = false;
+                }
+                
+                resultDiv.textContent = allPassed ? 'ALL TESTS PASS' : 'SOME TESTS FAILED';
+                resultDiv.style.color = allPassed ? 'green' : 'red';
+                
+            } catch (e) {
+                resultDiv.textContent = 'IMPORT ERROR: ' + e.message;
+                resultDiv.style.color = 'red';
+                addTestResult('Import', false, `- ${e.message}`);
+            }
+        }
+        
+        runTests();
+    </script>
+</body>
+</html>

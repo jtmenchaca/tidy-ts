@@ -210,12 +210,55 @@ export function buildColumnarProxyHandlers(
       return d ? { ...d, enumerable: false } : undefined;
     },
 
-    set(target, prop, _value) {
+    set(target, prop, value) {
       if (typeof prop === "string" && /^\d+$/.test(prop)) {
         throw new TypeError("Cannot assign by numeric index on DataFrame");
       }
+
+      // Check if this is a column assignment
       // deno-lint-ignore no-explicit-any
-      (target as any)[prop] = _value;
+      const currentStore = (api as any).__store;
+
+      if (typeof prop === "string" && Array.isArray(value)) {
+        // Validate array length matches DataFrame length
+        // deno-lint-ignore no-explicit-any
+        const currentView = (api as any).__view;
+        const materializedIndex = materializeIndex(
+          currentStore.length,
+          currentView,
+        );
+
+        if (value.length !== materializedIndex.length) {
+          throw new Error(
+            `Cannot assign column "${prop}": array length ${value.length} does not match ` +
+              `DataFrame length ${materializedIndex.length}`,
+          );
+        }
+
+        // Add or update the column in the store
+        if (currentView && (currentView.mask || currentView.index)) {
+          // If there's a view, we need to expand the values to full store size
+          const fullColumn = currentStore.columns[prop] ||
+            new Array(currentStore.length);
+          for (let i = 0; i < materializedIndex.length; i++) {
+            fullColumn[materializedIndex[i]] = value[i];
+          }
+          currentStore.columns[prop] = fullColumn;
+        } else {
+          // No view, direct assignment
+          currentStore.columns[prop] = [...value];
+        }
+
+        // Add column name if it's new
+        if (!currentStore.columnNames.includes(prop)) {
+          currentStore.columnNames.push(prop);
+        }
+
+        return true;
+      }
+
+      // deno-lint-ignore no-explicit-any
+      (target as any)[prop] = value;
       return true;
     },
   };
