@@ -10,13 +10,13 @@ Type-safe data analytics and statistics framework for TypeScript. Built for mode
 - **Type-Safe DataFrames**: Full TypeScript support with automatic column typing
 - **Async Operations**: Built-in support for asynchronous data transformations with concurrency control
 - **Multi-Format Data Import**: Read CSV, Parquet, and Arrow files with Zod schema validation
-- **Comprehensive Analytics**: Group, aggregate, join, reshape, and analyze data
-- **Statistics Toolkit**: 80+ functions across descriptive statistics, hypothesis testing via an intuitive API, and standard distributions functionas
+- **Data Analytics**: Group, aggregate, join, reshape, and analyze data
+- **Statistics Toolkit**: 80+ functions across descriptive statistics, hypothesis testing, and standard distributions functions
 - **Data Visualization**: Create charts with an integrated API backed by Vega
-- **Interactive Charts**: Jupyter notebook integration with zoom, pan, and hover tooltips
+- **Interactive Charts**: Jupyter notebook integration with hover tooltips
 - **Data Reshaping**: Pivot wider, pivot longer, and transpose with type safety
 - **High Performance**: Columnar storage with WASM-backed operations for critical paths
-- **Method Chaining**: Intuitive fluent API for complex data transformations
+- **Method Chaining**: Fluent API for data transformations
 
 ## Installation
 ```bash
@@ -61,10 +61,10 @@ const analysis = sales
       const taxPerItem = taxRate * row.price;
       const totalTax = taxPerItem * row.quantity;
       return totalTax
-    }
+    },
 
-    // Use 'index' to get the current row number, somethimes helpful for indexing into external arrays
-    row_number: (_row, index) => index
+    // Use 'index' to get the current row number, sometimes helpful for indexing into external arrays
+    row_number: (_row, index) => index,
     
     // Use 'df' to access the entire DataFrame when needed for a calculation
     moreQuantityThanAvg: (row, _index, df) => row.quantity > s.mean(df.quantity)
@@ -144,7 +144,7 @@ console.log(testResult);
 // }
 
 // Here are the various functions that the compare API exposes for use.  
-// Each has various options to help both beignner and advanced users feel confident in what they're getting.
+// Each has various options to help both beginner and experienced users feel confident in what they're getting.
 s.compare.oneGroup.centralTendency.toValue(...)
 s.compare.oneGroup.proportions.toValue(...)
 s.compare.oneGroup.distribution.toNormal(...)
@@ -205,7 +205,7 @@ With the distribution data, it can be easy to make something like:
 '@tidy-ts/dataframe' also provides data visualization tools directly from DataFrames backed by [Vega](https://vega.github.io):
 
 ```typescript
-// Interactive scatter plot with comprehensive configuration
+// Interactive scatter plot with configuration
 const chart = salesData
   .mutate({
     revenue: (r) => r.quantity * r.price,
@@ -261,24 +261,22 @@ await chart.saveSVG({ filename: "sales-chart.svg" });
 **Styling**: 9 color schemes, custom themes, interactive features
 
 ### Interactive Charts in Jupyter + Deno
-When using Deno and Jupyter notebooks, charts become interactive with features like zoom, pan, and hover tooltips:
+When using Deno and Jupyter notebooks, charts become interactive with hover tooltips:
 
 ```typescript
-// Interactive chart with zoom/pan (Jupyter only)
+// Interactive chart with tooltips (Jupyter only)
 const interactiveChart = salesData.graph({
   type: "scatter",
   mappings: { x: "revenue", y: "quantity", color: "region" },
-  layout: {
+  config: {
+    layout: {
+      tooltip: {
+        show: true, // default true
+      },
+    },
     tooltip: {
-      show: true, // default true
+      fields: ["region", "revenue", "quantity", "profit", "product"],
     },
-    interactivity: {
-      zoom: true, // default true
-      pan: true, // default true
-    },
-  },
-  tooltip: {
-    fields: ["region", "revenue", "quantity", "profit", "product"],
   },
 });
 
@@ -317,7 +315,10 @@ const dataArrow = await readArrow(pathToArrow, PersonSchema); // uses @uwdata/fl
 // You can also write to CSV and Parquet
 import {writeCSV, writeParquet} from "@tidy-ts/dataframe"
 
-const dataframe = createDataFrame({...})
+const dataframe = createDataFrame([
+  { name: "Alice", age: 30, city: "New York", score: 95 },
+  { name: "Bob", age: 25, city: "San Francisco", score: 87 },
+])
 
 await writeCSV(dataframe, pathToSaveCSV);
 await writeParquet(dataframe, pathToSaveParquet); // uses hyparquet-writer, only available server-side
@@ -374,7 +375,7 @@ const longData = wideData.pivotLonger({
 
 
 ## Documentation
-Visit our [documentation website](https://jtmenchaca.github.io/tidy-ts/) for comprehensive tutorials and API reference.
+Visit our [documentation website](https://jtmenchaca.github.io/tidy-ts/) for tutorials and API reference.
 
 ## Architecture
 - **Columnar Storage**: Memory-efficient column-major storage
