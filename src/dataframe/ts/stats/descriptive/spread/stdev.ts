@@ -13,15 +13,15 @@ import type {
  * Calculate the sample standard deviation of an array of values
  *
  * @param values - Array of numbers or single number
- * @param remove_na - If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
+ * @param removeNA - If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
  * @returns Sample standard deviation value or null if insufficient data
  *
  * @example
  * ```ts
  * sd(42) // Always returns 0 for single value
  * sd([1, 2, 3, 4, 5]) // sample standard deviation (default)
- * sd([1, "2", 3], true) // 1.41... (std dev of [1, 3] with remove_na=true)
- * sd([1, "2", 3], false) // null (mixed types, remove_na=false)
+ * sd([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)
+ * sd([1, "2", 3], false) // null (mixed types, removeNA=false)
  * ```
  */
 // Types that should be rejected at compile-time (examples):
@@ -32,11 +32,11 @@ import type {
 
 export function sd(value: number): number;
 export function sd(values: CleanNumberArray): number;
-export function sd(values: NumbersWithNullable, remove_na: true): number;
+export function sd(values: NumbersWithNullable, removeNA: true): number;
 export function sd(values: CleanNumberIterable): number;
 export function sd(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function sd(
   values:
@@ -47,26 +47,26 @@ export function sd(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle single number case
   if (typeof values === "number") {
     return 0; // Standard deviation of a single value is 0
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
   // Call variance with same parameters
 
-  const var_val = remove_na
+  const var_val = removeNA
     ? variance(values as any, true)
     : variance(values as any);
 
   if (var_val === null) {
-    if (remove_na) {
+    if (removeNA) {
       // Handle iterables by materializing to array for checking
       const processArray = Array.isArray(values)
         ? values

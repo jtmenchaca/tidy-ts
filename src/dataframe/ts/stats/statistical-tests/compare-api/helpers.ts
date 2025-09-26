@@ -1,4 +1,7 @@
 import { shapiroWilkTest } from "../shapiro-wilk.ts";
+import { dagostinoPearsonTest } from "../dagostino-pearson.ts";
+import { andersonDarlingTest } from "../anderson-darling.ts";
+import { leveneTest } from "../levene.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -8,6 +11,11 @@ import type {
 /**
  * Utility functions for the compare API
  */
+
+// Evidence-based approach constants
+const N_SMALL_MAX = 50;
+const N_MODERATE_MAX = 300;
+const ALPHA = 0.05;
 
 /**
  * Clean numeric data by filtering out null, undefined, and infinite values
@@ -106,37 +114,64 @@ export function expectedCounts2x2(
 }
 
 /**
- * Test if data is non-normal using Shapiro-Wilk test
+ * Test if data is non-normal using appropriate test based on sample size
+ *
+ * Based on the evidence-based approach:
+ * - n < 7: Cannot test, assume normal (conservative)
+ * - 7 ≤ n ≤ 50: Use Shapiro-Wilk (best power for small samples)
+ * - 50 < n ≤ 300: Use D'Agostino-Pearson K² (omnibus test for skewness + kurtosis)
+ * - n > 300: Use Anderson-Darling (tail-sensitive, good for large samples)
+ *
+ * Note: For n > 200, normality tests become oversensitive; consider using
+ * robust methods (Welch t-test) by default for large samples.
  */
 export function isNonNormal(data: number[], alpha = 0.05): boolean {
-  if (!canShapiro(data.length)) {
-    // If we can't test normality, assume normal (conservative approach)
+  const n = data.length;
+
+  // Cannot reliably test normality with very small samples
+  if (n < 7) {
+    // Conservative approach: assume normal when we can't test
     return false;
   }
 
-  const result = shapiroWilkTest({ data, alpha });
+  // Small-moderate samples (7-50): Shapiro-Wilk has best power
+  if (n <= 50) {
+    if (canShapiro(n)) {
+      const result = shapiroWilkTest({ data, alpha });
+      return (result.p_value ?? 1) < alpha;
+    }
+    // Fallback for edge cases
+    return false;
+  }
+
+  // Moderate samples (50-300): D'Agostino-Pearson K² for omnibus testing
+  if (n <= 300) {
+    // D'Agostino-Pearson requires n ≥ 20, but we're already > 50
+    const result = dagostinoPearsonTest({ data, alpha });
+    return (result.p_value ?? 1) < alpha;
+  }
+
+  // Large samples (>300): Anderson-Darling for tail sensitivity
+  // Note: For very large samples, consider defaulting to robust methods
+  const result = andersonDarlingTest({ data, alpha });
   return (result.p_value ?? 1) < alpha;
 }
 
 /**
- * Check if group variances are approximately equal using simple variance ratio
+ * Check if group variances are approximately equal using Brown-Forsythe test
+ *
+ * Uses the Brown-Forsythe modification of Levene's test (deviations from medians)
+ * which is more robust to non-normality than the original Levene's test.
  */
-export function hasEqualVariances(groups: number[][]): boolean {
-  const variances = groups.map((group) => {
-    if (group.length < 2) return 0;
-    const mean = group.reduce((a, b) => a + b, 0) / group.length;
-    return group.reduce((sum, x) => sum + (x - mean) ** 2, 0) /
-      (group.length - 1);
-  });
-
-  const validVariances = variances.filter((v) => v > 0);
-  if (validVariances.length < 2) return true;
-
-  const minVar = Math.min(...validVariances);
-  const maxVar = Math.max(...validVariances);
-
-  // Rule of thumb: max variance / min variance should be < 4
-  return (maxVar / minVar) < 4;
+export function hasEqualVariances(groups: number[][], alpha = 0.05): boolean {
+  try {
+    // Use Brown-Forsythe test (already implemented in leveneTest)
+    const result = leveneTest(groups, alpha);
+    return result.p_value >= alpha;
+  } catch {
+    // If test fails, assume unequal variances (conservative approach)
+    return false;
+  }
 }
 
 /**
@@ -149,4 +184,121 @@ export function hasBalancedSizes(groups: number[][]): boolean {
 
   // Rule of thumb: size ratio should be < 1.5
   return (maxSize / minSize) < 1.5;
+}
+
+// ---------- Residual Helper Functions (Evidence-Based Approach) ----------
+
+/**
+ * Compute residuals for one-sample test (data minus hypothesized value)
+ */
+export function residuals_oneSample(data: number[], value: number): number[] {
+  return data.map((d) => d - value);
+}
+
+/**
+ * Compute residuals for two-sample test (each group's deviations from their own mean)
+ */
+export function residuals_twoSample(
+  x: number[],
+  y: number[],
+): { rx: number[]; ry: number[] } {
+  const xMean = x.reduce((a, b) => a + b, 0) / x.length;
+  const yMean = y.reduce((a, b) => a + b, 0) / y.length;
+  const rx = x.map((d) => d - xMean);
+  const ry = y.map((d) => d - yMean);
+  return { rx, ry };
+}
+
+/**
+ * Compute residuals for multiple groups (each group's deviations from their own mean)
+ */
+export function residuals_groups(groups: number[][]): number[][] {
+  return groups.map((g) => {
+    const mean = g.reduce((a, b) => a + b, 0) / g.length;
+    return g.map((d) => d - mean);
+  });
+}
+
+/**
+ * Test normality using appropriate method based on sample size (evidence-based approach)
+ */
+export function normalityOK(vec: number[], alpha = ALPHA): boolean {
+  const n = vec.length;
+
+  if (n <= N_SMALL_MAX) {
+    // Small samples: Use Shapiro-Wilk (best power for small samples)
+    if (canShapiro(n)) {
+      const result = shapiroWilkTest({ data: vec, alpha });
+      return (result.p_value ?? 1) >= alpha;
+    }
+    return true; // Assume normal if we can't test
+  } else if (n <= N_MODERATE_MAX) {
+    // Moderate samples: Use D'Agostino-Pearson K² (omnibus test)
+    const result = dagostinoPearsonTest({ data: vec, alpha });
+    return (result.p_value ?? 1) >= alpha;
+  } else {
+    // Large samples: Always return true (use robust methods regardless)
+    return true;
+  }
+}
+
+/**
+ * Check if all groups pass normality test on their residuals
+ */
+export function allGroupsNormal(groups: number[][], alpha = ALPHA): boolean {
+  const residualGroups = residuals_groups(groups);
+  for (const r of residualGroups) {
+    if (!normalityOK(r, alpha)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Calculate skewness z-score for a sample
+ */
+export function skewnessZScore(data: number[]): number {
+  const n = data.length;
+  const mean = data.reduce((a, b) => a + b, 0) / n;
+
+  let m2 = 0;
+  let m3 = 0;
+  for (const x of data) {
+    const diff = x - mean;
+    const diff2 = diff * diff;
+    m2 += diff2;
+    m3 += diff2 * diff;
+  }
+  m2 /= n;
+  m3 /= n;
+
+  const skewness = m3 / Math.pow(m2, 1.5);
+  const se_skew = Math.sqrt(6 / n);
+
+  return skewness / se_skew;
+}
+
+/**
+ * Calculate kurtosis z-score for a sample
+ */
+export function kurtosisZScore(data: number[]): number {
+  const n = data.length;
+  const mean = data.reduce((a, b) => a + b, 0) / n;
+
+  let m2 = 0;
+  let m4 = 0;
+  for (const x of data) {
+    const diff = x - mean;
+    const diff2 = diff * diff;
+    m2 += diff2;
+    m4 += diff2 * diff2;
+  }
+  m2 /= n;
+  m4 /= n;
+
+  const kurtosis = m4 / (m2 * m2) - 3; // Excess kurtosis
+  const se_kurt = Math.sqrt(24 / n);
+
+  return kurtosis / se_kurt;
 }

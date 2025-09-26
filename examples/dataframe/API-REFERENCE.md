@@ -169,8 +169,8 @@
 | ---------- | ---------------- | ----------------- | ------------- | ------------ |
 | `toCSV`     | `()`            | Serialize to CSV  | ✓ | ✓ |
 | `toJSON`    | `()`            | Serialize to JSON | ✓ | ✓ |
-| `read_csv`  | `(csv: string)` | Parse from CSV    | `fromCSV` | |
-| `read_json` | `(json: string)` | Parse from JSON   | `fromJSON` | |
+| `readCSV`  | `(csv: string)` | Parse from CSV    | `fromCSV` | |
+| `readJSON` | `(json: string)` | Parse from JSON   | `fromJSON` | |
 
 ---
 

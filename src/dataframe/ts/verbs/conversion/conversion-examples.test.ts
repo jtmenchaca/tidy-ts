@@ -62,13 +62,14 @@ function conversionExample() {
   ]);
 
   // Convert string data to appropriate types
-  const converted = people
-    .mutate({ id_num: as_integer("id") })
-    .mutate({ age_num: as_integer("age") })
-    .mutate({ active_bool: as_logical("active") })
-    .mutate({ score_num: as_number("score") })
-    .mutate({ date_obj: as_date("date") })
-    .mutate({ name_str: as_string("name") });
+  const converted = people.mutate({
+    id_num: as_integer("id"),
+    age_num: as_integer("age"),
+    active_bool: as_logical("active"),
+    score_num: as_number("score"),
+    date_obj: as_date("date"),
+    name_str: as_string("name"),
+  });
 
   console.table(converted);
 

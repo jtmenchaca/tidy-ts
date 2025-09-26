@@ -470,6 +470,40 @@ export async function callRobustRust(
       };
     }
 
+    case "ad.test": {
+      const { andersonDarlingTest } = await import(
+        "../../../../ts/stats/statistical-tests/anderson-darling.ts"
+      );
+      const result = andersonDarlingTest({
+        data: params.data!.x!,
+        alpha,
+      });
+      return {
+        test_statistic: extractStatistic(result),
+        p_value: result.p_value,
+        method: "ad.test",
+        alternative: "two-sided",
+        alpha,
+      };
+    }
+
+    case "dagostino.test": {
+      const { dagostinoPearsonTest } = await import(
+        "../../../../ts/stats/statistical-tests/dagostino-pearson.ts"
+      );
+      const result = dagostinoPearsonTest({
+        data: params.data!.x!,
+        alpha,
+      });
+      return {
+        test_statistic: extractStatistic(result),
+        p_value: result.p_value,
+        method: "dagostino.test",
+        alternative: "two-sided",
+        alpha,
+      };
+    }
+
     // Chi-Square Tests
     case "chisq.test": {
       const { chiSquareTest } = await import(
@@ -714,6 +748,24 @@ export function generateComprehensiveTestCase(
         testType,
         data: {
           x: generateNormalData(sampleSize),
+        },
+        options: { alpha },
+      };
+
+    case "ad.test":
+      return {
+        testType,
+        data: {
+          x: generateNormalData(Math.max(sampleSize, 7)), // Anderson-Darling requires n >= 7
+        },
+        options: { alpha },
+      };
+
+    case "dagostino.test":
+      return {
+        testType,
+        data: {
+          x: generateNormalData(Math.max(sampleSize, 20)), // D'Agostino-Pearson requires n >= 20
         },
         options: { alpha },
       };

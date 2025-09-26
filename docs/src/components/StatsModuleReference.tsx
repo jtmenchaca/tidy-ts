@@ -12,7 +12,7 @@ export function StatsModuleReference() {
       <CardHeader>
         <CardTitle>Stats Module Reference</CardTitle>
         <CardDescription>
-          Comprehensive statistical functions available in mutate
+          Statistical functions available in mutate
           operations
         </CardDescription>
       </CardHeader>
@@ -75,7 +75,7 @@ export function StatsModuleReference() {
           </div>
 
           <div>
-            <h4 className="font-medium mb-2">Advanced Functions</h4>
+            <h4 className="font-medium mb-2">Additional Functions</h4>
             <ul className="text-sm space-y-1">
               <li>
                 • <code>s.rank()</code> - Ranking values

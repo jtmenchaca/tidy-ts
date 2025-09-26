@@ -34,7 +34,7 @@ pub fn z_test_one_sample(
             },
             effect_size: crate::stats::core::types::EffectSize {
                 value: f64::NAN,
-                effect_type: "Cohen's D".to_string(),
+                name: "Cohen's D".to_string(),
             },
         }
     })
@@ -75,7 +75,7 @@ pub fn z_test_two_sample(
             },
             effect_size: crate::stats::core::types::EffectSize {
                 value: f64::NAN,
-                effect_type: "Cohen's D".to_string(),
+                name: "Cohen's D".to_string(),
             },
             mean_difference: f64::NAN,
             standard_error: f64::NAN,

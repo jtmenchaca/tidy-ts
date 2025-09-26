@@ -13,9 +13,9 @@ console.log("Running mutate_columns type checking tests...");
 // 1. Ungrouped mutate_columns type check with integrated type inference
 const ungroupedMutate = testData
   .mutateColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1", "score2"],
-    new_columns: [
+    newColumns: [
       { prefix: "add_1_", fn: (col) => col + 1 },
       { prefix: "double_", fn: (col) => col * 2 },
     ],
@@ -42,9 +42,9 @@ console.log("Ungrouped mutate_columns type checking passed!");
 // 2. Test with suffix instead of prefix
 const suffixMutate = testData
   .mutateColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1"],
-    new_columns: [{ suffix: "_plus_10", fn: (col) => col + 10 }],
+    newColumns: [{ suffix: "_plus_10", fn: (col) => col + 10 }],
   });
 
 const _suffixTypeCheck: DataFrame<{
@@ -62,9 +62,9 @@ console.log("Suffix mutate_columns type checking passed!");
 // 3. Test with both prefix and suffix
 const prefixSuffixMutate = testData
   .mutateColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1"],
-    new_columns: [{ prefix: "new_", suffix: "_value", fn: (col) => col * 1.5 }],
+    newColumns: [{ prefix: "new_", suffix: "_value", fn: (col) => col * 1.5 }],
   });
 
 const _prefixSuffixTypeCheck: DataFrame<{
@@ -81,9 +81,9 @@ console.log("Prefix+suffix mutate_columns type checking passed!");
 
 // 4. Test with string columns
 const stringMutate = testData.mutateColumns({
-  col_type: "string",
+  colType: "string",
   columns: ["name", "team"],
-  new_columns: [
+  newColumns: [
     { prefix: "upper_", fn: (col) => col.toUpperCase() },
     { suffix: "_length", fn: (col) => col.length },
   ],
@@ -109,9 +109,9 @@ console.log("String mutate_columns type checking passed!");
 //   testData,
 //   groupBy("team"),
 //   mutateColumns({
-//     col_type: "number",
+//     colType: "number",
 //     columns: ["score1", "score2"],
-//     new_columns: [
+//     newColumns: [
 //       { prefix: "add_1_", fn: (col) => col + 1 },
 //       { prefix: "double_", fn: (col) => col * 2 },
 //     ],

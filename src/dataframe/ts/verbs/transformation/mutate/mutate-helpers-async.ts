@@ -53,7 +53,10 @@ export async function processGroupedMutationsAsync<
     } else if (Array.isArray(expr)) {
       const n = (df as DataFrame<Row>).nrows();
       if (expr.length !== n) {
-        throw new RangeError(`Column "${col}" length ${expr.length} ≠ ${n}`);
+        throw new Error(
+          `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
+            `Array values must match the number of rows in the DataFrame.`,
+        );
       }
       for (let i = 0; i < n; i++) {
         asyncUpdates[col][i] = Promise.resolve(expr[i]);
@@ -105,7 +108,10 @@ export async function processUngroupedMutationsAsync<
       }
     } else if (Array.isArray(expr)) {
       if (expr.length !== n) {
-        throw new RangeError(`Column "${col}" length ${expr.length} ≠ ${n}`);
+        throw new Error(
+          `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
+            `Array values must match the number of rows in the DataFrame.`,
+        );
       }
       // For array expressions, we need to handle the view mapping manually
       const view = api.__view;

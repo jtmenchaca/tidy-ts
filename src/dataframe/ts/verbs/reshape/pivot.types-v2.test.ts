@@ -14,8 +14,9 @@ const salesData = createDataFrame([
 // Example 1: Basic pivot with automatic type inference
 const basicPivot = salesData
   .pivotWider({
-    names_from: "product",
-    values_from: "revenue",
+    namesFrom: "product",
+    valuesFrom: "revenue",
+    expectedColumns: ["apples", "bananas"],
   });
 
 // Example 1: Basic pivot with automatic type inference
@@ -23,9 +24,9 @@ const _basicPivotV2: DataFrame<
   { store: string; apples: number; bananas: number }
 > = salesData
   .pivotWider({
-    names_from: "product",
-    values_from: "revenue",
-    expected_columns: ["apples", "bananas"],
+    namesFrom: "product",
+    valuesFrom: "revenue",
+    expectedColumns: ["apples", "bananas"],
   });
 
 console.log("Basic pivot:");
@@ -34,8 +35,8 @@ console.log(basicPivot);
 
 const aggregatedPivot = salesData
   .pivotWider({
-    names_from: "product",
-    values_from: "revenue",
+    namesFrom: "product",
+    valuesFrom: "revenue",
   });
 
 console.log("\nAggregated pivot (sum):");
@@ -43,9 +44,9 @@ console.log(aggregatedPivot);
 
 const meanPivot = salesData
   .pivotWider({
-    names_from: "product",
-    values_from: "revenue",
-    expected_columns: ["apples", "bananas"],
+    namesFrom: "product",
+    valuesFrom: "revenue",
+    expectedColumns: ["apples", "bananas"],
   });
 
 console.log("\nMean pivot:");
@@ -53,11 +54,11 @@ console.log(meanPivot);
 
 const customPivot = salesData
   .pivotWider({
-    names_from: "product",
-    values_from: "revenue",
-    expected_columns: ["apples", "bananas"],
+    namesFrom: "product",
+    valuesFrom: "revenue",
+    expectedColumns: ["apples", "bananas"],
     // values is correctly inferred as number[]
-    values_fn: (values) => {
+    valuesFn: (values) => {
       // We can use array methods without casting
       const sorted = values.sort((a, b) => a - b);
       return sorted[Math.floor(sorted.length / 2)]; // median
@@ -77,11 +78,11 @@ const categoryData = createDataFrame([
 
 const stringPivot = categoryData
   .pivotWider({
-    names_from: "employee",
-    values_from: "status",
-    expected_columns: ["Alice", "Bob"],
+    namesFrom: "employee",
+    valuesFrom: "status",
+    expectedColumns: ["Alice", "Bob"],
     // values is inferred as string[]
-    values_fn: (values) => values.join(", "),
+    valuesFn: (values) => values.join(", "),
   });
 
 console.log("\nString pivot:");

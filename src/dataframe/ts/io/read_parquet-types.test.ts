@@ -1,6 +1,6 @@
-// tests/read_parquet-types.test.ts
+// tests/readParquet-types.test.ts
 import { z } from "zod";
-import { type DataFrame, read_parquet } from "@tidy-ts/dataframe";
+import { type DataFrame, readParquet } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 // Define a Zod schema for our Parquet data
@@ -16,8 +16,8 @@ const PenguinsSchema = z.object({
   active: z.boolean().nullable(),
 });
 
-Deno.test("read_parquet type inference and validation", async () => {
-  const penguins = await read_parquet(
+Deno.test("readParquet type inference and validation", async () => {
+  const penguins = await readParquet(
     "./src/dataframe/ts/io/fixtures/penguins_test.parquet",
     PenguinsSchema,
     {
@@ -76,14 +76,14 @@ Deno.test("read_parquet type inference and validation", async () => {
 });
 
 // Test with subset of columns
-Deno.test("read_parquet column selection preserves types", async () => {
+Deno.test("readParquet column selection preserves types", async () => {
   const BasicSchema = z.object({
     species: z.string(),
     bill_length_mm: z.number().nullable(),
     active: z.boolean().nullable(),
   });
 
-  const penguins = await read_parquet(
+  const penguins = await readParquet(
     "./src/dataframe/ts/io/fixtures/penguins_test.parquet",
     BasicSchema,
     {
@@ -108,8 +108,8 @@ Deno.test("read_parquet column selection preserves types", async () => {
 });
 
 // Test row range selection with types
-Deno.test("read_parquet row range preserves types", async () => {
-  const penguins = await read_parquet(
+Deno.test("readParquet row range preserves types", async () => {
+  const penguins = await readParquet(
     "./src/dataframe/ts/io/fixtures/penguins_test.parquet",
     PenguinsSchema,
     {

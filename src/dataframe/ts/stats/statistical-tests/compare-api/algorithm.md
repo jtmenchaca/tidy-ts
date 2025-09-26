@@ -1,5 +1,5 @@
 // =======================
-// Compare API (revised, consistent)
+// Compare API (Evidence-Based Approach)
 // =======================
 
 // =======================
@@ -10,10 +10,13 @@ oneGroup = {
   centralTendency: { ✅
     toValue(data, value, parametric): ✅
       IF parametric == "auto": ✅
-        IF shapiroWilk(data, α=0.05).p_value < 0.05: ✅
-          RETURN wilcoxonSignedRank(data, value) ✅
-        ELSE: ✅
+        r = residuals_oneSample(data, value) ✅
+        n = length(r) ✅
+        IF n > N_MODERATE_MAX (300): ✅
           RETURN tTest_oneSample(data, value) ✅
+        IF !normalityOK(r): ✅
+          RETURN wilcoxonSignedRank(data, value) ✅
+        RETURN tTest_oneSample(data, value) ✅
       ELSE IF parametric == "parametric": ✅
         RETURN tTest_oneSample(data, value) ✅
       ELSE: ✅
@@ -39,16 +42,16 @@ twoGroups = {
   centralTendency: { ✅
     toEachOther(x, y, parametric, assumeEqualVariances?): ✅
       IF parametric == "auto": ✅
-        nonNormalX = shapiroWilk(x, α=0.05).p_value < 0.05 ✅
-        nonNormalY = shapiroWilk(y, α=0.05).p_value < 0.05 ✅
-        IF nonNormalX AND nonNormalY: ✅
+        (rx, ry) = residuals_twoSample(x, y) ✅
+        nmin = min(length(x), length(y)) ✅
+        IF nmin > N_MODERATE_MAX (300): ✅
+          equalVar = (assumeEqualVariances provided) ? assumeEqualVariances : hasEqualVariances([x, y], α=0.05) ✅
+          RETURN tTest_independent(x, y, equalVariances=equalVar) ✅
+        nonNormal = (!normalityOK(rx)) OR (!normalityOK(ry)) ✅
+        IF nonNormal: ✅
           RETURN mannWhitney(x, y) ✅
-        ELSE: ✅
-          IF assumeEqualVariances provided: ✅
-            RETURN tTest_independent(x, y, equalVariances=assumeEqualVariances) ✅
-          ELSE: ✅
-            equalVar = hasEqualVariances([x, y], α=0.05) ✅
-            RETURN tTest_independent(x, y, equalVariances=equalVar) ✅
+        equalVar = (assumeEqualVariances provided) ? assumeEqualVariances : hasEqualVariances([x, y], α=0.05) ✅
+        RETURN tTest_independent(x, y, equalVariances=equalVar) ✅
 
       ELSE IF parametric == "parametric": ✅
         IF assumeEqualVariances provided: ✅
@@ -131,17 +134,29 @@ multiGroups = {
         RETURN { result, postHoc } ✅
 
       ELSE: // "auto" ✅
-        anyNonNormal = groups.some(g => shapiroWilk(g, α=0.05).p_value < 0.05) ✅
-        IF anyNonNormal: ✅
-          result = kruskalWallis(groups) ✅
-          postHoc = (significant(result) AND length(groups) >= 3) ? dunnTest(groups) : undefined ✅
-        ELSE: ✅
+        cleanGroups = groups.map(cleanNumeric) ✅
+        nmin = min(...cleanGroups.map(g => g.length)) ✅
+        IF nmin > N_MODERATE_MAX (300): ✅
+          // Large samples: Use parametric regardless of normality ✅
           IF equalVar: ✅
             result = anovaOneWay(groups) ✅
             postHoc = (significant(result) AND length(groups) >= 3) ? tukeyHSD(groups) : undefined ✅
           ELSE: ✅
             result = welchAnova(groups) ✅
             postHoc = (significant(result) AND length(groups) >= 3) ? gamesHowell(groups) : undefined ✅
+        ELSE: ✅
+          // Test normality on residuals from group means ✅
+          groupsNormal = allGroupsNormal(cleanGroups, α) ✅
+          IF !groupsNormal: ✅
+            result = kruskalWallis(groups) ✅
+            postHoc = (significant(result) AND length(groups) >= 3) ? dunnTest(groups) : undefined ✅
+          ELSE: ✅
+            IF equalVar: ✅
+              result = anovaOneWay(groups) ✅
+              postHoc = (significant(result) AND length(groups) >= 3) ? tukeyHSD(groups) : undefined ✅
+            ELSE: ✅
+              result = welchAnova(groups) ✅
+              postHoc = (significant(result) AND length(groups) >= 3) ? gamesHowell(groups) : undefined ✅
         RETURN { result, postHoc } ✅
   },
 
@@ -171,22 +186,66 @@ proportions = {
 }
 
 // =======================
-// HELPERS ✅ MOSTLY COMPLETE
+// HELPERS ✅ COMPLETE (Evidence-Based Approach)
 // =======================
 helpers = {
+
+  // Evidence-based constants ✅
+  N_SMALL_MAX = 50 ✅
+  N_MODERATE_MAX = 300 ✅
+  ALPHA = 0.05 ✅
 
   significant(result, α=0.05): ✅
     RETURN result.p_value < α ✅
 
-  shapiroNonNormal(data, α=0.05): ✅
-    RETURN shapiroWilk(data, α).p_value < α ✅
+  // Evidence-based normality testing on residuals ✅
+  normalityOK(vec, α=ALPHA): ✅
+    n = length(vec) ✅
+    IF n <= N_SMALL_MAX (50): ✅
+      // Small samples: Use Shapiro-Wilk (best power for small samples) ✅
+      IF canShapiro(n): ✅
+        RETURN shapiroWilk(vec, α).p_value >= α ✅
+      RETURN true // Assume normal if we can't test ✅
+    ELSE IF n <= N_MODERATE_MAX (300): ✅
+      // Moderate samples: Use D'Agostino-Pearson K² (omnibus test) ✅
+      RETURN dagostinoPearson(vec, α).p_value >= α ✅
+    ELSE: ✅
+      // Large samples: Always return true (use robust methods regardless) ✅
+      RETURN true ✅
+
+  // Residual computation functions ✅
+  residuals_oneSample(data, value): ✅
+    RETURN data.map(d => d - value) ✅
+
+  residuals_twoSample(x, y): ✅
+    xMean = mean(x) ✅
+    yMean = mean(y) ✅
+    rx = x.map(d => d - xMean) ✅
+    ry = y.map(d => d - yMean) ✅
+    RETURN { rx, ry } ✅
+
+  residuals_groups(groups): ✅
+    RETURN groups.map(g => { ✅
+      mean = mean(g) ✅
+      RETURN g.map(d => d - mean) ✅
+    }) ✅
+
+  allGroupsNormal(groups, α=ALPHA): ✅
+    residualGroups = residuals_groups(groups) ✅
+    FOR r OF residualGroups: ✅
+      IF !normalityOK(r, α): ✅
+        RETURN false ✅
+    RETURN true ✅
 
   hasManyTies(x, y): ✅
-    RETURN uniqueValues(x ∪ y).length < (length(x) + length(y)) ✅
+    combined = x ∪ y ✅
+    uniqueCount = uniqueValues(combined).length ✅
+    RETURN uniqueCount < combined.length * 0.8 // More than 20% ties ✅
 
   hasEqualVariances(data, α=0.05): ✅
-    RETURN brownForsytheTest(data, α).p_value >= α ✅
-    // Note: Both multi-groups.ts and two-groups.ts now use Brown-Forsythe Levene test ✅
+    // Use Brown-Forsythe modification of Levene's test (deviations from medians) ✅
+    // which is more robust to non-normality than the original Levene's test ✅
+    RETURN leveneTest(data, α).p_value >= α ✅
 
   hasSmallExpectedCounts(data1, data2): ✅
     // implement expected count check for 2×2 formed by data1,data2 ✅

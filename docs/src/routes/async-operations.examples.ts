@@ -33,6 +33,17 @@ const withAsyncData = await people
 
 withAsyncData.print("DataFrame with async operations:");`,
 
+  concurrencyControl: `// Async data transformations with built-in concurrency control
+const enrichedData = await sales
+  .mutate({
+    // Mix sync and async operations
+    revenue: r => r.quantity * r.price, // sync
+    market_data: async r => await fetchMarketData(r.region), // async
+  }, { concurrency: 3 }) // Limit concurrent operations
+  .filter(async r => await validateRegion(r.region)); // async filtering
+
+enrichedData.print("Enriched data with concurrency control:");`,
+
   asyncFiltering: `// Async validation function - more realistic example
 async function validateCharacter(species: string): Promise<boolean> {
   await new Promise((resolve) => setTimeout(resolve, 1));
@@ -89,7 +100,7 @@ const result = await data
   });
 
 // With concurrency control and custom settings
-const advancedResult = await data
+const result = await data
   .mutate({
     api_call: async (row) => await fetchData(row.id),
   }, {

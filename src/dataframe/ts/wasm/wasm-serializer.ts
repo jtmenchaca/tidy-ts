@@ -10,24 +10,27 @@ export function serializeTestResult(result: any): any {
   if (result.__wbg_ptr !== undefined) {
     const serialized: any = {};
 
-    // Common properties for all test results
-    if (result.test_statistic) {
-      serialized.test_statistic = {
-        value: result.test_statistic.value,
-        name: result.test_statistic.name,
-      };
+    // Common properties for all test results - ordered for user-friendly output
+    if (result.test_name !== undefined) {
+      serialized.test_name = result.test_name;
     }
 
     if (result.p_value !== undefined) {
       serialized.p_value = result.p_value;
     }
 
-    if (result.test_name !== undefined) {
-      serialized.test_name = result.test_name;
+    if (result.effect_size) {
+      serialized.effect_size = {
+        value: result.effect_size.value,
+        name: result.effect_size.name,
+      };
     }
 
-    if (result.alpha !== undefined) {
-      serialized.alpha = result.alpha;
+    if (result.test_statistic) {
+      serialized.test_statistic = {
+        value: result.test_statistic.value,
+        name: result.test_statistic.name,
+      };
     }
 
     if (result.confidence_interval) {
@@ -51,11 +54,8 @@ export function serializeTestResult(result: any): any {
       serialized.df2 = result.df2;
     }
 
-    if (result.effect_size) {
-      serialized.effect_size = {
-        value: result.effect_size.value,
-        name: result.effect_size.effect_type,
-      };
+    if (result.alpha !== undefined) {
+      serialized.alpha = result.alpha;
     }
 
     if (result.error_message !== undefined) {
@@ -77,6 +77,15 @@ export function serializeTestResult(result: any): any {
 
     if (result.hypothesized_mean !== undefined) {
       serialized.hypothesized_mean = result.hypothesized_mean;
+    }
+
+    // Normality test properties
+    if (result.skewness !== undefined) {
+      serialized.skewness = result.skewness;
+    }
+
+    if (result.kurtosis !== undefined) {
+      serialized.kurtosis = result.kurtosis;
     }
 
     // Two-sample test properties
@@ -208,7 +217,7 @@ export function serializeTestResult(result: any): any {
         effect_size: result.factor_a.effect_size
           ? {
             value: result.factor_a.effect_size.value,
-            name: result.factor_a.effect_size.effect_type,
+            name: result.factor_a.effect_size.name,
           }
           : undefined,
         mean_square: result.factor_a.mean_square,
@@ -229,7 +238,7 @@ export function serializeTestResult(result: any): any {
         effect_size: result.factor_b.effect_size
           ? {
             value: result.factor_b.effect_size.value,
-            name: result.factor_b.effect_size.effect_type,
+            name: result.factor_b.effect_size.name,
           }
           : undefined,
         mean_square: result.factor_b.mean_square,
@@ -250,7 +259,7 @@ export function serializeTestResult(result: any): any {
         effect_size: result.interaction.effect_size
           ? {
             value: result.interaction.effect_size.value,
-            name: result.interaction.effect_size.effect_type,
+            name: result.interaction.effect_size.name,
           }
           : undefined,
         mean_square: result.interaction.mean_square,

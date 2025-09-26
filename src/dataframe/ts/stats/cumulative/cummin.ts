@@ -11,7 +11,7 @@ import type {
  * Calculate cumulative minimum of numeric values
  *
  * @param values - Array of numbers
- * @param remove_na - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
  * @returns Array of cumulative minimums
  *
  * @example
@@ -31,12 +31,12 @@ export function cummin(value: number): number;
 export function cummin(values: CleanNumberArray): number[];
 export function cummin(
   values: NumbersWithNullable,
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function cummin(values: CleanNumberIterable): number[];
 export function cummin(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function cummin(
   values:
@@ -47,7 +47,7 @@ export function cummin(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | number[] | (number | null)[] {
   // Handle single number case
   if (typeof values === "number") {
@@ -57,12 +57,12 @@ export function cummin(
   // Handle iterables by materializing to array
   const processArray = Array.isArray(values) ? values : Array.from(values);
 
-  // Check for mixed types first - return null array unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null array unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return new Array(processArray.length).fill(null);
   }
 
-  if (remove_na) {
+  if (removeNA) {
     // Calculate cumulative minimum while preserving array length, skipping NA values
     const result: number[] = [];
     let min = Infinity;

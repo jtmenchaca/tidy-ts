@@ -7,7 +7,7 @@ Deno.test("transpose - basic functionality", () => {
     { name: "Bob", age: 30, score: 87.2 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
 
   expect(transposed.nrows()).toBe(3); // 3 original columns become 3 rows
   const result = transposed.toArray();
@@ -42,7 +42,7 @@ Deno.test("transpose - with custom row labels", () => {
   const transposed = original
     .setRowLabels(["Alice", "Bob", "Charlie"])
     .transpose({
-      number_of_rows: 3,
+      numberOfRows: 3,
     });
 
   expect(transposed.nrows()).toBe(3); // student, math and english rows
@@ -78,7 +78,7 @@ Deno.test("transpose - numeric only data", () => {
     { x: 4, y: 5, z: 6 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
 
   expect(transposed.nrows()).toBe(3);
   const result = transposed.toArray();
@@ -111,7 +111,7 @@ Deno.test("transpose - mixed data types", () => {
     { id: 2, name: "Bob", active: false, score: 87.2 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
 
   expect(transposed.nrows()).toBe(4);
   const result = transposed.toArray();
@@ -135,7 +135,7 @@ Deno.test("transpose - single row", () => {
     { a: 10, b: 20, c: 30 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 1 });
+  const transposed = original.transpose({ numberOfRows: 1 });
 
   expect(transposed.nrows()).toBe(3);
   const result = transposed.toArray();
@@ -166,7 +166,7 @@ Deno.test("transpose - single column", () => {
     { value: 3 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 3 });
+  const transposed = original.transpose({ numberOfRows: 3 });
 
   expect(transposed.nrows()).toBe(1);
   const result = transposed.toArray();
@@ -186,7 +186,7 @@ Deno.test("transpose - with undefined values", () => {
     { a: undefined, b: 2, c: undefined },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
 
   expect(transposed.nrows()).toBe(3);
   const result = transposed.toArray();
@@ -210,7 +210,7 @@ Deno.test("transpose - real world example - financial data", () => {
 
   const transposed = financials.setRowLabels(["Apple", "Google", "Microsoft"])
     .transpose({
-      number_of_rows: 3,
+      numberOfRows: 3,
     });
 
   expect(transposed.nrows()).toBe(4); // company, revenue, profit, employees
@@ -246,12 +246,16 @@ Deno.test("transpose - double transpose returns original structure", () => {
     { name: "Bob", age: 30 },
   ]);
 
+  original.print();
+
   // First transpose
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
+  transposed.print();
   expect(transposed.nrows()).toBe(2); // name and age rows
 
   // Second transpose back (using the row count from first transpose)
-  const doubleTransposed = transposed.transpose({ number_of_rows: 2 });
+  const doubleTransposed = transposed.transpose({ numberOfRows: 2 });
+  doubleTransposed.print();
   expect(doubleTransposed.nrows()).toBe(2); // Back to Alice and Bob
 
   // Structure should be similar (though column order might differ)
@@ -269,7 +273,7 @@ Deno.test("transpose - preserves column order", () => {
     { first: 5, second: 6, third: 7, fourth: 8 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
   const result = transposed.toArray();
 
   // Row labels should preserve original column order
@@ -282,7 +286,7 @@ Deno.test("transpose - preserves column order", () => {
 Deno.test("transpose - handles empty DataFrame", () => {
   const empty = createDataFrame<{ a: number; b: string }>([]);
 
-  const transposed = empty.transpose({ number_of_rows: 0 });
+  const transposed = empty.transpose({ numberOfRows: 0 });
 
   expect(transposed.nrows()).toBe(0);
   expect(transposed.toArray()).toEqual([]);

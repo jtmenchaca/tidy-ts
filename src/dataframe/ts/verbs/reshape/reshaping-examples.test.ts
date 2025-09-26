@@ -16,9 +16,9 @@ import { expect } from "@std/expect";
  * ]);
  *
  * const wide = sales.pivotWider({
- *   names_from: "quarter",
- *   values_from: "revenue",
- *   expected_columns: ["Q1", "Q2"] as const,
+ *   namesFrom: "quarter",
+ *   valuesFrom: "revenue",
+ *   expectedColumns: ["Q1", "Q2"],
  * });
  *
  * console.table(wide);
@@ -33,9 +33,9 @@ function pivotWiderExample() {
   ]);
 
   const wide = sales.pivotWider({
-    names_from: "quarter",
-    values_from: "revenue",
-    expected_columns: ["Q1", "Q2"] as const,
+    namesFrom: "quarter",
+    valuesFrom: "revenue",
+    expectedColumns: ["Q1", "Q2"],
   });
 
   console.table(wide);
@@ -57,8 +57,8 @@ function pivotWiderExample() {
  *
  * const long = wide.pivotLonger({
  *   cols: ["Q1", "Q2", "Q3"] as const,
- *   names_to: "quarter",
- *   values_to: "revenue",
+ *   namesTo: "quarter",
+ *   valuesTo: "revenue",
  * });
  *
  * console.table(long);
@@ -72,8 +72,8 @@ function pivotLongerExample() {
 
   const long = wide.pivotLonger({
     cols: ["Q1", "Q2", "Q3"] as const,
-    names_to: "quarter",
-    values_to: "revenue",
+    namesTo: "quarter",
+    valuesTo: "revenue",
   });
 
   console.table(long);

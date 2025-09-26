@@ -32,7 +32,7 @@ function ComprehensiveWorkflowsComponent() {
           title="Complete Data Analysis Pipeline"
           description="A complete workflow combining all major tidy-ts operations"
           explanation="This example demonstrates a complete data analysis workflow from data loading through transformation, filtering, grouping, and summarization."
-          code={`import { createDataFrame, stats as s, read_csv } from "@tidy-ts/dataframe";
+          code={`import { createDataFrame, stats as s, readCSV } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // 1. Load and validate data
@@ -49,7 +49,7 @@ Bob,30,Los Angeles,92
 Carol,28,Chicago,78
 Dave,35,Houston,88\`;
 
-const people = await read_csv(csvData, PersonSchema);
+const people = await readCSV(csvData, PersonSchema);
 
 // 2. Complete analysis pipeline
 const analysis = people

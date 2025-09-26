@@ -348,9 +348,9 @@ Deno.test("Advanced DataFrame Features - Progressive Examples", () => {
   // Create a wide format pivot
   const wideFormat = salesData
     .pivotWider({
-      names_from: "region",
-      values_from: "sales",
-      values_fn: (values) => stats.mean(values),
+      namesFrom: "region",
+      valuesFrom: "sales",
+      valuesFn: (values) => stats.mean(values),
     });
 
   console.log("Wide format (sales by region):");

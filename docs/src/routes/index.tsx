@@ -85,12 +85,12 @@ function HomeComponent() {
                 Type-Safe Data Operations
               </CardTitle>
               <CardDescription className="text-base">
-                Essential DataFrame operations with full TypeScript support
+                DataFrame operations with full TypeScript support
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Create, transform, filter, select, and sort data with intuitive
+                Create, transform, filter, select, and sort data with
                 chaining and automatic column typing for compile-time safety.
               </p>
               <Button
@@ -110,16 +110,16 @@ function HomeComponent() {
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl">
                 <BarChartIcon className="h-6 w-6 text-orange-600" />
-                Advanced Analytics
+                Statistical Analysis
               </CardTitle>
               <CardDescription className="text-base">
-                80+ statistical functions including probability distributions and hypothesis testing
+                Comprehensive statistical analysis toolkit
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Complete statistical analysis with descriptive statistics, 16 probability distributions (DPQR functions), 
-                and comprehensive hypothesis testing rigorously tested against R. 
+                80+ functions across descriptive statistics, hypothesis testing, and probability distributions. 
+                All tests rigorously vetted against results in R.
               </p>
               <Button
                 asChild
@@ -142,7 +142,7 @@ function HomeComponent() {
               See Tidy-TS in Action
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Complete data analysis workflow in just a few lines
+              Data analysis workflow in just a few lines
             </p>
           </div>
           <CodeBlock
@@ -254,8 +254,7 @@ function HomeComponent() {
             Ready to get started?
           </h3>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Join developers who are building better data analytics with type
-            safety and modern tooling.
+            Start building data analytics with type safety.
           </p>
           <div className="flex justify-center">
             <Button

@@ -107,7 +107,7 @@ where
         },
         effect_size: EffectSize {
             value: _effect_size,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: sample_mean_diff,
         standard_error: std_error,
@@ -215,7 +215,7 @@ where
         },
         effect_size: EffectSize {
             value: effect_size,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: mean1 - mean2,
         standard_error: std_error,

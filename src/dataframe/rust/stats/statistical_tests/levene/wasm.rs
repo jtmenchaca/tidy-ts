@@ -40,7 +40,7 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
             degrees_of_freedom: 0.0,
             effect_size: EffectSize {
                 value: 0.0,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             sample_size: 0,
             sample_means: vec![],
@@ -69,7 +69,7 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
                 degrees_of_freedom: 0.0,
                 effect_size: EffectSize {
                     value: 0.0,
-                    effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                    name: EffectSizeType::EtaSquared.as_str().to_string(),
                 },
                 sample_size: 0,
                 sample_means: vec![],
@@ -98,7 +98,7 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
             degrees_of_freedom: 0.0,
             effect_size: EffectSize {
                 value: 0.0,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             sample_size: 0,
             sample_means: vec![],

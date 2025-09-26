@@ -1,6 +1,6 @@
 // tests/read-arrow-types.test.ts
 import { z } from "zod";
-import { type DataFrame, read_arrow } from "@tidy-ts/dataframe";
+import { type DataFrame, readArrow } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import {
   bool,
@@ -34,7 +34,7 @@ const PenguinsSchema = z.object({
   year: z.number(),
 });
 
-Deno.test("read_arrow type inference and validation", async () => {
+Deno.test("readArrow type inference and validation", async () => {
   // Create Arrow data with automatic type conversion and validation
   const penguinsData = {
     species: ["Adelie", "Adelie", "Adelie", "Adelie", "Adelie"],
@@ -61,7 +61,7 @@ Deno.test("read_arrow type inference and validation", async () => {
   });
   const buffer = tableToBuffer(table);
 
-  const penguins = await read_arrow(buffer, PenguinsSchema, {
+  const penguins = await readArrow(buffer, PenguinsSchema, {
     naValues: ["", "NA", "NULL", "null"],
   });
 
@@ -110,7 +110,7 @@ Deno.test("read_arrow type inference and validation", async () => {
 });
 
 // Test with different data types
-Deno.test("read_arrow mixed data types", async () => {
+Deno.test("readArrow mixed data types", async () => {
   const MixedSchema = z.object({
     id: z.number(),
     name: z.string(),
@@ -138,7 +138,7 @@ Deno.test("read_arrow mixed data types", async () => {
   });
   const buffer = tableToBuffer(table);
 
-  const mixed = await read_arrow(buffer, MixedSchema, {
+  const mixed = await readArrow(buffer, MixedSchema, {
     naValues: ["", "NA"],
   });
 
@@ -162,7 +162,7 @@ Deno.test("read_arrow mixed data types", async () => {
 });
 
 // Test Arrow-specific options
-Deno.test("read_arrow with Arrow-specific options", async () => {
+Deno.test("readArrow with Arrow-specific options", async () => {
   const DateSchema = z.object({
     id: z.number(),
     timestamp: z.date(),
@@ -179,7 +179,7 @@ Deno.test("read_arrow with Arrow-specific options", async () => {
   const table = tableFromArrays(testData);
   const buffer = tableToBuffer(table);
 
-  const df = await read_arrow(buffer, DateSchema, {
+  const df = await readArrow(buffer, DateSchema, {
     useDate: true, // Convert timestamps to Date objects
     useBigInt: false, // Convert BigInt to number (default behavior)
   });
@@ -191,7 +191,7 @@ Deno.test("read_arrow with Arrow-specific options", async () => {
 });
 
 // Test column filtering
-Deno.test("read_arrow with column filtering", async () => {
+Deno.test("readArrow with column filtering", async () => {
   const FilteredSchema = z.object({
     name: z.string(),
     score: z.number(),
@@ -217,7 +217,7 @@ Deno.test("read_arrow with column filtering", async () => {
   const buffer = tableToBuffer(table);
 
   // Only read specific columns
-  const filtered = await read_arrow(buffer, FilteredSchema, {
+  const filtered = await readArrow(buffer, FilteredSchema, {
     columns: ["name", "score"],
   });
 
@@ -236,8 +236,8 @@ Deno.test("read_arrow with column filtering", async () => {
   expect((filtered[0] as Record<string, unknown>).email).toBeUndefined();
 });
 
-// Test with real Arrow file (using the existing test from read_arrow.ts)
-Deno.test("read_arrow from URL data", async () => {
+// Test with real Arrow file (using the existing test from readArrow.ts)
+Deno.test("readArrow from URL data", async () => {
   // This test uses the flights data from the original example
   const FlightsSchema = z.object({
     delay: z.number(),
@@ -250,7 +250,7 @@ Deno.test("read_arrow from URL data", async () => {
       "https://cdn.jsdelivr.net/npm/vega-datasets@2/data/flights-200k.arrow";
     const buffer = await fetch(url).then((r) => r.arrayBuffer());
 
-    const flights = await read_arrow(buffer, FlightsSchema);
+    const flights = await readArrow(buffer, FlightsSchema);
 
     // Type check for flights data
     const _flightsTypeCheck: DataFrame<z.infer<typeof FlightsSchema>> = flights;

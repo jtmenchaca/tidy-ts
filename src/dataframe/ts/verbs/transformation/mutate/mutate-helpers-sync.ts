@@ -126,7 +126,10 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
     } else if (Array.isArray(expr)) {
       const n = (df as DataFrame<Row>).nrows();
       if (expr.length !== n) {
-        throw new RangeError(`Column "${col}" length ${expr.length} ≠ ${n}`);
+        throw new Error(
+          `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
+            `Array values must match the number of rows in the DataFrame.`,
+        );
       }
       // Map array values to physical indices respecting the view
       const idx = materialized;
@@ -171,7 +174,10 @@ export function processUngroupedMutations<Row extends Record<string, unknown>>(
       }
     } else if (Array.isArray(expr)) {
       if (expr.length !== n) {
-        throw new RangeError(`Column "${col}" length ${expr.length} ≠ ${n}`);
+        throw new Error(
+          `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
+            `Array values must match the number of rows in the DataFrame.`,
+        );
       }
       // For array expressions, map to the correct physical indices
       for (let i = 0; i < materializedIndex.length; i++) {

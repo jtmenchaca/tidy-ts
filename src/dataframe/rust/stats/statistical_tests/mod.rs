@@ -5,9 +5,11 @@
 
 #![allow(ambiguous_glob_reexports)]
 
+pub mod anderson_darling;
 pub mod anova;
 pub mod chi_square;
 pub mod correlation;
+pub mod dagostino_pearson;
 pub mod fisher_exact;
 pub mod kolmogorov_smirnov;
 pub mod kruskal_wallis;
@@ -22,9 +24,11 @@ pub mod z;
 
 // Re-export everything in modules to maintain access
 // Note: Some items may have conflicting names, access through module path if needed
+pub use anderson_darling::*;
 pub use anova::*;
 pub use chi_square::*;
 pub use correlation::*;
+pub use dagostino_pearson::*;
 pub use fisher_exact::*;
 pub use kolmogorov_smirnov::*;
 pub use kruskal_wallis::*;

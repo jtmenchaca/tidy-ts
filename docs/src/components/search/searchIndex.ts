@@ -14,7 +14,7 @@ export const searchIndex: SearchResult[] = [
     title: "Tidy-TS Documentation",
     path: "/",
     content:
-      "TypeScript data manipulation and statistics library. Fast, type-safe, and intuitive data analysis with DataFrames, statistical functions, and comprehensive data processing capabilities.",
+      "TypeScript data manipulation and statistics library. Fast, type-safe data analysis with DataFrames, statistical functions, and data processing capabilities.",
     category: "Home",
     type: "page",
     keywords: [
@@ -142,13 +142,13 @@ export const searchIndex: SearchResult[] = [
     ],
   },
 
-  // Advanced Operations
+  // Data Operations
   {
     title: "Grouping & Aggregation",
     path: "/grouping-aggregation",
     content:
       "Group data and calculate summaries. Use groupBy() and summarize() for statistical analysis and aggregations.",
-    category: "Advanced",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "group",
@@ -165,7 +165,7 @@ export const searchIndex: SearchResult[] = [
     path: "/joining-dataframes",
     content:
       "Combine data from multiple sources. Inner, left, right, and outer joins to merge DataFrames.",
-    category: "Advanced",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "join",
@@ -183,7 +183,7 @@ export const searchIndex: SearchResult[] = [
     path: "/reshaping-data",
     content:
       "Pivot and reshape your data. Convert between wide and long formats using pivot and melt operations.",
-    category: "Advanced",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "reshape",
@@ -200,7 +200,7 @@ export const searchIndex: SearchResult[] = [
     path: "/missing-data",
     content:
       "Handle missing values effectively. Deal with null, undefined, and missing data using various strategies.",
-    category: "Advanced",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "missing",
@@ -217,7 +217,7 @@ export const searchIndex: SearchResult[] = [
     path: "/stats-module",
     content:
       "Comprehensive statistical functions. Descriptive statistics, distributions, and mathematical operations.",
-    category: "Advanced",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "statistics",
@@ -227,6 +227,32 @@ export const searchIndex: SearchResult[] = [
       "median",
       "std",
       "distribution",
+    ],
+  },
+
+  // Data Visualization
+  {
+    title: "Data Visualization",
+    path: "/data-visualization",
+    content:
+      "Create charts with an integrated API backed by Vega. Interactive scatter plots, line charts, bar charts, and area charts with export capabilities.",
+    category: "Data Operations",
+    type: "page",
+    keywords: [
+      "visualization",
+      "charts",
+      "graphs",
+      "plotting",
+      "vega",
+      "scatter",
+      "line",
+      "bar",
+      "area",
+      "interactive",
+      "jupyter",
+      "export",
+      "png",
+      "svg",
     ],
   },
 
@@ -259,8 +285,8 @@ export const searchIndex: SearchResult[] = [
     title: "Async Operations",
     path: "/async-operations",
     content:
-      "Handle asynchronous operations seamlessly across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization.",
-    category: "Advanced",
+      "Handle asynchronous operations across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization.",
+    category: "Data Operations",
     type: "page",
     keywords: [
       "async",
@@ -277,13 +303,13 @@ export const searchIndex: SearchResult[] = [
     ],
   },
 
-  // Advanced Features
+  // Other Features
   {
     title: "Combining DataFrames",
     path: "/combining-dataframes",
     content:
-      "Advanced techniques for combining DataFrames. Concatenation, binding, and complex merge operations.",
-    category: "Advanced Features",
+      "Techniques for combining DataFrames. Concatenation, binding, and complex merge operations.",
+    category: "Other Features",
     type: "page",
     keywords: ["combine", "concatenate", "bind", "merge", "append", "union"],
   },
@@ -292,7 +318,7 @@ export const searchIndex: SearchResult[] = [
     path: "/transposing-data",
     content:
       "Transpose DataFrames to swap rows and columns. Rotate data for different analysis perspectives.",
-    category: "Advanced Features",
+    category: "Other Features",
     type: "page",
     keywords: ["transpose", "rotate", "swap", "rows", "columns", "flip"],
   },
@@ -301,7 +327,7 @@ export const searchIndex: SearchResult[] = [
     path: "/performance-benchmarks",
     content:
       "Performance analysis and benchmarks. Speed comparisons, optimization tips, and best practices.",
-    category: "Advanced Features",
+    category: "Other Features",
     type: "page",
     keywords: [
       "performance",

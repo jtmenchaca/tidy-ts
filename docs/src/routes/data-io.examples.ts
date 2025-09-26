@@ -1,6 +1,33 @@
 // Code examples for data I/O operations
 export const dataIoExamples = {
-  csvReading: `import { read_csv, type DataFrame } from "@tidy-ts/dataframe";
+  readingWithValidation: `import {readCSV, readParquet, readArrow } from "@tidy-ts/dataframe"
+import { z } from "zod";
+
+// Read CSV with schema validation and error handling
+const PersonSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  city: z.string(),
+  score: z.number().nullable(),
+});
+
+const dataCSV = await readCSV(pathToCSV, PersonSchema); // uses @std/csv
+const dataParquet = await readParquet(pathToParquet, PersonSchema); // uses hyparquet, only available server-side
+const dataArrow = await readArrow(pathToArrow, PersonSchema); // uses @uwdata/flechette`,
+
+  writingData: `// You can also write to CSV and Parquet
+import {writeCSV, writeParquet, createDataFrame} from "@tidy-ts/dataframe"
+
+const dataframe = createDataFrame([
+  { name: "Alice", age: 30, city: "New York", score: 95 },
+  { name: "Bob", age: 25, city: "San Francisco", score: 87 },
+  { name: "Charlie", age: 35, city: "Chicago", score: null },
+]);
+
+await writeCSV(dataframe, pathToSaveCSV);
+await writeParquet(dataframe, pathToSaveParquet); // uses hyparquet-writer, only available server-side
+// No support for writing Arrow`,
+  csvReading: `import { readCSV, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schema for CSV data validation
@@ -24,7 +51,7 @@ const jediAcademyCsv = \`id,name,species,homeworld,lightsaber_color,rank,force_s
 5,Ahsoka Tano,Togruta,Shili,white,Jedi Padawan,8.7,false\`;
 
 // Read CSV with schema validation
-const jediAcademyData = await read_csv(jediAcademyCsv, JediAcademySchema, {
+const jediAcademyData = await readCSV(jediAcademyCsv, JediAcademySchema, {
   naValues: ["", "NA", "NULL"],
   skipEmptyLines: true,
 });
@@ -48,11 +75,11 @@ writeCSV(jediData, "./output/jedi_roster.csv");
 const processedData = jediData
   .mutate({ power_level: (row) => row.force_sensitivity * 10 })
   .filter((row) => row.power_level > 90);
-writeCSV(processedData, "./output/powerful_jedi.csv");
+writeCSV(processedData, "./output/strong_jedi.csv");
 
 console.log("CSV written successfully");`,
 
-  parquetReading: `import { read_parquet, type DataFrame } from "@tidy-ts/dataframe";
+  parquetReading: `import { readParquet, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schema for Parquet data
@@ -70,7 +97,7 @@ const JediSchema = z.object({
 });
 
 // Read Parquet file with schema validation
-const jediOrder = await read_parquet(
+const jediOrder = await readParquet(
   "./data/jedi_order.parquet",
   JediSchema,
   {
@@ -127,7 +154,7 @@ writeParquet(processedJedi, "./output/processed_jedi.parquet");
 
 console.log("Parquet written successfully");`,
 
-  arrowReading: `import { read_arrow, type DataFrame } from "@tidy-ts/dataframe";
+  arrowReading: `import { readArrow, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schema for Arrow data
@@ -145,7 +172,7 @@ const JediSchema = z.object({
 });
 
 // Read Arrow buffer with schema validation
-const jediOrder = await read_arrow(arrowBuffer, JediSchema, {
+const jediOrder = await readArrow(arrowBuffer, JediSchema, {
   columns: ["name", "species", "force_sensitivity", "rank"], // Select specific columns
   naValues: ["", "NA", "NULL"],
   useDate: true, // Convert timestamps to Date objects
@@ -200,7 +227,7 @@ const arrowTable = tableFromArrays({
 const arrowBuffer = tableToIPC(arrowTable);
 console.log("Arrow data created successfully");`,
 
-  schemaValidation: `import { read_csv, read_parquet, read_arrow } from "@tidy-ts/dataframe";
+  schemaValidation: `import { readCSV, readParquet, readArrow } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Comprehensive schema with various data types
@@ -232,8 +259,8 @@ const JediMasterSchema = z.object({
   }).optional(),
 });
 
-// Read with comprehensive validation
-const jediData = await read_csv(csvContent, JediMasterSchema, {
+// Read with validation
+const jediData = await readCSV(csvContent, JediMasterSchema, {
   naValues: ["", "NA", "NULL", "null", "undefined"],
   skipEmptyLines: true,
   trim: true,
@@ -257,7 +284,7 @@ const _typeCheck: JediType = {
   },
 };`,
 
-  errorHandling: `import { read_csv, read_parquet } from "@tidy-ts/dataframe";
+  errorHandling: `import { readCSV, readParquet } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Schema with strict validation
@@ -269,7 +296,7 @@ const JediSchema = z.object({
 
 try {
   // This will throw if data doesn't match schema
-  const jediData = await read_csv(invalidCsv, JediSchema);
+  const jediData = await readCSV(invalidCsv, JediSchema);
 } catch (error) {
   console.error("Schema validation failed:", error.message);
   
@@ -283,7 +310,7 @@ try {
 
 // Graceful error handling for file operations
 try {
-  const jediData = await read_parquet("./nonexistent_jedi.parquet", JediSchema);
+  const jediData = await readParquet("./nonexistent_jedi.parquet", JediSchema);
 } catch (error) {
   if (error.code === "ENOENT") {
     console.error("File not found:", error.path);
@@ -292,11 +319,11 @@ try {
   }
 }`,
 
-  performanceOptimization: `import { read_csv, read_parquet, read_arrow } from "@tidy-ts/dataframe";
+  performanceOptimization: `import { readCSV, readParquet, readArrow } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Optimize CSV reading for large files
-const largeJediData = await read_csv(largeCsvFile, jediSchema, {
+const largeJediData = await readCSV(largeCsvFile, jediSchema, {
   // Skip empty lines to reduce processing
   skipEmptyLines: true,
   
@@ -308,7 +335,7 @@ const largeJediData = await read_csv(largeCsvFile, jediSchema, {
 });
 
 // Optimize Parquet reading with column selection
-const optimizedJediData = await read_parquet(
+const optimizedJediData = await readParquet(
   largeParquetFile,
   jediSchema,
   {
@@ -321,8 +348,8 @@ const optimizedJediData = await read_parquet(
   }
 );
 
-// Optimize Arrow reading with advanced options
-const optimizedArrowData = await read_arrow(
+// Optimize Arrow reading with options
+const optimizedArrowData = await readArrow(
   largeArrowBuffer,
   jediSchema,
   {
@@ -352,11 +379,11 @@ for (let i = 0; i < largeJediData.nrows(); i += chunkSize) {
   writeCSV(processedChunk, \`./output/jedi_chunk_\${i}.csv\`);
 }`,
 
-  dataTransformation: `import { createDataFrame, read_csv, read_parquet, read_arrow, stats as s } from "@tidy-ts/dataframe";
+  dataTransformation: `import { createDataFrame, readCSV, readParquet, readArrow, stats as s } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Load and transform data
-const rawJediData = await read_csv(csvContent, jediSchema);
+const rawJediData = await readCSV(csvContent, jediSchema);
 
 // Comprehensive data transformation pipeline
 const transformedJedi = rawJediData
@@ -374,12 +401,12 @@ const transformedJedi = rawJediData
       return "Padawan";
     },
     full_title: (row) => \`\${row.rank} \${row.name}\`,
-    is_powerful: (row) => row.force_sensitivity > 9.0,
+    is_strong: (row) => row.force_sensitivity > 9.0,
   })
   
   // Filter and select
   .filter((row) => row.is_active)
-  .select("id", "full_title", "rank_category", "force_sensitivity", "is_powerful")
+  .select("id", "full_title", "rank_category", "force_sensitivity", "is_strong")
   
   // Sort and export
   .arrange("force_sensitivity", "desc");
@@ -397,7 +424,7 @@ const summary = transformedJedi
 
 writeParquet(summary, "./output/jedi_summary.parquet");`,
 
-  integrationExample: `import { createDataFrame, read_csv, read_parquet, read_arrow, writeParquet } from "@tidy-ts/dataframe";
+  integrationExample: `import { createDataFrame, readCSV, readParquet, readArrow, writeParquet } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // Define schemas for different data sources
@@ -425,9 +452,9 @@ const TrainingSchema = z.object({
 });
 
 // Load data from multiple sources
-const jediOrder = await read_csv(jediCsv, JediSchema);
-const missions = await read_parquet("./data/missions.parquet", MissionSchema);
-const jediTraining = await read_arrow(trainingArrowBuffer, TrainingSchema);
+const jediOrder = await readCSV(jediCsv, JediSchema);
+const missions = await readParquet("./data/missions.parquet", MissionSchema);
+const jediTraining = await readArrow(trainingArrowBuffer, TrainingSchema);
 
 // Join and analyze data
 const jediAnalysis = jediOrder

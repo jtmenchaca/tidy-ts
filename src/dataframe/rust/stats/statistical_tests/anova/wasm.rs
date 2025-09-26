@@ -6,7 +6,9 @@ use super::{
     anova, anova_two_way as anova_two_way_impl, anova_two_way_factor_a, anova_two_way_factor_b,
     anova_two_way_interaction, welch_anova,
 };
-use crate::stats::core::types::{OneWayAnovaTestResult, TwoWayAnovaTestResult, WelchAnovaTestResult};
+use crate::stats::core::types::{
+    OneWayAnovaTestResult, TwoWayAnovaTestResult, WelchAnovaTestResult,
+};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for one-way ANOVA
@@ -32,7 +34,7 @@ pub fn anova_one_way(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayA
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -64,7 +66,7 @@ pub fn anova_one_way(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayA
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                name: crate::stats::core::types::EffectSizeType::EtaSquared
                     .as_str()
                     .to_string(),
             },
@@ -117,7 +119,7 @@ pub fn anova_two_way_factor_a_wasm(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                name: crate::stats::core::types::EffectSizeType::EtaSquared
                     .as_str()
                     .to_string(),
             },
@@ -170,7 +172,7 @@ pub fn anova_two_way_factor_b_wasm(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                name: crate::stats::core::types::EffectSizeType::EtaSquared
                     .as_str()
                     .to_string(),
             },
@@ -223,7 +225,7 @@ pub fn anova_two_way_interaction_wasm(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                name: crate::stats::core::types::EffectSizeType::EtaSquared
                     .as_str()
                     .to_string(),
             },
@@ -260,7 +262,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -278,7 +280,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -296,7 +298,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -341,7 +343,7 @@ pub fn anova_two_way(
                         degrees_of_freedom: 0.0,
                         effect_size: crate::stats::core::types::EffectSize {
                             value: 0.0,
-                            effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                            name: crate::stats::core::types::EffectSizeType::EtaSquared
                                 .as_str()
                                 .to_string(),
                         },
@@ -359,7 +361,7 @@ pub fn anova_two_way(
                         degrees_of_freedom: 0.0,
                         effect_size: crate::stats::core::types::EffectSize {
                             value: 0.0,
-                            effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                            name: crate::stats::core::types::EffectSizeType::EtaSquared
                                 .as_str()
                                 .to_string(),
                         },
@@ -377,7 +379,7 @@ pub fn anova_two_way(
                         degrees_of_freedom: 0.0,
                         effect_size: crate::stats::core::types::EffectSize {
                             value: 0.0,
-                            effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                            name: crate::stats::core::types::EffectSizeType::EtaSquared
                                 .as_str()
                                 .to_string(),
                         },
@@ -420,7 +422,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -438,7 +440,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -456,7 +458,7 @@ pub fn anova_two_way(
                 degrees_of_freedom: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::EtaSquared
+                    name: crate::stats::core::types::EffectSizeType::EtaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -504,7 +506,7 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> Welc
                 df2: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
-                    effect_type: crate::stats::core::types::EffectSizeType::OmegaSquared
+                    name: crate::stats::core::types::EffectSizeType::OmegaSquared
                         .as_str()
                         .to_string(),
                 },
@@ -536,7 +538,7 @@ pub fn welch_anova_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> Welc
             df2: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::OmegaSquared
+                name: crate::stats::core::types::EffectSizeType::OmegaSquared
                     .as_str()
                     .to_string(),
             },

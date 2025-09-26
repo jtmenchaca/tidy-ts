@@ -1,9 +1,9 @@
 import {
   createDataFrame,
   type DataFrame,
-  read_csv,
+  readCSV,
   stats,
-  write_csv,
+  writeCSV,
 } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
@@ -101,7 +101,7 @@ Adelie,Torgersen,40.3,18.0,195,3250,female,2007
 Adelie,Torgersen,NA,NA,NA,NA,NA,2007
 Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
-  const penguins = await read_csv(penguinsCsv, PenguinsSchema, {
+  const penguins = await readCSV(penguinsCsv, PenguinsSchema, {
     skipEmptyLines: true,
     naValues: ["", "NA", "NULL", "null"],
   });
@@ -180,7 +180,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
   // Write basic CSV
   // Start with the simplest case: basic CSV export
-  await write_csv(salesData, "./examples/dataframe/output/salesData.csv");
+  await writeCSV(salesData, "./examples/dataframe/output/salesData.csv");
 
   console.log("Basic CSV written successfully");
 
@@ -191,7 +191,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
   // Custom CSV formatting
   // This shows how to handle null values and customize output
-  write_csv(salesData, "./examples/dataframe/output/salesData.csv");
+  writeCSV(salesData, "./examples/dataframe/output/salesData.csv");
 
   console.log(
     "Custom formatted CSV (null values replaced with N/A) written successfully",
@@ -230,7 +230,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Processed data for export:");
   processedData.print();
 
-  write_csv(processedData, "./examples/dataframe/output/processedData.csv");
+  writeCSV(processedData, "./examples/dataframe/output/processedData.csv");
   console.log("\nProcessed data as CSV written successfully");
 
   // ============================================================================
@@ -257,7 +257,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Regional summary data:");
   summaryData.print();
 
-  write_csv(summaryData, "./examples/dataframe/output/summaryData.csv");
+  writeCSV(summaryData, "./examples/dataframe/output/summaryData.csv");
   console.log("\nSummary data as CSV written successfully");
 
   // ============================================================================
@@ -292,7 +292,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Database-ready export:");
   dbExport.print();
 
-  write_csv(dbExport, "./examples/dataframe/output/dbExport.csv");
+  writeCSV(dbExport, "./examples/dataframe/output/dbExport.csv");
   console.log("\nDatabase export as CSV written successfully");
 
   // ============================================================================
@@ -406,7 +406,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Efficiently processed summary:");
   efficientProcessing.print();
 
-  write_csv(
+  writeCSV(
     efficientProcessing,
     "./examples/dataframe/output/efficientProcessing.csv",
   );
@@ -443,7 +443,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Advanced export pattern (quarterly analysis):");
   advancedExport.print();
 
-  write_csv(advancedExport, "./examples/dataframe/output/advancedExport.csv");
+  writeCSV(advancedExport, "./examples/dataframe/output/advancedExport.csv");
   console.log("\nAdvanced export as CSV written successfully");
 
   // ============================================================================
@@ -489,6 +489,6 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
   console.log("Complete export workflow combining all concepts:");
   finalResult.print();
 
-  write_csv(finalResult, "./examples/dataframe/output/finalResult.csv");
+  writeCSV(finalResult, "./examples/dataframe/output/finalResult.csv");
   console.log("\nFinal workflow result as CSV written successfully");
 });

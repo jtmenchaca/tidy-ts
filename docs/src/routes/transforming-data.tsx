@@ -19,7 +19,7 @@ function TransformingDataComponent() {
   return (
     <DocPageLayout
       title="Transforming Data with mutate()"
-      description="The mutate() function is your primary tool for adding calculated columns and transforming data. Learn everything from basic calculations to advanced async operations."
+      description="The mutate() function is your primary tool for adding calculated columns and transforming data. Learn everything from basic calculations to async operations."
       currentPath="/transforming-data"
     >
 
@@ -45,7 +45,7 @@ function TransformingDataComponent() {
 
           <CodeBlock
             title="Using Stats Functions"
-            description="Leverage the comprehensive stats module for advanced calculations"
+            description="Leverage the stats module for calculations"
             explanation="The stats module provides 25+ statistical functions including mean, median, standard deviation, quantiles, ranking, and more. All functions are fully typed and optimized for performance."
             code={transformingExamples.usingStatsFunctions}
           />
@@ -54,7 +54,7 @@ function TransformingDataComponent() {
             <CardHeader>
               <CardTitle>Async Operations</CardTitle>
               <CardDescription>
-                Handle asynchronous operations seamlessly with full type safety
+                Handle asynchronous operations with full type safety
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -72,7 +72,7 @@ function TransformingDataComponent() {
                 >
                   Async Operations
                 </a>{" "}
-                page for comprehensive examples and advanced patterns.
+                page for examples and patterns.
               </p>
             </CardContent>
           </Card>

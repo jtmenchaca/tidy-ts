@@ -73,9 +73,9 @@ export type SummariseColumnsMethod<Row extends object> = {
   >(
     this: GroupedDataFrame<Row, GroupName>,
     config: {
-      col_type: ColType;
+      colType: ColType;
       columns: ColNames;
-      new_columns: NewColDefs;
+      newColumns: NewColDefs;
     },
   ): DataFrame<
     Prettify<Pick<Row, GroupName> & MapColsWithPrefix<ColNames, NewColDefs>>
@@ -92,9 +92,9 @@ export type SummariseColumnsMethod<Row extends object> = {
     }[],
   >(
     config: {
-      col_type: ColType;
+      colType: ColType;
       columns: ColNames;
-      new_columns: NewColDefs;
+      newColumns: NewColDefs;
     },
   ): DataFrame<Prettify<Row & MapColsWithPrefix<ColNames, NewColDefs>>>;
 };

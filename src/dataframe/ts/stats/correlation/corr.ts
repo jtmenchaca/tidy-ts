@@ -5,7 +5,7 @@ import { hasMixedTypes } from "../helpers.ts";
  *
  * @param x - First array of numbers
  * @param y - Second array of numbers
- * @param remove_na - If true, guarantees a number return (throws if no valid pairs)
+ * @param removeNA - If true, guarantees a number return (throws if no valid pairs)
  * @returns Pearson correlation coefficient between x and y, or null if no valid pairs
  *
  * @example
@@ -20,27 +20,27 @@ export function corr(x: number[], y: number[]): number;
 export function corr(
   x: (number | null | undefined)[],
   y: (number | null | undefined)[],
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function corr(
   x: (number | null | undefined)[],
   y: (number | null | undefined)[],
-  remove_na?: false,
+  removeNA?: false,
 ): number | null;
 export function corr(x: Iterable<number>, y: Iterable<number>): number;
 export function corr(
   x: Iterable<number | null | undefined>,
   y: Iterable<number | null | undefined>,
-  remove_na: true,
+  removeNA: true,
 ): number;
 // Accept mixed types for runtime filtering
 export function corr(x: unknown[], y: unknown[]): number | null;
-export function corr(x: unknown[], y: unknown[], remove_na: true): number;
+export function corr(x: unknown[], y: unknown[], removeNA: true): number;
 export function corr(x: Iterable<unknown>, y: Iterable<unknown>): number | null;
 export function corr(
   x: Iterable<unknown>,
   y: Iterable<unknown>,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function corr(
   x:
@@ -57,7 +57,7 @@ export function corr(
     | Iterable<number | null | undefined>
     | unknown[]
     | Iterable<unknown>,
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle iterables by materializing to arrays
   const xArray = Array.isArray(x) ? x : Array.from(x);
@@ -69,8 +69,8 @@ export function corr(
     );
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if ((hasMixedTypes(xArray) || hasMixedTypes(yArray)) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if ((hasMixedTypes(xArray) || hasMixedTypes(yArray)) && !removeNA) {
     return null;
   }
 
@@ -86,7 +86,7 @@ export function corr(
     const yIsValid = typeof yVal === "number" && Number.isFinite(yVal);
 
     if (!xIsValid || !yIsValid) {
-      if (!remove_na) {
+      if (!removeNA) {
         return null;
       }
       continue;
@@ -96,7 +96,7 @@ export function corr(
   }
 
   if (validPairs.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error("No valid pairs found to calculate correlation");
     }
     return null;

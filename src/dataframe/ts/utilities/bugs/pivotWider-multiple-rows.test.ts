@@ -49,9 +49,9 @@ Deno.test("pivotWider multiple rows bug", () => {
   const result1a = result1
     .drop("time_ms", "ratio")
     .pivotWider({
-      names_from: "library",
-      values_from: "display",
-      expected_columns: ["tidy-ts", "arquero", "pandas", "polars", "r"],
+      namesFrom: "library",
+      valuesFrom: "display",
+      expectedColumns: ["tidy-ts", "arquero", "pandas", "polars", "r"],
     })
     .arrange("operation");
 

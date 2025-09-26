@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createDataFrame, type DataFrame, read_csv } from "@tidy-ts/dataframe";
+import { createDataFrame, type DataFrame, readCSV } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 describe("Creating DataFrames", () => {
@@ -175,7 +175,7 @@ Anakin Skywalker,Human,Tatooine,blue,Jedi Knight,9.8`;
     });
 
     // Read CSV with schema validation
-    const jediAcademyData = await read_csv(jediAcademyCsv, JediAcademySchema);
+    const jediAcademyData = await readCSV(jediAcademyCsv, JediAcademySchema);
 
     // TypeScript knows the exact structure after Zod validation
     // The Zod schema ensures type safety at runtime

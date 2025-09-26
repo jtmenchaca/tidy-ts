@@ -19,7 +19,7 @@ function TidyDataGettingStartedComponent() {
   return (
     <DocPageLayout
       title="Getting Started"
-      description="Get up and running with Tidy-TS in minutes. Learn installation, basic concepts, and start working with DataFrames right away."
+      description="Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety."
       currentPath="/getting-started"
     >
       <Card>
@@ -65,23 +65,23 @@ function TidyDataGettingStartedComponent() {
       />
 
       <CodeBlock
-        title="Complete Data Analysis Example"
-        description="A real-world example showing the power of Tidy-TS"
-        explanation="This example demonstrates a complete data analysis workflow from data creation through transformation, grouping, and summarization - all in just a few lines of code."
+        title="Complete Data Analysis Workflow"
+        description="A complete example showing type-safe data transformations with Tidy-TS"
+        explanation="This example demonstrates creating DataFrames, adding calculated columns with full type safety, grouping data, and performing aggregations. Notice how the 'row' parameter provides typed access to columns without casting, and how you can access the entire DataFrame for calculations."
         code={gettingStartedExamples.quickTutorial}
       />
 
       <CodeBlock
-        title="Creating DataFrames from Arrays"
-        description="Simple DataFrame creation with automatic type inference"
-        explanation="DataFrames are created from arrays of objects, where each object represents a row and the object keys become column names. TypeScript infers types automatically."
+        title="DataFrame Creation"
+        description="Create DataFrames from rows or columns with automatic type inference"
+        explanation="DataFrames can be created from arrays of objects (rows) or from column objects. TypeScript automatically infers column types and provides full type safety throughout your data pipeline."
         code={gettingStartedExamples.creatingDataFrames}
       />
 
       <CodeBlock
         title="Adding Columns with mutate()"
-        description="Transform data by adding calculated columns"
-        explanation="Each key in the object becomes a new column name. The value can be a function that receives: (row, index, dataframe)."
+        description="Transform data by adding calculated columns with full type safety"
+        explanation="Each key becomes a new column name. Functions receive (row, index, dataframe) parameters with full typing - no casting needed. Access typed row properties, current index, or the entire DataFrame for calculations."
         code={gettingStartedExamples.addingColumnsWithMutate}
       />
 

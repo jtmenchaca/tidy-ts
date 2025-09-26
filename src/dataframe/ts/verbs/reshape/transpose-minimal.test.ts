@@ -18,7 +18,7 @@ Deno.test("transpose - simple strings and numbers", () => {
   original.print();
 
   // First transpose (no ROW_LABEL column) - creates symbol column + row_* columns
-  const transposed = original.transpose({ number_of_rows: 2 }); // 2 = original.nrows()
+  const transposed = original.transpose({ numberOfRows: 2 }); // 2 = original.nrows()
 
   // Type should include ROW_LABEL + row types storage + row_0, row_1 columns
   const _typeCheck: DataFrame<{
@@ -44,7 +44,7 @@ Deno.test("transpose - simple strings and numbers", () => {
   }> = originalWithRowLabels;
 
   const transposedWithRowLabels = originalWithRowLabels
-    .transpose({ number_of_rows: 2 }); // 2 = original.nrows()
+    .transpose({ numberOfRows: 2 }); // 2 = original.nrows()
 
   // Type should have ROW_LABEL with original column names + row types metadata + columns from row labels
   const _typeCheckWithRowLabels: DataFrame<{
@@ -58,7 +58,7 @@ Deno.test("transpose - simple strings and numbers", () => {
   transposedWithRowLabels.print();
 
   const backToOriginal = transposedWithRowLabels.transpose({
-    number_of_rows: 3,
+    numberOfRows: 3,
   });
 
   backToOriginal.print();
@@ -92,7 +92,7 @@ Deno.test("transpose - mutate operations on transposed data", () => {
     { name: "Bob", age: 30, score: 87.2 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 2 });
+  const transposed = original.transpose({ numberOfRows: 2 });
 
   // Mutate on transposed data - should preserve transpose structure
   const mutated = transposed.mutate({
@@ -118,7 +118,7 @@ Deno.test("transpose - mutate operations on transposed data", () => {
   // Test with row labels
   const originalWithRowLabels = original.setRowLabels(["person1", "person2"]);
   const transposedWithRowLabels = originalWithRowLabels.transpose({
-    number_of_rows: 2,
+    numberOfRows: 2,
   });
 
   const mutatedWithRowLabels = transposedWithRowLabels.mutate({
@@ -147,7 +147,7 @@ Deno.test("transpose - filter operations on transposed data", () => {
     { name: "Charlie", age: 35, score: 78.9 },
   ]);
 
-  const transposed = original.transpose({ number_of_rows: 3 });
+  const transposed = original.transpose({ numberOfRows: 3 });
 
   // Filter on transposed data - should preserve transpose structure
   const filtered = transposed.filter((row) => {
@@ -187,7 +187,7 @@ Deno.test("transpose - filter operations on transposed data", () => {
     "charlie",
   ]);
   const transposedWithRowLabels = originalWithRowLabels.transpose({
-    number_of_rows: 3,
+    numberOfRows: 3,
   });
 
   const filteredWithRowLabels = transposedWithRowLabels.filter((row) => {
@@ -225,7 +225,7 @@ Deno.test("transpose - complex chain operations", () => {
 
   // Complex chain: transpose -> filter -> mutate -> arrange
   const result = originalWithRowLabels
-    .transpose({ number_of_rows: 3 })
+    .transpose({ numberOfRows: 3 })
     .filter((row) =>
       row.__tidy_row_label__ === "age" || row.__tidy_row_label__ === "score"
     )

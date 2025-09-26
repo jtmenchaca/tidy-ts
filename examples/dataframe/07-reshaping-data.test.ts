@@ -29,8 +29,8 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
   const longScores = studentScores
     .pivotLonger({
       cols: ["math", "science", "english"],
-      names_to: "subject",
-      values_to: "score",
+      namesTo: "subject",
+      valuesTo: "score",
     });
 
   console.log("Converted to long format:");
@@ -47,8 +47,8 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
   // This shows how to reverse the pivot_longer operation
   const wideAgain = longScores
     .pivotWider({
-      names_from: "subject",
-      values_from: "score",
+      namesFrom: "subject",
+      valuesFrom: "score",
     });
 
   console.log("Converted back to wide format:");
@@ -80,8 +80,8 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
   // Pivot to get metrics as columns
   const salesWide = salesLong
     .pivotWider({
-      names_from: "metric",
-      values_from: "value",
+      namesFrom: "metric",
+      valuesFrom: "value",
     });
 
   console.log("Sales data pivoted wider (metrics as columns):");
@@ -259,9 +259,9 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
 
   const pivotedSales = aggregatedFirst
     .pivotWider({
-      names_from: "product",
-      values_from: "total_sales",
-      expected_columns: ["Widget", "Gadget"],
+      namesFrom: "product",
+      valuesFrom: "total_sales",
+      expectedColumns: ["Widget", "Gadget"],
     });
 
   console.log("Final pivoted sales by product:");
@@ -324,9 +324,9 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
   // Complex reshaping: pivot wider with multiple grouping
   const complexReshaped = complexData
     .pivotWider({
-      names_from: "metric",
-      values_from: "value",
-      expected_columns: ["costs", "revenue"],
+      namesFrom: "metric",
+      valuesFrom: "value",
+      expectedColumns: ["costs", "revenue"],
     })
     .mutate({
       profit: (row) => row.revenue - row.costs,
@@ -351,9 +351,9 @@ Deno.test("Reshaping Data - Pivot and Dummy Variables - Progressive Examples", (
   const finalResult = salesLong
     .filter((row) => row.value > 0) // Data validation
     .pivotWider({
-      names_from: "metric",
-      values_from: "value",
-      expected_columns: ["revenue", "units"],
+      namesFrom: "metric",
+      valuesFrom: "value",
+      expectedColumns: ["revenue", "units"],
     }) // Pivot to wide format
     .mutate({
       total_value: (row) => row.revenue + row.units * 100, // Calculate total value

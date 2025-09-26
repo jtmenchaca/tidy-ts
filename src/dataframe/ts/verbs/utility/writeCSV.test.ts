@@ -1,6 +1,6 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { write_csv as writeCSV } from "./writeCSV.verb.ts";
+import { writeCSV } from "./writeCSV.verb.ts";
 
 Deno.test("writeCSV() basic functionality", () => {
   const df = createDataFrame([

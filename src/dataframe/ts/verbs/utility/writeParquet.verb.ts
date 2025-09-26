@@ -80,7 +80,7 @@ function dataFrameToColumnData<T extends Record<string, unknown>>(
  * writeParquet(df, "data.parquet");
  * ```
  */
-export function write_parquet<Row extends Record<string, unknown>>(
+export function writeParquet<Row extends Record<string, unknown>>(
   dataFrame: DataFrame<Row>,
   filePath: string,
 ): DataFrame<Row> {

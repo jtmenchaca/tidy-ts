@@ -2,6 +2,22 @@
 
 library(jsonlite)
 
+# Load packages for normality tests (install if not available)
+if (!require(nortest, quietly = TRUE)) {
+  install.packages("nortest", repos = "https://cran.r-project.org/")
+  library(nortest)
+}
+
+if (!require(moments, quietly = TRUE)) {
+  install.packages("moments", repos = "https://cran.r-project.org/")
+  library(moments)
+}
+
+if (!require(fBasics, quietly = TRUE)) {
+  install.packages("fBasics", repos = "https://cran.r-project.org/")
+  library(fBasics)
+}
+
 # Parse the JSON parameter from command line
 args <- commandArgs(trailingOnly = TRUE)
 
@@ -353,6 +369,32 @@ result <- switch(test_type,
       test_statistic = as.numeric(test_result$statistic),
       p_value = test_result$p.value,
       method = "shapiro.test",
+      alternative = "two.sided",
+      alpha = alpha
+    )
+  },
+  
+  "ad.test" = {
+    x <- as.numeric(data$x)
+    test_result <- nortest::ad.test(x)
+    list(
+      test_statistic = as.numeric(test_result$statistic),
+      p_value = test_result$p.value,
+      method = "ad.test",
+      alternative = "two.sided",
+      alpha = alpha
+    )
+  },
+  
+  "dagostino.test" = {
+    x <- as.numeric(data$x)
+    # D'Agostino-Pearson test using fBasics::dagoTest
+    test_result <- fBasics::dagoTest(x)
+    # Extract the omnibus (first) statistic and p-value
+    list(
+      test_statistic = as.numeric(test_result@test$statistic[1]),
+      p_value = test_result@test$p.value[1],
+      method = "dagostino.test",
       alternative = "two.sided",
       alpha = alpha
     )

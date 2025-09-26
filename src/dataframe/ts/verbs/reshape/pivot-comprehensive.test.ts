@@ -17,21 +17,21 @@ const wideData = createDataFrame([
 
 console.log("=== pivot_wider tests ===");
 
-// 1. Basic pivot_wider with explicit expected_columns
-console.log("1. Basic pivot with expected_columns:");
+// 1. Basic pivot_wider with explicit expectedColumns
+console.log("1. Basic pivot with expectedColumns:");
 const basicPivot = longData.pivotWider({
-  names_from: "variable",
-  values_from: "value",
-  expected_columns: ["x", "y"],
+  namesFrom: "variable",
+  valuesFrom: "value",
+  expectedColumns: ["x", "y"],
 });
 console.log(basicPivot);
 
 // 2. Using .unique() method
 console.log("\n2. Using df.column.unique():");
 const autoPivot = longData.pivotWider({
-  names_from: "variable",
-  values_from: "value",
-  expected_columns: stats.unique(longData.variable),
+  namesFrom: "variable",
+  valuesFrom: "value",
+  expectedColumns: stats.unique(longData.variable),
 });
 console.log(autoPivot);
 
@@ -46,18 +46,18 @@ const aggregatedData = createDataFrame([
 ]);
 
 const aggregatedPivot = aggregatedData.pivotWider({
-  names_from: "variable",
-  values_from: "value",
-  expected_columns: ["x", "y"],
-  values_fn: (values) => stats.sum(values),
+  namesFrom: "variable",
+  valuesFrom: "value",
+  expectedColumns: ["x", "y"],
+  valuesFn: (values) => stats.sum(values),
 });
 console.log(aggregatedPivot);
 
-// 4. Without expected_columns (returns Record<string, unknown>)
-console.log("\n4. Without expected_columns:");
+// 4. Without expectedColumns (returns Record<string, unknown>)
+console.log("\n4. Without expectedColumns:");
 const dynamicPivot = longData.pivotWider({
-  names_from: "variable",
-  values_from: "value",
+  namesFrom: "variable",
+  valuesFrom: "value",
 });
 console.log(dynamicPivot);
 
@@ -67,8 +67,8 @@ console.log("\n=== pivot_longer tests ===");
 console.log("5. Basic pivot_longer:");
 const longerResult = wideData.pivotLonger({
   cols: ["x", "y", "z"],
-  names_to: "variable",
-  values_to: "value",
+  namesTo: "variable",
+  valuesTo: "value",
 });
 console.log(longerResult);
 
@@ -76,20 +76,20 @@ console.log(longerResult);
 console.log("\n6. Partial columns pivot_longer:");
 const partialLonger = wideData.pivotLonger({
   cols: ["x", "y"], // Only pivot some columns
-  names_to: "metric",
-  values_to: "score",
+  namesTo: "metric",
+  valuesTo: "score",
 });
 console.log(partialLonger);
 
 console.log("\n=== Error handling tests ===");
 
-// 7. Error: Wrong expected_columns
+// 7. Error: Wrong expectedColumns
 console.log("7. Testing validation error:");
 try {
   longData.pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    expected_columns: ["x", "z"], // "z" doesn't exist
+    namesFrom: "variable",
+    valuesFrom: "value",
+    expectedColumns: ["x", "z"], // "z" doesn't exist
   });
 } catch (error) {
   console.log("✓ Expected error:", (error as Error).message);
@@ -101,8 +101,8 @@ try {
   wideData.pivotLonger({
     // @ts-expect-error - invalid column name
     cols: ["x", "missing"], // "missing" doesn't exist
-    names_to: "variable",
-    values_to: "value",
+    namesTo: "variable",
+    valuesTo: "value",
   });
 } catch (error) {
   console.log("✓ Expected error:", (error as Error).message);

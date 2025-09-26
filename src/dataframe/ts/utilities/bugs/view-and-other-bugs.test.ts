@@ -107,11 +107,11 @@ Deno.test("View awareness bugs - fixed verbs should respect filtered/arranged st
   // Test 8: mutateColumns should respect the view
   console.log("\n--- Test 8: mutateColumns after filter+arrange ---");
   const mutateColsResult = await filteredAndArranged.mutateColumns({
-    col_type: "number" as const,
-    columns: ["value"] as const,
-    new_columns: [
+    colType: "number",
+    columns: ["value"],
+    newColumns: [
       { prefix: "double_", fn: (col: number) => col * 2 },
-    ] as const,
+    ],
   });
   mutateColsResult.print();
 

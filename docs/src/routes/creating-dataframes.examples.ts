@@ -84,7 +84,7 @@ const _typeCheck: DataFrame<JediKnight> = jediOrderDataFrame;
 
 jediOrderDataFrame.print("DataFrame created from typed array:");`,
 
-  csvWithValidation: `import { read_csv, type DataFrame } from "@tidy-ts/dataframe";
+  csvWithValidation: `import { readCSV, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // CSV data as string - Jedi Academy enrollment records
@@ -107,7 +107,7 @@ const JediAcademySchema = z.object({
 });
 
 // Read CSV with schema validation
-const jediAcademyData = await read_csv(jediAcademyCsv, JediAcademySchema);
+const jediAcademyData = await readCSV(jediAcademyCsv, JediAcademySchema);
 
 // TypeScript knows the exact structure after Zod validation
 const _typeCheck: DataFrame<{

@@ -14,6 +14,7 @@ import type { TukeyHsdTestResult } from "../../../../lib/tidy_ts_dataframe.d.ts"
  * - Following a significant one-way ANOVA
  * - Groups have approximately equal variances
  * - Sample sizes are reasonably balanced
+ * - Automatically corrects for multiple comparisons using studentized range distribution
  *
  * @param groups Array of groups, where each group is an array of numbers
  * @param alpha Significance level (default: 0.05)

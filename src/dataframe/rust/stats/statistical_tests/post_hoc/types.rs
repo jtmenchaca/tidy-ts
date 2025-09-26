@@ -34,26 +34,26 @@ pub struct PairwiseComparison {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
 pub struct TukeyHsdTestResult {
-    /// Test statistic for the overall test (if applicable)
-    pub test_statistic: TestStatistic,
-    /// P-value for the overall test (if applicable)
-    pub p_value: f64,
     /// Name of the test performed
     pub test_name: String,
-    /// Significance level used
-    pub alpha: f64,
-    /// Error message if test failed
-    pub error_message: Option<String>,
-    /// Explanatory note about the header values
-    pub note: Option<String>,
-    /// Multiple comparison correction method used
-    pub correction_method: String,
+    /// P-value for the overall test (if applicable)
+    pub p_value: f64,
+    /// Test statistic for the overall test (if applicable)
+    pub test_statistic: TestStatistic,
     /// Number of groups compared
     pub n_groups: usize,
     /// Total sample size
     pub n_total: usize,
     /// Individual pairwise comparisons
     pub comparisons: Vec<PairwiseComparison>,
+    /// Multiple comparison correction method used
+    pub correction_method: String,
+    /// Explanatory note about the header values
+    pub note: Option<String>,
+    /// Significance level used
+    pub alpha: f64,
+    /// Error message if test failed
+    pub error_message: Option<String>,
 }
 
 /// Result structure for Games-Howell test

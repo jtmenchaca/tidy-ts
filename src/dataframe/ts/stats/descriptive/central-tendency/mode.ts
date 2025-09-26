@@ -42,8 +42,8 @@ function calculateModeInfo(
  * Calculate the mode (most frequent value) of an array
  *
  * @param values - Array of numbers or single number
- * @param remove_na - If true, guarantees a number return (throws if no valid values)
- * @returns The mode value, or null if no valid values and remove_na=false
+ * @param removeNA - If true, guarantees a number return (throws if no valid values)
+ * @returns The mode value, or null if no valid values and removeNA=false
  *
  * @example
  * ```ts
@@ -61,11 +61,11 @@ function calculateModeInfo(
 
 export function mode(value: number): number;
 export function mode(values: CleanNumberArray): number;
-export function mode(values: NumbersWithNullable, remove_na: true): number;
+export function mode(values: NumbersWithNullable, removeNA: true): number;
 export function mode(values: CleanNumberIterable): number;
 export function mode(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function mode(
   values:
@@ -76,22 +76,22 @@ export function mode(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle single number case
   if (typeof values === "number") {
     return values;
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
   const result = calculateModeInfo(values);
 
   if (!result) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MODE);
     }
     return null;

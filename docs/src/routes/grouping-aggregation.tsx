@@ -36,7 +36,7 @@ function GroupingAggregationComponent() {
       />
 
       <CodeBlock
-        title="Advanced Aggregation Patterns"
+        title="Complex Aggregation Patterns"
         description="Complex aggregation with conditional logic and custom calculations"
         explanation="You can create complex summary statistics with conditional logic, custom calculations, and derived metrics."
         code={groupingExamples.conditionalAggregation}

@@ -6,7 +6,7 @@ import { expect } from "@std/expect";
 import { stats } from "@tidy-ts/dataframe";
 
 Deno.test("descriptive functions handle mixed types correctly", () => {
-  // Test data with mixed types: should return null when remove_na is false (default)
+  // Test data with mixed types: should return null when removeNA is false (default)
   const mixedTypes = [1, 2, "3", true, null, undefined, NaN, 4, "5", false];
 
   // Calculate all results and consolidate into an object
@@ -33,7 +33,7 @@ Deno.test("descriptive functions handle mixed types correctly", () => {
 
   console.log("Mixed types results:", results);
 
-  // Should return null for mixed types when remove_na is false (default)
+  // Should return null for mixed types when removeNA is false (default)
   expect(results.mean).toBeNull();
   expect(results.max).toBeNull();
   expect(results.min).toBeNull();
@@ -222,12 +222,12 @@ Deno.test("descriptive functions work correctly with clean numeric arrays", () =
   expect(results.mode).toBe(1); // First number when no repeats
 });
 
-Deno.test("descriptive functions with remove_na=true extract valid numbers", () => {
+Deno.test("descriptive functions with removeNA=true extract valid numbers", () => {
   // Test data: [1, 2, "3", true, null, undefined, NaN, 4, "5", false]
   // Valid numbers: [1, 2, 4]
   const mixedTypes = [1, 2, "3", true, null, undefined, NaN, 4, "5", false];
 
-  // Calculate all results with remove_na=true
+  // Calculate all results with removeNA=true
   const results = {
     // @ts-ignore -- this is a test
     mean: stats.mean(mixedTypes, true),
@@ -249,7 +249,7 @@ Deno.test("descriptive functions with remove_na=true extract valid numbers", () 
     mode: stats.mode(mixedTypes, true),
   };
 
-  console.log("remove_na=true results:", results);
+  console.log("removeNA=true results:", results);
 
   // Should process only valid numbers [1, 2, 4]
   expect(results.mean).toBeCloseTo(2.3333333333333335, 10); // (1+2+4)/3

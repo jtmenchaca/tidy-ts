@@ -3,9 +3,11 @@
 import { initWasm, wasmInternal } from "./wasm-init.ts";
 export { serializeTestResult } from "./wasm-serializer.ts";
 import type {
+  AndersonDarlingTestResult,
   ChiSquareGoodnessOfFitTestResult,
   ChiSquareIndependenceTestResult,
   ChiSquareVarianceTestResult,
+  DAgostinoPearsonTestResult,
   DunnTestResult,
   FishersExactTestResult,
   GamesHowellTestResult,
@@ -328,6 +330,26 @@ export function shapiro_wilk_test(
 ): ShapiroWilkTestResult {
   initWasm();
   const result = wasmInternal.shapiro_wilk_test(x, alpha);
+  return result;
+}
+
+// Anderson-Darling Test
+export function anderson_darling_test(
+  x: Float64Array,
+  alpha: number,
+): AndersonDarlingTestResult {
+  initWasm();
+  const result = wasmInternal.anderson_darling_test(x, alpha);
+  return result;
+}
+
+// D'Agostino-Pearson K² Test
+export function dagostino_pearson_test(
+  x: Float64Array,
+  alpha: number,
+): DAgostinoPearsonTestResult {
+  initWasm();
+  const result = wasmInternal.dagostino_pearson_test(x, alpha);
   return result;
 }
 

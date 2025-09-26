@@ -13,9 +13,9 @@ console.log("Running summarise_columns type checking tests...");
 // 1. Ungrouped summarise_columns type check with integrated type inference
 const ungroupedSummary = testData
   .summariseColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1", "score2"],
-    new_columns: [
+    newColumns: [
       { prefix: "mean_", fn: (col) => stats.mean(col) },
       { prefix: "sum_", fn: (col) => stats.sum(col) },
     ],
@@ -43,9 +43,9 @@ console.log("Ungrouped summarise_columns type checking passed!");
 const singleGroupSummary = testData
   .groupBy("team")
   .summariseColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1", "score2"],
-    new_columns: [
+    newColumns: [
       { prefix: "mean_", fn: (col) => stats.mean(col) },
       { prefix: "sum_", fn: (col) => stats.sum(col) },
     ],
@@ -66,9 +66,9 @@ console.log("Single group summarise_columns type checking passed!");
 const multiGroupSummary = testData
   .groupBy("team", "age")
   .summariseColumns({
-    col_type: "number",
+    colType: "number",
     columns: ["score1"],
-    new_columns: [
+    newColumns: [
       { prefix: "mean_", fn: (col) => stats.mean(col) },
     ],
   });

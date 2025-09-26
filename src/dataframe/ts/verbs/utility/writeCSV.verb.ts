@@ -44,7 +44,7 @@ function dataFrameToCSV<T extends Record<string, unknown>>(
  * writeCSV(df, "data.csv");
  * ```
  */
-export function write_csv<Row extends Record<string, unknown>>(
+export function writeCSV<Row extends Record<string, unknown>>(
   dataFrame: DataFrame<Row>,
   filePath: string,
 ): DataFrame<Row> {

@@ -11,7 +11,7 @@ import type {
  * Calculate the quartiles (Q25, median/Q50, Q75) of values
  *
  * @param values - Array of numbers or values that can contain null/undefined, or single number
- * @param remove_na - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
  * @returns Array of [Q25, Q50, Q75] or `null` if no valid values
  *
  * @example
@@ -30,14 +30,14 @@ export function quartiles(value: number): [number, number, number];
 export function quartiles(values: CleanNumberArray): [number, number, number];
 export function quartiles(
   values: NumbersWithNullable,
-  remove_na: true,
+  removeNA: true,
 ): [number, number, number];
 export function quartiles(
   values: CleanNumberIterable,
 ): [number, number, number];
 export function quartiles(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): [number, number, number];
 export function quartiles(
   data:
@@ -48,15 +48,15 @@ export function quartiles(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): [number, number, number] | null {
   // Handle single number case
   if (typeof data === "number") {
     return [data, data, data]; // Single value has same Q25, Q50, Q75
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(data) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(data) && !removeNA) {
     return null;
   }
 
@@ -64,7 +64,7 @@ export function quartiles(
   const validValues = extractValidNumbers(data);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error("No valid values found to calculate quartiles");
     }
     return null;

@@ -130,17 +130,9 @@ function printComparisonResults(results: ComparisonResult[]): void {
   );
 }
 
-// Main test runner
-async function main() {
-  const args = Deno.args;
-  const testCount = parseInt(args[0]) || 2;
-
-  console.log("🧪 Comprehensive Interface Test Runner");
-  console.log("==============================================");
-  console.log(`Running ${testCount} random tests per test type...\n`);
-
-  // Configuration for which tests to run - ALL WORKING TESTS ENABLED
-  const testConfig = {
+// Test configuration
+function getTestConfig() {
+  return {
     // Correlation tests
     "cor.test.pearson": true, // ✅ Working
     "cor.test.spearman": true, // ✅ Working
@@ -163,6 +155,8 @@ async function main() {
     "ks.test.uniform": true, // ✅ Fixed! (Kolmogorov-Smirnov one-sample)
     "ks.test.two.sample": true, // ✅ Working (kolmogorov_smirnov_two_sample)
     "shapiro.test": true, // ✅ Working (shapiro_wilk_tests)
+    "ad.test": true, // ✅ New! Anderson-Darling normality test
+    "dagostino.test": true, // ✅ New! D'Agostino-Pearson K² normality test
 
     // Non-parametric tests
     "wilcox.test.signedrank": true, // ✅ Fixed! Exact implementation (wilcoxonSignedRankTest)
@@ -191,17 +185,105 @@ async function main() {
     "kruskal.test.bygroup": false, // ❌ Different interface than basic kruskal test
     "aov.two": false, // ❌ Returns TwoWayAnovaTestResult (complex object)
   };
+}
 
-  const testTypes = Object.keys(testConfig).filter((key) =>
+// Parse command line arguments
+function parseArgs(args: string[]) {
+  const parsed = {
+    testCount: 2,
+    filter: null as string | null,
+    list: false,
+    help: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--filter" && i + 1 < args.length) {
+      parsed.filter = args[i + 1];
+      i++;
+    } else if (arg === "--list") {
+      parsed.list = true;
+    } else if (arg === "--help" || arg === "-h") {
+      parsed.help = true;
+    } else if (arg === "--count" && i + 1 < args.length) {
+      parsed.testCount = parseInt(args[i + 1]) || 2;
+      i++;
+    } else if (!isNaN(parseInt(arg))) {
+      parsed.testCount = parseInt(arg);
+    }
+  }
+
+  return parsed;
+}
+
+// Main test runner
+async function main() {
+  const args = parseArgs(Deno.args);
+
+  console.log("🧪 Comprehensive Interface Test Runner");
+  console.log("==============================================");
+
+  if (args.help) {
+    console.log("Usage: comprehensive-runner.ts [options]");
+    console.log("\nOptions:");
+    console.log(
+      "  --filter <pattern>    Only run tests matching pattern (case-insensitive)",
+    );
+    console.log(
+      "  --count <number>      Number of tests to run per test type (default: 2)",
+    );
+    console.log("  --list                List all available test types");
+    console.log("  --help, -h            Show this help message");
+    console.log("\nExamples:");
+    console.log("  # Run only D'Agostino-Pearson tests");
+    console.log("  deno run -A comprehensive-runner.ts --filter dagostino");
+    console.log("  # Run 5 Anderson-Darling tests");
+    console.log(
+      "  deno run -A comprehensive-runner.ts --filter ad.test --count 5",
+    );
+    console.log("  # List all available tests");
+    console.log("  deno run -A comprehensive-runner.ts --list");
+    return;
+  }
+
+  if (args.list) {
+    console.log("Available test types:");
+    const testConfig = getTestConfig();
+    Object.keys(testConfig).forEach((test) => {
+      const status = testConfig[test as keyof typeof testConfig] ? "✅" : "❌";
+      console.log(`  ${status} ${test}`);
+    });
+    return;
+  }
+
+  if (args.filter) {
+    console.log(`Filtering tests matching: "${args.filter}"`);
+  }
+  console.log(`Running ${args.testCount} random tests per test type...\n`);
+
+  const testConfig = getTestConfig();
+
+  let testTypes = Object.keys(testConfig).filter((key) =>
     testConfig[key as keyof typeof testConfig]
   );
+
+  // Apply filter if provided
+  if (args.filter) {
+    testTypes = testTypes.filter((testType) =>
+      testType.toLowerCase().includes(args.filter!.toLowerCase())
+    );
+    if (testTypes.length === 0) {
+      console.log(`No tests match filter: "${args.filter}"`);
+      return;
+    }
+  }
 
   const allResults: ComparisonResult[] = [];
 
   for (const testType of testTypes) {
     console.log(`🔬 Testing ${testType}...`);
 
-    for (let i = 0; i < testCount; i++) {
+    for (let i = 0; i < args.testCount; i++) {
       try {
         const params = generateComprehensiveTestCase(
           testType,

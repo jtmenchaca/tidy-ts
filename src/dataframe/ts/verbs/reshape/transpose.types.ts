@@ -93,8 +93,8 @@ import type {
 
 export type TransposeMethod<Row extends object> = {
   <const ExpectedRows extends number>(
-    { number_of_rows }: {
-      number_of_rows: RestrictEmptyDataFrame<
+    { numberOfRows }: {
+      numberOfRows: RestrictEmptyDataFrame<
         Row,
         ExpectedRows,
         EmptyDataFrameTranspose

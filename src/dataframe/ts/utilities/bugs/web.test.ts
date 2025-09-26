@@ -1,12 +1,12 @@
 import {
   createDataFrame,
   type DataFrame,
-  read_csv,
+  readCSV,
   stats,
 } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
-Deno.test("read_csv", async () => {
+Deno.test("readCSV", async () => {
   // CSV data as string - Jedi Academy enrollment records
   const jediAcademyCsv =
     `name,species,homeworld,lightsaber_color,rank,force_sensitivity
@@ -28,7 +28,7 @@ Anakin Skywalker,Human,Tatooine,blue,Jedi Knight,9.8`;
   });
 
   // Read CSV with schema validation
-  const jediAcademyData = await read_csv(jediAcademyCsv, JediAcademySchema);
+  const jediAcademyData = await readCSV(jediAcademyCsv, JediAcademySchema);
 
   // TypeScript knows the exact structure after Zod validation
   const _typeCheck: DataFrame<{

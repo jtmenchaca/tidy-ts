@@ -290,17 +290,17 @@ function isFilePath(input: string | ArrayBuffer): boolean {
  * });
  *
  * // Read from file
- * const df1 = await read_arrow("./data.arrow", schema);
+ * const df1 = await readArrow("./data.arrow", schema);
  *
  * // Parse from ArrayBuffer
  * const buffer = await Deno.readFile("./data.arrow");
- * const df2 = await read_arrow(buffer, schema);
+ * const df2 = await readArrow(buffer, schema);
  *
  * // Both are typed as DataFrame<z.output<typeof schema>>
  * ```
  */
 // deno-lint-ignore no-explicit-any
-export async function read_arrow<S extends z.ZodObject<any>>(
+export async function readArrow<S extends z.ZodObject<any>>(
   pathOrBuffer: string | ArrayBuffer,
   schema: S,
   opts: ArrowOptions & NAOpts = {},
@@ -359,7 +359,3 @@ export async function read_arrow<S extends z.ZodObject<any>>(
 
   return createDataFrame(rows, schema);
 }
-
-/*───────────────────────────────────────────────────────────────────────────┐
-│  5 · re-exports (optional)                                                 │
-└───────────────────────────────────────────────────────────────────────────*/

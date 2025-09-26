@@ -15,8 +15,8 @@ try {
   const result = wideData
     .pivotLonger({
       cols: ["x", "y", "z"],
-      names_to: "variable",
-      values_to: "value",
+      namesTo: "variable",
+      valuesTo: "value",
     });
   console.log("Success! Result:");
   console.log(result);
@@ -29,9 +29,9 @@ try {
   const result = wideData
     .pivotLonger({
       // @ts-expect-error - missing columns
-      cols: ["x", "y", "missing_column"], // "missing_column" doesn't exist
-      names_to: "variable",
-      values_to: "value",
+      cols: ["x", "y", "missingColumn"], // "missingColumn" doesn't exist
+      namesTo: "variable",
+      valuesTo: "value",
     });
   console.log("Success:", result);
 } catch (error) {
@@ -44,8 +44,8 @@ try {
     .pivotLonger({
       // @ts-expect-error - missing columns
       cols: ["x", "missing1", "missing2"], // Two missing columns
-      names_to: "variable",
-      values_to: "value",
+      namesTo: "variable",
+      valuesTo: "value",
     });
   console.log("Success:", result);
 } catch (error) {
@@ -57,8 +57,8 @@ try {
   const result = wideData
     .pivotLonger({
       cols: ["x", "y"], // Only pivot some columns
-      names_to: "variable",
-      values_to: "value",
+      namesTo: "variable",
+      valuesTo: "value",
     });
   console.log("Success! Result (id and z preserved):");
   console.log(result);

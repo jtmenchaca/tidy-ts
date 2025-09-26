@@ -54,9 +54,9 @@ export type MutateColumnsMethod<Row extends object> = {
   >(
     this: GroupedDataFrame<Row, GroupName>,
     config: {
-      col_type: ColType;
+      colType: ColType;
       columns: ColNames;
-      new_columns: NewColDefs;
+      newColumns: NewColDefs;
     },
   ): GroupedDataFrame<
     Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>,
@@ -77,9 +77,9 @@ export type MutateColumnsMethod<Row extends object> = {
     }[],
   >(
     config: {
-      col_type: ColType;
+      colType: ColType;
       columns: ColNames;
-      new_columns: NewColDefs;
+      newColumns: NewColDefs;
     },
   ): DataFrame<
     Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>

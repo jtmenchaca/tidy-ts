@@ -1,12 +1,12 @@
-// tests/read_csv.test.ts
+// tests/readCSV.test.ts
 import { expect } from "@std/expect";
 import { z } from "zod";
-import { type DataFrame, read_csv } from "@tidy-ts/dataframe";
+import { type DataFrame, readCSV } from "@tidy-ts/dataframe";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  1 · basic inference + coercion                                            │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · primitive coercion & type-inference", async () => {
+Deno.test("readCSV · primitive coercion & type-inference", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -15,7 +15,7 @@ Deno.test("read_csv · primitive coercion & type-inference", async () => {
     active: z.boolean(),
   });
 
-  const df = await read_csv(
+  const df = await readCSV(
     "./src/dataframe/ts/io/fixtures/john-jane.csv",
     Row,
     {
@@ -44,7 +44,7 @@ Deno.test("read_csv · primitive coercion & type-inference", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  2 · NA handling (nullable vs optional)                                    │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · NA handling for nullable / optional", async () => {
+Deno.test("readCSV · NA handling for nullable / optional", async () => {
   const Row = z.object({
     score: z.number().nullable(), // "NA" → null
     rating: z.number().optional(), // "NA" → undefined
@@ -53,7 +53,7 @@ Deno.test("read_csv · NA handling for nullable / optional", async () => {
   // NOTE: This test currently fails due to a bug in naValues handling for optional fields
   // The naValues option should convert "NA" to undefined for optional fields, but currently doesn't work properly
   // The function should throw an error when encountering invalid data
-  await expect(read_csv("./src/dataframe/ts/io/fixtures/na-handling.csv", Row, {
+  await expect(readCSV("./src/dataframe/ts/io/fixtures/na-handling.csv", Row, {
     skipEmptyLines: true,
     naValues: ["NA"],
   })).rejects.toThrow();
@@ -62,14 +62,14 @@ Deno.test("read_csv · NA handling for nullable / optional", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  3 · column-name cleaning                                                  │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · snake_case header cleaning", async () => {
+Deno.test("readCSV · snake_case header cleaning", async () => {
   const Row = z.object({
     user_id: z.number().int(),
     full_name: z.string(),
     email_address: z.email(),
   });
 
-  const df = await read_csv(
+  const df = await readCSV(
     "./src/dataframe/ts/io/fixtures/user-info.csv",
     Row,
     {
@@ -88,14 +88,14 @@ Deno.test("read_csv · snake_case header cleaning", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  4 · date & boolean coercion                                               │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · date & boolean coercion", async () => {
+Deno.test("readCSV · date & boolean coercion", async () => {
   const Row = z.object({
     id: z.number().int(),
     ok: z.boolean(),
     when: z.date(),
   });
 
-  const df = await read_csv(
+  const df = await readCSV(
     "./src/dataframe/ts/io/fixtures/date-boolean.csv",
     Row,
     {
@@ -119,7 +119,7 @@ Deno.test("read_csv · date & boolean coercion", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  5 · validation error bubbles out                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · throws on invalid row", async () => {
+Deno.test("readCSV · throws on invalid row", async () => {
   const Row = z.object({
     id: z.number().positive(),
   });
@@ -128,13 +128,13 @@ Deno.test("read_csv · throws on invalid row", async () => {
 -2`;
 
   // The function should throw an error when encountering invalid data
-  await expect(read_csv(bad, Row, { skipEmptyLines: true })).rejects.toThrow();
+  await expect(readCSV(bad, Row, { skipEmptyLines: true })).rejects.toThrow();
 });
 
 /*───────────────────────────────────────────────────────────────────────────┐
-│  6 · file reading with read_csv()                                          │
+│  6 · file reading with readCSV()                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv() · file reading with schema validation", async () => {
+Deno.test("readCSV() · file reading with schema validation", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -155,7 +155,7 @@ Deno.test("read_csv() · file reading with schema validation", async () => {
   try {
     console.log("Reading CSV file with schema validation...");
 
-    const df = await read_csv(tempFile, Row, {
+    const df = await readCSV(tempFile, Row, {
       skipEmptyLines: true,
       naValues: ["", "NA"],
     });
@@ -190,7 +190,7 @@ Deno.test("read_csv() · file reading with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  7 · type inference test (similar to docs issue)                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_csv · type inference with complex schema", async () => {
+Deno.test("readCSV · type inference with complex schema", async () => {
   // CSV data as string - Jedi Academy enrollment records
   const jediAcademyCsv =
     `name,species,homeworld,lightsaber_color,rank,force_sensitivity
@@ -212,7 +212,7 @@ Anakin Skywalker,Human,Tatooine,blue,Jedi Knight,9.8`;
   });
 
   // Read CSV with schema validation
-  const jediAcademyData = await read_csv(jediAcademyCsv, JediAcademySchema);
+  const jediAcademyData = await readCSV(jediAcademyCsv, JediAcademySchema);
 
   // TypeScript knows the exact structure after Zod validation
   // This should work without type instantiation errors

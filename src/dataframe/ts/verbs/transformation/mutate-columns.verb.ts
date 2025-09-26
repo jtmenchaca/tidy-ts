@@ -13,7 +13,7 @@ import {
 } from "../../dataframe/index.ts";
 
 /**
- * Conditional type to map col_type to the correct value type.
+ * Conditional type to map colType to the correct value type.
  * Ensures type safety by mapping column type strings to their corresponding TypeScript types.
  */
 type ColumnValueMap = {
@@ -33,11 +33,11 @@ export type MutateColumnsSpec<
   ColType extends keyof ColumnValueMap,
 > = {
   /** The type of columns to operate on */
-  col_type: ColType;
+  colType: ColType;
   /** Array of column names to apply functions to */
   columns: (keyof Row)[];
   /** Array of new column specifications */
-  new_columns: Array<{
+  newColumns: Array<{
     /** Optional prefix for new column names */
     prefix?: string;
     /** Optional suffix for new column names */
@@ -97,9 +97,9 @@ type GenerateColumnNamesWithTypes<
  * ```ts
  * // Apply multiple functions to numeric columns
  * pipe(df, mutate_columns({
- *   col_type: "number",
+ *   colType: "number",
  *   columns: ["score1", "score2", "score3"],
- *   new_columns: [
+ *   newColumns: [
  *     { prefix: "add_1_", fn: (col) => col + 1 },
  *     { prefix: "double_", fn: (col) => col * 2 }
  *   ]
@@ -107,9 +107,9 @@ type GenerateColumnNamesWithTypes<
  *
  * // Apply string operations
  * pipe(df, mutate_columns({
- *   col_type: "string",
+ *   colType: "string",
  *   columns: ["name", "city"],
- *   new_columns: [
+ *   newColumns: [
  *     { prefix: "upper_", fn: (col) => col.toUpperCase() },
  *     { suffix: "_length", fn: (col) => col.length }
  *   ]
@@ -117,9 +117,9 @@ type GenerateColumnNamesWithTypes<
  *
  * // Works with grouped data (applies same row-level operations)
  * pipe(df, group_by("category"), mutate_columns({
- *   col_type: "number",
+ *   colType: "number",
  *   columns: ["value1", "value2"],
- *   new_columns: [{ prefix: "scaled_", fn: (col) => col * 10 }]
+ *   newColumns: [{ prefix: "scaled_", fn: (col) => col * 10 }]
  * }))
  * ```
  *
@@ -129,7 +129,7 @@ type GenerateColumnNamesWithTypes<
  * - Works with both grouped and ungrouped dataframes
  * - For grouped data, applies same row-level operations within each group
  * - Preserves the original dataframe (does not mutate)
- * - Provides type safety based on col_type parameter
+ * - Provides type safety based on colType parameter
  * - All specified columns must be of the same type
  */
 
@@ -145,9 +145,9 @@ export function mutate_columns<
   }[],
 >(
   config: {
-    col_type: ColType;
+    colType: ColType;
     columns: ColNames;
-    new_columns: NewColDefs;
+    newColumns: NewColDefs;
   },
 ): <Row extends Record<string, unknown>>(
   df: DataFrame<Row> | GroupedDataFrame<Row>,
@@ -168,9 +168,9 @@ export function mutate_columns<
   }[],
 >(
   config: {
-    col_type: ColType;
+    colType: ColType;
     columns: ColNames;
-    new_columns: NewColDefs;
+    newColumns: NewColDefs;
   },
 ) {
   return (
@@ -220,7 +220,7 @@ export function mutate_columns<
         const colName = String(col);
         const sourceCol = store.columns[colName];
 
-        for (const newColSpec of config.new_columns) {
+        for (const newColSpec of config.newColumns) {
           const { prefix = "", suffix = "", fn } = newColSpec;
           const newColName = `${prefix}${colName}${suffix}`;
           const newCol = new Array(viewLength);
@@ -230,19 +230,19 @@ export function mutate_columns<
             const value = sourceCol[physicalIdx];
 
             // Type validation
-            if (config.col_type === "number" && typeof value !== "number") {
+            if (config.colType === "number" && typeof value !== "number") {
               throw new Error(
-                `Column "${colName}" contains non-numeric values but col_type is "number"`,
+                `Column "${colName}" contains non-numeric values but colType is "number"`,
               );
             }
-            if (config.col_type === "string" && typeof value !== "string") {
+            if (config.colType === "string" && typeof value !== "string") {
               throw new Error(
-                `Column "${colName}" contains non-string values but col_type is "string"`,
+                `Column "${colName}" contains non-string values but colType is "string"`,
               );
             }
-            if (config.col_type === "boolean" && typeof value !== "boolean") {
+            if (config.colType === "boolean" && typeof value !== "boolean") {
               throw new Error(
-                `Column "${colName}" contains non-boolean values but col_type is "boolean"`,
+                `Column "${colName}" contains non-boolean values but colType is "boolean"`,
               );
             }
 
@@ -336,25 +336,25 @@ export function mutate_columns<
       const rawValue = row[col as string];
 
       // Type validation
-      if (config.col_type === "number" && typeof rawValue !== "number") {
+      if (config.colType === "number" && typeof rawValue !== "number") {
         throw new Error(
           `Column "${
             String(col)
-          }" contains non-numeric values but col_type is "number"`,
+          }" contains non-numeric values but colType is "number"`,
         );
       }
-      if (config.col_type === "string" && typeof rawValue !== "string") {
+      if (config.colType === "string" && typeof rawValue !== "string") {
         throw new Error(
           `Column "${
             String(col)
-          }" contains non-string values but col_type is "string"`,
+          }" contains non-string values but colType is "string"`,
         );
       }
-      if (config.col_type === "boolean" && typeof rawValue !== "boolean") {
+      if (config.colType === "boolean" && typeof rawValue !== "boolean") {
         throw new Error(
           `Column "${
             String(col)
-          }" contains non-boolean values but col_type is "boolean"`,
+          }" contains non-boolean values but colType is "boolean"`,
         );
       }
 
@@ -377,7 +377,7 @@ export function mutate_columns<
           for (const col of config.columns) {
             const colValue = getColumnValue(row, col);
 
-            for (const newCol of config.new_columns) {
+            for (const newCol of config.newColumns) {
               const { prefix = "", suffix = "", fn } = newCol;
               const newColName = `${prefix}${String(col)}${suffix}`;
               out[rowIndex][newColName] = fn(colValue);
@@ -407,7 +407,7 @@ export function mutate_columns<
         for (const col of config.columns) {
           const colValue = getColumnValue(row, col);
 
-          for (const newCol of config.new_columns) {
+          for (const newCol of config.newColumns) {
             const { prefix = "", suffix = "", fn } = newCol;
             const newColName = `${prefix}${String(col)}${suffix}`;
             out[rowIndex][newColName] = fn(colValue);

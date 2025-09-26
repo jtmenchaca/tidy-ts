@@ -40,8 +40,8 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
   const { isMobile, setOpenMobile } = useSidebar();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     "core-operations": true,
-    "advanced-operations": true,
-    "advanced-features": true,
+    "data-operations": true,
+    "other-features": true,
     "examples": true,
   });
 
@@ -82,8 +82,8 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
       ],
     },
     {
-      id: "advanced-operations",
-      title: "Advanced Operations",
+      id: "data-operations",
+      title: "Data Operations",
       icon: BarChartIcon,
       items: [
         {
@@ -94,11 +94,12 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
         { name: "Reshaping Data", path: "/reshaping-data" },
         { name: "Missing Data Handling", path: "/missing-data" },
         { name: "Stats Module", path: "/stats-module" },
+        { name: "Data Visualization", path: "/data-visualization" },
       ],
     },
     {
-      id: "advanced-features",
-      title: "Advanced Features",
+      id: "other-features",
+      title: "Other Features",
       icon: CodeIcon,
       items: [
         {
@@ -118,7 +119,7 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
       icon: CodeIcon,
       items: [
         {
-          name: "Comprehensive Workflows",
+          name: "Example Workflows",
           path: "/examples/comprehensive-workflows",
         },
         {

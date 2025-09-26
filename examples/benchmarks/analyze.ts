@@ -1,10 +1,5 @@
 import { z } from "zod";
-import {
-  createDataFrame,
-  read_csv,
-  stats,
-  write_csv as writeCSV,
-} from "@tidy-ts/dataframe";
+import { createDataFrame, readCSV, stats, writeCSV } from "@tidy-ts/dataframe";
 
 // ============================================================================
 // BENCHMARK ANALYSIS TOOL
@@ -43,7 +38,7 @@ async function main() {
     console.log("📊 Loading benchmark data from CSV files...");
 
     // Load ratios data
-    const ratiosData = await read_csv(
+    const ratiosData = await readCSV(
       "results/benchmark_ratios.csv",
       z.object({
         Programming_Language: z.string(),
@@ -55,7 +50,7 @@ async function main() {
     );
 
     // Load times data
-    const timesData = await read_csv(
+    const timesData = await readCSV(
       "results/benchmark_times.csv",
       z.object({
         Programming_Language: z.string(),
@@ -199,9 +194,9 @@ async function main() {
 
       const performanceTablePivoted = performanceTable
         .pivotWider({
-          names_from: "library",
-          values_from: "display",
-          expected_columns: ["tidy-ts", "arquero", "pandas", "polars", "r"],
+          namesFrom: "library",
+          valuesFrom: "display",
+          expectedColumns: ["tidy-ts", "arquero", "pandas", "polars", "r"],
         })
         .arrange("operation");
 

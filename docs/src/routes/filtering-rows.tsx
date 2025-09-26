@@ -56,7 +56,7 @@ function FilteringRowsComponent() {
 
       <CodeBlock
         title="Complex Filtering Conditions"
-        description="Use sophisticated logic for advanced filtering scenarios"
+        description="Use complex logic for filtering scenarios"
         explanation="You can combine multiple conditions using logical operators (&&, ||, !) and even filter based on calculated values from previous transformations."
         code={filteringExamples.filterWithCalculations}
       />
@@ -83,7 +83,7 @@ function FilteringRowsComponent() {
             >
               Async Operations
             </a>{" "}
-            page for comprehensive async filtering examples and patterns.
+            page for async filtering examples and patterns.
           </p>
         </CardContent>
       </Card>

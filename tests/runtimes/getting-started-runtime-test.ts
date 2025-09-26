@@ -1,7 +1,7 @@
 import {
   createDataFrame,
   type DataFrame,
-  read_csv,
+  readCSV,
   stats,
   str
 } from "@tidy-ts/dataframe";
@@ -234,12 +234,12 @@ Dave,35,Houston,88`;
   });
 
   // Read CSV with schema validation
-  const csvDataFrame = await read_csv(csvData, PersonSchema);
+  const csvDataFrame = await readCSV(csvData, PersonSchema);
 
   console.log("DataFrame created from CSV data with schema validation:");
   csvDataFrame.print();
 
-  // Type check: read_csv with schema preserves the exact types
+  // Type check: readCSV with schema preserves the exact types
   const _csvDataFrameTypeCheck: DataFrame<{
     name: string;
     age: number;
@@ -273,7 +273,7 @@ Dave,35,Houston,invalid_score`;
 
   try {
     // This will fail because of missing/invalid data
-    const strictDataFrame = await read_csv(
+    const strictDataFrame = await readCSV(
       problematicCsvData,
       StrictPersonSchema,
     );
@@ -298,7 +298,7 @@ This is good! Our schema is protecting us from bad data.`);
   });
 
   try {
-    const flexibleDataFrame = await read_csv(
+    const flexibleDataFrame = await readCSV(
       problematicCsvData,
       FlexiblePersonSchema,
       {
@@ -338,7 +338,7 @@ Dave,35,Houston,88`;
 
   try {
     // First attempt with strict schema
-    const strictResult = await read_csv(recoveryCsvData, StrictPersonSchema);
+    const strictResult = await readCSV(recoveryCsvData, StrictPersonSchema);
     console.log("Strict schema worked!");
     strictResult.print();
   } catch (error) {
@@ -357,7 +357,7 @@ Dave,35,Houston,88`;
     });
 
     try {
-      const stringDataFrame = await read_csv(
+      const stringDataFrame = await readCSV(
         recoveryCsvData,
         StringPersonSchema,
       );

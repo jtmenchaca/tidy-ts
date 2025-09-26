@@ -10,11 +10,11 @@ import { tracer } from "../../telemetry/tracer.ts";
 // Policy mapping for aggregation functions (simplified for non-WASM approach)
 type Policy = "first" | "last" | "sum" | "mean";
 
-function mapValuesFnToPolicy(values_fn?: (values: any[]) => unknown): Policy {
-  if (!values_fn) return "first";
+function mapValuesFnToPolicy(valuesFn?: (values: any[]) => unknown): Policy {
+  if (!valuesFn) return "first";
 
   // Get the function name to identify common aggregation functions
-  const fnName = values_fn.name;
+  const fnName = valuesFn.name;
 
   // Map common aggregation functions to policies
   if (fnName === "sum" || fnName.includes("sum")) return "sum";
@@ -23,7 +23,7 @@ function mapValuesFnToPolicy(values_fn?: (values: any[]) => unknown): Policy {
   if (fnName === "max" || fnName.includes("max")) return "last"; // max is like last
 
   // Check function body for common patterns
-  const fnStr = values_fn.toString();
+  const fnStr = valuesFn.toString();
   if (fnStr.includes("stats.mean") || fnStr.includes("mean")) return "mean";
   if (fnStr.includes("stats.sum") || fnStr.includes("sum")) return "sum";
   if (fnStr.includes("reduce") && fnStr.includes("+") && fnStr.includes("/")) {
@@ -49,7 +49,7 @@ type PivotWiderResult<
   Prefix extends string = "",
 > =
   & {
-    // Keep all columns except names_from and values_from
+    // Keep all columns except namesFrom and valuesFrom
     [K in keyof T as K extends NamesFrom | ValuesFrom ? never : K]: T[K];
   }
   & {
@@ -82,13 +82,13 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
  * ]);
  *
  * // Basic usage with expected columns
- * // IMPORTANT: expected_columns should only contain values from the names_from column!
+ * // IMPORTANT: expectedColumns should only contain values from the namesFrom column!
  * const result = pipe(
  *   df,
  *   pivot_wider({
- *     names_from: "variable",
- *     values_from: "value",
- *     expected_columns: ["x", "y"]  // Values from 'variable' column, NOT 'group'!
+ *     namesFrom: "variable",
+ *     valuesFrom: "value",
+ *     expectedColumns: ["x", "y"]  // Values from 'variable' column, NOT 'group'!
  *   })
  * );
  * // Result: { group: ["A", "B"], x: [1, 3], y: [2, 4] }
@@ -97,9 +97,9 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
  * const result2 = pipe(
  *   df,
  *   pivot_wider({
- *     names_from: "variable",
- *     values_from: "value",
- *     expected_columns: df.variable.unique()  // Automatically gets ["x", "y"]
+ *     namesFrom: "variable",
+ *     valuesFrom: "value",
+ *     expectedColumns: df.variable.unique()  // Automatically gets ["x", "y"]
  *   })
  * );
  *
@@ -107,38 +107,38 @@ type Prettify<T> = { [K in keyof T]: T[K] } & {};
  * const result3 = pipe(
  *   df,
  *   pivot_wider({
- *     names_from: "variable",
- *     values_from: "value",
- *     expected_columns: ["x", "y"],
- *     values_fn: (values) => sum(values) // values automatically typed as number[]
+ *     namesFrom: "variable",
+ *     valuesFrom: "value",
+ *     expectedColumns: ["x", "y"],
+ *     valuesFn: (values) => sum(values) // values automatically typed as number[]
  *   })
  * );
  *
- * // Without expected_columns (returns Record<string, unknown>)
+ * // Without expectedColumns (returns Record<string, unknown>)
  * const result4 = pipe(
  *   df,
  *   pivot_wider({
- *     names_from: "variable",
- *     values_from: "value"
+ *     namesFrom: "variable",
+ *     valuesFrom: "value"
  *   })
  * );
  * ```
  *
  * @remarks
  * - Converts long format data to wide format
- * - Groups by all columns except names_from and values_from
- * - Handles duplicate combinations by using values_fn if provided
- * - **IMPORTANT**: expected_columns should ONLY contain the unique values from the names_from column
+ * - Groups by all columns except namesFrom and valuesFrom
+ * - Handles duplicate combinations by using valuesFn if provided
+ * - **IMPORTANT**: expectedColumns should ONLY contain the unique values from the namesFrom column
  *   that will become new column names. Do NOT include preserved columns (like 'id', 'group', etc.)
- * - Validates that expected_columns exactly match unique values in names_from column
- * - Use `df.columnName.unique()` to automatically get correct expected_columns
- * - Omit expected_columns to skip validation (returns Record<string, unknown>)
- * - values_fn parameter is automatically typed based on values_from column type
+ * - Validates that expectedColumns exactly match unique values in namesFrom column
+ * - Use `df.columnName.unique()` to automatically get correct expectedColumns
+ * - Omit expectedColumns to skip validation (returns Record<string, unknown>)
+ * - valuesFn parameter is automatically typed based on valuesFrom column type
  * - Preserves the original dataframe (does not mutate)
  * - Column matching uses String() coercion, so mixed types (e.g., 1 and "1") will collide
  */
 
-// Overload with explicit expected_columns for type inference
+// Overload with explicit expectedColumns for type inference
 export function pivot_wider<
   Row extends Record<string, unknown>,
   NamesFrom extends keyof Row,
@@ -149,11 +149,11 @@ export function pivot_wider<
   const Prefix extends string = "",
 >(
   config: {
-    names_from: NamesFrom;
-    values_from: ValuesFrom;
-    expected_columns: ExpectedCols;
-    values_fn?: ValuesFn;
-    names_prefix?: Prefix;
+    namesFrom: NamesFrom;
+    valuesFrom: ValuesFrom;
+    expectedColumns: ExpectedCols;
+    valuesFn?: ValuesFn;
+    namesPrefix?: Prefix;
   },
 ): (df: DataFrame<Row>) => DataFrame<
   Prettify<
@@ -168,22 +168,22 @@ export function pivot_wider<
   >
 >;
 
-// Overload without expected_columns (preserves original types with dynamic columns)
+// Overload without expectedColumns (preserves original types with dynamic columns)
 export function pivot_wider<
   Row extends Record<string, unknown>,
   NamesFrom extends keyof Row,
   ValuesFrom extends keyof Row,
 >(
   config: {
-    names_from: NamesFrom;
-    values_from: ValuesFrom;
-    values_fn?: (values: Row[ValuesFrom][]) => unknown;
-    names_prefix?: string;
+    namesFrom: NamesFrom;
+    valuesFrom: ValuesFrom;
+    valuesFn?: (values: Row[ValuesFrom][]) => unknown;
+    namesPrefix?: string;
   },
 ): (df: DataFrame<Row>) => DataFrame<
   Prettify<
     & {
-      // Keep all columns except names_from and values_from
+      // Keep all columns except namesFrom and valuesFrom
       [K in keyof Row as K extends NamesFrom | ValuesFrom ? never : K]: Row[K];
     }
     & {
@@ -197,12 +197,12 @@ export function pivot_wider<
 // Implementation (make return type `any` so it's compatible with both overloads)
 export function pivot_wider<Row extends Record<string, unknown>>(
   config: {
-    names_from: keyof Row;
-    values_from: keyof Row;
-    expected_columns?: readonly string[];
+    namesFrom: keyof Row;
+    valuesFrom: keyof Row;
+    expectedColumns?: readonly string[];
 
-    values_fn?: (values: any[]) => unknown;
-    names_prefix?: string;
+    valuesFn?: (values: any[]) => unknown;
+    namesPrefix?: string;
   },
 ) {
   // Return a function whose type is `any` at the implementation level.
@@ -213,31 +213,31 @@ export function pivot_wider<Row extends Record<string, unknown>>(
 
     try {
       const {
-        names_from,
-        values_from,
-        expected_columns,
-        values_fn,
-        names_prefix = "",
+        namesFrom,
+        valuesFrom,
+        expectedColumns,
+        valuesFn,
+        namesPrefix = "",
       } = config;
 
       // Get columnar store to avoid redundant scans
       const store = (df as any).__store;
 
-      // id columns: all columns except names_from and values_from
+      // id columns: all columns except namesFrom and valuesFrom
       const id_cols = store.columnNames.filter(
         (col: string) =>
-          col !== String(names_from) && col !== String(values_from),
+          col !== String(namesFrom) && col !== String(valuesFrom),
       ) as (keyof Row)[];
 
       // Extract unique names early for validation (will be replaced by namesDict)
       const unique_names = tracer.withSpan(df, "extract-unique-names", () => {
         const namesSet = new Set<string>();
         for (let i = 0; i < store.length; i++) {
-          namesSet.add(String(store.columns[String(names_from)][i]));
+          namesSet.add(String(store.columns[String(namesFrom)][i]));
         }
         return Array.from(namesSet);
       }, {
-        names_from: String(names_from),
+        namesFrom: String(namesFrom),
         uniqueCount: 0,
       });
 
@@ -246,9 +246,9 @@ export function pivot_wider<Row extends Record<string, unknown>>(
         span.metadata.uniqueNamesCount = unique_names.length;
       }
 
-      if (expected_columns) {
+      if (expectedColumns) {
         tracer.withSpan(df, "validate-expected-columns", () => {
-          const expectedNames = [...expected_columns].sort();
+          const expectedNames = [...expectedColumns].sort();
           const actualNames = [...unique_names].sort();
           if (
             expectedNames.length !== actualNames.length ||
@@ -256,17 +256,17 @@ export function pivot_wider<Row extends Record<string, unknown>>(
           ) {
             throw new Error(
               `Pivot wider validation failed:\n` +
-                `  expected_columns should only contain values from the '${
-                  String(names_from)
+                `  expectedColumns should only contain values from the '${
+                  String(namesFrom)
                 }' column.\n` +
                 `  You provided: [${expectedNames.join(", ")}]\n` +
-                `  Actual values in '${String(names_from)}' column: [${
+                `  Actual values in '${String(namesFrom)}' column: [${
                   actualNames.join(", ")
                 }]`,
             );
           }
         }, {
-          expectedCount: expected_columns.length,
+          expectedCount: expectedColumns.length,
           actualCount: unique_names.length,
         });
       }
@@ -304,8 +304,8 @@ export function pivot_wider<Row extends Record<string, unknown>>(
         });
 
         // Step 2: Extract names and values (columnar access)
-        const namesColumn = store.columns[String(names_from)] as unknown[];
-        const valuesColumn = store.columns[String(values_from)] as unknown[];
+        const namesColumn = store.columns[String(namesFrom)] as unknown[];
+        const valuesColumn = store.columns[String(valuesFrom)] as unknown[];
 
         // Step 3: Get unique group keys and unique names
         const uniqueGroupKeys = Array.from(new Set(groupKeys));
@@ -339,7 +339,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
 
             // Allocate pivot columns
             for (const name of uniqueNames) {
-              const columnName = names_prefix + name;
+              const columnName = namesPrefix + name;
               outCols[columnName] = new Array(outputRowCount).fill(undefined);
             }
 
@@ -355,7 +355,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
         // Step 6: Fill output columns efficiently
         tracer.withSpan(df, "fill-output-columns", () => {
           // Group data for aggregation if needed
-          const aggregationGroups = values_fn
+          const aggregationGroups = valuesFn
             ? new Map<string, unknown[]>()
             : null;
 
@@ -377,7 +377,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
             }
 
             // Handle values
-            const pivotColumnName = names_prefix + name;
+            const pivotColumnName = namesPrefix + name;
 
             // Ensure column exists (dynamic column creation)
             if (!outputColumns[pivotColumnName]) {
@@ -386,7 +386,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
               );
             }
 
-            if (values_fn) {
+            if (valuesFn) {
               // Collect values for aggregation
               const aggKey = `${groupKey}⟘${name}`;
               if (!aggregationGroups!.has(aggKey)) {
@@ -397,7 +397,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
               // Use first value (or last, depending on policy)
               if (
                 outputColumns[pivotColumnName][groupIndex] === undefined ||
-                mapValuesFnToPolicy(values_fn) === "last"
+                mapValuesFnToPolicy(valuesFn) === "last"
               ) {
                 outputColumns[pivotColumnName][groupIndex] = value;
               }
@@ -405,11 +405,11 @@ export function pivot_wider<Row extends Record<string, unknown>>(
           }
 
           // Apply aggregation function if provided
-          if (values_fn && aggregationGroups) {
+          if (valuesFn && aggregationGroups) {
             for (const [aggKey, values] of aggregationGroups) {
               const [groupKey, name] = aggKey.split("⟘");
               const groupIndex = groupKeyToIndex.get(groupKey)!;
-              const pivotColumnName = names_prefix + name;
+              const pivotColumnName = namesPrefix + name;
 
               // Ensure column exists (dynamic column creation for aggregation)
               if (!outputColumns[pivotColumnName]) {
@@ -419,7 +419,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
               }
 
               try {
-                outputColumns[pivotColumnName][groupIndex] = values_fn(
+                outputColumns[pivotColumnName][groupIndex] = valuesFn(
                   values as any,
                 );
               } catch (_error) {
@@ -429,16 +429,16 @@ export function pivot_wider<Row extends Record<string, unknown>>(
           }
         }, {
           inputRowCount,
-          aggregationRequired: !!values_fn,
+          aggregationRequired: !!valuesFn,
         });
 
         // Step 7: Add missing expected columns if provided
-        if (expected_columns) {
+        if (expectedColumns) {
           const actualPivotColumns = uniqueNames.map((name) =>
-            names_prefix + name
+            namesPrefix + name
           );
-          const expectedPivotColumns = expected_columns.map((name) =>
-            names_prefix + name
+          const expectedPivotColumns = expectedColumns.map((name) =>
+            namesPrefix + name
           );
           const missing = expectedPivotColumns.filter((col) =>
             !actualPivotColumns.includes(col)
@@ -460,7 +460,7 @@ export function pivot_wider<Row extends Record<string, unknown>>(
         });
       }, {
         idColumns: id_cols.length,
-        outputColumnCount: (expected_columns || unique_names).length,
+        outputColumnCount: (expectedColumns || unique_names).length,
       });
 
       // Result is already a DataFrame from createColumnarDataFrameFromStore
@@ -516,8 +516,8 @@ type PivotLongerResult<
  *   df,
  *   pivot_longer({
  *     cols: ["x", "y"],
- *     names_to: "variable",
- *     values_to: "value"
+ *     namesTo: "variable",
+ *     valuesTo: "value"
  *   })
  * );
  * // Result: { id: [1, 1, 2, 2], variable: ["x", "y", "x", "y"], value: [10, 20, 15, 25] }
@@ -540,9 +540,9 @@ export function pivot_longer<
 >(
   config: {
     cols: Cols;
-    names_to: NamesTo;
-    values_to: ValuesTo;
-    names_prefix?: string;
+    namesTo: NamesTo;
+    valuesTo: ValuesTo;
+    namesPrefix?: string;
     names_pattern?: RegExp;
   },
 ): (
@@ -556,7 +556,7 @@ export function pivot_longer<
     const span = tracer.startSpan(df, "pivot_longer", config);
 
     try {
-      const { cols, names_to, values_to } = config;
+      const { cols, namesTo, valuesTo } = config;
       const groupedDf = df as GroupedDataFrame<Row>;
 
       // Validate that all specified columns exist in the data
@@ -628,8 +628,8 @@ export function pivot_longer<
           }
 
           // Allocate arrays for new columns
-          outputCols[String(names_to)] = new Array(outputRowCount);
-          outputCols[String(values_to)] = new Array(outputRowCount);
+          outputCols[String(namesTo)] = new Array(outputRowCount);
+          outputCols[String(valuesTo)] = new Array(outputRowCount);
 
           return outputCols;
         },
@@ -654,11 +654,11 @@ export function pivot_longer<
 
             // Add the name column (the column being folded)
             const foldColName = String(cols[foldIdx]);
-            const processedName = config.names_prefix
+            const processedName = config.namesPrefix
               ? foldColName.replace(
                 new RegExp(
                   "^" +
-                    config.names_prefix.replace(
+                    config.namesPrefix.replace(
                       /[.*+?^${}()|[\]\\]/g,
                       "\\$&",
                     ),
@@ -667,7 +667,7 @@ export function pivot_longer<
               )
               : foldColName;
 
-            outputColumns[String(names_to)][outputIndex] = config.names_pattern
+            outputColumns[String(namesTo)][outputIndex] = config.names_pattern
               ? (processedName.match(config.names_pattern)?.slice(1)
                 .join(
                   "_",
@@ -675,7 +675,7 @@ export function pivot_longer<
               : processedName;
 
             // Add the value column
-            outputColumns[String(values_to)][outputIndex] =
+            outputColumns[String(valuesTo)][outputIndex] =
               store.columns[foldColName][rowIdx];
 
             outputIndex++;
@@ -688,7 +688,7 @@ export function pivot_longer<
       });
 
       // Return columnar DataFrame directly (no row conversion)
-      const columnNames = [...keepColumns, String(names_to), String(values_to)];
+      const columnNames = [...keepColumns, String(namesTo), String(valuesTo)];
       const outDf = createColumnarDataFrameFromStore({
         columns: outputColumns,
         columnNames,

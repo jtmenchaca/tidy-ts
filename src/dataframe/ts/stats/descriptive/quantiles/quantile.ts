@@ -14,7 +14,7 @@ import { extractNumbersWithOptions } from "../../helpers.ts";
  *
  * @param data - Array of numbers or single number
  * @param probs - Probability value(s) between 0 and 1
- * @param remove_na - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
  * @returns Quantile value(s)
  *
  * @example
@@ -36,24 +36,24 @@ export function quantile(data: CleanNumberArray, probs: number[]): number[];
 export function quantile(
   data: NumbersWithNullable,
   probs: number,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function quantile(
   data: NumbersWithNullable,
   probs: number[],
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function quantile(data: CleanNumberIterable, probs: number): number;
 export function quantile(data: CleanNumberIterable, probs: number[]): number[];
 export function quantile(
   data: NumbersWithNullableIterable,
   probs: number,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function quantile(
   data: NumbersWithNullableIterable,
   probs: number[],
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function quantile(
   data:
@@ -65,15 +65,15 @@ export function quantile(
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
   probs: number | number[],
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | number[] | null | (number | null)[] {
   // Handle single number case
   if (typeof data === "number") {
     return Array.isArray(probs) ? probs.map(() => data) : data;
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(data) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(data) && !removeNA) {
     return Array.isArray(probs) ? probs.map(() => null) : null;
   }
 
@@ -81,7 +81,7 @@ export function quantile(
   const validValues = extractNumbersWithOptions(data, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error("No valid values found to calculate quantiles");
     }
     return Array.isArray(probs) ? probs.map(() => null) : null;

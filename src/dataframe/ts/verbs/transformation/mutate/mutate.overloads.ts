@@ -4,7 +4,11 @@ import type {
   GroupedDataFrame,
   Prettify,
 } from "../../../dataframe/index.ts";
-import type { AddColumns, ColumnValue } from "./mutate.types.ts";
+import type {
+  AddColumns,
+  ColumnValue,
+  MutateAssignments,
+} from "./mutate.types.ts";
 import { shouldUseAsyncForMutate } from "../../../promised-dataframe/index.ts";
 import { mutateSyncImpl } from "./mutate-sync.ts";
 import { mutateAsyncImpl } from "./mutate-async.ts";
@@ -27,10 +31,10 @@ import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency
  */
 
 /* =================================================================================
-   Overloads (pipe style). Function-spec overloads come first and use the
-   "intersection trick" so we keep inferred return types from the arrow
-   functions while enforcing (row, idx, df) parameter types.
-   ================================================================================= */
+  Overloads (pipe style). Function-spec overloads come first and use the
+  "intersection trick" so we keep inferred return types from the arrow
+  functions while enforcing (row, idx, df) parameter types.
+  ================================================================================= */
 
 // ---------- GROUPED: object spec of functions (preserve return types) ----------
 
@@ -64,7 +68,7 @@ export function mutate<
   >
 >;
 
-// ---------- GROUPED: broad MutateExpr fallback ----------
+// ---------- GROUPED: broad MutateExpr fallback (functions | arrays | null) ----------
 
 export function mutate<
   Row extends Record<string, unknown>,
@@ -103,7 +107,7 @@ export function mutate<
   >
 >;
 
-// ---------- UNGROUPED: broad MutateExpr fallback ----------
+// ---------- UNGROUPED: broad MutateExpr fallback (functions | arrays | null) ----------
 
 export function mutate<
   Row extends Record<string, unknown>,
@@ -217,8 +221,8 @@ export function mutate<
 ) => Promise<DataFrame<Prettify<AddColumns<Row, Assignments>>>>;
 
 /* =================================================================================
-   Implementation (broad; overloads give the precise types).
-   ================================================================================= */
+  Implementation (broad; overloads give the precise types).
+  ================================================================================= */
 
 export function mutate(
   spec: Record<string, any>,
@@ -238,11 +242,14 @@ export function mutate(
           { concurrency: 10 };
         return mutateAsyncImpl(
           df,
-          spec as Record<string, unknown>,
+          spec as MutateAssignments<Record<string, unknown>>, // scalar-free
           concurrencyOptions,
         );
       } else {
-        return mutateSyncImpl(df, spec as Record<string, unknown>);
+        return mutateSyncImpl(
+          df,
+          spec as MutateAssignments<Record<string, unknown>>, // scalar-free
+        );
       }
     } else {
       throw new TypeError("Invalid arguments to mutate");

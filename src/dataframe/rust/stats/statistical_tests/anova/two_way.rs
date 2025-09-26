@@ -1,6 +1,6 @@
 use super::super::super::core::types::{
-    AnovaTableComponent, AnovaTestComponent, EffectSize, EffectSizeType, OneWayAnovaTestResult, TestStatistic,
-    TestStatisticName, TwoWayAnovaTestResult,
+    AnovaTableComponent, AnovaTestComponent, EffectSize, EffectSizeType, OneWayAnovaTestResult,
+    TestStatistic, TestStatisticName, TwoWayAnovaTestResult,
 };
 use super::super::super::core::{TailType, calculate_p, eta_squared};
 use statrs::distribution::FisherSnedecor;
@@ -247,7 +247,7 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
 
     // Calculate effect sizes
     let ss_total = ss_a + ss_b + ss_ab + ss_error;
-    
+
     // Model-level R² = (SS_model) / SS_total = (SS_A + SS_B + SS_AB) / SS_total
     let r_squared = (ss_a + ss_b + ss_ab) / ss_total;
     let _adjusted_r_squared = 1.0
@@ -258,27 +258,27 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
     let eta_sq_a = eta_squared(ss_a, ss_total);
     let eta_sq_b = eta_squared(ss_b, ss_total);
     let eta_sq_ab = eta_squared(ss_ab, ss_total);
-    
+
     // Calculate partial eta squared for each component
     let partial_eta_sq_a = ss_a / (ss_a + ss_error);
     let partial_eta_sq_b = ss_b / (ss_b + ss_error);
     let partial_eta_sq_ab = ss_ab / (ss_ab + ss_error);
-    
+
     // Calculate omega squared for each component (unbiased estimate)
-    let omega_sq_a = if ss_total > 0.0 { 
-        ((ss_a - df_a * ms_error) / (ss_total + ms_error)).max(0.0) 
-    } else { 
-        0.0 
+    let omega_sq_a = if ss_total > 0.0 {
+        ((ss_a - df_a * ms_error) / (ss_total + ms_error)).max(0.0)
+    } else {
+        0.0
     };
-    let omega_sq_b = if ss_total > 0.0 { 
-        ((ss_b - df_b * ms_error) / (ss_total + ms_error)).max(0.0) 
-    } else { 
-        0.0 
+    let omega_sq_b = if ss_total > 0.0 {
+        ((ss_b - df_b * ms_error) / (ss_total + ms_error)).max(0.0)
+    } else {
+        0.0
     };
-    let omega_sq_ab = if ss_total > 0.0 { 
-        ((ss_ab - df_ab * ms_error) / (ss_total + ms_error)).max(0.0) 
-    } else { 
-        0.0 
+    let omega_sq_ab = if ss_total > 0.0 {
+        ((ss_ab - df_ab * ms_error) / (ss_total + ms_error)).max(0.0)
+    } else {
+        0.0
     };
 
     // Return the complete two-way ANOVA result
@@ -292,7 +292,7 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
             degrees_of_freedom: df_a,
             effect_size: EffectSize {
                 value: eta_sq_a,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             mean_square: ms_a,
             sum_of_squares: ss_a,
@@ -306,7 +306,7 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
             degrees_of_freedom: df_b,
             effect_size: EffectSize {
                 value: eta_sq_b,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             mean_square: ms_b,
             sum_of_squares: ss_b,
@@ -320,7 +320,7 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
             degrees_of_freedom: df_ab,
             effect_size: EffectSize {
                 value: eta_sq_ab,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             mean_square: ms_ab,
             sum_of_squares: ss_ab,
@@ -593,7 +593,7 @@ pub fn anova_two_way_factor_a(
         degrees_of_freedom: df_a,
         effect_size: EffectSize {
             value: eta_sq,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: total_n,
         sample_means,
@@ -786,7 +786,7 @@ pub fn anova_two_way_factor_b(
         degrees_of_freedom: df_b,
         effect_size: EffectSize {
             value: eta_sq,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: total_n,
         sample_means,
@@ -818,10 +818,10 @@ pub fn anova_two_way_interaction(
         sample_means: full_result.sample_means,
         sample_std_devs: full_result.sample_std_devs,
         sum_of_squares: vec![
-            full_result.sum_of_squares[0], // ss_a
-            full_result.sum_of_squares[1], // ss_b  
+            full_result.sum_of_squares[0],          // ss_a
+            full_result.sum_of_squares[1],          // ss_b
             full_result.interaction.sum_of_squares, // ss_ab
-            full_result.sum_of_squares[3], // ss_error
+            full_result.sum_of_squares[3],          // ss_error
         ],
         r_squared: full_result.interaction.sum_of_squares
             / (full_result.interaction.sum_of_squares + full_result.sum_of_squares[3]),

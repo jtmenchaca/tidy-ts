@@ -107,7 +107,7 @@ pub fn fishers_exact_test(
         },
         effect_size: EffectSize {
             value: estimate,
-            effect_type: EffectSizeType::OddsRatio.as_str().to_string(),
+            name: EffectSizeType::OddsRatio.as_str().to_string(),
         },
         method: match alternative_type {
             AlternativeType::TwoSided => "two-sided",

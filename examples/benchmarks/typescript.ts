@@ -736,8 +736,8 @@ export function runTypeScriptBenchmarks() {
         () => {
           const result = tidyPivotDf.pivotLonger({
             cols: ["q1", "q2", "q3", "q4"],
-            names_to: "quarter",
-            values_to: "sales",
+            namesTo: "quarter",
+            valuesTo: "sales",
           });
           result.printTrace();
           return result;
@@ -782,9 +782,9 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = tidyLongDf.pivotWider({
-            names_from: "quarter",
-            values_from: "sales",
-            expected_columns: ["q1", "q2", "q3", "q4"],
+            namesFrom: "quarter",
+            valuesFrom: "sales",
+            expectedColumns: ["q1", "q2", "q3", "q4"],
           });
           result.printTrace();
           return result;

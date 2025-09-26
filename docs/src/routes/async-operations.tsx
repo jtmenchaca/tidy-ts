@@ -17,8 +17,8 @@ export const Route = createFileRoute("/async-operations" as any)({
 function AsyncOperationsComponent() {
   return (
     <DocPageLayout
-      title="Async Operations"
-      description="Handle asynchronous operations seamlessly across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization."
+      title="Async Operations with Concurrency Control"
+      description="Built-in support for asynchronous data transformations with concurrency control"
       currentPath="/async-operations"
     >
       <CodeBlock
@@ -26,6 +26,13 @@ function AsyncOperationsComponent() {
         description="Add calculated columns using asynchronous functions"
         explanation="You can mix synchronous and asynchronous operations in the same mutate() call. Perfect for API enrichment, data validation, and external service integration."
         code={asyncOperationsExamples.asyncMutateOperations}
+      />
+
+      <CodeBlock
+        title="Concurrency Control"
+        description="Control the number of concurrent async operations"
+        explanation="Limit concurrent operations to prevent overwhelming external services or APIs. This example shows how to use the concurrency parameter."
+        code={asyncOperationsExamples.concurrencyControl}
       />
 
       <CodeBlock

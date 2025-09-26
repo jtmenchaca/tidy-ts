@@ -11,7 +11,7 @@ import { extractNumbersWithOptions, isAllFiniteNumbers } from "../helpers.ts";
  * Calculate the product (multiplication) of all values
  *
  * @param values - Array of numbers or single number
- * @param remove_na - If true, guarantees a number return (throws if no valid values)
+ * @param removeNA - If true, guarantees a number return (throws if no valid values)
  * @returns Product of all values, or null if no valid values
  *
  * @example
@@ -30,11 +30,11 @@ import { extractNumbersWithOptions, isAllFiniteNumbers } from "../helpers.ts";
 
 export function product(value: number): number;
 export function product(values: CleanNumberArray): number;
-export function product(values: NumbersWithNullable, remove_na: true): number;
+export function product(values: NumbersWithNullable, removeNA: true): number;
 export function product(values: CleanNumberIterable): number;
 export function product(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function product(
   values:
@@ -45,14 +45,14 @@ export function product(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   if (typeof values === "number") {
     return values;
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
@@ -67,7 +67,7 @@ export function product(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error("No valid values found to calculate product");
     }
     return null;

@@ -1,4 +1,4 @@
-import { createDataFrame, read_csv, stats } from "@tidy-ts/dataframe";
+import { createDataFrame, readCSV, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { z } from "zod";
 
@@ -276,7 +276,7 @@ NA,3.8
 90,NA
 78,`;
 
-  const csvData = await read_csv(csvContent, CSVSchema, {
+  const csvData = await readCSV(csvContent, CSVSchema, {
     skipEmptyLines: true,
     naValues: ["", "NA", "NULL", "null", "N/A"],
   });

@@ -18,13 +18,17 @@ import { dunnTest, gamesHowellTest, tukeyHSD } from "../post-hoc/index.ts";
  * // Two groups comparisons
  * s.compare.twoGroups.centralTendency.toEachOther({ x: group1, y: group2 });
  * s.compare.twoGroups.association.toEachOther({ x, y, method: "pearson" });
+ * s.compare.twoGroups.proportions.toEachOther({ data1: [true, false], data2: [true, true] });
+ * s.compare.twoGroups.distributions.toEachOther({ x, y, method: "ks" });
  *
- * // Multiple groups comparisons
+ * // Multiple groups comparisons (post-hoc tests automatically correct for multiple comparisons)
  * s.compare.multiGroups.centralTendency.toEachOther({ groups: [g1, g2, g3] });
  * s.compare.multiGroups.centralTendency.toEachOther({ data: twoWayData, design: "two-way", testType: "factorA" });
  *
- * // Post-hoc analyses after significant omnibus tests
- * s.compare.postHoc.dunn({ groups: [g1, g2, g3] });
+ * // Post-hoc tests (also available through main tests with automatic post-hoc when significant)
+ * s.compare.postHoc.tukey(groups, 0.05);
+ * s.compare.postHoc.gamesHowell(groups, 0.05);
+ * s.compare.postHoc.dunn(groups, 0.05);
  * ```
  */
 export const compare = {
@@ -32,13 +36,8 @@ export const compare = {
   twoGroups,
   multiGroups,
   postHoc: {
-    dunn: dunnTest,
-    gamesHowell: gamesHowellTest,
     tukey: tukeyHSD,
+    gamesHowell: gamesHowellTest,
+    dunn: dunnTest,
   },
 };
-
-// Re-export individual components for flexibility
-export { oneGroup } from "./one-group/index.ts";
-export { twoGroups } from "./two-group/index.ts";
-export { multiGroups } from "./multi-group/index.ts";

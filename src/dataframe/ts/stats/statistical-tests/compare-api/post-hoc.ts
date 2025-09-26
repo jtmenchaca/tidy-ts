@@ -22,12 +22,13 @@ export type PostHocTestType = "tukey" | "games-howell" | "dunn" | "auto";
  * - The type of original test performed (ANOVA vs Kruskal-Wallis)
  * - Data characteristics (equal/unequal variances, normality)
  * - User preferences
+ * - All tests automatically correct for multiple comparisons
  *
  * @param groups - Array of groups, where each group is an array of numbers
  * @param testType - Type of post-hoc test to perform or "auto" for automatic selection
  * @param originalTest - The original test that was significant ("anova" | "kruskal-wallis")
  * @param alpha - Significance level (default: 0.05)
- * @returns Post-hoc test results with pairwise comparisons
+ * @returns Post-hoc test results with pairwise comparisons (multiple comparison corrected)
  */
 export function postHocFor({
   groups,

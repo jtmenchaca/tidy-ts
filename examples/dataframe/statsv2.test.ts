@@ -273,3 +273,14 @@ Deno.test("Distribution Functions", () => {
     poissonSample,
   ] as number[][];
 });
+
+Deno.test("Correlation Functions", () => {
+  const group1 = [23, 45, 67, 34, 56, 78, 29, 41, 52, 38]; // Hours spent studying per week
+  const group2 = [78, 85, 92, 73, 88, 95, 69, 81, 89, 76]; // Final exam scores
+  const groupComparison = s.compare.twoGroups.association.toEachOther({
+    x: group1,
+    y: group2,
+    method: "pearson",
+  });
+  console.log(groupComparison);
+});

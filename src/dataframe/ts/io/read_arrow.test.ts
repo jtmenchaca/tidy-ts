@@ -1,7 +1,7 @@
-// tests/read_arrow.test.ts
+// tests/readArrow.test.ts
 import { expect } from "@std/expect";
 import { z } from "zod";
-import { type DataFrame, read_arrow } from "@tidy-ts/dataframe";
+import { type DataFrame, readArrow } from "@tidy-ts/dataframe";
 import {
   bool,
   float32,
@@ -47,7 +47,7 @@ function tableToBuffer(table: Table): ArrayBuffer {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  1 · basic inference + coercion                                           │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · primitive coercion & type-inference", async () => {
+Deno.test("readArrow · primitive coercion & type-inference", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -66,7 +66,7 @@ Deno.test("read_arrow · primitive coercion & type-inference", async () => {
   };
 
   const buffer = createArrowBuffer(testData);
-  const df = await read_arrow(buffer, Row);
+  const df = await readArrow(buffer, Row);
 
   console.log("Parsed DataFrame:", JSON.stringify(df, null, 2));
   console.log("DataFrame length:", df.nrows());
@@ -89,7 +89,7 @@ Deno.test("read_arrow · primitive coercion & type-inference", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  2 · NA handling (nullable vs optional)                                   │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · NA handling for nullable / optional", async () => {
+Deno.test("readArrow · NA handling for nullable / optional", async () => {
   const Row = z.object({
     score: z.number().nullable(), // null → null
     rating: z.number().optional(), // null → undefined
@@ -108,7 +108,7 @@ Deno.test("read_arrow · NA handling for nullable / optional", async () => {
   });
   const buffer = tableToBuffer(table);
 
-  const df = await read_arrow(buffer, Row);
+  const df = await readArrow(buffer, Row);
 
   console.log("NA handling test:", JSON.stringify(df, null, 2));
 
@@ -121,7 +121,7 @@ Deno.test("read_arrow · NA handling for nullable / optional", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  3 · date & boolean coercion                                              │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · date & boolean coercion", async () => {
+Deno.test("readArrow · date & boolean coercion", async () => {
   const Row = z.object({
     id: z.number().int(),
     ok: z.boolean(),
@@ -143,7 +143,7 @@ Deno.test("read_arrow · date & boolean coercion", async () => {
   });
   const buffer = tableToBuffer(table);
 
-  const df = await read_arrow(buffer, Row);
+  const df = await readArrow(buffer, Row);
 
   console.log("Parsed DataFrame:", JSON.stringify(df, null, 2));
 
@@ -161,7 +161,7 @@ Deno.test("read_arrow · date & boolean coercion", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  4 · validation error bubbles out                                         │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · throws on invalid row", async () => {
+Deno.test("readArrow · throws on invalid row", async () => {
   const Row = z.object({
     id: z.number().positive(),
   });
@@ -178,13 +178,13 @@ Deno.test("read_arrow · throws on invalid row", async () => {
   const buffer = tableToBuffer(table);
 
   // The function should throw an error when encountering invalid data
-  await expect(read_arrow(buffer, Row)).rejects.toThrow();
+  await expect(readArrow(buffer, Row)).rejects.toThrow();
 });
 
 /*───────────────────────────────────────────────────────────────────────────┐
-│  5 · file reading with read_arrow()                                       │
+│  5 · file reading with readArrow()                                       │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow() · file reading with schema validation", async () => {
+Deno.test("readArrow() · file reading with schema validation", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -209,7 +209,7 @@ Deno.test("read_arrow() · file reading with schema validation", async () => {
   try {
     console.log("Reading Arrow file with schema validation...");
 
-    const df = await read_arrow(tempFile, Row, {
+    const df = await readArrow(tempFile, Row, {
       naValues: ["", "NA"],
     });
 
@@ -243,7 +243,7 @@ Deno.test("read_arrow() · file reading with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · type inference test (similar to docs issue)                         │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · type inference with complex schema", async () => {
+Deno.test("readArrow · type inference with complex schema", async () => {
   // Define Zod schema for Arrow data - handles type conversion and validation
   const JediAcademySchema = z.object({
     name: z.string(),
@@ -298,7 +298,7 @@ Deno.test("read_arrow · type inference with complex schema", async () => {
   const buffer = tableToBuffer(table);
 
   // Read Arrow with schema validation
-  const jediAcademyDataFrame = await read_arrow(buffer, JediAcademySchema);
+  const jediAcademyDataFrame = await readArrow(buffer, JediAcademySchema);
 
   // TypeScript knows the exact structure after Zod validation
   // This should work without type instantiation errors
@@ -329,7 +329,7 @@ Deno.test("read_arrow · type inference with complex schema", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  7 · column filtering                                                     │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("read_arrow · column filtering", async () => {
+Deno.test("readArrow · column filtering", async () => {
   const Row = z.object({
     name: z.string(),
     age: z.number(),
@@ -353,7 +353,7 @@ Deno.test("read_arrow · column filtering", async () => {
   const buffer = tableToBuffer(table);
 
   // Only read specific columns
-  const df = await read_arrow(buffer, Row, {
+  const df = await readArrow(buffer, Row, {
     columns: ["name", "age"],
   });
 

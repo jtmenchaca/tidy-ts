@@ -16,8 +16,8 @@ import { median_wasm } from "../../../wasm/wasm-loader.ts";
  * Calculate the median of an array of values
  *
  * @param values - Array of numbers, or single number
- * @param remove_na - If true, guarantees a number return (throws if no valid values)
- * @returns The median value, or null if no valid values and remove_na=false
+ * @param removeNA - If true, guarantees a number return (throws if no valid values)
+ * @returns The median value, or null if no valid values and removeNA=false
  *
  * @example
  * ```ts
@@ -37,11 +37,11 @@ import { median_wasm } from "../../../wasm/wasm-loader.ts";
 
 export function median(value: number): number;
 export function median(values: CleanNumberArray): number;
-export function median(values: NumbersWithNullable, remove_na: true): number;
+export function median(values: NumbersWithNullable, removeNA: true): number;
 export function median(values: CleanNumberIterable): number;
 export function median(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function median(
   values:
@@ -52,15 +52,15 @@ export function median(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle single number case
   if (typeof values === "number") {
     return values;
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
@@ -73,7 +73,7 @@ export function median(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MEDIAN);
     }
     return null;

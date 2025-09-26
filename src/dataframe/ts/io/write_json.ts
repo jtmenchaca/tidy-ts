@@ -20,14 +20,14 @@ import type { DataFrame } from "../dataframe/index.ts";
  *   { name: "Bob", age: 30 }
  * ]);
  *
- * const json = df.write_json();
+ * const json = df.writeJSON();
  * // '[{"name":"Alice","age":25},{"name":"Bob","age":30}]'
  *
- * const prettyJson = df.write_json({ space: 2 });
+ * const prettyJson = df.writeJSON({ space: 2 });
  * // Formatted JSON with 2-space indentation
  * ```
  */
-export async function write_json<T extends Record<string, unknown>>(
+export async function writeJSON<T extends Record<string, unknown>>(
   filePath: string,
   dataFrame: DataFrame<T>,
   options: {

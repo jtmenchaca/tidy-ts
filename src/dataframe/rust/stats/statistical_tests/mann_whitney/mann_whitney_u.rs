@@ -212,7 +212,7 @@ impl MannWhitneyUTest {
             error_message: None,
             effect_size: EffectSize {
                 value: effect_size,
-                effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
+                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
             alternative: config.alternative,
         })

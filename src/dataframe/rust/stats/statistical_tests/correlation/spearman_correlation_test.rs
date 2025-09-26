@@ -145,23 +145,23 @@ pub fn spearman_test(
     };
 
     Ok(SpearmanCorrelationTestResult {
+        test_name: "Spearman's rank correlation rho".to_string(), // Match R's method name
+        p_value,
+        effect_size: EffectSize {
+            value: rho,
+            name: EffectSizeType::SpearmansRho.as_str().to_string(),
+        },
         test_statistic: TestStatistic {
             value: test_statistic_value,
             name: test_statistic_name,
         },
-        p_value,
-        test_name: "Spearman's rank correlation rho".to_string(), // Match R's method name
-        alpha,
-        error_message: None,
         confidence_interval: ConfidenceInterval {
             lower: f64::NAN, // TODO: Implement CI for correlation
             upper: f64::NAN,
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: (n - 2) as f64, // Always n-2 for consistency
-        effect_size: EffectSize {
-            value: rho,
-            effect_type: EffectSizeType::SpearmansRho.as_str().to_string(),
-        },
+        alpha,
+        error_message: None,
     })
 }

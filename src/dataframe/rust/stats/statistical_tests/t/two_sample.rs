@@ -68,7 +68,7 @@ where
         degrees_of_freedom: result.degrees_of_freedom,
         effect_size: EffectSize {
             value: result.effect_size.value,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: mean_diff,
         standard_error: std_error,
@@ -105,7 +105,7 @@ pub fn t_test_paired_vec(
         degrees_of_freedom: f64::NAN,
         effect_size: EffectSize {
             value: f64::NAN,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: f64::NAN,
         standard_error: f64::NAN,
@@ -268,7 +268,7 @@ where
         degrees_of_freedom: df,
         effect_size: EffectSize {
             value: cohens_d,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: mean1 - mean2,
         standard_error: std_error,

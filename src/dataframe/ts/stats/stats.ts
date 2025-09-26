@@ -12,7 +12,6 @@ import { iqr } from "./descriptive/spread/iqr.ts";
 import { quantile } from "./descriptive/quantiles/quantile.ts";
 import { quartiles } from "./descriptive/quantiles/quartiles.ts";
 import { covariance } from "./correlation/covariance.ts";
-import { corr } from "./correlation/corr.ts";
 import { unique } from "./descriptive/counts/unique.ts";
 import { uniqueCount } from "./descriptive/counts/unique-count.ts";
 import { cumsum } from "./cumulative/cumsum.ts";
@@ -107,7 +106,6 @@ export const stats: {
   readonly quantile: typeof quantile;
   readonly quartiles: typeof quartiles;
   readonly covariance: typeof covariance;
-  readonly corr: typeof corr;
   readonly unique: typeof unique;
   readonly uniqueCount: typeof uniqueCount;
   readonly cumsum: typeof cumsum;
@@ -356,7 +354,6 @@ export const stats: {
 
   // Bivariate statistics
   covariance,
-  corr,
 
   // Count and unique functions
   unique,

@@ -63,7 +63,7 @@ where
         degrees_of_freedom: df,
         effect_size: EffectSize {
             value: effect_size,
-            effect_type: EffectSizeType::CramersV.as_str().to_string(), // Using CramersV as closest match for variance ratio
+            name: EffectSizeType::CramersV.as_str().to_string(), // Using CramersV as closest match for variance ratio
         },
         sample_size: n,
         confidence_interval: ConfidenceInterval {

@@ -130,7 +130,7 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> Result<KruskalWal
             degrees_of_freedom: df,
             effect_size: EffectSize {
                 value: 0.0,
-                effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                name: EffectSizeType::EtaSquared.as_str().to_string(),
             },
             sample_size: n,
         });
@@ -167,7 +167,7 @@ pub fn kruskal_wallis_test(groups: &[Vec<f64>], alpha: f64) -> Result<KruskalWal
         degrees_of_freedom: df,
         effect_size: EffectSize {
             value: eta_squared,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: n,
     })

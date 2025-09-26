@@ -198,7 +198,7 @@ where
         degrees_of_freedom: df_between + df_within,
         effect_size: EffectSize {
             value: eta_squared,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: n_total,
         sample_means,

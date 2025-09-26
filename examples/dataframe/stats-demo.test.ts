@@ -545,13 +545,4 @@ Deno.test("Stats API Demo - Advanced Features", () => {
   console.log("  Unique values:", s.unique(data));
   console.log("  Unique count:", s.uniqueCount(data));
   console.log("  Count value (1):", s.countValue(data, 1));
-
-  // Bivariate statistics
-  const x = [1, 2, 3, 4, 5];
-  const y = [2, 4, 6, 8, 10];
-  console.log("\nBivariate Statistics:");
-  console.log("  X:", x);
-  console.log("  Y:", y);
-  console.log("  Covariance:", s.covariance(x, y));
-  console.log("  Correlation:", s.corr(x, y));
 });

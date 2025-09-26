@@ -36,7 +36,7 @@ pub fn chi_square_independence(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::CramersV
+                name: crate::stats::core::types::EffectSizeType::CramersV
                     .as_str()
                     .to_string(),
             },
@@ -70,7 +70,7 @@ pub fn chi_square_independence(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::CramersV
+                name: crate::stats::core::types::EffectSizeType::CramersV
                     .as_str()
                     .to_string(),
             },
@@ -105,7 +105,7 @@ pub fn chi_square_goodness_of_fit(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::CramersV
+                name: crate::stats::core::types::EffectSizeType::CramersV
                     .as_str()
                     .to_string(),
             },
@@ -147,7 +147,7 @@ pub fn chi_square_variance(
             degrees_of_freedom: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
-                effect_type: crate::stats::core::types::EffectSizeType::CramersV
+                name: crate::stats::core::types::EffectSizeType::CramersV
                     .as_str()
                     .to_string(),
             },

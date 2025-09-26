@@ -41,7 +41,7 @@ pub fn t_test_one_sample(
             degrees_of_freedom: f64::NAN,
             effect_size: EffectSize {
                 value: f64::NAN,
-                effect_type: EffectSizeType::CohensD.as_str().to_string(),
+                name: EffectSizeType::CohensD.as_str().to_string(),
             },
         }
     })
@@ -81,7 +81,7 @@ pub fn t_test_two_sample_independent(
         degrees_of_freedom: f64::NAN,
         effect_size: EffectSize {
             value: f64::NAN,
-            effect_type: "Cohen's d".to_string(),
+            name: "Cohen's d".to_string(),
         },
         mean_difference: f64::NAN,
         standard_error: f64::NAN,
@@ -115,7 +115,7 @@ pub fn t_test_paired(x: &[f64], y: &[f64], alpha: f64, alternative: &str) -> Pai
         degrees_of_freedom: f64::NAN,
         effect_size: EffectSize {
             value: f64::NAN,
-            effect_type: "Cohen's d".to_string(),
+            name: "Cohen's d".to_string(),
         },
         mean_difference: f64::NAN,
         standard_error: f64::NAN,

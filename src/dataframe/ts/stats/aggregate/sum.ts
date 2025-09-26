@@ -18,7 +18,7 @@ import type {
  * Calculate the sum of numeric values.
  *
  * @param value - A single number or array of numbers
- * @param remove_na - Whether to exclude null/undefined values (when using mixed arrays)
+ * @param removeNA - Whether to exclude null/undefined values (when using mixed arrays)
  * @returns The sum of all numeric values
  *
  * @example
@@ -31,7 +31,7 @@ import type {
  * // Array of numbers
  * stats.sum([1, 2, 3, 4]); // 10
  *
- * // Array with nulls (requires remove_na flag)
+ * // Array with nulls (requires removeNA flag)
  * stats.sum([1, 2, null, 4], true); // 7
  *
  * // Using with DataFrame columns
@@ -43,11 +43,11 @@ import type {
  */
 export function sum(value: number): number;
 export function sum(values: CleanNumberArray): number;
-export function sum(values: NumbersWithNullable, remove_na: true): number;
+export function sum(values: NumbersWithNullable, removeNA: true): number;
 export function sum(values: CleanNumberIterable): number;
 export function sum(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function sum(
   values:
@@ -58,13 +58,13 @@ export function sum(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   if (typeof values === "number") return values;
   if (values === undefined || values === null) return null;
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
@@ -112,7 +112,7 @@ export function sum(
   }
 
   if (!sawAny) {
-    if (remove_na) throw new Error("No valid values found to calculate sum");
+    if (removeNA) throw new Error("No valid values found to calculate sum");
     return null;
   }
   return s;

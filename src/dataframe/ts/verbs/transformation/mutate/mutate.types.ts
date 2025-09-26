@@ -21,7 +21,6 @@ import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency
 export type ColumnValue<Row extends object> =
   | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
   | unknown[]
-  | unknown
   | null;
 
 /**
@@ -95,6 +94,26 @@ export type RowAfterAssignments<
   Row extends object,
   Assignments extends Record<string, ColumnValue<Row>>,
 > = RowAfterMutation<Row, Assignments>;
+
+/**
+ * WithContextForFunctions<Row, A>
+ * Refines an arbitrary assignments object A so that any function-valued
+ * properties are contextually typed with the precise `(row: Row, idx, df)` signature.
+ * Non-function properties are left unchanged. This enables strong parameter
+ * inference for function literals even when mixed with arrays/scalars.
+ */
+type WithContextForFunctions<
+  Row extends object,
+  // deno-lint-ignore no-explicit-any
+  A extends Record<string, any>,
+> = {
+  [K in keyof A]: A[K] extends (...args: unknown[]) => unknown ? (
+      row: Row,
+      idx: number,
+      df: DataFrame<Row>,
+    ) => Awaited<ReturnType<Extract<A[K], (...args: unknown[]) => unknown>>>
+    : A[K];
+};
 
 /**
  * Add new columns to a DataFrame using expressions, arrays, or scalar values.
@@ -303,6 +322,23 @@ export interface MutateMethod<Row extends object> {
     Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
   >;
 
+  // ── Grouped — mixed without scalars (functions | arrays | null) for better inference ─
+  <
+    GroupName extends keyof Row,
+    Assignments extends {
+      [key: string]:
+        | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
+        | readonly unknown[]
+        | null;
+    },
+  >(
+    this: GroupedDataFrame<Row, GroupName>,
+    assignments: Assignments,
+  ): GroupedDataFrame<
+    Prettify<RowAfterMutation<Row, Assignments>>,
+    Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+  >;
+
   // ── Ungrouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
   /**
    * Add new columns to an ungrouped DataFrame using function expressions.
@@ -329,9 +365,11 @@ export interface MutateMethod<Row extends object> {
     formulas: Formulas,
   ): DataFrame<Prettify<RowAfterMutation<Row, Formulas>>>;
 
-  // ── Ungrouped — mixed assignments (functions | arrays | scalars | null) ─────────
+  // ── Ungrouped — mixed assignments with contextual function typing ─────────
   /**
-   * Add new columns to an ungrouped DataFrame using mixed expressions.
+   * Add new columns with mixed expressions while preserving contextual typing
+   * of function parameters. Function-valued properties receive the full
+   * `(row: Row, idx, df)` signature; arrays/scalars/null are accepted unchanged.
    *
    * @example
    * ```typescript
@@ -344,6 +382,28 @@ export interface MutateMethod<Row extends object> {
    *   deleted: null                  // Delete column
    * });
    * ```
+   */
+  <A extends Record<string, unknown>>(
+    assignments: WithContextForFunctions<Row, A>,
+  ): AnyPropertyIsAsync<A> extends true
+    ? PromisedDataFrame<Prettify<RowAfterMutation<Row, A>>>
+    : DataFrame<Prettify<RowAfterMutation<Row, A>>>;
+
+  // ── Ungrouped — mixed without scalars (functions | arrays | null) for better inference ─────
+  <
+    Assignments extends {
+      [key: string]:
+        | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
+        | readonly unknown[]
+        | null;
+    },
+  >(
+    assignments: Assignments,
+  ): DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>;
+
+  // ── Ungrouped — fallback for mixed assignments (functions | arrays | scalars | null) ─────────
+  /**
+   * Fallback overload for mixed assignments when specific type inference fails.
    */
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,

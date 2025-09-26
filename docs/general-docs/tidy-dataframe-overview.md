@@ -29,7 +29,7 @@ const df = createDataFrame([{ a: 1, b: "x" }, { a: 2, b: "y" }]);
 
 - Infers schema from literal data
 - Optionally pass a Zod schema for strict validation
-- Also supports `read_csv`, `read_json` with schema enforcement
+- Also supports `readCSV`, `readJSON` with schema enforcement
 
 ### 2. Chainable Verbs
 
@@ -75,8 +75,8 @@ const summary = df
 ### 5. Schema-Aware I/O
 
 ```typescript
-import { read_csv } from "@tidy-ts/dataframe";
-const users = await read_csv(csvString, UserSchema, { naValues: [""] });
+import { readCSV } from "@tidy-ts/dataframe";
+const users = await readCSV(csvString, UserSchema, { naValues: [""] });
 ```
 
 - Zod schemas catch bad data at ingestion

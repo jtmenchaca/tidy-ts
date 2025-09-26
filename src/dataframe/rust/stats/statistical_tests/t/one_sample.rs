@@ -89,23 +89,23 @@ where
     };
 
     Ok(OneSampleTTestResult {
+        test_name: "One-sample t-test".to_string(),
+        p_value,
+        effect_size: EffectSize {
+            value: cohens_d,
+            name: EffectSizeType::CohensD.as_str().to_string(),
+        },
         test_statistic: TestStatistic {
             value: test_statistic,
             name: TestStatisticName::TStatistic.as_str().to_string(),
         },
-        p_value,
-        test_name: "One-sample t-test".to_string(),
-        alpha,
-        error_message: None,
         confidence_interval: ConfidenceInterval {
             lower: confidence_interval.0,
             upper: confidence_interval.1,
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: df,
-        effect_size: EffectSize {
-            value: cohens_d,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
-        },
+        alpha,
+        error_message: None,
     })
 }

@@ -11,9 +11,9 @@ const data = createDataFrame([
 Deno.test("mutate_columns basic functionality", () => {
   const result = data
     .mutateColumns({
-      col_type: "number",
+      colType: "number",
       columns: ["score1", "score2", "score3"],
-      new_columns: [
+      newColumns: [
         { prefix: "add_1_", fn: (col) => col + 1 },
         { prefix: "add_2_", fn: (col) => col + 2 },
       ],
@@ -58,9 +58,9 @@ Deno.test("mutate_columns with grouped data", () => {
   const result = data
     .groupBy("age")
     .mutateColumns({
-      col_type: "number",
+      colType: "number",
       columns: ["score1", "score2"],
-      new_columns: [
+      newColumns: [
         { prefix: "add_1_", fn: (col) => col + 1 },
         { prefix: "add_2_", fn: (col) => col + 2 },
       ],

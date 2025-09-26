@@ -7,7 +7,7 @@ type ReplaceNullType<T, R> = T extends null | undefined ? R
   : T;
 
 /**
- * Transform Row type after replace_na operation
+ * Transform Row type after replaceNA operation
  */
 type ReplaceNaResult<
   Row extends object,
@@ -19,7 +19,7 @@ type ReplaceNaResult<
 };
 
 /**
- * replace_na method type for DataFrames
+ * replaceNA method type for DataFrames
  */
 export type ReplaceNaMethod<Row extends object> = <
   M extends Partial<{ [K in keyof Row]: unknown }>,

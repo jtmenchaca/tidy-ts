@@ -15,7 +15,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
   console.log("Original data:");
   basicData.print();
 
-  const basicTransposed = basicData.transpose({ number_of_rows: 3 });
+  const basicTransposed = basicData.transpose({ numberOfRows: 3 });
   console.log("Transposed (should have row_0, row_1, row_2 columns):");
   basicTransposed.print();
 
@@ -39,7 +39,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
   console.log("Data with row labels:");
   dataWithLabels.print();
 
-  const transposedWithLabels = dataWithLabels.transpose({ number_of_rows: 3 });
+  const transposedWithLabels = dataWithLabels.transpose({ numberOfRows: 3 });
   console.log(
     "Transposed with labels (should have person1, person2, person3 columns):",
   );
@@ -54,7 +54,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
 
   // Test 3: Double transpose (should restore original structure)
   console.log("\n3. Double transpose (restore original)");
-  const backToOriginal = transposedWithLabels.transpose({ number_of_rows: 3 });
+  const backToOriginal = transposedWithLabels.transpose({ numberOfRows: 3 });
   console.log("Double transposed (should restore original structure):");
   backToOriginal.print();
 
@@ -92,7 +92,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
   mixedData.print();
 
   const mixedTransposed = mixedData.setRowLabels(["user1", "user2"]).transpose(
-    { number_of_rows: 2 },
+    { numberOfRows: 2 },
   );
   console.log("Transposed mixed data:");
   mixedTransposed.print();
@@ -106,7 +106,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
   console.log("Single row:");
   singleRow.print();
 
-  const singleRowTransposed = singleRow.transpose({ number_of_rows: 1 });
+  const singleRowTransposed = singleRow.transpose({ numberOfRows: 1 });
   console.log("Transposed single row:");
   singleRowTransposed.print();
 
@@ -117,7 +117,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
   // emptyData.print(); // Skip print for empty dataframe
 
   // @ts-expect-error - empty dataframe
-  const emptyTransposed = emptyData.transpose({ number_of_rows: 0 });
+  const emptyTransposed = emptyData.transpose({ numberOfRows: 0 });
   console.log("Transposed empty dataframe:");
   // emptyTransposed.print(); // Skip print for empty dataframe
 
@@ -143,7 +143,7 @@ Deno.test("transpose - comprehensive functionality test", () => {
     "row3",
     "row4",
     "row5",
-  ]).transpose({ number_of_rows: 5 });
+  ]).transpose({ numberOfRows: 5 });
   console.log("Transposed large dataframe:");
   largeTransposed.print();
 
@@ -156,10 +156,10 @@ Deno.test("transpose - comprehensive functionality test", () => {
 
   // First transpose
   const firstTranspose = typeTestData.setRowLabels(["first", "second"])
-    .transpose({ number_of_rows: 2 });
+    .transpose({ numberOfRows: 2 });
 
   // Second transpose should restore original types
-  const secondTranspose = firstTranspose.transpose({ number_of_rows: 2 });
+  const secondTranspose = firstTranspose.transpose({ numberOfRows: 2 });
 
   console.log("Type preservation - second transpose:");
   secondTranspose.print();
@@ -184,11 +184,11 @@ Deno.test("transpose - edge cases and error handling", () => {
   ]);
 
   // This should work fine - transpose doesn't validate expected rows
-  const transposed = data.transpose({ number_of_rows: 2 });
+  const transposed = data.transpose({ numberOfRows: 2 });
   expect(transposed.nrows()).toBe(2); // 2 original columns become 2 rows
 
   // Test with different expected rows (should still work)
-  const transposedWrong = data.transpose({ number_of_rows: 5 });
+  const transposedWrong = data.transpose({ numberOfRows: 5 });
   expect(transposedWrong.nrows()).toBe(2); // Still 2 rows, not 5
 
   console.log("Transpose with wrong expected rows (should still work):");
@@ -215,7 +215,7 @@ Deno.test("transpose - edge cases and error handling", () => {
   dataWithNulls.print();
 
   const transposedWithNulls = dataWithNulls.setRowLabels(["row1", "row2"])
-    .transpose({ number_of_rows: 2 });
+    .transpose({ numberOfRows: 2 });
   console.log("Transposed with nulls/undefined:");
   transposedWithNulls.print();
 
@@ -248,7 +248,7 @@ Deno.test("transpose - performance and memory test", () => {
 
   // Transpose
   const transposed = df.setRowLabels(rowLabels).transpose({
-    number_of_rows: rows,
+    numberOfRows: rows,
   });
 
   const transposeTime = performance.now() - startTime;
@@ -256,7 +256,7 @@ Deno.test("transpose - performance and memory test", () => {
 
   // Transpose back
   const startTime2 = performance.now();
-  const backToOriginal = transposed.transpose({ number_of_rows: cols });
+  const backToOriginal = transposed.transpose({ numberOfRows: cols });
   const doubleTransposeTime = performance.now() - startTime2;
   console.log(`Double transpose took ${doubleTransposeTime.toFixed(2)}ms`);
 

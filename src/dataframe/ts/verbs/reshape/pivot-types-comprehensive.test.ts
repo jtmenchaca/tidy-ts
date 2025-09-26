@@ -17,9 +17,9 @@ const wideData = createDataFrame([
 
 const basicWider = longData
   .pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    expected_columns: ["x", "y"],
+    namesFrom: "variable",
+    valuesFrom: "value",
+    expectedColumns: ["x", "y"],
   });
 
 // Type check passes - columns are properly inferred
@@ -40,10 +40,10 @@ const aggregatedWider = createDataFrame([
   { group: "B", variable: "y", value: 5 },
 ])
   .pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    expected_columns: ["x", "y"],
-    values_fn: (values) => stats.sum(values),
+    namesFrom: "variable",
+    valuesFrom: "value",
+    expectedColumns: ["x", "y"],
+    valuesFn: (values) => stats.sum(values),
   });
 
 // Type check - aggregation function changes return type
@@ -58,10 +58,10 @@ console.log("Aggregated pivot_wider result:", aggregatedWider);
 // 3. Test pivot_wider with prefix
 const prefixedWider = longData
   .pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    expected_columns: ["x", "y"],
-    names_prefix: "val_",
+    namesFrom: "variable",
+    valuesFrom: "value",
+    expectedColumns: ["x", "y"],
+    namesPrefix: "val_",
   });
 
 // Type check - prefix is applied to column names
@@ -77,8 +77,8 @@ console.log("Prefixed pivot_wider result:", prefixedWider);
 const longerData = wideData
   .pivotLonger({
     cols: ["x", "y", "z"],
-    names_to: "variable",
-    values_to: "value",
+    namesTo: "variable",
+    valuesTo: "value",
   });
 
 // Type check - proper type inference for pivot_longer
@@ -90,11 +90,11 @@ const _longerTypeCheck: DataFrame<{
 
 console.log("Pivot_longer result:", longerData);
 
-// 5. Test pivot_wider without expected_columns (falls back to Record<string, unknown>)
+// 5. Test pivot_wider without expectedColumns (falls back to Record<string, unknown>)
 const dynamicWider = longData
   .pivotWider({
-    names_from: "variable",
-    values_from: "value",
+    namesFrom: "variable",
+    valuesFrom: "value",
   });
 
 // This now preserves original column types with dynamic columns as unknown

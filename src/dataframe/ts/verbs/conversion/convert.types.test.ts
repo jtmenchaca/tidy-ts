@@ -297,9 +297,9 @@ console.log("Type conversion tests completed!");
 // 7. Test column-wise casting with mutate_columns()
 const columnWiseConversion = testData
   .mutateColumns({
-    col_type: "string",
+    colType: "string",
     columns: ["age", "score", "salary"],
-    new_columns: [{ suffix: "_number", fn: as_number }],
+    newColumns: [{ suffix: "_number", fn: as_number }],
   });
 
 const _columnWiseTypeCheck: DataFrame<{
@@ -322,9 +322,9 @@ console.log("Column-wise conversion type checking passed!");
 // 8. Test multiple conversions in one mutate_columns call
 const multipleConversions = testData
   .mutateColumns({
-    col_type: "string",
+    colType: "string",
     columns: ["active", "birth_date"],
-    new_columns: [
+    newColumns: [
       { suffix: "_logical", fn: as_logical },
       { suffix: "_date", fn: as_date },
     ],

@@ -30,7 +30,7 @@ pub fn mann_whitney_test(
             error_message: Some(e),
             effect_size: EffectSize {
                 value: f64::NAN,
-                effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
+                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
             alternative: alternative.to_string(),
         }
@@ -66,7 +66,7 @@ pub fn mann_whitney_test_with_config(
             error_message: Some(e),
             effect_size: EffectSize {
                 value: f64::NAN,
-                effect_type: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
+                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
             alternative: alternative.to_string(),
         })

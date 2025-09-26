@@ -11,9 +11,9 @@ const data = createDataFrame([
 Deno.test("summarise_columns basic functionality", () => {
   const result = data
     .summariseColumns({
-      col_type: "number",
+      colType: "number",
       columns: ["score1", "score2", "score3"],
-      new_columns: [
+      newColumns: [
         { prefix: "mean_", fn: (col) => stats.mean(col) },
         { prefix: "sum_", fn: (col) => stats.sum(col) },
       ],
@@ -31,9 +31,9 @@ Deno.test("summarise_columns with grouped data", () => {
   const result = data
     .groupBy("age")
     .summariseColumns({
-      col_type: "number",
+      colType: "number",
       columns: ["score1", "score2"],
-      new_columns: [
+      newColumns: [
         { prefix: "mean_", fn: (col) => stats.mean(col) },
       ],
     });

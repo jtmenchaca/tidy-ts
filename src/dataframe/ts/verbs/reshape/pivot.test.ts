@@ -10,8 +10,8 @@ Deno.test("pivotWider - basic functionality", () => {
   ]);
 
   const result = df.pivotWider({
-    names_from: "variable",
-    values_from: "value",
+    namesFrom: "variable",
+    valuesFrom: "value",
   });
 
   expect(result.nrows()).toBe(2);
@@ -21,7 +21,7 @@ Deno.test("pivotWider - basic functionality", () => {
   expect(resultArray[1]).toEqual({ group: "B", x: 3, y: 4 });
 });
 
-Deno.test("pivotWider - with expected_columns", () => {
+Deno.test("pivotWider - with expectedColumns", () => {
   const sales = createDataFrame([
     { product: "A", quarter: "Q1", revenue: 100 },
     { product: "A", quarter: "Q2", revenue: 150 },
@@ -30,9 +30,9 @@ Deno.test("pivotWider - with expected_columns", () => {
   ]);
 
   const result = sales.pivotWider({
-    names_from: "quarter",
-    values_from: "revenue",
-    expected_columns: ["Q1", "Q2"],
+    namesFrom: "quarter",
+    valuesFrom: "revenue",
+    expectedColumns: ["Q1", "Q2"],
   });
 
   expect(result.nrows()).toBe(2);
@@ -52,9 +52,9 @@ Deno.test("pivotWider - with aggregation function", () => {
   ]);
 
   const result = df.pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    values_fn: (values: number[]) => stats.mean(values), // Average the duplicates
+    namesFrom: "variable",
+    valuesFrom: "value",
+    valuesFn: (values: number[]) => stats.mean(values), // Average the duplicates
   });
 
   expect(result.nrows()).toBe(2);
@@ -73,8 +73,8 @@ Deno.test("pivotWider - with additional columns preserved", () => {
   ]);
 
   const result = df.pivotWider({
-    names_from: "variable",
-    values_from: "value1",
+    namesFrom: "variable",
+    valuesFrom: "value1",
   });
 
   expect(result.nrows()).toBe(2);
@@ -102,8 +102,8 @@ Deno.test("pivotWider - missing values fill with undefined", () => {
   ]);
 
   const result = df.pivotWider({
-    names_from: "variable",
-    values_from: "value",
+    namesFrom: "variable",
+    valuesFrom: "value",
   });
 
   expect(result.nrows()).toBe(2);
@@ -122,8 +122,8 @@ Deno.test("pivotWider - with fill value for missing data", () => {
   ]);
 
   const result = df.pivotWider({
-    names_from: "variable",
-    values_from: "value",
+    namesFrom: "variable",
+    valuesFrom: "value",
   });
 
   expect(result.nrows()).toBe(2);
@@ -147,9 +147,9 @@ Deno.test("pivotWider - complex real-world example", () => {
 
   // Pivot by quarter, getting revenue for each store-product combination
   const result = salesData.pivotWider({
-    names_from: "quarter",
-    values_from: "revenue",
-    expected_columns: ["Q1", "Q2"],
+    namesFrom: "quarter",
+    valuesFrom: "revenue",
+    expectedColumns: ["Q1", "Q2"],
   });
 
   expect(result.nrows()).toBe(4); // 2 stores × 2 products
@@ -166,7 +166,7 @@ Deno.test("pivotWider - complex real-world example", () => {
   }); // units from first Q1 record
 });
 
-Deno.test("pivotWider - validation with expected_columns", () => {
+Deno.test("pivotWider - validation with expectedColumns", () => {
   const salesData = createDataFrame([
     { store: "A", product: "apples", revenue: 100 },
     { store: "A", product: "bananas", revenue: 75 },
@@ -174,11 +174,11 @@ Deno.test("pivotWider - validation with expected_columns", () => {
     { store: "B", product: "bananas", revenue: 90 },
   ]);
 
-  // Test that providing expected_columns works correctly
+  // Test that providing expectedColumns works correctly
   const result = salesData.pivotWider({
-    names_from: "product",
-    values_from: "revenue",
-    expected_columns: ["apples", "bananas"],
+    namesFrom: "product",
+    valuesFrom: "revenue",
+    expectedColumns: ["apples", "bananas"],
   });
 
   expect(result.nrows()).toBe(2);
@@ -200,9 +200,9 @@ Deno.test("pivotWider - using unique values from data", () => {
   const uniqueItems = stats.unique(df.item);
 
   const result = df.pivotWider({
-    names_from: "item",
-    values_from: "price",
-    expected_columns: uniqueItems,
+    namesFrom: "item",
+    valuesFrom: "price",
+    expectedColumns: uniqueItems,
   });
 
   expect(result.nrows()).toBe(2);
@@ -224,8 +224,8 @@ Deno.test("pivotLonger - basic functionality", () => {
 
   const result = df.pivotLonger({
     cols: ["x", "y"],
-    names_to: "variable",
-    values_to: "value",
+    namesTo: "variable",
+    valuesTo: "value",
   });
 
   expect(result.nrows()).toBe(4);
@@ -247,8 +247,8 @@ Deno.test("pivotLonger - with column pattern matching", () => {
 
   const result = df.pivotLonger({
     cols: ["score_math", "score_english"], // Only score columns
-    names_to: "subject",
-    values_to: "score",
+    namesTo: "subject",
+    valuesTo: "score",
   });
 
   expect(result.nrows()).toBe(4);
@@ -270,8 +270,8 @@ Deno.test("pivotLonger - with names transformation", () => {
 
   const result = df.pivotLonger({
     cols: ["Q1_2023", "Q2_2023", "Q3_2023"],
-    names_to: "quarter",
-    values_to: "revenue",
+    namesTo: "quarter",
+    valuesTo: "revenue",
   });
 
   expect(result.nrows()).toBe(6);
@@ -291,8 +291,8 @@ Deno.test("pivotLonger - preserving non-pivoted columns", () => {
 
   const result = df.pivotLonger({
     cols: ["height", "weight"], // Only pivot these measurements
-    names_to: "measurement_type",
-    values_to: "measurement_value",
+    namesTo: "measurement_type",
+    valuesTo: "measurement_value",
   });
 
   expect(result.nrows()).toBe(4);

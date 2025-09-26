@@ -34,13 +34,13 @@ centralTendency.toEachOther(x, y, parametric, assumeEqualVariances?):
       IF assumeEqualVariances provided:
         RETURN tTest(x, y, assumeEqualVariances)
       ELSE:
-        equalVar = leveneTest([x, y], α=0.05).p_value >= 0.05
+        equalVar = brownForsytheTest([x, y]).p_value >= 0.05
         RETURN tTest(x, y, equalVar)
   ELSE IF parametric = "parametric":
     IF assumeEqualVariances provided:
       RETURN tTest(x, y, assumeEqualVariances)
     ELSE:
-      equalVar = leveneTest([x, y], α=0.05).p_value >= 0.05
+      equalVar = brownForsytheTest([x, y]).p_value >= 0.05
       RETURN tTest(x, y, equalVar)
   ELSE:
     RETURN mannWhitney(x, y)
@@ -85,11 +85,16 @@ distributions.toEachOther(x, y, method):
 
 ## Multiple Groups
 
+**Multiple Testing Corrections**: All post-hoc tests automatically correct for multiple comparisons:
+- **Tukey HSD**: Uses studentized range distribution (built-in correction)
+- **Games-Howell**: Uses Welch's t-test with adjusted degrees of freedom (built-in correction)  
+- **Dunn's Test**: Uses Bonferroni correction (explicit adjustment)
+
 ```
 centralTendency.toEachOther(groups, parametric, assumeEqualVariances?):
   // Auto-detect variance equality if not provided
   IF assumeEqualVariances not provided AND parametric != "nonparametric":
-    assumeEqualVariances = leveneTest(groups, α=0.05).p_value >= 0.05
+    assumeEqualVariances = brownForsytheTest(groups).p_value >= 0.05
 
   IF parametric = "parametric":
     IF assumeEqualVariances:
@@ -115,7 +120,7 @@ centralTendency.toEachOther(groups, parametric, assumeEqualVariances?):
         result = assumeEqualVariances ? anovaOneWay(groups) : welchAnova(groups)
         postHoc = assumeEqualVariances ? tukeyHSD(groups) : gamesHowell(groups) IF significant
       ELSE:
-        equalVar = leveneTest(groups, α=0.05).p_value >= 0.05
+        equalVar = brownForsytheTest(groups).p_value >= 0.05
         result = equalVar ? anovaOneWay(groups) : welchAnova(groups)
         postHoc = equalVar ? tukeyHSD(groups) : gamesHowell(groups) IF significant
     RETURN {result, postHoc}

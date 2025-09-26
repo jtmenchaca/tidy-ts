@@ -126,7 +126,7 @@ pub fn independence(
         degrees_of_freedom: df as f64,
         effect_size: EffectSize {
             value: cramers_v,
-            effect_type: EffectSizeType::CramersV.as_str().to_string(),
+            name: EffectSizeType::CramersV.as_str().to_string(),
         },
         sample_size: n as usize,
         phi_coefficient: phi.unwrap_or(0.0),
@@ -223,7 +223,7 @@ where
         degrees_of_freedom: df,
         effect_size: EffectSize {
             value: effect_size,
-            effect_type: EffectSizeType::CramersV.as_str().to_string(),
+            name: EffectSizeType::CramersV.as_str().to_string(),
         },
         sample_size: observed.len(),
         chi_square_expected: expected.clone(),

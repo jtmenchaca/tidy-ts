@@ -1,4 +1,4 @@
-import { read_csv, stats as s } from "@tidy-ts/dataframe";
+import { readCSV, stats as s } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 Deno.test("Example Test", async () => {
@@ -26,7 +26,7 @@ Deno.test("Example Test", async () => {
     comments: z.string().nullable(),
   });
   const csvPath = new URL("../fixtures/penguins.csv", import.meta.url).pathname;
-  const df = await read_csv(csvPath, PenguinsSchema);
+  const df = await readCSV(csvPath, PenguinsSchema);
 
   const testing = df
     .summarize({

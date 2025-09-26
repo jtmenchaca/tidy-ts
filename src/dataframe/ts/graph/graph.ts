@@ -74,9 +74,9 @@ export type ColorConfig = Prettify<{
    * Predefined color schemes:
    * - "default": Standard blue/green/orange palette
    * - "blue"/"green"/"red"/"purple"/"orange": Monochromatic schemes
-   * - "oklch_vibrant": High-contrast vibrant colors
-   * - "oklch_professional": Muted professional colors
-   * - "oklch_accessible": WCAG-compliant accessible colors
+   * - "vibrant": High-contrast vibrant colors
+   * - "professional": Muted professional colors
+   * - "high_contrast": WCAG-compliant high contrast colors
    */
   scheme?:
     | "default"
@@ -85,9 +85,9 @@ export type ColorConfig = Prettify<{
     | "red"
     | "purple"
     | "orange"
-    | "oklch_vibrant"
-    | "oklch_professional"
-    | "oklch_accessible";
+    | "vibrant"
+    | "professional"
+    | "high_contrast";
 }>;
 
 /**
@@ -455,26 +455,26 @@ const COLOR_SCHEMES = {
   red: ["#f87171", "#ef4444", "#dc2626", "#b91c1c", "#991b1b"],
   purple: ["#a78bfa", "#8b5cf6", "#7c3aed", "#6d28d9", "#5b21b6"],
   orange: ["#fb923c", "#f97316", "#ea580c", "#c2410c", "#9a3412"],
-  oklch_vibrant: [
-    "oklch(0.7 0.25 240)",
-    "oklch(0.75 0.25 120)",
-    "oklch(0.7 0.25 60)",
-    "oklch(0.7 0.25 300)",
-    "oklch(0.7 0.25 0)",
+  vibrant: [
+    "#4f46e5", // Blue (oklch(0.7 0.25 240))
+    "#10b981", // Green (oklch(0.75 0.25 120))
+    "#f59e0b", // Yellow (oklch(0.7 0.25 60))
+    "#8b5cf6", // Purple (oklch(0.7 0.25 300))
+    "#ef4444", // Red (oklch(0.7 0.25 0))
   ],
-  oklch_professional: [
-    "oklch(0.6 0.15 240)",
-    "oklch(0.65 0.15 150)",
-    "oklch(0.6 0.15 270)",
-    "oklch(0.55 0.15 30)",
-    "oklch(0.5 0.15 0)",
+  professional: [
+    "#3b82f6", // Blue (oklch(0.6 0.15 240))
+    "#059669", // Green (oklch(0.65 0.15 150))
+    "#7c3aed", // Purple (oklch(0.6 0.15 270))
+    "#dc2626", // Red (oklch(0.55 0.15 30))
+    "#374151", // Dark gray (oklch(0.5 0.15 0))
   ],
-  oklch_accessible: [
-    "oklch(0.55 0.2 240)",
-    "oklch(0.6 0.2 120)",
-    "oklch(0.5 0.2 30)",
-    "oklch(0.45 0.15 300)",
-    "oklch(0.5 0.2 0)",
+  high_contrast: [
+    "#1e40af", // Dark blue (oklch(0.55 0.2 240))
+    "#047857", // Dark green (oklch(0.6 0.2 120))
+    "#b91c1c", // Dark red (oklch(0.5 0.2 30))
+    "#6b21a8", // Dark purple (oklch(0.45 0.15 300))
+    "#1f2937", // Very dark gray (oklch(0.5 0.2 0))
   ],
 } as const;
 

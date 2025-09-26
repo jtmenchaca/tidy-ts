@@ -49,11 +49,11 @@ export type PivotWiderMethod<Row extends object> = {
     const Prefix extends string = "",
   >(
     pivotConfig: {
-      names_from: NamesFrom;
-      values_from: ValuesFrom;
-      expected_columns: ExpectedCols;
-      values_fn?: ValuesFn;
-      names_prefix?: Prefix;
+      namesFrom: NamesFrom;
+      valuesFrom: ValuesFrom;
+      expectedColumns: ExpectedCols;
+      valuesFn?: ValuesFn;
+      namesPrefix?: Prefix;
     },
   ): DataFrame<
     Prettify<
@@ -72,10 +72,10 @@ export type PivotWiderMethod<Row extends object> = {
     NamesFrom extends keyof Row,
     ValuesFrom extends keyof Row,
   >(pivotConfig: {
-    names_from: NamesFrom;
-    values_from: ValuesFrom;
-    values_fn?: (values: Row[ValuesFrom][]) => unknown;
-    names_prefix?: string;
+    namesFrom: NamesFrom;
+    valuesFrom: ValuesFrom;
+    valuesFn?: (values: Row[ValuesFrom][]) => unknown;
+    namesPrefix?: string;
   }): DataFrame<
     Prettify<
       & {
@@ -98,10 +98,10 @@ export type PivotLongerMethod<Row extends object> = {
     const ValuesTo extends string,
   >(pivotConfig: {
     cols: ColNames;
-    names_to: NamesTo;
-    values_to: ValuesTo;
-    names_prefix?: string;
-    names_pattern?: RegExp;
+    namesTo: NamesTo;
+    valuesTo: ValuesTo;
+    namesPrefix?: string;
+    namesPattern?: RegExp;
   }): DataFrame<
     Prettify<RowAfterPivotLonger<Row, ColNames, NamesTo, ValuesTo>>
   >;

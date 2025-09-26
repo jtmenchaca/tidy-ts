@@ -27,11 +27,11 @@ import { extractNumbersWithOptions } from "../../helpers.ts";
 
 export function range(value: number): number;
 export function range(values: CleanNumberArray): number;
-export function range(values: NumbersWithNullable, remove_na: true): number;
+export function range(values: NumbersWithNullable, removeNA: true): number;
 export function range(values: CleanNumberIterable): number;
 export function range(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function range(
   data:
@@ -42,15 +42,15 @@ export function range(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle single number case
   if (typeof data === "number") {
     return 0; // Range of a single value is 0
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(data) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(data) && !removeNA) {
     return null;
   }
 
@@ -58,14 +58,14 @@ export function range(
   const validValues = extractNumbersWithOptions(data, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error("No valid values found to calculate range");
     }
     return null;
   }
 
-  const min_val = Math.min(...validValues);
-  const max_val = Math.max(...validValues);
+  const minVal = Math.min(...validValues);
+  const maxVal = Math.max(...validValues);
 
-  return max_val - min_val;
+  return maxVal - minVal;
 }

@@ -151,7 +151,7 @@ export type ValidateJoinKey<
  * Statistics function error messages
  */
 export type NullableArrayWithoutRemoveNa =
-  "🚨 Array contains null values. Use remove_na: true to exclude them.";
+  "🚨 Array contains null values. Use removeNA: true to exclude them.";
 
 /**
  * Check if an array type contains nullable values
@@ -162,7 +162,7 @@ export type HasNullableValues<T> = T extends ReadonlyArray<infer U>
   : false;
 
 /**
- * Conditional type that shows error for nullable arrays without remove_na
+ * Conditional type that shows error for nullable arrays without removeNA
  * Similar to RestrictEmptyDataFrame but for nullable arrays
  */
 export type RestrictNullableArray<

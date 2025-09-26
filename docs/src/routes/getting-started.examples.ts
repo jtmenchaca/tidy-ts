@@ -1,50 +1,66 @@
 // Code examples for getting started
 export const gettingStartedExamples = {
-  quickTutorial: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  quickTutorial: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  
+// import { createDataFrame, s } from "@tidy-ts/dataframe" works as well
 
-// 1. Create a DataFrame from your data
+// Create DataFrame from rows
 const sales = createDataFrame([
   { region: "North", product: "Widget", quantity: 10, price: 100 },
-  { region: "North", product: "Gadget", quantity: 5, price: 200 },
   { region: "South", product: "Widget", quantity: 20, price: 100 },
-  { region: "South", product: "Gadget", quantity: 15, price: 200 },
   { region: "East", product: "Widget", quantity: 8, price: 100 },
 ]);
 
-// 2. Transform your data with method chaining
+// Complete data analysis workflow
 const analysis = sales
-
-  // Add calculated columns
   .mutate({ 
-    revenue: r => r.quantity * r.price,
-    category: r => r.quantity > 10 ? "High Volume" : "Standard"
+    // Use 'row' to access a neatly typed row while defining new columns - no type casting needed
+    revenue: (row) => row.quantity * row.price,
+
+    // Use standard function syntax for more complicated calculations.  The DataFrame will keep track of the types. 
+    totalTax: (row) => {
+      const taxRate = 0.08;
+      const taxPerItem = taxRate * row.price;
+      const totalTax = taxPerItem * row.quantity;
+      return totalTax
+    },
+
+    // Use 'index' to get the current row number, sometimes helpful for indexing into external arrays
+    row_number: (_row, index) => index,
+    
+    // Use 'df' to access the entire DataFrame when needed for a calculation
+    moreQuantityThanAvg: (row, _index, df) => row.quantity > s.mean(df.quantity)
   })
-
-  // Group by region
   .groupBy("region")
-
-  // Calculate summary statistics
   .summarize({
     total_revenue: (group) => s.sum(group.revenue),
     avg_quantity: (group) => s.mean(group.quantity),
-    product_count: (group) => group.nrows()
+    product_count: (group) => group.nrows() // We have some helpers to calculate commonly needed values
   })
-
-  // Sort by revenue (highest first)
   .arrange("total_revenue", "desc");
 
-// 3. View your results
-analysis.print();`,
+// Pretty print the table with the .print() method
+analysis.print("Sales Analysis");`,
 
   creatingDataFrames: `import { createDataFrame } from "@tidy-ts/dataframe";
 
+// Create DataFrame from rows
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
   { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
   { id: 3, name: "R2-D2", species: "Droid", mass: 32, height: 96 },
   { id: 4, name: "Darth Vader", species: "Human", mass: 136, height: 202 },
   { id: 5, name: "Chewbacca", species: "Wookiee", mass: 112, height: 228 },
-]);`,
+]);
+
+// Or create DataFrame from columns
+const salesFromColumns = createDataFrame({
+  columns: {
+    region: ["North", "South", "East"],
+    product: ["Widget", "Widget", "Widget"], 
+    quantity: [10, 20, 8],
+    price: [100, 100, 100]
+  }
+});`,
 
   addingColumnsWithMutate: `const example = people
   .mutate({

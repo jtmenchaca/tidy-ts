@@ -20,7 +20,7 @@ function JupyterNotebooksComponent() {
     >
       <CodeBlock
         title="Setup: Deno with Jupyter"
-        description="Tidy-TS works seamlessly with Deno's built-in Jupyter kernel"
+        description="Tidy-TS works with Deno's built-in Jupyter kernel"
         explanation="As long as you have Deno installed, your VSCode or Cursor editor should automatically detect and use the Deno kernel for .ipynb files. No configuration files needed!"
         code={`// 1. Install Deno (if not already installed)
 // Visit: https://docs.deno.com/runtime/getting_started/installation/

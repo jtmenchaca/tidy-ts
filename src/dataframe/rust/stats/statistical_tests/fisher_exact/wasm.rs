@@ -35,7 +35,7 @@ pub fn fishers_exact_test_wasm(
             },
             effect_size: EffectSize {
                 value: f64::NAN,
-                effect_type: EffectSizeType::OddsRatio.as_str().to_string(),
+                name: EffectSizeType::OddsRatio.as_str().to_string(),
             },
             method: alternative.to_string(),
             method_type: "exact".to_string(),

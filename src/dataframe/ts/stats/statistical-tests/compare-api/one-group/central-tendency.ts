@@ -9,7 +9,7 @@ import type {
   NumbersWithNullable,
   NumbersWithNullableIterable,
 } from "../../../helpers.ts";
-import { cleanNumeric, isNonNormal } from "../helpers.ts";
+import { cleanNumeric, normalityOK, residuals_oneSample } from "../helpers.ts";
 
 /**
  * Test if a single group's central tendency differs from a hypothesized value.
@@ -92,24 +92,33 @@ export function centralTendencyToValue({
   const cleanData = cleanNumeric(data);
 
   // ============================================================================
-  // DECISION TREE: One Group Central Tendency vs Value
+  // DECISION TREE: One Group Central Tendency vs Value (Evidence-Based Approach)
   // ============================================================================
-  // Decision logic from pseudocode:
-  // 1. If parametric = "auto" (default):
-  //    a. Can we test normality? (n >= 3 && n <= 5000)
-  //       - YES: Run Shapiro-Wilk test
-  //         - p > 0.05 (normal) → Use t-test
-  //         - p ≤ 0.05 (non-normal) → Use Wilcoxon signed-rank
-  //       - NO: Default to t-test (t-tests are robust to mild non-normality)
-  // 2. If parametric = "parametric": Use t-test
-  // 3. If parametric = "nonparametric": Use Wilcoxon signed-rank
+  // IF parametric == "auto":
+  //   r = residuals_oneSample(data, value)
+  //   n = length(r)
+  //   IF n > N_MODERATE_MAX: RETURN tTest_oneSample(data, value)
+  //   IF !normalityOK(r):
+  //     IF n >= 20: RETURN yuenT_oneSample(data, value, trim=TRIM_PROP)
+  //     ELSE:       RETURN wilcoxonSignedRank(data, value)
+  //   RETURN tTest_oneSample(data, value)
   // ============================================================================
 
   // Determine whether to use parametric test
   let useParametric: boolean;
   if (parametric === "auto") {
-    // Default to t-test when we can't test normality; t-tests are robust to mild non-normality
-    useParametric = !isNonNormal(cleanData);
+    const n = cleanData.length;
+
+    // For large samples, default to parametric regardless of normality
+    if (n > 300) { // N_MODERATE_MAX
+      useParametric = true;
+    } else {
+      // For smaller samples, test normality on residuals
+      const residuals = residuals_oneSample(cleanData, hypothesizedValue);
+      const residualsNormal = normalityOK(residuals);
+
+      useParametric = residualsNormal;
+    }
   } else {
     useParametric = parametric === "parametric";
   }

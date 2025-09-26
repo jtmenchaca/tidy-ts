@@ -15,6 +15,7 @@ import type { DunnTestResult } from "../../../../lib/tidy_ts_dataframe.d.ts";
  * - Data is not normally distributed
  * - Comparing rank-based differences rather than means
  * - Non-parametric alternative to parametric post-hoc tests
+ * - Corrects for multiple comparisons using Bonferroni adjustment
  *
  * @param groups Array of groups, where each group is an array of numbers
  * @param alpha Significance level (default: 0.05)

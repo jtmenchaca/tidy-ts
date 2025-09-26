@@ -33,7 +33,7 @@ pub fn kruskal_wallis_test_wasm(
                 degrees_of_freedom: f64::NAN,
                 effect_size: EffectSize {
                     value: f64::NAN,
-                    effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+                    name: EffectSizeType::EtaSquared.as_str().to_string(),
                 },
                 sample_size: 0,
             };
@@ -54,7 +54,7 @@ pub fn kruskal_wallis_test_wasm(
         degrees_of_freedom: f64::NAN,
         effect_size: EffectSize {
             value: f64::NAN,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: 0,
     })

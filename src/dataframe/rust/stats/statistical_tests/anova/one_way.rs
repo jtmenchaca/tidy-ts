@@ -105,7 +105,7 @@ where
         degrees_of_freedom: df_between,
         effect_size: EffectSize {
             value: eta_sq,
-            effect_type: EffectSizeType::EtaSquared.as_str().to_string(),
+            name: EffectSizeType::EtaSquared.as_str().to_string(),
         },
         sample_size: total_n as usize,
         r_squared,
@@ -251,7 +251,7 @@ where
         df2: df_denom,
         effect_size: EffectSize {
             value: omega_squared,
-            effect_type: EffectSizeType::OmegaSquared.as_str().to_string(),
+            name: EffectSizeType::OmegaSquared.as_str().to_string(),
         },
         sample_size: total_n,
         r_squared,

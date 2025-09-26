@@ -85,6 +85,30 @@ Deno.test("mutate with array values", () => {
   expect(result[1]).toHaveProperty("category", "heavy");
 });
 
+Deno.test("mutate throws on array length mismatch (ungrouped)", () => {
+  expect(() => {
+    try {
+      testData.mutate({ status: ["ok"] });
+    } catch (error) {
+      console.log("CAUGHT ERROR:", error);
+      throw error;
+    }
+  }).toThrow();
+});
+
+Deno.test("mutate throws on array length mismatch (grouped view)", () => {
+  const grouped = testData.groupBy("species");
+  // Grouped view still materializes two visible rows overall; provide wrong length
+  expect(() => {
+    try {
+      grouped.mutate({ label: ["a", "b", "c"] });
+    } catch (error) {
+      console.log("CAUGHT ERROR:", error);
+      throw error;
+    }
+  }).toThrow();
+});
+
 Deno.test("mutate object spec type inference", () => {
   const result = testData.mutate({
     new_mass: (row) => row.mass * 2,

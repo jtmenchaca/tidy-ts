@@ -1,6 +1,6 @@
-// tests/read_csv-types.test.ts
+// tests/readCSV-types.test.ts
 import { z } from "zod";
-import { type DataFrame, read_csv } from "@tidy-ts/dataframe";
+import { type DataFrame, readCSV } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 // Define a Zod schema for our CSV data
@@ -15,7 +15,7 @@ const PenguinsSchema = z.object({
   year: z.number(),
 });
 
-Deno.test("read_csv type inference and validation", async () => {
+Deno.test("readCSV type inference and validation", async () => {
   // Read CSV content with automatic type conversion and validation
   const penguinsCsv =
     `species,island,bill_length_mm,bill_depth_mm,flipper_length_mm,body_mass_g,sex,year
@@ -25,7 +25,7 @@ Adelie,Torgersen,40.3,18.0,195,3250,female,2007
 Adelie,Torgersen,NA,NA,NA,NA,NA,2007
 Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 
-  const penguins = await read_csv(penguinsCsv, PenguinsSchema, {
+  const penguins = await readCSV(penguinsCsv, PenguinsSchema, {
     skipEmptyLines: true,
     naValues: ["", "NA", "NULL", "null"],
   });
@@ -75,7 +75,7 @@ Adelie,Torgersen,36.7,19.3,193,3450,female,2007`;
 });
 
 // Test with different data types
-Deno.test("read_csv mixed data types", async () => {
+Deno.test("readCSV mixed data types", async () => {
   const MixedSchema = z.object({
     id: z.number(),
     name: z.string(),
@@ -90,7 +90,7 @@ Deno.test("read_csv mixed data types", async () => {
 3,Charlie,true,NA,
 4,Diana,false,92.0,A`;
 
-  const mixed = await read_csv(mixedCsv, MixedSchema, {
+  const mixed = await readCSV(mixedCsv, MixedSchema, {
     naValues: ["", "NA"],
   });
 
@@ -114,14 +114,14 @@ Deno.test("read_csv mixed data types", async () => {
 });
 
 // Test reading from actual CSV fixture file
-Deno.test("read_csv from fixture file", async () => {
+Deno.test("readCSV from fixture file", async () => {
   const UserSchema = z.object({
     user_id: z.number(),
     full_name: z.string(),
     email_address: z.string(),
   });
 
-  const users = await read_csv(
+  const users = await readCSV(
     "./src/dataframe/ts/io/fixtures/user-info.csv",
     UserSchema,
   );

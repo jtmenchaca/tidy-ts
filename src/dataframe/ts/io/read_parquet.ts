@@ -287,17 +287,17 @@ function isFilePath(input: string | ArrayBuffer): boolean {
  * });
  *
  * // Read from file
- * const df1 = await read_parquet("./data.parquet", schema);
+ * const df1 = await readParquet("./data.parquet", schema);
  *
  * // Parse from ArrayBuffer
  * const buffer = await Deno.readFile("./data.parquet");
- * const df2 = await read_parquet(buffer, schema);
+ * const df2 = await readParquet(buffer, schema);
  *
  * // Both are typed as DataFrame<z.output<typeof schema>>
  * ```
  */
 // deno-lint-ignore no-explicit-any
-export async function read_parquet<S extends z.ZodObject<any>>(
+export async function readParquet<S extends z.ZodObject<any>>(
   pathOrBuffer: string | ArrayBuffer,
   schema: S,
   opts: ParquetOptions & NAOpts = {},
@@ -342,7 +342,3 @@ export async function read_parquet<S extends z.ZodObject<any>>(
 
   return createDataFrame(rows, schema);
 }
-
-/*───────────────────────────────────────────────────────────────────────────┐
-│  5 · re-exports (optional)                                                 │
-└───────────────────────────────────────────────────────────────────────────*/

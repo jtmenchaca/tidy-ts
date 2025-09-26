@@ -11,11 +11,12 @@ import type {
 } from "../../../helpers.ts";
 import {
   cleanNumeric,
+  hasEqualVariances,
   hasManyTies,
-  isNonNormal,
+  normalityOK,
+  residuals_twoSample,
   smallSample2,
 } from "../helpers.ts";
-import { hasEqualVariances } from "../../levene.ts";
 
 /**
  * Compare the central tendencies of two independent groups.
@@ -26,7 +27,7 @@ import { hasEqualVariances } from "../../levene.ts";
  * Assumptions:
  * - Samples are independent and randomly drawn
  * - For parametric: Data in each group is approximately normally distributed
- * - For parametric: Automatically detects equal/unequal variances using Levene's test (unless `assumeEqualVariances` is provided)
+ * - For parametric: Automatically detects equal/unequal variances using the Brown-Forsythe modification of Levene's test (unless `assumeEqualVariances` is provided)
  * - For non-parametric: Tests stochastic dominance (whether one distribution tends to have larger values)
  *   Note: Only tests medians specifically when distributions have the same shape
  * - Auto mode: Defaults to t-test; switches to Mann-Whitney only if both groups show clear non-normality (p < 0.05)
@@ -34,7 +35,7 @@ import { hasEqualVariances } from "../../levene.ts";
  * @param x - First group's values
  * @param y - Second group's values
  * @param parametric - Use t-test (true), Mann-Whitney U test (false), or "auto" (default: "auto")
- * @param assumeEqualVariances - Assume equal variances for t-test (optional: if not provided, uses Levene's test to auto-detect)
+ * @param assumeEqualVariances - Assume equal variances for t-test (optional: if not provided, uses Brown-Forsythe Levene test to auto-detect)
  * @param alternative - Direction of the test ("two-sided", "less", "greater"), where "greater" means x > y
  * @param alpha - Significance level (default: 0.05)
  * @returns Test results with statistic, p-value, and effect size
@@ -115,49 +116,55 @@ export function centralTendencyToEachOther({
   const cleanY = cleanNumeric(y);
 
   // ============================================================================
-  // DECISION TREE: Two Groups Central Tendency to Each Other
+  // DECISION TREE: Two Groups Central Tendency (Evidence-Based Approach)
   // ============================================================================
-  // Decision logic from pseudocode:
-  // 1. If parametric = "auto" (default):
-  //    a. Can we test normality for both groups? (n >= 3 && n <= 5000)
-  //       - YES: Run Shapiro-Wilk on both groups
-  //         - Both groups normal (p > 0.05) → Use t-test with auto variance detection
-  //         - Both groups non-normal (p ≤ 0.05) → Use Mann-Whitney U
-  //         - Mixed results → Use t-test (robust to mild non-normality)
-  //       - NO: Default to t-test (t-tests are robust to mild non-normality)
-  // 2. If parametric = "parametric": Use t-test with auto variance detection
-  // 3. If parametric = "nonparametric": Use Mann-Whitney U
-  // 4. For t-test: Auto-detect equal/unequal variances using Levene's test (unless assumeEqualVariances provided)
-  // 5. For Mann-Whitney: Use exact test if small samples (n ≤ 8) and no ties
+  // IF parametric == "auto":
+  //   (rx, ry) = residuals_twoSample(x, y)
+  //   nmin = min(length(x), length(y))
+  //   IF nmin > N_MODERATE_MAX:
+  //     equalVar = (assumeEqualVariances provided) ? assumeEqualVariances
+  //                                                : hasEqualVariances([x, y], α=ALPHA)
+  //     RETURN tTest_independent(x, y, equalVariances=equalVar)
+  //   nonNormal = (!normalityOK(rx)) OR (!normalityOK(ry))
+  //   IF nonNormal:
+  //     IF nmin >= 20: RETURN yuenT_twoSample(x, y, trim=TRIM_PROP)
+  //     ELSE:          RETURN mannWhitney(x, y)
+  //   equalVar = (assumeEqualVariances provided) ? assumeEqualVariances
+  //                                              : hasEqualVariances([x, y], α=ALPHA)
+  //   RETURN tTest_independent(x, y, equalVariances=equalVar)
   // ============================================================================
+
+  const nmin = Math.min(cleanX.length, cleanY.length);
 
   // Determine whether to use parametric test
   let useParametric: boolean;
   if (parametric === "auto") {
-    // Default to t-test; switch to Mann-Whitney only if both groups show non-normality
-    // T-tests are robust to mild non-normality
-    const normalityThreshold = 0.05; // Standard threshold for normality testing
-    const xNonNormal = isNonNormal(cleanX, normalityThreshold);
-    const yNonNormal = isNonNormal(cleanY, normalityThreshold);
+    // For large samples (nmin > N_MODERATE_MAX), default to parametric regardless of normality
+    if (nmin > 300) { // N_MODERATE_MAX
+      useParametric = true;
+    } else {
+      // For smaller samples, test normality on residuals from each group's mean
+      const { rx, ry } = residuals_twoSample(cleanX, cleanY);
+      const nonNormal = !normalityOK(rx) || !normalityOK(ry);
 
-    useParametric = !(xNonNormal && yNonNormal);
+      // Use parametric unless both groups show clear non-normality
+      useParametric = !nonNormal;
+    }
   } else {
     useParametric = parametric === "parametric";
   }
 
   if (useParametric) {
-    // Auto-detect variance equality if not explicitly specified
-    let useEqualVar = assumeEqualVariances;
-    if (useEqualVar === undefined) {
-      // Use Levene's test to determine variance equality
-      useEqualVar = hasEqualVariances([cleanX, cleanY], 0.05);
-    }
+    // Determine variance equality
+    const equalVar = assumeEqualVariances !== undefined
+      ? assumeEqualVariances
+      : hasEqualVariances([cleanX, cleanY], 0.05);
 
     // Use independent samples t-test for parametric data
     return tTestIndependent({
       x: cleanX,
       y: cleanY,
-      equalVar: useEqualVar,
+      equalVar,
       alternative,
       alpha,
     });

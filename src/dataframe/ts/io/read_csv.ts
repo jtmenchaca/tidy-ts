@@ -277,17 +277,17 @@ function isFilePath(input: string): boolean {
  * });
  *
  * // Read from file
- * const df1 = await read_csv("./data.csv", schema);
+ * const df1 = await readCSV("./data.csv", schema);
  *
  * // Parse from raw content
  * const csvContent = "id,name,email,age\\n1,Alice,alice@example.com,25\\n2,Bob,bob@example.com,30";
- * const df2 = await read_csv(csvContent, schema);
+ * const df2 = await readCSV(csvContent, schema);
  *
  * // Both are typed as DataFrame<z.output<typeof schema>>
  * ```
  */
 // deno-lint-ignore no-explicit-any
-export async function read_csv<S extends z.ZodObject<any>>(
+export async function readCSV<S extends z.ZodObject<any>>(
   pathOrContent: string,
   schema: S,
   opts: CsvOptions & NAOpts = {},
@@ -319,7 +319,3 @@ export async function read_csv<S extends z.ZodObject<any>>(
 
   return createDataFrame(rows, schema);
 }
-
-/*───────────────────────────────────────────────────────────────────────────┐
-│  6 · re-exports (optional)                                                 │
-└───────────────────────────────────────────────────────────────────────────*/

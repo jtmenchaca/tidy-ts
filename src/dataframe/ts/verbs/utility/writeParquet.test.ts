@@ -1,7 +1,7 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { parquetReadObjects } from "hyparquet";
-import { write_parquet as writeParquet } from "./writeParquet.verb.ts";
+import { writeParquet } from "./writeParquet.verb.ts";
 
 Deno.test("writeParquet() basic functionality", async () => {
   const df = createDataFrame([

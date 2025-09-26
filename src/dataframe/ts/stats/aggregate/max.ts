@@ -15,8 +15,8 @@ import {
  * Find the maximum value in an array of numbers
  *
  * @param values - Array of numbers, or single number
- * @param remove_na - If true, guarantees a number return (throws if no valid values)
- * @returns The maximum value, or null if no valid values and remove_na=false
+ * @param removeNA - If true, guarantees a number return (throws if no valid values)
+ * @returns The maximum value, or null if no valid values and removeNA=false
  *
  * @example
  * ```ts
@@ -34,11 +34,11 @@ import {
 
 export function max(value: number): number;
 export function max(values: CleanNumberArray): number;
-export function max(values: NumbersWithNullable, remove_na: true): number;
+export function max(values: NumbersWithNullable, removeNA: true): number;
 export function max(values: CleanNumberIterable): number;
 export function max(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
 export function max(
   values:
@@ -49,15 +49,15 @@ export function max(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | null {
   // Handle single number case
   if (typeof values === "number") {
     return values;
   }
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
@@ -70,7 +70,7 @@ export function max(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) {
+    if (removeNA) {
       throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MAX);
     }
     return null;

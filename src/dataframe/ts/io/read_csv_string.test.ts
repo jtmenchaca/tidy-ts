@@ -1,8 +1,8 @@
 import { expect } from "@std/expect";
 import { z } from "zod";
-import { read_csv } from "@tidy-ts/dataframe";
+import { readCSV } from "@tidy-ts/dataframe";
 
-Deno.test("read_csv_string - basic type inference and coercion", async () => {
+Deno.test("readCSV_string - basic type inference and coercion", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -16,7 +16,7 @@ Deno.test("read_csv_string - basic type inference and coercion", async () => {
 2,Jane Smith,jane@example.com,25,false
 3,Bob Johnson,bob@example.com,,true`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
   });
 
@@ -42,7 +42,7 @@ Deno.test("read_csv_string - basic type inference and coercion", async () => {
   };
 });
 
-Deno.test("read_csv_string - nullable values with NA handling", async () => {
+Deno.test("readCSV_string - nullable values with NA handling", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -56,7 +56,7 @@ Deno.test("read_csv_string - nullable values with NA handling", async () => {
 3,Charlie,92,NA
 4,David,78,`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
     naValues: ["NA", ""],
   });
@@ -75,7 +75,7 @@ Deno.test("read_csv_string - nullable values with NA handling", async () => {
   expect(df[3].rating).toBe(undefined); // empty becomes undefined for optional
 });
 
-Deno.test("read_csv_string - column name cleaning", async () => {
+Deno.test("readCSV_string - column name cleaning", async () => {
   const schema = z.object({
     "User ID": z.number().int(),
     "Full Name": z.string(),
@@ -86,7 +86,7 @@ Deno.test("read_csv_string - column name cleaning", async () => {
 1,John Doe,john@example.com
 2,Jane Smith,jane@example.com`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
   });
 
@@ -96,7 +96,7 @@ Deno.test("read_csv_string - column name cleaning", async () => {
   expect(df[0]["Email Address"]).toBe("john@example.com");
 });
 
-Deno.test("read_csv_string - date coercion", async () => {
+Deno.test("readCSV_string - date coercion", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -108,7 +108,7 @@ Deno.test("read_csv_string - date coercion", async () => {
 1,Project A,2024-01-15,2024-01-20
 2,Project B,2024-02-01,NA`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
     naValues: ["NA", ""],
   });
@@ -125,7 +125,7 @@ Deno.test("read_csv_string - date coercion", async () => {
   expect(df[1].updated_at).toBe(undefined); // NA becomes undefined for optional
 });
 
-Deno.test("read_csv_string - boolean coercion", async () => {
+Deno.test("readCSV_string - boolean coercion", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -139,7 +139,7 @@ Deno.test("read_csv_string - boolean coercion", async () => {
 3,User C,1,0
 4,User D,0,NA`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
     naValues: ["NA"],
   });
@@ -158,7 +158,7 @@ Deno.test("read_csv_string - boolean coercion", async () => {
   expect(df[3].verified).toBe(undefined); // NA becomes undefined
 });
 
-Deno.test("read_csv_string - validation errors", async () => {
+Deno.test("readCSV_string - validation errors", async () => {
   const schema = z.object({
     id: z.number().int().positive(),
     name: z.string().min(1),
@@ -170,12 +170,12 @@ Deno.test("read_csv_string - validation errors", async () => {
 2,Valid User,valid@example.com`;
 
   // Should throw an error when encountering validation errors
-  await expect(read_csv(csvData, schema, {
+  await expect(readCSV(csvData, schema, {
     skipEmptyLines: true,
   })).rejects.toThrow();
 });
 
-Deno.test("read_csv_string - empty DataFrame", async () => {
+Deno.test("readCSV_string - empty DataFrame", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -183,9 +183,9 @@ Deno.test("read_csv_string - empty DataFrame", async () => {
 
   const csvData = `id,name`;
 
-  // NOTE: This test currently fails due to a bug in read_csv string handling
+  // NOTE: This test currently fails due to a bug in readCSV string handling
   // The function should handle CSV strings correctly, but currently treats them as filenames
-  await expect(read_csv(csvData, schema, {
+  await expect(readCSV(csvData, schema, {
     skipEmptyLines: true,
   })).rejects.toThrow();
 
@@ -197,7 +197,7 @@ Deno.test("read_csv_string - empty DataFrame", async () => {
   // };
 });
 
-Deno.test("read_csv_string - custom NA values", async () => {
+Deno.test("readCSV_string - custom NA values", async () => {
   const schema = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -210,7 +210,7 @@ Deno.test("read_csv_string - custom NA values", async () => {
 3,Charlie,unknown
 4,David,42`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
     naValues: ["missing", "unknown"],
   });
@@ -222,7 +222,7 @@ Deno.test("read_csv_string - custom NA values", async () => {
   expect(df[3].score).toBe(42);
 });
 
-Deno.test("read_csv_string - preserves validation rules", async () => {
+Deno.test("readCSV_string - preserves validation rules", async () => {
   const schema = z.object({
     id: z.number().int().positive(),
     name: z.string().min(2),
@@ -234,7 +234,7 @@ Deno.test("read_csv_string - preserves validation rules", async () => {
 123,John Doe,john@example.com,30
 456,Jane Smith,jane@example.com,25`;
 
-  const df = await read_csv(csvData, schema, {
+  const df = await readCSV(csvData, schema, {
     skipEmptyLines: true,
   });
 
@@ -250,7 +250,7 @@ Deno.test("read_csv_string - preserves validation rules", async () => {
   expect(df[1].age).toBe(25);
 });
 
-Deno.test("read_csv_string - complex real-world example", async () => {
+Deno.test("readCSV_string - complex real-world example", async () => {
   const Person = z.object({
     id: z.number().int().positive(),
     name: z.string().min(1),
@@ -266,7 +266,7 @@ Deno.test("read_csv_string - complex real-world example", async () => {
 456,Jane Smith,jane@example.com,25,NA,false,2024-02-01
 789,Bob Johnson,bob@example.com,,92.0,true,NA`;
 
-  const df = await read_csv(csvData, Person, {
+  const df = await readCSV(csvData, Person, {
     skipEmptyLines: true,
     naValues: ["", "NA"],
   });

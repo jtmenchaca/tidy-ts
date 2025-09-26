@@ -327,7 +327,7 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
 
   if (prop === "transpose") {
     return (expectedRows: number) => {
-      return transpose({ number_of_rows: expectedRows })(df as any);
+      return transpose({ numberOfRows: expectedRows })(df as any);
     };
   }
 

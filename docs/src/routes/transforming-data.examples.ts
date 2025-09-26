@@ -70,7 +70,7 @@ const filtered = objectExample
     finalValue: (row) => row.calculations.quadrupleMass * 2
   });`,
 
-  usingStatsFunctions: `// Use the stats module for advanced calculations
+  usingStatsFunctions: `// Use the stats module for calculations
 const withStats = people
   .mutate({
     // Calculate z-score for mass

@@ -15,6 +15,7 @@ import type { GamesHowellTestResult } from "../../../../lib/tidy_ts_dataframe.d.
  * - Groups have unequal variances (violates ANOVA assumption)
  * - Sample sizes are unequal
  * - More robust than Tukey HSD for heterogeneous data
+ * - Automatically corrects for multiple comparisons using Welch's t-test with adjusted degrees of freedom
  *
  * @param groups Array of groups, where each group is an array of numbers
  * @param alpha Significance level (default: 0.05)

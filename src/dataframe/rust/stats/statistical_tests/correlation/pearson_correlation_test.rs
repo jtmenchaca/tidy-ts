@@ -5,7 +5,7 @@ use super::super::super::core::{
         TestStatistic, TestStatisticName,
     },
 };
-use super::super::super::distributions::{students_t, normal};
+use super::super::super::distributions::{normal, students_t};
 
 /// Calculate Pearson correlation coefficient
 fn pearson_correlation(x: &[f64], y: &[f64]) -> f64 {
@@ -49,7 +49,7 @@ pub fn pearson_test(
         // Normal case: calculate test statistic
         let df = (n - 2) as f64;
         let t_stat = r * (df / (1.0 - r * r)).sqrt();
-        
+
         // Calculate p-value using students_t distribution
         let p = match alternative {
             AlternativeType::TwoSided => 2.0 * students_t::pt(t_stat.abs(), df, false, false),
@@ -75,25 +75,25 @@ pub fn pearson_test(
         // Standard error: sigma = 1 / sqrt(n - 3)
         let sigma = 1.0 / (n as f64 - 3.0).sqrt();
         let conf_level = 1.0 - alpha;
-        
+
         let (lower_z, upper_z) = match alternative {
             AlternativeType::Less => {
                 // One-sided: (-Inf, z + sigma * qnorm(conf.level))
                 let upper_z = z + sigma * normal::qnorm(conf_level, 0.0, 1.0, true, false);
                 (f64::NEG_INFINITY, upper_z)
-            },
+            }
             AlternativeType::Greater => {
                 // One-sided: (z - sigma * qnorm(conf.level), Inf)
                 let lower_z = z - sigma * normal::qnorm(conf_level, 0.0, 1.0, true, false);
                 (lower_z, f64::INFINITY)
-            },
+            }
             AlternativeType::TwoSided => {
                 // Two-sided: z ± sigma * qnorm((1 + conf.level) / 2)
                 let margin = sigma * normal::qnorm((1.0 + conf_level) / 2.0, 0.0, 1.0, true, false);
                 (z - margin, z + margin)
             }
         };
-        
+
         // Transform back from z-space to correlation space using tanh
         ConfidenceInterval {
             lower: lower_z.tanh(),
@@ -110,19 +110,19 @@ pub fn pearson_test(
     };
 
     Ok(PearsonCorrelationTestResult {
+        test_name: "Pearson correlation test".to_string(),
+        p_value,
+        effect_size: EffectSize {
+            value: r,
+            name: EffectSizeType::PearsonsR.as_str().to_string(),
+        },
         test_statistic: TestStatistic {
             value: t,
             name: TestStatisticName::TStatistic.as_str().to_string(),
         },
-        p_value,
-        test_name: "Pearson correlation test".to_string(),
-        alpha,
-        error_message: None,
         confidence_interval,
         degrees_of_freedom: (n - 2) as f64,
-        effect_size: EffectSize {
-            value: r,
-            effect_type: EffectSizeType::PearsonsR.as_str().to_string(),
-        },
+        alpha,
+        error_message: None,
     })
 }

@@ -22,6 +22,7 @@ import { Route as GroupingAggregationRouteImport } from "./routes/grouping-aggre
 import { Route as GettingStartedRouteImport } from "./routes/getting-started.tsx"
 import { Route as FilteringRowsRouteImport } from "./routes/filtering-rows.tsx"
 import { Route as DataframeBasicsRouteImport } from "./routes/dataframe-basics.tsx"
+import { Route as DataVisualizationRouteImport } from "./routes/data-visualization.tsx"
 import { Route as DataIoRouteImport } from "./routes/data-io.tsx"
 import { Route as CreatingDataframesRouteImport } from "./routes/creating-dataframes.tsx"
 import { Route as CombiningDataframesRouteImport } from "./routes/combining-dataframes.tsx"
@@ -95,6 +96,11 @@ const DataframeBasicsRoute = DataframeBasicsRouteImport.update({
   path: "/dataframe-basics",
   getParentRoute: () => rootRouteImport,
 } as any)
+const DataVisualizationRoute = DataVisualizationRouteImport.update({
+  id: "/data-visualization",
+  path: "/data-visualization",
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DataIoRoute = DataIoRouteImport.update({
   id: "/data-io",
   path: "/data-io",
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
   "/data-io": typeof DataIoRoute
+  "/data-visualization": typeof DataVisualizationRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
   "/data-io": typeof DataIoRoute
+  "/data-visualization": typeof DataVisualizationRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -184,6 +192,7 @@ export interface FileRoutesById {
   "/combining-dataframes": typeof CombiningDataframesRoute
   "/creating-dataframes": typeof CreatingDataframesRoute
   "/data-io": typeof DataIoRoute
+  "/data-visualization": typeof DataVisualizationRoute
   "/dataframe-basics": typeof DataframeBasicsRoute
   "/filtering-rows": typeof FilteringRowsRoute
   "/getting-started": typeof GettingStartedRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | "/combining-dataframes"
     | "/creating-dataframes"
     | "/data-io"
+    | "/data-visualization"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -230,6 +240,7 @@ export interface FileRouteTypes {
     | "/combining-dataframes"
     | "/creating-dataframes"
     | "/data-io"
+    | "/data-visualization"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -252,6 +263,7 @@ export interface FileRouteTypes {
     | "/combining-dataframes"
     | "/creating-dataframes"
     | "/data-io"
+    | "/data-visualization"
     | "/dataframe-basics"
     | "/filtering-rows"
     | "/getting-started"
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   CombiningDataframesRoute: typeof CombiningDataframesRoute
   CreatingDataframesRoute: typeof CreatingDataframesRoute
   DataIoRoute: typeof DataIoRoute
+  DataVisualizationRoute: typeof DataVisualizationRoute
   DataframeBasicsRoute: typeof DataframeBasicsRoute
   FilteringRowsRoute: typeof FilteringRowsRoute
   GettingStartedRoute: typeof GettingStartedRoute
@@ -385,6 +398,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof DataframeBasicsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    "/data-visualization": {
+      id: "/data-visualization"
+      path: "/data-visualization"
+      fullPath: "/data-visualization"
+      preLoaderRoute: typeof DataVisualizationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     "/data-io": {
       id: "/data-io"
       path: "/data-io"
@@ -443,6 +463,7 @@ const rootRouteChildren: RootRouteChildren = {
   CombiningDataframesRoute: CombiningDataframesRoute,
   CreatingDataframesRoute: CreatingDataframesRoute,
   DataIoRoute: DataIoRoute,
+  DataVisualizationRoute: DataVisualizationRoute,
   DataframeBasicsRoute: DataframeBasicsRoute,
   FilteringRowsRoute: FilteringRowsRoute,
   GettingStartedRoute: GettingStartedRoute,

@@ -15,11 +15,11 @@ export type SummariseColumnsSpec<
   C extends keyof ColumnTypeMap,
 > = {
   /** The type of columns to operate on */
-  col_type: C;
+  colType: C;
   /** Array of column names to apply functions to */
   columns: (keyof T)[];
   /** Array of new column specifications */
-  new_columns: Array<{
+  newColumns: Array<{
     /** Prefix for new column names */
     prefix: string;
     /** Function to apply to each column array */
@@ -39,7 +39,7 @@ type ExtractPrefixes<NewCols extends readonly { prefix: string }[]> = {
   [I in keyof NewCols]: NewCols[I] extends { prefix: infer P } ? P : never;
 };
 type ExtractColumns<Spec> = Spec extends { columns: infer Cols } ? Cols : never;
-type ExtractNewColumns<Spec> = Spec extends { new_columns: infer NewCols }
+type ExtractNewColumns<Spec> = Spec extends { newColumns: infer NewCols }
   ? NewCols
   : never;
 type ExtractPrefixesFromNewCols<NewCols> = NewCols extends
@@ -95,9 +95,9 @@ type GenerateColumnNamesWithTypes<
  * ```ts
  * // Numeric columns
  * pipe(df, summarise_columns({
- *   col_type: "number",
+ *   colType: "number",
  *   columns: ["score1", "score2", "score3"],
- *   new_columns: [
+ *   newColumns: [
  *     { prefix: "mean_", fn: (col) => mean(col) },
  *     { prefix: "sum_", fn: (col) => sum(col) }
  *   ]
@@ -105,16 +105,16 @@ type GenerateColumnNamesWithTypes<
  *
  * // Grouped: one row per group
  * pipe(df, group_by("age"), summarise_columns({
- *   col_type: "number",
+ *   colType: "number",
  *   columns: ["score1", "score2"],
- *   new_columns: [{ prefix: "mean_", fn: (col) => mean(col) }]
+ *   newColumns: [{ prefix: "mean_", fn: (col) => mean(col) }]
  * }))
  *
  * // String column operations
  * pipe(df, summarise_columns({
- *   col_type: "string",
+ *   colType: "string",
  *   columns: ["name", "city"],
- *   new_columns: [
+ *   newColumns: [
  *     { prefix: "count_", fn: (col) => col.length },
  *     { prefix: "unique_", fn: (col) => new Set(col).size }
  *   ]
@@ -141,7 +141,7 @@ export function summarise_columns<
   }[],
   K extends keyof T,
 >(
-  spec: { col_type: C; columns: Cols; new_columns: NewCols },
+  spec: { colType: C; columns: Cols; newColumns: NewCols },
 ): (df: GroupedDataFrame<T, K>) => DataFrame<
   Prettify<Pick<T, K> & GenerateColumnNamesWithTypes<Cols, NewCols>>
 >;
@@ -156,7 +156,7 @@ export function summarise_columns<
     fn: (col: ColumnTypeMap[C]) => any;
   }[],
 >(
-  spec: { col_type: C; columns: Cols; new_columns: NewCols },
+  spec: { colType: C; columns: Cols; newColumns: NewCols },
 ): (df: DataFrame<T>) => DataFrame<
   Prettify<GenerateColumnNamesWithTypes<Cols, NewCols>>
 >;
@@ -224,7 +224,7 @@ export function summarise_columns<
             groupData as unknown as DataFrame<T>,
             col,
           );
-          for (const newCol of spec.new_columns) {
+          for (const newCol of spec.newColumns) {
             const newColName = `${newCol.prefix}${String(col)}`;
             (result as any)[newColName] = newCol.fn(columnData);
           }
@@ -237,7 +237,7 @@ export function summarise_columns<
       const result: object = {};
       for (const col of spec.columns) {
         const columnData = getColumnData(df as DataFrame<T>, col);
-        for (const newCol of spec.new_columns) {
+        for (const newCol of spec.newColumns) {
           const newColName = `${newCol.prefix}${String(col)}`;
           (result as any)[newColName] = newCol.fn(columnData);
         }

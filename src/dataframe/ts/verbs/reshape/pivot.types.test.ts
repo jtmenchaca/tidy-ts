@@ -18,9 +18,9 @@ const _wideData = createDataFrame([
 // 1. Test basic pivot_wider type inference
 const basicWider = longData
   .pivotWider({
-    names_from: "variable",
-    values_from: "value",
-    expected_columns: ["x", "y"],
+    namesFrom: "variable",
+    valuesFrom: "value",
+    expectedColumns: ["x", "y"],
   });
 
 const _basicWiderTypeCheck: DataFrame<{

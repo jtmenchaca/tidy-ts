@@ -66,81 +66,104 @@ const cummax = s.cummax(values);
 console.log("Cumulative sum:", cumsum);
 console.log("Cumulative max:", cummax);`,
 
-  distributionFunctions: `import { stats as s } from "@tidy-ts/dataframe";
+  distributionFunctions: `import { s } from "@tidy-ts/dataframe";
 
-// Normal distribution with intuitive function names
-const normalSample = s.dist.normal.random(0, 1);  // Random sample from N(0,1)
-const normalDensity = s.dist.normal.density(0, 0, 1);  // PDF at x=0
-const normalCDF = s.dist.normal.probability(0, 0, 1);  // CDF at x=0
-const normalQuantile = s.dist.normal.quantile(0.5, 0, 1);  // 50th percentile
+// Individual distribution functions
+const randomValue = s.dist.normal.random({ mean: 0, standardDeviation: 1, sampleSize: 10 });        // Random sample
+const density = s.dist.normal.density({ at: 0, mean: 0, standardDeviation: 1});        // PDF at x=0
+const probability = s.dist.normal.probability({ at: 1.96, mean: 0, standardDeviation: 1 });  // CDF (P-value)
+const quantile = s.dist.normal.quantile({ probability: 0.975, mean: 0, standardDeviation: 1 });  // Critical value
 
-console.log("Normal random sample:", normalSample);
-console.log("Normal density at 0:", normalDensity);
-console.log("Normal CDF at 0:", normalCDF);
-console.log("Normal median:", normalQuantile);
-
-// Beta distribution for bounded random variables
-const betaSample = s.dist.beta.random(2, 3);  // Beta(2,3) sample
-const betaDensity = s.dist.beta.density(0.5, 2, 3);  // PDF at x=0.5
-
-console.log("Beta random sample:", betaSample);
-console.log("Beta density at 0.5:", betaDensity);
-
-// Chi-squared distribution for statistical testing
-const chiSquareCritical = s.dist.chiSquare.quantile(0.95, 1);  // 95th percentile
-const chiSquareP = s.dist.chiSquare.probability(3.84, 1);  // P-value calculation
-
-console.log("Chi-square critical value (α=0.05, df=1):", chiSquareCritical);
-console.log("Chi-square probability:", chiSquareP);
-
-// Generate multiple samples for analysis
-const samples = Array.from({length: 1000}, () => s.dist.normal.random(0, 1));
-const sampleMean = s.mean(samples);
-const sampleStd = s.stdev(samples);
-
-console.log("Sample mean (should be ~0):", sampleMean);
-console.log("Sample std (should be ~1):", sampleStd);`,
-
-  statisticalTests: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
-
-// Sample data for testing
-const groupA = [23, 25, 28, 30, 32, 29, 27];
-const groupB = [18, 20, 22, 24, 26, 21, 19];
-const groupC = [15, 17, 19, 21, 23, 18, 16];
-
-// One-sample t-test
-const tTestResult = s.test.t.oneSample(groupA, 25, "two-sided", 0.05);
-console.log("One-sample t-test:", {
-  statistic: tTestResult.statistic,
-  pValue: tTestResult.pValue,
-  significant: tTestResult.pValue < 0.05
+// Generate distribution data for visualization
+const normalPDFData = s.dist.normal.data({
+  mean: 0,
+  standardDeviation: 2,
+  type: "pdf",
+  range: [-4, 4],
+  points: 100,
 });
 
-// Independent two-sample t-test
-const tTestInd = s.test.t.independent(groupA, groupB, 0.05);
-console.log("Two-sample t-test p-value:", tTestInd.pValue);
+// Other distributions: beta, gamma, exponential, chi-square, t, f, uniform,
+// weibull, binomial, poisson, geometric, hypergeometric, and more
+const betaSample = s.dist.beta.random({ alpha: 2, beta: 5 });
+const chiSquareQuantile = s.dist.chiSquare.quantile({ probability: 0.95, degreesOfFreedom: 1 });`,
 
-// One-way ANOVA
-const anovaResult = s.test.anova.oneWay([groupA, groupB, groupC], 0.05);
-console.log("ANOVA F-statistic:", anovaResult.fStatistic);
-console.log("ANOVA p-value:", anovaResult.pValue);
+  compareAPI: `import { stats as s } from "@tidy-ts/dataframe";
 
-// Normality test
-const normalityTest = s.test.normality.shapiroWilk(groupA, 0.05);
-console.log("Shapiro-Wilk test for normality:", {
-  statistic: normalityTest.statistic,
-  pValue: normalityTest.pValue,
-  isNormal: normalityTest.pValue > 0.05
+// Compare API - designed to help you perform the analysis best suited to your needs
+const heights = [170, 165, 180, 175, 172, 168];
+const testResult = s.compare.oneGroup.centralTendency.toValue({
+  data: heights,
+  hypothesizedValue: 170,
+  parametric: "parametric" // Use "auto" for help deciding if parametric or non-parametric is best
+}); 
+console.log(testResult);
+
+// {
+//   test_name: "One-sample t-test",
+//   p_value: 0.47...,
+//   effect_size: { value: 0.31..., name: "Cohen's D" },
+//   test_statistic: { value: 0.76..., name: "T-Statistic" },
+//   confidence_interval: {
+//     lower: 166.08...,
+//     upper: 177.24...,
+//     confidence_level: 0.95
+//   },
+//   degrees_of_freedom: 5,
+//   alpha: 0.05
+// } 
+
+const group1 = [23, 45, 67, 34, 56, 78, 29, 41, 52, 38]; // Hours spent studying per week
+const group2 = [78, 85, 92, 73, 88, 95, 69, 81, 89, 76]; // Final exam scores
+const groupComparison = s.compare.twoGroups.association.toEachOther({
+  x: group1,
+  y: group2,
+  method: "pearson", // Use "auto" for help choosing the right correlation test
 });
+console.log(groupComparison);
 
-// Correlation test
-const x = [1, 2, 3, 4, 5, 6, 7];
-const y = [2, 4, 6, 8, 10, 12, 14];
-const corrTest = s.test.correlation.pearson(x, y, "two-sided", 0.05);
-console.log("Pearson correlation test:", {
-  correlation: corrTest.statistic,
-  pValue: corrTest.pValue
-});`,
+// Two-group comparison result: {
+//   test_name: "Pearson correlation test",
+//   p_value: 0.0003...,
+//   effect_size: { value: 0.90..., name: "Pearson's R" },
+//   test_statistic: { value: 5.95..., name: "T-Statistic" },
+//   confidence_interval: {
+//     lower: 0.63...,
+//     upper: 0.97...,
+//     confidence_level: 0.95
+//   },
+//   degrees_of_freedom: 8,
+//   alpha: 0.05
+// }`,
+
+  specificTests: `// If you'd prefer to have the specific test instead, we provide that via the test API as well. 
+const data = [170, 165, 180, 175, 172, 168];
+const before = [23, 25, 28, 30, 32, 29, 27];
+const after = [25, 27, 30, 32, 34, 31, 29];
+const group1 = [23, 25, 28, 30, 32, 29, 27];
+const group2 = [18, 20, 22, 24, 26, 21, 19];
+const group3 = [15, 17, 19, 21, 23, 18, 16];
+
+const oneSampleT = s.test.t.oneSample({ data, mu: 170, alternative: "two-sided", alpha: 0.05 });
+const independentT = s.test.t.independent({ x: group1, y: group2, alpha: 0.05 });
+const pairedT = s.test.t.paired({ x: before, y: after, alpha: 0.05 });
+const anovaResult = s.test.anova.oneWay([group1, group2, group3], 0.05);
+const mannWhitney = s.test.nonparametric.mannWhitney(group1, group2, 0.05);
+const kruskalWallis = s.test.nonparametric.kruskalWallis([group1, group2], 0.05);
+const pearsonTest = s.test.correlation.pearson(group1, group2, "two-sided", 0.05);
+const shapiroWilk = s.test.normality.shapiroWilk(data, 0.05);`,
+
+  compareAPIReference: `// Here are the various functions that the compare API exposes for use.  
+// Each has various options to help both new and experienced users feel confident in what they're getting.
+s.compare.oneGroup.centralTendency.toValue(...)
+s.compare.oneGroup.proportions.toValue(...)
+s.compare.oneGroup.distribution.toNormal(...)
+s.compare.twoGroups.centralTendency.toEachOther(...)
+s.compare.twoGroups.association.toEachOther(...)
+s.compare.twoGroups.proportions.toEachOther(...)
+s.compare.twoGroups.distributions.toEachOther(...)
+s.compare.multiGroups.centralTendency.toEachOther(...)
+s.compare.multiGroups.proportions.toEachOther(...)`,
 
   importOptions: `// Option 1: Import with full name for clarity
 import { stats } from "@tidy-ts/dataframe";

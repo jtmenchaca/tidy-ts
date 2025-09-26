@@ -74,7 +74,7 @@ where
         },
         effect_size: EffectSize {
             value: effect_size,
-            effect_type: EffectSizeType::CohensD.as_str().to_string(),
+            name: EffectSizeType::CohensD.as_str().to_string(),
         },
     })
 }

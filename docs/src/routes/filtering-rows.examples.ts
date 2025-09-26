@@ -36,7 +36,7 @@ const withParameters = people
     // df: Access the entire DataFrame for relative comparisons
     const isAboveAverage = row.mass > 50; 
     
-    // Combine all three for sophisticated filtering
+    // Combine all three for complex filtering
     return isHeavy && isFirstHalf && isAboveAverage;
   });
 

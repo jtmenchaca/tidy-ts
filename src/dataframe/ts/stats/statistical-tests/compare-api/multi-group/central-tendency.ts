@@ -6,7 +6,11 @@ import {
   welchAnovaOneWay,
 } from "../../anova.ts";
 import { kruskalWallisTest } from "../../kruskal-wallis.ts";
-import { cleanNumeric, hasEqualVariances, isNonNormal } from "../helpers.ts";
+import {
+  allGroupsNormal,
+  cleanNumeric,
+  hasEqualVariances,
+} from "../helpers.ts";
 import { dunnTest, gamesHowellTest, tukeyHSD } from "../../post-hoc/index.ts";
 import type {
   DunnTestResult,
@@ -75,15 +79,16 @@ function runPostHocTest(
  * Assumptions:
  * - Groups are independent
  * - For ANOVA: Data in each group is approximately normally distributed
- * - For ANOVA: Automatically detects equal/unequal variances using Levene's test (unless `assumeEqualVariances` is provided)
+ * - For ANOVA: Automatically detects equal/unequal variances using the Brown-Forsythe modification of Levene's test (unless `assumeEqualVariances` is provided)
  * - For Kruskal-Wallis: Data is continuous or ordinal
+ * - Post-hoc tests automatically correct for multiple comparisons (Tukey HSD, Games-Howell, or Dunn's with Bonferroni)
  * - Null hypothesis: All groups have the same central tendency
  *
  * @param groups - Array of arrays, each containing values for one group
  * @param parametric - Use ANOVA (true) or Kruskal-Wallis (false)
  * @param alpha - Significance level (default: 0.05)
- * @param assumeEqualVariances - Assume equal variances for ANOVA (optional: if not provided, uses Levene's test to auto-detect)
- * @returns Test statistic (F or H), p-value, degrees of freedom, and effect size
+ * @param assumeEqualVariances - Assume equal variances for ANOVA (optional: if not provided, uses Brown-Forsythe Levene test to auto-detect)
+ * @returns Test statistic (F or H), p-value, degrees of freedom, effect size, and post-hoc comparisons (if significant)
  */
 export function centralTendencyToEachOther({
   groups,
@@ -210,7 +215,7 @@ export function centralTendencyToEachOther({
   // Determine variance equality if not explicitly specified
   let equalVariances: boolean;
   if (assumeEqualVariances === undefined && parametric !== "nonparametric") {
-    // Use simple variance ratio to determine variance equality
+    // Use Brown-Forsythe Levene test to determine variance equality
     equalVariances = hasEqualVariances(groups);
   } else {
     // Use the provided value or default to true for nonparametric
@@ -241,11 +246,32 @@ export function centralTendencyToEachOther({
       post_hoc: postHoc,
     }) as KruskalWallisWithPostHocResult;
   } else if (parametric === "auto") {
-    // Test normality in each group and decide
+    // Evidence-based approach: Test normality on residuals from group means
     const cleanGroups = groups.map((g) => cleanNumeric(g));
-    const anyNonNormal = cleanGroups.some((group) => isNonNormal(group, 0.05));
+    const nmin = Math.min(...cleanGroups.map((g) => g.length));
 
-    if (anyNonNormal) {
+    // For large samples, default to parametric regardless of normality
+    if (nmin > 300) { // N_MODERATE_MAX
+      if (equalVariances) {
+        const result = anovaOneWay(groups, alpha);
+        const postHoc = runPostHocTest("anova", groups, result, alpha);
+        return Object.assign(result, {
+          post_hoc: postHoc,
+        }) as OneWayAnovaWithPostHocResult;
+      } else {
+        const result = welchAnovaOneWay(groups, alpha);
+        const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
+        return {
+          ...result,
+          post_hoc: postHoc,
+        } as WelchAnovaWithPostHocResult;
+      }
+    }
+
+    // For smaller samples, test normality on residuals from group means
+    const groupsNormal = allGroupsNormal(cleanGroups, alpha);
+
+    if (!groupsNormal) {
       const result = kruskalWallisTest(groups, alpha);
       const postHoc = runPostHocTest("kruskal_wallis", groups, result, alpha);
       return Object.assign(result, {

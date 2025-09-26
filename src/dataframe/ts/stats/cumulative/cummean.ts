@@ -15,7 +15,7 @@ import type {
  * Returns an array where each element is the mean of all values up to that point.
  *
  * @param values - Array of numbers
- * @param remove_na - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
  * @returns Array of cumulative means
  *
  * @example
@@ -34,12 +34,12 @@ export function cummean(value: number): number;
 export function cummean(values: CleanNumberArray): number[];
 export function cummean(
   values: NumbersWithNullable,
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function cummean(values: CleanNumberIterable): number[];
 export function cummean(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number[];
 export function cummean(
   values:
@@ -50,7 +50,7 @@ export function cummean(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
 ): number | number[] | (number | null)[] {
   // Handle single number case
   if (typeof values === "number") {
@@ -64,12 +64,12 @@ export function cummean(
     return [];
   }
 
-  // Check for mixed types first - return null array unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null array unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return new Array(processArray.length).fill(null);
   }
 
-  if (remove_na) {
+  if (removeNA) {
     // Calculate cumulative mean while preserving array length, skipping NA values
     const result: number[] = [];
     let sum = 0;

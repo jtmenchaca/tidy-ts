@@ -25,7 +25,7 @@ import type {
  * Calculate the arithmetic mean (average) of numeric values.
  *
  * @param value - A single number or array of numbers
- * @param remove_na - Whether to exclude null/undefined values (when using mixed arrays)
+ * @param removeNA - Whether to exclude null/undefined values (when using mixed arrays)
  * @returns The arithmetic mean of all numeric values
  *
  * @example
@@ -38,7 +38,7 @@ import type {
  * // Array of numbers
  * stats.mean([1, 2, 3, 4]); // 2.5
  *
- * // Array with nulls (requires remove_na flag)
+ * // Array with nulls (requires removeNA flag)
  * stats.mean([1, 2, null, 4], true); // 2.33
  *
  * // Using with DataFrame columns
@@ -51,12 +51,12 @@ import type {
 export function mean(value: number): number;
 export function mean(values: CleanNumberArray): number;
 export function mean(values: CleanNumberIterable): number;
-export function mean(values: NumbersWithNullable, remove_na: true): number;
+export function mean(values: NumbersWithNullable, removeNA: true): number;
 export function mean(
   values: NumbersWithNullableIterable,
-  remove_na: true,
+  removeNA: true,
 ): number;
-// Error overload for nullable arrays without remove_na
+// Error overload for nullable arrays without removeNA
 export function mean(
   values: RestrictNullableArray<
     NumbersWithNullable,
@@ -84,13 +84,13 @@ export function mean(
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
-  remove_na: boolean = false,
+  removeNA: boolean = false,
   // deno-lint-ignore no-explicit-any
 ): any {
   if (typeof values === "number") return values;
 
-  // Check for mixed types first - return null unless remove_na is true
-  if (hasMixedTypes(values) && !remove_na) {
+  // Check for mixed types first - return null unless removeNA is true
+  if (hasMixedTypes(values) && !removeNA) {
     return null;
   }
 
@@ -106,7 +106,7 @@ export function mean(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (remove_na) throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MEAN);
+    if (removeNA) throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MEAN);
     return null;
   }
 
