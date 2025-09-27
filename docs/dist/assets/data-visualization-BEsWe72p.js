@@ -1,4 +1,4 @@
-import{j as t}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-D947jj47.js";import{C as r,a as i,b as s,c as o,d as n}from"./card-zfR3GFa3.js";import{D as c}from"./DocPageLayout-DU6leA-n.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-lQ5cgthg.js";const a={interactiveScatterPlot:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as t}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-CUjdLlo8.js";import{C as r,a as i,b as s,c as o,d as n}from"./card-HSAO52gV.js";import{D as c}from"./DocPageLayout-ipjS22Kh.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-CR8_k6wP.js";const a={interactiveScatterPlot:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 // Create sample sales data
 const salesData = createDataFrame([

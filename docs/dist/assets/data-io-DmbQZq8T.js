@@ -1,4 +1,4 @@
-import{j as a}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-D947jj47.js";import{C as r,a as i,b as o,c as n,d as s}from"./card-zfR3GFa3.js";import{D as d}from"./DocPageLayout-DU6leA-n.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-lQ5cgthg.js";const t={readingWithValidation:`import {readCSV, readParquet, readArrow } from "@tidy-ts/dataframe"
+import{j as a}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-CUjdLlo8.js";import{C as r,a as i,b as o,c as n,d as s}from"./card-HSAO52gV.js";import{D as d}from"./DocPageLayout-ipjS22Kh.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-CR8_k6wP.js";const t={readingWithValidation:`import {readCSV, readParquet, readArrow } from "@tidy-ts/dataframe"
 import { z } from "zod";
 
 // Read CSV with schema validation and error handling

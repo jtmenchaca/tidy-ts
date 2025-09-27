@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-D947jj47.js";import{C as a,a as n,b as t,c as r,d as c}from"./card-zfR3GFa3.js";import{D as l}from"./DocPageLayout-DU6leA-n.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-lQ5cgthg.js";const i={basicMutate:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-CUjdLlo8.js";import{C as a,a as n,b as t,c as r,d as c}from"./card-HSAO52gV.js";import{D as l}from"./DocPageLayout-ipjS22Kh.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-CR8_k6wP.js";const i={basicMutate:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },

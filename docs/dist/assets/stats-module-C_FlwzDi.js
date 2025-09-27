@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-D947jj47.js";import{C as i,a,b as n,c as o,d as r}from"./card-zfR3GFa3.js";import{D as l}from"./DocPageLayout-DU6leA-n.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-lQ5cgthg.js";const t={basicDescriptiveStats:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-CUjdLlo8.js";import{C as i,a,b as n,c as o,d as r}from"./card-HSAO52gV.js";import{D as l}from"./DocPageLayout-ipjS22Kh.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-CR8_k6wP.js";const t={basicDescriptiveStats:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const sampleData = createDataFrame([
   { id: 1, value: 10, category: "A", score: 85 },

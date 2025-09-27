@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-D947jj47.js";import{D as a}from"./DocPageLayout-DU6leA-n.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-zfR3GFa3.js";import"./index-lQ5cgthg.js";import"./shiki-themes-BheiPiei.js";const o={pivotWider:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-CUjdLlo8.js";import{D as a}from"./DocPageLayout-ipjS22Kh.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-HSAO52gV.js";import"./index-CR8_k6wP.js";import"./shiki-themes-BheiPiei.js";const o={pivotWider:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 // Create sales data in long format (one row per product per quarter)
 const salesLong = createDataFrame([
