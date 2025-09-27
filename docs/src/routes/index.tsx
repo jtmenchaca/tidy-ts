@@ -15,7 +15,12 @@ import {
   GithubIcon,
   ShieldIcon,
 } from "lucide-react";
-import { starWarsExample } from "./index.example.ts";
+import { 
+  dataCreationExample, 
+  dataTransformationExample, 
+  groupingExample, 
+  statisticalTestExample 
+} from "./index.examples.ts";
 import TidyTsLogo from "../assets/tidy-ts-logo-v2.svg";
 // deno-lint-ignore no-explicit-any
 export const Route = createFileRoute("/" as any)({
@@ -45,16 +50,16 @@ function HomeComponent() {
             </h2>
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
               Type-safe data analytics and statistics in TypeScript. Research
-              shows static typing prevents 15-38% of production
+              shows that static typing can prevent 15–38% of production
               bugs<sup className="text-blue-600 dark:text-blue-400">
                 <a
                   href="#research-evidence"
                   className="hover:underline"
-                  title="View research details and sources"
+                  title="Supporting research sources"
                 >
                   1,2,3
                 </a>
-              </sup>. Built for modern data science workflows.
+              </sup>. Designed for modern data science workflows.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
@@ -70,7 +75,7 @@ function HomeComponent() {
                   className="flex items-center gap-2"
                 >
                   <GithubIcon className="h-5 w-5" />
-                  View on GitHub
+                  Explore on GitHub
                 </a>
               </Button>
             </div>
@@ -85,7 +90,7 @@ function HomeComponent() {
                 Type-Safe Data Operations
               </CardTitle>
               <CardDescription className="text-base">
-                DataFrame operations with full TypeScript support
+                Perform DataFrame operations with full TypeScript support
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -113,13 +118,13 @@ function HomeComponent() {
                 Statistical Analysis
               </CardTitle>
               <CardDescription className="text-base">
-                Comprehensive statistical analysis toolkit
+                A comprehensive toolkit for statistical analysis
               </CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 80+ functions across descriptive statistics, hypothesis testing, and probability distributions. 
-                All tests rigorously vetted against results in R.
+                All tests are rigorously validated against results from R.
               </p>
               <Button
                 asChild
@@ -136,20 +141,153 @@ function HomeComponent() {
           </Card>
         </section>
         {/* Code Preview */}
-        <section className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/20 rounded-xl p-6 md:p-8 border border-orange-100 dark:border-orange-900/30">
-          <div className="text-center mb-6">
+        <section className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-6 md:p-8 border border-emerald-100 dark:border-emerald-900/30">
+          <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               See Tidy-TS in Action
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Data analysis workflow in just a few lines
+              A complete data analysis workflow, broken into focused examples
             </p>
           </div>
-          <CodeBlock
-            title=""
-            description=""
-            code={starWarsExample}
-          />
+          
+          <div className="space-y-4">
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
+              <CardHeader className="pb-1 px-4 pt-4">
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    1. Create DataFrames
+                  </CardTitle>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                  >
+                    {/* @ts-ignore TS thinks you need search prop */}
+                    <Link 
+                      to="/creating-dataframes"
+                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    >
+                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  Create DataFrames from arrays of objects with automatic type inference
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={dataCreationExample}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
+              <CardHeader className="pb-1 px-4 pt-4">
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    2. Transform Data
+                  </CardTitle>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                  >
+                    {/* @ts-ignore TS thinks you need search prop */}
+                    <Link 
+                      to="/transforming-data"
+                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    >
+                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  Add calculated columns using `mutate()` with access to row values, index, and full DataFrame context
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={dataTransformationExample}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
+              <CardHeader className="pb-1 px-4 pt-4">
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    3. Group and Summarize
+                  </CardTitle>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                  >
+                    {/* @ts-ignore TS thinks you need search prop */}
+                    <Link 
+                      to="/grouping-aggregation"
+                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    >
+                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  Group data by categories and calculate summary statistics with groupBy() and summarize()
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={groupingExample}
+                />
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
+              <CardHeader className="pb-1 px-4 pt-4">
+                <div className="flex items-center justify-between w-full">
+                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    4. Statistical Tests
+                  </CardTitle>
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                  >
+                    {/* @ts-ignore TS thinks you need search prop */}
+                    <Link 
+                      to="/stats-module"
+                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                    >
+                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                  Perform hypothesis testing and correlation analysis using the `stats` module
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-0">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={statisticalTestExample}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </section>
 
         {/* Research Evidence Section */}
@@ -162,8 +300,7 @@ function HomeComponent() {
               Proven Bug Prevention
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Empirical research shows static typing prevents significant bugs
-              in production
+              Empirical research shows that static typing significantly reduces production bugs
             </p>
           </div>
 
@@ -254,7 +391,7 @@ function HomeComponent() {
             Ready to get started?
           </h3>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto">
-            Start building data analytics with type safety.
+            Start building data analytics workflows with type safety.
           </p>
           <div className="flex justify-center">
             <Button
@@ -267,7 +404,7 @@ function HomeComponent() {
                 to="/getting-started"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >
-                Get Started <ArrowRightIcon className="ml-2 h-5 w-5" />
+                Start Building <ArrowRightIcon className="ml-2 h-5 w-5" />
               </Link>
             </Button>
           </div>
