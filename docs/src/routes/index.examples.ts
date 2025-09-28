@@ -28,20 +28,21 @@ const analysis = characters
     mass_lbs: (row) => row.mass_kg * 2.20462,  // Convert to pounds
     height_in: (row) => row.height_cm / 2.54,  // Convert to inches
     bmi: (row) => row.mass_kg / ((row.height_cm / 100) ** 2),  // Body Mass Index
-  });
+  })
+  .select("name", "mass_lbs", "height_in", "bmi");
 
 analysis.print("Character Analysis with Calculations");
 
 // Output:
 // Character Analysis with Calculations
-// ┌───────┬────────┬─────────┬───────────┬──────────┬───────────┬─────────┐
-// │ name  │ species│ mass_kg │ height_cm │ mass_lbs │ height_in │ bmi     │
-// ├───────┼────────┼─────────┼───────────┼──────────┼───────────┼─────────┤
-// │ Luke  │ Human  │ 77      │ 172       │ 169.76   │ 67.72     │ 26.03   │
-// │ Leia  │ Human  │ 49      │ 150       │ 108.03   │ 59.06     │ 21.78   │
-// │ C-3PO │ Droid  │ 75      │ 167       │ 165.35   │ 65.75     │ 26.89   │
-// │ R2-D2 │ Droid  │ 32      │ 96        │ 70.55    │ 37.80     │ 34.72   │
-// └───────┴────────┴─────────┴───────────┴──────────┴───────────┴─────────┘`;
+// ┌───────┬──────────┬───────────┬─────────┐
+// │ name  │ mass_lbs │ height_in │ bmi     │
+// ├───────┼──────────┼───────────┼─────────┤
+// │ Luke  │ 169.76   │ 67.72     │ 26.03   │
+// │ Leia  │ 108.03   │ 59.06     │ 21.78   │
+// │ C-3PO │ 165.35   │ 65.75     │ 26.89   │
+// │ R2-D2 │ 70.55    │ 37.80     │ 34.72   │
+// └───────┴──────────┴───────────┴─────────┘`;
 
 export const groupingExample = `import { stats as s } from "@tidy-ts/dataframe";
 
@@ -73,7 +74,7 @@ const droids = analysis.filter((r) => r.species === "Droid");
 const bmiTest = s.compare.twoGroups.centralTendency.toEachOther({
   x: humans.bmi,
   y: droids.bmi,
-  parametric: "auto", // Auto-detects appropriate test based on normality
+  parametric: "auto", // Auto-detects appropriate test
 });
 
 console.log(\`Droid conspiracy? Test: \${bmiTest.test_name}, p-value: \${s.round(bmiTest.p_value, 3)}\`);
@@ -85,7 +86,7 @@ console.log(\`Droid conspiracy? Test: \${bmiTest.test_name}, p-value: \${s.round
 const heightMassTest = s.compare.twoGroups.association.toEachOther({
   x: analysis.height_cm,
   y: analysis.mass_kg,
-  method: "auto", // Selects appropriate test between Pearson, Spearman, or Kendall
+  method: "auto", // Selects best choice between Pearson, Spearman, or Kendall
 });
 
 console.log(\`Height and mass correlation? 

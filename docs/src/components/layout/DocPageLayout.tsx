@@ -17,7 +17,7 @@ export function DocPageLayout({
   maxWidth = "max-w-4xl",
 }: DocPageLayoutProps) {
   return (
-    <div className="flex-1 p-8 overflow-y-auto">
+    <div className="flex-1 p-2 sm:p-4 md:p-8 overflow-y-auto">
       <div className={`${maxWidth} mx-auto space-y-8`}>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">

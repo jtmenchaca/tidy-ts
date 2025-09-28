@@ -21,109 +21,103 @@ function StatsModuleComponent() {
       description="Tidy-TS provides a statistical toolkit with 80+ functions across descriptive stats, hypothesis testing, and probability distributions."
       currentPath="/stats-module"
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>Descriptive Statistics</CardTitle>
-          <CardDescription>
-            Comprehensive descriptive statistics functions for data analysis
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <CodeBlock
-              title="Basic Descriptive Statistics"
-              description="Essential statistical measures for understanding your data"
-              explanation="The stats module provides all the descriptive statistics you need: mean(), median(), mode(), stdev(), variance(), min(), max(), range()"
-              code={statsModuleExamples.basicDescriptiveStats}
-            />
-            <CodeBlock
-              title="Quantiles and Percentiles"
-              description="Statistical measures for data distribution analysis"
-              explanation="Quantile and ranking functions: quantile(), percentileRank(), iqr(), quartiles(), rank(), denseRank(), percentileRank()"
-              code={statsModuleExamples.quantilesAndPercentiles}
-            />
-            <CodeBlock
-              title="Cumulative Functions"
-              description="Calculate running totals and cumulative statistics"
-              explanation="Cumulative operations for time series: cumsum(), cummean(), cummin(), cummax(), cumprod()"
-              code={statsModuleExamples.cumulativeFunctions}
-            />
-            <CodeBlock
-              title="Window Functions"
-              description="Lag, lead, and other window operations"
-              explanation="Window functions for time series analysis: lag(), lead()"
-              code={statsModuleExamples.mutateWithRanking}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <section className="space-y-6">
+        <div className="mb-2">
+          <h2 className="text-xl font-semibold text-muted-foreground mb-4">Descriptive Statistics</h2>
+        </div>
+        
+        <CodeBlock
+          title="Basic Descriptive Statistics"
+          description="Essential statistical measures for understanding your data"
+          explanation="The stats module provides all the descriptive statistics you need: mean(), median(), mode(), stdev(), variance(), min(), max(), range()"
+          code={statsModuleExamples.basicDescriptiveStats}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Probability Distributions</CardTitle>
-          <CardDescription>
-            The library provides 16 probability distributions, each with functions for random values, density, probability, quantile, and data generation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              <strong>Continuous distributions:</strong> normal, beta, gamma, exponential, chi-square, t, F, uniform, Weibull, log-normal, and Wilcoxon<br />
-              <strong>Discrete distributions:</strong> binomial, Poisson, geometric, negative binomial, and hypergeometric.
-            </p>
-            <CodeBlock
-              title="Probability Distribution Functions"
-              description="Individual distribution functions for statistical analysis"
-              explanation="Each distribution provides random(), density(), probability(), and quantile() functions. You can also generate distribution data for visualization."
-              code={statsModuleExamples.distributionFunctions}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        <CodeBlock
+          title="Quantiles and Percentiles"
+          description="Statistical measures for data distribution analysis"
+          explanation="Quantile and ranking functions: quantile(), percentileRank(), iqr(), quartiles(), rank(), denseRank(), percentileRank()"
+          code={statsModuleExamples.quantilesAndPercentiles}
+        />
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Hypothesis Testing</CardTitle>
-          <CardDescription>
-            The library provides many of the commonly needed statistical tests for routine analytics. These can at times be challenging to navigate for those who are new to statistics, so the library also provides a custom-designed comparison API designed to help you perform the analysis best suited to your needs. In either approach, you'll receive a neatly typed test result at the end.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <CodeBlock
-              title="Compare API - Intuitive Statistical Comparisons"
-              description="Custom-designed API to help you perform the analysis best suited to your needs"
-              explanation="All tests available are rigorously vetted against results in R using testing against randomly generated data. The Compare API guides you to the right statistical test with descriptive function names and helpful options."
-              code={statsModuleExamples.compareAPI}
-            />
-            <CodeBlock
-              title="Available Compare API Functions"
-              description="Complete reference of comparison functions available"
-              explanation="Each function has various options to help both new and experienced users feel confident in what they're getting."
-              code={statsModuleExamples.compareAPIReference}
-            />
-            <CodeBlock
-              title="Specific Test API"
-              description="Direct access to specific statistical tests if you prefer"
-              explanation="If you'd prefer to have the specific test instead, we provide that via the test API as well. All tests return detailed, typed results."
-              code={statsModuleExamples.specificTests}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        <CodeBlock
+          title="Cumulative Functions"
+          description="Calculate running totals and cumulative statistics"
+          explanation="Cumulative operations for time series: cumsum(), cummean(), cummin(), cummax(), cumprod()"
+          code={statsModuleExamples.cumulativeFunctions}
+        />
 
-      <CodeBlock
-        title="Import Options"
-        description="Flexible import patterns for different coding styles"
-        explanation="Import as 'stats' for clarity or 's' for brevity. Both provide access to the same statistical functionality."
-        code={statsModuleExamples.importOptions}
-      />
+        <CodeBlock
+          title="Window Functions"
+          description="Lag, lead, and other window operations"
+          explanation="Window functions for time series analysis: lag(), lead()"
+          code={statsModuleExamples.mutateWithRanking}
+        />
+      </section>
 
-      <Card>
+      <section className="space-y-6 mt-12">
+        <div>
+          <h2 className="text-xl font-semibold text-muted-foreground mb-3">Probability Distributions</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            16 probability distributions with functions for random values, density, probability, quantile, and data generation.<br />
+            <span className="inline-block mt-1"><strong>Continuous:</strong> normal, beta, gamma, exponential, chi-square, t, F, uniform, Weibull, log-normal, Wilcoxon</span><br />
+            <span className="inline-block mt-1"><strong>Discrete:</strong> binomial, Poisson, geometric, negative binomial, hypergeometric</span>
+          </p>
+        </div>
+
+        <CodeBlock
+          title="Probability Distribution Functions"
+          description="Individual distribution functions for statistical analysis"
+          explanation="Each distribution provides random(), density(), probability(), and quantile() functions. You can also generate distribution data for visualization."
+          code={statsModuleExamples.distributionFunctions}
+        />
+      </section>
+
+      <section className="space-y-6 mt-12">
+        <div>
+          <h2 className="text-xl font-semibold text-muted-foreground mb-3">Hypothesis Testing</h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            Comprehensive statistical tests with two approaches: a custom-designed Compare API that guides you to the right test,
+            and direct access to specific tests. All tests are rigorously validated against R.
+          </p>
+        </div>
+
+        <CodeBlock
+          title="Compare API - Intuitive Statistical Comparisons"
+          description="Custom-designed API to help you perform the analysis best suited to your needs"
+          explanation="All tests available are rigorously vetted against results in R using testing against randomly generated data. The Compare API guides you to the right statistical test with descriptive function names and helpful options."
+          code={statsModuleExamples.compareAPI}
+        />
+
+        <CodeBlock
+          title="Available Compare API Functions"
+          description="Complete reference of comparison functions available"
+          explanation="Each function has various options to help both new and experienced users feel confident in what they're getting."
+          code={statsModuleExamples.compareAPIReference}
+        />
+
+        <CodeBlock
+          title="Specific Test API"
+          description="Direct access to specific statistical tests if you prefer"
+          explanation="If you'd prefer to have the specific test instead, we provide that via the test API as well. All tests return detailed, typed results."
+          code={statsModuleExamples.specificTests}
+        />
+      </section>
+
+      <section className="mt-12">
+        <CodeBlock
+          title="Import Options"
+          description="Flexible import patterns for different coding styles"
+          explanation="Import as 'stats' for clarity or 's' for brevity. Both provide access to the same statistical functionality."
+          code={statsModuleExamples.importOptions}
+        />
+      </section>
+
+      <Card className="mt-12">
         <CardHeader>
-          <CardTitle>Complete Stats Function Reference</CardTitle>
+          <CardTitle>Function Reference</CardTitle>
           <CardDescription>
-            All 80+ statistical functions available in the stats module
+            Complete list of 80+ statistical functions organized by category
           </CardDescription>
         </CardHeader>
         <CardContent>

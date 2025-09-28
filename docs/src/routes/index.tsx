@@ -140,9 +140,9 @@ function HomeComponent() {
             </CardContent>
           </Card>
         </section>
-        {/* Code Preview */}
+        {/* Code Preview Header */}
         <section className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-6 md:p-8 border border-emerald-100 dark:border-emerald-900/30">
-          <div className="text-center mb-8">
+          <div className="text-center">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               See Tidy-TS in Action
             </h3>
@@ -150,13 +150,15 @@ function HomeComponent() {
               A complete data analysis workflow, broken into focused examples
             </p>
           </div>
-          
-          <div className="space-y-4">
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
-              <CardHeader className="pb-1 px-4 pt-4">
+        </section>
+
+        {/* Code Examples */}
+        <div className="space-y-4 -mx-4 md:mx-0">
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+              <CardHeader className="pb-3 px-4 pt-4">
                 <div className="flex items-center justify-between w-full">
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    1. Create DataFrames
+                    Create DataFrames
                   </CardTitle>
                   <Button
                     asChild
@@ -173,24 +175,26 @@ function HomeComponent() {
                     </Link>
                   </Button>
                 </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Create DataFrames from arrays of objects with automatic type inference
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0">
-                <CodeBlock
-                  title=""
-                  description=""
-                  code={dataCreationExample}
-                />
+                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                  <CodeBlock
+                    title=""
+                    description=""
+                    code={dataCreationExample}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
-              <CardHeader className="pb-1 px-4 pt-4">
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+              <CardHeader className="pb-3 px-4 pt-4">
                 <div className="flex items-center justify-between w-full">
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    2. Transform Data
+                    Transform Data
                   </CardTitle>
                   <Button
                     asChild
@@ -207,24 +211,26 @@ function HomeComponent() {
                     </Link>
                   </Button>
                 </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Add calculated columns using `mutate()` with access to row values, index, and full DataFrame context
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0">
-                <CodeBlock
-                  title=""
-                  description=""
-                  code={dataTransformationExample}
-                />
+                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                  <CodeBlock
+                    title=""
+                    description=""
+                    code={dataTransformationExample}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
-              <CardHeader className="pb-1 px-4 pt-4">
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+              <CardHeader className="pb-3 px-4 pt-4">
                 <div className="flex items-center justify-between w-full">
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    3. Group and Summarize
+                    Group and Summarize
                   </CardTitle>
                   <Button
                     asChild
@@ -241,24 +247,26 @@ function HomeComponent() {
                     </Link>
                   </Button>
                 </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Group data by categories and calculate summary statistics with groupBy() and summarize()
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0">
-                <CodeBlock
-                  title=""
-                  description=""
-                  code={groupingExample}
-                />
+                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                  <CodeBlock
+                    title=""
+                    description=""
+                    code={groupingExample}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2">
-              <CardHeader className="pb-1 px-4 pt-4">
+            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+              <CardHeader className="pb-3 px-4 pt-4">
                 <div className="flex items-center justify-between w-full">
                   <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    4. Statistical Tests
+                    Statistical Tests
                   </CardTitle>
                   <Button
                     asChild
@@ -275,20 +283,21 @@ function HomeComponent() {
                     </Link>
                   </Button>
                 </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400">
+                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
                   Perform hypothesis testing and correlation analysis using the `stats` module
                 </CardDescription>
               </CardHeader>
               <CardContent className="px-0">
-                <CodeBlock
-                  title=""
-                  description=""
-                  code={statisticalTestExample}
-                />
+                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                  <CodeBlock
+                    title=""
+                    description=""
+                    code={statisticalTestExample}
+                  />
+                </div>
               </CardContent>
             </Card>
-          </div>
-        </section>
+        </div>
 
         {/* Research Evidence Section */}
         <section

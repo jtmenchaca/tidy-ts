@@ -44,3 +44,12 @@ root.render(
     </QueryClientProvider>
   </StrictMode>,
 );
+
+// Handle redirects from 404.html for GitHub Pages
+const urlParams = new URLSearchParams(window.location.search);
+const currentRoute = urlParams.get("currentRoute");
+if (currentRoute) {
+  // Clean up the URL and navigate to the intended route
+  window.history.replaceState(null, "", window.location.pathname);
+  router.navigate({ to: `/${currentRoute}` });
+}
