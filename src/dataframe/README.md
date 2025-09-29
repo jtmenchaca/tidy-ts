@@ -29,6 +29,22 @@ npx jsr add @tidy-ts/dataframe // npm
 yarn add jsr:@tidy-ts/dataframe // yarn
 ```
 
+### Browser Setup
+For browser environments, call `setupTidyTS()` once before using any tidy-ts functions:
+
+```typescript
+import { setupTidyTS, createDataFrame, stats } from "@tidy-ts/dataframe";
+
+// Required in browsers - call once at app startup
+await setupTidyTS();
+
+// Then use normally
+const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
+const sum = stats.sum(df.a); // 4
+```
+
+> **Note**: `setupTidyTS()` is only needed in browsers. Node.js and Deno work without any setup.
+
 ## Quick Start
 ```typescript
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  

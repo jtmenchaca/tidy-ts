@@ -40,9 +40,11 @@ export async function setupTidyTS(url?: string | URL): Promise<void> {
   if (preloadPromise) return preloadPromise;
 
   // Resolve default WASM URL next to the lib output
+  // For ESM.sh, we need to construct the correct URL
+  const baseUrl = import.meta.url.replace(/\/es2022\/.*$/, "");
   const defaultUrl = new URL(
-    "../../lib/tidy_ts_dataframe.wasm",
-    import.meta.url,
+    "lib/tidy_ts_dataframe.wasm",
+    baseUrl + "/",
   );
   const wasmUrl = url ?? defaultUrl;
 

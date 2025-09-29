@@ -5,7 +5,7 @@
     <script type="importmap">
     {
         "imports": {
-            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe@0.1.12"
+            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe@0.1.14"
         }
     }
     </script>
@@ -33,8 +33,12 @@
             
             try {
                 // Test 1: Basic import
-                const { createDataFrame, stats } = await import('@tidy-ts/dataframe');
-                addTestResult('Basic Import', true, '- createDataFrame and stats imported');
+                const { createDataFrame, stats, setupTidyTS } = await import('@tidy-ts/dataframe');
+                addTestResult('Basic Import', true, '- createDataFrame, stats, and setupTidyTS imported');
+                
+                // Test 1.5: Setup for browser
+                await setupTidyTS();
+                addTestResult('Browser Setup', true, '- setupTidyTS() completed');
                 
                 // Test 2: DataFrame creation
                 const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);

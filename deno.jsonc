@@ -13,7 +13,7 @@
     "jsxImportSourceTypes": "npm:@types/react@^19.1.1"
   },
   "tasks": {
-    "ci": "deno fmt --check && deno lint && deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage cov_profile",
+    "ci": "deno fmt --check && deno lint && deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests --quiet",
     "ci:update-badge": "deno task ci && deno run --allow-read --allow-write --allow-run scripts/update-coverage-badge.ts",
     "benchmark:runner": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A runner.ts && cd ../..",
     "benchmark:analyze": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A analyze.ts && cd ../..",

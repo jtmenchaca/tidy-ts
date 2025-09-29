@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributions Test with Manual WASM - @tidy-ts/dataframe</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe@0.1.14"
+        }
+    }
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .output {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        h1 { color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Distributions Test with Manual WASM - @tidy-ts/dataframe</h1>
+        <p>This test uses the published library with manual WASM loading to test statistical distributions functionality.</p>
+        
+        <div id="status" class="status">Running internal test...</div>
+        <div id="output" class="output">Loading internal library...</div>
+    </div>
+
+    <script type="module">
+        const statusDiv = document.getElementById('status');
+        const outputDiv = document.getElementById('output');
+        
+        function log(message) {
+            outputDiv.textContent += message + '\n';
+            console.log(message);
+        }
+        
+        function setStatus(message, type = 'success') {
+            statusDiv.className = `status ${type}`;
+            statusDiv.textContent = message;
+        }
+        
+        try {
+            log("📊 Internal Distributions Test");
+            log("=" .repeat(50));
+            
+            // Import the published library
+            const { createDataFrame, s, setupTidyTS } = await import('@tidy-ts/dataframe');
+            log("✅ Library imported successfully");
+            
+            // Initialize WASM with the correct URL
+            await setupTidyTS("https://esm.sh/@jsr/tidy-ts__dataframe@0.1.14/lib/tidy_ts_dataframe.wasm");
+            log("✅ WASM initialized");
+            
+            // Check if statistical distributions are available
+            if (!s || !s.dist || !s.dist.normal) {
+                throw new Error("Statistical distributions API not available");
+            }
+            log("✅ Statistical distributions API available");
+            
+            // Generate PDF data using the new .data() method
+            log("\n🔹 Generating Normal Distribution PDF data...");
+            const normalPDFData = s.dist.normal.data({
+                mean: 0,
+                standardDeviation: 2,
+                type: "pdf",
+                range: [-4, 4],
+                points: 20, // Reduced for browser display
+            });
+            
+            log("✅ PDF data generated");
+            log("First 5 rows of PDF data:");
+            const pdfArray = normalPDFData.toArray();
+            pdfArray.slice(0, 5).forEach((row, i) => {
+                log(`  ${i + 1}. x: ${row.x.toFixed(2)}, density: ${row.density.toFixed(4)}`);
+            });
+            
+            // Generate CDF data using the new .data() method
+            log("\n🔹 Generating Normal Distribution CDF data...");
+            const normalCDFData = s.dist.normal.data({
+                mean: 0,
+                standardDeviation: 1,
+                type: "cdf",
+                range: [-4, 4],
+                points: 20, // Reduced for browser display
+            });
+            
+            log("✅ CDF data generated");
+            log("First 5 rows of CDF data:");
+            const cdfArray = normalCDFData.toArray();
+            cdfArray.slice(0, 5).forEach((row, i) => {
+                log(`  ${i + 1}. x: ${row.x.toFixed(2)}, probability: ${row.probability.toFixed(4)}`);
+            });
+            
+            // Join PDF and CDF data
+            log("\n🔹 Joining PDF and CDF data...");
+            const normalData = normalPDFData.leftJoin(normalCDFData, "x");
+            log("✅ Data joined successfully");
+            
+            // Create a multi-series line chart data (pivot for visualization)
+            log("\n🔹 Preparing data for visualization...");
+            const normalDataForGraph = normalData
+                .pivotLonger({
+                    cols: ["density", "probability"],
+                    namesTo: "distribution_type",
+                    valuesTo: "value",
+                });
+            
+            log("✅ Data prepared for visualization");
+            log("Sample of pivoted data:");
+            const graphArray = normalDataForGraph.toArray();
+            graphArray.slice(0, 6).forEach((row, i) => {
+                log(`  ${i + 1}. x: ${row.x.toFixed(2)}, type: ${row.distribution_type}, value: ${row.value.toFixed(4)}`);
+            });
+            
+            // Show summary statistics
+            log("\n📈 Summary Statistics:");
+            log("PDF Statistics:");
+            const pdfStats = normalPDFData.summarize({
+                min_density: (df) => Math.min(...df.density),
+                max_density: (df) => Math.max(...df.density),
+                mean_density: (df) => s.mean(df.density),
+                count: (df) => df.nrows(),
+            });
+            pdfStats.print();
+            
+            log("\nCDF Statistics:");
+            const cdfStats = normalCDFData.summarize({
+                min_probability: (df) => Math.min(...df.probability),
+                max_probability: (df) => Math.max(...df.probability),
+                mean_probability: (df) => s.mean(df.probability),
+                count: (df) => df.nrows(),
+            });
+            cdfStats.print();
+            
+            // Show final combined data
+            log("\n📊 Final Combined Data (first 10 rows):");
+            normalData.print();
+            
+            log("\n✅ Distributions test completed successfully!");
+            log("📝 This demonstrates that the statistical distributions API works");
+            log("   when using the published library with correct WASM loading.");
+            
+            setStatus("✅ Distributions test completed successfully!", "success");
+            
+        } catch (error) {
+            log(`❌ Error: ${error.message}`);
+            log(`Stack: ${error.stack}`);
+            setStatus("❌ Internal test failed!", "error");
+        }
+    </script>
+</body>
+</html>
