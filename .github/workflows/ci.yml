@@ -83,7 +83,6 @@ jobs:
       - name: Run tests with canary
         run: deno test -A --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests
 
-
   # Build and test the JSR package
   build-jsr:
     runs-on: ubuntu-latest
