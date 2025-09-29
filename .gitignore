@@ -16,6 +16,7 @@ target/
 # Coverage reports
 cov_profile/
 cov.lcov
+docs/public/coverage/
 
 
 # Temporary files

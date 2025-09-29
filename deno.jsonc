@@ -14,6 +14,7 @@
   },
   "tasks": {
     "ci": "deno fmt --check && deno lint && deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage cov_profile",
+    "ci:update-badge": "deno task ci && deno run --allow-read --allow-write --allow-run scripts/update-coverage-badge.ts",
     "benchmark:runner": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A runner.ts && cd ../..",
     "benchmark:analyze": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A analyze.ts && cd ../..",
     "benchmark": "deno task benchmark:runner && deno task benchmark:analyze",
@@ -29,13 +30,14 @@
     "test-glm": "deno test -A --parallel tests/glm/",
     "test-gee": "deno test -A --parallel tests/gee/",
     "test-runtimes": "cd tests/runtimes && bash test-runner.sh",
-    "coverage": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage cov_profile",
-    "coverage-html": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --html cov_profile",
-    "coverage-lcov": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --lcov --output=cov.lcov cov_profile",
-    "coverage-badge": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage cov_profile --detailed | grep -o '[0-9]*\\.[0-9]*%' | head -1 | sed 's/%//' | xargs -I {} echo '![Coverage](https://img.shields.io/badge/coverage-{}-brightgreen)'",
+    "coverage": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --html --exclude='lib/|rust/' cov_profile",
+    "coverage-html": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --html --exclude='lib/|rust/' cov_profile",
+    "coverage-docs": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --html --exclude='lib/|rust/' cov_profile && cp -r cov_profile/html/* docs/public/coverage/ && cd docs && bun run prerender && cd ..",
+    "coverage-lcov": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --lcov --exclude='lib/|rust/' --output=cov.lcov cov_profile",
+    "coverage-badge": "deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage --exclude='lib/|rust/' cov_profile --detailed | grep -o '[0-9]*\\.[0-9]*%' | head -1 | sed 's/%//' | xargs -I {} echo '![Coverage](https://img.shields.io/badge/coverage-{}-brightgreen)'",
     "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib",
     "docs:prerender": "cd docs && bun run prerender && cd ..",
-    "precommit": "deno task ci & deno task docs:prerender"
+    "precommit": "deno task ci:update-badge && deno task docs:prerender"
   },
   "importMap": "import_map.json",
   "nodeModulesDir": "auto",
