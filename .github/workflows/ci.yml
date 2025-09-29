@@ -40,6 +40,19 @@ jobs:
           git config --system core.autocrlf false
           git config --system core.eol lf
 
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: 'release'
+
+      - name: Install R packages
+        run: |
+          Rscript -e "install.packages(c('jsonlite', 'nortest', 'moments', 'fBasics'), repos='https://cran.r-project.org/')"
+
+      - name: Create output directories
+        run: |
+          mkdir -p examples/dataframe/output
+
       - name: Check formatting
         run: deno fmt --check
 
@@ -100,4 +113,4 @@ jobs:
         run: deno check src/dataframe/mod.ts
 
       - name: Test JSR package
-        run: deno test -A --allow-read=src/dataframe src/dataframe/
+        run: deno test -A --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests
