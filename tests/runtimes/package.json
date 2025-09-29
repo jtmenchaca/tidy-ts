@@ -11,7 +11,7 @@
     "test:sh": "bash test-runner.sh"
  },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.14"
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

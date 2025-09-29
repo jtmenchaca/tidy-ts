@@ -7,7 +7,7 @@
     <script type="importmap">
     {
         "imports": {
-            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe@0.1.14"
+            "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe@0.1.15"
         }
     }
     </script>
@@ -85,9 +85,8 @@
             const { createDataFrame, s, setupTidyTS } = await import('@tidy-ts/dataframe');
             log("✅ Library imported successfully");
             
-            // Initialize WASM (required for browser)
-            // Use the correct WASM URL from the same CDN
-            await setupTidyTS("https://esm.sh/@jsr/tidy-ts__dataframe@0.1.14/lib/tidy_ts_dataframe.wasm");
+            // Initialize WASM (should now work automatically with the fixed URL construction)
+            await setupTidyTS();
             log("✅ WASM initialized");
             
             // Check if statistical distributions are available
@@ -140,8 +139,8 @@
             const normalDataForGraph = normalData
                 .pivotLonger({
                     cols: ["density", "probability"],
-                    names_to: "distribution_type",
-                    values_to: "value",
+                    namesTo: "distribution_type",
+                    valuesTo: "value",
                 });
             
             log("✅ Data prepared for visualization");
