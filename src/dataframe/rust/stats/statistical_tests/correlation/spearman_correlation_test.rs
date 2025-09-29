@@ -123,26 +123,24 @@ pub fn spearman_test(
     // Follow R's approach: always return S statistic and calculate p-value accordingly
     // R: q <- (n^3 - n) * (1 - r) / 6
     let n_f = n as f64;
-    let _s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
+    let s_statistic = (n_f.powi(3) - n_f) * (1.0 - rho) / 6.0;
 
-    let (p_value, test_statistic_name, test_statistic_value) = if n <= 9 && !has_ties {
-        // Use exact permutation test for small samples without ties - report Rho directly
-        (
-            exact_spearman_p_value(n, rho_raw, &alternative),
-            "Rho".to_string(),
-            rho_raw,
-        )
+    let p_value = if n <= 9 && !has_ties {
+        // Use exact permutation test for small samples without ties
+        exact_spearman_p_value(n, rho_raw, &alternative)
     } else {
-        // Large sample or ties: use t-approximation - report T-statistic
+        // Large sample or ties: use t-approximation
         let df = (n - 2) as f64;
         let t = rho * (df / (1.0 - rho * rho)).sqrt();
-        let p = match alternative {
+        match alternative {
             AlternativeType::TwoSided => 2.0 * students_t::pt(t.abs(), df, false, false),
             AlternativeType::Greater => students_t::pt(t, df, false, false),
             AlternativeType::Less => students_t::pt(t, df, true, false),
-        };
-        (p, "T-Statistic".to_string(), t)
+        }
     };
+
+    // Always return S statistic to match R's cor.test()
+    let (test_statistic_name, test_statistic_value) = ("S".to_string(), s_statistic);
 
     Ok(SpearmanCorrelationTestResult {
         test_name: "Spearman's rank correlation rho".to_string(), // Match R's method name

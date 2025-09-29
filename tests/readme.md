@@ -1,0 +1,1 @@
+NOTE: core functionality dataframe tests are co-located with the implementation files. 

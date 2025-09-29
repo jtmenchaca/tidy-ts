@@ -13,6 +13,10 @@ examples/dataframe/output/
 target/
 **/*.rs.bk
 
+# Coverage reports
+cov_profile/
+cov.lcov
+
 
 # Temporary files
 /tmp/*

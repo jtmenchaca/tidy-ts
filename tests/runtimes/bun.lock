@@ -4,7 +4,7 @@
     "": {
       "name": "@tidy-ts/runtime-tests",
       "dependencies": {
-        "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.10",
+        "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@0.1.12",
       },
       "devDependencies": {
         "@playwright/test": "^1.55.0",
@@ -74,7 +74,7 @@
 
     "@playwright/test": ["@playwright/test@1.55.1", "", { "dependencies": { "playwright": "1.55.1" }, "bin": { "playwright": "cli.js" } }, "sha512-IVAh/nOJaw6W9g+RJVlIQJ6gSiER+ae6mKQ5CX1bERzQgbC1VSeBlwdvczT7pxb0GWiyrxH4TGKbMfDb4Sq/ig=="],
 
-    "@tidy-ts/dataframe": ["@jsr/tidy-ts__dataframe@0.1.10", "https://npm.jsr.io/~/11/@jsr/tidy-ts__dataframe/0.1.10.tgz", { "dependencies": { "@jsr/std__csv": "^1.0.6", "@uwdata/flechette": "^2.2.3", "hyparquet": "^1.17.8", "hyparquet-compressors": "^1.1.1", "hyparquet-writer": "^0.6.1", "vega": "^6.2.0", "vega-embed": "^7.0.2", "vega-lite": "^6.4.1", "zod": "^4.1.8" } }, "sha512-MGi1tbBCLS5AmaWj8bPE29rGU6So7KVFGDBcq8MzHtTZ1AicgoEGiWFkmKJ7jtvAbwQgI4lIVoBv+oBKguhEEA=="],
+    "@tidy-ts/dataframe": ["@jsr/tidy-ts__dataframe@0.1.12", "https://npm.jsr.io/~/11/@jsr/tidy-ts__dataframe/0.1.12.tgz", { "dependencies": { "@jsr/std__csv": "^1.0.6", "@uwdata/flechette": "^2.2.3", "hyparquet": "^1.17.8", "hyparquet-compressors": "^1.1.1", "vega": "^6.2.0", "vega-embed": "^7.0.2", "vega-lite": "^6.4.1", "zod": "^4.1.8" } }, "sha512-7y9H1wKN3a8/u88ya1sYGYlg6K75//0AYzncE5Pi3zDK9hAKNhgZNRaZoLZ61EoksoSucued1JnHfJUAPtBZIg=="],
 
     "@types/estree": ["@types/estree@1.0.8", "", {}, "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w=="],
 
@@ -149,8 +149,6 @@
     "hyparquet": ["hyparquet@1.18.0", "", {}, "sha512-pdg39j047rcJtyxEif0rlJZe1kiILycnBRwp5WTHuwTHe/R7oePN7vFYrDSeEO7Tc+ATHosVcUijtnJpqZApfg=="],
 
     "hyparquet-compressors": ["hyparquet-compressors@1.1.1", "", { "dependencies": { "fzstd": "0.1.1", "hysnappy": "1.0.0" } }, "sha512-yx7aA3Rhj0YycbdV71+XznQSLAefa4cT0urpgNXy4aM6eSeCknaVDNne8y45Uz74Fb15yyXUzOStlceOJBan7A=="],
-
-    "hyparquet-writer": ["hyparquet-writer@0.6.1", "", { "dependencies": { "hyparquet": "1.17.1" } }, "sha512-llpI/BgEq/GvasIz0gGku3JihyfA6ZH25JjHm/NMa5dU12EU4spINpwAdbNFQPPqGz6gL+rXorUSZDrHpHGvRw=="],
 
     "hysnappy": ["hysnappy@1.0.0", "", {}, "sha512-MNrC4NfwDGPb889O6gIfEtbvEZCSWUsSEhsz4Oq2FRcpGtXHfeVz3KciSPp5Pnnz1NjFMgDQNfxdJozymJEDDA=="],
 
@@ -261,8 +259,6 @@
     "yargs-parser": ["yargs-parser@22.0.0", "", {}, "sha512-rwu/ClNdSMpkSrUb+d6BRsSkLUq1fmfsY6TOpYzTwvwkg1/NRG85KBy3kq++A8LKQwX6lsu+aWad+2khvuXrqw=="],
 
     "zod": ["zod@4.1.11", "", {}, "sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg=="],
-
-    "hyparquet-writer/hyparquet": ["hyparquet@1.17.1", "", {}, "sha512-79NqDEkWF3VHbjiUuefexuZLtiwD/j43eSc7kKbrcI8f4V8owLBw6P8Eg6k0VaCeB0KpmJVDW3ZewlsW18h8fQ=="],
 
     "topojson-client/commander": ["commander@2.20.3", "", {}, "sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ=="],
   }

@@ -35,7 +35,7 @@ function PerformanceBenchmarksComponent() {
         <CardHeader>
           <CardTitle>500K Rows Benchmark</CardTitle>
           <CardDescription>
-            Performance comparison across core operations (ms)
+            Performance comparison across core operations (median of 7 runs with 5 warmups, ms)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -88,8 +88,10 @@ function PerformanceBenchmarksComponent() {
       <Alert>
         <AlertDescription>
           <strong>Note:</strong>{" "}
-          These benchmarks are based on real performance tests. Results may vary
-          based on hardware and data characteristics.
+          These benchmarks are based on real performance tests with 500,000 rows, 
+          using median times from 7 iterations with 5 warmup runs. Results may vary
+          based on hardware, data characteristics, and specific use cases. 
+          All tests use optimized data types (categorical/factor) where applicable.
         </AlertDescription>
       </Alert>
     </DocPageLayout>

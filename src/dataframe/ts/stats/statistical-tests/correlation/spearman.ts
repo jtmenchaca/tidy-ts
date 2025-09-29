@@ -24,14 +24,18 @@ export function spearmanTest({
     throw new Error("x and y must have the same length");
   }
 
-  const cleanX = x.filter((val) => isFinite(val));
-  const cleanY = y.filter((val) => isFinite(val));
+  // Filter paired data to remove any rows where either x or y is not finite
+  const pairedData = x.map((xi, i) => ({ x: xi, y: y[i] }))
+    .filter((pair) => isFinite(pair.x) && isFinite(pair.y));
 
-  if (cleanX.length < 2) {
+  if (pairedData.length < 2) {
     throw new Error(
       "Spearman correlation test requires at least 2 observations",
     );
   }
+
+  const cleanX = pairedData.map((pair) => pair.x);
+  const cleanY = pairedData.map((pair) => pair.y);
 
   // Pass alternative directly to WASM
   const wasmAlternative = alternative;

@@ -2,6 +2,11 @@
 
 [![JSR](https://jsr.io/badges/@tidy-ts/dataframe)](https://jsr.io/@tidy-ts/dataframe)
 [![JSR Score](https://jsr.io/badges/@tidy-ts/dataframe/score)](https://jsr.io/@tidy-ts/dataframe)
+[![Coverage](https://img.shields.io/badge/coverage-95.2%25-brightgreen)](https://github.com/jtmenchaca/tidy-ts)
+[![CI](https://github.com/jtmenchaca/tidy-ts/workflows/CI/badge.svg)](https://github.com/jtmenchaca/tidy-ts/actions)
+[![Universal](https://img.shields.io/badge/universal-Deno%20%7C%20Bun%20%7C%20Node%20%7C%20Browser-blue)](https://github.com/jtmenchaca/tidy-ts)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0%2B-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
 
