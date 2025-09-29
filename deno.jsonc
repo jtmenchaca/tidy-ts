@@ -1,7 +1,7 @@
 {
   "license": "Apache-2.0",
   "version": "0.0.1",
-  "exports": ".src/mod.ts",
+  "exports": "./src/mod.ts",
   "compilerOptions": {
     "lib": [
       "deno.ns",
@@ -14,11 +14,11 @@
   },
   "tasks": {
     "ci": "deno fmt --check && deno lint && deno test -A --coverage=cov_profile --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests && deno coverage cov_profile",
-    "benchmark:runner": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A runner.ts & cd ../..",
-    "benchmark:analyze": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A analyze.ts & cd ../..",
+    "benchmark:runner": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A runner.ts && cd ../..",
+    "benchmark:analyze": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && deno run -A analyze.ts && cd ../..",
     "benchmark": "deno task benchmark:runner && deno task benchmark:analyze",
-    "benchmark-python": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && .venv/bin/python python.py & cd ../..",
-    "benchmark-r": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && Rscript r.R & cd ../..",
+    "benchmark-python": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && .venv/bin/python python.py && cd ../..",
+    "benchmark-r": "cd /Users/jtmenchaca/tidy-ts/tests/benchmarks && Rscript r.R && cd ../..",
     "benchmark-ts": "deno run -A tests/benchmarks/typescript.ts",
     "benchmark-tidy": "deno run -A tests/benchmarks/tidy-ts-only.ts",
     "benchmark-tidy-p": "deno run -A tests/benchmarks/tidy-ts-only-parallel.ts",
