@@ -5,6 +5,8 @@
 node_modules/
 */node_modules/*
 **/node_modules/*
+output/
+
 
 examples/dataframe/output/
 
