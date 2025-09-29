@@ -199,10 +199,6 @@ const betaSample = s.dist.beta.random({ alpha: 2, beta: 5 });
 const chiSquareQuantile = s.dist.chiSquare.quantile({ probability: 0.95, degreesOfFreedom: 1 });
 ```
 
-With the distribution data, it can be easy to make something like:
-
-![Normal Distribution](assets/normal-distribution.svg
-
 ## Data Visualization
 '@tidy-ts/dataframe' also provides data visualization tools directly from DataFrames backed by [Vega](https://vega.github.io):
 
@@ -256,7 +252,6 @@ await chart.savePNG({ filename: "sales-chart.png" });
 await chart.saveSVG({ filename: "sales-chart.svg" });
 ```
 
-![Sales Chart](assets/sales-chart.svg)
 
 **Chart Types**: scatter, line, bar, area  
 **Aesthetics**: color, size, series, tooltips, legends  
