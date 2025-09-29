@@ -83,24 +83,6 @@ jobs:
       - name: Run tests with canary
         run: deno test -A --parallel src/dataframe examples/dataframe tests/glm tests/statistical_tests
 
-  # Performance benchmarks (optional)
-  benchmark:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Deno
-        uses: denoland/setup-deno@v2
-        with:
-          deno-version: 2.4.2
-          cache: true
-
-      - name: Run benchmarks
-        run: |
-          deno task benchmark:runner
-          deno task benchmark:analyze
 
   # Build and test the JSR package
   build-jsr:
