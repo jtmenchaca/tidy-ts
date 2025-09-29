@@ -1,4 +1,3 @@
-// Universal WASM loader using Node.js APIs (supported by Deno)
 // deno-lint-ignore-file no-explicit-any
 
 import * as fs from "node:fs";
@@ -12,20 +11,77 @@ export { wasmInternal };
 let wasmModule: any = null;
 let wasmBytesCache: ArrayBuffer | null = null;
 
+// NEW: Browser preloading support
+let compiledModule: WebAssembly.Module | null = null;
+let preloadPromise: Promise<void> | null = null;
+
+// Runtime detection helpers
+const isBrowser = typeof window !== "undefined" &&
+  typeof document !== "undefined";
+
+// Build imports from internal glue (functions only)
+function buildImports() {
+  const imports: Record<string, any> = {};
+  for (const [k, v] of Object.entries(wasmInternal)) {
+    if (typeof v === "function") imports[k] = v;
+  }
+  return { "./tidy_ts_dataframe.internal.js": imports };
+}
+
+/**
+ * Setup function for browsers - preload & compile the WASM module.
+ * Call once before using any tidy-ts functions in browsers.
+ *
+ * If url is omitted, we derive the URL relative to this file.
+ */
+export async function setupTidyTS(url?: string | URL): Promise<void> {
+  if (!isBrowser) return; // No-op outside browsers
+  if (compiledModule) return; // Already compiled
+  if (preloadPromise) return preloadPromise;
+
+  // Resolve default WASM URL next to the lib output
+  const defaultUrl = new URL(
+    "../../lib/tidy_ts_dataframe.wasm",
+    import.meta.url,
+  );
+  const wasmUrl = url ?? defaultUrl;
+
+  const imports = buildImports();
+
+  preloadPromise = (async () => {
+    // Fast path: instantiateStreaming (requires application/wasm)
+    if ("instantiateStreaming" in WebAssembly) {
+      try {
+        const { module, instance } = await WebAssembly.instantiateStreaming(
+          fetch(wasmUrl as any),
+          imports,
+        );
+        compiledModule = module; // cache compiled module
+        wasmInternal.__wbg_set_wasm(instance.exports);
+        wasmModule = instance.exports;
+        return;
+      } catch (_e) {
+        // Fall through to arrayBuffer path (wrong MIME or non-support)
+      }
+    }
+
+    // Fallback: fetch bytes → compile (async) → cache module
+    const res = await fetch(wasmUrl as any);
+    const bytes = await res.arrayBuffer();
+    compiledModule = await WebAssembly.compile(bytes);
+    // Don't instantiate yet; let initWasm() do a synchronous Instance() later.
+  })();
+
+  await preloadPromise;
+}
+
 // NEW: allow initializing from bytes (worker path)
 export function initWasmFromBytes(bytes: ArrayBuffer): any {
   if (wasmModule) return wasmModule;
 
-  // Build imports from internal glue (functions only)
-  const wasmImports: Record<string, any> = {};
-  for (const [k, v] of Object.entries(wasmInternal)) {
-    if (typeof v === "function") wasmImports[k] = v;
-  }
-
+  const imports = buildImports();
   const mod = new WebAssembly.Module(new Uint8Array(bytes));
-  const instance = new WebAssembly.Instance(mod, {
-    "./tidy_ts_dataframe.internal.js": wasmImports,
-  });
+  const instance = new WebAssembly.Instance(mod, imports);
 
   wasmInternal.__wbg_set_wasm(instance.exports);
   wasmModule = instance.exports;
@@ -51,7 +107,21 @@ export function getWasmBytes(): ArrayBuffer {
 export function initWasm(): any {
   if (wasmModule) return wasmModule;
 
-  // Get path to WASM file
+  // Browser: require prior async preload
+  if (isBrowser) {
+    if (!compiledModule) {
+      throw new Error(
+        "WASM not loaded yet. In the browser, call `await setupTidyTS()` once before using the API.",
+      );
+    }
+    const imports = buildImports();
+    const instance = new WebAssembly.Instance(compiledModule, imports);
+    wasmInternal.__wbg_set_wasm(instance.exports);
+    wasmModule = instance.exports;
+    return wasmModule;
+  }
+
+  // Server runtimes (Node/Deno): original sync path
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
   const wasmPath = path.resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
 

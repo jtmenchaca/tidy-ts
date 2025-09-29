@@ -17,3 +17,6 @@ export {
   writeCSV,
   writeParquet,
 } from "./ts/io/index.ts";
+
+// Browser setup function
+export { setupTidyTS } from "./ts/wasm/wasm-init.ts";

@@ -853,15 +853,6 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("Lead (next value):", stats.lead(values, 1));
   console.log("Lag with default:", stats.lag(values, 1, 0));
 
-  console.log("\n=== Correlation and Covariance ===");
-  console.log(
-    "Correlation between value and score:",
-    stats.corr(values, scores),
-  );
-  console.log(
-    "Covariance between value and score:",
-    stats.covariance(values, scores),
-  );
 
   console.log("\n=== Utility Functions ===");
   console.log("Rounded mean (2 decimals):", stats.round(stats.mean(values), 2));
@@ -1392,7 +1383,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   );
 
   // Type check: bindRows preserves types
-  const _finalCombinedTypeCheck: DataFrame<{
+  const FinalCombinedTypeCheck: DataFrame<{
     id: number;
     name: string;
     species: string;
@@ -1528,13 +1519,13 @@ Production async operations need concurrency control and retry mechanisms.`,
   // Strategy 3: Conditional replacement based on other columns
   const conditionalCleaned = messyData
     .mutate({
-      name_filled: (row) => row.name || `Person_${row.id}`,
-      age_filled: (row) => {
+      nameFilled: (row) => row.name || `Person_${row.id}`,
+      ageFilled: (row) => {
         if (row.age !== null && row.age !== undefined) return row.age;
         // Use different defaults based on other data
         return row.active ? 30 : 25;
       },
-      score_filled: (row) => {
+      scoreFilled: (row) => {
         if (
           row.score !== null && row.score !== undefined && !isNaN(row.score)
         ) {
@@ -1543,16 +1534,16 @@ Production async operations need concurrency control and retry mechanisms.`,
         // Use median for missing scores
         return stats.median(validScores, true); // note,
       },
-      active_filled: (row) => row.active ?? true, // Default to true
-      notes_filled: (row) => row.notes || "No additional notes",
+      activeFilled: (row) => row.active ?? true, // Default to true
+      notesFilled: (row) => row.notes || "No additional notes",
     })
     .select(
       "id",
-      "name_filled",
-      "age_filled",
-      "score_filled",
-      "active_filled",
-      "notes_filled",
+      "nameFilled",
+      "ageFilled",
+      "scoreFilled",
+      "activeFilled",
+      "notesFilled",
     );
 
   console.log("After conditional replacement:");
@@ -1906,9 +1897,9 @@ Production async operations need concurrency control and retry mechanisms.`,
   // Pivot to wide format - products as columns
   console.log("\n--- Pivot to Wide Format (Products as Columns) ---");
   const salesWide = salesLong.pivotWider({
-    names_from: "product",
-    values_from: "sales",
-    expected_columns: ["Widget A", "Widget B"],
+    namesFrom: "product",
+    valuesFrom: "sales",
+    expectedColumns: ["Widget A", "Widget B"],
   });
 
   // Type check: PivotWider<T,Cat> with closed Cat (output columns typed as Cat keys, optional where sparse)
@@ -1936,9 +1927,9 @@ Production async operations need concurrency control and retry mechanisms.`,
   ]);
 
   const pivotWithAgg = salesWithRegions.pivotWider({
-    names_from: "region",
-    values_from: "sales",
-    expected_columns: ["North", "South"],
+    namesFrom: "region",
+    valuesFrom: "sales",
+    expectedColumns: ["North", "South"],
   });
 
   // Type check: PivotWider<T,Cat> with closed Cat (output columns typed as Cat keys, optional where sparse)
@@ -1965,8 +1956,8 @@ Production async operations need concurrency control and retry mechanisms.`,
 
   const longData = wideData.pivotLonger({
     cols: ["math", "science", "english"],
-    names_to: "subject",
-    values_to: "score",
+    namesTo: "subject",
+    valuesTo: "score",
   });
 
   // Type check: PivotLonger (value column type = union/supertype of inputs; key column = literal union)
@@ -1984,9 +1975,9 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("\n--- Pivot with Analysis ---");
   const pivotAnalysis = salesLong
     .pivotWider({
-      names_from: "product",
-      values_from: "sales",
-      expected_columns: ["Widget A", "Widget B"],
+      namesFrom: "product",
+      valuesFrom: "sales",
+      expectedColumns: ["Widget A", "Widget B"],
     })
     .mutate({
       total_sales: (row) => row["Widget A"] + row["Widget B"],
@@ -2031,7 +2022,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("Original sales data (products × quarters):");
   salesDataOriginal.print();
 
-  const transposed = salesDataOriginal.transpose({ number_of_rows: 3 });
+  const transposed = salesDataOriginal.transpose({ numberOfRows: 3 });
 
   // Type check: Basic transpose creates row_* columns with union types
   const _transposedTypeCheck: DataFrame<{
@@ -2068,7 +2059,7 @@ Production async operations need concurrency control and retry mechanisms.`,
     "student_2",
     "student_3",
   ]);
-  const transposedWithLabels = withLabels.transpose({ number_of_rows: 3 });
+  const transposedWithLabels = withLabels.transpose({ numberOfRows: 3 });
 
   // Type check: Transpose with row labels uses custom column names
   const _transposedWithLabelsTypeCheck: DataFrame<{
@@ -2093,7 +2084,7 @@ Production async operations need concurrency control and retry mechanisms.`,
     "Transpose operations are reversible with perfect data integrity.",
   );
 
-  const backToOriginal = transposedWithLabels.transpose({ number_of_rows: 3 });
+  const backToOriginal = transposedWithLabels.transpose({ numberOfRows: 3 });
   console.log("Double transposed (restored original structure):");
   backToOriginal.print();
 
@@ -2115,7 +2106,7 @@ Production async operations need concurrency control and retry mechanisms.`,
     "south",
     "east",
     "west",
-  ]).transpose({ number_of_rows: 4 });
+  ]).transpose({ numberOfRows: 4 });
 
   // Type check: Real-world transpose with meaningful row labels
   const _monthlyViewTypeCheck: DataFrame<{
@@ -2159,7 +2150,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   mixedData.print();
 
   const mixedTransposed = mixedData.setRowLabels(["user1", "user2"]).transpose(
-    { number_of_rows: 2 },
+    { numberOfRows: 2 },
   );
 
   // Type check: Mixed data types transpose preserves all types
