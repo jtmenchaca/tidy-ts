@@ -78,15 +78,15 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="raw-sqlite"
-        title="2. Raw SQLite + DataFrame"
-        description="Query SQLite databases with raw SQL and create DataFrames with Zod schema validation"
-        explanation="Use node:sqlite for direct database access. Zod schemas provide type safety for query results, ensuring data integrity when creating DataFrames."
+        title="2. SQL"
+        description="Query databases with raw SQL and create DataFrames with Zod schema validation"
+        explanation="You can use any SQL database. Zod schemas provide type safety for query results, ensuring data integrity when creating DataFrames."
         code={creatingExamples.rawSqlite}
       />
 
       <CodeBlock
         id="drizzle-orm"
-        title="3. Drizzle ORM + DataFrame"
+        title="3. Drizzle ORM"
         description="Use Drizzle ORM for type-safe database queries with automatic DataFrame type inference"
         explanation="Drizzle provides excellent TypeScript integration. When you create DataFrames from Drizzle results, types are automatically inferred from your schema definitions."
         code={creatingExamples.drizzleOrm}
@@ -94,7 +94,7 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="csv-validation"
-        title="4. Reading CSV Data with Zod Validation"
+        title="4. CSV Data with Zod"
         description="Define your data structure explicitly - Zod handles type conversion and validation"
         explanation="With CSV data, you get full control over your data structure. Define exactly what types you expect, and Zod will convert strings to numbers, validate the data, and catch errors at import time."
         code={creatingExamples.csvWithValidation}
@@ -102,7 +102,7 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="parquet-reading"
-        title="5. Reading Parquet Files"
+        title="5. Parquet Files with Zod"
         description="Load Parquet files with schema validation"
         explanation="Use Zod schemas to ensure type safety when reading Parquet files."
         code={creatingExamples.parquetReading}
@@ -110,7 +110,7 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="arrow-reading"
-        title="6. Reading Arrow Data"
+        title="6. Arrow Data with Zod"
         description="Read Arrow format data with schema validation"
         explanation="Arrow is a columnar data format. Use Zod schemas for type safety when reading Arrow files."
         code={creatingExamples.arrowReading}
@@ -118,7 +118,7 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="writing-data"
-        title="7. Writing Data Files"
+        title="7. Writing CSV and Parquet Files"
         description="Export DataFrames to CSV and Parquet formats"
         explanation="Save your processed data in standard formats."
         code={creatingExamples.csvWriting}
