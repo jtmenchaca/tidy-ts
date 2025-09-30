@@ -15,7 +15,7 @@ function JupyterNotebooksComponent() {
   return (
     <DocPageLayout
       title="Jupyter Notebooks with Tidy-TS"
-      description="Interactive data analysis and visualization with Tidy-TS in Jupyter notebooks. Create rich, interactive visualizations and explore data with TypeScript."
+      description="Interactive data analysis and visualization with Tidy-TS in Jupyter notebooks."
       currentPath="/examples/jupyter-notebooks"
     >
       <CodeBlock
@@ -130,135 +130,49 @@ console.log("Monthly totals:", monthlyTotals);`}
       />
 
       <CodeBlock
-        title="Interactive Data Exploration"
-        description="Real-time interactive visualizations in Jupyter"
-        explanation="Jupyter notebooks with Tidy-TS enable instant, interactive data exploration. Every graph is live and responsive - zoom, pan, hover for details, and see your data come alive!"
-        code={`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
-
-// Galactic fleet data - explore the Star Wars universe!
-const fleetData = createDataFrame([
-  { ship: "X-wing", speed: 1050, firepower: 85, cost: 149999, faction: "Rebel", crew: 1 },
-  { ship: "TIE Fighter", speed: 1200, firepower: 75, cost: 60000, faction: "Empire", crew: 1 },
-  { ship: "Millennium Falcon", speed: 1050, firepower: 95, cost: 100000, faction: "Rebel", crew: 2 },
-  { ship: "Star Destroyer", speed: 975, firepower: 200, cost: 150000000, faction: "Empire", crew: 37000 },
-  { ship: "A-wing", speed: 1300, firepower: 80, cost: 175000, faction: "Rebel", crew: 1 },
-  { ship: "TIE Interceptor", speed: 1250, firepower: 90, cost: 120000, faction: "Empire", crew: 1 },
-]);
-
-// Interactive scatter plot - hover to explore!
-const fleetComparison = fleetData.graph({
-  type: "scatter",
-  mappings: {
-    x: "speed",
-    y: "firepower",
-    color: "faction",
-    size: "cost"
-  },
-  title: "Fleet Comparison: Speed vs Firepower",
-  subtitle: "Size represents cost, color represents faction"
-});
-
-console.log("Interactive fleet comparison chart:", fleetComparison);`}
-      />
-
-      <CodeBlock
-        title="Advanced Data Analysis"
-        description="Perform complex data transformations and analysis"
-        explanation="Jupyter notebooks allow you to build complex analysis step by step, with each cell building on the previous results. Perfect for exploratory data analysis and prototyping."
+        title="Interactive Charts with Tooltips"
+        description="Create interactive visualizations with hover tooltips"
+        explanation="In Jupyter notebooks, charts automatically display with interactive tooltips when you reference the chart object."
         code={`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
 
-// Load and process data
-const rawData = createDataFrame([
-  { id: 1, product: "Laptop", category: "Electronics", price: 999, quantity: 5 },
-  { id: 2, product: "Mouse", category: "Electronics", price: 25, quantity: 20 },
-  { id: 3, product: "Desk", category: "Furniture", price: 299, quantity: 3 },
-  { id: 4, product: "Chair", category: "Furniture", price: 199, quantity: 8 }
+// Create sample sales data
+const salesData = createDataFrame([
+  { region: "North", product: "Widget", quantity: 10, price: 100 },
+  { region: "South", product: "Widget", quantity: 20, price: 100 },
+  { region: "East", product: "Widget", quantity: 8, price: 100 },
+  { region: "North", product: "Gadget", quantity: 15, price: 200 },
+  { region: "South", product: "Gadget", quantity: 12, price: 200 },
 ]);
 
-// Calculate revenue and filter high-value items
-const analysis = rawData
+// Interactive scatter plot with configuration
+const interactiveChart = salesData
   .mutate({
-    revenue: row => row.price * row.quantity,
-    isHighValue: row => row.price > 500
+    revenue: (r) => r.quantity * r.price,
+    profit: (r) => r.quantity * r.price * 0.2,
   })
-  .filter(row => row.revenue > 1000)
-  .arrange("revenue", "desc");
-
-console.log("High-value products:", analysis);
-
-// Group by category
-const categorySummary = rawData
-  .groupBy("category")
-  .summarise({
-    totalRevenue: "revenue",
-    avgPrice: "price",
-    totalQuantity: "quantity"
+  .graph({
+    type: "scatter",
+    mappings: {
+      x: "revenue",
+      y: "quantity",
+      color: "region",
+    },
+    config: {
+      layout: {
+        tooltip: {
+          show: true, // default true
+        },
+      },
+      tooltip: {
+        fields: ["region", "revenue", "quantity", "profit", "product"],
+      },
+    },
   });
 
-console.log("Category summary:", categorySummary);`}
+interactiveChart // Chart displays interactively in Jupyter cell`}
       />
 
-      <CodeBlock
-        title="Exporting Results"
-        description="Save your analysis results to files"
-        explanation="Once you've completed your analysis, you can easily export the results to various formats for sharing or further processing."
-        code={`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
-import { writeCSV } from "@jsr/tidy-ts__dataframe";
 
-// Your analysis results
-const results = createDataFrame([
-  { category: "Electronics", revenue: 10990, avgPrice: 512 },
-  { category: "Furniture", revenue: 2393, avgPrice: 249 }
-]);
-
-// Export to CSV
-await writeCSV(results, "analysis_results.csv");
-console.log("Results exported to analysis_results.csv");
-
-// You can also export to JSON
-const jsonData = results.toJSON();
-console.log("JSON data:", jsonData);
-
-// Or get the raw data
-const rawData = results.toArray();
-console.log("Raw data:", rawData);`}
-      />
-
-      <CodeBlock
-        title="Statistical Analysis"
-        description="Perform statistical calculations and summaries"
-        explanation="Jupyter notebooks are perfect for statistical analysis. You can easily calculate descriptive statistics, correlations, and other metrics while keeping your data and results organized."
-        code={`import { createDataFrame, stats as s } from "@jsr/tidy-ts__dataframe";
-
-// Sample dataset for analysis
-const data = createDataFrame([
-  { name: "Alice", age: 30, salary: 75000, department: "Engineering" },
-  { name: "Bob", age: 25, salary: 65000, department: "Marketing" },
-  { name: "Charlie", age: 35, salary: 85000, department: "Engineering" },
-  { name: "Diana", age: 28, salary: 70000, department: "Sales" },
-  { name: "Eve", age: 32, salary: 80000, department: "Engineering" }
-]);
-
-// Calculate descriptive statistics
-const ageStats = data.summarise({
-  meanAge: s.mean("age"),
-  medianAge: s.median("age"),
-  minAge: s.min("age"),
-  maxAge: s.max("age"),
-  stdAge: s.std("age")
-});
-
-console.log("Age statistics:", ageStats);
-
-// Group by department and calculate salary statistics
-const deptStats = data.groupBy("department").summarise({
-  avgSalary: s.mean("salary"),
-  medianSalary: s.median("salary"),
-  count: s.count()
-});
-
-console.log("Department salary statistics:", deptStats);`}
-      />
     </DocPageLayout>
   );
 }

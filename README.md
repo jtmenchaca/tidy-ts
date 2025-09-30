@@ -4,7 +4,13 @@
 [![JSR Score](https://jsr.io/badges/@tidy-ts/dataframe/score)](https://jsr.io/@tidy-ts/dataframe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+**🔗 [GitHub](https://github.com/jtmenchaca/tidy-ts) | 📚 [Documentation](https://jtmenchaca.github.io/tidy-ts/)**
+
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
+
+> **💡 Development Status**  
+> Currently in active development with comprehensive test coverage.  
+> We welcome your feedback and contributions!
 
 ## Key Features
 

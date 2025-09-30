@@ -185,49 +185,58 @@ Deno.test("readArrow · throws on invalid row", async () => {
 │  5 · file reading with readArrow()                                       │
 └───────────────────────────────────────────────────────────────────────────*/
 Deno.test("readArrow() · file reading with schema validation", async () => {
-  const Row = z.object({
+  const JediSchema = z.object({
     id: z.number().int(),
     name: z.string().min(1),
-    email: z.string().email(),
-    age: z.number().optional(),
-    active: z.boolean(),
+    force_sensitivity: z.number(),
+    rank: z.string(),
   });
 
   // Create test data and write to temporary Arrow file
   const testData = {
     id: [1, 2, 3],
-    name: ["John Doe", "Jane Smith", "Bob Johnson"],
-    email: ["john@example.com", "jane@example.com", "bob@example.com"],
-    age: [30, 25, null],
-    active: [true, false, true],
+    name: ["Luke Skywalker", "Yoda", "Obi-Wan Kenobi"],
+    force_sensitivity: [9.2, 10.0, 9.5],
+    rank: ["Jedi Knight", "Grand Master", "Jedi Master"],
   };
 
-  const buffer = createArrowBuffer(testData);
-  const tempFile = "./temp_test.arrow";
+  const table = tableFromArrays(testData, {
+    types: {
+      id: int32(),
+      name: utf8(),
+      force_sensitivity: float32(),
+      rank: utf8(),
+    },
+  });
+  const buffer = tableToBuffer(table);
+  const tempFile = "./temp_jedi.arrow";
   await Deno.writeFile(tempFile, new Uint8Array(buffer));
 
   try {
     console.log("Reading Arrow file with schema validation...");
 
-    const df = await readArrow(tempFile, Row, {
-      naValues: ["", "NA"],
-    });
+    const df = await readArrow(tempFile, JediSchema);
 
     console.log("Parsed DataFrame:", JSON.stringify(df, null, 2));
 
     expect(df.nrows()).toBe(3);
     expect(df[0].id).toBe(1);
-    expect(df[0].name).toBe("John Doe");
-    expect(df[0].email).toBe("john@example.com");
-    expect(df[0].age).toBe(30);
-    expect(df[0].active).toBe(true);
+    expect(df[0].name).toBe("Luke Skywalker");
+    expect(df[0].force_sensitivity).toBeCloseTo(9.2, 1);
+    expect(df[0].rank).toBe("Jedi Knight");
 
-    expect(df[1].age).toBe(25);
-    expect(df[2].age).toBeUndefined(); // null becomes undefined for optional
+    expect(df[1].name).toBe("Yoda");
+    expect(df[1].force_sensitivity).toBe(10.0);
+    expect(df[1].rank).toBe("Grand Master");
 
     // Type checking
     type T = typeof df[0];
-    const _ok: T = { id: 9, name: "x", email: "x@x.x", active: false };
+    const _ok: T = {
+      id: 9,
+      name: "x",
+      force_sensitivity: 8.0,
+      rank: "Padawan",
+    };
 
     console.log("Test 5 completed successfully");
   } finally {

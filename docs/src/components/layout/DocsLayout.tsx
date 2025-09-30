@@ -36,11 +36,11 @@ export function DocsLayout(
             )}
           </div>
         </header>
-        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+        <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
           <div className="container mx-auto max-w-none space-y-6 md:space-y-8">
             {children}
           </div>
-        </main>
+        </div>
       </SidebarInset>
     </div>
   );

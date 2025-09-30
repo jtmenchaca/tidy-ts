@@ -24,70 +24,77 @@ const _typeCheck: DataFrame<{
 
 jediKnights.print("Created DataFrame with 5 Jedi Knights:");`,
 
-  typedArrayDataFrame: `import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
+  rawSqlite: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { DatabaseSync } from "node:sqlite";
+import { z } from "zod";
 
-// Define explicit types for better IntelliSense and type safety
-type JediKnight = {
-  id: number;
-  name: string;
-  species: string;
-  homeworld: string;
-  lightsaber_color: string;
-  rank: string;
-  force_sensitivity: number;
-  is_master?: boolean; // Optional property
-  padawan_name?: string; // Optional property
-};
+// Define schema for type safety
+const EmployeeSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  department: z.string(),
+  salary: z.number(),
+});
 
-// Create typed array of Jedi Knights
-const jediKnights: JediKnight[] = [
-  {
-    id: 1,
-    name: "Luke Skywalker",
-    species: "Human",
-    homeworld: "Tatooine",
-    lightsaber_color: "blue",
-    rank: "Jedi Knight",
-    force_sensitivity: 9.2,
-    is_master: false,
-    // Note: no padawan_name property
-  },
-  {
-    id: 2,
-    name: "Yoda",
-    species: "Unknown",
-    homeworld: "Unknown",
-    lightsaber_color: "green",
-    rank: "Grand Master",
-    force_sensitivity: 10.0,
-    is_master: true,
-    padawan_name: "Count Dooku",
-  },
-  {
-    id: 3,
-    name: "Obi-Wan Kenobi",
-    species: "Human",
-    homeworld: "Stewjon",
-    lightsaber_color: "blue",
-    rank: "Jedi Master",
-    force_sensitivity: 9.5,
-    is_master: true,
-    padawan_name: "Anakin Skywalker",
-  },
-];
+// Connect to database
+const db = new DatabaseSync("employees.db");
 
-// Create DataFrame from typed array
-const jediOrderDataFrame = createDataFrame(jediKnights);
+// Query and create DataFrame
+const employees = db.prepare("SELECT * FROM employees").all();
+const employeesDF = createDataFrame(employees, EmployeeSchema);
 
-// TypeScript knows the exact structure
-const _typeCheck: DataFrame<JediKnight> = jediOrderDataFrame;
+// Analyze data
+const highEarners = employeesDF.filter(row => row.salary > 80000);
+const deptSummary = employeesDF
+  .groupBy("department")
+  .summarise({
+    count: (group) => group.nrows(),
+    avg_salary: (group) => stats.round(stats.mean(group.salary), 0),
+  })
+  .arrange("avg_salary", "desc");
 
-jediOrderDataFrame.print("DataFrame created from typed array:");`,
+deptSummary.print("Department Summary");
+
+db.close();`,
+
+  drizzleOrm: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { drizzle } from "npm:drizzle-orm/libsql";
+import { createClient } from "npm:@libsql/client";
+import { integer, real, sqliteTable, text } from "npm:drizzle-orm/sqlite-core";
+
+// Define Drizzle schema
+const employees = sqliteTable("employees", {
+  id: integer("id").primaryKey(),
+  name: text("name").notNull(),
+  department: text("department").notNull(),
+  salary: real("salary").notNull(),
+});
+
+// Connect and query
+const client = createClient({ url: "file:employees.db" });
+const db = drizzle(client);
+
+const allEmployees = await db.select().from(employees).all();
+const employeesDF = createDataFrame(allEmployees); // Auto-inferred types
+
+// Analyze data
+const highEarners = employeesDF.filter(row => row.salary > 80000);
+const deptSummary = employeesDF
+  .groupBy("department")
+  .summarise({
+    count: (group) => group.nrows(),
+    avg_salary: (group) => stats.round(stats.mean(group.salary), 0),
+  })
+  .arrange("avg_salary", "desc");
+
+deptSummary.print("Department Summary");
+
+client.close();`,
 
   csvWithValidation: `import { readCSV, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
-// CSV data as string - Jedi Academy enrollment records
+// CSV data of Jedi Academy enrollment records (you can pass either a string or a file path to readCSV)
 const jediAcademyCsv = \`name,species,homeworld,lightsaber_color,rank,force_sensitivity
 Luke Skywalker,Human,Tatooine,blue,Jedi Knight,9.2
 Obi-Wan Kenobi,Human,Stewjon,blue,Jedi Master,9.5
@@ -120,4 +127,40 @@ const _typeCheck: DataFrame<{
 }> = jediAcademyData;
 
 jediAcademyData.print("DataFrame created from Jedi Academy CSV:");`,
+
+  parquetReading: `import { readParquet, type DataFrame } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+const JediSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  force_sensitivity: z.number(),
+  rank: z.string(),
+});
+
+const jediData = await readParquet("./data/jedi.parquet", JediSchema);
+jediData.print("DataFrame from Parquet:");`,
+
+  arrowReading: `import { readArrow, type DataFrame } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+const JediSchema = z.object({
+  id: z.number(),
+  name: z.string(),
+  force_sensitivity: z.number(),
+});
+
+const jediData = await readArrow("./data/jedi.arrow", JediSchema);
+jediData.print("DataFrame from Arrow:");`,
+
+  csvWriting: `import { createDataFrame, writeCSV } from "@tidy-ts/dataframe";
+
+const jediData = createDataFrame([
+  { name: "Luke", force_sensitivity: 9.2 },
+  { name: "Yoda", force_sensitivity: 10.0 },
+]);
+
+await writeCSV(jediData, "./output/jedi.csv");
+await writeCSV(jediData, "./output/jedi.parquet");
+// No writing to .arrow format currently`,
 };

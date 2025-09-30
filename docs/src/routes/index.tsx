@@ -31,7 +31,7 @@ function HomeComponent() {
     <div className="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
       <div className="container mx-auto max-w-4xl space-y-6 md:space-y-8 relative">
         {/* Hero Section */}
-        <section className="relative text-center py-12 sm:py-20">
+        <div className="relative text-center py-12 sm:py-20">
           {/* Large background logo */}
           <div className="absolute -left-25 -top-30 opacity-4 dark:opacity-10 pointer-events-none">
             <img 
@@ -80,9 +80,9 @@ function HomeComponent() {
               </Button>
             </div>
           </div>
-        </section>
+        </div>
         {/* Key Features */}
-        <section className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
           <Card className="border-0 shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-3 text-xl">
@@ -139,9 +139,9 @@ function HomeComponent() {
               </Button>
             </CardContent>
           </Card>
-        </section>
+          </div>
         {/* Code Preview Header */}
-        <section className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-6 md:p-8 border border-emerald-100 dark:border-emerald-900/30">
+        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-6 md:p-8 border border-emerald-100 dark:border-emerald-900/30">
           <div className="text-center">
             <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               See Tidy-TS in Action
@@ -150,7 +150,7 @@ function HomeComponent() {
               A complete data analysis workflow, broken into focused examples
             </p>
           </div>
-        </section>
+            </div>
 
         {/* Code Examples */}
         <div className="space-y-4 -mx-4 md:mx-0">
@@ -300,7 +300,7 @@ function HomeComponent() {
         </div>
 
         {/* Research Evidence Section */}
-        <section
+        <div
           id="research-evidence"
           className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-xl p-6 md:p-8 border border-blue-100 dark:border-blue-900/30"
         >
@@ -392,10 +392,10 @@ function HomeComponent() {
               </div>
             </div>
           </div>
-        </section>
+        </div>
 
         {/* Call to Action */}
-        <section className="text-center py-12">
+        <div className="text-center py-12">
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">
             Ready to get started?
           </h3>
@@ -417,7 +417,7 @@ function HomeComponent() {
               </Link>
             </Button>
           </div>
-        </section>
+        </div>
       </div>
     </div>
   );

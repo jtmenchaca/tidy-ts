@@ -89,9 +89,9 @@ export function SidebarProvider(
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 bg-white dark:bg-gray-900 overflow-y-auto min-w-0">
+          <div className="flex-1 bg-white dark:bg-gray-900 overflow-y-auto min-w-0">
             {children}
-          </main>
+          </div>
         </SidebarInset>
       </div>
     </UISidebarProvider>

@@ -72,12 +72,11 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
       icon: DatabaseIcon,
       items: [
         { name: "Creating DataFrames", path: "/creating-dataframes" },
-        { name: "Data I/O Operations", path: "/data-io" },
         { name: "DataFrame Basics", path: "/dataframe-basics" },
         { name: "Transforming Data", path: "/transforming-data" },
         { name: "Filtering Rows", path: "/filtering-rows" },
         { name: "Selecting Columns", path: "/selecting-columns" },
-        { name: "Sorting & Arranging", path: "/sorting-arranging" },
+        { name: "Sorting / Arranging", path: "/sorting-arranging" },
         { name: "Async Operations", path: "/async-operations" },
       ],
     },

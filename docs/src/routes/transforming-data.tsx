@@ -67,7 +67,7 @@ function TransformingDataComponent() {
               <p className="text-sm text-blue-600 dark:text-blue-400">
                 📖 <strong>Learn more:</strong> See the{" "}
                 <a
-                  href="/async-operations"
+                  href="async-operations"
                   className="underline hover:no-underline"
                 >
                   Async Operations

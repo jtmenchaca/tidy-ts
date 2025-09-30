@@ -17,6 +17,7 @@ import githubLight from "@shikijs/themes/github-light";
 import tokyoNight from "@shikijs/themes/tokyo-night";
 
 interface CodeBlockProps {
+  id?: string;
   title?: string;
   description?: string;
   code: string;
@@ -73,7 +74,7 @@ const getHighlighter = cache(async (language: string) => {
 });
 
 export function CodeBlock(
-  { title, description, code, language = "typescript", children, explanation }:
+  { id, title, description, code, language = "typescript", children, explanation }:
     CodeBlockProps,
 ) {
   const [highlightedHtml, setHighlightedHtml] = React.useState<string>("");
@@ -130,7 +131,7 @@ export function CodeBlock(
 
   if (title || description) {
     return (
-      <Card>
+      <Card id={id}>
         {(title || description) && (
           <CardHeader>
             {title && <CardTitle>{title}</CardTitle>}

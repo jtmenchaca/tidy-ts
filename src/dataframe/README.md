@@ -4,7 +4,12 @@
 [![JSR Score](https://jsr.io/badges/@tidy-ts/dataframe/score)](https://jsr.io/@tidy-ts/dataframe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+**🔗 [GitHub](https://github.com/jtmenchaca/tidy-ts) | 📚 [Documentation](https://jtmenchaca.github.io/tidy-ts/)**
+
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
+ 
+> **🚧 In Active Development**  
+> Well-tested and actively developed - feedback is very welcome and appreciated!
 
 ## Key Features
 
@@ -96,6 +101,37 @@ const analysis = sales
 
 // Pretty print the table with the .print() method
 analysis.print("Sales Analysis");
+```
+
+### Database Integration
+```typescript
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { DatabaseSync } from "node:sqlite";
+import { drizzle } from "npm:drizzle-orm/libsql";
+import { createClient } from "npm:@libsql/client";
+
+// Raw SQLite
+const db = new DatabaseSync("data.db");
+const employees = db.prepare("SELECT * FROM employees").all();
+const employeesDF = createDataFrame(employees, EmployeeSchema);
+
+// Drizzle ORM  
+const client = createClient({ url: "file:data.db" });
+const db = drizzle(client);
+const employees = await db.select().from(employeesTable).all();
+const employeesDF = createDataFrame(employees); // Auto-inferred types
+
+// DataFrame analysis
+const summary = employeesDF
+  .filter(row => row.salary > 80000)
+  .groupBy("department")
+  .summarize({
+    count: (group) => group.nrows(),
+    avg_salary: (group) => stats.round(stats.mean(group.salary), 0)
+  })
+  .arrange("avg_salary", "desc");
+
+summary.print("High Earners by Department");
 ```
 
 ## Statistical Analysis
