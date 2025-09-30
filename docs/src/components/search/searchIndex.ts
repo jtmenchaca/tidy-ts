@@ -71,10 +71,10 @@ export const searchIndex: SearchResult[] = [
     ],
   },
   {
-    title: "Transforming Data",
+    title: "Transforming Data with mutate()",
     path: "/transforming-data",
     content:
-      "Add calculated columns with mutate(). Transform data, add new columns, calculations, and derived values.",
+      "The mutate() function is your primary tool for adding calculated columns and transforming data. Learn everything from basic calculations to async operations with stats integration.",
     category: "Core",
     type: "page",
     keywords: [
@@ -85,6 +85,14 @@ export const searchIndex: SearchResult[] = [
       "column",
       "derive",
       "change",
+      "async",
+      "stats",
+      "functions",
+      "chaining",
+      "parameters",
+      "row",
+      "index",
+      "dataframe",
     ],
   },
   {
@@ -124,7 +132,7 @@ export const searchIndex: SearchResult[] = [
   },
   {
     title: "DataFrame Basics",
-    path: "/dataframe-basics",
+    path: "/basics",
     content:
       "DataFrame properties, column access, and TypeScript integration. Learn the fundamentals before diving into data operations.",
     category: "Core",
@@ -213,10 +221,10 @@ export const searchIndex: SearchResult[] = [
     ],
   },
   {
-    title: "Stats Module",
+    title: "Statistical Analysis",
     path: "/stats-module",
     content:
-      "Comprehensive statistical functions. Descriptive statistics, distributions, and mathematical operations.",
+      "Tidy-TS provides a statistical toolkit with 80+ functions across descriptive stats, hypothesis testing, and probability distributions. 16 probability distributions, comprehensive statistical tests, and Compare API for intuitive analysis.",
     category: "Data Operations",
     type: "page",
     keywords: [
@@ -227,6 +235,22 @@ export const searchIndex: SearchResult[] = [
       "median",
       "std",
       "distribution",
+      "hypothesis",
+      "testing",
+      "probability",
+      "descriptive",
+      "quantiles",
+      "correlation",
+      "anova",
+      "t-test",
+      "chi-square",
+      "normal",
+      "beta",
+      "gamma",
+      "binomial",
+      "poisson",
+      "compare",
+      "api",
     ],
   },
 
@@ -235,7 +259,7 @@ export const searchIndex: SearchResult[] = [
     title: "Data Visualization",
     path: "/data-visualization",
     content:
-      "Create charts with an integrated API backed by Vega. Interactive scatter plots, line charts, bar charts, and area charts with export capabilities.",
+      "Create charts with an integrated API backed by Vega. Interactive scatter plots, line charts, bar charts, and area charts with export capabilities. Jupyter integration with hover tooltips and rich output.",
     category: "Data Operations",
     type: "page",
     keywords: [
@@ -253,6 +277,10 @@ export const searchIndex: SearchResult[] = [
       "export",
       "png",
       "svg",
+      "tooltips",
+      "color schemes",
+      "styling",
+      "themes",
     ],
   },
 
@@ -282,10 +310,10 @@ export const searchIndex: SearchResult[] = [
     ],
   },
   {
-    title: "Async Operations",
+    title: "Async Operations with Concurrency Control",
     path: "/async-operations",
     content:
-      "Handle asynchronous operations across all tidy-ts functions. From API calls to file operations, async support is built-in with full type safety and performance optimization.",
+      "Built-in support for asynchronous data transformations with concurrency control. Mix sync and async operations, control concurrency, handle errors gracefully, and integrate with external APIs.",
     category: "Data Operations",
     type: "page",
     keywords: [
@@ -300,6 +328,11 @@ export const searchIndex: SearchResult[] = [
       "error",
       "handling",
       "retry",
+      "concurrency",
+      "control",
+      "mutate",
+      "filter",
+      "aggregation",
     ],
   },
 
@@ -405,6 +438,60 @@ export const searchIndex: SearchResult[] = [
       "chain",
       "methods",
       "operations",
+    ],
+  },
+  {
+    title: "TypeScript Integration",
+    path: "/getting-started",
+    content:
+      "Full TypeScript support with automatic type inference, type safety, and IntelliSense. TypeScript-first design for better developer experience.",
+    category: "Concepts",
+    type: "section",
+    keywords: [
+      "typescript",
+      "types",
+      "inference",
+      "intellisense",
+      "type safety",
+      "autocomplete",
+      "compilation",
+    ],
+  },
+  {
+    title: "Performance Optimization",
+    path: "/performance-benchmarks",
+    content:
+      "High-performance data processing with optimized algorithms. Speed comparisons, optimization tips, and best practices for large datasets.",
+    category: "Concepts",
+    type: "section",
+    keywords: [
+      "performance",
+      "speed",
+      "optimization",
+      "fast",
+      "efficient",
+      "benchmark",
+      "large data",
+      "memory",
+    ],
+  },
+  {
+    title: "Jupyter Notebooks",
+    path: "/examples/jupyter-notebooks",
+    content:
+      "Interactive data analysis with Deno Jupyter. Rich visualizations, widgets, and real-time analysis in notebooks with interactive charts.",
+    category: "Concepts",
+    type: "section",
+    keywords: [
+      "jupyter",
+      "notebook",
+      "interactive",
+      "deno",
+      "visualization",
+      "widgets",
+      "rich output",
+      "analysis",
+      "cells",
     ],
   },
 ];

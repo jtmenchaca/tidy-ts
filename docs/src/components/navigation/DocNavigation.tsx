@@ -27,9 +27,9 @@ const navigationFlow: NavigationItem[] = [
     description: "Learn to create DataFrames from various sources",
   },
   {
-    title: "Data I/O Operations",
-    path: "/data-io",
-    description: "Read and write CSV, Parquet, and Arrow files with type safety",
+    title: "DataFrame Basics",
+    path: "/basics",
+    description: "DataFrame properties, column access, and TypeScript integration",
   },
   {
     title: "Transforming Data",
