@@ -10,7 +10,7 @@ const people = createDataFrame([
   { id: 5, name: "Chewbacca", species: "Wookiee", mass: 112, height: 228 },
 ]);
 
-// Simulate async API enrichment - more realistic example
+// Simulate async API enrichment
 async function enrichWithExternalData(mass: number): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 1)); // Simulate API delay
   if (mass > 100) return "🦣 Heavy Class";
@@ -44,7 +44,7 @@ const enrichedData = await sales
 
 enrichedData.print("Enriched data with concurrency control:");`,
 
-  asyncFiltering: `// Async validation function - more realistic example
+  asyncFiltering: `// Async validation function
 async function validateCharacter(species: string): Promise<boolean> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   // Simulate API validation - exclude droids
@@ -69,7 +69,7 @@ heavyValidatedCharacters.print("Heavy validated characters:");`,
 
   asyncAggregation: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
-// Async function to fetch species metadata - more realistic example
+// Async function to fetch species metadata
 async function fetchSpeciesMetadata(species: string): Promise<number> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   const metadata = { "Human": 79, "Droid": 200, "Wookiee": 400 };
@@ -148,7 +148,7 @@ async function fetchUserRatingSafe(mass: number): Promise<string | Error> {
   return "⭐ Lightweight";
 }
 
-// Clean error handling - errors become part of the data
+// Error handling - errors become part of the data
 const resultWithErrors = await people
   .mutate({
     rating: async (row) => await fetchUserRatingSafe(row.mass),

@@ -24,7 +24,7 @@ function AsyncOperationsComponent() {
       <CodeBlock
         title="Async Mutate Operations"
         description="Add calculated columns using asynchronous functions"
-        explanation="You can mix synchronous and asynchronous operations in the same mutate() call. Perfect for API enrichment, data validation, and external service integration."
+        explanation="You can mix synchronous and asynchronous operations in the same mutate() call. Useful for API enrichment, data validation, and external service integration."
         code={asyncOperationsExamples.asyncMutateOperations}
       />
 
@@ -38,7 +38,7 @@ function AsyncOperationsComponent() {
       <CodeBlock
         title="Async Filtering"
         description="Filter rows based on asynchronous conditions"
-        explanation="Async filtering is perfect for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations."
+        explanation="Async filtering is useful for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations."
         code={asyncOperationsExamples.asyncFiltering}
       />
 
@@ -52,7 +52,7 @@ function AsyncOperationsComponent() {
       <CodeBlock
         title="Error Handling"
         description="Gracefully handle async operation failures"
-        explanation="Async operations can fail, and tidy-ts provides clean error handling patterns for managing these scenarios in your data pipelines."
+        explanation="Async operations can fail, and tidy-ts provides error handling patterns for managing these scenarios in your data pipelines."
         code={asyncOperationsExamples.errorHandling}
       />
 
@@ -60,7 +60,7 @@ function AsyncOperationsComponent() {
         <CardHeader>
           <CardTitle>Concurrency and Retries</CardTitle>
           <CardDescription>
-            Tidy-ts has baked-in concurrency control and retry mechanisms
+            Tidy-ts includes concurrency control and retry mechanisms
           </CardDescription>
         </CardHeader>
         <CardContent>

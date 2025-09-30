@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-DpTuEMFA.js";import{C as t,a as n,b as s,c as i,d as o}from"./card-D6EoMKyk.js";import{D as c}from"./DocPageLayout-CFlrGnwc.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-Blv6KGu2.js";const r={asyncMutateOperations:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-_BwUP3j2.js";import{C as t,a as s,b as n,c as i,d as o}from"./card-djngM638.js";import{D as c}from"./DocPageLayout-CGQ1Zr89.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-COi4_aVs.js";const r={asyncMutateOperations:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
@@ -8,7 +8,7 @@ const people = createDataFrame([
   { id: 5, name: "Chewbacca", species: "Wookiee", mass: 112, height: 228 },
 ]);
 
-// Simulate async API enrichment - more realistic example
+// Simulate async API enrichment
 async function enrichWithExternalData(mass: number): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 1)); // Simulate API delay
   if (mass > 100) return "🦣 Heavy Class";
@@ -38,7 +38,7 @@ const enrichedData = await sales
   }, { concurrency: 3 }) // Limit concurrent operations
   .filter(async r => await validateRegion(r.region)); // async filtering
 
-enrichedData.print("Enriched data with concurrency control:");`,asyncFiltering:`// Async validation function - more realistic example
+enrichedData.print("Enriched data with concurrency control:");`,asyncFiltering:`// Async validation function
 async function validateCharacter(species: string): Promise<boolean> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   // Simulate API validation - exclude droids
@@ -61,7 +61,7 @@ const heavyValidatedCharacters = await people
 
 heavyValidatedCharacters.print("Heavy validated characters:");`,asyncAggregation:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
-// Async function to fetch species metadata - more realistic example
+// Async function to fetch species metadata
 async function fetchSpeciesMetadata(species: string): Promise<number> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   const metadata = { "Human": 79, "Droid": 200, "Wookiee": 400 };
@@ -136,7 +136,7 @@ async function fetchUserRatingSafe(mass: number): Promise<string | Error> {
   return "⭐ Lightweight";
 }
 
-// Clean error handling - errors become part of the data
+// Error handling - errors become part of the data
 const resultWithErrors = await people
   .mutate({
     rating: async (row) => await fetchUserRatingSafe(row.mass),
@@ -152,4 +152,4 @@ const errorRows = resultWithErrors.filter(row =>
 );
 
 console.log("Successful ratings:", successfulRatings.nrows());
-console.log("Failed ratings:", errorRows.nrows());`};function g(){return e.jsxs(c,{title:"Async Operations with Concurrency Control",description:"Built-in support for asynchronous data transformations with concurrency control",currentPath:"/async-operations",children:[e.jsx(a,{title:"Async Mutate Operations",description:"Add calculated columns using asynchronous functions",explanation:"You can mix synchronous and asynchronous operations in the same mutate() call. Perfect for API enrichment, data validation, and external service integration.",code:r.asyncMutateOperations}),e.jsx(a,{title:"Concurrency Control",description:"Control the number of concurrent async operations",explanation:"Limit concurrent operations to prevent overwhelming external services or APIs. This example shows how to use the concurrency parameter.",code:r.concurrencyControl}),e.jsx(a,{title:"Async Filtering",description:"Filter rows based on asynchronous conditions",explanation:"Async filtering is perfect for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations.",code:r.asyncFiltering}),e.jsx(a,{title:"Async Aggregation",description:"Handle asynchronous operations in group summaries",explanation:"Group summaries can include async operations to enrich your data with external information while maintaining type safety.",code:r.asyncAggregation}),e.jsx(a,{title:"Error Handling",description:"Gracefully handle async operation failures",explanation:"Async operations can fail, and tidy-ts provides clean error handling patterns for managing these scenarios in your data pipelines.",code:r.errorHandling}),e.jsxs(t,{children:[e.jsxs(n,{children:[e.jsx(s,{children:"Concurrency and Retries"}),e.jsx(i,{children:"Tidy-ts has baked-in concurrency control and retry mechanisms"})]}),e.jsx(o,{children:e.jsx("div",{children:e.jsx(a,{code:r.concurrencyAndRetries})})})]})]})}export{g as component};
+console.log("Failed ratings:", errorRows.nrows());`};function g(){return e.jsxs(c,{title:"Async Operations with Concurrency Control",description:"Built-in support for asynchronous data transformations with concurrency control",currentPath:"/async-operations",children:[e.jsx(a,{title:"Async Mutate Operations",description:"Add calculated columns using asynchronous functions",explanation:"You can mix synchronous and asynchronous operations in the same mutate() call. Useful for API enrichment, data validation, and external service integration.",code:r.asyncMutateOperations}),e.jsx(a,{title:"Concurrency Control",description:"Control the number of concurrent async operations",explanation:"Limit concurrent operations to prevent overwhelming external services or APIs. This example shows how to use the concurrency parameter.",code:r.concurrencyControl}),e.jsx(a,{title:"Async Filtering",description:"Filter rows based on asynchronous conditions",explanation:"Async filtering is useful for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations.",code:r.asyncFiltering}),e.jsx(a,{title:"Async Aggregation",description:"Handle asynchronous operations in group summaries",explanation:"Group summaries can include async operations to enrich your data with external information while maintaining type safety.",code:r.asyncAggregation}),e.jsx(a,{title:"Error Handling",description:"Gracefully handle async operation failures",explanation:"Async operations can fail, and tidy-ts provides error handling patterns for managing these scenarios in your data pipelines.",code:r.errorHandling}),e.jsxs(t,{children:[e.jsxs(s,{children:[e.jsx(n,{children:"Concurrency and Retries"}),e.jsx(i,{children:"Tidy-ts includes concurrency control and retry mechanisms"})]}),e.jsx(o,{children:e.jsx("div",{children:e.jsx(a,{code:r.concurrencyAndRetries})})})]})]})}export{g as component};
