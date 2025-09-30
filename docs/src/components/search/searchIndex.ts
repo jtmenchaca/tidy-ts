@@ -71,7 +71,7 @@ export const searchIndex: SearchResult[] = [
     ],
   },
   {
-    title: "Transforming Data with mutate()",
+    title: "Transforming Data",
     path: "/transforming-data",
     content:
       "The mutate() function is your primary tool for adding calculated columns and transforming data. Learn everything from basic calculations to async operations with stats integration.",
@@ -132,7 +132,7 @@ export const searchIndex: SearchResult[] = [
   },
   {
     title: "DataFrame Basics",
-    path: "/basics",
+    path: "/dataframe-basics",
     content:
       "DataFrame properties, column access, and TypeScript integration. Learn the fundamentals before diving into data operations.",
     category: "Core",
@@ -221,7 +221,7 @@ export const searchIndex: SearchResult[] = [
     ],
   },
   {
-    title: "Statistical Analysis",
+    title: "Stats Module",
     path: "/stats-module",
     content:
       "Tidy-TS provides a statistical toolkit with 80+ functions across descriptive stats, hypothesis testing, and probability distributions. 16 probability distributions, comprehensive statistical tests, and Compare API for intuitive analysis.",
@@ -284,33 +284,8 @@ export const searchIndex: SearchResult[] = [
     ],
   },
 
-  // Data I/O
   {
-    title: "Data I/O Operations",
-    path: "/data-io",
-    content:
-      "Read and write data from various formats including CSV, Parquet, and Arrow files with full type safety and schema validation.",
-    category: "Data I/O",
-    type: "page",
-    keywords: [
-      "data",
-      "io",
-      "input",
-      "output",
-      "csv",
-      "parquet",
-      "arrow",
-      "read",
-      "write",
-      "file",
-      "import",
-      "export",
-      "schema",
-      "validation",
-    ],
-  },
-  {
-    title: "Async Operations with Concurrency Control",
+    title: "Async Operations",
     path: "/async-operations",
     content:
       "Built-in support for asynchronous data transformations with concurrency control. Mix sync and async operations, control concurrency, handle errors gracefully, and integrate with external APIs.",
@@ -374,7 +349,7 @@ export const searchIndex: SearchResult[] = [
 
   // Examples
   {
-    title: "Comprehensive Workflows",
+    title: "Example Workflows",
     path: "/examples/comprehensive-workflows",
     content:
       "Real-world data analysis examples. Complete workflows showing end-to-end data processing examples.",

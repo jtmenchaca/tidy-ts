@@ -28,7 +28,7 @@ const navigationFlow: NavigationItem[] = [
   },
   {
     title: "DataFrame Basics",
-    path: "/basics",
+    path: "/dataframe-basics",
     description: "DataFrame properties, column access, and TypeScript integration",
   },
   {

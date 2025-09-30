@@ -3,7 +3,7 @@ import { CodeBlock } from "../components/ui/code-block.tsx";
 import { DocPageLayout } from "../components/layout/DocPageLayout.tsx";
 import { dataframeBasicsExamples } from "./dataframe-basics.examples.ts";
 
-export const Route = createFileRoute("/basics" as any)({
+export const Route = createFileRoute("/dataframe-basics" as any)({
   component: DataFrameBasicsComponent,
 });
 
