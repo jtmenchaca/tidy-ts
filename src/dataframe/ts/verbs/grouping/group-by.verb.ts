@@ -76,12 +76,21 @@ export function groupBy<
     // Key → gid
     let gid = 0;
 
+    // Helper to normalize values for comparison (e.g., Date objects)
+    const normalizeKey = (val: unknown): unknown => {
+      if (val instanceof Date) {
+        return val.getTime();
+      }
+      return val;
+    };
+
     if (columns.length === 1) {
       const col = String(columns[0]);
       const m = new Map<unknown, number>();
 
       for (let i = 0; i < n; i++) {
-        const k = getVal(i, col);
+        const rawKey = getVal(i, col);
+        const k = normalizeKey(rawKey);
         let g = m.get(k);
         if (g === undefined) {
           g = gid++;
@@ -103,7 +112,8 @@ export function groupBy<
       const getOrCreateGid = (i: number): number => {
         let node: Node = root;
         for (let c = 0; c < columns.length - 1; c++) {
-          const v = getVal(i, String(columns[c]));
+          const rawVal = getVal(i, String(columns[c]));
+          const v = normalizeKey(rawVal);
           let nxt = node.get(v);
           if (!nxt) {
             nxt = new Map();
@@ -111,7 +121,8 @@ export function groupBy<
           }
           node = nxt;
         }
-        const last = getVal(i, String(columns[columns.length - 1]));
+        const rawLast = getVal(i, String(columns[columns.length - 1]));
+        const last = normalizeKey(rawLast);
         let g = node.get(last);
         if (g === undefined) {
           g = gid++;

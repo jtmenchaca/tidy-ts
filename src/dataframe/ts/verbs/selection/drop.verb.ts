@@ -16,7 +16,8 @@ import {
  * are silently ignored, making this function safe to use even when column names
  * might not exist in the data.
  *
- * @param cols - One or more column names to remove from the dataframe
+ * @param columnOrColumns - Column name, array of column names, or undefined
+ * @param additionalColumns - Additional column names (when using sequential arguments)
  * @returns A function that takes a DataFrame and returns the DataFrame with columns removed
  *
  * @example
@@ -24,14 +25,19 @@ import {
  * // Remove a single column
  * df.drop("mass")
  *
- * // Remove multiple columns
+ * // Remove multiple columns (sequential arguments)
  * df.drop("mass", "homeworld")
+ *
+ * // Remove multiple columns (array syntax)
+ * df.drop(["mass", "homeworld"])
  *
  * // Non-existent columns are ignored
  * df.drop("nonexistent", "mass") // Only removes "mass"
+ * df.drop(["nonexistent", "mass"]) // Only removes "mass"
  *
  * // Remove all columns (results in empty objects)
  * df.drop("id", "name", "mass", "species", "homeworld")
+ * df.drop(["id", "name", "mass", "species", "homeworld"])
  * ```
  *
  * @remarks
@@ -42,7 +48,7 @@ import {
  * - Returns empty objects if all columns are dropped
  */
 
-// Typed overload for precise column removal
+// Typed overload for precise column removal - sequential arguments
 export function drop<
   Row extends Record<string, unknown>,
   const Cols extends readonly (keyof Row & string)[],
@@ -50,8 +56,26 @@ export function drop<
   ...cols: Cols
 ): (df: DataFrame<Row>) => DataFrame<Prettify<Omit<Row, Cols[number]>>>;
 
+// Typed overload for array syntax
+export function drop<
+  Row extends Record<string, unknown>,
+  const Cols extends readonly (keyof Row & string)[],
+>(
+  cols: Cols,
+): (df: DataFrame<Row>) => DataFrame<Prettify<Omit<Row, Cols[number]>>>;
+
 // Implementation signature (wide for backward compatibility)
-export function drop<Row extends Record<string, unknown>>(...cols: string[]) {
+export function drop<Row extends Record<string, unknown>>(
+  columnOrColumns?: string | string[],
+  ...additionalColumns: string[]
+) {
+  // Normalize inputs - handle both array and rest parameter syntax
+  const cols = columnOrColumns === undefined
+    ? []
+    : Array.isArray(columnOrColumns)
+    ? columnOrColumns
+    : [columnOrColumns, ...additionalColumns];
+
   const set = new Set(cols);
   // Note the `any` return so it satisfies both overloads
   return (df: DataFrame<Row>): any => {

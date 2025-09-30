@@ -113,6 +113,7 @@ function printTable(
         const value = (row as any)[col];
         if (value === null) return "(null)".length;
         if (value === undefined) return "(undefined)".length;
+        if (value instanceof Date) return value.toISOString().length;
         return String(value).length;
       }),
     );
@@ -152,6 +153,8 @@ function printTable(
         displayValue = "(null)";
       } else if (value === undefined) {
         displayValue = "(undefined)";
+      } else if (value instanceof Date) {
+        displayValue = value.toISOString();
       } else {
         displayValue = String(value);
       }

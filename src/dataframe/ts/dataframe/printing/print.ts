@@ -26,6 +26,9 @@ export function stringifyCell(v: unknown): string {
     return v.replace(/\|/g, "\\|").replace(/\r?\n/g, "↵");
   }
   if (typeof v === "boolean") return v ? "true" : "false";
+  if (v instanceof Date) {
+    return v.toISOString();
+  }
   try {
     return JSON.stringify(v);
   } catch {

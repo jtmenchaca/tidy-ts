@@ -181,7 +181,10 @@ export function createColumnarDataFrameFromStore<
           let value = column[actualRowIndex];
 
           // Handle nested objects and long strings
-          if (
+          if (value instanceof Date) {
+            // Keep Date objects as-is for proper display
+            value = value;
+          } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {
             const entries = Object.entries(value);
@@ -212,7 +215,10 @@ export function createColumnarDataFrameFromStore<
           let value = currentStore.columns[colName][actualRowIndex];
 
           // Handle nested objects and long strings
-          if (
+          if (value instanceof Date) {
+            // Keep Date objects as-is for proper display
+            value = value;
+          } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {
             const entries = Object.entries(value);

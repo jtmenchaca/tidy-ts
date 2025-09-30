@@ -185,6 +185,8 @@ function summariseSync<T extends object>(
             groupIndices.push(actualIdx);
             rowIdx = next[rowIdx];
           }
+          // Adjacency list gives us rows in reverse order, so reverse to get original order
+          groupIndices.reverse();
           return groupIndices;
         });
 
@@ -413,6 +415,8 @@ async function summariseAsync<T extends object>(
         groupIndices.push(actualIdx);
         rowIdx = next[rowIdx];
       }
+      // Adjacency list gives us rows in reverse order, so reverse to get original order
+      groupIndices.reverse();
 
       // Create columnar group data by extracting column slices
       const groupColumns: Record<string, unknown[]> = {};
