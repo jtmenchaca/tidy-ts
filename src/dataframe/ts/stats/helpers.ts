@@ -5,6 +5,9 @@
 
 import { isNA } from "../utilities/mod.ts";
 
+// Re-export isNA for convenience
+export { isNA };
+
 // Type aliases for clear overload signatures
 export type NumbersWithNullable =
   | (number | null | undefined)[]

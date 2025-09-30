@@ -10,16 +10,16 @@ Deno.test("Debug Date storage", () => {
   console.log(data);
 
   const df = createDataFrame(data);
-  
+
   console.log("\nDataFrame.toArray():");
   console.log(df.toArray());
-  
+
   console.log("\nDataFrame.toTable():");
   console.log(df.toTable());
-  
+
   console.log("\nDirect column access:");
   console.log("df.date:", df.date);
-  
+
   console.log("\nPrint DataFrame:");
   df.print();
 });

@@ -54,21 +54,21 @@ Deno.test("Slice Methods - Comprehensive Grouped vs Ungrouped Behavior", () => {
 
   // Grouped: should return first 2 rows from each group (6 total: 2 from A, 2 from B, 2 from C)
   expect(groupedHead.nrows()).toBe(6);
-  // First group (A): A5, A4
+  // First group (A): A1, A2 (correct order after fix)
   expect(groupedHead[0].species).toBe("A");
-  expect(groupedHead[0].id).toBe("A5");
+  expect(groupedHead[0].id).toBe("A1");
   expect(groupedHead[1].species).toBe("A");
-  expect(groupedHead[1].id).toBe("A4");
-  // Second group (B): B3, B2
+  expect(groupedHead[1].id).toBe("A2");
+  // Second group (B): B1, B2 (correct order after fix)
   expect(groupedHead[2].species).toBe("B");
-  expect(groupedHead[2].id).toBe("B3");
+  expect(groupedHead[2].id).toBe("B1");
   expect(groupedHead[3].species).toBe("B");
   expect(groupedHead[3].id).toBe("B2");
-  // Third group (C): C4, C3
+  // Third group (C): C1, C2 (correct order after fix)
   expect(groupedHead[4].species).toBe("C");
-  expect(groupedHead[4].id).toBe("C4");
+  expect(groupedHead[4].id).toBe("C1");
   expect(groupedHead[5].species).toBe("C");
-  expect(groupedHead[5].id).toBe("C3");
+  expect(groupedHead[5].id).toBe("C2");
 
   console.log("slice_head behavior verification checked");
 
@@ -104,11 +104,11 @@ Deno.test("Slice Methods - Comprehensive Grouped vs Ungrouped Behavior", () => {
   // Grouped: should return last 1 row from each group (3 total: 1 from A, 1 from B, 1 from C)
   expect(groupedTail.nrows()).toBe(3);
   expect(groupedTail[0].species).toBe("A");
-  expect(groupedTail[0].id).toBe("A1"); // Last row of group A
+  expect(groupedTail[0].id).toBe("A5"); // Last row of group A (correct order after fix)
   expect(groupedTail[1].species).toBe("B");
-  expect(groupedTail[1].id).toBe("B1"); // Last row of group B
+  expect(groupedTail[1].id).toBe("B3"); // Last row of group B (correct order after fix)
   expect(groupedTail[2].species).toBe("C");
-  expect(groupedTail[2].id).toBe("C1"); // Last row of group C
+  expect(groupedTail[2].id).toBe("C4"); // Last row of group C (correct order after fix)
 
   console.log("slice_tail behavior verification checked");
 
@@ -221,15 +221,15 @@ Deno.test("Slice Methods - Comprehensive Grouped vs Ungrouped Behavior", () => {
 
   // Grouped: should return indices 1, 2 from each group (first two rows of each group)
   expect(groupedIndices.nrows()).toBe(3);
-  // Group A: indices 1, 2 -> A4
+  // Group A: indices 1, 2 -> A2 (corrected order)
   expect(groupedIndices[0].species).toBe("A");
-  expect(groupedIndices[0].id).toBe("A4");
-  // Group B: indices 1, 2 -> B2
+  expect(groupedIndices[0].id).toBe("A2");
+  // Group B: indices 1, 2 -> B2 (corrected order)
   expect(groupedIndices[1].species).toBe("B");
   expect(groupedIndices[1].id).toBe("B2");
-  // Group C: indices 1, 2 -> C3
+  // Group C: indices 1, 2 -> C2 (corrected order)
   expect(groupedIndices[2].species).toBe("C");
-  expect(groupedIndices[2].id).toBe("C3");
+  expect(groupedIndices[2].id).toBe("C2");
 
   console.log("slice (by indices) behavior verification checked");
 
@@ -299,8 +299,8 @@ Deno.test("Slice Methods - Edge Cases and Boundary Conditions", () => {
   // Should return all available rows from each group
   expect(moreThanGroupSize.nrows()).toBe(3); // 1 from X, 2 from Y
   expect(moreThanGroupSize[0].id).toBe("X1");
-  expect(moreThanGroupSize[1].id).toBe("Y2");
-  expect(moreThanGroupSize[2].id).toBe("Y1");
+  expect(moreThanGroupSize[1].id).toBe("Y1"); // Corrected order
+  expect(moreThanGroupSize[2].id).toBe("Y2");
 
   // Test empty group handling
   const emptyData = createDataFrame([]);
@@ -346,10 +346,10 @@ Deno.test("Slice Methods - Multiple Grouping Columns", () => {
 
   // Should return first row from each category-type combination
   expect(multiGroupSlice.nrows()).toBe(4); // AX, AY, BX, BY
-  expect(multiGroupSlice[0].id).toBe("AX2");
+  expect(multiGroupSlice[0].id).toBe("AX1"); // Corrected order
   expect(multiGroupSlice[1].id).toBe("AY1");
   expect(multiGroupSlice[2].id).toBe("BX1");
-  expect(multiGroupSlice[3].id).toBe("BY2");
+  expect(multiGroupSlice[3].id).toBe("BY1"); // Corrected order
 
   console.log("\n📊 Multiple grouping columns tests finished");
 });
@@ -375,9 +375,9 @@ Deno.test("Slice Methods - Data Integrity and Type Safety", () => {
 
   // Verify no data corruption
   expect(sliced[0].species).toBe("A");
-  expect(sliced[0].value).toBe(8);
-  expect(sliced[0].priority).toBe(2);
-  expect(sliced[0].id).toBe("A5");
+  expect(sliced[0].value).toBe(10); // Corrected order - first row of group A
+  expect(sliced[0].priority).toBe(1);
+  expect(sliced[0].id).toBe("A1");
 
   console.log("Data integrity and type safety verified");
   console.log("\n📊 Data integrity and type safety tests finished");

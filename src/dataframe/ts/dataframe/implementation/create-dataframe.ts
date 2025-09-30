@@ -183,7 +183,6 @@ export function createColumnarDataFrameFromStore<
           // Handle nested objects and long strings
           if (value instanceof Date) {
             // Keep Date objects as-is for proper display
-            value = value;
           } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {
@@ -217,7 +216,6 @@ export function createColumnarDataFrameFromStore<
           // Handle nested objects and long strings
           if (value instanceof Date) {
             // Keep Date objects as-is for proper display
-            value = value;
           } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {

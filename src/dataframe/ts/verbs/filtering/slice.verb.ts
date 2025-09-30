@@ -68,6 +68,8 @@ export function slice<Row extends object>(
           groupViewIdx.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupViewIdx.reverse();
 
         const n = groupViewIdx.length;
         const s = Math.max(0, start < 0 ? n + start : start);
@@ -140,6 +142,8 @@ export function slice_indices<Row extends object>(
           groupRows.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupRows.reverse();
 
         // Apply slice indices to this group
         for (const idx of indices) {
@@ -255,18 +259,25 @@ export function slice_head<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
+        // Collect all rows in this group first
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
-        let count = 0;
+        while (rowIdx !== -1) {
+          groupIndices.push(rowIdx);
+          rowIdx = next[rowIdx];
+        }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupIndices.reverse();
 
         // Take first n rows from this group using view-aware row construction
-        while (rowIdx !== -1 && count < n) {
+        const takeCount = Math.min(n, groupIndices.length);
+        for (let i = 0; i < takeCount; i++) {
+          const actualRowIdx = groupIndices[i];
           const row = {} as Row;
           for (const colName of store.columnNames) {
-            (row as any)[colName] = store.columns[colName][rowIdx];
+            (row as any)[colName] = store.columns[colName][actualRowIdx];
           }
           rebuilt.push(row);
-          rowIdx = next[rowIdx];
-          count++;
         }
       }
 
@@ -337,6 +348,8 @@ export function slice_tail<Row extends object>(
           groupRows.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupRows.reverse();
 
         // Take last n rows from this group
         for (
@@ -417,6 +430,8 @@ export function slice_min<Row extends object>(
           groupRows.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupRows.reverse();
 
         const groupData = groupRows.map((i: number) => rows[i]);
         const sorted = [...groupData].sort((a, b) => {
@@ -427,6 +442,9 @@ export function slice_min<Row extends object>(
           if (bVal == null) return -1;
           if (typeof aVal === "number" && typeof bVal === "number") {
             return aVal - bVal;
+          }
+          if (aVal instanceof Date && bVal instanceof Date) {
+            return aVal.getTime() - bVal.getTime(); // Ascending order for dates
           }
           return String(aVal).localeCompare(String(bVal));
         });
@@ -458,6 +476,9 @@ export function slice_min<Row extends object>(
         if (bVal == null) return -1;
         if (typeof aVal === "number" && typeof bVal === "number") {
           return aVal - bVal;
+        }
+        if (aVal instanceof Date && bVal instanceof Date) {
+          return aVal.getTime() - bVal.getTime(); // Ascending order for dates
         }
         return String(aVal).localeCompare(String(bVal));
       });
@@ -563,21 +584,45 @@ export function slice_max<Row extends object>(
           groupRows.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupRows.reverse();
 
         const groupData = groupRows.map((i: number) => rows[i]);
-        const sorted = [...groupData].sort((a, b) => {
+
+        // Separate defined and undefined values
+        const definedData = groupData.filter((row) => row[column] != null);
+        const undefinedData = groupData.filter((row) => row[column] == null);
+
+        // Sort defined values in descending order for sliceMax
+        const sortedDefined = [...definedData].sort((a, b) => {
           const aVal = a[column];
           const bVal = b[column];
-          if (aVal == null && bVal == null) return 0;
-          if (aVal == null) return 1;
-          if (bVal == null) return -1;
           if (typeof aVal === "number" && typeof bVal === "number") {
             return bVal - aVal;
           }
+          if (aVal instanceof Date && bVal instanceof Date) {
+            return bVal.getTime() - aVal.getTime(); // Descending order for dates
+          }
           return String(bVal).localeCompare(String(aVal));
         });
-        for (let i = 0; i < Math.min(n, sorted.length); ++i) {
-          rebuilt.push(sorted[i]);
+
+        // Take first n from defined values, then undefined if needed
+        const toTake = Math.min(n, groupData.length);
+        let taken = 0;
+
+        // First, take from sorted defined values
+        for (let i = 0; i < Math.min(toTake, sortedDefined.length); i++) {
+          rebuilt.push(sortedDefined[i]);
+          taken++;
+        }
+
+        // If we need more and have undefined values, take those
+        for (
+          let i = 0;
+          i < Math.min(toTake - taken, undefinedData.length);
+          i++
+        ) {
+          rebuilt.push(undefinedData[i]);
         }
       }
       const out = createDataFrame(rebuilt);
@@ -604,6 +649,9 @@ export function slice_max<Row extends object>(
         if (bVal == null) return -1;
         if (typeof aVal === "number" && typeof bVal === "number") {
           return bVal - aVal; // Descending order
+        }
+        if (aVal instanceof Date && bVal instanceof Date) {
+          return bVal.getTime() - aVal.getTime(); // Descending order for dates
         }
         return String(bVal).localeCompare(String(aVal)); // Descending order
       });
@@ -709,6 +757,8 @@ export function slice_sample<Row extends object>(
           groupRows.push(rowIdx);
           rowIdx = next[rowIdx];
         }
+        // Adjacency list gives us rows in reverse order, so reverse to get original order
+        groupRows.reverse();
 
         const groupData = groupRows.map((i: number) => rows[i]);
         const sampled = sampleArray(

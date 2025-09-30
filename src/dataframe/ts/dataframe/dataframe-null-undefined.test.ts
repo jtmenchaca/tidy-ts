@@ -197,6 +197,7 @@ Deno.test("Null and Undefined Edge Cases - Statistical Functions", () => {
     console.log(`Max with problematic values: ${maxScore}`);
     // Max should return Infinity if present, or handle gracefully
     expect(
+      // @ts-expect-error - this is a test
       maxScore === Infinity || typeof maxScore === "number" || maxScore == null,
     ).toBe(true);
   } catch (error: any) {
@@ -212,6 +213,7 @@ Deno.test("Null and Undefined Edge Cases - Statistical Functions", () => {
     console.log(`Min with problematic values: ${minScore}`);
     // Min should return -Infinity if present, or handle gracefully
     expect(
+      // @ts-expect-error - this is a test
       minScore === -Infinity || typeof minScore === "number" ||
         minScore == null,
     ).toBe(true);

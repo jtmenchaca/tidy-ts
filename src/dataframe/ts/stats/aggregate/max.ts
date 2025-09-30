@@ -9,13 +9,20 @@ import {
   ERROR_MESSAGES,
   extractNumbersWithOptions,
   isAllFiniteNumbers,
+  isNA,
 } from "../helpers.ts";
 
+// Type definitions for Date arrays
+export type CleanDateArray = readonly Date[];
+export type DatesWithNullable =
+  | (Date | null | undefined)[]
+  | readonly (Date | null | undefined)[];
+
 /**
- * Find the maximum value in an array of numbers
+ * Find the maximum value in an array of numbers or dates
  *
- * @param values - Array of numbers, or single number
- * @param removeNA - If true, guarantees a number return (throws if no valid values)
+ * @param values - Array of numbers/dates, or single number/date
+ * @param removeNA - If true, guarantees a number/date return (throws if no valid values)
  * @returns The maximum value, or null if no valid values and removeNA=false
  *
  * @example
@@ -24,6 +31,7 @@ import {
  * max([1, 2, 3, 4, 5]) // 5
  * max([null, 2, 3], false) // 3 (or null if no valid values)
  * max([null, 2, 3], true) // 3 (guaranteed number or throws)
+ * max([new Date('2024-01-01'), new Date('2024-01-02')]) // new Date('2024-01-02')
  * ```
  */
 // Types that should be rejected at compile-time (examples):
@@ -32,28 +40,74 @@ import {
 // type ArrayWithMixedTypes = (number | string | boolean | null)[];
 // These types are intentionally NOT supported in overloads - use runtime filtering instead
 
+// Single value overloads
 export function max(value: number): number;
+export function max(value: Date): Date;
+
+// Clean array overloads (no nulls/undefined)
+export function max(values: CleanDateArray): Date;
 export function max(values: CleanNumberArray): number;
-export function max(values: NumbersWithNullable, removeNA: true): number;
 export function max(values: CleanNumberIterable): number;
+
+// Arrays with nullables that require removeNA=true
+export function max(values: DatesWithNullable, removeNA: true): Date;
+export function max(values: NumbersWithNullable, removeNA: true): number;
 export function max(
   values: NumbersWithNullableIterable,
   removeNA: true,
 ): number;
+
+// Arrays with nullables that return nullable (removeNA=false or omitted)
+export function max(
+  values: DatesWithNullable,
+  removeNA?: false,
+): Date | null;
+export function max(
+  values: NumbersWithNullable,
+  removeNA?: false,
+): number | null;
 export function max(
   values:
     | number
+    | Date
     | CleanNumberArray
+    | CleanDateArray
     | NumbersWithNullable
+    | DatesWithNullable
     | CleanNumberIterable
     | NumbersWithNullableIterable
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
   removeNA: boolean = false,
-): number | null {
+): number | Date | null {
   // Handle single number case
   if (typeof values === "number") {
     return values;
+  }
+
+  // Handle single date case
+  if (values instanceof Date) {
+    return values;
+  }
+
+  // Check if all values are dates (after filtering nulls/undefined)
+  const processArray = Array.isArray(values) ? values : Array.from(values);
+  const nonNullValues = processArray.filter((v) => !isNA(v));
+
+  if (
+    nonNullValues.length > 0 && nonNullValues.every((v) => v instanceof Date)
+  ) {
+    // Handle date arrays
+    const validDates = processArray.filter((v): v is Date => v instanceof Date);
+
+    if (validDates.length === 0) {
+      if (removeNA) {
+        throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MAX);
+      }
+      return null;
+    }
+
+    return validDates.reduce((max, date) => date > max ? date : max);
   }
 
   // Check for mixed types first - return null unless removeNA is true
