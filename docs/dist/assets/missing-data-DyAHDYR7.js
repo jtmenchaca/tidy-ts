@@ -1,4 +1,4 @@
-import{j as a}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-D2D4yAeg.js";import{D as n}from"./DocPageLayout-B3SbONa0.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-F5r6CUZd.js";import"./index-qpSwu6Nl.js";import"./shiki-themes-BheiPiei.js";const t={nullUndefinedSupport:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as a}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-m6lKxO6J.js";import{D as n}from"./DocPageLayout-oXMYcfC1.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-CWLLJPHH.js";import"./index-De-L4Rh0.js";import"./shiki-themes-BheiPiei.js";const t={nullUndefinedSupport:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 // DataFrames naturally support null and undefined values
 const data = createDataFrame([

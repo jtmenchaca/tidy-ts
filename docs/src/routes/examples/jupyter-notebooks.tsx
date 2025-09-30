@@ -73,36 +73,12 @@ function JupyterNotebooksComponent() {
         </div>
       </div>
 
-      <CodeBlock
-        title="Basic DataFrame Operations"
-        description="Create and manipulate DataFrames in Jupyter cells"
-        explanation="Jupyter notebooks provide an interactive environment perfect for data exploration. Each cell can contain code that runs independently, making it easy to experiment and iterate."
-        code={`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
-
-// Create a DataFrame from sample data
-const df = createDataFrame([
-  { name: "Alice", age: 30, city: "New York" },
-  { name: "Bob", age: 25, city: "San Francisco" },
-  { name: "Charlie", age: 35, city: "Chicago" }
-]);
-
-// Display the DataFrame
-console.log(df);
-
-// Basic operations
-const youngPeople = df.filter(row => row.age < 30);
-console.log("Young people:", youngPeople);
-
-// Select specific columns
-const namesAndAges = df.select("name", "age");
-console.log("Names and ages:", namesAndAges);`}
-      />
 
       <CodeBlock
         title="Data Visualization"
         description="Create interactive charts and visualizations"
-        explanation="Jupyter notebooks excel at combining code, data, and visualizations. You can create rich, interactive charts that update as you modify your data."
-        code={`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
+        explanation="Jupyter notebooks are great for exploring data and visualizing it."
+        code={`import { createDataFrame } from "jsr:@tidy-ts/dataframe";
 
 // Sample sales data
 const salesData = createDataFrame([
@@ -114,26 +90,29 @@ const salesData = createDataFrame([
 ]);
 
 // Calculate profit margin
-const withMargin = salesData.mutate({
-  profitMargin: row => (row.profit / row.sales * 100).toFixed(1) + "%"
-});
+const withMargin = salesData
+  .mutate({
+    profitMargin: row => (row.profit / row.sales * 100).toFixed(1) + "%"
+  });
 
 console.log("Sales data with profit margin:", withMargin);
 
 // Group by month and calculate totals
-const monthlyTotals = salesData.groupBy("month").summarise({
-  totalSales: "sales",
-  totalProfit: "profit"
-});
+const monthlyTotals = salesData
+  .groupBy("month")
+  .summarize({
+    totalSales: "sales",
+    totalProfit: "profit"
+  });
 
 console.log("Monthly totals:", monthlyTotals);`}
       />
 
       <CodeBlock
-        title="Interactive Charts with Tooltips"
+        title="Interactive Charts"
         description="Create interactive visualizations with hover tooltips"
-        explanation="In Jupyter notebooks, charts automatically display with interactive tooltips when you reference the chart object."
-        code={`import { createDataFrame } from "@jsr/tidy-ts__dataframe";
+        explanation="In Jupyter notebooks, charts automatically display with interactivity when you reference the chart object."
+        code={`import { createDataFrame } from "jsr:@tidy-ts/dataframe";
 
 // Create sample sales data
 const salesData = createDataFrame([
