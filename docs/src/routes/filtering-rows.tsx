@@ -18,17 +18,10 @@ function FilteringRowsComponent() {
   return (
     <DocPageLayout
       title="Filtering Rows"
-      description="Filtering lets you work with subsets of your data based on specific conditions. Learn both synchronous and asynchronous filtering patterns."
+      description="Filtering lets you subset your data based on specific conditions. It supports both synchronous and asynchronous filtering patterns."
       currentPath="/filtering-rows"
     >
-      <CodeBlock
-        title="Basic Filtering"
-        description="Filter rows based on simple conditions"
-        explanation="The filter() function creates a new DataFrame containing only rows that match your condition. You can use any combination of column values and logical operators."
-        code={filteringExamples.basicFiltering}
-      />
-
-      <div className="my-8">
+       <div className="my-8">
         <video
           src={FilterVideo}
           autoPlay
@@ -45,12 +38,21 @@ function FilteringRowsComponent() {
         >
           Your browser does not support the video tag.
         </video>
-      </div>
+      </div> 
+
+      <CodeBlock
+        title="Basic Filtering"
+        description="Filter rows based on simple conditions"
+        explanation="The filter() function creates a new DataFrame containing only rows that match your condition. You can use any combination of column values and logical operators."
+        code={filteringExamples.basicFiltering}
+      />
+
+     
 
       <CodeBlock
         title="Using (row, index, df) Parameters in Filter"
-        description="Learn how to use all three parameters available in filter functions"
-        explanation="row: Current row's data • index: Row position (0-based) • df: Entire DataFrame"
+        description="Just like mutate(), filter() also provides three parameters available in filter functions"
+        explanation="row: Current row's data | index: Row position (0-based) | df: Entire DataFrame"
         code={filteringExamples.filterWithParameters}
       />
 
@@ -65,7 +67,7 @@ function FilteringRowsComponent() {
         <CardHeader>
           <CardTitle>Async Filtering</CardTitle>
           <CardDescription>
-            Handle asynchronous operations in your filter conditions
+            Handle asynchronous operations in filter conditions
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -116,25 +118,6 @@ function FilteringRowsComponent() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Considerations</CardTitle>
-          <CardDescription>
-            Tips for efficient filtering operations
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium mb-2">Chaining Filters</h4>
-              <CodeBlock
-                code={filteringExamples.chainedFiltering}
-              />
-            </div>
-
-          </div>
-        </CardContent>
-      </Card>
     </DocPageLayout>
   );
 }
