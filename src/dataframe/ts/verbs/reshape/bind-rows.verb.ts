@@ -5,6 +5,45 @@ import { createColumnarDataFrameFromStore } from "../../dataframe/implementation
 import { tracer } from "../../telemetry/tracer.ts";
 
 /**
+ * Helper to detect if a property is optional in a type
+ */
+type IsOptional<T, K extends keyof T> = undefined extends T[K] ? true : false;
+
+/**
+ * Helper type that properly merges two objects by creating unions for shared keys
+ * and maintaining optional status for keys that don't exist in both types.
+ *
+ * This handles the complex case where fields might be optional in one type but required in another.
+ */
+type MergeRows<Row1, Row2> =
+  & {
+    // For keys that exist in both:
+    // - If optional in either type, make the result optional
+    // - Create union of the value types
+    [
+      K in keyof Row1 & keyof Row2 as IsOptional<Row1, K> extends true ? K
+        : IsOptional<Row2, K> extends true ? K
+        : never
+    ]?: Row1[K] | Row2[K];
+  }
+  & {
+    // For keys that exist in both and are required in both
+    [
+      K in keyof Row1 & keyof Row2 as IsOptional<Row1, K> extends false
+        ? IsOptional<Row2, K> extends false ? K : never
+        : never
+    ]: Row1[K] | Row2[K];
+  }
+  & {
+    // For keys only in Row1, keep them as-is
+    [K in Exclude<keyof Row1, keyof Row2>]: Row1[K];
+  }
+  & {
+    // For keys only in Row2, make them optional
+    [K in Exclude<keyof Row2, keyof Row1>]?: Row2[K];
+  };
+
+/**
  * Bind multiple DataFrames together by rows (vertical binding).
  *
  * This function combines DataFrames by stacking their rows on top of each other,
@@ -42,7 +81,7 @@ export function bind_rows<
   OtherRow extends Record<string, unknown>,
 >(
   ...dataFrames: DataFrame<OtherRow>[]
-): (df: DataFrame<Row>) => DataFrame<Prettify<Row & Partial<OtherRow>>> {
+): (df: DataFrame<Row>) => DataFrame<Prettify<MergeRows<Row, OtherRow>>> {
   return (df: DataFrame<Row>) => {
     const span = tracer.startSpan(df, "bind_rows", {
       dataFrameCount: dataFrames.length + 1,
@@ -139,10 +178,10 @@ export function bind_rows<
       // Create DataFrame from the new store (most efficient path)
       const result = tracer.withSpan(df, "create-dataframe", () => {
         return createColumnarDataFrameFromStore<
-          Prettify<Row & Partial<OtherRow>>
+          Prettify<MergeRows<Row, OtherRow>>
         >(
           newStore,
-        ) as unknown as DataFrame<Prettify<Row & Partial<OtherRow>>>;
+        ) as unknown as DataFrame<Prettify<MergeRows<Row, OtherRow>>>;
       });
 
       // Copy trace context to new DataFrame
