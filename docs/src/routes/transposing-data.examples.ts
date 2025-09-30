@@ -8,19 +8,19 @@ const sales = createDataFrame([
 ]);
 
 // Transpose rows and columns
-const transposed = sales.transpose({ number_of_rows: 2 });
+const transposed = sales.transpose({ numberOfRows: 2 });
 console.log("Transposed data:");
 transposed.print();`,
 
   transposeWithLabels: `// Add custom row labels before transposing
 const withLabels = sales.setRowLabels(["widget_a", "widget_b"]);
-const labeledTranspose = withLabels.transpose({ number_of_rows: 2 });
+const labeledTranspose = withLabels.transpose({ numberOfRows: 2 });
 
 console.log("Transposed with custom labels:");
 labeledTranspose.print();`,
 
   doubleTranspose: `// Double transpose returns to original structure
-const backToOriginal = transposed.transpose({ number_of_rows: 2 });
+const backToOriginal = transposed.transpose({ numberOfRows: 2 });
 console.log("Double transpose (restored):");
 backToOriginal.print();`,
 
@@ -30,7 +30,7 @@ const mixed = createDataFrame([
   { id: 2, name: "Bob", active: false, score: 87.2 },
 ]);
 
-const mixedTranspose = mixed.setRowLabels(["user1", "user2"]).transpose({ number_of_rows: 2 });
+const mixedTranspose = mixed.setRowLabels(["user1", "user2"]).transpose({ numberOfRows: 2 });
 console.log("Mixed data types transpose:");
 mixedTranspose.print();`,
 };

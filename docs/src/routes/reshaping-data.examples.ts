@@ -12,9 +12,9 @@ const salesLong = createDataFrame([
 
 // Pivot to wide format (one row per quarter, columns for each product)
 const salesWide = salesLong.pivotWider({
-  names_from: "product",
-  values_from: "sales",
-  expected_columns: ["Widget A", "Widget B"],
+  namesFrom: "product",
+  valuesFrom: "sales",
+  expectedColumns: ["Widget A", "Widget B"],
 });
 
 salesWide.print("Sales data pivoted to wide format:");`,
@@ -29,8 +29,8 @@ const gradesWide = createDataFrame([
 // Melt to long format (one row per student per subject)
 const gradesLong = gradesWide.pivotLonger({
   cols: ["math", "science", "english"],
-  names_to: "subject",
-  values_to: "score",
+  namesTo: "subject",
+  valuesTo: "score",
 });
 
 gradesLong.print("Student grades melted to long format:");`,
@@ -49,9 +49,9 @@ const regionalSales = createDataFrame([
 
 // Pivot by region to compare North vs South sales
 const regionComparison = regionalSales.pivotWider({
-  names_from: "region",
-  values_from: "sales",
-  expected_columns: ["North", "South"],
+  namesFrom: "region",
+  valuesFrom: "sales",
+  expectedColumns: ["North", "South"],
 });
 
 regionComparison.print("Sales comparison by region:");`,
@@ -68,8 +68,8 @@ studentData.print();
 // First melt to long format
 const longFormat = studentData.pivotLonger({
   cols: ["math", "science", "english"],
-  names_to: "subject",
-  values_to: "score",
+  namesTo: "subject",
+  valuesTo: "score",
 });
 
 console.log("After melting to long format:");
@@ -77,9 +77,9 @@ longFormat.print();
 
 // Then pivot back to wide with different structure
 const backToWide = longFormat.pivotWider({
-  names_from: "subject",
-  values_from: "score",
-  expected_columns: ["math", "science", "english"],
+  namesFrom: "subject",
+  valuesFrom: "score",
+  expectedColumns: ["math", "science", "english"],
 });
 
 console.log("After pivoting back to wide format:");
@@ -95,9 +95,9 @@ const incompleteData = createDataFrame([
 
 // Pivot with missing values
 const pivoted = incompleteData.pivotWider({
-  names_from: "category",
-  values_from: "value",
-  expected_columns: ["A", "B"],
+  namesFrom: "category",
+  valuesFrom: "value",
+  expectedColumns: ["A", "B"],
 });
 
 pivoted.print("Data pivoted with missing values handled:");`,

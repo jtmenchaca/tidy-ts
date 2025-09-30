@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-m6lKxO6J.js";import{D as o}from"./DocPageLayout-oXMYcfC1.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-CWLLJPHH.js";import"./index-De-L4Rh0.js";import"./shiki-themes-BheiPiei.js";const a={basicTranspose:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as s}from"./code-block-BA1CzTGk.js";import{D as o}from"./DocPageLayout-L2pKdOzd.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-yU6oze86.js";import"./index-BiIjVCDJ.js";import"./shiki-themes-BheiPiei.js";const a={basicTranspose:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const sales = createDataFrame([
   { product: "Widget A", q1: 100, q2: 120, q3: 110, q4: 130 },
@@ -6,15 +6,15 @@ const sales = createDataFrame([
 ]);
 
 // Transpose rows and columns
-const transposed = sales.transpose({ number_of_rows: 2 });
+const transposed = sales.transpose({ numberOfRows: 2 });
 console.log("Transposed data:");
 transposed.print();`,transposeWithLabels:`// Add custom row labels before transposing
 const withLabels = sales.setRowLabels(["widget_a", "widget_b"]);
-const labeledTranspose = withLabels.transpose({ number_of_rows: 2 });
+const labeledTranspose = withLabels.transpose({ numberOfRows: 2 });
 
 console.log("Transposed with custom labels:");
 labeledTranspose.print();`,doubleTranspose:`// Double transpose returns to original structure
-const backToOriginal = transposed.transpose({ number_of_rows: 2 });
+const backToOriginal = transposed.transpose({ numberOfRows: 2 });
 console.log("Double transpose (restored):");
 backToOriginal.print();`,mixedDataTypes:`// Transpose works with mixed data types
 const mixed = createDataFrame([
@@ -22,6 +22,6 @@ const mixed = createDataFrame([
   { id: 2, name: "Bob", active: false, score: 87.2 },
 ]);
 
-const mixedTranspose = mixed.setRowLabels(["user1", "user2"]).transpose({ number_of_rows: 2 });
+const mixedTranspose = mixed.setRowLabels(["user1", "user2"]).transpose({ numberOfRows: 2 });
 console.log("Mixed data types transpose:");
 mixedTranspose.print();`};function m(){return e.jsxs(o,{title:"Transposing Data",description:"Flip rows and columns to change your data perspective. Perfect for time series analysis, visualization, and preparing data for different analysis tools.",currentPath:"/transposing-data",children:[e.jsx(s,{title:"Basic Transpose",description:"Flip rows and columns with a simple transpose operation",explanation:"Transpose operations flip rows and columns, making it easy to reshape data for different analysis needs. tidy-ts provides reversible transposes with strong type preservation.",code:a.basicTranspose}),e.jsx(s,{title:"Custom Row Labels",description:"Use meaningful row labels instead of generic names",explanation:"You can provide custom row labels to make transposed data more meaningful and easier to work with in subsequent operations. This is especially useful for time series data.",code:a.transposeWithLabels}),e.jsx(s,{title:"Double Transpose (Round-trip)",description:"Transpose operations are perfectly reversible",explanation:"Transpose operations are reversible with perfect data integrity. You can transpose data, perform analysis, and transpose back to the original structure without any data loss.",code:a.doubleTranspose}),e.jsx(s,{title:"Mixed Data Types",description:"Transpose works with any data types including arrays and objects",explanation:"Transpose operations work with any data types including strings, numbers, booleans, and even complex types like arrays and objects. All types are preserved perfectly.",code:a.mixedDataTypes})]})}export{m as component};

@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-m6lKxO6J.js";import{D as a}from"./DocPageLayout-oXMYcfC1.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-CWLLJPHH.js";import"./index-De-L4Rh0.js";import"./shiki-themes-BheiPiei.js";const o={pivotWider:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as t}from"./code-block-BA1CzTGk.js";import{D as a}from"./DocPageLayout-L2pKdOzd.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-yU6oze86.js";import"./index-BiIjVCDJ.js";import"./shiki-themes-BheiPiei.js";const o={pivotWider:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 // Create sales data in long format (one row per product per quarter)
 const salesLong = createDataFrame([
@@ -10,9 +10,9 @@ const salesLong = createDataFrame([
 
 // Pivot to wide format (one row per quarter, columns for each product)
 const salesWide = salesLong.pivotWider({
-  names_from: "product",
-  values_from: "sales",
-  expected_columns: ["Widget A", "Widget B"],
+  namesFrom: "product",
+  valuesFrom: "sales",
+  expectedColumns: ["Widget A", "Widget B"],
 });
 
 salesWide.print("Sales data pivoted to wide format:");`,pivotLonger:`// Create student grade data in wide format (one column per subject)
@@ -25,8 +25,8 @@ const gradesWide = createDataFrame([
 // Melt to long format (one row per student per subject)
 const gradesLong = gradesWide.pivotLonger({
   cols: ["math", "science", "english"],
-  names_to: "subject",
-  values_to: "score",
+  namesTo: "subject",
+  valuesTo: "score",
 });
 
 gradesLong.print("Student grades melted to long format:");`,complexReshape:`// Start with wide format student data
@@ -41,8 +41,8 @@ studentData.print();
 // First melt to long format
 const longFormat = studentData.pivotLonger({
   cols: ["math", "science", "english"],
-  names_to: "subject",
-  values_to: "score",
+  namesTo: "subject",
+  valuesTo: "score",
 });
 
 console.log("After melting to long format:");
@@ -50,9 +50,9 @@ longFormat.print();
 
 // Then pivot back to wide with different structure
 const backToWide = longFormat.pivotWider({
-  names_from: "subject",
-  values_from: "score",
-  expected_columns: ["math", "science", "english"],
+  namesFrom: "subject",
+  valuesFrom: "score",
+  expectedColumns: ["math", "science", "english"],
 });
 
 console.log("After pivoting back to wide format:");
