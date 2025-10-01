@@ -59,7 +59,29 @@ import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
  * ```
  */
 export type PromisedDataFrame<Row extends Record<string, unknown>> =
-  & Omit<DataFrame<Row>, "mutate" | "filter" | "select" | "arrange" | "sort"> // Remove original methods
+  & Omit<
+    DataFrame<Row>,
+    | "mutate"
+    | "filter"
+    | "select"
+    | "arrange"
+    | "sort"
+    | "print"
+    | "extract"
+    | "extractHead"
+    | "extractTail"
+    | "extractNth"
+    | "extractSample"
+    | "forEachRow"
+    | "forEachCol"
+    | "graph"
+    | "getRowLabels"
+    | "setRowLabels"
+    | "loc"
+    | "iloc"
+    | "getTrace"
+    | "printTrace"
+  > // Remove original methods
   & PromiseLike<DataFrame<Row>>
   & {
     // Override mutate to always return PromisedDataFrame with awaited types
@@ -153,7 +175,26 @@ export type PromisedGroupedDataFrame<
 > =
   & Omit<
     GroupedDataFrame<Row, K>,
-    "mutate" | "filter" | "select" | "arrange" | "sort"
+    | "mutate"
+    | "filter"
+    | "select"
+    | "arrange"
+    | "sort"
+    | "print"
+    | "extract"
+    | "extractHead"
+    | "extractTail"
+    | "extractNth"
+    | "extractSample"
+    | "forEachRow"
+    | "forEachCol"
+    | "graph"
+    | "getRowLabels"
+    | "setRowLabels"
+    | "loc"
+    | "iloc"
+    | "getTrace"
+    | "printTrace"
   > // Remove original methods
   & PromiseLike<GroupedDataFrame<Row, K>>
   & {

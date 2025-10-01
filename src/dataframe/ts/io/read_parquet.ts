@@ -306,12 +306,12 @@ export async function readParquet<S extends z.ZodObject<any>>(
   let file: any; // AsyncBuffer from hyparquet
 
   if (isFilePath(pathOrBuffer)) {
-    // It's a file path - read the file
+    // It's a file path - read the file using Deno.readFile to avoid resource leaks
     try {
-      // Dynamically import asyncBufferFromFile only when needed
-      // This prevents the import from breaking browser environments
-      const { asyncBufferFromFile } = await import("hyparquet");
-      file = await asyncBufferFromFile(pathOrBuffer as string);
+      // Read the entire file into memory as an ArrayBuffer
+      // This ensures the file handle is properly closed after reading
+      const fileData = await Deno.readFile(pathOrBuffer as string);
+      file = fileData.buffer;
     } catch (error) {
       throw new Error(
         `Failed to read Parquet file '${pathOrBuffer}': ${
