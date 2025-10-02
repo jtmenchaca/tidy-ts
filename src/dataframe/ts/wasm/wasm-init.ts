@@ -18,6 +18,17 @@ let preloadPromise: Promise<void> | null = null;
 // Runtime detection helpers
 const isBrowser = typeof window !== "undefined" &&
   typeof document !== "undefined";
+const isDeno = typeof Deno !== "undefined";
+
+// For Deno: pre-load WASM at module initialization using top-level await
+if (isDeno && !isBrowser) {
+  const wasmUrl = new URL("../../lib/tidy_ts_dataframe.wasm", import.meta.url);
+  const wasmExports = await import(wasmUrl.href);
+
+  // Deno 2.1+ returns the instantiated WASM exports directly
+  wasmInternal.__wbg_set_wasm(wasmExports);
+  wasmModule = wasmExports;
+}
 
 // Build imports from internal glue (functions only)
 function buildImports() {
@@ -123,7 +134,12 @@ export function initWasm(): any {
     return wasmModule;
   }
 
-  // Server runtimes (Node/Deno): original sync path
+  // Deno: already loaded at module initialization via top-level await
+  if (isDeno) {
+    return wasmModule;
+  }
+
+  // Node/Bun: original sync path using file system
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
   const wasmPath = path.resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
 
