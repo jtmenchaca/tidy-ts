@@ -196,7 +196,7 @@ export async function processConcurrently<T, R>(
   options: ConcurrencyOptions = {},
 ): Promise<R[]> {
   const {
-    concurrency = DEFAULT_CONCURRENCY.mutate.concurrency ?? 10,
+    concurrency = DEFAULT_CONCURRENCY.mutate.concurrency ?? 1,
     batchSize,
     batchDelay = 0,
     retry,
@@ -237,7 +237,7 @@ export async function processConcurrentlyLegacy<T, R>(
   options: LegacyConcurrencyOptions = {},
 ): Promise<R[]> {
   const {
-    concurrency = DEFAULT_CONCURRENCY.mutate.concurrency ?? 10,
+    concurrency = DEFAULT_CONCURRENCY.mutate.concurrency ?? 1,
     batchSize,
     batchDelay = 0,
   } = options;
@@ -402,12 +402,15 @@ async function processWithConcurrencyLimit<R>(
  */
 async function isPromiseResolved(promise: Promise<void>): Promise<boolean> {
   try {
+    let timeoutId: number | undefined;
     await Promise.race([
       promise,
-      new Promise<void>((_, reject) =>
-        setTimeout(() => reject(new Error("timeout")), 0)
-      ),
+      new Promise<void>((_, reject) => {
+        timeoutId = setTimeout(() => reject(new Error("timeout")), 0);
+      }),
     ]);
+    // Clear timeout if promise resolved first
+    if (timeoutId !== undefined) clearTimeout(timeoutId);
     return true;
   } catch {
     return false;
@@ -470,9 +473,9 @@ export class ConcurrencyQueue {
  */
 export const DEFAULT_CONCURRENCY: Record<string, ConcurrencyOptions> = {
   // Conservative defaults for different operations
-  mutate: { concurrency: 10 },
-  filter: { concurrency: 20 },
-  summarise: { concurrency: 5 },
+  mutate: { concurrency: 1 },
+  filter: { concurrency: 1 },
+  summarise: { concurrency: 1 },
 
   // Batch-based processing for large datasets
   largeMutate: { batchSize: 100, batchDelay: 10 },
@@ -480,7 +483,7 @@ export const DEFAULT_CONCURRENCY: Record<string, ConcurrencyOptions> = {
 
   // Default retry settings when retries are enabled
   withRetries: {
-    concurrency: 10,
+    concurrency: 1,
     retry: {
       backoff: "exponential",
       maxRetries: 3,

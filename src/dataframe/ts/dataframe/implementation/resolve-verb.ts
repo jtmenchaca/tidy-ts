@@ -97,6 +97,7 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   }
   if (prop === "filter") {
     return (...a: unknown[]) => {
+      // Handle both old variadic and new (predicates, options) signatures
       const result = (filter as any)(...a)(df);
 
       // Only wrap if result is a Promise, otherwise return directly for chaining
@@ -444,7 +445,7 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (...args: Parameters<typeof graph>) => graph(...args)(df as any);
   }
 
-  if (prop === "forEachRow") {
+  if (prop === "forEach" || prop === "forEachRow") {
     return (...a: unknown[]) => {
       // for_each_row always returns the same df for reference equality
       // Even for async, we want to preserve the original df reference

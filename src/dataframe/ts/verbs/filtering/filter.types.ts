@@ -8,6 +8,7 @@ import type {
   PromisedDataFrame,
   PromisedGroupedDataFrame,
 } from "../../promised-dataframe/index.ts";
+import type { ConcurrencyOptions } from "../../promised-dataframe/concurrency-utils.ts";
 
 type RowFilter<Row extends object> =
   | ((
@@ -53,6 +54,16 @@ export type FilterRowsMethod<Row extends object> = {
   (
     pred: readonly (boolean | null | undefined)[],
   ): DataFrame<RowAfterFilter<Row>>;
+
+  // ── With concurrency options (forces async) ────────────────────────────
+  (
+    predicate: (
+      row: Row,
+      index: number,
+      df: DataFrame<Row>,
+    ) => Promise<boolean | null | undefined> | boolean | null | undefined,
+    options: ConcurrencyOptions,
+  ): PromisedDataFrame<RowAfterFilter<Row>>;
 
   // ── Grouped DataFrame with async detection ──────────────────────────────
   <GroupName extends keyof Row, Preds extends readonly AsyncRowFilter<Row>[]>(

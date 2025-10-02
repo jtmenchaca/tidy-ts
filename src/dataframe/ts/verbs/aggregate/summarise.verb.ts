@@ -8,6 +8,10 @@ import {
 } from "../../dataframe/index.ts";
 import { shouldUseAsyncForSummarise } from "../../promised-dataframe/index.ts";
 import { withErrorHandling } from "../../promised-dataframe/async-sync-processor.ts";
+import {
+  type ConcurrencyOptions,
+  DEFAULT_CONCURRENCY,
+} from "../../promised-dataframe/concurrency-utils.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 export type SummariseFn<T extends object> = (
@@ -36,6 +40,7 @@ export type SummariseSpec<T extends object> =
 
 export function summarise<T extends object>(
   spec: SummariseSpec<T>,
+  options?: ConcurrencyOptions,
 ): (
   df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
 ) => DataFrame<any> | Promise<DataFrame<any>> {
@@ -43,9 +48,19 @@ export function summarise<T extends object>(
     const span = tracer.startSpan(df, "summarise", { spec: typeof spec });
 
     try {
-      // Check if any formulas are async
-      if (shouldUseAsyncForSummarise(df as DataFrame<T>, spec)) {
-        return summariseAsync(df, spec);
+      // Check if any formulas are async or if options are provided
+      const isAsync = shouldUseAsyncForSummarise(df as DataFrame<T>, spec) ||
+        (options !== undefined);
+
+      if (isAsync) {
+        // Get DataFrame's default options if available
+        const dfOptions = (df as any).__options as
+          | ConcurrencyOptions
+          | undefined;
+        // Apply default concurrency if no options provided
+        const concurrencyOptions = options || dfOptions ||
+          DEFAULT_CONCURRENCY.summarise;
+        return summariseAsync(df, spec, concurrencyOptions);
       } else {
         const result = summariseSync(df, spec);
         tracer.copyContext(df, result);
@@ -316,10 +331,11 @@ function summariseSync<T extends object>(
   });
 }
 
-// Async implementation
+// Async implementation with concurrency control
 async function summariseAsync<T extends object>(
   df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
   spec: SummariseSpec<T>,
+  _options: ConcurrencyOptions = DEFAULT_CONCURRENCY.summarise,
 ): Promise<DataFrame<any>> {
   const gdf = df as GroupedDataFrame<T, keyof T>;
   // @ts-ignore internal field

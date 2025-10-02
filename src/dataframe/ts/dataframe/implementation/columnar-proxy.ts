@@ -6,7 +6,6 @@ import { materializeIndex } from "./columnar-view.ts";
 /** Disabled array APIs to nudge users to tidy verbs */
 export const ARRAY_METHODS = new Set<string>([
   "map",
-  "forEach",
   "reduce",
   "concat",
   "find",

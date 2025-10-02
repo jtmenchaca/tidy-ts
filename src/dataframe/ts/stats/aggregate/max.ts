@@ -44,10 +44,12 @@ export type DatesWithNullable =
 export function max(value: number): number;
 export function max(value: Date): Date;
 
-// Clean array overloads (no nulls/undefined)
-export function max(values: CleanDateArray): Date;
-export function max(values: CleanNumberArray): number;
-export function max(values: CleanNumberIterable): number;
+// Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
+export function max(values: readonly Date[]): Date;
+export function max(values: readonly number[]): number;
+export function max(values: number[]): number;
+export function max(values: Date[]): Date;
+export function max(values: Iterable<number>): number;
 
 // Arrays with nullables that require removeNA=true
 export function max(values: DatesWithNullable, removeNA: true): Date;
@@ -57,14 +59,18 @@ export function max(
   removeNA: true,
 ): number;
 
-// Arrays with nullables that return nullable (removeNA=false or omitted)
+// Arrays with nullables that return nullable (removeNA=false explicitly)
 export function max(
   values: DatesWithNullable,
-  removeNA?: false,
+  removeNA: false,
 ): Date | null;
 export function max(
   values: NumbersWithNullable,
-  removeNA?: false,
+  removeNA: false,
+): number | null;
+export function max(
+  values: NumbersWithNullableIterable,
+  removeNA: false,
 ): number | null;
 export function max(
   values:
@@ -76,6 +82,7 @@ export function max(
     | DatesWithNullable
     | CleanNumberIterable
     | NumbersWithNullableIterable
+    | readonly unknown[] // Runtime filtering fallback
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
   removeNA: boolean = false,

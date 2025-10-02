@@ -10,8 +10,6 @@
     "@uwdata/flechette/": "npm:/@uwdata/flechette@^2.2.3/",
     "hyparquet-compressors": "npm:hyparquet-compressors@^1.1.1",
     "hyparquet-compressors/": "npm:/hyparquet-compressors@^1.1.1/",
-    "@openai/agents": "npm:@openai/agents@^0.0.10",
-    "@openai/agents/": "npm:/@openai/agents@^0.0.10/",
     "@deno/wasmbuild": "jsr:@deno/wasmbuild@^0.19.2",
     "@deno/wasmbuild/": "jsr:/@deno/wasmbuild@^0.19.2/",
     "@hono/hono": "jsr:@hono/hono@^4.8.3",

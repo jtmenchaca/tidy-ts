@@ -19,6 +19,11 @@ import {
   returnsPromise,
   shouldUseAsyncForFilter,
 } from "../../promised-dataframe/index.ts";
+import {
+  type ConcurrencyOptions,
+  DEFAULT_CONCURRENCY,
+  processConcurrently,
+} from "../../promised-dataframe/concurrency-utils.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 export type Predicate<Row extends object> =
@@ -56,7 +61,17 @@ const WASM_MIN_ROWS_NUMERIC = Infinity; // below this, JS tends to be faster
 
 // Async overload - when function returns Promise
 export function filter<Row extends object>(
-  ...predicates: Array<
+  predicate: (
+    row: Row,
+    idx: number,
+    df: DataFrame<Row>,
+  ) => Promise<boolean | null | undefined>,
+  options?: ConcurrencyOptions,
+): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
+
+// Async overload with array
+export function filter<Row extends object>(
+  predicates: Array<
     | ((
       row: Row,
       idx: number,
@@ -68,7 +83,18 @@ export function filter<Row extends object>(
       df: DataFrame<Row>,
     ) => boolean | null | undefined)
     | ReadonlyArray<boolean | null | undefined>
-  >
+  >,
+  options?: ConcurrencyOptions,
+): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
+
+// Sync overload with options - for explicit concurrency with sync predicates
+export function filter<Row extends object>(
+  predicate: (
+    row: Row,
+    idx: number,
+    df: DataFrame<Row>,
+  ) => boolean | null | undefined,
+  options: ConcurrencyOptions,
 ): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
 
 // Sync overload - when all functions are sync
@@ -85,12 +111,43 @@ export function filter<Row extends object>(
 
 // Implementation
 export function filter<Row extends object>(
-  ...predicates: any[]
+  ...args: any[]
 ): any {
   return (df: DataFrame<Row>): any => {
-    // Check if any predicates are async
-    if (shouldUseAsyncForFilter(df, predicates)) {
-      return filterRowsAsync(df, predicates);
+    // Handle both old (...predicates) and new (predicates, options) signatures
+    let predicates: any[];
+    let options: ConcurrencyOptions | undefined;
+
+    // Check if last argument is a ConcurrencyOptions object
+    const lastArg = args[args.length - 1];
+    const isLastArgOptions = lastArg &&
+      typeof lastArg === "object" &&
+      !Array.isArray(lastArg) &&
+      !("length" in lastArg) && // Not a predicate array
+      (lastArg.concurrency !== undefined || lastArg.batchSize !== undefined ||
+        lastArg.retry !== undefined);
+
+    if (isLastArgOptions) {
+      // Last argument is options, everything else is predicates
+      predicates = args.slice(0, -1);
+      options = lastArg as ConcurrencyOptions;
+    } else {
+      // All arguments are predicates (original behavior)
+      predicates = args;
+      options = undefined;
+    }
+
+    // Check if any predicates are async or if options are provided
+    const isAsync = shouldUseAsyncForFilter(df, predicates) ||
+      (options !== undefined);
+
+    if (isAsync) {
+      // Get DataFrame's default options if available
+      const dfOptions = (df as any).__options as ConcurrencyOptions | undefined;
+      // Apply default concurrency if no options provided
+      const concurrencyOptions = options || dfOptions ||
+        DEFAULT_CONCURRENCY.filter;
+      return filterRowsAsync(df, predicates, concurrencyOptions);
     } else {
       return filterRowsSync(df, predicates as Predicate<Row>[]);
     }
@@ -690,75 +747,82 @@ function getPhysicalIndex(api: any, logicalIndex: number): number {
   return logicalIndex;
 }
 
-// Async implementation
+// Async implementation with concurrency control
 async function filterRowsAsync<Row extends object>(
   df: DataFrame<Row>,
   predicates: any[],
+  options: ConcurrencyOptions = DEFAULT_CONCURRENCY.filter,
 ): Promise<DataFrame<Prettify<Row>>> {
   const api = df as any;
   const store = api.__store;
   const n = df.nrows();
 
   // For async predicates, we can't use WASM optimizations
-  // Fall back to row-by-row evaluation with Promise.all
+  // Fall back to row-by-row evaluation with concurrency control
 
-  // Collect all async predicate evaluations with their physical indices
-  const rowEvaluations: {
+  // Prepare row data and indices
+  const rowData: {
     logicalIdx: number;
     physicalIdx: number;
-    promise: Promise<boolean>;
+    rowSnapshot: any;
   }[] = [];
 
   for (let i = 0; i < n; i++) {
-    // Create a snapshot of the row data using proper logical indexing
     const rowSnapshot = makeRowSnapshot(api, i);
-
-    // Get physical index for this logical row
     const physicalIdx = getPhysicalIndex(api, i);
-
-    // Evaluate all predicates for this row
-    const predicatePromises = predicates.map((pred) => {
-      if (Array.isArray(pred)) {
-        // Check array length against logical view size
-        if (pred.length !== n) {
-          throw new RangeError(
-            "Predicate array length must equal current view length",
-          );
-        }
-        return Promise.resolve(!!pred[i]);
-      } else if (typeof pred === "function") {
-        try {
-          const result = pred(rowSnapshot, i, df);
-          return returnsPromise(result)
-            ? result.then((r) => !!r)
-            : Promise.resolve(!!result);
-        } catch (_error) {
-          // If predicate throws, treat as false
-          return Promise.resolve(false);
-        }
-      }
-      return Promise.resolve(true);
-    });
-
-    // All predicates must be true (AND logic)
-    const rowPromise = Promise.all(predicatePromises).then((results) =>
-      results.every(Boolean)
-    );
-
-    rowEvaluations.push({ logicalIdx: i, physicalIdx, promise: rowPromise });
+    rowData.push({ logicalIdx: i, physicalIdx, rowSnapshot });
   }
 
-  // Resolve all row evaluations
-  const evaluationResults = await Promise.all(
-    rowEvaluations.map(async (evalItem) => ({
-      physicalIdx: evalItem.physicalIdx,
-      passed: await evalItem.promise,
-    })),
+  // Create tasks for concurrent processing
+  const tasks = rowData.map(
+    ({ logicalIdx, physicalIdx, rowSnapshot }) => async () => {
+      // Evaluate all predicates for this row
+      const predicatePromises = predicates.map((pred) => {
+        if (Array.isArray(pred)) {
+          // Check array length against logical view size
+          if (pred.length !== n) {
+            throw new RangeError(
+              "Predicate array length must equal current view length",
+            );
+          }
+          return Promise.resolve(!!pred[logicalIdx]);
+        } else if (typeof pred === "function") {
+          try {
+            const result = pred(rowSnapshot, logicalIdx, df);
+            return returnsPromise(result)
+              ? result.then((r) => !!r)
+              : Promise.resolve(!!result);
+          } catch (_error) {
+            // If predicate throws, treat as false
+            return Promise.resolve(false);
+          }
+        }
+        return Promise.resolve(true);
+      });
+
+      // All predicates must be true (AND logic)
+      const passed = await Promise.all(predicatePromises).then((results) =>
+        results.every(Boolean)
+      );
+
+      return { physicalIdx, passed };
+    },
   );
+
+  // Process with concurrency control
+  const evaluationResults = await processConcurrently(
+    tasks,
+    options,
+  ) as { physicalIdx: number; passed: boolean }[];
 
   // Build mask from results using physical indices
   const bs = createBitSet(store.length);
-  for (const { physicalIdx, passed } of evaluationResults) {
+  for (
+    const { physicalIdx, passed } of evaluationResults as {
+      physicalIdx: number;
+      passed: boolean;
+    }[]
+  ) {
     if (passed && physicalIdx >= 0) {
       bitsetSet(bs, physicalIdx);
     }

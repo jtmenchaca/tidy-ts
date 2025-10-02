@@ -238,6 +238,8 @@ export type DataFrame<Row extends object = object> =
     graph(spec: GraphOptions<Row>): TidyGraphWidget;
 
     // ---------- Side-effects ----------
+    forEach: ForEachRowMethod<Row>;
+    /** @deprecated Use forEach instead */
     forEachRow: ForEachRowMethod<Row>;
     forEachCol: ForEachColMethod<Row>;
 

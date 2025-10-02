@@ -6,7 +6,6 @@ export type Forbid<Key extends PropertyKey> = { [PropertyName in Key]?: never };
 /** Standard array methods that should be forbidden on DataFrame */
 export type ForbiddenArrayMethods =
   | "map"
-  | "forEach"
   | "reduce"
   | "concat"
   | "find"

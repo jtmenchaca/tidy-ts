@@ -22,7 +22,9 @@ Deno.test("Min and Max with Date objects", () => {
   ];
   const minDate = s.min(dates); // should work
   const maxDate = s.max(dates); // should work
+  // @ts-expect-error should have compile issue due to missing values (undefined/null)
   const minMixedDates = s.min(mixedDates); // should have compile issue due to missing values (undefined/null)
+  // @ts-expect-error should have compile issue due to missing values (undefined/null)
   const maxMixedDates = s.max(mixedDates); // should have compile issue due to missing values (undefined/null)
   const minMixedDatesRemoveNA = s.min(mixedDates, true); // should work
   const maxMixedDatesRemoveNA = s.max(mixedDates, true); // should work

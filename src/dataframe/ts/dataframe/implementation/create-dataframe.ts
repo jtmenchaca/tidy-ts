@@ -619,36 +619,6 @@ export function createDataFrame<
 ): DataFrame<z.infer<S>>;
 
 /**
- * Create a DataFrame with flexible schema parameter (union overload).
- *
- * This overload handles cases where the schema parameter can be either a Zod schema
- * or null, with flexible row type inference. Used internally for type resolution.
- *
- * @param rows - An array of objects (readonly or regular)
- * @param schema - Optional Zod schema for validation or null to skip validation
- * @returns A DataFrame with either inferred row type or schema-validated type
- *
- * @example
- * ```typescript
- * // With schema
- * const df1 = createDataFrame(data, userSchema);
- *
- * // Without schema (null)
- * const df2 = createDataFrame(data, null);
- *
- * // With optional schema
- * const df3 = createDataFrame(data, schema);
- * ```
- */
-export function createDataFrame<
-  R extends readonly object[],
-  S extends z.ZodObject<any>,
->(
-  rows: R | readonly object[],
-  schema?: S | null,
-): DataFrame<R[number]> | DataFrame<z.infer<S>>;
-
-/**
  * Create a DataFrame from an array of objects with explicit type parameter (duplicate overload).
  *
  * This is a duplicate overload that provides the same functionality as the earlier

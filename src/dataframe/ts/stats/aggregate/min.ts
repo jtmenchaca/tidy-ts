@@ -44,10 +44,12 @@ export type DatesWithNullable =
 export function min(value: number): number;
 export function min(value: Date): Date;
 
-// Clean array overloads (no nulls/undefined)
-export function min(values: CleanDateArray): Date;
-export function min(values: CleanNumberArray): number;
-export function min(values: CleanNumberIterable): number;
+// Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
+export function min(values: readonly Date[]): Date;
+export function min(values: Date[]): Date;
+export function min(values: readonly number[]): number;
+export function min(values: number[]): number;
+export function min(values: Iterable<number>): number;
 
 // Arrays with nullables that require removeNA=true
 export function min(values: DatesWithNullable, removeNA: true): Date;
@@ -57,14 +59,18 @@ export function min(
   removeNA: true,
 ): number;
 
-// Arrays with nullables that return nullable (removeNA=false or omitted)
+// Arrays with nullables that return nullable (removeNA=false explicitly)
 export function min(
   values: DatesWithNullable,
-  removeNA?: false,
+  removeNA: false,
 ): Date | null;
 export function min(
   values: NumbersWithNullable,
-  removeNA?: false,
+  removeNA: false,
+): number | null;
+export function min(
+  values: NumbersWithNullableIterable,
+  removeNA: false,
 ): number | null;
 export function min(
   values:
@@ -76,6 +82,7 @@ export function min(
     | DatesWithNullable
     | CleanNumberIterable
     | NumbersWithNullableIterable
+    | readonly unknown[] // Runtime filtering fallback
     | unknown[] // Runtime filtering fallback
     | Iterable<unknown>, // Runtime filtering fallback
   removeNA: boolean = false,

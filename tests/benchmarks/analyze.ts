@@ -112,6 +112,7 @@ async function main() {
         avg_ratio: (group) => stats.round(stats.mean(group.ratio_vs_tidy), 3),
         median_ratio: (group) =>
           stats.round(stats.median(group.ratio_vs_tidy), 3),
+        min: (group) => stats.min(group.ratio_vs_tidy),
         min_ratio: (group) => stats.round(stats.min(group.ratio_vs_tidy), 3),
         max_ratio: (group) => stats.round(stats.max(group.ratio_vs_tidy), 3),
         count: (group) => group.nrows(),
