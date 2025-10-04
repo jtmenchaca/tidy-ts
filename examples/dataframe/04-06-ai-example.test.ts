@@ -1,3 +1,4 @@
+// deno-lint-ignore no-import-prefix
 import { Agent, run, user } from "npm:@openai/agents@latest";
 import { createDataFrame } from "@tidy-ts/dataframe";
 import "@std/dotenv/load";

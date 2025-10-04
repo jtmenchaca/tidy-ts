@@ -13,6 +13,7 @@
     "jsxImportSourceTypes": "npm:@types/react@^19.1.1"
   },
   "tasks": {
+    "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check .",
     "ci": "deno fmt --check && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/glm tests/statistical_tests --quiet",
     "ci:update-badge": "deno task ci && deno run --allow-read --allow-write --allow-run scripts/update-coverage-badge.ts",
     "benchmark:runner": "cd tests/benchmarks && deno run -A runner.ts && cd ../..",

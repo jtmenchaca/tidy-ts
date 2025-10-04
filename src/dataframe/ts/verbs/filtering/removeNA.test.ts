@@ -2,7 +2,15 @@ import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 // Test data with null and undefined values
-const testData = createDataFrame([
+// Use explicit type to get unified field types instead of per-row union
+type TestRow = {
+  id: number;
+  name: string;
+  homeworld: string | null | undefined;
+  affiliation: string | null | undefined;
+};
+
+const testData = createDataFrame<TestRow>([
   { id: 1, name: "Luke", homeworld: "Tatooine", affiliation: "Rebel" },
   { id: 2, name: "Vader", homeworld: null, affiliation: "Empire" },
   { id: 3, name: "Leia", homeworld: undefined, affiliation: "Rebel" },
@@ -23,13 +31,15 @@ Deno.test("removeNA removes both null and undefined", () => {
 Deno.test("removeNA type narrowing - removes null and undefined from type", () => {
   const result = testData.removeNA("homeworld");
 
-  // Type should be narrowed to exclude null and undefined
-  const _typeCheck: DataFrame<{
+  // Type should be narrowed to exclude null and undefined from homeworld field
+  // Note: Due to union type inference, the result type will be a union, but homeworld is narrowed
+  type ResultRow = {
     id: number;
     name: string;
     homeworld: string; // No null or undefined
     affiliation: string | null | undefined;
-  }> = result;
+  };
+  const _typeCheck: DataFrame<ResultRow> = result;
 
   expect(result.nrows()).toBe(2);
 });

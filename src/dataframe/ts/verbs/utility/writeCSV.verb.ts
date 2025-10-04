@@ -2,6 +2,10 @@ import { stringify } from "@std/csv/stringify";
 import * as fs from "node:fs";
 import type { DataFrame } from "../../dataframe/index.ts";
 
+// Runtime detection helpers
+const isBrowser = typeof window !== "undefined" &&
+  typeof document !== "undefined";
+
 /**
  * Convert a DataFrame to CSV string format using @std/csv/stringify
  */
@@ -55,15 +59,15 @@ export function writeCSV<Row extends Record<string, unknown>>(
     fs.writeFileSync(filePath, csvString, "utf8");
   } catch (error) {
     // Browser environment fallback - trigger download
-    if (typeof globalThis !== "undefined" && globalThis.navigator) {
+    if (isBrowser) {
       const blob = new Blob([csvString], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const a = globalThis.document.createElement("a");
+      const a = document.createElement("a");
       a.href = url;
       a.download = filePath.split("/").pop() || "data.csv";
-      globalThis.document.body.appendChild(a);
+      document.body.appendChild(a);
       a.click();
-      globalThis.document.body.removeChild(a);
+      document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } else {
       throw new Error(`Failed to write file: ${error}`);

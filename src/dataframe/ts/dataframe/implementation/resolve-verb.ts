@@ -502,21 +502,21 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
 
   if (prop === "removeNA") {
     return (fieldOrFields: unknown, ...fields: unknown[]) => {
-      const result = (removeNA as any)(fieldOrFields, ...fields)(df);
+      const result = (removeNA as any)(df, fieldOrFields, ...fields);
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
 
   if (prop === "removeNull") {
     return (fieldOrFields: unknown, ...fields: unknown[]) => {
-      const result = (removeNull as any)(fieldOrFields, ...fields)(df);
+      const result = (removeNull as any)(df, fieldOrFields, ...fields);
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
 
   if (prop === "removeUndefined") {
     return (fieldOrFields: unknown, ...fields: unknown[]) => {
-      const result = (removeUndefined as any)(fieldOrFields, ...fields)(df);
+      const result = (removeUndefined as any)(df, fieldOrFields, ...fields);
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }

@@ -3,6 +3,7 @@ import type { TidyGraphWidget } from "../../graph/graph-types.ts";
 import type { RowLabel } from "./row-labels.ts";
 import type { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
 import type { Prettify } from "./utility-types.ts";
+import type { UnifyUnion } from "./utility-types.ts";
 
 import type { MutateMethod } from "../../verbs/transformation/mutate/mutate.types.ts";
 import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-columns.types.ts";
@@ -219,54 +220,77 @@ export type DataFrame<Row extends object = object> =
         field: Field,
       ): DataFrame<
         Prettify<
-          & Omit<Row, Field>
-          & { [K in Field]: Exclude<Row[Field], null | undefined> }
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
         >
       >;
       <Field extends keyof Row>(
         field: Field,
         ...fields: Field[]
       ): DataFrame<
-        Prettify<Row & { [K in Field]: Exclude<Row[K], null | undefined> }>
+        Prettify<
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+        >
       >;
       <Field extends keyof Row>(
         fields: Field[],
       ): DataFrame<
-        Prettify<Row & { [K in Field]: Exclude<Row[K], null | undefined> }>
+        Prettify<
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+        >
       >;
     };
     removeNull: {
       <Field extends keyof Row>(
         field: Field,
       ): DataFrame<
-        Prettify<Omit<Row, Field> & { [K in Field]: Exclude<Row[Field], null> }>
-      >;
-      <Field extends keyof Row>(
-        field: Field,
-        ...fields: Field[]
-      ): DataFrame<Prettify<Row & { [K in Field]: Exclude<Row[K], null> }>>;
-      <Field extends keyof Row>(
-        fields: Field[],
-      ): DataFrame<Prettify<Row & { [K in Field]: Exclude<Row[K], null> }>>;
-    };
-    removeUndefined: {
-      <Field extends keyof Row>(
-        field: Field,
-      ): DataFrame<
         Prettify<
-          Omit<Row, Field> & { [K in Field]: Exclude<Row[Field], undefined> }
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
         >
       >;
       <Field extends keyof Row>(
         field: Field,
         ...fields: Field[]
       ): DataFrame<
-        Prettify<Row & { [K in Field]: Exclude<Row[K], undefined> }>
+        Prettify<
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        >
       >;
       <Field extends keyof Row>(
         fields: Field[],
       ): DataFrame<
-        Prettify<Row & { [K in Field]: Exclude<Row[K], undefined> }>
+        Prettify<
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        >
+      >;
+    };
+    removeUndefined: {
+      <Field extends keyof Row>(
+        field: Field,
+      ): DataFrame<
+        Prettify<
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        >
+      >;
+      <Field extends keyof Row>(
+        field: Field,
+        ...fields: Field[]
+      ): DataFrame<
+        Prettify<
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        >
+      >;
+      <Field extends keyof Row>(
+        fields: Field[],
+      ): DataFrame<
+        Prettify<
+          & UnifyUnion<Row>
+          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        >
       >;
     };
 

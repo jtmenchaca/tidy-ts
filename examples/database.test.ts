@@ -1,12 +1,18 @@
+// deno-lint-ignore-file no-import-prefix
+
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { z } from "zod";
 import { expect } from "@std/expect";
+// deno-lint-ignore no-unversioned-import
 import { drizzle } from "npm:drizzle-orm/libsql";
+// deno-lint-ignore no-unversioned-import
 import { createClient } from "npm:@libsql/client";
+// deno-lint-ignore no-unversioned-import
 import { desc, eq, gt, sql } from "npm:drizzle-orm";
+// deno-lint-ignore no-unversioned-import
 import { integer, real, sqliteTable, text } from "npm:drizzle-orm/sqlite-core";
 
 const __filename = fileURLToPath(import.meta.url);
