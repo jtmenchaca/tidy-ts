@@ -233,3 +233,29 @@ export function extract_sample<
     return sampled;
   };
 }
+
+/**
+ * Extract unique values from a column.
+ * Functionally equivalent to [...new Set(df.extract("column"))].
+ *
+ * @param column - The column name to extract unique values from
+ * @returns A function that takes a DataFrame and returns an array of unique values from the specified column
+ *
+ * @example
+ * ```ts
+ * const uniqueCategories = df.extractUnique("category"); // ["A", "B", "C"]
+ * const uniqueAges = df.extractUnique("age"); // [25, 30, 35]
+ * ```
+ */
+export function extract_unique<
+  T extends Record<string, unknown>,
+  K extends keyof T,
+>(
+  column: K,
+) {
+  return (df: DataFrame<T>): T[K][] => {
+    const values: T[K][] = [];
+    for (const row of df) values.push(row[column]);
+    return [...new Set(values)];
+  };
+}

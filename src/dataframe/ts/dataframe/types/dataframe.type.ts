@@ -57,6 +57,7 @@ import type {
   ExtractNthMethod,
   ExtractSampleMethod,
   ExtractTailMethod,
+  ExtractUniqueMethod,
 } from "../../verbs/selection/extract.types.ts";
 import type { BindRowsMethod } from "../../verbs/reshape/bind-rows.types.ts";
 import type { ReplaceNaMethod } from "../../verbs/missing-data/replace-na.types.ts";
@@ -182,6 +183,7 @@ export type DataFrame<Row extends object = object> =
     extractTail: ExtractTailMethod<Row>;
     extractNth: ExtractNthMethod<Row>;
     extractSample: ExtractSampleMethod<Row>;
+    extractUnique: ExtractUniqueMethod<Row>;
     arrange: ArrangeMethod<Row>;
     sort: ArrangeMethod<Row>;
     distinct: DistinctMethod<Row>;
@@ -310,6 +312,8 @@ export type DataFrame<Row extends object = object> =
     sliceTail: SliceTailMethod<Row>;
     sliceMin: SliceMinMethod<Row>;
     sliceMax: SliceMaxMethod<Row>;
+    sliceSample: SliceSampleMethod<Row>;
+    /** @deprecated Use sliceSample instead */
     sample: SliceSampleMethod<Row>;
     /** @deprecated Use sliceHead instead */
     head: SliceHeadMethod<Row>;

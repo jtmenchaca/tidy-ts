@@ -45,3 +45,9 @@ export type ExtractSampleMethod<Row extends object> = {
     n: number,
   ): Row[ColName][];
 };
+
+export type ExtractUniqueMethod<Row extends object> = {
+  <ColName extends keyof Row>(
+    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+  ): Row[ColName][];
+};

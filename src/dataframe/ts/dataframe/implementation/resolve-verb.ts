@@ -10,7 +10,6 @@ import { dummy_col } from "../../verbs/utility/dummy-col.verb.ts";
 import {
   slice,
   slice_head,
-  slice_indices,
   slice_max,
   slice_min,
   slice_sample,
@@ -36,6 +35,7 @@ import {
   extract_nth,
   extract_sample,
   extract_tail,
+  extract_unique,
 } from "../../verbs/selection/extract.verb.ts";
 
 // Joins
@@ -146,6 +146,9 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   }
   if (prop === "extractSample") {
     return (...a: unknown[]) => (extract_sample as any)(...a)(df);
+  }
+  if (prop === "extractUnique") {
+    return (...a: unknown[]) => (extract_unique as any)(...a)(df);
   }
   if (prop === "rename") {
     return (...a: unknown[]) => {
@@ -278,13 +281,6 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
-  if (prop === "slice_indices") {
-    return (...a: unknown[]) => {
-      const result = (slice_indices as any)(...a)(df);
-      return result instanceof Promise ? thenableDataFrame(result) : result;
-    };
-  }
-
   if (prop === "sliceHead") {
     return (n: unknown) => {
       const result = (slice_head as any)(n)(df);
@@ -323,6 +319,12 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   if (prop === "sliceMax") {
     return (c: unknown, n: unknown) => {
       const result = (slice_max as any)(c, n)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+  if (prop === "sliceSample") {
+    return (n: unknown, seed?: number) => {
+      const result = (slice_sample as any)(n, seed)(df);
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
