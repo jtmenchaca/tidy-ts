@@ -8,19 +8,6 @@ export {
   type PromisedDataFrame,
   type PromisedGroupedDataFrame,
 } from "./ts/dataframe/index.ts";
-export {
-  isDefined,
-  isNotNull,
-  isNotNullish,
-  isNotUndefined,
-  isTruthy,
-} from "./ts/verbs/filtering/type-guards.ts";
-export {
-  removeNA,
-  removeNull,
-  removeUndefined,
-} from "./ts/verbs/filtering/remove-na.ts";
-
 // I/O functions with conditional loading
 export {
   readArrow,
