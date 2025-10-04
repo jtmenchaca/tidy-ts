@@ -1,5 +1,49 @@
 # Tidy-TS Architecture
 
+Notes:
+- When debugging an issue, use the root/tests/bugs directory and make a [issue].test.ts file using the style of our other tests. 
+- Here's a demo of how the dataframe library works:
+```typescript
+  // Create DataFrame from rows
+  const sales = createDataFrame([
+    { region: "North", product: "Widget", quantity: 10, price: 100 },
+    { region: "South", product: "Widget", quantity: 20, price: 100 },
+    { region: "East", product: "Widget", quantity: 8, price: 100 },
+  ]);
+
+  // Or create DataFrame from columns
+  const salesFromColumns = createDataFrame({
+    columns: {
+      region: ["North", "South", "East"],
+      product: ["Widget", "Widget", "Widget"],
+      quantity: [10, 20, 8],
+      price: [100, 100, 100],
+    },
+  });
+
+  console.log("Created DataFrames from both rows and columns ✓");
+  console.log(`Columns DataFrame has ${salesFromColumns.nrows()} rows`);
+
+  // Complete data analysis workflow
+  // Note: When mixing functions with arrays/scalars, TypeScript may need explicit types
+  const analysis = sales
+    .mutate({
+      revenue: (r) => r.quantity * r.price,
+      status: ["Active", "Pending", "Active"], // Array values
+      tax_rate: () => 0.08, // Scalar repeated for all rows (function for inference)
+      category: (r) => r.quantity > 10 ? "High Volume" : "Standard",
+    })
+    .groupBy("region")
+    .summarize({
+      total_revenue: (group) => s.sum(group.revenue),
+      avg_quantity: (group) => s.mean(group.quantity),
+      product_count: (group) => group.nrows(),
+    })
+    .arrange("total_revenue", "desc");
+
+  console.log("Data analysis workflow completed ✓");
+  analysis.print();
+  ```
 
 ## Code Style Guidelines
 - **Function Parameters**: Use destructured named parameters instead of wrapper objects (e.g., `function({ path, width, height })` not `function(opts)`)

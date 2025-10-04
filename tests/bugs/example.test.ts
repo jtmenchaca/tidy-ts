@@ -25,7 +25,7 @@ Deno.test("Example Test", async () => {
     delta13COoo: z.number().nullable(),
     comments: z.string().nullable(),
   });
-  const csvPath = new URL("../fixtures/penguins.csv", import.meta.url).pathname;
+  const csvPath = new URL("./fixtures/penguins.csv", import.meta.url).pathname;
   const df = await readCSV(csvPath, PenguinsSchema);
 
   const testing = df

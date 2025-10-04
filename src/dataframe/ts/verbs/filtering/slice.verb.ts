@@ -11,6 +11,7 @@ import {
   withGroupsRebuilt,
   withIndex,
 } from "../../dataframe/index.ts";
+import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { createRandomInt, sampleArray } from "../utility/seedable-random.ts";
 
 /**
@@ -56,27 +57,35 @@ export function slice<Row extends object>(
     // If grouped, apply slice within each group
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      const rows = [...df]; // view-aware row materialization
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
       const { head, next, size } = groupedDf.__groups;
 
       for (let g = 0; g < size; g++) {
-        // Collect view indices for this group
-        const groupViewIdx: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupViewIdx.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupViewIdx.reverse();
+        groupIndices.reverse();
 
-        const n = groupViewIdx.length;
+        const n = groupIndices.length;
         const s = Math.max(0, start < 0 ? n + start : start);
         const e0 = end == null ? n : (end < 0 ? n + end : end);
         const e = Math.min(n, e0);
         for (let i = s; i < e; i++) {
-          rebuilt.push(rows[groupViewIdx[i]]);
+          const actualRowIdx = groupIndices[i];
+          const row = {} as Row;
+          for (const colName of store.columnNames) {
+            (row as any)[colName] = store.columns[colName][actualRowIdx];
+          }
+          rebuilt.push(row);
         }
       }
 
@@ -126,8 +135,9 @@ export function slice_indices<Row extends object>(
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      // Grouped: slice within each group, preserve group order
-      const rows = [...df]; // TODO: optimize for columnar grouped data
+      const api: any = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -135,20 +145,28 @@ export function slice_indices<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupRows.reverse();
+        groupIndices.reverse();
 
         // Apply slice indices to this group
         for (const idx of indices) {
-          if (idx >= 0 && idx < groupRows.length) {
-            rebuilt.push(rows[groupRows[idx]]);
+          if (idx >= 0 && idx < groupIndices.length) {
+            const actualRowIdx = groupIndices[idx];
+            const row = {} as Row;
+            for (const colName of store.columnNames) {
+              (row as any)[colName] = store.columns[colName][actualRowIdx];
+            }
+            rebuilt.push(row);
           }
         }
       }
@@ -252,6 +270,7 @@ export function slice_head<Row extends object>(
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -259,17 +278,20 @@ export function slice_head<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group first
+        // Collect physical indices for this group, filtering by mask if present
         const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupIndices.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
         groupIndices.reverse();
 
-        // Take first n rows from this group using view-aware row construction
+        // Take first n rows from this group
         const takeCount = Math.min(n, groupIndices.length);
         for (let i = 0; i < takeCount; i++) {
           const actualRowIdx = groupIndices[i];
@@ -333,7 +355,9 @@ export function slice_tail<Row extends object>(
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      const rows = [...df]; // TODO: optimize for columnar grouped data
+      const api: any = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -341,23 +365,31 @@ export function slice_tail<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupRows.reverse();
+        groupIndices.reverse();
 
         // Take last n rows from this group
         for (
-          let i = Math.max(0, groupRows.length - n);
-          i < groupRows.length;
+          let i = Math.max(0, groupIndices.length - n);
+          i < groupIndices.length;
           ++i
         ) {
-          rebuilt.push(rows[groupRows[i]]);
+          const actualRowIdx = groupIndices[i];
+          const row = {} as Row;
+          for (const colName of store.columnNames) {
+            (row as any)[colName] = store.columns[colName][actualRowIdx];
+          }
+          rebuilt.push(row);
         }
       }
       const out = createDataFrame(rebuilt);
@@ -415,7 +447,9 @@ export function slice_min<Row extends object>(
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      const rows = [...df];
+      const api: any = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -423,17 +457,28 @@ export function slice_min<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupRows.reverse();
+        groupIndices.reverse();
 
-        const groupData = groupRows.map((i: number) => rows[i]);
+        // Build rows from indices and sort
+        const groupData = groupIndices.map((i: number) => {
+          const row = {} as Row;
+          for (const colName of store.columnNames) {
+            (row as any)[colName] = store.columns[colName][i];
+          }
+          return row;
+        });
+
         const sorted = [...groupData].sort((a, b) => {
           const aVal = a[column];
           const bVal = b[column];
@@ -569,7 +614,9 @@ export function slice_max<Row extends object>(
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      const rows = [...df];
+      const api: any = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -577,17 +624,27 @@ export function slice_max<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupRows.reverse();
+        groupIndices.reverse();
 
-        const groupData = groupRows.map((i: number) => rows[i]);
+        // Build rows from indices
+        const groupData = groupIndices.map((i: number) => {
+          const row = {} as Row;
+          for (const colName of store.columnNames) {
+            (row as any)[colName] = store.columns[colName][i];
+          }
+          return row;
+        });
 
         // Separate defined and undefined values
         const definedData = groupData.filter((row) => row[column] != null);
@@ -742,7 +799,9 @@ export function slice_sample<Row extends object>(
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const groupedDf = df as GroupedDataFrame<Row>;
     if (groupedDf.__groups) {
-      const rows = [...df];
+      const api: any = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
       const rebuilt: Row[] = [];
 
       if (!groupedDf.__groups) return df as DataFrame<Row>;
@@ -750,17 +809,28 @@ export function slice_sample<Row extends object>(
 
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask if present
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          // Only include this row if it passes the mask (or if there's no mask)
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
         // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupRows.reverse();
+        groupIndices.reverse();
 
-        const groupData = groupRows.map((i: number) => rows[i]);
+        // Build rows from indices
+        const groupData = groupIndices.map((i: number) => {
+          const row = {} as Row;
+          for (const colName of store.columnNames) {
+            (row as any)[colName] = store.columns[colName][i];
+          }
+          return row;
+        });
+
         const sampled = sampleArray(
           groupData,
           Math.min(n, groupData.length),

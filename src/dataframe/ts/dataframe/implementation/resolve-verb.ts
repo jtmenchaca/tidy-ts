@@ -22,7 +22,11 @@ import { drop } from "../../verbs/selection/drop.verb.ts";
 import { reorder } from "../../verbs/transformation/reorder.verb.ts";
 import { ungroup } from "../../verbs/grouping/ungroup.verb.ts";
 import { replaceNA } from "../../verbs/missing-data/replace-na.verb.ts";
-// import { filterNA } from "../../verbs/missing-data/filter-na.verb.ts";
+import {
+  removeNA,
+  removeNull,
+  removeUndefined,
+} from "../../verbs/filtering/remove-na.ts";
 import { append } from "../../verbs/reshape/append.verb.ts";
 import { prepend } from "../../verbs/reshape/prepend.verb.ts";
 import { shuffle } from "../../verbs/sorting/shuffle.verb.ts";
@@ -281,6 +285,21 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
+  if (prop === "sliceHead") {
+    return (n: unknown) => {
+      const result = (slice_head as any)(n)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "sliceTail") {
+    return (n: unknown) => {
+      const result = (slice_tail as any)(n)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  // Deprecated aliases (no warnings - handled by @deprecated in types)
   if (prop === "head") {
     return (n: unknown) => {
       const result = (slice_head as any)(n)(df);
@@ -294,6 +313,7 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
+
   if (prop === "sliceMin") {
     return (c: unknown, n: unknown) => {
       const result = (slice_min as any)(c, n)(df);
@@ -479,12 +499,28 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
-  // if (prop === "filterNA") {
-  //   return (col: unknown, ...rest: unknown[]) => {
-  //     const result = (filterNA as any)(col as any, ...rest as any)(df);
-  //     return result instanceof Promise ? thenableDataFrame(result) : result;
-  //   };
-  // }
+
+  if (prop === "removeNA") {
+    return (fieldOrFields: unknown, ...fields: unknown[]) => {
+      const result = (removeNA as any)(fieldOrFields, ...fields)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "removeNull") {
+    return (fieldOrFields: unknown, ...fields: unknown[]) => {
+      const result = (removeNull as any)(fieldOrFields, ...fields)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "removeUndefined") {
+    return (fieldOrFields: unknown, ...fields: unknown[]) => {
+      const result = (removeUndefined as any)(fieldOrFields, ...fields)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
   if (prop === "append") {
     return (...rows: unknown[]) => {
       const result = (append as any)(...rows)(df);

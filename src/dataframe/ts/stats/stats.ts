@@ -67,6 +67,15 @@ import {
   tukeyHSD,
 } from "./statistical-tests/post-hoc/index.ts";
 
+// Import type guards for filter narrowing
+import {
+  isDefined,
+  isNotNull,
+  isNotNullish,
+  isNotUndefined,
+  isTruthy,
+} from "../verbs/filtering/type-guards.ts";
+
 /**
  * Comprehensive statistical functions for data analysis.
  *
@@ -334,6 +343,13 @@ export const stats: {
       readonly tukey: typeof tukeyHSD;
     };
   };
+
+  // Type guards for filter narrowing
+  readonly isNotNull: typeof isNotNull;
+  readonly isNotUndefined: typeof isNotUndefined;
+  readonly isDefined: typeof isDefined;
+  readonly isNotNullish: typeof isNotNullish;
+  readonly isTruthy: typeof isTruthy;
 } = {
   // Basic statistics
   sum,
@@ -584,6 +600,13 @@ export const stats: {
       tukey: tukeyHSD,
     },
   },
+
+  // Type guards for filter narrowing
+  isNotNull,
+  isNotUndefined,
+  isDefined,
+  isNotNullish,
+  isTruthy,
 };
 
 // Export stats with alias 's' for convenience

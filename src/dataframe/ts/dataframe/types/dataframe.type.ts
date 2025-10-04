@@ -214,7 +214,61 @@ export type DataFrame<Row extends object = object> =
 
     // ---------- Missing Data ----------
     replaceNA: ReplaceNaMethod<Row>;
-    //    filterNA: FilterNaMethod<Row>;
+    removeNA: {
+      <Field extends keyof Row>(
+        field: Field,
+      ): DataFrame<
+        Prettify<
+          & Omit<Row, Field>
+          & { [K in Field]: Exclude<Row[Field], null | undefined> }
+        >
+      >;
+      <Field extends keyof Row>(
+        field: Field,
+        ...fields: Field[]
+      ): DataFrame<
+        Prettify<Row & { [K in Field]: Exclude<Row[K], null | undefined> }>
+      >;
+      <Field extends keyof Row>(
+        fields: Field[],
+      ): DataFrame<
+        Prettify<Row & { [K in Field]: Exclude<Row[K], null | undefined> }>
+      >;
+    };
+    removeNull: {
+      <Field extends keyof Row>(
+        field: Field,
+      ): DataFrame<
+        Prettify<Omit<Row, Field> & { [K in Field]: Exclude<Row[Field], null> }>
+      >;
+      <Field extends keyof Row>(
+        field: Field,
+        ...fields: Field[]
+      ): DataFrame<Prettify<Row & { [K in Field]: Exclude<Row[K], null> }>>;
+      <Field extends keyof Row>(
+        fields: Field[],
+      ): DataFrame<Prettify<Row & { [K in Field]: Exclude<Row[K], null> }>>;
+    };
+    removeUndefined: {
+      <Field extends keyof Row>(
+        field: Field,
+      ): DataFrame<
+        Prettify<
+          Omit<Row, Field> & { [K in Field]: Exclude<Row[Field], undefined> }
+        >
+      >;
+      <Field extends keyof Row>(
+        field: Field,
+        ...fields: Field[]
+      ): DataFrame<
+        Prettify<Row & { [K in Field]: Exclude<Row[K], undefined> }>
+      >;
+      <Field extends keyof Row>(
+        fields: Field[],
+      ): DataFrame<
+        Prettify<Row & { [K in Field]: Exclude<Row[K], undefined> }>
+      >;
+    };
 
     // ---------- Convenience Verbs ----------
     append: AppendMethod<Row>;
@@ -228,11 +282,15 @@ export type DataFrame<Row extends object = object> =
 
     // ---------- Slicing ----------
     slice: SliceRowsMethod<Row>;
-    head: SliceHeadMethod<Row>;
-    tail: SliceTailMethod<Row>;
+    sliceHead: SliceHeadMethod<Row>;
+    sliceTail: SliceTailMethod<Row>;
     sliceMin: SliceMinMethod<Row>;
     sliceMax: SliceMaxMethod<Row>;
     sample: SliceSampleMethod<Row>;
+    /** @deprecated Use sliceHead instead */
+    head: SliceHeadMethod<Row>;
+    /** @deprecated Use sliceTail instead */
+    tail: SliceTailMethod<Row>;
 
     // ---------- Graph ----------
     graph(spec: GraphOptions<Row>): TidyGraphWidget;
