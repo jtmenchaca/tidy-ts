@@ -27,6 +27,7 @@ import { lead } from "./window/lead.ts";
 import { round } from "./transformation/round.ts";
 import { floor } from "./transformation/floor.ts";
 import { ceiling } from "./transformation/ceiling.ts";
+import { percent } from "./transformation/percent.ts";
 import { count_value } from "./descriptive/counts/count-value.ts";
 import { percentile_rank } from "./ranking/percentile-rank.ts";
 
@@ -121,6 +122,7 @@ export const stats: {
   readonly round: typeof round;
   readonly floor: typeof floor;
   readonly ceiling: typeof ceiling;
+  readonly percent: typeof percent;
   readonly countValue: typeof count_value;
   readonly percentileRank: typeof percentile_rank;
 
@@ -373,6 +375,7 @@ export const stats: {
   round,
   floor,
   ceiling,
+  percent,
   countValue: count_value,
   percentileRank: percentile_rank,
 
