@@ -12,6 +12,7 @@ export {
 export {
   readArrow,
   readCSV,
+  readJSON,
   readParquet,
   writeCSV,
   writeParquet,

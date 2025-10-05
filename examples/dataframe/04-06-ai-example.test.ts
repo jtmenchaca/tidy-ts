@@ -122,6 +122,7 @@ Deno.test("test-3-concurrency-default", async () => {
   // Track concurrent API calls
   let activeCalls = 0;
   let maxConcurrentCalls = 0;
+  const timers: number[] = [];
 
   // Mock async function that doesn't make real API calls
   async function mockAsyncOperation(text: string, name: string) {
@@ -130,9 +131,14 @@ Deno.test("test-3-concurrency-default", async () => {
     console.log(`Active calls: ${activeCalls}, Max: ${maxConcurrentCalls}`);
 
     // Simulate API delay with setTimeout wrapped in Promise
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise<void>((resolve) => {
+      const timerId = setTimeout(() => {
+        activeCalls--;
+        resolve();
+      }, 50);
+      timers.push(timerId);
+    });
 
-    activeCalls--;
     return `Processed: ${text} for ${name}`;
   }
 
@@ -158,6 +164,9 @@ Deno.test("test-3-concurrency-default", async () => {
   console.log(`Max concurrent calls with default: ${maxConcurrentCalls}`);
   expect(maxConcurrentCalls).toBeLessThanOrEqual(1);
   df1.print();
+
+  // Clean up any remaining timers
+  timers.forEach((timerId) => clearTimeout(timerId));
 });
 
 Deno.test("test-4-concurrency-limited", async () => {
@@ -206,6 +215,9 @@ Deno.test("test-4-concurrency-limited", async () => {
   console.log(`Max concurrent calls with limit 2: ${maxConcurrentCalls}`);
   expect(maxConcurrentCalls).toBeLessThanOrEqual(2);
   df1.print();
+
+  // Clean up any remaining timers
+  timers.forEach((timerId) => clearTimeout(timerId));
 });
 
 Deno.test("test-5-dataframe-level-concurrency", async () => {
@@ -260,4 +272,7 @@ Deno.test("test-5-dataframe-level-concurrency", async () => {
   );
   expect(maxConcurrentCalls).toBeLessThanOrEqual(3);
   df1.print();
+
+  // Clean up any remaining timers
+  timers.forEach((timerId) => clearTimeout(timerId));
 });

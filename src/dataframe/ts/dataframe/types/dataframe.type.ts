@@ -10,6 +10,7 @@ import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-colu
 import type { SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
 import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-columns.types.ts";
 import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
+import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
 import type { RenameMethod } from "../../verbs/transformation/rename.types.ts";
 import type { DummyColMethod } from "../../verbs/utility/dummy-col.types.ts";
 import type {
@@ -132,6 +133,9 @@ export type DataFrame<Row extends object = object> =
     /** escape hatch to a copy */
     toArray(): readonly Row[];
 
+    /** Convert DataFrame to JSON string with nested DataFrame support */
+    toJSON(options?: { space?: number }): string;
+
     /** Get the number of rows in the DataFrame */
     nrows(): number;
 
@@ -210,6 +214,7 @@ export type DataFrame<Row extends object = object> =
     summariseColumns: SummariseColumnsMethod<Row>;
     summarizeColumns: SummariseColumnsMethod<Row>;
     crossTabulate: CrossTabulateMethod<Row>;
+    count: CountMethod<Row>;
 
     // ---------- Utilities ----------
     dummyCol: DummyColMethod<Row>;

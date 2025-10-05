@@ -96,28 +96,21 @@ Deno.test("percent - edge case: very large numbers", () => {
 Deno.test("percent - null/undefined numerator", () => {
   const nullValue: number | null = null;
   const undefinedValue: number | undefined = undefined;
-  // @ts-expect-error - null value is not a number
   expect(percent(nullValue, 100)).toBe(null);
-  // @ts-expect-error - undefined value is not a number
   expect(percent(undefinedValue, 100)).toBe(null);
 });
 
 Deno.test("percent - null/undefined denominator", () => {
   const nullValue: number | null = null;
   const undefinedValue: number | undefined = undefined;
-  // @ts-expect-error - null value is not a number
   expect(percent(50, nullValue)).toBe(null);
-  // @ts-expect-error - undefined value is not a number
   expect(percent(50, undefinedValue)).toBe(null);
 });
 
 Deno.test("percent - both null/undefined", () => {
   const nullValue: number | null = null;
   const undefinedValue: number | undefined = undefined;
-  // @ts-expect-error - null value is not a number
   expect(percent(nullValue, nullValue)).toBe(null);
-  // @ts-expect-error - undefined value is not a number
   expect(percent(undefinedValue, undefinedValue)).toBe(null);
-  // @ts-expect-error - undefined value is not a number
   expect(percent(nullValue, undefinedValue)).toBe(null);
 });

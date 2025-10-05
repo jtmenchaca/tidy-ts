@@ -9,7 +9,7 @@ import type { DataFrame } from "../dataframe/index.ts";
 export * from "./read_csv.ts";
 export * from "./read_parquet.ts";
 export * from "./read_arrow.ts";
-export * from "./read_json.ts";
+export { readJSON } from "./read_json.ts";
 export * from "./write_json.ts";
 
 // CSV parsing utilities (exported for advanced usage)

@@ -2,7 +2,13 @@ import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 // Test data with undefined values
-const testData = createDataFrame([
+type TestRow = {
+  id: number;
+  name: string;
+  homeworld: string | undefined;
+  species: string | undefined;
+};
+const testData = createDataFrame<TestRow>([
   { id: 1, name: "Luke", homeworld: "Tatooine", species: "Human" },
   { id: 2, name: "Vader", homeworld: undefined, species: "Human" },
   { id: 3, name: "Leia", homeworld: "Alderaan", species: undefined },
@@ -11,6 +17,13 @@ const testData = createDataFrame([
 
 Deno.test("removeUndefined removes only undefined values", () => {
   const result = testData.removeUndefined("homeworld");
+
+  const _typeCheck: DataFrame<{
+    id: number;
+    name: string;
+    homeworld: string; // No undefined
+    species: string | undefined;
+  }> = result;
 
   expect(result.nrows()).toBe(2);
   expect(result.toArray()).toEqual([

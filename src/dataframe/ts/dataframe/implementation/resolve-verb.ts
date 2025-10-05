@@ -51,6 +51,7 @@ import { groupBy } from "../../verbs/grouping/group-by.verb.ts";
 import { summarise } from "../../verbs/aggregate/summarise.verb.ts";
 import { summarise_columns } from "../../verbs/aggregate/summarise-columns.verb.ts";
 import { cross_tabulate } from "../../verbs/aggregate/cross_tabulate.verb.ts";
+import { count } from "../../verbs/aggregate/count.verb.ts";
 
 // Pivot
 import { pivot_longer, pivot_wider } from "../../verbs/reshape/pivot.verb.ts";
@@ -272,6 +273,13 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
 
   if (prop === "crossTabulate") {
     return (...a: unknown[]) => (cross_tabulate as any)(...a)(df);
+  }
+
+  if (prop === "count") {
+    return (...a: unknown[]) => {
+      const result = (count as any)(...a)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
   }
 
   if (prop === "slice") {

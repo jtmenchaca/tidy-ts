@@ -49,6 +49,61 @@ export async function writeJSON<T extends Record<string, unknown>>(
   }
 }
 
+/**
+ * Check if a value is a DataFrame by looking for DataFrame-like methods
+ */
+function isDataFrame(
+  value: unknown,
+): value is DataFrame<Record<string, unknown>> {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  // Check for key DataFrame methods
+  return (
+    "nrows" in value &&
+    "ncols" in value &&
+    "toArray" in value &&
+    typeof (value as { toArray?: unknown }).toArray === "function"
+  );
+}
+
+/**
+ * Convert a value to a JSON-serializable format, handling nested DataFrames
+ */
+function convertValue(value: unknown): unknown {
+  // Handle DataFrame objects - convert to array
+  if (isDataFrame(value)) {
+    return value.toArray().map((row) => convertRow(row));
+  }
+
+  // Handle arrays - recursively convert elements
+  if (Array.isArray(value)) {
+    return value.map((item) => convertValue(item));
+  }
+
+  // Handle plain objects - recursively convert properties
+  if (
+    value !== null && typeof value === "object" && value.constructor === Object
+  ) {
+    return convertRow(value as Record<string, unknown>);
+  }
+
+  // Return primitives as-is
+  return value;
+}
+
+/**
+ * Convert a row object, handling nested DataFrames
+ */
+function convertRow(row: Record<string, unknown>): Record<string, unknown> {
+  const converted: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    converted[key] = convertValue(value);
+  }
+  return converted;
+}
+
 export function dataFrameToJSON<T extends Record<string, unknown>>(
   dataFrame: DataFrame<T>,
   options: {
@@ -61,9 +116,9 @@ export function dataFrameToJSON<T extends Record<string, unknown>>(
     return "[]";
   }
 
-  const rows: T[] = [];
+  const rows: Record<string, unknown>[] = [];
   for (const row of dataFrame) {
-    rows.push(row);
+    rows.push(convertRow(row as Record<string, unknown>));
   }
 
   return JSON.stringify(rows, null, options.space);

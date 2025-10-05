@@ -14,7 +14,7 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  * @example
  * ```ts
  * import { z } from "zod";
- * import { read_json } from "@tidy-ts/dataframe";
+ * import { readJSON } from "@tidy-ts/dataframe";
  *
  * // For a simple object
  * const ConfigSchema = z.object({
@@ -23,7 +23,7 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  *   retries: z.number().int().min(0),
  * });
  *
- * const config = await read_json("./config.json", ConfigSchema);
+ * const config = await readJSON("./config.json", ConfigSchema);
  * // config is typed as z.infer<typeof ConfigSchema>
  *
  * // For an array of objects (returns DataFrame)
@@ -34,11 +34,11 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  *   age: z.number().optional(),
  * }));
  *
- * const users = await read_json("./users.json", UserSchema);
+ * const users = await readJSON("./users.json", UserSchema);
  * // users is typed as DataFrame<{id: number, name: string, ...}>
  * ```
  */
-export async function read_json<T extends ZodTypeAny>(
+export async function readJSON<T extends ZodTypeAny>(
   filePath: string,
   schema: T,
 ): Promise<

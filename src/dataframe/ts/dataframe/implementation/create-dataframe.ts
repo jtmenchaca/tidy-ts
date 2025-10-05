@@ -8,6 +8,7 @@ import { type ColumnarStore, toColumnarStorage } from "./columnar-store.ts";
 import { materializeIndex, type View } from "./columnar-view.ts";
 import { detectColumnTypes } from "./column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+import { dataFrameToJSON } from "../../io/write_json.ts";
 
 export type PrintOptions = {
   maxRows?: number;
@@ -123,6 +124,11 @@ export function createColumnarDataFrameFromStore<
       result[i] = row;
     }
     return result;
+  };
+
+  // JSON conversion with nested DataFrame support
+  api.toJSON = (options?: { space?: number }) => {
+    return dataFrameToJSON(dataFrame as any, options);
   };
 
   // ---- Tracing utilities ----
