@@ -106,6 +106,8 @@ export function makeDataFrameProbe<Row extends object>(
     extractTail: () => "test_value",
     extractNth: () => "test_value",
     extractSample: () => "test_value",
+    extractUnique: () => ["test_value"],
+    extractNthWhereSorted: () => makeDataFrameProbe(df),
 
     // Reshape methods
     pivotWider: () => makeDataFrameProbe(df),

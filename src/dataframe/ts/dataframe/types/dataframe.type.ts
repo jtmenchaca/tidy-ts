@@ -189,6 +189,7 @@ export type DataFrame<Row extends object = object> =
     extractNth: ExtractNthMethod<Row>;
     extractSample: ExtractSampleMethod<Row>;
     extractUnique: ExtractUniqueMethod<Row>;
+
     extractNthWhereSorted: ExtractNthWhereSortedMethod<Row>;
     arrange: ArrangeMethod<Row>;
     sort: ArrangeMethod<Row>;
