@@ -6,7 +6,6 @@ import type {
   NumbersWithNullableIterable,
 } from "../helpers.ts";
 import {
-  ERROR_MESSAGES,
   extractNumbersWithOptions,
   isAllFiniteNumbers,
   isNA,
@@ -108,9 +107,6 @@ export function max(
     const validDates = processArray.filter((v): v is Date => v instanceof Date);
 
     if (validDates.length === 0) {
-      if (removeNA) {
-        throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MAX);
-      }
       return null;
     }
 
@@ -131,9 +127,6 @@ export function max(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (removeNA) {
-      throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MAX);
-    }
     return null;
   }
 

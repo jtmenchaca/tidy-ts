@@ -5,7 +5,7 @@ import type {
   NumbersWithNullable,
   NumbersWithNullableIterable,
 } from "../../helpers.ts";
-import { ERROR_MESSAGES, extractNumbersWithOptions } from "../../helpers.ts";
+import { extractNumbersWithOptions } from "../../helpers.ts";
 
 /**
  * Helper function to calculate mode information
@@ -91,9 +91,6 @@ export function mode(
   const result = calculateModeInfo(values);
 
   if (!result) {
-    if (removeNA) {
-      throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MODE);
-    }
     return null;
   }
 

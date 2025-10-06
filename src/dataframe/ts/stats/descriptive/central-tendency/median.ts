@@ -6,7 +6,6 @@ import type {
   NumbersWithNullableIterable,
 } from "../../helpers.ts";
 import {
-  ERROR_MESSAGES,
   extractNumbersWithOptions,
   isAllFiniteNumbers,
 } from "../../helpers.ts";
@@ -73,9 +72,6 @@ export function median(
   const validValues = extractNumbersWithOptions(values, true, false);
 
   if (validValues.length === 0) {
-    if (removeNA) {
-      throw new Error(ERROR_MESSAGES.NO_VALID_VALUES_MEDIAN);
-    }
     return null;
   }
 
