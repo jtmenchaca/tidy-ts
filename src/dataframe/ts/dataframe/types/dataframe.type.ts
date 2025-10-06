@@ -60,6 +60,7 @@ import type {
   ExtractTailMethod,
   ExtractUniqueMethod,
 } from "../../verbs/selection/extract.types.ts";
+import type { ExtractNthWhereSortedMethod } from "../../verbs/selection/extract-nth-where-sorted.types.ts";
 import type { BindRowsMethod } from "../../verbs/reshape/bind-rows.types.ts";
 import type { ReplaceNaMethod } from "../../verbs/missing-data/replace-na.types.ts";
 // import type { FilterNaMethod } from "../../verbs/missing-data/filter-na.types.ts";
@@ -188,6 +189,7 @@ export type DataFrame<Row extends object = object> =
     extractNth: ExtractNthMethod<Row>;
     extractSample: ExtractSampleMethod<Row>;
     extractUnique: ExtractUniqueMethod<Row>;
+    extractNthWhereSorted: ExtractNthWhereSortedMethod<Row>;
     arrange: ArrangeMethod<Row>;
     sort: ArrangeMethod<Row>;
     distinct: DistinctMethod<Row>;

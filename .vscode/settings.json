@@ -51,6 +51,13 @@
     "**/.git": true,
     "**/.DS_Store": true
   },
+  "files.watcherExclude": {
+    "**/.git/**": true,
+    "**/.DS_Store": true,
+    "**/node_modules/.deno/**": true,
+    "**/vendor/**": true,
+    "**/apps/smart-on-fhir-frontend/src/routeTree.gen.ts": true
+  },
 
   "typescript.suggest.autoImports": false,
   "deno.documentPreloadLimit": 2000

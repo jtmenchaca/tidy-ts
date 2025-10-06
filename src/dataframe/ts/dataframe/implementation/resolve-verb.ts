@@ -37,6 +37,7 @@ import {
   extract_tail,
   extract_unique,
 } from "../../verbs/selection/extract.verb.ts";
+import { extract_nth_where_sorted } from "../../verbs/selection/extract-nth-where-sorted.verb.ts";
 
 // Joins
 import { inner_join } from "../../verbs/join/inner-join.verb.ts";
@@ -150,6 +151,9 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   }
   if (prop === "extractUnique") {
     return (...a: unknown[]) => (extract_unique as any)(...a)(df);
+  }
+  if (prop === "extractNthWhereSorted") {
+    return (...a: unknown[]) => (extract_nth_where_sorted as any)(...a)(df);
   }
   if (prop === "rename") {
     return (...a: unknown[]) => {
