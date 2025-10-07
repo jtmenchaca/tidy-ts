@@ -114,6 +114,7 @@ impl WilcoxonWTest {
             p_value,
             test_name: "Wilcoxon Signed-Rank Test".to_string(),
             method: WilcoxonMethod::Asymptotic.as_str().to_string(), // This implementation uses asymptotic method
+            alternative: alternative.to_string(),
             alpha,
             error_message: None,
             effect_size: EffectSize {

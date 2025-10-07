@@ -72,6 +72,7 @@ where
             upper: confidence_interval.map(|ci| ci.1).unwrap_or(f64::NAN),
             confidence_level: 1.0 - alpha,
         },
+        alternative: alternative.as_str().to_string(),
         effect_size: EffectSize {
             value: effect_size,
             name: EffectSizeType::CohensD.as_str().to_string(),

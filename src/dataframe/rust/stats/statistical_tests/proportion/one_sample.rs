@@ -94,5 +94,6 @@ where
             upper: confidence_interval.1,
             confidence_level: 1.0 - alpha,
         },
+        alternative: alternative.as_str().to_string(),
     })
 }

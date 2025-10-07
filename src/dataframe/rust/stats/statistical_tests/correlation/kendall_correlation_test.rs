@@ -230,5 +230,6 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
             value: tau,
             name: EffectSizeType::KendallsTau.as_str().to_string(),
         },
+        alternative: alternative.as_str().to_string(),
     })
 }

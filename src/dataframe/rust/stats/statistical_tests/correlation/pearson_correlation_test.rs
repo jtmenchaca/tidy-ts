@@ -122,6 +122,7 @@ pub fn pearson_test(
         },
         confidence_interval,
         degrees_of_freedom: (n - 2) as f64,
+        alternative: alternative.as_str().to_string(),
         alpha,
         error_message: None,
     })

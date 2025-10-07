@@ -1587,6 +1587,7 @@ export class KendallCorrelationTestResult {
   effect_size: EffectSize;
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1649,6 +1650,7 @@ export class OneSampleProportionTestResult {
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
   sample_proportion: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1665,6 +1667,7 @@ export class OneSampleTTestResult {
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
   degrees_of_freedom: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1680,6 +1683,7 @@ export class OneSampleZTestResult {
   effect_size: EffectSize;
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1719,6 +1723,7 @@ export class PairedTTestResult {
   degrees_of_freedom: number;
   mean_difference: number;
   standard_error: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1778,6 +1783,7 @@ export class PearsonCorrelationTestResult {
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
   degrees_of_freedom: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1843,6 +1849,7 @@ export class SpearmanCorrelationTestResult {
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
   degrees_of_freedom: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1922,6 +1929,7 @@ export class TwoSampleProportionTestResult {
   test_statistic: TestStatistic;
   confidence_interval: ConfidenceInterval;
   proportion_difference: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1940,6 +1948,7 @@ export class TwoSampleTTestResult {
   degrees_of_freedom: number;
   mean_difference: number;
   standard_error: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -1957,6 +1966,7 @@ export class TwoSampleZTestResult {
   confidence_interval: ConfidenceInterval;
   mean_difference: number;
   standard_error: number;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);
@@ -2017,6 +2027,7 @@ export class WilcoxonSignedRankTestResult {
   effect_size: EffectSize;
   test_statistic: TestStatistic;
   method: string;
+  alternative: string;
   alpha: number;
   get error_message(): string | undefined;
   set error_message(value: string | null | undefined);

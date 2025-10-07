@@ -72,6 +72,7 @@ where
         },
         mean_difference: mean_diff,
         standard_error: std_error,
+        alternative: alternative.as_str().to_string(),
     })
 }
 
@@ -109,6 +110,7 @@ pub fn t_test_paired_vec(
         },
         mean_difference: f64::NAN,
         standard_error: f64::NAN,
+        alternative: alternative.as_str().to_string(),
     })
 }
 
@@ -272,5 +274,6 @@ where
         },
         mean_difference: mean1 - mean2,
         standard_error: std_error,
+        alternative: alternative.as_str().to_string(),
     })
 }

@@ -440,6 +440,7 @@ pub struct PearsonCorrelationTestResult {
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
     pub degrees_of_freedom: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -454,6 +455,7 @@ pub struct SpearmanCorrelationTestResult {
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
     pub degrees_of_freedom: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -467,6 +469,7 @@ pub struct KendallCorrelationTestResult {
     pub effect_size: EffectSize, // Kendall's tau as effect size
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -481,6 +484,7 @@ pub struct OneSampleTTestResult {
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
     pub degrees_of_freedom: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -497,6 +501,7 @@ pub struct TwoSampleTTestResult {
     pub degrees_of_freedom: f64,
     pub mean_difference: f64,
     pub standard_error: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -513,6 +518,7 @@ pub struct PairedTTestResult {
     pub degrees_of_freedom: f64,
     pub mean_difference: f64,
     pub standard_error: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -543,6 +549,7 @@ pub struct WilcoxonSignedRankTestResult {
     pub effect_size: EffectSize,
     pub test_statistic: TestStatistic,
     pub method: String, // "Exact" or "Asymptotic"
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -570,6 +577,7 @@ pub struct OneSampleZTestResult {
     pub effect_size: EffectSize,
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -585,6 +593,7 @@ pub struct TwoSampleZTestResult {
     pub confidence_interval: ConfidenceInterval,
     pub mean_difference: f64,
     pub standard_error: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -598,6 +607,7 @@ pub struct OneSampleProportionTestResult {
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
     pub sample_proportion: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }
@@ -611,6 +621,7 @@ pub struct TwoSampleProportionTestResult {
     pub test_statistic: TestStatistic,
     pub confidence_interval: ConfidenceInterval,
     pub proportion_difference: f64,
+    pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
     pub error_message: Option<String>,
 }

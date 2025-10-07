@@ -32,6 +32,7 @@ pub fn z_test_one_sample(
                 upper: f64::NAN,
                 confidence_level: 1.0 - alpha,
             },
+            alternative: alternative.to_string(),
             effect_size: crate::stats::core::types::EffectSize {
                 value: f64::NAN,
                 name: "Cohen's D".to_string(),
@@ -73,6 +74,7 @@ pub fn z_test_two_sample(
                 upper: f64::NAN,
                 confidence_level: 1.0 - alpha,
             },
+            alternative: alternative.to_string(),
             effect_size: crate::stats::core::types::EffectSize {
                 value: f64::NAN,
                 name: "Cohen's D".to_string(),

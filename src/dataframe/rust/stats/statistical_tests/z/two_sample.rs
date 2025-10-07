@@ -111,6 +111,7 @@ where
         },
         mean_difference: sample_mean_diff,
         standard_error: std_error,
+        alternative: alternative.as_str().to_string(),
     })
 }
 
@@ -219,5 +220,6 @@ where
         },
         mean_difference: mean1 - mean2,
         standard_error: std_error,
+        alternative: alternative.as_str().to_string(),
     })
 }

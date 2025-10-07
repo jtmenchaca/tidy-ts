@@ -25,6 +25,7 @@ pub fn wilcoxon_w_test(
             p_value: f64::NAN,
             test_name: "Wilcoxon Signed-Rank Test".to_string(),
             method: "Error".to_string(),
+            alternative: alternative.to_string(),
             alpha,
             error_message: Some(e),
             effect_size: EffectSize {

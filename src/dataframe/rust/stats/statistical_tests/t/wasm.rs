@@ -39,6 +39,7 @@ pub fn t_test_one_sample(
                 confidence_level: 1.0 - alpha,
             },
             degrees_of_freedom: f64::NAN,
+            alternative: alternative.to_string(),
             effect_size: EffectSize {
                 value: f64::NAN,
                 name: EffectSizeType::CohensD.as_str().to_string(),
@@ -79,6 +80,7 @@ pub fn t_test_two_sample_independent(
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: f64::NAN,
+        alternative: alternative.to_string(),
         effect_size: EffectSize {
             value: f64::NAN,
             name: "Cohen's d".to_string(),
@@ -113,6 +115,7 @@ pub fn t_test_paired(x: &[f64], y: &[f64], alpha: f64, alternative: &str) -> Pai
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: f64::NAN,
+        alternative: alternative.to_string(),
         effect_size: EffectSize {
             value: f64::NAN,
             name: "Cohen's d".to_string(),

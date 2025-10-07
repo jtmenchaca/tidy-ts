@@ -37,6 +37,7 @@ pub fn pearson_correlation_test(
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: f64::NAN,
+        alternative: alternative.to_string(),
         effect_size: crate::stats::core::types::EffectSize {
             value: f64::NAN,
             name: "Pearson's R".to_string(),
@@ -74,6 +75,7 @@ pub fn spearman_correlation_test(
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: f64::NAN,
+        alternative: alternative.to_string(),
         alpha,
         error_message: Some(e),
     })
@@ -106,6 +108,7 @@ pub fn kendall_correlation_test(
             upper: f64::NAN,
             confidence_level: 1.0 - alpha,
         },
+        alternative: alternative.to_string(),
         effect_size: crate::stats::core::types::EffectSize {
             value: f64::NAN,
             name: "Kendall's Tau".to_string(),

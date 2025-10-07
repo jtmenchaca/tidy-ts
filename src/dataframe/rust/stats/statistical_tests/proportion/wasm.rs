@@ -40,6 +40,7 @@ pub fn proportion_test_one_sample(
                 confidence_level: 1.0 - alpha,
             },
             sample_proportion: f64::NAN,
+            alternative: alternative.to_string(),
         },
     }
 }
@@ -74,6 +75,7 @@ pub fn proportion_test_two_sample(
                 confidence_level: 1.0 - alpha,
             },
             proportion_difference: f64::NAN,
+            alternative: alternative.to_string(),
         },
     }
 }

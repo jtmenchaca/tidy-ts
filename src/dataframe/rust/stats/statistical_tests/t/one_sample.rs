@@ -105,6 +105,7 @@ where
             confidence_level: 1.0 - alpha,
         },
         degrees_of_freedom: df,
+        alternative: alternative.as_str().to_string(),
         alpha,
         error_message: None,
     })
