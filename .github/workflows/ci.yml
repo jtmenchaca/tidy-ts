@@ -16,5 +16,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache Deno dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.deno
+            ~/.cache/deno
+          key: ${{ runner.os }}-deno-${{ hashFiles('deno.jsonc', 'import_map.json') }}
+          restore-keys: |
+            ${{ runner.os }}-deno-
+
       - name: Run CI tests
         run: deno task ci
