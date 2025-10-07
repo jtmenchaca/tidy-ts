@@ -67,6 +67,9 @@ Rust (Core) → WASM → TypeScript (Interface) → Deno/Node.js
 # Build Rust → WASM
 deno task wasmbuild
 
+# Run all CI tests
+deno task ci
+
 # Run regression tests
 deno task test-regression
 

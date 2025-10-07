@@ -32,6 +32,13 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     "\n2. Testing central tendency against value (non-parametric Wilcoxon):",
   );
 
+  s.test.t.oneSample({
+    data: singleGroup,
+    mu: 24,
+    alternative: "two-sided",
+    alpha: 0.05,
+  });
+
   const wilcoxonTest = s.compare.oneGroup.centralTendency.toValue({
     data: singleGroup,
     hypothesizedValue: 24,

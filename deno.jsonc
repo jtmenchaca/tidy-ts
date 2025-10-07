@@ -33,6 +33,8 @@
     "test-runtimes": "cd tests/runtimes && bash test-runner.sh",
     "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib",
     "docs:prerender": "cd docs && bun run prerender && cd ..",
+    "joss:local-render": "devkit md2pdf tmp/proposal/draft-v3.md",
+    "joss:render": "cd tmp/proposal && cp draft-v3.md paper.md && cp ../../paper.bib . && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
     "precommit": "deno task ci:update-badge && deno task docs:prerender"
   },
   "importMap": "import_map.json",
@@ -41,6 +43,7 @@
   "fmt": {
     "exclude": [
       "node_modules/",
+      "LICENSE",
       "**/*.md",
       "**/*.mdc",
       "**/*.ipynb",
