@@ -22,7 +22,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     data: singleGroup,
     hypothesizedValue: 24,
     parametric: "parametric",
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`  Complete test result:`, JSON.stringify(oneSampleT, null, 2));
@@ -78,7 +78,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   const propTest = s.compare.oneGroup.proportions.toValue({
     data: proportionData,
     p: 0.5,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`  Complete test result:`, JSON.stringify(propTest, null, 2));
@@ -106,7 +106,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     y: group2,
     parametric: "parametric",
     assumeEqualVariances: true,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`  Complete test result:`, JSON.stringify(twoSampleT, null, 2));
@@ -119,7 +119,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   const twoPropTest = s.compare.twoGroups.proportions.toEachOther({
     data1: group1Props,
     data2: group2Props,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
     useChiSquare: false,
   });
@@ -133,7 +133,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     x: x,
     y: y,
     method: "pearson",
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`  Complete test result:`, JSON.stringify(corrTest, null, 2));
@@ -144,7 +144,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     x: group1,
     y: group2,
     method: "ks",
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`  Complete test result:`, JSON.stringify(distTest, null, 2));

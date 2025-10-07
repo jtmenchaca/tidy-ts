@@ -234,7 +234,7 @@ Deno.test("Stats API Demo - New Compare API - One Group", () => {
       data,
       hypothesizedValue: 5,
       parametric: "parametric",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -245,7 +245,7 @@ Deno.test("Stats API Demo - New Compare API - One Group", () => {
       data,
       hypothesizedValue: 5,
       parametric: "nonparametric",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -256,7 +256,7 @@ Deno.test("Stats API Demo - New Compare API - One Group", () => {
       data,
       hypothesizedValue: 5,
       parametric: "auto",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -268,7 +268,7 @@ Deno.test("Stats API Demo - New Compare API - One Group", () => {
     s.compare.oneGroup.proportions.toValue({
       data: binaryData,
       p: 0.5,
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -322,7 +322,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       parametric: "parametric",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -333,7 +333,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       parametric: "nonparametric",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -344,7 +344,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       parametric: "auto",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -357,7 +357,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "pearson",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -368,7 +368,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "spearman",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -379,7 +379,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "auto",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -392,7 +392,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       data1: binary1,
       data2: binary2,
       useChiSquare: "auto",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -405,7 +405,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "ks",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -416,7 +416,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "mann-whitney",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
@@ -427,7 +427,7 @@ Deno.test("Stats API Demo - New Compare API - Two Groups", () => {
       x: group1,
       y: group2,
       method: "auto",
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     }),
   );
