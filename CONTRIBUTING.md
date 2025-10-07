@@ -40,6 +40,25 @@ deno task test-glm          # Test GLM tests
 deno task test-gee          # Test GEE tests
 ```
 
+### CI/CD Pipeline
+```
+Push to GitHub
+      ↓
+CI workflow starts
+      ↓
+Pulls Docker image (R + Deno + packages pre-installed)
+      ↓
+Restores Deno dependency cache
+      ↓
+Checks out code
+      ↓
+Runs deno task ci
+      ↓
+Reports pass/fail
+```
+
+The Docker image contains R runtime, all R packages, Deno 2.5.3, and test directories pre-configured. This makes CI runs fast (~1-2 minutes) instead of reinstalling everything each time.
+
 ## Code Style
 - Follow TypeScript best practices
 - Use meaningful variable and function names
