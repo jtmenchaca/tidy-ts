@@ -16,10 +16,5 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create output directories
-        run: |
-          mkdir -p examples/dataframe/output
-          mkdir -p tests/bugs/output
-
       - name: Run CI tests
         run: deno task ci

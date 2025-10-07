@@ -46,3 +46,6 @@ RUN deno cache --import-map=import_map.json \
 
 # Clean up copied files (they'll be mounted from the repo during CI)
 RUN rm -f import_map.json deno.jsonc
+
+# Create output directories for tests
+RUN mkdir -p examples/dataframe/output tests/bugs/output
