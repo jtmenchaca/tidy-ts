@@ -8,7 +8,7 @@ Deno.test("writeCSV() minimal example", () => {
     { id: 2, name: "Bob" },
   ]);
 
-  const tempFile = "./test-minimal.csv";
+  const tempFile = "./tests/bugs/output/test-minimal.csv";
   writeCSV(df, tempFile);
 
   const content = Deno.readTextFileSync(tempFile);
@@ -27,7 +27,7 @@ Deno.test("writeCSV() with newline in string field", () => {
     { id: 2, description: "Normal text" },
   ]);
 
-  const tempFile = "./test-newline.csv";
+  const tempFile = "./tests/bugs/output/test-newline.csv";
   writeCSV(df, tempFile);
 
   const content = Deno.readTextFileSync(tempFile);
