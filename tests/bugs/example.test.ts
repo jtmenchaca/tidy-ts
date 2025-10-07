@@ -47,7 +47,7 @@ Deno.test("Example Test", async () => {
           data: df.culmenLengthMm.filter((x): x is number => x !== null),
           hypothesizedValue: 0,
           parametric: "parametric",
-          alternative: "two-sided",
+          comparator: "not equal to",
           alpha: 0.05,
         }),
     });
@@ -90,7 +90,7 @@ Deno.test("Example Test", async () => {
       y: chinstrapData,
       parametric: "parametric", // Use t-test
       assumeEqualVariances: true, // Assume equal variances
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
     });
 
@@ -129,7 +129,7 @@ Deno.test("Example Test", async () => {
     x: maleData,
     y: femaleData,
     parametric: "nonparametric", // Use Mann-Whitney U test
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
 
@@ -148,7 +148,7 @@ Deno.test("Example Test", async () => {
     x: df.culmenLengthMm.filter((x): x is number => x !== null),
     y: df.flipperLengthMm.filter((x): x is number => x !== null),
     method: "pearson", // Use Pearson correlation
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
 
@@ -182,7 +182,7 @@ Deno.test("Example Test", async () => {
     .toEachOther({
       data1: adelieClutchData,
       data2: gentooClutchData,
-      alternative: "two-sided",
+      comparator: "not equal to",
       alpha: 0.05,
       useChiSquare: false, // Use two-proportion z-test
     });
@@ -214,7 +214,7 @@ Deno.test("Example Test", async () => {
     x: torgersenData,
     y: biscoeData,
     method: "ks", // Explicitly use KS test for distribution equality
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
 
@@ -240,7 +240,7 @@ Deno.test("Example Test", async () => {
           data,
           hypothesizedValue: 40, // Test if mean culmen length differs from 40mm
           parametric: "parametric",
-          alternative: "two-sided",
+          comparator: "not equal to",
           alpha: 0.05,
         });
       },
@@ -252,7 +252,7 @@ Deno.test("Example Test", async () => {
           data,
           hypothesizedValue: 200, // Test if mean flipper length differs from 200mm
           parametric: "parametric",
-          alternative: "two-sided",
+          comparator: "not equal to",
           alpha: 0.05,
         });
       },

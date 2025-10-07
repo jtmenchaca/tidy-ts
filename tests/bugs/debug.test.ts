@@ -232,7 +232,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const oneGroupTest = stats.compare.oneGroup.centralTendency.toValue({
     data: controlGroup,
     hypothesizedValue: 13.0,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
     parametric: "auto", // Auto-selects parametric vs non-parametric
   });
@@ -243,7 +243,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const proportionTest = stats.compare.oneGroup.proportions.toValue({
     data: successRates,
     p: 0.5,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`Proportion Test: ${proportionTest}`);
@@ -263,7 +263,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const twoGroupTest = stats.compare.twoGroups.centralTendency.toEachOther({
     x: controlGroup,
     y: treatmentGroup,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`Two Group Test: ${twoGroupTest}`);
@@ -273,7 +273,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const twoGroupProportion = stats.compare.twoGroups.proportions.toEachOther({
     data1: controlSuccess,
     data2: treatmentSuccess,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
     useChiSquare: "auto", // Auto-select appropriate test based on sample size
   });
@@ -285,7 +285,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     x: controlGroup,
     y: treatmentGroup,
     method: "pearson", // or "spearman" for non-parametric
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`Correlation Test: ${correlationTest}`);
@@ -295,7 +295,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   const distributionTest = stats.compare.twoGroups.distributions.toEachOther({
     x: controlGroup,
     y: placeboGroup,
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
   console.log(`Test: ${distributionTest.test_name}`);
@@ -363,7 +363,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
     x: controlGroup,
     y: treatmentGroup,
     parametric: useParametric ? "parametric" : "nonparametric",
-    alternative: "two-sided",
+    comparator: "not equal to",
     alpha: 0.05,
   });
 
