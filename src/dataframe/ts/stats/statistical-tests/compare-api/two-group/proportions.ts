@@ -23,65 +23,65 @@ import { to01 } from "../helpers.ts";
  *
  * @param data1 - First group's binary data (0/1 or boolean)
  * @param data2 - Second group's binary data (0/1 or boolean)
+ * @param comparator - Direction for tests ("not equal to", "less than", "greater than")
  * @param useChiSquare - Test selection: false (z-test), true (chi-squared), "auto", or "fisher"
- * @param alternative - Direction for tests ("two-sided", "less", "greater")
  * @param alpha - Significance level (default: 0.05)
  * @returns Test results with statistic, p-value, and effect size measures
  */
 export function proportionsToEachOther({
   data1,
   data2,
-  alternative,
-  alpha,
+  comparator,
   useChiSquare,
+  alpha,
 }: {
   data1: boolean[] | readonly boolean[];
   data2: boolean[] | readonly boolean[];
-  alternative?: "two-sided" | "less" | "greater";
-  alpha?: number;
+  comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: false;
+  alpha?: number;
 }): TwoSampleProportionTestResult;
 
 export function proportionsToEachOther({
   data1,
   data2,
-  alternative,
-  alpha,
+  comparator,
   useChiSquare,
+  alpha,
 }: {
   data1: boolean[] | readonly boolean[];
   data2: boolean[] | readonly boolean[];
-  alternative?: "two-sided" | "less" | "greater";
-  alpha?: number;
+  comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: true;
+  alpha?: number;
 }): ChiSquareIndependenceTestResult;
 
 export function proportionsToEachOther({
   data1,
   data2,
-  alternative,
-  alpha,
+  comparator,
   useChiSquare,
+  alpha,
 }: {
   data1: boolean[] | readonly boolean[];
   data2: boolean[] | readonly boolean[];
-  alternative?: "two-sided" | "less" | "greater";
-  alpha?: number;
+  comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: "fisher";
+  alpha?: number;
 }): FishersExactTestResult;
 
 export function proportionsToEachOther({
   data1,
   data2,
-  alternative,
-  alpha,
+  comparator,
   useChiSquare,
+  alpha,
 }: {
   data1: boolean[] | readonly boolean[];
   data2: boolean[] | readonly boolean[];
-  alternative?: "two-sided" | "less" | "greater";
-  alpha?: number;
+  comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare?: boolean | "auto" | "fisher";
+  alpha?: number;
 }):
   | TwoSampleProportionTestResult
   | ChiSquareIndependenceTestResult
@@ -90,19 +90,26 @@ export function proportionsToEachOther({
 export function proportionsToEachOther({
   data1,
   data2,
-  alternative = "two-sided",
-  alpha = 0.05,
+  comparator = "not equal to",
   useChiSquare = "auto",
+  alpha = 0.05,
 }: {
   data1: boolean[] | readonly boolean[];
   data2: boolean[] | readonly boolean[];
-  alternative?: "two-sided" | "less" | "greater";
-  alpha?: number;
+  comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare?: boolean | "auto" | "fisher";
+  alpha?: number;
 }):
   | TwoSampleProportionTestResult
   | ChiSquareIndependenceTestResult
   | FishersExactTestResult {
+  // Map comparator to alternative parameter for underlying functions
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
+
   // Convert boolean arrays to numeric (0/1) for calculations
   const numericData1 = data1.map(to01);
   const numericData2 = data2.map(to01);

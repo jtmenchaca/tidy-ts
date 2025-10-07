@@ -24,7 +24,7 @@ import { cleanNumeric, normalityOK, residuals_oneSample } from "../helpers.ts";
  *
  * @param data - Sample values to test
  * @param hypothesizedValue - The value to compare against (population mean/median)
- * @param alternative - Direction of the test ("two-sided", "less", "greater")
+ * @param comparator - Direction of the test ("not equal to", "less than", "greater than")
  * @param alpha - Significance level (default: 0.05)
  * @param parametric - Test type selection (true, false, or "auto")
  * @returns Test results with statistic, p-value, and confidence intervals
@@ -32,13 +32,13 @@ import { cleanNumeric, normalityOK, residuals_oneSample } from "../helpers.ts";
 export function centralTendencyToValue({
   data,
   hypothesizedValue,
-  alternative,
+  comparator,
   alpha,
   parametric,
 }: {
   data: readonly number[];
   hypothesizedValue: number;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric: "parametric";
 }): OneSampleTTestResult;
@@ -46,13 +46,13 @@ export function centralTendencyToValue({
 export function centralTendencyToValue({
   data,
   hypothesizedValue,
-  alternative,
+  comparator,
   alpha,
   parametric,
 }: {
   data: readonly number[];
   hypothesizedValue: number;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric: "nonparametric";
 }): WilcoxonSignedRankTestResult;
@@ -60,13 +60,13 @@ export function centralTendencyToValue({
 export function centralTendencyToValue({
   data,
   hypothesizedValue,
-  alternative,
+  comparator,
   alpha,
   parametric,
 }: {
   data: readonly number[];
   hypothesizedValue: number;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric?: "parametric" | "nonparametric" | "auto";
 }): OneSampleTTestResult | WilcoxonSignedRankTestResult;
@@ -74,7 +74,7 @@ export function centralTendencyToValue({
 export function centralTendencyToValue({
   data,
   hypothesizedValue,
-  alternative = "two-sided",
+  comparator = "not equal to",
   alpha = 0.05,
   parametric = "auto",
 }: {
@@ -84,12 +84,19 @@ export function centralTendencyToValue({
     | NumbersWithNullable
     | NumbersWithNullableIterable;
   hypothesizedValue: number;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric?: "parametric" | "nonparametric" | "auto";
 }): OneSampleTTestResult | WilcoxonSignedRankTestResult {
   // Convert data to a regular array for processing and filter out null/undefined values
   const cleanData = cleanNumeric(data);
+
+  // Map comparator to alternative parameter for underlying functions
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
 
   // ============================================================================
   // DECISION TREE: One Group Central Tendency vs Value (Evidence-Based Approach)

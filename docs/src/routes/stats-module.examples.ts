@@ -94,9 +94,10 @@ const chiSquareQuantile = s.dist.chiSquare.quantile({ probability: 0.95, degrees
 const heights = [170, 165, 180, 175, 172, 168];
 const testResult = s.compare.oneGroup.centralTendency.toValue({
   data: heights,
+  comparator: "not equal to", // "not equal to" | "less than" | "greater than"
   hypothesizedValue: 170,
   parametric: "parametric" // Use "auto" for help deciding if parametric or non-parametric is best
-}); 
+});
 console.log(testResult);
 
 // {

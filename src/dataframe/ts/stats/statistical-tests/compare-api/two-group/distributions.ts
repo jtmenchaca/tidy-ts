@@ -20,16 +20,16 @@ import { cleanNumeric, hasManyTies, smallSample2 } from "../helpers.ts";
  *
  * @param x - First group's values
  * @param y - Second group's values
+ * @param comparator - Direction of the test ("not equal to", "less than", "greater than")
  * @param method - Test method: "ks" (distribution equality), "mann-whitney" (stochastic dominance), or "auto" (defaults to KS)
- * @param alternative - Direction of the test ("two-sided", "less", "greater")
  * @param alpha - Significance level (default: 0.05)
  * @returns Test result with appropriate statistic and properties
  */
 export function distributionsToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x:
@@ -42,16 +42,16 @@ export function distributionsToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "auto" | "ks" | "mann-whitney";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): MannWhitneyTestResult | KolmogorovSmirnovTestResult;
 
 export function distributionsToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x:
@@ -64,16 +64,16 @@ export function distributionsToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method: "ks";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): KolmogorovSmirnovTestResult;
 
 export function distributionsToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x:
@@ -86,16 +86,16 @@ export function distributionsToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method: "mann-whitney";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): MannWhitneyTestResult;
 
 export function distributionsToEachOther({
   x,
   y,
+  comparator = "not equal to",
   method = "auto",
-  alternative = "two-sided",
   alpha = 0.05,
 }: {
   x:
@@ -108,10 +108,17 @@ export function distributionsToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "auto" | "ks" | "mann-whitney";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): MannWhitneyTestResult | KolmogorovSmirnovTestResult {
+  // Map comparator to alternative parameter for underlying functions
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
+
   // Convert data to regular arrays and filter out null/undefined/infinite values
   const cleanX = cleanNumeric(x);
   const cleanY = cleanNumeric(y);

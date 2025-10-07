@@ -68,15 +68,15 @@ Deno.test("oneGroup.distribution.toNormal - Shapiro-Wilk test", () => {
 });
 
 // Additional one-group tests
-Deno.test("oneGroup.centralTendency.toValue - with alternative hypothesis", () => {
+Deno.test("oneGroup.centralTendency.toValue - with comparator hypothesis", () => {
   const result = compare.oneGroup.centralTendency.toValue({
     data: normalData,
     hypothesizedValue: 5,
     parametric: "parametric",
-    alternative: "greater",
+    comparator: "greater than",
   });
 
-  console.log("One-tailed t-test (greater) result:", result);
+  console.log("One-tailed t-test (greater than) result:", result);
 });
 
 Deno.test("oneGroup.centralTendency.toValue - with custom alpha", () => {
@@ -258,17 +258,17 @@ Deno.test("twoGroups.centralTendency.toEachOther - auto selection", () => {
   console.log("Auto selection two-group test:", result);
 });
 
-Deno.test("twoGroups.centralTendency.toEachOther - with alternative hypothesis", () => {
+Deno.test("twoGroups.centralTendency.toEachOther - with comparator hypothesis", () => {
   const x = [1, 2, 3, 4, 5];
   const y = [6, 7, 8, 9, 10];
   const result = compare.twoGroups.centralTendency.toEachOther({
     x,
     y,
     parametric: "parametric",
-    alternative: "less",
+    comparator: "less than",
   });
 
-  console.log("One-tailed t-test (less) result:", result);
+  console.log("One-tailed t-test (less than) result:", result);
 });
 
 Deno.test("twoGroups.centralTendency.toEachOther - different sample sizes", () => {

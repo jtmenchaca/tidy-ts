@@ -30,8 +30,8 @@ import { cleanNumeric, hasManyTies, isNonNormal } from "../helpers.ts";
  *
  * @param x - First variable's values
  * @param y - Second variable's values
+ * @param comparator - Test direction ("not equal to", "less than", "greater than")
  * @param method - Correlation method ("pearson", "spearman", "kendall", or "auto")
- * @param alternative - Test direction ("two-sided", "less", "greater")
  * @param alpha - Significance level (default: 0.05)
  * @returns Correlation coefficient, test statistic, p-value, and confidence intervals
  */
@@ -39,8 +39,8 @@ import { cleanNumeric, hasManyTies, isNonNormal } from "../helpers.ts";
 export function associationToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x: readonly boolean[];
@@ -49,16 +49,16 @@ export function associationToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "auto";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): PearsonCorrelationTestResult;
 
 export function associationToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x:
@@ -67,8 +67,8 @@ export function associationToEachOther({
     | NumbersWithNullable
     | NumbersWithNullableIterable;
   y: readonly boolean[];
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "auto";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): PearsonCorrelationTestResult;
 
@@ -76,8 +76,8 @@ export function associationToEachOther({
 export function associationToEachOther({
   x,
   y,
+  comparator,
   method,
-  alternative,
   alpha,
 }: {
   x:
@@ -90,8 +90,8 @@ export function associationToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "spearman" | "kendall" | "auto";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }):
   | PearsonCorrelationTestResult
@@ -101,8 +101,8 @@ export function associationToEachOther({
 export function associationToEachOther({
   x,
   y,
+  comparator = "not equal to",
   method = "auto",
-  alternative = "two-sided",
   alpha = 0.05,
 }: {
   x:
@@ -117,13 +117,20 @@ export function associationToEachOther({
     | NumberIterable
     | NumbersWithNullable
     | NumbersWithNullableIterable;
+  comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "spearman" | "kendall" | "auto";
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }):
   | PearsonCorrelationTestResult
   | SpearmanCorrelationTestResult
   | KendallCorrelationTestResult {
+  // Map comparator to alternative parameter for underlying functions
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
+
   // Type-safe data handling
   const xIsBinary = Array.isArray(x) && x.length > 0 &&
     typeof x[0] === "boolean";

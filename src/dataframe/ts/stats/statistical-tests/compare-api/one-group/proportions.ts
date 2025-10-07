@@ -14,20 +14,20 @@ import { to01 } from "../helpers.ts";
  * - Sample size is large enough (np ≥ 5 and n(1-p) ≥ 5)
  *
  * @param data - Binary data (0/1 or boolean values)
+ * @param comparator - Direction of the test ("not equal to", "less than", "greater than")
  * @param p - Hypothesized population proportion (default: 0.5)
- * @param alternative - Direction of the test ("two-sided", "less", "greater")
  * @param alpha - Significance level (default: 0.05)
  * @returns Test results with z-statistic, p-value, and confidence intervals
  */
 export function proportionsToValue({
   data,
+  comparator = "not equal to",
   p = 0.5,
-  alternative = "two-sided",
   alpha = 0.05,
 }: {
   data: boolean[] | readonly boolean[];
+  comparator?: "not equal to" | "less than" | "greater than";
   p?: number;
-  alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): OneSampleProportionTestResult {
   // ============================================================================
@@ -42,6 +42,13 @@ export function proportionsToValue({
 
   // Convert boolean data to 0/1 format for the proportion test
   const binaryData = data.map((x) => Boolean(to01(x)));
+
+  // Map comparator to alternative parameter for underlying function
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
 
   return proportionTestOneSample({
     data: binaryData,

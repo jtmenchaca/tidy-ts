@@ -36,7 +36,7 @@ import {
  * @param y - Second group's values
  * @param parametric - Use t-test (true), Mann-Whitney U test (false), or "auto" (default: "auto")
  * @param assumeEqualVariances - Assume equal variances for t-test (optional: if not provided, uses Brown-Forsythe Levene test to auto-detect)
- * @param alternative - Direction of the test ("two-sided", "less", "greater"), where "greater" means x > y
+ * @param comparator - Direction of the test ("not equal to", "less than", "greater than"), where "greater than" means x > y
  * @param alpha - Significance level (default: 0.05)
  * @returns Test results with statistic, p-value, and effect size
  */
@@ -45,14 +45,14 @@ export function centralTendencyToEachOther({
   y,
   parametric,
   assumeEqualVariances,
-  alternative,
+  comparator,
   alpha,
 }: {
   x: readonly number[];
   y: readonly number[];
   parametric: "parametric";
   assumeEqualVariances?: boolean;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
 }): TwoSampleTTestResult;
 
@@ -61,14 +61,14 @@ export function centralTendencyToEachOther({
   y,
   parametric,
   assumeEqualVariances,
-  alternative,
+  comparator,
   alpha,
 }: {
   x: readonly number[];
   y: readonly number[];
   parametric: "nonparametric";
   assumeEqualVariances?: boolean;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
 }): MannWhitneyTestResult;
 
@@ -77,14 +77,14 @@ export function centralTendencyToEachOther({
   y,
   parametric,
   assumeEqualVariances,
-  alternative,
+  comparator,
   alpha,
 }: {
   x: readonly number[];
   y: readonly number[];
   parametric?: "parametric" | "nonparametric" | "auto";
   assumeEqualVariances?: boolean;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
 }): TwoSampleTTestResult | MannWhitneyTestResult;
 
@@ -93,7 +93,7 @@ export function centralTendencyToEachOther({
   y,
   parametric = "auto",
   assumeEqualVariances,
-  alternative = "two-sided",
+  comparator = "not equal to",
   alpha = 0.05,
 }: {
   x:
@@ -108,12 +108,19 @@ export function centralTendencyToEachOther({
     | NumbersWithNullableIterable;
   parametric?: "parametric" | "nonparametric" | "auto";
   assumeEqualVariances?: boolean;
-  alternative?: "two-sided" | "less" | "greater";
+  comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
 }): TwoSampleTTestResult | MannWhitneyTestResult {
   // Convert data to regular arrays and filter out null/undefined/infinite values
   const cleanX = cleanNumeric(x);
   const cleanY = cleanNumeric(y);
+
+  // Map comparator to alternative parameter for underlying functions
+  const alternative = comparator === "not equal to"
+    ? "two-sided"
+    : comparator === "less than"
+    ? "less"
+    : "greater";
 
   // ============================================================================
   // DECISION TREE: Two Groups Central Tendency (Evidence-Based Approach)
