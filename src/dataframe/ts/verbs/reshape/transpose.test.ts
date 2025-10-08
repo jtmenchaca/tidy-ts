@@ -9,6 +9,20 @@ Deno.test("transpose - basic functionality", () => {
 
   const transposed = original.transpose({ numberOfRows: 2 });
 
+  const transposed1 = original.transpose({ numberOfRows: 2 });
+
+  transposed.print("transposed with numberOfRows");
+  transposed1.print("transposed without numberOfRows");
+
+  const testChange = transposed1.mutate({
+    row_15: (row: { row_0: number; row_1: number }) => row.row_0,
+    row_16: (row: { row_0: number; row_1: number }) => row.row_1,
+  });
+  testChange.print("testChange");
+
+  const testChangeTransposed = testChange.transpose({ numberOfRows: 2 });
+  testChangeTransposed.print("testChangeTransposed");
+
   expect(transposed.nrows()).toBe(3); // 3 original columns become 3 rows
   const result = transposed.toArray();
 

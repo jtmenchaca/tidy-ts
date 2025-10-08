@@ -72,8 +72,7 @@ export function slice<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         const n = groupIndices.length;
         const s = Math.max(0, start < 0 ? n + start : start);
@@ -155,8 +154,7 @@ export function slice_indices<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Apply slice indices to this group
         for (const idx of indices) {
@@ -288,8 +286,7 @@ export function slice_head<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Take first n rows from this group
         const takeCount = Math.min(n, groupIndices.length);
@@ -375,8 +372,7 @@ export function slice_tail<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Take last n rows from this group
         for (
@@ -467,8 +463,7 @@ export function slice_min<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Build rows from indices and sort
         const groupData = groupIndices.map((i: number) => {
@@ -634,8 +629,7 @@ export function slice_max<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
@@ -819,8 +813,7 @@ export function slice_sample<Row extends object>(
           }
           rowIdx = next[rowIdx];
         }
-        // Adjacency list gives us rows in reverse order, so reverse to get original order
-        groupIndices.reverse();
+        // Adjacency list now maintains original order (no reversal needed)
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {

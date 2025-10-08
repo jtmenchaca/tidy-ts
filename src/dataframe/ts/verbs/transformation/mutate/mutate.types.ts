@@ -173,7 +173,7 @@ type WithContextForFunctions<
  * ```typescript
  * const grouped = df.groupBy("category").mutate({
  *   groupSize: (_r, _idx, groupDf) => groupDf.nrows(),
- *   groupRank: (_r, idx) => idx + 1
+ *   indexWithinGroup: (_r, idx) => idx + 1
  * });
  * ```
  */

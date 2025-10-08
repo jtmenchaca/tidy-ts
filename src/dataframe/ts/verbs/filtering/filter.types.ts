@@ -66,6 +66,31 @@ export type FilterRowsMethod<Row extends object> = {
   ): PromisedDataFrame<RowAfterFilter<Row>>;
 
   // ── Grouped DataFrame with async detection ──────────────────────────────
+  /**
+   * Filter rows based on one or more predicates.
+   *
+   * @example
+   * // Sync filtering
+   * df.filter(row => row.age > 18)
+   *
+   * @example
+   * // Multiple predicates (AND logic)
+   * df.filter(
+   *   row => row.age > 18,
+   *   row => row.status === "active"
+   * )
+   *
+   * @example
+   * // Async filtering with concurrency
+   * df.filter(
+   *   async (row) => await validateUser(row.id),
+   *   { concurrency: 10 }
+   * )
+   *
+   * @example
+   * // Boolean array predicate
+   * df.filter([true, false, true, false])
+   */
   <GroupName extends keyof Row, Preds extends readonly AsyncRowFilter<Row>[]>(
     this: GroupedDataFrame<Row, GroupName>,
     ...filterPredicates: Preds
@@ -74,6 +99,28 @@ export type FilterRowsMethod<Row extends object> = {
     : GroupedDataFrame<RowAfterFilter<Row>, GroupName>;
 
   // ── Regular DataFrame with async detection ──────────────────────────────
+  /**
+   * Filter rows based on one or more predicates.
+   *
+   * @example
+   * // Sync filtering
+   * df.filter(row => row.age > 18)
+   *
+   * // Multiple predicates (AND logic)
+   * df.filter(
+   *   row => row.age > 18,
+   *   row => row.status === "active"
+   * )
+   *
+   * // Async filtering with concurrency
+   * df.filter(
+   *   async (row) => await validateUser(row.id),
+   *   { concurrency: 10 }
+   * )
+   *
+   * // Boolean array predicate
+   * df.filter([true, false, true, false])
+   */
   <Preds extends readonly AsyncRowFilter<Row>[]>(
     ...filterPredicates: Preds
   ): AnyPredicateIsAsync<Preds> extends true

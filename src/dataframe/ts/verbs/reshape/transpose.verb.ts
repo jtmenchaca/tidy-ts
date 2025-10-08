@@ -14,7 +14,7 @@ import { ROW_LABEL, ROW_TYPES } from "./transpose.types.ts";
  * This makes transpose truly reversible with zero column name conflicts.
  */
 export function transpose<const ExpectedRows extends number>(
-  { numberOfRows: _numberOfRows }: { numberOfRows: ExpectedRows },
+  { numberOfRows: _numberOfRows }: { numberOfRows?: ExpectedRows },
 ) {
   return <Row extends Record<string, unknown>>(
     df: DataFrame<Row>,

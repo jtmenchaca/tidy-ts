@@ -205,3 +205,29 @@ Deno.test("mutate_group - scalar output validation", () => {
   expect(result[1]).toHaveProperty("species_label", "Wookiee member");
   expect(result[1]).toHaveProperty("mass_doubled", 224);
 });
+
+Deno.test("group mutate index", () => {
+  // Test data with explicit typing
+  const testData = createDataFrame([
+    { name: "Luke", mass: 77, species: "Human" },
+    { name: "R2-D2", mass: 42, species: "Droid" },
+    { name: "Leia", mass: 49, species: "Human" },
+    { name: "C-3PO", mass: 75, species: "Droid" },
+  ]);
+
+  const grouped = testData
+    .groupBy("species")
+    .mutate({
+      groupSize: (_r, _idx, groupDf) => groupDf.nrows(),
+      indexWithinGroup: (_r, idx) => idx + 1,
+    });
+
+  expect(grouped[0]).toHaveProperty("groupSize", 2);
+  expect(grouped[0]).toHaveProperty("indexWithinGroup", 1);
+  expect(grouped[1]).toHaveProperty("groupSize", 2);
+  expect(grouped[1]).toHaveProperty("indexWithinGroup", 1);
+  expect(grouped[2]).toHaveProperty("groupSize", 2);
+  expect(grouped[2]).toHaveProperty("indexWithinGroup", 2);
+  expect(grouped[3]).toHaveProperty("groupSize", 2);
+  expect(grouped[3]).toHaveProperty("indexWithinGroup", 2);
+});

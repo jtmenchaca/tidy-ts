@@ -16,7 +16,8 @@ const testData = createDataFrame([
 ]);
 
 Deno.test("filter with single function predicate", () => {
-  const result = testData.filter((row) => row.mass > 80);
+  const result = testData
+    .filter((row) => row.mass > 80);
   console.log("Single function predicate result:", result);
   expect(result.toArray()).toEqual([
     {

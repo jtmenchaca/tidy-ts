@@ -59,7 +59,31 @@ const WASM_MIN_ROWS_NUMERIC = Infinity; // below this, JS tends to be faster
 /* Public API                                                                  */
 /* -------------------------------------------------------------------------- */
 
-// Async overload - when function returns Promise
+/**
+ * Filter rows based on one or more predicates.
+ *
+ * @example
+ * // Sync filtering
+ * df.filter(row => row.age > 18)
+ *
+ * @example
+ * // Multiple predicates (AND logic)
+ * df.filter(
+ *   row => row.age > 18,
+ *   row => row.status === "active"
+ * )
+ *
+ * @example
+ * // Async filtering with concurrency
+ * df.filter(
+ *   async (row) => await validateUser(row.id),
+ *   { concurrency: 10 }
+ * )
+ *
+ * @example
+ * // Boolean array predicate
+ * df.filter([true, false, true, false])
+ */
 export function filter<Row extends object>(
   predicate: (
     row: Row,
@@ -69,7 +93,31 @@ export function filter<Row extends object>(
   options?: ConcurrencyOptions,
 ): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
 
-// Async overload with array
+/**
+ * Filter rows based on one or more predicates.
+ *
+ * @example
+ * // Sync filtering
+ * df.filter(row => row.age > 18)
+ *
+ * @example
+ * // Multiple predicates (AND logic)
+ * df.filter(
+ *   row => row.age > 18,
+ *   row => row.status === "active"
+ * )
+ *
+ * @example
+ * // Async filtering with concurrency
+ * df.filter(
+ *   async (row) => await validateUser(row.id),
+ *   { concurrency: 10 }
+ * )
+ *
+ * @example
+ * // Boolean array predicate
+ * df.filter([true, false, true, false])
+ */
 export function filter<Row extends object>(
   predicates: Array<
     | ((
@@ -87,7 +135,31 @@ export function filter<Row extends object>(
   options?: ConcurrencyOptions,
 ): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
 
-// Sync overload with options - for explicit concurrency with sync predicates
+/**
+ * Filter rows based on one or more predicates.
+ *
+ * @example
+ * // Sync filtering
+ * df.filter(row => row.age > 18)
+ *
+ * @example
+ * // Multiple predicates (AND logic)
+ * df.filter(
+ *   row => row.age > 18,
+ *   row => row.status === "active"
+ * )
+ *
+ * @example
+ * // Async filtering with concurrency
+ * df.filter(
+ *   async (row) => await validateUser(row.id),
+ *   { concurrency: 10 }
+ * )
+ *
+ * @example
+ * // Boolean array predicate
+ * df.filter([true, false, true, false])
+ */
 export function filter<Row extends object>(
   predicate: (
     row: Row,
@@ -97,7 +169,31 @@ export function filter<Row extends object>(
   options: ConcurrencyOptions,
 ): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
 
-// Sync overload - when all functions are sync
+/**
+ * Filter rows based on one or more predicates.
+ *
+ * @example
+ * // Sync filtering
+ * df.filter(row => row.age > 18)
+ *
+ * @example
+ * // Multiple predicates (AND logic)
+ * df.filter(
+ *   row => row.age > 18,
+ *   row => row.status === "active"
+ * )
+ *
+ * @example
+ * // Async filtering with concurrency
+ * df.filter(
+ *   async (row) => await validateUser(row.id),
+ *   { concurrency: 10 }
+ * )
+ *
+ * @example
+ * // Boolean array predicate
+ * df.filter([true, false, true, false])
+ */
 export function filter<Row extends object>(
   ...predicates: Array<
     | ((

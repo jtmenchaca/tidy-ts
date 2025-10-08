@@ -161,13 +161,13 @@ function summariseSync<T extends object>(
           const groupSize = count[g];
           const groupIndices = new Array(groupSize);
 
-          // Fill array in reverse order, then write forward to avoid separate reversal
+          // Fill array in forward order (adjacency list now maintains original order)
           let rowIdx = head[g];
-          let writePos = groupSize - 1;
+          let writePos = 0;
           while (rowIdx !== -1) {
             const actualIdx = usesRawIndices ? rowIdx : baseIndex![rowIdx];
             groupIndices[writePos] = actualIdx;
-            writePos--;
+            writePos++;
             rowIdx = next[rowIdx];
           }
 

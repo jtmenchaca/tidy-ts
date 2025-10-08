@@ -70,6 +70,7 @@ export function groupBy<
     const next = new Int32Array(n);
     next.fill(-1);
     const head: number[] = []; // head row (view index) per group
+    const tail: number[] = []; // tail row (view index) per group - for maintaining order
     const count: number[] = []; // count per group
     const keyRow: number[] = []; // representative row (view index) per group
 
@@ -95,12 +96,15 @@ export function groupBy<
         if (g === undefined) {
           g = gid++;
           m.set(k, g);
-          head[g] = -1;
+          head[g] = i;
+          tail[g] = i;
           count[g] = 0;
           keyRow[g] = i;
+        } else {
+          // Append to tail to maintain order
+          next[tail[g]] = i;
+          tail[g] = i;
         }
-        next[i] = head[g];
-        head[g] = i;
         count[g] = (count[g] + 1) | 0;
       }
     } else {
@@ -109,7 +113,7 @@ export function groupBy<
       type Node = Map<unknown, any>;
       const root: Node = new Map();
 
-      const getOrCreateGid = (i: number): number => {
+      const getOrCreateGid = (i: number): { g: number; isNew: boolean } => {
         let node: Node = root;
         for (let c = 0; c < columns.length - 1; c++) {
           const rawVal = getVal(i, String(columns[c]));
@@ -127,17 +131,22 @@ export function groupBy<
         if (g === undefined) {
           g = gid++;
           node.set(last, g);
-          head[g] = -1;
+          head[g] = i;
+          tail[g] = i;
           count[g] = 0;
           keyRow[g] = i;
+          return { g, isNew: true };
         }
-        return g;
+        return { g, isNew: false };
       };
 
       for (let i = 0; i < n; i++) {
-        const g = getOrCreateGid(i);
-        next[i] = head[g];
-        head[g] = i;
+        const { g, isNew } = getOrCreateGid(i);
+        if (!isNew) {
+          // Append to tail to maintain order
+          next[tail[g]] = i;
+          tail[g] = i;
+        }
         count[g] = (count[g] + 1) | 0;
       }
     }

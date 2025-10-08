@@ -22,7 +22,6 @@ Deno.test("filter with async function - simplest case", async () => {
   console.log("Original DataFrame:");
   df.print();
 
-  // EXPECTED BEHAVIOR: Auto-detection should make this return Promise<DataFrame>
   const result = await df.filter(async (row) => await isValidAsync(row.value));
 
   console.log("\nResult with async filter:");
