@@ -132,6 +132,7 @@ export function makeDataFrameProbe<Row extends object>(
     prepend: () => makeDataFrameProbe(df),
     shuffle: () => makeDataFrameProbe(df),
     bindRows: () => makeDataFrameProbe(df),
+    bind: () => makeDataFrameProbe(df),
   } as unknown as DataFrame<Row>;
 }
 

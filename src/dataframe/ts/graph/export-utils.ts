@@ -63,14 +63,38 @@ export function buildStandaloneVlSpec<T extends Record<string, unknown>>(
     ...specNoData,
     width,
     height,
+    autosize: { type: "fit", resize: true },
     data: { values: normalizeRows(data) },
     background: opts?.background ?? specNoData.background ?? "white",
   };
 }
 
 /** Render SVG fully in-process (no DOM, no browser). */
-export async function vlToSVG(vlSpec: any): Promise<string> {
+export async function vlToSVG(
+  vlSpec: any,
+  opts?: { width?: number; height?: number },
+): Promise<string> {
   const vg = vegaLite.compile(vlSpec).spec;
+
+  // Override Vega dimensions if specified
+  // Vega adds padding (default 5px on each side = 10px total), so subtract it
+  if (opts?.width !== undefined) {
+    const padding = vg.padding || 5;
+    const horizontalPadding =
+      typeof padding === "object" && padding !== null && !("signal" in padding)
+        ? (padding.left || 0) + (padding.right || 0)
+        : (padding as number) * 2;
+    vg.width = opts.width - horizontalPadding;
+  }
+  if (opts?.height !== undefined) {
+    const padding = vg.padding || 5;
+    const verticalPadding =
+      typeof padding === "object" && padding !== null && !("signal" in padding)
+        ? (padding.top || 0) + (padding.bottom || 0)
+        : (padding as number) * 2;
+    vg.height = opts.height - verticalPadding;
+  }
+
   const view = new vega.View(vega.parse(vg), { renderer: "none" });
   return await view.toSVG();
 }
@@ -78,7 +102,9 @@ export async function vlToSVG(vlSpec: any): Promise<string> {
 /** Rasterize SVG → PNG using resvg-js WASM. */
 export async function svgToPNG(
   svg: string,
-  scale: number,
+  width: number,
+  _height: number,
+  scale: number = 2,
 ): Promise<Uint8Array> {
   await ensureResvg();
 
@@ -99,13 +125,13 @@ export async function svgToPNG(
     }
   } catch (e) {
     console.warn(
-      "Failed to load Roboto fonts, falling back to system fonts:",
+      "Failed to load Inter fonts, falling back to system fonts:",
       e,
     );
   }
 
   const resvg = new Resvg(svg, {
-    fitTo: { mode: "zoom", value: scale },
+    fitTo: { mode: "width", value: width * scale },
     font: fontBuffers.length > 0
       ? {
         fontBuffers: fontBuffers,
@@ -122,10 +148,12 @@ export async function svgToPNG(
     textRendering: 1, // optimizeLegibility for better text rendering
     shapeRendering: 2, // geometricPrecision for better shapes
     imageRendering: 0, // optimizeQuality for better image quality
-    dpi: 144, // Higher DPI for crisp text rendering
+    dpi: 300, // Higher DPI for crisp text rendering
   });
   const pngData = resvg.render();
-  return pngData.asPng();
+  const pngBuffer = pngData.asPng();
+
+  return pngBuffer;
 }
 
 // ---- Public helpers -------------------------------------------------------
@@ -166,7 +194,7 @@ export async function saveGraphAsSVG<T extends Record<string, unknown>>(
   }
 
   const vl = buildStandaloneVlSpec(df, spec, { width, height, background });
-  const svg = await vlToSVG(vl);
+  const svg = await vlToSVG(vl, { width, height });
   fs.writeFileSync(filename, svg, "utf8");
 }
 
@@ -178,7 +206,7 @@ export async function saveGraphAsPNG<T extends Record<string, unknown>>(
     width,
     height,
     background,
-    scale = 3, // PNG resolution multiplier (1-4, default: 3)
+    scale = 1, // PNG resolution multiplier (1-4, default: 1)
   }: {
     filename: string;
     width?: number;
@@ -213,11 +241,12 @@ export async function saveGraphAsPNG<T extends Record<string, unknown>>(
   }
 
   const vl = buildStandaloneVlSpec(df, spec, { width, height, background });
-  const svg = await vlToSVG(vl);
+  const pngWidth = width ?? 700;
+  const pngHeight = height ?? 400;
+  const svg = await vlToSVG(vl, { width: pngWidth, height: pngHeight });
 
-  // Clamp scale to valid range
   const clampedScale = Math.max(1, Math.min(4, scale));
-  const png = await svgToPNG(svg, clampedScale);
+  const png = await svgToPNG(svg, pngWidth, pngHeight, clampedScale);
 
   fs.writeFileSync(filename, png);
 }

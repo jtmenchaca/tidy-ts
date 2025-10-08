@@ -110,6 +110,10 @@ export type LegendConfig = Prettify<{
     | "top-right"
     | "bottom-left"
     | "bottom-right";
+  /** Font size for legend labels in pixels (default: 12) */
+  fontSize?: number;
+  /** Font size for legend title in pixels (default: 13) */
+  titleFontSize?: number;
 }>;
 
 /**
@@ -204,6 +208,8 @@ export type AreaChartConfig = Prettify<{
   style?: "monotone" | "linear" | "step" | "basis" | "cardinal";
   /** Thickness of the area boundary line in pixels (default: 1) */
   strokeWidth?: number;
+  /** Opacity of the area fill from 0-1 (default: 0.7) */
+  opacity?: number;
 }>;
 
 /**
@@ -585,15 +591,45 @@ function buildVegaSpec<T extends Record<string, unknown>>(
   const cfg = (spec.config ?? {}) as InternalConfig;
   const { xField, yField, colorField, sizeField, shapeField } = fields;
 
+  // Filter rows based on domain if specified
+  const xDomain = cfg.xAxis?.domain;
+  const yDomain = cfg.yAxis?.domain;
+
+  let filteredRows = rows;
+  if (xDomain) {
+    filteredRows = filteredRows.filter((row) => {
+      const xVal = row[xField];
+      if (typeof xVal === "number") {
+        const [xMin, xMax] = xDomain as [number, number];
+        return xVal >= xMin && xVal <= xMax;
+      }
+      return true;
+    });
+  }
+
+  if (yDomain) {
+    filteredRows = filteredRows.filter((row) => {
+      const yVal = row[yField];
+      if (typeof yVal === "number") {
+        const [yMin, yMax] = yDomain as [number, number];
+        return yVal >= yMin && yVal <= yMax;
+      }
+      return true;
+    });
+  }
+
   // infer types for x/y
-  const xType = rows.length && rows[0][xField] instanceof Date
+  const xType = filteredRows.length && filteredRows[0][xField] instanceof Date
     ? "temporal"
-    : typeof rows[0]?.[xField] === "number"
+    : typeof filteredRows[0]?.[xField] === "number"
     ? "quantitative"
     : "ordinal";
   const yType = "quantitative";
 
   // mark by chart type
+  // Add clip: true when domain is specified to enforce hard boundaries
+  const shouldClip = !!(xDomain || yDomain);
+
   let mark: any;
   if (spec.type === "scatter") {
     mark = {
@@ -601,6 +637,7 @@ function buildVegaSpec<T extends Record<string, unknown>>(
       filled: true,
       size: cfg.scatter?.pointSize ?? 60,
       opacity: cfg.scatter?.pointOpacity ?? 0.8,
+      clip: shouldClip,
     };
   } else if (spec.type === "line") {
     mark = {
@@ -608,9 +645,14 @@ function buildVegaSpec<T extends Record<string, unknown>>(
       point: cfg.line?.dots ? { filled: true, size: 50 } : false,
       strokeWidth: cfg.line?.strokeWidth ?? 2,
       interpolate: mapLineInterpolation(cfg.line?.style),
+      clip: shouldClip,
     };
   } else if (spec.type === "bar") {
-    mark = { type: "bar", cornerRadiusEnd: cfg.bar?.radius ?? 4 };
+    mark = {
+      type: "bar",
+      cornerRadiusEnd: cfg.bar?.radius ?? 4,
+      clip: shouldClip,
+    };
   } else {
     mark = {
       type: "area",
@@ -618,7 +660,8 @@ function buildVegaSpec<T extends Record<string, unknown>>(
         ? { strokeWidth: cfg.area.strokeWidth }
         : true,
       interpolate: mapLineInterpolation(cfg.area?.style),
-      opacity: 0.7,
+      opacity: cfg.area?.opacity ?? 0.7,
+      clip: shouldClip,
     };
   }
 
@@ -627,8 +670,6 @@ function buildVegaSpec<T extends Record<string, unknown>>(
   const yLabel = cfg.yAxis?.label ?? yField;
   const hideXAxis = cfg.xAxis?.hide ?? false;
   const hideYAxis = cfg.yAxis?.hide ?? false;
-  const xDomain = cfg.xAxis?.domain;
-  const yDomain = cfg.yAxis?.domain;
 
   // encoding
   const encoding: any = {
@@ -640,27 +681,35 @@ function buildVegaSpec<T extends Record<string, unknown>>(
         labelAngle: xType !== "quantitative" ? -45 : 0,
         format: xType === "temporal" ? "%b %Y" : undefined,
       },
-      scale: xDomain ? { domain: xDomain } : {},
+      scale: xDomain ? { domain: xDomain, nice: false, zero: false } : {},
     },
     y: {
       field: yField,
       type: yType,
       title: yLabel,
       axis: hideYAxis ? null : {},
-      scale: yDomain ? { domain: yDomain } : {},
+      scale: yDomain ? { domain: yDomain, nice: false, zero: false } : {},
     },
   };
 
   if (colorField) {
-    const colorType = typeof rows[0]?.[colorField] === "number"
+    const colorType = typeof filteredRows[0]?.[colorField] === "number"
       ? "quantitative"
       : "nominal";
+
+    const legendConfig: any = cfg.legend?.show === false ? null : {
+      orient: nearestLegendOrient(cfg.legend?.position),
+      ...(cfg.legend?.fontSize ? { labelFontSize: cfg.legend.fontSize } : {}),
+      ...(cfg.legend?.titleFontSize
+        ? { titleFontSize: cfg.legend.titleFontSize }
+        : {}),
+      columnPadding: 0,
+    };
+
     encoding.color = {
       field: colorField,
       type: colorType,
-      legend: cfg.legend?.show === false
-        ? null
-        : { orient: nearestLegendOrient(cfg.legend?.position) },
+      legend: legendConfig,
       scale: (cfg.color?.colors || cfg.color?.scheme)
         ? {
           range: cfg.color?.colors ??
@@ -687,22 +736,30 @@ function buildVegaSpec<T extends Record<string, unknown>>(
   // stacking for bar/area
   if (
     (spec.type === "bar" || spec.type === "area") &&
-    ((spec.type === "bar" && cfg.bar?.stacked) ||
-      (spec.type === "area" && cfg.area?.stacked)) &&
     colorField
   ) {
-    encoding.y.stack = "zero";
+    if (
+      (spec.type === "bar" && cfg.bar?.stacked) ||
+      (spec.type === "area" && cfg.area?.stacked)
+    ) {
+      encoding.y.stack = "zero";
+    } else if (
+      (spec.type === "bar" && cfg.bar?.stacked === false) ||
+      (spec.type === "area" && cfg.area?.stacked === false)
+    ) {
+      encoding.y.stack = null;
+    }
   }
 
   // tooltip
   if (cfg.tooltip?.show !== false) {
     const t = spec.tooltip;
-    const fields = t?.fields ?? Object.keys(rows[0] ?? {});
+    const fields = t?.fields ?? Object.keys(filteredRows[0] ?? {});
     encoding.tooltip = fields.map((f) => ({
       field: f,
-      type: typeof rows[0]?.[f] === "number"
+      type: typeof filteredRows[0]?.[f] === "number"
         ? "quantitative"
-        : rows[0]?.[f] instanceof Date
+        : filteredRows[0]?.[f] instanceof Date
         ? "temporal"
         : "nominal",
     }));
@@ -711,7 +768,7 @@ function buildVegaSpec<T extends Record<string, unknown>>(
   // base spec
   const vl: any = {
     $schema: "https://vega.github.io/schema/vega-lite/v5.json",
-    data: { values: rows },
+    data: { values: filteredRows },
     mark,
     encoding,
     width: cfg.layout?.width ?? "container",
@@ -727,6 +784,20 @@ function buildVegaSpec<T extends Record<string, unknown>>(
           range: {
             category: cfg.color?.colors ??
               COLOR_SCHEMES[cfg.color?.scheme ?? "default"],
+          },
+        }
+        : {}),
+      ...(cfg.legend
+        ? {
+          legend: {
+            ...(cfg.legend.fontSize
+              ? { labelFontSize: cfg.legend.fontSize }
+              : {}),
+            ...(cfg.legend.titleFontSize
+              ? { titleFontSize: cfg.legend.titleFontSize }
+              : {}),
+            labelLimit: 0, // Don't truncate legend labels
+            symbolLimit: 0, // Don't limit number of symbols
           },
         }
         : {}),

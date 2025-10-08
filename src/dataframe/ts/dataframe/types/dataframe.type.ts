@@ -222,6 +222,8 @@ export type DataFrame<Row extends object = object> =
     // ---------- Utilities ----------
     dummyCol: DummyColMethod<Row>;
     bindRows: BindRowsMethod<Row>;
+    /** @deprecated Use bindRows instead */
+    bind: BindRowsMethod<Row>;
 
     // ---------- Missing Data ----------
     replaceNA: ReplaceNaMethod<Row>;

@@ -556,7 +556,7 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
-  if (prop === "bindRows") {
+  if (prop === "bindRows" || prop === "bind") {
     return (...a: unknown[]) => (bind_rows as any)(...a)(df);
   }
 

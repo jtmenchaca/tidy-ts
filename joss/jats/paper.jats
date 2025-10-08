@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE article PUBLIC "-//NLM//DTD JATS (Z39.96) Journal Publishing DTD v1.2 20190208//EN"
+                  "JATS-publishing1.dtd">
+<article xmlns:mml="http://www.w3.org/1998/Math/MathML" xmlns:xlink="http://www.w3.org/1999/xlink" dtd-version="1.2" article-type="other">
+<front>
+<journal-meta>
+<journal-id></journal-id>
+<journal-title-group>
+<journal-title>Journal of Open Source Software</journal-title>
+<abbrev-journal-title>JOSS</abbrev-journal-title>
+</journal-title-group>
+<issn publication-format="electronic">2475-9066</issn>
+<publisher>
+<publisher-name>Open Journals</publisher-name>
+</publisher>
+</journal-meta>
+<article-meta>
+<article-id pub-id-type="publisher-id">0</article-id>
+<article-id pub-id-type="doi">N/A</article-id>
+<title-group>
+<article-title>Tidy-TS: A Type-Safe Framework for Statistical Data
+Analysis in the TypeScript Ecosystem</article-title>
+</title-group>
+<contrib-group>
+<contrib contrib-type="author">
+<contrib-id contrib-id-type="orcid">https://orcid.org/0000-0002-2685-7729</contrib-id>
+<name>
+<surname>Menchaca</surname>
+<given-names>John Thomas</given-names>
+<suffix>MD</suffix>
+</name>
+<xref ref-type="aff" rid="aff-1"/>
+<xref ref-type="aff" rid="aff-2"/>
+</contrib>
+<aff id="aff-1">
+<institution-wrap>
+<institution>University of Utah, Department of Biomedical
+Informatics</institution>
+</institution-wrap>
+</aff>
+<aff id="aff-2">
+<institution-wrap>
+<institution>University of Utah, Department of Internal
+Medicine</institution>
+</institution-wrap>
+</aff>
+</contrib-group>
+<pub-date date-type="pub" publication-format="electronic" iso-8601-date="2025-10-06">
+<day>6</day>
+<month>10</month>
+<year>2025</year>
+</pub-date>
+<volume>¿VOL?</volume>
+<issue>¿ISSUE?</issue>
+<fpage>¿PAGE?</fpage>
+<permissions>
+<copyright-statement>Authors of papers retain copyright and release the
+work under a Creative Commons Attribution 4.0 International License (CC
+BY 4.0)</copyright-statement>
+<copyright-year>1970</copyright-year>
+<copyright-holder>The article authors</copyright-holder>
+<license license-type="open-access" xlink:href="https://creativecommons.org/licenses/by/4.0/">
+<license-p>Authors of papers retain copyright and release the work under
+a Creative Commons Attribution 4.0 International License (CC BY
+4.0)</license-p>
+</license>
+</permissions>
+<kwd-group kwd-group-type="author">
+<kwd>TypeScript</kwd>
+<kwd>statistics</kwd>
+<kwd>dataframes</kwd>
+</kwd-group>
+</article-meta>
+</front>
+<body>
+<sec id="summary">
+  <title>Summary</title>
+  <p>Tidy-TS is a type-safe library for statistical computing, data
+  transformation, and visualization in the TypeScript ecosystem. It
+  introduces a functional grammar for manipulating tabular data using
+  arrays of objects, which are the idiomatic format in JavaScript
+  runtimes. Inspired by the tidyverse philosophy
+  (<xref alt="Wickham et al., 2019" rid="ref-WickhamU003A2019" ref-type="bibr">Wickham
+  et al., 2019</xref>), it brings static typing, schema validation, and
+  compile time guarantees to data workflows in TypeScript.</p>
+  <p>The library supports pipelines that load data from files, APIs, or
+  databases, apply transformations that preserve type information, run
+  statistical analyses, and produce interactive visualizations using
+  Vega-Lite
+  (<xref alt="Satyanarayan et al., 2016" rid="ref-SatyanarayanU003A2016" ref-type="bibr">Satyanarayan
+  et al., 2016</xref>,
+  <xref alt="2017" rid="ref-SatyanarayanU003A2017" ref-type="bibr">2017</xref>).
+  These workflows remain entirely within TypeScript and avoid the need
+  to switch languages for analysis or presentation.</p>
+  <p>Tidy-TS is designed for use in browsers, servers, and notebooks. It
+  targets teams working fully in TypeScript who face fragmented
+  toolchains and inconsistent data handling. Features such as
+  asynchronous row-wise operations, concurrency controls, columnar
+  storage, and WebAssembly acceleration support mid scale interactive
+  analytics in both research and production environments. The addition
+  of a type system extends this paradigm to include substantive
+  compile-time guarantees through static types, which existing
+  literature suggests can prevent 15–38% of production bugs
+  (<xref alt="Bunge, 2019" rid="ref-BungeU003A2019" ref-type="bibr">Bunge,
+  2019</xref>;
+  <xref alt="Gao et al., 2017" rid="ref-GaoU003A2017" ref-type="bibr">Gao
+  et al., 2017</xref>;
+  <xref alt="Khan et al., 2021" rid="ref-KhanU003A2021" ref-type="bibr">Khan
+  et al., 2021</xref>).</p>
+</sec>
+<sec id="statement-of-need">
+  <title>Statement of need</title>
+  <p>JavaScript and TypeScript are widely used for building interactive
+  data applications, but they lack a type-aware and expressive toolkit
+  for statistical computing. Existing libraries like Arquero and
+  Danfo.js offer partial solutions for dataframe operations, but they do
+  not provide a unified type-safe environment that combines data
+  wrangling, statistical analysis, schema validation, asynchronous
+  control, and visualization.</p>
+  <p>Without a shared grammar or consistent type model, developers are
+  often left writing brittle glue code across loosely coupled tools.
+  This leads to duplicated logic, reduced testability, and unnecessary
+  language switching. Many teams using TypeScript for data ingestion and
+  application logic still rely on Python or R for analysis and modeling.
+  This workflow involves exporting and reimporting data with assumptions
+  about column names, types, and missing values. Subtle errors such as
+  incorrect joins, inconsistent handling of null and undefined values,
+  or mismatched column references often go undetected until late stages.
+  These issues create avoidable risk in data pipelines. Tidy-TS is
+  designed to prevent this class of error through structured typing and
+  declarative composition.</p>
+  <p>This library implements and builds upon tidyverse grammar using
+  TypeScript’s structural type system. Each operation in a pipeline
+  maintains and refines the type signature of the data. For example,
+  mutate not only adds a column but also updates the inferred structure
+  so that downstream transformations and visualizations remain
+  type-safe. Operations like select, drop, join, pivot, and summarize
+  all preserve static typing. Descriptive statistics follow conventions
+  from R but enforce type correctness at compile time rather than
+  through runtime checks. For example, functions that summarize over
+  potentially null values require the developer to explicitly handle
+  missing data before returning numeric output. This type-safe approach
+  is illustrated in Example 1, which demonstrates how a complete data
+  analysis workflow maintains type information throughout
+  transformations, grouping, and aggregation.</p>
+  <disp-quote>
+    <p><bold>Example 1: Type-Safe Data Transformation
+    Pipeline</bold></p>
+    <code language="typescript">import { createDataFrame, stats as s } from &quot;@tidy-ts/dataframe&quot;;
+
+const sales = createDataFrame([
+  { region: &quot;North&quot;, product: &quot;Widget&quot;, quantity: 10, price: 100 },
+  { region: &quot;North&quot;, product: &quot;Gizmo&quot;, quantity: 20, price: 50 },
+  { region: &quot;South&quot;, product: &quot;Widget&quot;, quantity: 20, price: 100 },
+  { region: &quot;East&quot;, product: &quot;Widget&quot;, quantity: 8, price: 100 },
+]);
+
+const analysis = sales
+  .mutate({ 
+    revenue: (row) =&gt; row.quantity * row.price,
+    moreQuantityThanAvg: (row, _index, df) =&gt; row.quantity &gt; s.mean(df.quantity)
+  })
+  .groupBy(&quot;region&quot;)
+  .summarize({
+    total_revenue: (group) =&gt; s.sum(group.revenue),
+    avg_quantity: (group) =&gt; s.mean(group.quantity)
+  })
+  .arrange(&quot;total_revenue&quot;, &quot;desc&quot;);</code>
+  </disp-quote>
+  <p>Tidy-TS also includes support for statistical hypothesis testing
+  (Example 2). These functions are validated against R using randomized
+  test suites to ensure parity in results. Output from statistical tests
+  is returned in typed objects that contain test names, effect sizes, p
+  values, confidence intervals, and relevant statistics in a structured
+  format. This improves both interpretability and composability. These
+  features are particularly important in clinical research and in
+  applications that process real-time clinical data. Example 2
+  demonstrates how Tidy-TS both exposes statistical tests directly as
+  well as provides an omnibus compare API that guides users to the
+  correct test based on their intention, invoking the tidyverse
+  philosophy of human-centered design. Both methods return the same
+  structured, typed results.</p>
+  <disp-quote>
+    <p><bold>Example 2: Statistical Hypothesis Testing with Type
+    Safety</bold></p>
+    <code language="typescript">import { stats as s } from &quot;@tidy-ts/dataframe&quot;;
+
+// Create test &quot;height&quot; data for 6 individuals
+const heights = [170, 165, 180, 175, 172, 168];
+
+// Direct test API
+// Access specific statistical tests
+const directTest = s.test.t.oneSample({
+  data: heights,
+  mu: 170,
+  alternative: &quot;two-sided&quot;,
+  alpha: 0.05
+});
+
+// Compare API
+// Intent-driven design options to assist with picking
+// the correct test.
+const compareAPI = s.compare.oneGroup.centralTendency.toValue({
+  data: heights,
+  comparator: &quot;not equal to&quot; // or &quot;less than&quot; | &quot;greater than&quot;
+  hypothesizedValue: 170,
+  parametric: &quot;parametric&quot;, // or &quot;nonparametric&quot; | &quot;auto&quot;
+  alpha: 0.05
+});
+
+// Both return the same typed result:
+// {
+//   test_name: &quot;One-sample t-test&quot;,
+//   p_value: 0.47...,
+//   effect_size: { value: 0.31..., name: &quot;Cohen's D&quot; },
+//   test_statistic: { value: 0.76..., name: &quot;T-Statistic&quot; },
+//   confidence_interval: { lower: 166.08..., upper: 177.24..., 
+//     confidence_level: 0.95 },
+//   degrees_of_freedom: 5,
+//   alpha: 0.05,
+//   alternative: &quot;Two-Sided&quot;
+// }</code>
+  </disp-quote>
+  <p>Many modern analytics workflows also rely on remote API calls or
+  external services for validation and analysis. Tidy-TS supports
+  asynchronous transformations natively, permitting row-wise async
+  operations within mutate, filter, and summarize operations. It also
+  includes both dataframe-level and operation-level controls for
+  concurrency and retries. This eases the task of building analytics
+  pipelines dependent on external services or subject to API rate
+  limits. Applications that call remote artificial intelligence (AI)
+  models or services are a key use case.</p>
+  <p>Modern workflows also ingest data from various sources. Tidy-TS
+  provides tools to import CSV, Parquet, Arrow, and JSON in a type-safe
+  manner with the help of Zod schema. Likewise, databases queries made
+  with raw SQL can be made type-safe with schema validation. For data
+  queried via popular type-safe Object-Relational Mappers, Tidy-TS can
+  seamlessly create dataframes using their provided types.</p>
+  <p>Tidy-TS builds on lessons from tools like pandas, dplyr, and Polars
+  but is adapted for modern development in TypeScript, providing a model
+  for integrating asynchronous transformations, structural typing,
+  statistical functions, visualization, and multi runtime deployment
+  within the constraints and idioms of the TypeScript ecosystem.</p>
+</sec>
+<sec id="research-applications">
+  <title>Research applications</title>
+  <p>Tidy-TS supports common data analysis workflows in research
+  environments that rely on TypeScript. At the University of Utah’s
+  Department of Biomedical Informatics, the library is used for
+  healthcare data analysis where static typing and schema validation
+  help improve analytical accuracy and reduce runtime errors, supporting
+  both ad hoc quality improvement analysis and real-time evaluation of
+  clinical data streams intended for integration into the electronic
+  health record.</p>
+  <p>The ability to perform asynchronous transformations also allows
+  researchers to incorporate external data sources without switching
+  between programming languages. For example, researchers can fetch data
+  from a repository, process and clean it, invoke async AI tools for
+  analysis, perform statistical testing, and then visualize the results
+  (see Figure 1) all within a single type-safe TypeScript workflow
+  without switching to Python or R for analysis.</p>
+  <fig>
+    <caption><p>Publication-quality statistical visualization generated
+    with Tidy-TS, showing normal and t-distributions with varying
+    degrees of freedom.</p></caption>
+    <graphic mimetype="image" mime-subtype="png" xlink:href="distributionComparison.png" />
+  </fig>
+  <p>Tidy-TS runs in multiple environments including Node.js, Deno, Bun,
+  and modern browsers. It can also be used interactively in Jupyter
+  notebooks through the Deno kernel, enabling data analyses and
+  exploration alongside graph outputs with minimal configuration. This
+  extends the reach of the type-safe analytics and reproducibility to an
+  interactive workflow commonly used in data science and research.</p>
+</sec>
+<sec id="acknowledgements">
+  <title>Acknowledgements</title>
+  <p>No external funding was received in support of this work. The
+  author is grateful to Dr. Kensaku Kawamoto for his mentorship and
+  support, without which this work would not be possible.</p>
+  <p>Tidy-TS is also only possible due to numerous open source projects.
+  Beyond the pioneering work by the tidyverse teams, the author would
+  like to specifically acknowledge and give thanks for the excellent
+  work by the University of Washington Interactive Data Lab for their
+  inspirational work with Vega-Lite, Vega, and the arquero javascript
+  library.</p>
+</sec>
+</body>
+<back>
+<ref-list>
+  <title></title>
+  <ref id="ref-WickhamU003A2019">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Wickham</surname><given-names>Hadley</given-names></name>
+        <name><surname>Averick</surname><given-names>Mara</given-names></name>
+        <name><surname>Bryan</surname><given-names>Jennifer</given-names></name>
+        <name><surname>Chang</surname><given-names>Winston</given-names></name>
+        <name><surname>McGowan</surname><given-names>Lucy D’Agostino</given-names></name>
+        <name><surname>François</surname><given-names>Romain</given-names></name>
+        <name><surname>Grolemund</surname><given-names>Garrett</given-names></name>
+        <name><surname>Hayes</surname><given-names>Alex</given-names></name>
+        <name><surname>Henry</surname><given-names>Lionel</given-names></name>
+        <name><surname>Hester</surname><given-names>Jim</given-names></name>
+        <name><surname>Kuhn</surname><given-names>Max</given-names></name>
+        <name><surname>Lin Pedersen</surname><given-names>Thomas</given-names></name>
+        <name><surname>Miller</surname><given-names>Evan</given-names></name>
+        <name><surname>Milton Bache</surname><given-names>Stephan</given-names></name>
+        <name><surname>Müller</surname><given-names>Kirill</given-names></name>
+        <name><surname>Ooms</surname><given-names>Jeroen</given-names></name>
+        <name><surname>Robinson</surname><given-names>David</given-names></name>
+        <name><surname>Seidel</surname><given-names>Dana Paige</given-names></name>
+        <name><surname>Spinu</surname><given-names>Vitalie</given-names></name>
+        <name><surname>Takahashi</surname><given-names>Kohske</given-names></name>
+        <name><surname>Vaughan</surname><given-names>Davis</given-names></name>
+        <name><surname>Wilke</surname><given-names>Claus</given-names></name>
+        <name><surname>Woo</surname><given-names>Kara</given-names></name>
+        <name><surname>Yutani</surname><given-names>Hiroaki</given-names></name>
+      </person-group>
+      <article-title>Welcome to the tidyverse</article-title>
+      <source>Journal of Open Source Software</source>
+      <publisher-name>The Open Journal</publisher-name>
+      <year iso-8601-date="2019">2019</year>
+      <volume>4</volume>
+      <issue>43</issue>
+      <uri>https://doi.org/10.21105/joss.01686</uri>
+      <pub-id pub-id-type="doi">10.21105/joss.01686</pub-id>
+      <fpage>1686</fpage>
+      <lpage></lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-SatyanarayanU003A2017">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Satyanarayan</surname><given-names>Arvind</given-names></name>
+        <name><surname>Moritz</surname><given-names>Dominik</given-names></name>
+        <name><surname>Wongsuphasawat</surname><given-names>Kanit</given-names></name>
+        <name><surname>Heer</surname><given-names>Jeffrey</given-names></name>
+      </person-group>
+      <article-title>Vega-lite: A grammar of interactive graphics</article-title>
+      <source>IEEE Transactions on Visualization and Computer Graphics</source>
+      <publisher-name>IEEE</publisher-name>
+      <year iso-8601-date="2017">2017</year>
+      <volume>23</volume>
+      <issue>1</issue>
+      <pub-id pub-id-type="doi">10.1109/TVCG.2016.2599030</pub-id>
+      <fpage>341</fpage>
+      <lpage>350</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-SatyanarayanU003A2016">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Satyanarayan</surname><given-names>Arvind</given-names></name>
+        <name><surname>Russell</surname><given-names>Ryan</given-names></name>
+        <name><surname>Hoffswell</surname><given-names>Jane</given-names></name>
+        <name><surname>Heer</surname><given-names>Jeffrey</given-names></name>
+      </person-group>
+      <article-title>Reactive vega: A streaming dataflow architecture for declarative interactive visualization</article-title>
+      <source>IEEE Transactions on Visualization and Computer Graphics</source>
+      <publisher-name>IEEE</publisher-name>
+      <year iso-8601-date="2016">2016</year>
+      <volume>22</volume>
+      <issue>1</issue>
+      <pub-id pub-id-type="doi">10.1109/TVCG.2015.2467091</pub-id>
+      <fpage>659</fpage>
+      <lpage>668</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-GaoU003A2017">
+    <element-citation publication-type="paper-conference">
+      <person-group person-group-type="author">
+        <name><surname>Gao</surname><given-names>Zheng</given-names></name>
+        <name><surname>Bird</surname><given-names>Christian</given-names></name>
+        <name><surname>Barr</surname><given-names>Earl T</given-names></name>
+      </person-group>
+      <article-title>To type or not to type: Quantifying detectable bugs in JavaScript</article-title>
+      <source>Proceedings of the 39th international conference on software engineering</source>
+      <publisher-name>IEEE Press</publisher-name>
+      <year iso-8601-date="2017">2017</year>
+      <fpage>758</fpage>
+      <lpage>769</lpage>
+    </element-citation>
+  </ref>
+  <ref id="ref-BungeU003A2019">
+    <element-citation>
+      <person-group person-group-type="author">
+        <name><surname>Bunge</surname><given-names>Brie</given-names></name>
+      </person-group>
+      <article-title>Adopting TypeScript at scale</article-title>
+      <publisher-name>JSConf Hawaii 2019</publisher-name>
+      <year iso-8601-date="2019">2019</year>
+      <uri>https://www.youtube.com/watch?v=P-J9Eg7hJwE&amp;feature=youtu.be&amp;t=702</uri>
+    </element-citation>
+  </ref>
+  <ref id="ref-KhanU003A2021">
+    <element-citation publication-type="article-journal">
+      <person-group person-group-type="author">
+        <name><surname>Khan</surname><given-names>Sajid</given-names></name>
+        <name><surname>Uddin</surname><given-names>Ghulam</given-names></name>
+        <name><surname>Niazi</surname><given-names>Mahmood</given-names></name>
+      </person-group>
+      <article-title>A systematic literature review on the empirical evidence for the effectiveness of type systems</article-title>
+      <source>IEEE Transactions on Software Engineering</source>
+      <publisher-name>IEEE</publisher-name>
+      <year iso-8601-date="2021">2021</year>
+      <volume>47</volume>
+      <issue>12</issue>
+      <pub-id pub-id-type="doi">10.1109/TSE.2019.2961751</pub-id>
+      <fpage>2670</fpage>
+      <lpage>2691</lpage>
+    </element-citation>
+  </ref>
+</ref-list>
+</back>
+</article>
