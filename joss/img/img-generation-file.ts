@@ -1,9 +1,9 @@
-// Normal Distribution - PDF and CDF using new .data() method
 import { s } from "@tidy-ts/dataframe";
 
 // Multiple Distributions Comparison
 const numPoints = 1000;
 
+// Generate normal distribution data
 const normal = s.dist.normal.data({
   mean: 0,
   standardDeviation: 1,
@@ -14,6 +14,7 @@ const normal = s.dist.normal.data({
   distribution: "Normal (μ=0, σ=1)",
 });
 
+// Generate t-distribution data with 1 degree of freedom
 const t1 = s.dist.t.data({
   degreesOfFreedom: 1,
   type: "pdf",
@@ -23,6 +24,7 @@ const t1 = s.dist.t.data({
   distribution: "t-dist (df=1)",
 });
 
+// Generate t-distribution data with 5 degrees of freedom
 const t5 = s.dist.t.data({
   degreesOfFreedom: 5,
   type: "pdf",
@@ -32,6 +34,7 @@ const t5 = s.dist.t.data({
   distribution: "t-dist (df=5)",
 });
 
+// Generate t-distribution data with 30 degrees of freedom
 const t30 = s.dist.t.data({
   degreesOfFreedom: 30,
   type: "pdf",
@@ -41,11 +44,13 @@ const t30 = s.dist.t.data({
   distribution: "t-dist (df=30)",
 });
 
+// Combine the distributions into a single dataframe
 const distributionData = normal
   .bindRows(t1)
   .bindRows(t5)
   .bindRows(t30);
 
+// Generate the distribution comparison plot
 const distributionComparison = distributionData.graph({
   type: "line",
   mappings: {
@@ -87,10 +92,11 @@ const distributionComparison = distributionData.graph({
   },
 });
 
+// Set the final height and width of the plot
 const finalHeight = 500;
 const finalWidth = 700;
 
-console.log("📊 Distribution Comparison:");
+// Save the plot to a file
 distributionComparison.savePNG({
   filename: "./joss/img/distributionComparison.png",
   width: finalWidth,
