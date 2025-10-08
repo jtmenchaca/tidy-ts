@@ -1,6 +1,7 @@
 // GLM functions for WASM
 
 import { initWasm, wasmInternal } from "./wasm-init.ts";
+import type { DataFrame } from "../dataframe/index.ts";
 
 /**
  * GLM fit result interface
@@ -129,25 +130,102 @@ export function glmFit(
 }
 
 /**
- * Create a simple test dataset for GLM
+ * Fit a GLM model with DataFrame
  *
- * @param n - Number of observations
- * @returns Test dataset with y, x1, x2 columns
+ * @param formula - Model formula (e.g., "y ~ x1 + x2")
+ * @param family - GLM family name
+ * @param link - Link function name
+ * @param data - DataFrame containing the data
+ * @param options - Optional GLM parameters
+ * @returns GLM fit result
  */
-export function createTestData(n: number): Record<string, number[]> {
-  const y: number[] = [];
-  const x1: number[] = [];
-  const x2: number[] = [];
+export function glm<Row extends Record<string, number>>({
+  formula,
+  family,
+  link,
+  data,
+  options,
+}: {
+  formula: string;
+  family:
+    | "gaussian"
+    | "binomial"
+    | "poisson"
+    | "gamma"
+    | "inverse_gaussian";
+  link:
+    | "identity"
+    | "logit"
+    | "probit"
+    | "cauchit"
+    | "log"
+    | "cloglog"
+    | "inverse"
+    | "sqrt"
+    | "inverse_squared";
+  data: DataFrame<Row>;
+  options?: {
+    weights?: number[];
+    na_action?: string;
+    epsilon?: number;
+    max_iter?: number;
+    trace?: boolean;
+  };
+}): GlmFitResult {
+  const dataObject: Record<string, readonly number[]> = {};
 
-  for (let i = 0; i < n; i++) {
-    const x1_val = Math.random() * 10 - 5; // -5 to 5
-    const x2_val = Math.random() * 10 - 5; // -5 to 5
-    const y_val = 2 + 0.5 * x1_val + 0.3 * x2_val + (Math.random() - 0.5) * 2; // Linear with noise
-
-    y.push(y_val);
-    x1.push(x1_val);
-    x2.push(x2_val);
+  for (const col of data.columns()) {
+    dataObject[col] = data[col];
   }
 
-  return { y, x1, x2 };
+  const dataJson = JSON.stringify(dataObject);
+
+  // Convert options to JSON string
+  const optionsJson = options ? JSON.stringify(options) : undefined;
+
+  // Initialize WASM and call function
+  initWasm();
+
+  let resultJson: string;
+  try {
+    resultJson = wasmInternal.glm_fit_wasm(
+      formula,
+      family,
+      link,
+      dataJson,
+      optionsJson,
+    );
+  } catch (e) {
+    // Log more details about the error
+    console.error(`WASM Error in glm for ${family}/${link}:`, e);
+    console.error(`Formula: ${formula}`);
+    console.error(`Data keys: ${Object.keys(dataObject).join(", ")}`);
+    console.error(
+      `Data sample sizes: ${
+        Object.entries(dataObject).map(([k, v]) => `${k}:${v.length}`).join(
+          ", ",
+        )
+      }`,
+    );
+    // Log the actual y values for binomial family
+    if (family === "binomial" && dataObject.y) {
+      console.error(`Y values: [${dataObject.y.join(", ")}]`);
+      console.error(
+        `Y range: min=${Math.min(...dataObject.y)}, max=${
+          Math.max(...dataObject.y)
+        }`,
+      );
+    }
+    throw new Error(`[BUG] ${e}`);
+  }
+
+  // Parse result
+  const result = JSON.parse(resultJson);
+
+  // Check for errors
+  if (result.error) {
+    throw new Error(`GLM fit failed: ${result.error}`);
+  }
+
+  return result as GlmFitResult;
 }
