@@ -1,36 +1,50 @@
 // Normal Distribution - PDF and CDF using new .data() method
-import { createDataFrame, s } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 
 // Multiple Distributions Comparison
 const numPoints = 1000;
-const tX = Array.from(
-  { length: numPoints },
-  (_, i) => -4 + (i * 8) / (numPoints - 1),
-);
-const distributionData = createDataFrame(
-  tX.flatMap((x) => [
-    {
-      x: x,
-      distribution: "1. Normal (df=∞)",
-      density: s.dist.normal.density({ at: x, mean: 0, standardDeviation: 1 }),
-    },
-    {
-      x: x,
-      distribution: "2. t-dist (df=1)",
-      density: s.dist.t.density({ at: x, degreesOfFreedom: 1 }),
-    },
-    {
-      x: x,
-      distribution: "3. t-dist (df=5)",
-      density: s.dist.t.density({ at: x, degreesOfFreedom: 5 }),
-    },
-    {
-      x: x,
-      distribution: "4. t-dist (df=30)",
-      density: s.dist.t.density({ at: x, degreesOfFreedom: 30 }),
-    },
-  ]),
-);
+
+const normal = s.dist.normal.data({
+  mean: 0,
+  standardDeviation: 1,
+  type: "pdf",
+  range: [-4, 4],
+  points: numPoints,
+}).mutate({
+  distribution: "Normal (μ=0, σ=1)",
+});
+
+const t1 = s.dist.t.data({
+  degreesOfFreedom: 1,
+  type: "pdf",
+  range: [-4, 4],
+  points: numPoints,
+}).mutate({
+  distribution: "t-dist (df=1)",
+});
+
+const t5 = s.dist.t.data({
+  degreesOfFreedom: 5,
+  type: "pdf",
+  range: [-4, 4],
+  points: numPoints,
+}).mutate({
+  distribution: "t-dist (df=5)",
+});
+
+const t30 = s.dist.t.data({
+  degreesOfFreedom: 30,
+  type: "pdf",
+  range: [-4, 4],
+  points: numPoints,
+}).mutate({
+  distribution: "t-dist (df=30)",
+});
+
+const distributionData = normal
+  .bindRows(t1)
+  .bindRows(t5)
+  .bindRows(t30);
 
 const distributionComparison = distributionData.graph({
   type: "line",

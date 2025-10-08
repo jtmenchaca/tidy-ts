@@ -27,15 +27,15 @@ Tidy-TS is a type-safe library for statistical computing, data transformation, a
 
 The library supports pipelines that load data from files, APIs, or databases, apply transformations that preserve type information, run statistical analyses, and produce interactive visualizations using Vega-Lite [@Satyanarayan:2017; @Satyanarayan:2016]. These workflows remain entirely within TypeScript and avoid the need to switch languages for analysis or presentation.
 
-Tidy-TS is designed for use in browsers, servers, and notebooks. It targets teams working fully in TypeScript who face fragmented toolchains and inconsistent data handling. Features such as asynchronous row-wise operations, concurrency controls, columnar storage, and WebAssembly acceleration support mid scale interactive analytics in both research and production environments. The addition of a type system extends this paradigm to include substantive compile-time guarantees through static types, which existing literature suggests can prevent 15–38% of production bugs [@Gao:2017; @Bunge:2019; @Khan:2021].
+Tidy-TS is designed for use in browsers, servers, and notebooks. It targets teams working fully in TypeScript who face fragmented toolchains and inconsistent data handling. Features such as asynchronous row-wise operations, concurrency controls, columnar storage, and WebAssembly acceleration support mid-scale interactive analytics in both research and production environments. The addition of a type system extends this paradigm to include substantive compile-time guarantees through static types, which existing literature suggests can prevent 15–38% of production bugs [@Gao:2017; @Bunge:2019; @Khan:2021].
 
 # Statement of need
 
 JavaScript and TypeScript are widely used for building interactive data applications, but they lack a type-aware and expressive toolkit for statistical computing. Existing libraries like Arquero and Danfo.js offer partial solutions for dataframe operations, but they do not provide a unified type-safe environment that combines data wrangling, statistical analysis, schema validation, asynchronous control, and visualization. 
 
-Without a shared grammar or consistent type model, developers are often left writing brittle glue code across loosely coupled tools. This leads to duplicated logic, reduced testability, and unnecessary language switching.  Many teams using TypeScript for data ingestion and application logic still rely on Python or R for analysis and modeling. This workflow involves exporting and reimporting data with assumptions about column names, types, and missing values. Subtle errors such as incorrect joins, inconsistent handling of null and undefined values, or mismatched column references often go undetected until late stages. These issues create avoidable risk in data pipelines. Tidy-TS is designed to prevent this class of error through structured typing and declarative composition.
+Without a shared grammar or consistent type model, developers are often left writing brittle glue code across loosely coupled tools. This leads to duplicated logic, reduced testability, and unnecessary language switching.  Many teams using TypeScript for data ingestion and application logic still rely on Python or R for analysis and modeling. This workflow involves exporting and reimporting data with assumptions about column names, types, and missing values. Subtle errors such as incorrect joins, inconsistent handling of null and undefined values, or mismatched column references often go undetected until late stages. These issues create avoidable risk in data pipelines. Tidy-TS is designed to minimize this class of error.
 
-This library implements and builds upon tidyverse grammar using TypeScript's structural type system. Each operation in a pipeline maintains and refines the type signature of the data. For example, mutate not only adds a column but also updates the inferred structure so that downstream transformations and visualizations remain type-safe. Operations like select, drop, join, pivot, and summarize all preserve static typing. Descriptive statistics follow conventions from R but enforce type correctness at compile time rather than through runtime checks. For example, functions that summarize over potentially null values require the developer to explicitly handle missing data before returning numeric output. This type-safe approach is illustrated in Example 1, which demonstrates how a complete data analysis workflow maintains type information throughout transformations, grouping, and aggregation.
+This library implements and builds upon a tidyverse-style grammar of data manipulation using TypeScript's structural type system. Each operation in a pipeline maintains and refines the type signature of the data. For example, mutate not only adds a column but also updates the inferred structure, helping downstream transformations and visualizations remain type-safe. Operations like select, drop, join, pivot, and summarize also all preserve static typing. Descriptive statistics follow conventions from R but enforce type correctness at compile time rather than through runtime checks. For example, functions that summarize over potentially null values require the developer to explicitly handle missing data before returning numeric output. This type-safe approach is illustrated in Example 1, which demonstrates how a complete data analysis workflow maintains type information through transformations, grouping, and aggregation.
 
 
 > **Example 1: Type-Safe Data Transformation Pipeline**
@@ -53,7 +53,7 @@ This library implements and builds upon tidyverse grammar using TypeScript's str
 > const analysis = sales
 >   .mutate({ 
 >     revenue: (row) => row.quantity * row.price,
->     moreQuantityThanAvg: (row, _index, df) => row.quantity > s.mean(df.quantity)
+>     moreQuantityThanAvg: (row, _i, df) => row.quantity > s.mean(df.quantity)
 >   })
 >   .groupBy("region")
 >   .summarize({
@@ -63,7 +63,7 @@ This library implements and builds upon tidyverse grammar using TypeScript's str
 >   .arrange("total_revenue", "desc");
 > ```
 
-Tidy-TS also includes support for statistical hypothesis testing (Example 2). These functions are validated against R using randomized test suites to ensure parity in results. Output from statistical tests is returned in typed objects that contain test names, effect sizes, p values, confidence intervals, and relevant statistics in a structured format. This improves both interpretability and composability. These features are particularly important in clinical research and in applications that process real-time clinical data. Example 2 demonstrates how Tidy-TS both exposes statistical tests directly as well as provides an omnibus compare API that guides users to the correct test based on their intention, invoking the tidyverse philosophy of human-centered design.  Both methods return the same structured, typed results.
+Tidy-TS also includes support for statistical hypothesis testing (Example 2). These functions are validated against R using randomized test suites to ensure parity in results. Output from statistical tests is returned in typed objects that contain test names, effect sizes, p-values, confidence intervals, and relevant statistics in a structured format. Providing these features natively is a priority for this work, particularly as research experiences a convergence between data collection and data analysis enabled by technologies like TypeScript and interactive applications. Example 2 demonstrates how Tidy-TS exposes statistical tests directly and via an API that guides users to the correct test based on their intention, invoking the tidyverse philosophy of human-centered design.  Both methods return the same structured, typed results.
 
 
 > **Example 2: Statistical Hypothesis Testing with Type Safety**
@@ -84,8 +84,7 @@ Tidy-TS also includes support for statistical hypothesis testing (Example 2). Th
 > });
 >
 > // Compare API
-> // Intent-driven design options to assist with picking
-> // the correct test.
+> // Intent-driven hypothesis testing api 
 > const compareAPI = s.compare.oneGroup.centralTendency.toValue({
 >   data: heights,
 >   comparator: "not equal to" // or "less than" | "greater than"
@@ -110,15 +109,15 @@ Tidy-TS also includes support for statistical hypothesis testing (Example 2). Th
 
 Many modern analytics workflows also rely on remote API calls or external services for validation and analysis. Tidy-TS supports asynchronous transformations natively, permitting row-wise async operations within mutate, filter, and summarize operations. It also includes both dataframe-level and operation-level controls for concurrency and retries.  This eases the task of building analytics pipelines dependent on external services or subject to API rate limits. Applications that call remote artificial intelligence (AI) models or services are a key use case.
 
-Modern workflows also ingest data from various sources.  Tidy-TS provides tools to import CSV, Parquet, Arrow, and JSON in a type-safe manner with the help of Zod schema.  Likewise, databases queries made with raw SQL can be made type-safe with schema validation.  For data queried via popular type-safe Object-Relational Mappers, Tidy-TS can seamlessly create dataframes using their provided types.
+Modern workflows also ingest data from various sources.  Tidy-TS provides tools to import CSV, Parquet, Arrow, and JSON in a type-safe manner with the help of Zod schema.  Likewise, databases queries made with raw SQL can be made type-safe with schema validation.  For data queried via popular type-safe Object-Relational Mappers, Tidy-TS can create dataframes using their provided types directly.
 
-Tidy-TS builds on lessons from tools like pandas, dplyr, and Polars but is adapted for modern development in TypeScript, providing a model for integrating asynchronous transformations, structural typing, statistical functions, visualization, and multi runtime deployment within the constraints and idioms of the TypeScript ecosystem.
+Tidy-TS ultimately builds on lessons from tools like pandas, dplyr, and Polars and adapts them for modern Typescript development needs.
 
 # Research applications
 
-Tidy-TS supports common data analysis workflows in research environments that rely on TypeScript. At the University of Utah's Department of Biomedical Informatics, the library is used for healthcare data analysis where static typing and schema validation help improve analytical accuracy and reduce runtime errors, supporting both ad hoc quality improvement analysis and real-time evaluation of clinical data streams intended for integration into the electronic health record.
+Tidy-TS supports many common data analysis workflows in research environments. At the University of Utah's Department of Biomedical Informatics, the library is used for healthcare data analysis where the added type safety aids in integrating between multiple data sources.  These projects include both ad hoc quality improvement analysis and real-time evaluation of clinical data streams intended for integration into the electronic health record.
 
-The ability to perform asynchronous transformations also allows researchers to incorporate external data sources without switching between programming languages. For example, researchers can fetch data from a repository, process and clean it, invoke async AI tools for analysis, perform statistical testing, and then visualize the results (see Figure 1) all within a single type-safe TypeScript workflow without switching to Python or R for analysis.
+The ability to perform asynchronous transformations also helps researchers to incorporate external data sources in an idiomatic pipeline. One can fetch data from a repository, process and clean it, invoke async AI tools, perform statistical testing, and visualize the results (see Figure 1) all within a single type-safe TypeScript workflow without switching to Python or R for analysis.
 
 ![Publication-quality statistical visualization generated with Tidy-TS, showing normal and t-distributions with varying degrees of freedom.](img/distributionComparison.png)
 
