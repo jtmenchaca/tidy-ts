@@ -10,6 +10,7 @@
     "jsr:@std/internal@^1.0.7": "1.0.10",
     "jsr:@std/path@^1.0.8": "1.1.2",
     "jsr:@std/random@~0.1.2": "0.1.2",
+    "npm:@jsr/std__expect@*": "1.0.17",
     "npm:@libsql/client@*": "0.15.15",
     "npm:@openai/agents@*": "0.0.17_zod@3.25.76",
     "npm:@openai/agents@latest": "0.1.7_zod@3.25.76",
@@ -611,6 +612,25 @@
         "@jridgewell/resolve-uri",
         "@jridgewell/sourcemap-codec"
       ]
+    },
+    "@jsr/std__assert@1.0.15": {
+      "integrity": "sha512-iaekOy2yP8hMA5pN5PHMXic4MH0pRggviqTvPd4iEMkS66lDOFTV0uxDRwRc3ia4btRB39QiSUXJPpVZCQu8nA==",
+      "dependencies": [
+        "@jsr/std__internal"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__assert/1.0.15.tgz"
+    },
+    "@jsr/std__expect@1.0.17": {
+      "integrity": "sha512-+1wHqnotlmsLVrD9nAPTN0ITanwLCYmd9likMB7vn3/4vkTmotv/qUnzwtvegj7utgHrckR4Ksl1NDR8iaW3RQ==",
+      "dependencies": [
+        "@jsr/std__assert",
+        "@jsr/std__internal"
+      ],
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__expect/1.0.17.tgz"
+    },
+    "@jsr/std__internal@1.0.12": {
+      "integrity": "sha512-6xReMW9p+paJgqoFRpOE2nogJFvzPfaLHLIlyADYjKMUcwDyjKZxryIbgcU+gxiTygn8yCjld1HoI0ET4/iZeA==",
+      "tarball": "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.12.tgz"
     },
     "@libsql/client@0.15.15": {
       "integrity": "sha512-twC0hQxPNHPKfeOv3sNT6u2pturQjLcI+CnpTM0SjRpocEGgfiZ7DWKXLNnsothjyJmDqEsBQJ5ztq9Wlu470w==",
@@ -3762,6 +3782,11 @@
       "npm:vite@^7.0.4",
       "npm:zod@^4.1.8",
       "npm:zustand@^5.0.6"
-    ]
+    ],
+    "packageJson": {
+      "dependencies": [
+        "npm:@jsr/std__expect@*"
+      ]
+    }
   }
 }

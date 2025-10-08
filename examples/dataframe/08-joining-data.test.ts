@@ -1,7 +1,8 @@
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Joining DataFrames - Progressive Examples", () => {
+test("Joining DataFrames - Progressive Examples", () => {
   // ============================================================================
   // 1. SETTING UP THE DATA - Create our working datasets
   // ============================================================================

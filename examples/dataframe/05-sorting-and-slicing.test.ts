@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Sorting and Slicing Data - Progressive Examples", () => {
+test("Sorting and Slicing Data - Progressive Examples", () => {
   // ============================================================================
   // 1. SETTING UP THE DATA - Create our working dataset
   // ============================================================================

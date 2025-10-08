@@ -35,7 +35,9 @@ const employees = sqliteTable("employees", {
   is_active: integer("is_active").notNull(),
 });
 
-Deno.test("Raw SQLite + DataFrame", () => {
+import { test } from "../tests/shims/test.ts";
+
+test("Raw SQLite + DataFrame", () => {
   const db = new DatabaseSync(dbPath);
 
   // Basic query
@@ -60,7 +62,7 @@ Deno.test("Raw SQLite + DataFrame", () => {
   db.close();
 });
 
-Deno.test("Drizzle ORM + DataFrame", async () => {
+test("Drizzle ORM + DataFrame", async () => {
   const client = createClient({ url: `file:${dbPath}` });
   const db = drizzle(client);
 

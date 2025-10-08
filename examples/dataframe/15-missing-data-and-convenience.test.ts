@@ -1,8 +1,9 @@
 import { createDataFrame, readCSV, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { z } from "zod";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Missing Data and Convenience Functions - Progressive Examples", async () => {
+test("Missing Data and Convenience Functions - Progressive Examples", async () => {
   // ============================================================================
   // 1. SETTING UP DATA WITH MISSING VALUES - Common patterns
   // ============================================================================

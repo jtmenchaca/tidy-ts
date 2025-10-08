@@ -1,7 +1,8 @@
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Extract Methods - Column Value Extraction Examples", () => {
+test("Extract Methods - Column Value Extraction Examples", () => {
   // ============================================================================
   // 1. SETTING UP THE DATA - Create our working dataset
   // ============================================================================

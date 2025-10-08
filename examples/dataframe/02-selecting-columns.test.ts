@@ -1,7 +1,8 @@
 import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Selecting and Managing Columns - Progressive Examples", () => {
+test("Selecting and Managing Columns - Progressive Examples", () => {
   // ============================================================================
   // 1. SETTING UP THE DATA - Create our working dataset
   // ============================================================================

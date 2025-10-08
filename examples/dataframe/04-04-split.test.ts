@@ -1,7 +1,8 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("String Splitting with strSplit", () => {
+test("String Splitting with strSplit", () => {
   console.log("=== String Splitting (strSplit) ===");
 
   // Sample data with delimited text

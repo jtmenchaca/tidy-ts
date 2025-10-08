@@ -1,7 +1,8 @@
 import { createDataFrame, stats, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Transforming and Mutating Data - Progressive Examples", () => {
+test("Transforming and Mutating Data - Progressive Examples", () => {
   const characters = createDataFrame([
     { id: 1, name: "Luke", mass: 77, height: 172, birth_year: "19BBY" },
     { id: 2, name: "Leia", mass: 49, height: 150, birth_year: "19BBY" },

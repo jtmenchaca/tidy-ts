@@ -62,7 +62,9 @@ const departments = sqliteTable("departments", {
   location: text("location").notNull(),
 });
 
-Deno.test("Database Query and DataFrame Creation", () => {
+import { test } from "../tests/shims/test.ts";
+
+test("Database Query and DataFrame Creation", () => {
   // Open the database
   const db = new DatabaseSync(dbPath);
 
@@ -170,7 +172,7 @@ Deno.test("Database Query and DataFrame Creation", () => {
   }
 });
 
-Deno.test("Drizzle ORM with DataFrame Integration", async () => {
+test("Drizzle ORM with DataFrame Integration", async () => {
   // Initialize Drizzle with libsql as per docs
   const client = createClient({ url: `file:${dbPath}` });
   const db = drizzle(client);

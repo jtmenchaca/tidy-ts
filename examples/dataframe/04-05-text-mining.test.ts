@@ -1,7 +1,8 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Complex Text Mining Scenarios", () => {
+test("Complex Text Mining Scenarios", () => {
   console.log("=== Complex Text Mining Scenarios ===");
 
   // Sample customer feedback data

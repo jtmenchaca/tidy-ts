@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Extract Nth Where Sorted - Real-World Examples", () => {
+test("Extract Nth Where Sorted - Real-World Examples", () => {
   console.log(
     "=== Extract Nth Where Sorted - Real-World Examples ===",
   );

@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@std/expect": "npm:@jsr/std__expect"
+  }
+}

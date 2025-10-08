@@ -51,46 +51,47 @@ const distributionData = normal
   .bindRows(t30);
 
 // Generate the distribution comparison plot
-const distributionComparison = distributionData.graph({
-  type: "line",
-  mappings: {
-    x: "x",
-    y: "density",
-    series: "distribution",
-  },
-  config: {
-    layout: {
-      title: "Distribution Comparison - Normal vs t-Distributions",
-      description:
-        "How t-distributions approach normal as degrees of freedom increase",
+const distributionComparison = distributionData
+  .graph({
+    type: "line",
+    mappings: {
+      x: "x",
+      y: "density",
+      series: "distribution",
     },
-    xAxis: {
-      label: "Value (x)",
-      domain: [-4, 4],
+    config: {
+      layout: {
+        title: "Distribution Comparison - Normal vs t-Distributions",
+        description:
+          "How t-distributions approach normal as degrees of freedom increase",
+      },
+      xAxis: {
+        label: "Value (x)",
+        domain: [-4, 4],
+      },
+      yAxis: {
+        label: "Density f(x)",
+        domain: [0, 0.45],
+      },
+      line: {
+        style: "linear",
+        dots: false,
+        strokeWidth: 2,
+      },
+      color: {
+        scheme: "vibrant",
+      },
+      legend: {
+        show: true,
+        position: "top-right",
+        fontSize: 12,
+        titleFontSize: 13,
+      },
+      grid: {
+        show: true,
+      },
     },
-    yAxis: {
-      label: "Density f(x)",
-      domain: [0, 0.45],
-    },
-    line: {
-      style: "linear",
-      dots: false,
-      strokeWidth: 2,
-    },
-    color: {
-      scheme: "vibrant",
-    },
-    legend: {
-      show: true,
-      position: "top-right",
-      fontSize: 12,
-      titleFontSize: 13,
-    },
-    grid: {
-      show: true,
-    },
-  },
-});
+  });
 
 // Set the final height and width of the plot
 const finalHeight = 500;

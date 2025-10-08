@@ -1,7 +1,8 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Pattern Replacement with strReplace and strReplaceAll", () => {
+test("Pattern Replacement with strReplace and strReplaceAll", () => {
   console.log("=== Pattern Replacement (strReplace & strReplaceAll) ===");
 
   // Sample data with sensitive information

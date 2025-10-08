@@ -1,0 +1,17 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "dependencies": {
+        "@std/expect": "npm:@jsr/std__expect",
+      },
+    },
+  },
+  "packages": {
+    "@jsr/std__assert": ["@jsr/std__assert@1.0.15", "https://npm.jsr.io/~/11/@jsr/std__assert/1.0.15.tgz", { "dependencies": { "@jsr/std__internal": "^1.0.12" } }, "sha512-iaekOy2yP8hMA5pN5PHMXic4MH0pRggviqTvPd4iEMkS66lDOFTV0uxDRwRc3ia4btRB39QiSUXJPpVZCQu8nA=="],
+
+    "@jsr/std__internal": ["@jsr/std__internal@1.0.12", "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.12.tgz", {}, "sha512-6xReMW9p+paJgqoFRpOE2nogJFvzPfaLHLIlyADYjKMUcwDyjKZxryIbgcU+gxiTygn8yCjld1HoI0ET4/iZeA=="],
+
+    "@std/expect": ["@jsr/std__expect@1.0.17", "https://npm.jsr.io/~/11/@jsr/std__expect/1.0.17.tgz", { "dependencies": { "@jsr/std__assert": "^1.0.14", "@jsr/std__internal": "^1.0.10" } }, "sha512-+1wHqnotlmsLVrD9nAPTN0ITanwLCYmd9likMB7vn3/4vkTmotv/qUnzwtvegj7utgHrckR4Ksl1NDR8iaW3RQ=="],
+  }
+}

@@ -1,7 +1,8 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "../../tests/shims/test.ts";
 
-Deno.test("Pattern Extraction with strExtract and strExtractAll - Progressive Examples", () => {
+test("Pattern Extraction with strExtract and strExtractAll - Progressive Examples", () => {
   // ============================================================================
   // 1. SETTING UP THE DATA - Create our working dataset
   // ============================================================================
