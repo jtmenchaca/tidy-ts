@@ -8,9 +8,6 @@
 
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
  
- **🚧 In Active Development**  
- Well-tested and actively developed - feedback is very welcome and appreciated!
-
 ## Key Features
 
 - **Type-Safe DataFrames**: Full TypeScript support with automatic column typing
