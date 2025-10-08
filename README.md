@@ -7,10 +7,9 @@
 **🔗 [GitHub](https://github.com/jtmenchaca/tidy-ts) | 📚 [Documentation](https://jtmenchaca.github.io/tidy-ts/)**
 
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
-
-> **💡 Development Status**  
-> Currently in active development with comprehensive test coverage.  
-> We welcome your feedback and contributions!
+ 
+ **🚧 In Active Development**  
+ Well-tested and actively developed - feedback is very welcome and appreciated!
 
 ## Key Features
 
@@ -48,7 +47,7 @@ const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
 const sum = stats.sum(df.a); // 4
 ```
 
-> **Note**: `setupTidyTS()` is only needed in browsers. Node.js and Deno work without any setup.
+ **Note**: `setupTidyTS()` is only needed in browsers. Deno / Bun / Node.js work without any setup.
 
 ## Quick Start
 ```typescript
@@ -104,6 +103,37 @@ const analysis = sales
 analysis.print("Sales Analysis");
 ```
 
+### Database Integration
+```typescript
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { DatabaseSync } from "node:sqlite";
+import { drizzle } from "npm:drizzle-orm/libsql";
+import { createClient } from "npm:@libsql/client";
+
+// Raw SQLite
+const db = new DatabaseSync("data.db");
+const employees = db.prepare("SELECT * FROM employees").all();
+const employeesDF = createDataFrame(employees, EmployeeSchema);
+
+// Drizzle ORM  
+const client = createClient({ url: "file:data.db" });
+const db = drizzle(client);
+const employees = await db.select().from(employeesTable).all();
+const employeesDF = createDataFrame(employees); // Auto-inferred types
+
+// DataFrame analysis
+const summary = employeesDF
+  .filter(row => row.salary > 80000)
+  .groupBy("department")
+  .summarize({
+    count: (group) => group.nrows(),
+    avg_salary: (group) => stats.round(stats.mean(group.salary), 0)
+  })
+  .arrange("avg_salary", "desc");
+
+summary.print("High Earners by Department");
+```
+
 ## Statistical Analysis
 Tidy-TS provides a statistical toolkit with 80+ functions across descriptive stats, hypothesis testing, and probability distributions.
 
@@ -119,29 +149,44 @@ The library provides many of the commonly needed statistical tests for routine a
 
 All tests available are rigorously vetted against results in R using testing against randomly generated data.  You can find the comparison suites on [GitHub](https://github.com/jtmenchaca/tidy-ts). 
 
-```typescript
-// Compare API
-const heights = [170, 165, 180, 175, 172, 168];
-const testResult = s.compare.oneGroup.centralTendency.toValue({
-  data: heights,
-  hypothesizedValue: 170,
-  parametric: "parametric" // Use "auto" for help deciding if parametric or non-parametric is best
-}); 
-console.log(testResult);
+ ```typescript
+import { stats as s } from "@tidy-ts/dataframe";
 
+// Create test "height" data for 6 individuals
+const heights = [170, 165, 180, 175, 172, 168];
+
+// Direct test API
+// Access specific statistical tests
+const directTest = s.test.t.oneSample({
+  data: heights,
+  mu: 170,
+  alternative: "two-sided",
+  alpha: 0.05
+});
+
+// Compare API
+// Intent-driven design options to assist with picking
+// the correct test.
+const compareAPI = s.compare.oneGroup.centralTendency.toValue({
+  data: heights,
+  comparator: "not equal to" // or "less than" | "greater than"
+  hypothesizedValue: 170,
+  parametric: "parametric", // or "nonparametric" | "auto"
+  alpha: 0.05
+});
+
+// Both return the same typed result:
 // {
 //   test_name: "One-sample t-test",
 //   p_value: 0.47...,
 //   effect_size: { value: 0.31..., name: "Cohen's D" },
 //   test_statistic: { value: 0.76..., name: "T-Statistic" },
-//   confidence_interval: {
-//     lower: 166.08...,
-//     upper: 177.24...,
-//     confidence_level: 0.95
-//   },
+//   confidence_interval: { lower: 166.08..., upper: 177.24..., 
+//     confidence_level: 0.95 },
 //   degrees_of_freedom: 5,
-//   alpha: 0.05
-// } 
+//   alpha: 0.05,
+//   alternative: "Two-Sided"
+// }
 
   const group1 = [23, 45, 67, 34, 56, 78, 29, 41, 52, 38]; // Hours spent studying per week
   const group2 = [78, 85, 92, 73, 88, 95, 69, 81, 89, 76]; // Final exam scores
@@ -273,6 +318,7 @@ await chart.savePNG({ filename: "sales-chart.png" });
 await chart.saveSVG({ filename: "sales-chart.svg" });
 ```
 
+
 **Chart Types**: scatter, line, bar, area  
 **Aesthetics**: color, size, series, tooltips, legends  
 **Styling**: 9 color schemes, custom themes, interactive features
@@ -305,7 +351,7 @@ interactiveChart // Chart displays interactively in Jupyter cell
 ### Async Operations with Concurrency Control
 ```typescript
 // Async data transformations with built-in concurrency control
-const enrichedData = await sales
+const asyncData = await sales
   .mutate({
     // Mix sync and async operations
     revenue: r => r.quantity * r.price, // sync
