@@ -1010,6 +1010,18 @@ export function sum_wasm(values) {
 }
 
 /**
+ * WASM export for mean calculation
+ * @param {Float64Array} values
+ * @returns {number}
+ */
+export function mean_wasm(values) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.mean_wasm(ptr0, len0);
+  return ret;
+}
+
+/**
  * WASM export for unique f64 values
  * @param {Float64Array} values
  * @returns {Float64Array}

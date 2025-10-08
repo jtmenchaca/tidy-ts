@@ -34,6 +34,11 @@ export function count_str(values: any, target: any) {
   return wasmInternal.count_str(values, target);
 }
 
+export function mean_wasm(values: any) {
+  initWasm();
+  return wasmInternal.mean_wasm(values);
+}
+
 export function sum_wasm(values: any) {
   initWasm();
   return wasmInternal.sum_wasm(values);

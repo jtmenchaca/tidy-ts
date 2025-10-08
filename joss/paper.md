@@ -127,4 +127,4 @@ Tidy-TS runs in multiple environments including Node.js, Deno, Bun, and modern b
 
 No external funding was received in support of this work. The author is grateful to Dr. Kensaku Kawamoto for his mentorship and support, without which this work would not be possible.
 
-Tidy-TS is also only possible due to numerous open source projects. Beyond the pioneering work by the tidyverse teams, the author would like to specifically acknowledge and give thanks for the excellent work by the University of Washington Interactive Data Lab for their inspirational work with Vega-Lite, Vega, and the arquero javascript library.
+Tidy-TS is also only possible due to numerous open source projects. Beyond the pioneering work by the tidyverse teams, the author would like to specifically acknowledge and give thanks to 1) the [University of Washington Interactive Data Lab](https://github.com/uwdata) for their transformative work with Vega-Lite, Vega, and the arquero javascript library, 2) the [hyparam team](https://github.com/hyparam) for their parquet processing libraries and 3) the [cross-org team](https://github.com/cross-org) for their cross-runtime testing tooling.

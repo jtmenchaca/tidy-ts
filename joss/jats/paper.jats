@@ -96,9 +96,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
   targets teams working fully in TypeScript who face fragmented
   toolchains and inconsistent data handling. Features such as
   asynchronous row-wise operations, concurrency controls, columnar
-  storage, and WebAssembly acceleration support mid-scale interactive
-  analytics in both research and production environments. The addition
-  of a type system extends this paradigm to include substantive
+  storage, and WebAssembly acceleration support analytics workflows on
+  millions of records in both research and production environments. The
+  addition of a type system extends this paradigm to include substantive
   compile-time guarantees through static types, which existing
   literature suggests can prevent 15–38% of production bugs
   (<xref alt="Bunge, 2019" rid="ref-BungeU003A2019" ref-type="bibr">Bunge,
@@ -114,20 +114,18 @@ a Creative Commons Attribution 4.0 International License (CC BY
   data applications, but they lack a type-aware and expressive toolkit
   for statistical computing. Existing libraries like Arquero and
   Danfo.js offer partial solutions for dataframe operations, but they do
-  not provide a unified type-safe environment that combines data
-  wrangling, statistical analysis, schema validation, asynchronous
-  control, and visualization.</p>
-  <p>Without a shared grammar or consistent type model, developers are
-  often left writing brittle glue code across loosely coupled tools.
-  This leads to duplicated logic, reduced testability, and unnecessary
-  language switching. Many teams using TypeScript for data ingestion and
-  application logic still rely on Python or R for analysis and modeling.
-  This workflow involves exporting and reimporting data with assumptions
-  about column names, types, and missing values. Subtle errors such as
-  incorrect joins, inconsistent handling of null and undefined values,
-  or mismatched column references often go undetected until late stages.
-  These issues create avoidable risk in data pipelines. Tidy-TS is
-  designed to minimize this class of error.</p>
+  not provide a comprehensive type system for full data analysis
+  pipeline.</p>
+  <p>Without a consistent type model for this work, developers are often
+  left writing brittle glue code across loosely coupled tools. Many
+  teams using TypeScript for data ingestion and application logic still
+  rely on Python or R for analysis and modeling. This workflow involves
+  exporting and reimporting data with assumptions about column names,
+  types, and missing values. Subtle errors such as incorrect joins,
+  inconsistent handling of null and undefined values, or mismatched
+  column references often go undetected until late stages. These issues
+  create avoidable risk in data pipelines. Tidy-TS is designed to
+  minimize this class of error.</p>
   <p>This library implements and builds upon a tidyverse-style grammar
   of data manipulation using TypeScript’s structural type system. Each
   operation in a pipeline maintains and refines the type signature of
@@ -235,8 +233,9 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
   queried via popular type-safe Object-Relational Mappers, Tidy-TS can
   create dataframes using their provided types directly.</p>
   <p>Tidy-TS ultimately builds on lessons from tools like pandas, dplyr,
-  and Polars and adapts them for modern Typescript development
-  needs.</p>
+  and Polars and adapts them for modern Typescript development needs.
+  Tidy-TS is tested on each commit with a suite of over 900 tests and
+  across Node, Bun, Deno, and browser targets.</p>
 </sec>
 <sec id="research-applications">
   <title>Research applications</title>
@@ -273,10 +272,14 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
   support, without which this work would not be possible.</p>
   <p>Tidy-TS is also only possible due to numerous open source projects.
   Beyond the pioneering work by the tidyverse teams, the author would
-  like to specifically acknowledge and give thanks for the excellent
-  work by the University of Washington Interactive Data Lab for their
-  inspirational work with Vega-Lite, Vega, and the arquero javascript
-  library.</p>
+  like to specifically acknowledge and give thanks to 1) the
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/uwdata">University
+  of Washington Interactive Data Lab</ext-link> for their transformative
+  work with Vega-Lite, Vega, and the arquero javascript library, 2) the
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/hyparam">hyparam
+  team</ext-link> for their parquet processing libraries and 3) the
+  <ext-link ext-link-type="uri" xlink:href="https://github.com/cross-org">cross-org
+  team</ext-link> for their cross-runtime testing tooling.</p>
 </sec>
 </body>
 <back>

@@ -88,6 +88,26 @@ export function mean(
 ): any {
   if (typeof values === "number") return values;
 
+  // OPTIMIZATION: Check if array is pre-validated (from summarise.verb.ts group proxy)
+  // Skip expensive type checking if we know the data is clean
+  // BUT: only use fast path if NOT removing NAs (fast path doesn't handle nulls)
+  const VALIDATED_ARRAY = Symbol.for("tidy-ts:validated-array");
+  // deno-lint-ignore no-explicit-any
+  if (Array.isArray(values) && (values as any)[VALIDATED_ARRAY] && !removeNA) {
+    const arr = values as number[];
+    // Use Welford's algorithm for numerical stability (online mean calculation)
+    let m = 0;
+    let count = 0;
+    for (let i = 0; i < arr.length; i++) {
+      const val = arr[i];
+      // Skip nulls/NaN even in validated arrays
+      if (val == null || Number.isNaN(val)) continue;
+      count++;
+      m += (val - m) / count;
+    }
+    return count > 0 ? m : null;
+  }
+
   // Check for mixed types first - return null unless removeNA is true
   if (hasMixedTypes(values) && !removeNA) {
     return null;
@@ -108,7 +128,6 @@ export function mean(
     return null;
   }
 
-  // Welford's algorithm for numerical stability
   let count = 0;
   let m = 0;
 

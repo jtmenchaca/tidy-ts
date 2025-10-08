@@ -63,6 +63,26 @@ export function sum(
   if (typeof values === "number") return values;
   if (values === undefined || values === null) return null;
 
+  // OPTIMIZATION: Check if array is pre-validated (from summarise.verb.ts group proxy)
+  // Skip expensive type checking if we know the data is clean
+  // BUT: only use fast path if NOT removing NAs (fast path doesn't handle nulls)
+  const VALIDATED_ARRAY = Symbol.for("tidy-ts:validated-array");
+  // deno-lint-ignore no-explicit-any
+  if (Array.isArray(values) && (values as any)[VALIDATED_ARRAY] && !removeNA) {
+    const arr = values as number[];
+    // Simple loop for typical group sizes with null handling
+    let s = 0;
+    let sawAny = false;
+    for (let i = 0; i < arr.length; i++) {
+      const val = arr[i];
+      // Skip nulls/NaN even in validated arrays
+      if (val == null || Number.isNaN(val)) continue;
+      s += val;
+      sawAny = true;
+    }
+    return sawAny ? s : null;
+  }
+
   // Check for mixed types first - return null unless removeNA is true
   if (hasMixedTypes(values) && !removeNA) {
     return null;

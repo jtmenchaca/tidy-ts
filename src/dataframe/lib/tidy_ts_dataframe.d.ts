@@ -291,6 +291,10 @@ export function right_join_typed_multi_u32(
  */
 export function sum_wasm(values: Float64Array): number;
 /**
+ * WASM export for mean calculation
+ */
+export function mean_wasm(values: Float64Array): number;
+/**
  * WASM export for unique f64 values
  */
 export function unique_f64(values: Float64Array): Float64Array;

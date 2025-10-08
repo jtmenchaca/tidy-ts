@@ -42,9 +42,11 @@ Deno.test("s.mean returns null when all values are null even with removeNA=true"
   df.print();
 
   // This should return null instead of throwing
-  const result = df.groupBy("unit").summarize({
-    mean_value: (g) => s.mean(g.value, true),
-  });
+  const result = df
+    .groupBy("unit")
+    .summarize({
+      mean_value: (g) => s.mean(g.value, true),
+    });
 
   console.log("\nResult:");
   result.print();

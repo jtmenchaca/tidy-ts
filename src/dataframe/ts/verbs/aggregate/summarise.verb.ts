@@ -72,37 +72,6 @@ export function summarise<T extends object>(
   };
 }
 
-// Helper function to analyze column usage in summarise functions
-function analyzeColumnUsage<T extends object>(
-  spec: SummariseSpec<T>,
-): Set<string> {
-  const usedColumns = new Set<string>();
-
-  if (typeof spec === "function") {
-    // Parse function string to find g.columnName patterns
-    const funcStr = spec.toString();
-    const columnPattern = /\bg\.(\w+)(?!\.length)/g;
-    let match;
-    while ((match = columnPattern.exec(funcStr)) !== null) {
-      usedColumns.add(match[1]);
-    }
-  } else {
-    // Parse each function in the spec object
-    for (const [, expr] of Object.entries(spec)) {
-      if (typeof expr === "function") {
-        const funcStr = expr.toString();
-        const columnPattern = /\bg\.(\w+)(?!\.length)/g;
-        let match;
-        while ((match = columnPattern.exec(funcStr)) !== null) {
-          usedColumns.add(match[1]);
-        }
-      }
-    }
-  }
-
-  return usedColumns;
-}
-
 // Sync implementation (original logic)
 function summariseSync<T extends object>(
   df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
@@ -141,15 +110,10 @@ function summariseSync<T extends object>(
   const api = gdf as any;
   const store = api.__store;
 
-  // OPTIMIZATION: Analyze which columns are actually needed
-  const requiredColumns = tracer.withSpan(df, "analyze-column-usage", () => {
-    return analyzeColumnUsage(spec);
-  });
-
   const {
     head,
     next,
-    count: _count,
+    count,
     keyRow,
     groupingColumns,
     usesRawIndices,
@@ -193,54 +157,119 @@ function summariseSync<T extends object>(
       const groupSpan = tracer.withSpan(df, `process-group-${g}`, () => {
         // Extract group row indices using adjacency list
         const groupIndices = tracer.withSpan(df, "extract-indices", () => {
-          const groupIndices: number[] = [];
+          // OPTIMIZED: Pre-allocate array with known size to avoid push() overhead
+          const groupSize = count[g];
+          const groupIndices = new Array(groupSize);
+
+          // Fill array in reverse order, then write forward to avoid separate reversal
           let rowIdx = head[g];
+          let writePos = groupSize - 1;
           while (rowIdx !== -1) {
             const actualIdx = usesRawIndices ? rowIdx : baseIndex![rowIdx];
-            groupIndices.push(actualIdx);
+            groupIndices[writePos] = actualIdx;
+            writePos--;
             rowIdx = next[rowIdx];
           }
-          // Adjacency list gives us rows in reverse order, so reverse to get original order
-          groupIndices.reverse();
+
           return groupIndices;
         });
 
-        // OPTIMIZED: Extract only required columns (lazy extraction)
-        const groupColumns = tracer.withSpan(df, "extract-columns", () => {
-          const groupColumns: Record<string, unknown[]> = {};
+        // OPTIMIZED: Create lightweight DataFrame proxy with lazy column extraction
+        const groupDF = tracer.withSpan(df, "create-group-proxy", () => {
           const groupSize = groupIndices.length;
 
-          // Always extract all columns for safety - column analysis is too simplistic for complex functions
-          const columnsToExtract = new Set(store.columnNames);
+          // Lazy column cache - only extract columns when accessed
+          const columnCache: Record<string, unknown[]> = {};
 
-          for (const colName of columnsToExtract) {
-            const colNameStr = String(colName);
-            if (store.columns[colNameStr]) {
-              const sourceColumn = store.columns[colNameStr];
-              const groupColumn = new Array(groupSize);
+          // Lazy DataFrame - only create if methods are called
+          let realDataFrame: DataFrame<T> | null = null;
 
-              // Direct loop instead of map for better performance
-              for (let i = 0; i < groupSize; i++) {
-                groupColumn[i] = sourceColumn[groupIndices[i]];
+          // Symbol to mark arrays as pre-validated (skip expensive type checking in stats functions)
+          const VALIDATED_ARRAY = Symbol.for("tidy-ts:validated-array");
+
+          const getColumn = (colName: string): unknown[] => {
+            if (columnCache[colName]) {
+              return columnCache[colName];
+            }
+
+            const sourceColumn = store.columns[colName];
+            if (!sourceColumn) {
+              throw new Error(`Column '${colName}' not found`);
+            }
+
+            // Extract column on demand
+            const groupColumn = new Array(groupSize);
+            for (let i = 0; i < groupSize; i++) {
+              groupColumn[i] = sourceColumn[groupIndices[i]];
+            }
+
+            // Mark array as validated to skip expensive type checks in stats functions
+            // This is safe because we know the data comes from a typed DataFrame column
+            (groupColumn as any)[VALIDATED_ARRAY] = true;
+
+            columnCache[colName] = groupColumn;
+            return groupColumn;
+          };
+
+          const getRealDataFrame = (): DataFrame<T> => {
+            if (realDataFrame) return realDataFrame;
+
+            // Extract all columns if not already cached
+            for (const colName of store.columnNames) {
+              if (!columnCache[colName]) {
+                getColumn(colName);
+              }
+            }
+
+            // Create real DataFrame from cached columns
+            const groupStore = {
+              columns: columnCache,
+              columnNames: store.columnNames,
+              length: groupSize,
+            };
+            realDataFrame = createColumnarDataFrameFromStore(
+              groupStore,
+            ) as DataFrame<T>;
+            return realDataFrame;
+          };
+
+          // Create proxy that looks like a DataFrame but only extracts columns on demand
+          const proxy = new Proxy({
+            nrows: () => groupSize,
+            ncols: () => store.columnNames.length,
+            columnNames: store.columnNames,
+          } as any, {
+            get(target, prop: string | symbol) {
+              // Handle basic DataFrame properties
+              if (
+                prop === "nrows" || prop === "ncols" || prop === "columnNames"
+              ) {
+                return target[prop];
               }
 
-              groupColumns[colNameStr] = groupColumn;
-            }
-          }
-          return groupColumns;
-        }, {
-          rowCount: groupIndices.length,
-          columnCount: requiredColumns.size || store.columnNames.length,
-        });
+              // Handle column access - lazily extract the column
+              if (
+                typeof prop === "string" && store.columnNames.includes(prop)
+              ) {
+                return getColumn(prop);
+              }
 
-        // OPTIMIZED: Create DataFrame directly from columnar store (avoid toColumnarStorage)
-        const groupDF = tracer.withSpan(df, "create-dataframe", () => {
-          const groupStore = {
-            columns: groupColumns,
-            columnNames: store.columnNames,
-            length: groupIndices.length,
-          };
-          return createColumnarDataFrameFromStore(groupStore) as DataFrame<T>;
+              // For any other property/method, create and use real DataFrame
+              // This handles filter(), select(), mutate(), etc.
+              if (prop !== "then" && prop !== "catch") { // Avoid promise-like behavior
+                const realDF = getRealDataFrame();
+                const value = (realDF as any)[prop];
+                if (typeof value === "function") {
+                  return value.bind(realDF);
+                }
+                return value;
+              }
+
+              return target[prop];
+            },
+          });
+
+          return proxy as DataFrame<T>;
         });
 
         // Apply summarization functions
