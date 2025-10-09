@@ -117,24 +117,39 @@ impl MannWhitneyUTest {
 
         let n = n_x + n_y;
 
-        // Determine whether to use exact distribution (R's logic: n ≤ 50 and no ties)
-        let use_exact = config.exact && n_xy <= 50.0 && tie_correction == 0.0;
+        // Determine whether to use exact distribution
+        // R's logic from wilcox.test.R line 279-280: exact <- (n.x < 50) && (n.y < 50)
+        let use_exact = config.exact && n_x < 50.0 && n_y < 50.0 && tie_correction == 0.0;
 
         // Calculate p-value using configured method
         let p_value = if use_exact {
-            // Use exact Wilcoxon distribution (R's exact approach)
+            // Use exact Wilcoxon distribution following R's exact logic
             let w_statistic = estimate_small;
-            let p_exact = if w_statistic > n_xy / 2.0 {
-                pwilcox(w_statistic - 1.0, n_x, n_y, false, false)
-            } else {
-                pwilcox(w_statistic, n_x, n_y, true, false)
-            };
 
-            // Apply alternative hypothesis
+            // Match R's logic from wilcox.test.R lines 285-297
             match config.alternative.as_str() {
-                "less" => p_exact,
-                "greater" => 1.0 - p_exact,
-                _ => (2.0 * p_exact).min(1.0), // two-sided
+                "two-sided" => {
+                    let p = if w_statistic > n_xy / 2.0 {
+                        pwilcox(w_statistic - 1.0, n_x, n_y, false, false)
+                    } else {
+                        pwilcox(w_statistic, n_x, n_y, true, false)
+                    };
+                    (2.0 * p).min(1.0)
+                },
+                "greater" => {
+                    pwilcox(w_statistic - 1.0, n_x, n_y, false, false)
+                },
+                "less" => {
+                    pwilcox(w_statistic, n_x, n_y, true, false)
+                },
+                _ => {
+                    let p = if w_statistic > n_xy / 2.0 {
+                        pwilcox(w_statistic - 1.0, n_x, n_y, false, false)
+                    } else {
+                        pwilcox(w_statistic, n_x, n_y, true, false)
+                    };
+                    (2.0 * p).min(1.0)
+                }
             }
         } else {
             // Use normal approximation following R's exact implementation

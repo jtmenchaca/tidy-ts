@@ -14,11 +14,13 @@ export function kendallTest({
   y,
   alternative = "two-sided",
   alpha = 0.05,
+  exact,
 }: {
   x: number[];
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
+  exact?: boolean;
 }): KendallCorrelationTestResult {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
@@ -41,6 +43,7 @@ export function kendallTest({
     new Float64Array(cleanY),
     wasmAlternative,
     alpha,
+    exact,
   );
   return serializeTestResult(result) as KendallCorrelationTestResult;
 }

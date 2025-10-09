@@ -51,7 +51,10 @@ pub fn independence(
                 .map(|(j, &obs)| {
                     let exp = expected[i][j];
                     if exp == 0.0 {
-                        0.0
+                        // If expected frequency is 0 and observed is also 0, this is a degenerate case
+                        // If observed is non-zero but expected is 0, this is also degenerate
+                        // Return NaN to indicate the test cannot be computed
+                        f64::NAN
                     } else {
                         // Apply Yates' continuity correction for 2x2 tables
                         let corrected_diff = if num_rows == 2 && num_cols == 2 {
@@ -98,7 +101,7 @@ pub fn independence(
                 .map(|(j, &obs)| {
                     let exp = expected[i][j];
                     if exp == 0.0 {
-                        0.0
+                        f64::NAN
                     } else {
                         (obs - exp) / exp.sqrt()
                     }
@@ -187,7 +190,7 @@ where
         .zip(expected.iter())
         .map(|(&obs, &exp)| {
             if exp == 0.0 {
-                0.0
+                f64::NAN
             } else {
                 (obs - exp).powi(2) / exp
             }

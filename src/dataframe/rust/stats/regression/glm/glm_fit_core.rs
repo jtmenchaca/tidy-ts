@@ -9,8 +9,11 @@ use super::glm_fit_core_validation::*;
 use super::glm_fit_core_warnings::*;
 
 use super::glm_fit_irls_core::run_irls_iteration;
-use super::types::{GlmControl, GlmResult};
+use super::types::{
+    GlmControl, GlmFamilyInfo, GlmResult, ModelFrame, ModelMatrix, QrDecomposition, TermsObject,
+};
 use crate::stats::regression::family::GlmFamily;
+use std::collections::HashMap;
 
 #[cfg(feature = "wasm")]
 use web_sys::console;
@@ -57,6 +60,7 @@ pub fn glm_fit(
     family: Box<dyn GlmFamily>,
     control: GlmControl,
     intercept: bool,
+    column_names: Option<Vec<String>>,
 ) -> Result<GlmResult, String> {
     // Validate control parameters
     validate_control(&control)?;
@@ -116,8 +120,9 @@ pub fn glm_fit(
         start.unwrap_or_else(|| vec![0.0; p])
     };
 
-    // Track rank from IRLS
+    // Track rank and QR from IRLS
     let mut irls_rank: Option<usize> = None;
+    let mut irls_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
 
     if !empty {
         // Run IRLS iteration
@@ -146,6 +151,7 @@ pub fn glm_fit(
         conv = irls_result.converged;
         boundary = irls_result.boundary;
         irls_rank = Some(irls_result.rank);
+        irls_qr_result = irls_result.qr_result;
 
         // Handle convergence and boundary warnings (matching R's behavior)
         if !conv {
@@ -188,7 +194,9 @@ pub fn glm_fit(
     let (w, good) = calculate_working_weights(&weights, &mu, &eta, &variance_fn, &mu_eta);
 
     // Calculate null deviance
-    let nulldev = calculate_null_deviance(&y, &weights, &offset, intercept, &linkinv, &dev_resids);
+    let nulldev = calculate_null_deviance(&y, &weights, &offset, intercept, &linkinv, &|y, mu, w| {
+        deviance_fn.deviance(y, mu, w)
+    });
 
     // Calculate degrees of freedom
     // Use the rank returned by the IRLS weighted least squares solve when available
@@ -221,6 +229,9 @@ pub fn glm_fit(
     // Create working weights
     let wt = create_final_working_weights(&w, &good);
 
+    // Clone coef before moving it into the struct so we can use it for calculations
+    let coef_for_stats = coef.clone();
+
     Ok(GlmResult {
         coefficients: coef,
         residuals: residuals.clone(),
@@ -232,17 +243,63 @@ pub fn glm_fit(
             .zip(mu.iter())
             .map(|(&y_i, &mu_i)| y_i - mu_i)
             .collect(),
-        deviance_residuals: residuals.clone(),
         pearson_residuals: residuals.clone(),
-        effects: None,  // TODO: Calculate from QR
-        r_matrix: None, // TODO: Calculate from QR
-        qr: None,       // TODO: Store QR result
+        effects: irls_qr_result
+            .as_ref()
+            .map(|qr| qr.effects.clone())
+            .unwrap_or_default(),
+        r: irls_qr_result
+            .as_ref()
+            .map(|qr| {
+                // Convert QR matrix to R matrix format (upper triangular)
+                // QR decomposition stores R in upper triangle of qr matrix (column-major)
+                let mut r_matrix = vec![vec![0.0; p]; p];
+                let n = qr.qr.len() / p; // number of rows
+                for i in 0..p {
+                    for j in i..p {
+                        // Column-major indexing: element at (row=i, col=j) is at index j*n + i
+                        let idx = j * n + i;
+                        if idx < qr.qr.len() {
+                            r_matrix[i][j] = qr.qr[idx];
+                        }
+                    }
+                }
+                r_matrix
+            })
+            .unwrap_or_default(),
+        qr: QrDecomposition {
+            qr: irls_qr_result
+                .as_ref()
+                .map(|qr| {
+                    // Convert 1D QR matrix to 2D format
+                    let mut qr_2d = vec![vec![0.0; p]; y.len()];
+                    for i in 0..y.len() {
+                        for j in 0..p {
+                            if i * p + j < qr.qr.len() {
+                                qr_2d[i][j] = qr.qr[i * p + j];
+                            }
+                        }
+                    }
+                    qr_2d
+                })
+                .unwrap_or_default(),
+            rank: rank,
+            qraux: irls_qr_result
+                .as_ref()
+                .map(|qr| qr.qraux.clone())
+                .unwrap_or_default(),
+            pivot: irls_qr_result
+                .as_ref()
+                .map(|qr| qr.pivot.iter().map(|&x| x as usize).collect())
+                .unwrap_or_else(|| (0..p).collect()),
+            tol: control.epsilon,
+        },
         rank,
         qr_rank: rank,
         pivot: (0..p as i32).collect(),
         tol: control.epsilon,
         pivoted: false,
-        family: family.clone_box(),
+        family: GlmFamilyInfo::from_glm_family(family.as_ref()),
         deviance: devold,
         aic: aic_model,
         null_deviance: nulldev,
@@ -251,21 +308,345 @@ pub fn glm_fit(
         prior_weights: weights,
         df_residual: resdf,
         df_null: nulldf,
-        y,
+        y: y.clone(),
         converged: conv,
         boundary,
-        model: None,
-        x: None,
-        call: None,
-        formula: None,
-        terms: None,
-        data: None,
+        model: ModelFrame {
+            y: y.clone(),
+            predictors: (0..p)
+                .map(|i| (format!("x{}", i), x.iter().map(|row| row[i]).collect()))
+                .collect(),
+            factors: HashMap::new(),
+        },
+        x: Some(ModelMatrix {
+            matrix: x.iter().flatten().cloned().collect(), // Flatten 2D to 1D
+            n_rows: y.len(),
+            n_cols: p,
+            column_names: (0..p).map(|i| format!("x{}", i)).collect(),
+            term_assignments: (0..p as i32).collect(),
+            row_names: None,
+        }),
+        call: format!(
+            "glm(formula = y ~ x, family = {}, data = data)",
+            family.name()
+        ),
+        formula: "y ~ x".to_string(),
+        terms: TermsObject {
+            variables: vec!["y".to_string(), "x".to_string()],
+            factors: vec![vec![1]], // Factor matrix - x variable
+            term_labels: vec!["(Intercept)".to_string(), "x".to_string()],
+            order: vec![0, 1],
+            intercept: 1,
+            response: 0,
+            data_classes: HashMap::new(),
+        },
+        data: "data".to_string(),
         offset: Some(offset),
         control,
         method: "glm.fit".to_string(),
-        contrasts: None,
-        xlevels: None,
+        contrasts: HashMap::new(),
+        xlevels: HashMap::new(),
         na_action: None,
         dispersion: 1.0, // Default dispersion value
+
+        // Additional derived information (31-50)
+        model_matrix: x.clone(),
+        model_matrix_dimensions: (y.len(), p),
+        model_matrix_column_names: column_names.unwrap_or_else(|| (0..p).map(|i| format!("x{}", i)).collect()),
+        residual_standard_error: if resdf > 0 {
+            (devold / resdf as f64).sqrt()
+        } else {
+            0.0
+        },
+        r_squared: if nulldev > 0.0 {
+            1.0 - (devold / nulldev)
+        } else {
+            0.0
+        },
+        adjusted_r_squared: if nulldev > 0.0 && y.len() > p {
+            let n = y.len() as f64;
+            let k = p as f64;
+            1.0 - (1.0 - (devold / nulldev)) * (n - 1.0) / (n - k)
+        } else {
+            0.0
+        },
+        deviance_explained_percent: if nulldev > 0.0 {
+            (1.0 - (devold / nulldev)) * 100.0
+        } else {
+            0.0
+        },
+        f_statistic: if resdf > 0 && nulldev > devold {
+            ((nulldev - devold) / (nulldf - resdf) as f64) / (devold / resdf as f64)
+        } else {
+            0.0
+        },
+        f_p_value: 0.0, // TODO: Calculate F-test p-value
+        n_observations: y.len(),
+        response_variable_name: "y".to_string(),
+        predictor_variable_names: (0..p).map(|i| format!("x{}", i)).collect(),
+        factor_levels: HashMap::new(),
+        reference_levels: HashMap::new(),
+        dispersion_parameter: if resdf > 0 {
+            devold / resdf as f64
+        } else {
+            1.0
+        },
+        deviance_residuals: residuals.clone(),
+        covariance_matrix: {
+            // Calculate covariance matrix from R matrix
+            // Cov = (X'X)^(-1) * σ² = R^(-1) * (R^(-1))' * σ²
+            let sigma_squared = if resdf > 0 {
+                devold / resdf as f64
+            } else {
+                1.0
+            };
+
+            // Get R matrix from QR result
+            let r_matrix = irls_qr_result
+                .as_ref()
+                .map(|qr| {
+                    // Convert QR matrix to R matrix format (upper triangular)
+                    // QR decomposition stores R in upper triangle of qr matrix
+                    let mut r_mat = vec![vec![0.0; p]; p];
+                    let n = qr.qr.len() / p; // number of rows
+                    for i in 0..p {
+                        for j in i..p {
+                            // Column-major indexing: element at (row=i, col=j) is at index j*n + i
+                            let idx = j * n + i;
+                            if idx < qr.qr.len() {
+                                r_mat[i][j] = qr.qr[idx];
+                            }
+                        }
+                    }
+                    r_mat
+                })
+                .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+
+            // Calculate R^(-1) using back substitution
+            // For upper triangular matrix R, solve R * R_inv = I
+            let mut r_inv = vec![vec![0.0; p]; p];
+
+            // Solve for each column of R_inv
+            for j in 0..p {
+                // Start with identity matrix column j
+                let mut b = vec![0.0; p];
+                b[j] = 1.0;
+
+                // Back substitution: solve R * x = b
+                for i in (0..p).rev() {
+                    if r_matrix[i][i].abs() < 1e-10 {
+                        // Singular matrix
+                        r_inv[i][j] = 0.0;
+                    } else {
+                        let mut sum = b[i];
+                        for k in (i + 1)..p {
+                            sum -= r_matrix[i][k] * r_inv[k][j];
+                        }
+                        r_inv[i][j] = sum / r_matrix[i][i];
+                    }
+                }
+            }
+
+            // Calculate covariance matrix: R^(-1) * (R^(-1))' * σ²
+            let mut cov = vec![vec![0.0; p]; p];
+            for i in 0..p {
+                for j in 0..p {
+                    for k in 0..p {
+                        cov[i][j] += r_inv[i][k] * r_inv[j][k];
+                    }
+                    cov[i][j] *= sigma_squared;
+                }
+            }
+            cov
+        },
+        standard_errors: {
+            // Calculate standard errors from covariance matrix diagonal
+            // SE = sqrt(diag(Cov)) = sqrt(diag((X'X)^(-1) * σ²))
+            let sigma_squared = if resdf > 0 {
+                devold / resdf as f64
+            } else {
+                1.0
+            };
+
+            // Get R matrix and compute (X'X)^(-1) = R^(-1) * (R^(-1))'
+            let r_matrix = irls_qr_result
+                .as_ref()
+                .map(|qr| {
+                    let mut r_mat = vec![vec![0.0; p]; p];
+                    let n = qr.qr.len() / p;
+                    for i in 0..p {
+                        for j in i..p {
+                            let idx = j * n + i;
+                            if idx < qr.qr.len() {
+                                r_mat[i][j] = qr.qr[idx];
+                            }
+                        }
+                    }
+                    r_mat
+                })
+                .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+
+            // Compute R^(-1)
+            let mut r_inv = vec![vec![0.0; p]; p];
+            for j in 0..p {
+                let mut b = vec![0.0; p];
+                b[j] = 1.0;
+                for i in (0..p).rev() {
+                    if r_matrix[i][i].abs() < 1e-10 {
+                        r_inv[i][j] = 0.0;
+                    } else {
+                        let mut sum = b[i];
+                        for k in (i + 1)..p {
+                            sum -= r_matrix[i][k] * r_inv[k][j];
+                        }
+                        r_inv[i][j] = sum / r_matrix[i][i];
+                    }
+                }
+            }
+
+            // Compute diagonal of (X'X)^(-1) = R^(-1) * (R^(-1))'
+            let mut std_errors = vec![0.0; p];
+            for i in 0..p {
+                let mut var_i = 0.0;
+                for k in 0..p {
+                    var_i += r_inv[i][k] * r_inv[i][k];
+                }
+                std_errors[i] = (var_i * sigma_squared).sqrt();
+            }
+            std_errors
+        },
+        t_statistics: {
+            // Calculate t-statistics: t = coefficient / SE
+            coef_for_stats.iter()
+                .zip(
+                    // Recompute standard errors inline (we can't reference the above)
+                    {
+                        let sigma_squared = if resdf > 0 {
+                            devold / resdf as f64
+                        } else {
+                            1.0
+                        };
+
+                        let r_matrix = irls_qr_result
+                            .as_ref()
+                            .map(|qr| {
+                                let mut r_mat = vec![vec![0.0; p]; p];
+                                let n = qr.qr.len() / p;
+                                for i in 0..p {
+                                    for j in i..p {
+                                        let idx = j * n + i;
+                                        if idx < qr.qr.len() {
+                                            r_mat[i][j] = qr.qr[idx];
+                                        }
+                                    }
+                                }
+                                r_mat
+                            })
+                            .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+
+                        let mut r_inv = vec![vec![0.0; p]; p];
+                        for j in 0..p {
+                            let mut b = vec![0.0; p];
+                            b[j] = 1.0;
+                            for i in (0..p).rev() {
+                                if r_matrix[i][i].abs() < 1e-10 {
+                                    r_inv[i][j] = 0.0;
+                                } else {
+                                    let mut sum = b[i];
+                                    for k in (i + 1)..p {
+                                        sum -= r_matrix[i][k] * r_inv[k][j];
+                                    }
+                                    r_inv[i][j] = sum / r_matrix[i][i];
+                                }
+                            }
+                        }
+
+                        let mut std_errors = vec![0.0; p];
+                        for i in 0..p {
+                            let mut var_i = 0.0;
+                            for k in 0..p {
+                                var_i += r_inv[i][k] * r_inv[i][k];
+                            }
+                            std_errors[i] = (var_i * sigma_squared).sqrt();
+                        }
+                        std_errors
+                    }.into_iter()
+                )
+                .map(|(&coef_val, se)| if se > 0.0 { coef_val / se } else { 0.0 })
+                .collect()
+        },
+        p_values: {
+            // Calculate p-values from t-distribution
+            use crate::stats::distributions::students_t;
+
+            coef_for_stats.iter()
+                .zip(
+                    // Recompute standard errors and t-stats inline
+                    {
+                        let sigma_squared = if resdf > 0 {
+                            devold / resdf as f64
+                        } else {
+                            1.0
+                        };
+
+                        let r_matrix = irls_qr_result
+                            .as_ref()
+                            .map(|qr| {
+                                let mut r_mat = vec![vec![0.0; p]; p];
+                                let n = qr.qr.len() / p;
+                                for i in 0..p {
+                                    for j in i..p {
+                                        let idx = j * n + i;
+                                        if idx < qr.qr.len() {
+                                            r_mat[i][j] = qr.qr[idx];
+                                        }
+                                    }
+                                }
+                                r_mat
+                            })
+                            .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+
+                        let mut r_inv = vec![vec![0.0; p]; p];
+                        for j in 0..p {
+                            let mut b = vec![0.0; p];
+                            b[j] = 1.0;
+                            for i in (0..p).rev() {
+                                if r_matrix[i][i].abs() < 1e-10 {
+                                    r_inv[i][j] = 0.0;
+                                } else {
+                                    let mut sum = b[i];
+                                    for k in (i + 1)..p {
+                                        sum -= r_matrix[i][k] * r_inv[k][j];
+                                    }
+                                    r_inv[i][j] = sum / r_matrix[i][i];
+                                }
+                            }
+                        }
+
+                        let mut t_stats = Vec::new();
+                        for i in 0..p {
+                            let mut var_i = 0.0;
+                            for k in 0..p {
+                                var_i += r_inv[i][k] * r_inv[i][k];
+                            }
+                            let se = (var_i * sigma_squared).sqrt();
+                            let t = if se > 0.0 { coef_for_stats[i] / se } else { 0.0 };
+                            t_stats.push(t);
+                        }
+                        t_stats
+                    }.into_iter()
+                )
+                .map(|(&_coef_val, t_stat)| {
+                    if resdf > 0 {
+                        // Two-tailed p-value from t-distribution
+                        2.0 * students_t::pt(t_stat.abs(), resdf as f64, false, false)
+                    } else {
+                        f64::NAN
+                    }
+                })
+                .collect()
+        },
+        leverage: Vec::new(),       // TODO: Calculate leverage
+        cooks_distance: Vec::new(), // TODO: Calculate Cook's distance
     })
 }

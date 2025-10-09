@@ -427,9 +427,9 @@ fn format_glm_result(result: &GlmResult) -> String {
     json.push(']');
 
     // Add effects if present
-    if let Some(ref effects) = result.effects {
+    if !result.effects.is_empty() {
         json.push_str(r#","effects":["#);
-        for (i, eff) in effects.iter().enumerate() {
+        for (i, eff) in result.effects.iter().enumerate() {
             if i > 0 {
                 json.push(',');
             }
@@ -451,9 +451,58 @@ fn format_glm_result(result: &GlmResult) -> String {
     }
     json.push(']');
 
-    // Add qr if present
-    if result.qr.is_some() {
-        json.push_str(r#","qr":true"#);
+    // Add R matrix if present
+    if !result.r.is_empty() {
+        json.push_str(r#","r":[["#);
+        for (i, row) in result.r.iter().enumerate() {
+            if i > 0 {
+                json.push_str("],[");
+            }
+            for (j, val) in row.iter().enumerate() {
+                if j > 0 {
+                    json.push(',');
+                }
+                json.push_str(&format_json_number(*val));
+            }
+        }
+        json.push_str("]]");
+    }
+
+    // Add qr if present (QR is now always present as a struct)
+    if !result.qr.qr.is_empty() {
+        json.push_str(r#","qr":{"#);
+        json.push_str(r#""qr":[["#);
+        for (i, row) in result.qr.qr.iter().enumerate() {
+            if i > 0 {
+                json.push_str("],[");
+            }
+            for (j, val) in row.iter().enumerate() {
+                if j > 0 {
+                    json.push(',');
+                }
+                json.push_str(&format_json_number(*val));
+            }
+        }
+        json.push_str("]]");
+        json.push_str(&format!(r#","rank":{}"#, result.qr.rank));
+        json.push_str(r#","qraux":["#);
+        for (i, val) in result.qr.qraux.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+        json.push(']');
+        json.push_str(r#","pivot":["#);
+        for (i, p) in result.qr.pivot.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&p.to_string());
+        }
+        json.push(']');
+        json.push_str(&format!(r#","tol":{}"#, result.qr.tol));
+        json.push('}');
     }
 
     // Add df.residual
@@ -463,7 +512,11 @@ fn format_glm_result(result: &GlmResult) -> String {
     json.push_str(&format!(r#","df_null":{}"#, result.df_null));
 
     // Add family info
-    json.push_str(&format!(r#","family":"{}""#, result.family.name()));
+    json.push_str(&format!(
+        r#","family":{{"family":"{}","link":"{}"}}"#,
+        result.family.family,
+        result.family.link
+    ));
 
     // Add deviance
     json.push_str(&format!(
@@ -490,19 +543,218 @@ fn format_glm_result(result: &GlmResult) -> String {
     json.push_str(&format!(r#","boundary":{}"#, result.boundary));
 
     // Add call
-    if let Some(ref call) = result.call {
-        json.push_str(&format!(r#","call":"{}""#, call));
+    if !result.call.is_empty() {
+        json.push_str(&format!(r#","call":"{}""#, result.call));
     }
 
     // Add formula
-    if let Some(ref formula) = result.formula {
-        json.push_str(&format!(r#","formula":"{}""#, formula));
+    if !result.formula.is_empty() {
+        json.push_str(&format!(r#","formula":"{}""#, result.formula));
     }
 
-    // Add terms if present
-    if result.terms.is_some() {
-        json.push_str(r#","terms":true"#);
+    // Add x field if present
+    if let Some(x) = &result.x {
+        json.push_str(r#","x":{"#);
+        json.push_str(r#""matrix":["#);
+        for (i, val) in x.matrix.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+        json.push(']');
+        json.push_str(&format!(r#","n_rows":{}"#, x.n_rows));
+        json.push_str(&format!(r#","n_cols":{}"#, x.n_cols));
+        json.push_str(r#","column_names":["#);
+        for (i, name) in x.column_names.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}""#, name));
+        }
+        json.push(']');
+        json.push_str(r#","term_assignments":["#);
+        for (i, assign) in x.term_assignments.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&assign.to_string());
+        }
+        json.push(']');
+        json.push_str(r#","row_names":null"#);
+        json.push('}');
     }
+
+    // Add model frame if present
+    if !result.model.predictors.is_empty() {
+        json.push_str(r#","model":{"#);
+        json.push_str(r#""y":["#);
+        for (i, val) in result.model.y.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+        json.push(']');
+        json.push_str(r#","predictors":{"#);
+        for (i, (name, values)) in result.model.predictors.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}":["#, name));
+            for (j, val) in values.iter().enumerate() {
+                if j > 0 {
+                    json.push(',');
+                }
+                json.push_str(&format_json_number(*val));
+            }
+            json.push(']');
+        }
+        json.push('}');
+        json.push_str(r#","factors":{}"#);
+        json.push('}');
+    }
+
+    // Add terms if present (terms is now always present as a struct)
+    if !result.terms.variables.is_empty() {
+        json.push_str(r#","terms":{"#);
+        json.push_str(r#""variables":["#);
+        for (i, var) in result.terms.variables.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}""#, var));
+        }
+        json.push(']');
+        json.push_str(r#","factors":[["#);
+        for (i, factor_row) in result.terms.factors.iter().enumerate() {
+            if i > 0 {
+                json.push_str("],[");
+            }
+            for (j, val) in factor_row.iter().enumerate() {
+                if j > 0 {
+                    json.push(',');
+                }
+                json.push_str(&val.to_string());
+            }
+        }
+        json.push_str("]]");
+        json.push_str(r#","term_labels":["#);
+        for (i, label) in result.terms.term_labels.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}""#, label));
+        }
+        json.push(']');
+        json.push_str(r#","order":["#);
+        for (i, order) in result.terms.order.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&order.to_string());
+        }
+        json.push(']');
+        json.push_str(&format!(r#","intercept":{}"#, result.terms.intercept));
+        json.push_str(&format!(r#","response":{}"#, result.terms.response));
+        json.push_str(r#","data_classes":{}"#);
+        json.push('}');
+    }
+
+    // Add additional diagnostic fields
+    json.push_str(&format!(
+        r#","r_squared":{}"#,
+        format_json_number(result.r_squared)
+    ));
+    json.push_str(&format!(
+        r#","adjusted_r_squared":{}"#,
+        format_json_number(result.adjusted_r_squared)
+    ));
+    json.push_str(&format!(
+        r#","f_statistic":{}"#,
+        format_json_number(result.f_statistic)
+    ));
+    json.push_str(&format!(
+        r#","residual_standard_error":{}"#,
+        format_json_number(result.residual_standard_error)
+    ));
+    json.push_str(&format!(r#","n_observations":{}"#, result.n_observations));
+    json.push_str(&format!(
+        r#","dispersion_parameter":{}"#,
+        format_json_number(result.dispersion_parameter)
+    ));
+
+    // Add model matrix info
+    json.push_str(r#","model_matrix":[["#);
+    for (i, row) in result.model_matrix.iter().enumerate() {
+        if i > 0 {
+            json.push_str("],[");
+        }
+        for (j, val) in row.iter().enumerate() {
+            if j > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+    }
+    json.push_str("]]");
+    json.push_str(&format!(
+        r#","model_matrix_dimensions":[{},{}]"#,
+        result.model_matrix_dimensions.0, result.model_matrix_dimensions.1
+    ));
+    json.push_str(r#","model_matrix_column_names":["#);
+    for (i, name) in result.model_matrix_column_names.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format!(r#""{}""#, name));
+    }
+    json.push(']');
+
+    // Add standard errors
+    json.push_str(r#","standard_errors":["#);
+    for (i, val) in result.standard_errors.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add t_statistics
+    json.push_str(r#","t_statistics":["#);
+    for (i, val) in result.t_statistics.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add p_values
+    json.push_str(r#","p_values":["#);
+    for (i, val) in result.p_values.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add covariance matrix
+    json.push_str(r#","covariance_matrix":[["#);
+    for (i, row) in result.covariance_matrix.iter().enumerate() {
+        if i > 0 {
+            json.push_str("],[");
+        }
+        for (j, val) in row.iter().enumerate() {
+            if j > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+    }
+    json.push_str("]]");
 
     json.push('}');
     json

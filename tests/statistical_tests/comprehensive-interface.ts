@@ -167,6 +167,7 @@ export async function callRobustRust(
         y: params.data!.y!,
         alternative,
         alpha,
+        exact: params.options?.exact,
       });
       return {
         test_statistic: extractStatistic(result),
@@ -542,7 +543,7 @@ export async function callRobustRust(
 
     // Two-way ANOVA Tests
     case "aov.two.factorA": {
-      const { twoWayAnovaFactorA } = await import(
+      const { _twoWayAnovaFactorA } = await import(
         "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const twoWayData = params.data!.twoWayData!;
@@ -557,7 +558,7 @@ export async function callRobustRust(
           dataIndex += cellSize;
         }
       }
-      const result = twoWayAnovaFactorA({
+      const result = _twoWayAnovaFactorA({
         data: data3D,
         alpha,
       });
@@ -571,7 +572,7 @@ export async function callRobustRust(
     }
 
     case "aov.two.factorB": {
-      const { twoWayAnovaFactorB } = await import(
+      const { _twoWayAnovaFactorB } = await import(
         "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const twoWayData = params.data!.twoWayData!;
@@ -586,7 +587,7 @@ export async function callRobustRust(
           dataIndex += cellSize;
         }
       }
-      const result = twoWayAnovaFactorB({
+      const result = _twoWayAnovaFactorB({
         data: data3D,
         alpha,
       });
@@ -600,7 +601,7 @@ export async function callRobustRust(
     }
 
     case "aov.two.interaction": {
-      const { twoWayAnovaInteraction } = await import(
+      const { _twoWayAnovaInteraction } = await import(
         "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const twoWayData = params.data!.twoWayData!;
@@ -615,7 +616,7 @@ export async function callRobustRust(
           dataIndex += cellSize;
         }
       }
-      const result = twoWayAnovaInteraction({
+      const result = _twoWayAnovaInteraction({
         data: data3D,
         alpha,
       });

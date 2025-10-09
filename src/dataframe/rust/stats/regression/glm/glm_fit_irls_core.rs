@@ -18,6 +18,8 @@ pub struct IrlsResult {
     pub boundary: bool,
     /// Estimated rank of the design matrix from the final IRLS WLS solve
     pub rank: usize,
+    /// QR decomposition result from the final iteration
+    pub qr_result: Option<super::qr_decomposition::QrLsResult>,
 }
 
 /// Run the IRLS iteration algorithm
@@ -56,6 +58,7 @@ pub fn run_irls_iteration(
     // Main IRLS iteration
     // Track the estimated rank from the weighted least squares step
     let mut last_rank: usize = 0;
+    let mut last_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
 
     for iter_count in 1..=control.maxit {
         // Starting iteration {}/{}
@@ -187,6 +190,8 @@ pub fn run_irls_iteration(
         )?;
 
         // cdqrls completed
+        // Store QR result for final return
+        last_qr_result = Some(qr_result.clone());
 
         // Checking coefficients
 
@@ -406,5 +411,6 @@ pub fn run_irls_iteration(
         converged: *conv,
         boundary: *boundary,
         rank: last_rank,
+        qr_result: last_qr_result,
     })
 }

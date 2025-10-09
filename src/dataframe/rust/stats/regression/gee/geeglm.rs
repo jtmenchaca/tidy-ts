@@ -235,7 +235,9 @@ mod tests {
 
     #[test]
     fn test_geeglm_basic() {
-        let data = HashMap::new();
+        let mut data = HashMap::new();
+        data.insert("y".to_string(), vec![1.0, 2.0, 3.0, 4.0]);
+        data.insert("x".to_string(), vec![0.0, 1.0, 0.0, 1.0]);
         let id = vec![1, 1, 2, 2];
 
         let result = geeglm(

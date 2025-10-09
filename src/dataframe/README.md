@@ -435,7 +435,7 @@ const longData = wideData.pivotLonger({
 
 
 ## Documentation
-Visit our [documentation website](https://jtmenchaca.github.io/tidy-ts/) for tutorials and API reference.
+Visit the [documentation website](https://jtmenchaca.github.io/tidy-ts/) for tutorials and API reference.
 
 ## Architecture
 - **Columnar Storage**: Memory-efficient column-major storage

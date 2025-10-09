@@ -87,6 +87,7 @@ pub fn kendall_correlation_test(
     y: &[f64],
     alternative: &str,
     alpha: f64,
+    exact: Option<bool>,
 ) -> KendallCorrelationTestResult {
     let alt_type = match alternative {
         "two.sided" => AlternativeType::TwoSided,
@@ -94,7 +95,7 @@ pub fn kendall_correlation_test(
         "less" => AlternativeType::Less,
         _ => AlternativeType::TwoSided,
     };
-    kendall_test(x, y, alt_type, alpha).unwrap_or_else(|e| KendallCorrelationTestResult {
+    kendall_test(x, y, alt_type, alpha, exact).unwrap_or_else(|e| KendallCorrelationTestResult {
         test_statistic: crate::stats::core::types::TestStatistic {
             value: f64::NAN,
             name: "Z-Statistic".to_string(),

@@ -31,7 +31,8 @@ pub fn anova_one_way(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayA
                 test_name: "One-way ANOVA".to_string(),
                 alpha,
                 error_message: Some("Group sizes exceed data length".to_string()),
-                degrees_of_freedom: 0.0,
+                df_between: 0.0,
+                df_within: 0.0,
                 effect_size: crate::stats::core::types::EffectSize {
                     value: 0.0,
                     name: crate::stats::core::types::EffectSizeType::EtaSquared
@@ -63,7 +64,8 @@ pub fn anova_one_way(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneWayA
             test_name: "One-way ANOVA".to_string(),
             alpha,
             error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
                 name: crate::stats::core::types::EffectSizeType::EtaSquared
@@ -116,7 +118,8 @@ pub fn anova_two_way_factor_a_wasm(
             test_name: "Two-way ANOVA (Factor A)".to_string(),
             alpha,
             error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
                 name: crate::stats::core::types::EffectSizeType::EtaSquared
@@ -169,7 +172,8 @@ pub fn anova_two_way_factor_b_wasm(
             test_name: "Two-way ANOVA (Factor B)".to_string(),
             alpha,
             error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
                 name: crate::stats::core::types::EffectSizeType::EtaSquared
@@ -222,7 +226,8 @@ pub fn anova_two_way_interaction_wasm(
             test_name: "Two-way ANOVA (Interaction)".to_string(),
             alpha,
             error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: crate::stats::core::types::EffectSize {
                 value: 0.0,
                 name: crate::stats::core::types::EffectSizeType::EtaSquared

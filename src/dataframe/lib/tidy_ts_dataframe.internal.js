@@ -2409,9 +2409,10 @@ export function spearman_correlation_test(x, y, alternative, alpha) {
  * @param {Float64Array} y
  * @param {string} alternative
  * @param {number} alpha
+ * @param {boolean | null} [exact]
  * @returns {KendallCorrelationTestResult}
  */
-export function kendall_correlation_test(x, y, alternative, alpha) {
+export function kendall_correlation_test(x, y, alternative, alpha, exact) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
   const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
@@ -2430,6 +2431,7 @@ export function kendall_correlation_test(x, y, alternative, alpha) {
     ptr2,
     len2,
     alpha,
+    isLikeNone(exact) ? 0xFFFFFF : exact ? 1 : 0,
   );
   return KendallCorrelationTestResult.__wrap(ret);
 }
@@ -7083,7 +7085,7 @@ export class OneWayAnovaTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_test_name(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7140,7 +7142,7 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get df_between() {
     const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
       this.__wbg_ptr,
     );
@@ -7149,26 +7151,26 @@ export class OneWayAnovaTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set df_between(arg0) {
     wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get r_squared() {
+  get df_within() {
     const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set r_squared(arg0) {
+  set df_within(arg0) {
     wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get adjusted_r_squared() {
+  get r_squared() {
     const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
       this.__wbg_ptr,
     );
@@ -7177,8 +7179,23 @@ export class OneWayAnovaTestResult {
   /**
    * @param {number} arg0
    */
-  set adjusted_r_squared(arg0) {
+  set r_squared(arg0) {
     wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get adjusted_r_squared() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
+      this.__wbg_ptr,
+    );
+    return ret;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set adjusted_r_squared(arg0) {
+    wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
@@ -7268,7 +7285,7 @@ export class OneWayAnovaTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_alpha(
       this.__wbg_ptr,
     );
     return ret;
@@ -7277,7 +7294,7 @@ export class OneWayAnovaTestResult {
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_chisquarevariancetestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
@@ -7544,11 +7561,7 @@ export class PairedTTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_error_message(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
   }
 }
 
@@ -9393,11 +9406,7 @@ export class TwoSampleTTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_error_message(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
   }
 }
 
@@ -10151,7 +10160,7 @@ export class WelchAnovaTestResult {
   set sample_means(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_welchanovatestresult_sample_means(
+    wasm.__wbg_set_onewayanovatestresult_sample_means(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10174,7 +10183,7 @@ export class WelchAnovaTestResult {
   set sample_std_devs(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_welchanovatestresult_sample_std_devs(
+    wasm.__wbg_set_onewayanovatestresult_sample_std_devs(
       this.__wbg_ptr,
       ptr0,
       len0,

@@ -69,7 +69,8 @@ result <- switch(test_type,
   "cor.test.kendall" = {
     x <- as.numeric(data$x)
     y <- as.numeric(data$y)
-    test_result <- cor.test(x, y, method = "kendall", alternative = alternative)
+    exact <- if (is.null(options$exact)) TRUE else options$exact
+    test_result <- cor.test(x, y, method = "kendall", alternative = alternative, exact = exact)
     list(
       test_statistic = as.numeric(test_result$statistic),
       p_value = test_result$p.value,

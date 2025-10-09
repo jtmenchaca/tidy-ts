@@ -59,10 +59,10 @@ export const GEE_COMPREHENSIVE_SUCCESS_THRESHOLD = 0.9;
  * Used in statistical test comparisons to determine if R and Rust results are close enough
  * to be considered equivalent. Applied to test statistics and p-values.
  *
- * Value: 0.01 (maximum difference of 0.01 between R and Rust results)
+ * Value: 0.0001 (0.01%, maximum difference of 0.0001 between R and Rust results)
  * Used by: statistical-tests.test.ts runRobustComparison()
  */
-export const STATISTICAL_TEST_DIFFERENCE_THRESHOLD = 0.01;
+export const STATISTICAL_TEST_DIFFERENCE_THRESHOLD = 0.0001;
 
 /**
  * COEFFICIENT_DIFFERENCE_THRESHOLD: Maximum allowed difference between R and Rust coefficients for normal regression cases

@@ -955,6 +955,7 @@ export function kendall_correlation_test(
   y: Float64Array,
   alternative: string,
   alpha: number,
+  exact?: boolean | null,
 ): KendallCorrelationTestResult;
 /**
  * WASM export for D'Agostino-Pearson K² normality test
@@ -1702,7 +1703,8 @@ export class OneWayAnovaTestResult {
   p_value: number;
   effect_size: EffectSize;
   test_statistic: TestStatistic;
-  degrees_of_freedom: number;
+  df_between: number;
+  df_within: number;
   r_squared: number;
   adjusted_r_squared: number;
   sample_size: number;

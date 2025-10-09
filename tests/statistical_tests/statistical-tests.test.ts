@@ -1,6 +1,29 @@
 #!/usr/bin/env -S deno test --allow-all
 
 // deno-lint-ignore-file no-explicit-any
+
+console.log(`
+🧪 STATISTICAL TESTS SUITE
+==========================
+This test suite runs in TWO PHASES:
+
+📋 PHASE 1: Individual Test Cases (22 tests)
+   • Each statistical test type runs 2 specific, known test cases
+   • These are deterministic tests with expected outcomes
+   • Covers: correlations, t-tests, z-tests, proportions, distributions, 
+     nonparametric tests, ANOVA, chi-square tests
+
+🎲 PHASE 2: Comprehensive Random Tests (22 tests)  
+   • Each test type runs 2 additional random test cases
+   • These provide broader coverage with varied data
+   • Same test types as Phase 1, but with different random inputs
+
+📊 TOTAL: 44 tests across 22 statistical test types
+🎯 Goal: Ensure both specific known cases and random cases work correctly
+
+Starting Phase 1: Individual Test Cases...
+`);
+
 import {
   callRobustR,
   callRobustRust,
@@ -10,7 +33,7 @@ import {
 import {
   INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   runComprehensiveTestSuite,
-  runTestGroup,
+  runTestType,
   STATISTICAL_COMPREHENSIVE_SUCCESS_THRESHOLD,
   STATISTICAL_TEST_DIFFERENCE_THRESHOLD,
   type TestResult,
@@ -27,6 +50,13 @@ interface ComparisonResult extends TestResult {
   coefficientDiff: number;
   rSquaredDiff: number;
   aicDiff: number;
+  // Add detailed comparison fields for statistical tests
+  testStatisticDiff: number;
+  pValueDiff: number;
+  rTestStatistic: number;
+  rustTestStatistic: number;
+  rPValue: number;
+  rustPValue: number;
 }
 
 // Run comparison using robust interface
@@ -65,6 +95,13 @@ async function runRobustComparison(
       coefficientDiff: maxDiff,
       rSquaredDiff: maxDiff,
       aicDiff: maxDiff,
+      // Add detailed comparison fields for statistical tests
+      testStatisticDiff: statDiff,
+      pValueDiff: pvalDiff,
+      rTestStatistic: rStat,
+      rustTestStatistic: rustStat,
+      rPValue: rPval,
+      rustPValue: rustPval,
     };
   } catch (error) {
     return {
@@ -79,6 +116,13 @@ async function runRobustComparison(
       coefficientDiff: 1,
       rSquaredDiff: 1,
       aicDiff: 1,
+      // Add detailed comparison fields for statistical tests (error case)
+      testStatisticDiff: 1,
+      pValueDiff: 1,
+      rTestStatistic: 0,
+      rustTestStatistic: 0,
+      rPValue: 0,
+      rustPValue: 0,
     };
   }
 }
@@ -131,6 +175,65 @@ function generateTestCase(testType: string, sampleSize: number) {
   return generateComprehensiveTestCase(testType, sampleSize);
 }
 
+// Custom test group runner for statistical tests with detailed output
+async function runStatisticalTestGroup(
+  testName: string,
+  testType: string,
+  testCount: number,
+  generateTestCase: (testType: string, sampleSize: number) => any,
+  runComparison: (params: any) => Promise<ComparisonResult>,
+  sampleSizeRange: [number, number] = [10, 30],
+  successThreshold: number = 0.5,
+): Promise<ComparisonResult[]> {
+  const results = await runTestType(
+    testType,
+    testCount,
+    generateTestCase,
+    runComparison,
+    sampleSizeRange,
+  );
+
+  const passed = results.filter((r) => r.status === "PASS").length;
+  const total = results.length;
+
+  console.log(`\n🔬 ${testName}: ${passed}/${total} passed`);
+  results.forEach((result) => {
+    const icon = result.status === "PASS"
+      ? "✅"
+      : result.status === "FAIL"
+      ? "❌"
+      : "🔥";
+
+    if (result.status === "ERROR") {
+      console.log(
+        `  ${icon} ${result.testName}: ${result.status} (${result.errorMessage})`,
+      );
+    } else {
+      console.log(
+        `  ${icon} ${result.testName}: ${result.status}`,
+      );
+      console.log(
+        `    Test Statistic: R=${result.rTestStatistic.toFixed(6)}, Rust=${
+          result.rustTestStatistic.toFixed(6)
+        } (diff: ${result.testStatisticDiff.toFixed(6)})`,
+      );
+      console.log(
+        `    P-Value: R=${result.rPValue.toFixed(6)}, Rust=${
+          result.rustPValue.toFixed(6)
+        } (diff: ${result.pValueDiff.toFixed(6)})`,
+      );
+    }
+  });
+
+  if (passed < total * successThreshold) {
+    throw new Error(
+      `Only ${passed}/${total} ${testName} tests passed`,
+    );
+  }
+
+  return results;
+}
+
 const testCount = 2; // Number of test cases per test type
 
 // Get enabled test types for comprehensive testing
@@ -141,7 +244,7 @@ const enabledTestTypes = Object.keys(testConfig).filter(
 
 // Correlation Tests
 Deno.test("correlation.pearson", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Pearson Correlation Tests",
     "cor.test.pearson",
     testCount,
@@ -153,7 +256,7 @@ Deno.test("correlation.pearson", async () => {
 });
 
 Deno.test("correlation.spearman", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Spearman Correlation Tests",
     "cor.test.spearman",
     testCount,
@@ -165,7 +268,7 @@ Deno.test("correlation.spearman", async () => {
 });
 
 Deno.test("correlation.kendall", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Kendall Correlation Tests",
     "cor.test.kendall",
     testCount,
@@ -178,7 +281,7 @@ Deno.test("correlation.kendall", async () => {
 
 // T-Tests
 Deno.test("t-tests.one-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "One-Sample T-Tests",
     "t.test.one",
     testCount,
@@ -190,7 +293,7 @@ Deno.test("t-tests.one-sample", async () => {
 });
 
 Deno.test("t-tests.two-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Two-Sample T-Tests",
     "t.test.two",
     testCount,
@@ -202,7 +305,7 @@ Deno.test("t-tests.two-sample", async () => {
 });
 
 Deno.test("t-tests.paired", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Paired T-Tests",
     "t.test.paired",
     testCount,
@@ -215,7 +318,7 @@ Deno.test("t-tests.paired", async () => {
 
 // Z-Tests
 Deno.test("z-tests.one-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "One-Sample Z-Tests",
     "z.test.one",
     testCount,
@@ -227,7 +330,7 @@ Deno.test("z-tests.one-sample", async () => {
 });
 
 Deno.test("z-tests.two-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Two-Sample Z-Tests",
     "z.test.two",
     testCount,
@@ -240,7 +343,7 @@ Deno.test("z-tests.two-sample", async () => {
 
 // Proportion Tests
 Deno.test("proportion-tests.one-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "One-Sample Proportion Tests",
     "prop.test.one",
     testCount,
@@ -252,7 +355,7 @@ Deno.test("proportion-tests.one-sample", async () => {
 });
 
 Deno.test("proportion-tests.two-sample", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Two-Sample Proportion Tests",
     "prop.test.two",
     testCount,
@@ -265,7 +368,7 @@ Deno.test("proportion-tests.two-sample", async () => {
 
 // Distribution Tests
 Deno.test("distribution-tests.kolmogorov-smirnov", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Kolmogorov-Smirnov Tests",
     "ks.test.uniform",
     testCount,
@@ -277,7 +380,7 @@ Deno.test("distribution-tests.kolmogorov-smirnov", async () => {
 });
 
 Deno.test("distribution-tests.shapiro-wilk", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Shapiro-Wilk Tests",
     "shapiro.test",
     testCount,
@@ -289,7 +392,7 @@ Deno.test("distribution-tests.shapiro-wilk", async () => {
 });
 
 Deno.test("distribution-tests.anderson-darling", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Anderson-Darling Tests",
     "ad.test",
     testCount,
@@ -301,7 +404,7 @@ Deno.test("distribution-tests.anderson-darling", async () => {
 });
 
 Deno.test("distribution-tests.dagostino-pearson", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "D'Agostino-Pearson Tests",
     "dagostino.test",
     testCount,
@@ -314,7 +417,7 @@ Deno.test("distribution-tests.dagostino-pearson", async () => {
 
 // Non-parametric Tests
 Deno.test("nonparametric.wilcoxon-signed-rank", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Wilcoxon Signed-Rank Tests",
     "wilcox.test.signedrank",
     testCount,
@@ -326,7 +429,7 @@ Deno.test("nonparametric.wilcoxon-signed-rank", async () => {
 });
 
 Deno.test("nonparametric.mann-whitney", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Mann-Whitney Tests",
     "wilcox.test.mannwhitney",
     testCount,
@@ -338,7 +441,7 @@ Deno.test("nonparametric.mann-whitney", async () => {
 });
 
 Deno.test("nonparametric.kruskal-wallis", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Kruskal-Wallis Tests",
     "kruskal.test",
     testCount,
@@ -351,7 +454,7 @@ Deno.test("nonparametric.kruskal-wallis", async () => {
 
 // ANOVA Tests
 Deno.test("anova.one-way", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "One-Way ANOVA Tests",
     "aov.one",
     testCount,
@@ -363,7 +466,7 @@ Deno.test("anova.one-way", async () => {
 });
 
 Deno.test("anova.welch", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Welch ANOVA Tests",
     "aov.welch",
     testCount,
@@ -376,7 +479,7 @@ Deno.test("anova.welch", async () => {
 
 // Chi-square Tests
 Deno.test("chi-square.chi-square", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Chi-Square Tests",
     "chisq.test",
     testCount,
@@ -388,7 +491,7 @@ Deno.test("chi-square.chi-square", async () => {
 });
 
 Deno.test("chi-square.fishers-exact", async () => {
-  await runTestGroup(
+  await runStatisticalTestGroup(
     "Fisher's Exact Tests",
     "fisher.test",
     testCount,
@@ -401,6 +504,13 @@ Deno.test("chi-square.fishers-exact", async () => {
 
 // Comprehensive statistical test suite
 Deno.test("statistical.comprehensive", async () => {
+  console.log(`
+🎲 PHASE 2: Comprehensive Random Tests
+=====================================
+Now running 2 additional random test cases per test type...
+This provides broader coverage with varied data inputs.
+`);
+
   await runComprehensiveTestSuite(
     "Comprehensive Statistical Test Suite",
     enabledTestTypes,

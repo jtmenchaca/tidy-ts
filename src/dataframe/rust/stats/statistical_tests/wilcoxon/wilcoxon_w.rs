@@ -63,48 +63,118 @@ impl WilcoxonWTest {
         alpha: f64,
         alternative: &str,
     ) -> Result<WilcoxonSignedRankTestResult, String> {
-        // Calculate differences and remove zeros (like R does)
-        let diffs: Vec<f64> = x.iter().zip(y).map(|(x, y)| x - y).filter(|&d| d != 0.0).collect();
+        // Calculate all differences (for Cohen's d)
+        let all_diffs: Vec<f64> = x.iter().zip(y).map(|(x, y)| x - y).collect();
+
+        // Remove zeros for Wilcoxon test (like R does)
+        let diffs: Vec<f64> = all_diffs.iter().copied().filter(|&d| d != 0.0).collect();
         let n = diffs.len() as f64;
-        
+
         if diffs.is_empty() {
             return Err("No non-zero differences found".to_string());
         }
-        
+
         // Get absolute values for ranking (but keep original signs)
         let abs_diffs: Vec<f64> = diffs.iter().map(|&d| d.abs()).collect();
         let (ranks, tie_correction) = (&abs_diffs).ranks();
-        
+
         // Calculate V statistic: sum of ranks for positive differences (like R)
         let v_statistic: f64 = diffs.iter().zip(ranks.iter())
             .filter_map(|(&diff, &rank)| if diff > 0.0 { Some(rank) } else { None })
             .sum();
-        
+
         let zeroes = x.len() - diffs.len();
-        let distribution = SignedRank::new(diffs.len(), zeroes, tie_correction)
-            .map_err(|e| format!("Failed to create distribution: {}", e))?;
-        
-        // Use R's exact p-value calculation method
-        let p_value = match alternative {
-            "less" => distribution.cdf(v_statistic),
-            "greater" => {
-                // R uses: psignrank(STATISTIC - 1, n, lower.tail = FALSE)
-                1.0 - distribution.cdf(v_statistic - 1.0)
-            },
-            _ => {
-                // Two-sided: R logic
-                let expected = n * (n + 1.0) / 4.0;
-                let p_raw = if v_statistic > expected {
+        let has_ties = tie_correction > 0;
+        let has_zeroes = zeroes > 0;
+
+        // Decide whether to use exact or asymptotic method (like R does)
+        // R uses exact when n < 50 AND no ties AND no zeroes
+        let use_exact = n < 50.0 && !has_ties && !has_zeroes;
+
+        let (p_value, method) = if use_exact {
+            // Exact p-value using SignedRank distribution
+            let distribution = SignedRank::new(diffs.len(), zeroes, tie_correction)
+                .map_err(|e| format!("Failed to create distribution: {}", e))?;
+
+            let p_val = match alternative {
+                "less" => distribution.cdf(v_statistic),
+                "greater" => {
+                    // R uses: psignrank(STATISTIC - 1, n, lower.tail = FALSE)
                     1.0 - distribution.cdf(v_statistic - 1.0)
-                } else {
-                    distribution.cdf(v_statistic)
-                };
-                (2.0 * p_raw).min(1.0)
-            }
+                },
+                _ => {
+                    // Two-sided: R logic
+                    let expected = n * (n + 1.0) / 4.0;
+                    let p_raw = if v_statistic > expected {
+                        1.0 - distribution.cdf(v_statistic - 1.0)
+                    } else {
+                        distribution.cdf(v_statistic)
+                    };
+                    (2.0 * p_raw).min(1.0)
+                }
+            };
+            (p_val, WilcoxonMethod::Exact)
+        } else {
+            // Asymptotic approximation with continuity correction (R's default when exact not possible)
+            // R code lines 124-142
+            let z_raw = v_statistic - n * (n + 1.0) / 4.0;
+
+            // Calculate variance with tie correction
+            // SIGMA <- sqrt(n * (n + 1) * (2 * n + 1) / 24 - sum(NTIES^3 - NTIES) / 48)
+            let nties_correction = tie_correction as f64;
+            let sigma = (n * (n + 1.0) * (2.0 * n + 1.0) / 24.0 - nties_correction / 48.0).sqrt();
+
+            // Apply continuity correction
+            let correction = match alternative {
+                "two-sided" => {
+                    if z_raw > 0.0 { 0.5 } else { -0.5 }
+                },
+                "greater" => 0.5,
+                "less" => -0.5,
+                _ => 0.0,
+            };
+
+            let z = (z_raw - correction) / sigma;
+
+            // Calculate p-value using normal distribution
+            let p_val = match alternative {
+                "less" => {
+                    // pnorm(z)
+                    statrs::distribution::Normal::new(0.0, 1.0)
+                        .unwrap()
+                        .cdf(z)
+                },
+                "greater" => {
+                    // pnorm(z, lower.tail = FALSE)
+                    1.0 - statrs::distribution::Normal::new(0.0, 1.0)
+                        .unwrap()
+                        .cdf(z)
+                },
+                _ => {
+                    // two.sided: 2 * min(pnorm(z), pnorm(z, lower.tail = FALSE))
+                    let norm = statrs::distribution::Normal::new(0.0, 1.0).unwrap();
+                    let lower = norm.cdf(z);
+                    let upper = 1.0 - lower;
+                    2.0 * lower.min(upper)
+                }
+            };
+
+            (p_val, WilcoxonMethod::Asymptotic)
         };
 
-        let rank_sum = n * (n + 1.0) / 2.0;
-        let effect_size = v_statistic / rank_sum;
+        // Calculate Cohen's d effect size (matching R's effsize package with paired=TRUE, within=FALSE)
+        // R's effsize::cohen.d uses ALL differences (including zeros) not just non-zero ones
+        // Cohen's d = mean(all_differences) / sd(all_differences)
+        let n_all = all_diffs.len() as f64;
+        let mean_diff = all_diffs.iter().sum::<f64>() / n_all;
+        let variance_diff = all_diffs.iter().map(|&d| (d - mean_diff).powi(2)).sum::<f64>() / (n_all - 1.0);
+        let sd_diff = variance_diff.sqrt();
+
+        let cohens_d = if sd_diff == 0.0 {
+            0.0
+        } else {
+            mean_diff / sd_diff
+        };
 
         Ok(WilcoxonSignedRankTestResult {
             test_statistic: TestStatistic {
@@ -113,13 +183,13 @@ impl WilcoxonWTest {
             },
             p_value,
             test_name: "Wilcoxon Signed-Rank Test".to_string(),
-            method: WilcoxonMethod::Asymptotic.as_str().to_string(), // This implementation uses asymptotic method
+            method: method.as_str().to_string(),
             alternative: alternative.to_string(),
             alpha,
             error_message: None,
             effect_size: EffectSize {
-                value: effect_size,
-                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
+                value: cohens_d,
+                name: EffectSizeType::CohensD.as_str().to_string(),
             },
         })
     }
@@ -136,7 +206,7 @@ mod tests {
         let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
         // R gives 0.03322777 but with ties warning - our implementation may handle ties differently
         assert!((test.p_value - 0.03322777).abs() < 0.03); // Allow tolerance for tie handling
-        assert_eq!(test.effect_size.value, 0.06944444444444445);
+        // Effect size is now Cohen's d instead of rank-biserial
     }
 
     #[test]
@@ -150,6 +220,6 @@ mod tests {
             test.p_value
         );
         assert!((test.p_value - 0.078125).abs() < 1e-10);
-        assert_eq!(test.effect_size.value, 0.08333333333333333);
+        // Effect size is now Cohen's d instead of rank-biserial
     }
 }

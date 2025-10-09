@@ -70,18 +70,9 @@ pub fn fishers_exact_test(
         }
     };
 
-    // Calculate sample odds ratio: OR = (a*d)/(b*c)
-    let estimate = if b == 0 && c == 0 {
-        f64::INFINITY
-    } else if a == 0 && d == 0 {
-        0.0
-    } else if b == 0 || c == 0 {
-        f64::INFINITY
-    } else if a == 0 || d == 0 {
-        0.0
-    } else {
-        (a as f64 * d as f64) / (b as f64 * c as f64)
-    };
+    // Calculate MLE for odds ratio (matching R's approach)
+    // R computes the MLE by solving E(X) = x where X ~ NonCentralHypergeometric
+    let estimate = mle_odds_ratio(x, m, n, k);
     
     // Calculate mid-p corrected p-value 
     let obs_prob = dnhyper(x, m, n, k, odds_ratio);
@@ -283,7 +274,6 @@ fn dhyper_central(x: i32, m: i32, n: i32, k: i32) -> f64 {
 
 /// Calculate expectation of non-central hypergeometric distribution
 /// E(X) where X ~ NonCentralHypergeometric(m, n, k, ncp)
-#[allow(dead_code)]
 fn expectation_nhyper(m: i32, n: i32, k: i32, ncp: f64) -> f64 {
     let lo = std::cmp::max(0, k - n);
     let hi = std::cmp::min(k, m);
@@ -304,7 +294,6 @@ fn expectation_nhyper(m: i32, n: i32, k: i32, ncp: f64) -> f64 {
 
 /// Calculate MLE for odds ratio using R's approach
 /// Solves E(X) = x by finding ncp such that expectation equals observed value
-#[allow(dead_code)]
 fn mle_odds_ratio(x: i32, m: i32, n: i32, k: i32) -> f64 {
     let lo = std::cmp::max(0, k - n);
     let hi = std::cmp::min(k, m);
@@ -338,7 +327,6 @@ fn mle_odds_ratio(x: i32, m: i32, n: i32, k: i32) -> f64 {
 }
 
 /// Binary search to find MLE odds ratio
-#[allow(dead_code)]
 fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high: f64) -> f64 {
     const MAX_ITER: usize = 50;
     const TOL: f64 = 1e-6;

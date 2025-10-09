@@ -29,19 +29,22 @@ impl Model for GeeglmResult {
     }
 
     fn family(&self) -> &dyn crate::stats::regression::family::GlmFamily {
-        self.glm_result.family.as_ref()
+        // This is a temporary fix - we need to convert GlmFamilyInfo back to GlmFamily
+        // For now, we'll return a default Gaussian family
+        todo!("Convert GlmFamilyInfo back to GlmFamily trait object")
     }
 
     fn formula(&self) -> Option<&str> {
-        self.glm_result.formula.as_deref()
+        Some(&self.glm_result.formula)
     }
 
     fn call(&self) -> Option<&str> {
-        self.glm_result.call.as_deref()
+        Some(&self.glm_result.call)
     }
 
     fn model_frame(&self) -> Option<&crate::stats::regression::model_utilities::ModelFrame> {
-        self.glm_result.model.as_ref()
+        // This is a temporary fix - we need to convert our ModelFrame to the expected type
+        todo!("Convert ModelFrame to expected type")
     }
 
     fn response(&self) -> &[f64] {

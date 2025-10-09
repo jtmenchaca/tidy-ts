@@ -54,6 +54,16 @@ where
         / (differences.len() - 1) as f64;
     let std_error = (variance_diff / differences.len() as f64).sqrt();
 
+    // Calculate Cohen's d for paired samples using SD of differences
+    // This matches R's effsize::cohen.d(..., paired=TRUE, within=FALSE) behavior
+    // which is the standard Cohen's d for paired samples (mean_diff / sd_diff)
+    let sd_diff = variance_diff.sqrt();
+    let cohens_d = if sd_diff == 0.0 {
+        0.0
+    } else {
+        mean_diff / sd_diff
+    };
+
     // Create new result with updated test type for paired test
     Ok(PairedTTestResult {
         test_statistic: TestStatistic {
@@ -67,7 +77,7 @@ where
         confidence_interval: result.confidence_interval,
         degrees_of_freedom: result.degrees_of_freedom,
         effect_size: EffectSize {
-            value: result.effect_size.value,
+            value: cohens_d,
             name: EffectSizeType::CohensD.as_str().to_string(),
         },
         mean_difference: mean_diff,

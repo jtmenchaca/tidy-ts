@@ -195,7 +195,8 @@ where
         test_name: "Levene's Test".to_string(),
         alpha,
         error_message: None,
-        degrees_of_freedom: df_between + df_within,
+        df_between,
+        df_within,
         effect_size: EffectSize {
             value: eta_squared,
             name: EffectSizeType::EtaSquared.as_str().to_string(),

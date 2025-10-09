@@ -37,7 +37,8 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
             test_name: "Levene's Test".to_string(),
             alpha,
             error_message: Some("Alpha must be between 0 and 1".to_string()),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: EffectSize {
                 value: 0.0,
                 name: EffectSizeType::EtaSquared.as_str().to_string(),
@@ -66,7 +67,8 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
                 test_name: "Levene's Test".to_string(),
                 alpha,
                 error_message: Some("Group sizes exceed data length".to_string()),
-                degrees_of_freedom: 0.0,
+                df_between: 0.0,
+            df_within: 0.0,
                 effect_size: EffectSize {
                     value: 0.0,
                     name: EffectSizeType::EtaSquared.as_str().to_string(),
@@ -95,7 +97,8 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> OneW
             test_name: "Levene's Test".to_string(),
             alpha,
             error_message: Some(e),
-            degrees_of_freedom: 0.0,
+            df_between: 0.0,
+            df_within: 0.0,
             effect_size: EffectSize {
                 value: 0.0,
                 name: EffectSizeType::EtaSquared.as_str().to_string(),

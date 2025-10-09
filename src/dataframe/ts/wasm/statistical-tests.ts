@@ -429,6 +429,7 @@ export function kendall_correlation_test(
   y: Float64Array,
   alternative: string,
   alpha: number,
+  exact?: boolean,
 ): KendallCorrelationTestResult {
   initWasm();
   const result = wasmInternal.kendall_correlation_test(
@@ -436,6 +437,7 @@ export function kendall_correlation_test(
     y,
     alternative,
     alpha,
+    exact ?? null,
   );
   return result;
 }

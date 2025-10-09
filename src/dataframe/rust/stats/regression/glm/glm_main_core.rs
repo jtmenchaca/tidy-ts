@@ -167,23 +167,21 @@ pub fn glm(
         family,
         control,
         parsed_formula.has_intercept, // Use intercept from formula
+        Some(parsed_formula.predictors.clone()), // Pass predictor names as column names
     )?;
 
     // Add additional information to the result
-    fit.model = None; // Model frame removed
-    fit.x = None; // Design matrix removed for now
+    // fit.model is already set in glm_fit_core
+    // fit.x is already set in glm_fit_core
     if !y {
         fit.y = vec![];
     }
-    fit.call = Some(format!(
-        "glm(formula = {}, family = ..., data = ...)",
-        formula
-    ));
-    fit.formula = Some(formula);
-    fit.terms = Some("placeholder".to_string()); // TODO: Parse from formula
-    fit.data = Some("placeholder".to_string()); // TODO: Store data reference
-    fit.contrasts = contrasts;
-    fit.xlevels = None; // TODO: Extract from factors
+    fit.call = format!("glm(formula = {}, family = ..., data = ...)", formula);
+    fit.formula = formula;
+    // fit.terms is already set in glm_fit_core
+    // fit.data is already set in glm_fit_core
+    fit.contrasts = contrasts.unwrap_or_default();
+    // fit.xlevels is already set in glm_fit_core
     fit.na_action = Some(na_action);
 
     Ok(fit)

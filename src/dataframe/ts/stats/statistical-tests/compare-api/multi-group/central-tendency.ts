@@ -1,10 +1,4 @@
-import {
-  anovaOneWay,
-  twoWayAnovaFactorA,
-  twoWayAnovaFactorB,
-  twoWayAnovaInteraction,
-  welchAnovaOneWay,
-} from "../../anova.ts";
+import { anovaOneWay, twoWayAnova, welchAnovaOneWay } from "../../anova.ts";
 import { kruskalWallisTest } from "../../kruskal-wallis.ts";
 import {
   allGroupsNormal,
@@ -18,6 +12,7 @@ import type {
   KruskalWallisTestResult,
   OneWayAnovaTestResult,
   TukeyHsdTestResult,
+  TwoWayAnovaTestResult,
   WelchAnovaTestResult,
 } from "../../../../../lib/tidy_ts_dataframe.d.ts";
 
@@ -173,7 +168,6 @@ export function centralTendencyToEachOther({
   parametric = "parametric",
   alpha = 0.05,
   design,
-  testType,
   assumeEqualVariances,
 }: {
   groups?: number[][];
@@ -186,6 +180,7 @@ export function centralTendencyToEachOther({
 }):
   | OneWayAnovaWithPostHocResult
   | WelchAnovaWithPostHocResult
+  | TwoWayAnovaTestResult
   | KruskalWallisWithPostHocResult {
   // Handle two-way ANOVA
   if (design === "two-way" && data) {
@@ -193,18 +188,7 @@ export function centralTendencyToEachOther({
       throw new Error("Two-way ANOVA requires parametric=true");
     }
 
-    switch (testType) {
-      case "factorA":
-        return twoWayAnovaFactorA({ data, alpha });
-      case "factorB":
-        return twoWayAnovaFactorB({ data, alpha });
-      case "interaction":
-        return twoWayAnovaInteraction({ data, alpha });
-      default:
-        throw new Error(
-          "testType must be 'factorA', 'factorB', or 'interaction' for two-way ANOVA",
-        );
-    }
+    return twoWayAnova({ data, alpha });
   }
 
   // Handle one-way ANOVA or Kruskal-Wallis

@@ -1,7 +1,7 @@
 FROM rocker/r-ver:latest
 
 # Install R packages
-RUN Rscript -e "install.packages(c('jsonlite', 'geepack', 'dplyr', 'tidyr', 'nortest', 'moments', 'fBasics'), repos='https://cloud.r-project.org/', Ncpus=2)"
+RUN Rscript -e "install.packages(c('jsonlite', 'geepack', 'dplyr', 'tidyr', 'nortest', 'moments', 'fBasics', 'effsize'), repos='https://cloud.r-project.org/', Ncpus=2)"
 
 # Install system dependencies for Deno
 RUN apt-get update && apt-get install -y \

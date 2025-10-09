@@ -102,7 +102,8 @@ where
         test_name: "One-way ANOVA".to_string(),
         alpha,
         error_message: None,
-        degrees_of_freedom: df_between,
+        df_between,
+        df_within,
         effect_size: EffectSize {
             value: eta_sq,
             name: EffectSizeType::EtaSquared.as_str().to_string(),

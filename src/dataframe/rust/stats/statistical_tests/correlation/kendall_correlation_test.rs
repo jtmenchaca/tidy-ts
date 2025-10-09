@@ -90,7 +90,7 @@ fn count_pairs(x: &[f64], y: &[f64]) -> (i32, i32, i32, i32, i32) {
 }
 
 /// Kendall rank correlation test
-pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64) -> Result<KendallCorrelationTestResult, String> {
+pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f64, exact: Option<bool>) -> Result<KendallCorrelationTestResult, String> {
     if x.len() != y.len() {
         return Err("x and y must have the same length".to_string());
     }
@@ -163,8 +163,17 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
     // Check if we have ties
     let _has_ties = ties_x > 0 || ties_y > 0 || ties_xy > 0;
 
-    // Follow R's exact logic: exact for small samples without ties, asymptotic otherwise
-    let (test_statistic, statistic_name, p_value) = if n < 50 && !_has_ties {
+    // Determine whether to use exact test
+    // If exact is None, R uses TRUE by default
+    // If exact is Some(true), use exact test if possible (n < 50 and no ties)
+    // If exact is Some(false), always use asymptotic
+    let use_exact = match exact {
+        None => n < 50 && !_has_ties, // R's default: auto-detect
+        Some(true) => n < 50 && !_has_ties, // User requested exact (only if feasible)
+        Some(false) => false, // User requested asymptotic
+    };
+
+    let (test_statistic, statistic_name, p_value) = if use_exact {
         // Exact test: use T statistic like R
         // R: q <- round((r + 1) * n * (n - 1) / 4)
         let q = ((tau + 1.0) * n_f * (n_f - 1.0) / 4.0).round();
@@ -186,11 +195,8 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
         (q, TestStatisticName::SStatistic.as_str().to_string(), p)
     } else {
         // Asymptotic test: use R's approach with S statistic and z-score
-        // R: S <- r * sqrt((T0 - T1) * (T0 - T2)) where T0 = n*(n-1)/2
-        let t0 = n_f * (n_f - 1.0) / 2.0;
-        let t1 = t2_sum / 2.0;  // sum of x ties
-        let t2 = u2_sum / 2.0;  // sum of y ties
-        let s = tau * ((t0 - t1) * (t0 - t2)).sqrt();
+        // S is just the raw concordant - discordant score
+        let s = _s_raw;
         
         // R's variance calculation with all tie corrections
         let v0 = n_f * (n_f - 1.0) * (2.0 * n_f + 5.0);

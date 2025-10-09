@@ -8,7 +8,10 @@
 pub use super::types_control::{GlmControl, GlmOptions};
 
 // Re-export result types
-pub use super::types_results::{CoefficientInfo, GlmResult, GlmSummary, QrResult};
+pub use super::types_results::{
+    CoefficientInfo, GlmFamilyInfo, GlmResult, GlmSummary, ModelFrame, ModelMatrix,
+    QrDecomposition, TermsObject,
+};
 
 // Re-export ANOVA types
 pub use super::types_anova::{AnovaRow, GlmAnova};

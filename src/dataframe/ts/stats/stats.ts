@@ -262,9 +262,7 @@ export const stats: {
     // ANOVA
     readonly anova: {
       readonly oneWay: typeof statisticalTests.anovaOneWay;
-      readonly twoWayMain: typeof statisticalTests.twoWayAnovaFactorA;
-      readonly twoWayInteraction:
-        typeof statisticalTests.twoWayAnovaInteraction;
+      readonly twoWay: typeof statisticalTests.twoWayAnova;
     };
 
     // Correlation tests
@@ -515,8 +513,7 @@ export const stats: {
     // ANOVA
     anova: {
       oneWay: statisticalTests.anovaOneWay,
-      twoWayMain: statisticalTests.twoWayAnovaFactorA,
-      twoWayInteraction: statisticalTests.twoWayAnovaInteraction,
+      twoWay: statisticalTests.twoWayAnova,
     },
 
     // Correlation tests

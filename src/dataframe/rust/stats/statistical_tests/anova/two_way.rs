@@ -590,7 +590,8 @@ pub fn anova_two_way_factor_a(
         test_name: "Two-way ANOVA (Factor A)".to_string(),
         alpha,
         error_message: None,
-        degrees_of_freedom: df_a,
+        df_between: df_a,
+        df_within: df_error,
         effect_size: EffectSize {
             value: eta_sq,
             name: EffectSizeType::EtaSquared.as_str().to_string(),
@@ -783,7 +784,8 @@ pub fn anova_two_way_factor_b(
         test_name: "Two-way ANOVA (Factor B)".to_string(),
         alpha,
         error_message: None,
-        degrees_of_freedom: df_b,
+        df_between: df_b,
+        df_within: df_error,
         effect_size: EffectSize {
             value: eta_sq,
             name: EffectSizeType::EtaSquared.as_str().to_string(),
@@ -806,13 +808,16 @@ pub fn anova_two_way_interaction(
     let full_result = anova_two_way(data, alpha)?;
 
     // Convert the interaction component to OneWayAnovaTestResult
+    let df_error = full_result.df_error;
+
     Ok(OneWayAnovaTestResult {
         test_statistic: full_result.interaction.test_statistic,
         p_value: full_result.interaction.p_value,
         test_name: "Two-way ANOVA (Interaction)".to_string(),
         alpha: full_result.alpha,
         error_message: full_result.error_message,
-        degrees_of_freedom: full_result.interaction.degrees_of_freedom,
+        df_between: full_result.interaction.degrees_of_freedom,
+        df_within: df_error,
         effect_size: full_result.interaction.effect_size,
         sample_size: full_result.sample_size,
         sample_means: full_result.sample_means,
