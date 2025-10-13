@@ -541,9 +541,9 @@ export async function callRobustRust(
       };
     }
 
-    // Two-way ANOVA Tests
-    case "aov.two.factorA": {
-      const { _twoWayAnovaFactorA } = await import(
+    // Two-way ANOVA Test
+    case "aov.two": {
+      const { twoWayAnova } = await import(
         "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const twoWayData = params.data!.twoWayData!;
@@ -558,72 +558,14 @@ export async function callRobustRust(
           dataIndex += cellSize;
         }
       }
-      const result = _twoWayAnovaFactorA({
+      const result = twoWayAnova({
         data: data3D,
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
-        method: "aov.two.factorA",
-        alternative: "two-sided",
-        alpha,
-      };
-    }
-
-    case "aov.two.factorB": {
-      const { _twoWayAnovaFactorB } = await import(
-        "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
-      );
-      const twoWayData = params.data!.twoWayData!;
-      // Convert flat data to 3D array structure for two-way ANOVA
-      const data3D: number[][][] = [];
-      let dataIndex = 0;
-      for (let a = 0; a < twoWayData.aLevels; a++) {
-        data3D[a] = [];
-        for (let b = 0; b < twoWayData.bLevels; b++) {
-          const cellSize = twoWayData.cellSizes[a * twoWayData.bLevels + b];
-          data3D[a][b] = twoWayData.data.slice(dataIndex, dataIndex + cellSize);
-          dataIndex += cellSize;
-        }
-      }
-      const result = _twoWayAnovaFactorB({
-        data: data3D,
-        alpha,
-      });
-      return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
-        method: "aov.two.factorB",
-        alternative: "two-sided",
-        alpha,
-      };
-    }
-
-    case "aov.two.interaction": {
-      const { _twoWayAnovaInteraction } = await import(
-        "../../src/dataframe/ts/stats/statistical-tests/anova.ts"
-      );
-      const twoWayData = params.data!.twoWayData!;
-      // Convert flat data to 3D array structure for two-way ANOVA
-      const data3D: number[][][] = [];
-      let dataIndex = 0;
-      for (let a = 0; a < twoWayData.aLevels; a++) {
-        data3D[a] = [];
-        for (let b = 0; b < twoWayData.bLevels; b++) {
-          const cellSize = twoWayData.cellSizes[a * twoWayData.bLevels + b];
-          data3D[a][b] = twoWayData.data.slice(dataIndex, dataIndex + cellSize);
-          dataIndex += cellSize;
-        }
-      }
-      const result = _twoWayAnovaInteraction({
-        data: data3D,
-        alpha,
-      });
-      return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
-        method: "aov.two.interaction",
+        test_statistic: extractStatistic(result.factor_a), // Return factor A test statistic as primary
+        p_value: result.factor_a.p_value, // Return factor A p-value as primary
+        method: "aov.two",
         alternative: "two-sided",
         alpha,
       };
@@ -810,10 +752,8 @@ export function generateComprehensiveTestCase(
         options: { alpha },
       };
 
-    // Two-way ANOVA Tests
-    case "aov.two.factorA":
-    case "aov.two.factorB":
-    case "aov.two.interaction":
+    // Two-way ANOVA Test
+    case "aov.two":
       return {
         testType,
         data: {

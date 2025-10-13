@@ -321,7 +321,7 @@ fn parse_data_json(
 
 /// Parse options from JSON string
 fn parse_options_json(
-    _json: &str,
+    json: &str,
 ) -> Result<
     (
         Option<Vec<f64>>,
@@ -330,13 +330,53 @@ fn parse_options_json(
     ),
     String,
 > {
-    // Simple parsing for options - currently returns defaults
-    // TODO: Implement full options parsing when needed
-    // Expected format: {"weights": [1,1,1], "na_action": "na.omit", "epsilon": 1e-8, "max_iter": 25, "trace": false}
+    use serde_json::Value;
 
-    let weights = None;
-    let na_action = Some("na.omit".to_string());
-    let control_params = Some((Some(1e-8), Some(25), Some(false)));
+    // Parse JSON
+    let parsed: Value = serde_json::from_str(json)
+        .map_err(|e| format!("Failed to parse options JSON: {}", e))?;
+
+    // Extract weights
+    let weights = if let Some(w) = parsed.get("weights") {
+        if let Some(arr) = w.as_array() {
+            let weights_vec: Result<Vec<f64>, String> = arr
+                .iter()
+                .map(|v| {
+                    v.as_f64()
+                        .ok_or_else(|| "weights must be numeric".to_string())
+                })
+                .collect();
+            Some(weights_vec?)
+        } else {
+            return Err("weights must be an array".to_string());
+        }
+    } else {
+        None
+    };
+
+    // Validate weights if present (must be non-negative, matching R's behavior)
+    if let Some(ref w) = weights {
+        if w.iter().any(|&x| x < 0.0) {
+            return Err("negative weights not allowed".to_string());
+        }
+    }
+
+    // Extract na_action
+    let na_action = parsed.get("na_action")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string())
+        .or_else(|| Some("na.omit".to_string()));
+
+    // Extract control parameters
+    let epsilon = parsed.get("epsilon").and_then(|v| v.as_f64());
+    let max_iter = parsed.get("max_iter").and_then(|v| v.as_u64()).map(|v| v as usize);
+    let trace = parsed.get("trace").and_then(|v| v.as_bool());
+
+    let control_params = if epsilon.is_some() || max_iter.is_some() || trace.is_some() {
+        Some((epsilon, max_iter, trace))
+    } else {
+        Some((Some(1e-8), Some(25), Some(false)))
+    };
 
     Ok((weights, na_action, control_params))
 }
@@ -393,6 +433,14 @@ fn create_family(
 
 /// Format GLM result as JSON string
 fn format_glm_result(result: &GlmResult) -> String {
+    // Use serde_json to properly handle NaN/Infinity
+    match serde_json::to_string(result) {
+        Ok(json) => json,
+        Err(e) => format!(r#"{{"error":"Failed to serialize GLM result: {}"}}"#, e),
+    }
+}
+
+fn format_glm_result_manual_DEPRECATED(result: &GlmResult) -> String {
     let mut json = String::new();
     json.push('{');
 
@@ -423,6 +471,46 @@ fn format_glm_result(result: &GlmResult) -> String {
             json.push(',');
         }
         json.push_str(&format_json_number(*fit));
+    }
+    json.push(']');
+
+    // Add working residuals
+    json.push_str(r#","working_residuals":["#);
+    for (i, res) in result.working_residuals.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*res));
+    }
+    json.push(']');
+
+    // Add response residuals
+    json.push_str(r#","response_residuals":["#);
+    for (i, res) in result.response_residuals.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*res));
+    }
+    json.push(']');
+
+    // Add pearson residuals
+    json.push_str(r#","pearson_residuals":["#);
+    for (i, res) in result.pearson_residuals.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*res));
+    }
+    json.push(']');
+
+    // Add deviance residuals
+    json.push_str(r#","deviance_residuals":["#);
+    for (i, res) in result.deviance_residuals.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*res));
     }
     json.push(']');
 
@@ -510,6 +598,46 @@ fn format_glm_result(result: &GlmResult) -> String {
 
     // Add df.null
     json.push_str(&format!(r#","df_null":{}"#, result.df_null));
+
+    // Add weights
+    json.push_str(r#","weights":["#);
+    for (i, val) in result.weights.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add prior_weights
+    json.push_str(r#","prior_weights":["#);
+    for (i, val) in result.prior_weights.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add y
+    json.push_str(r#","y":["#);
+    for (i, val) in result.y.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add linear_predictors
+    json.push_str(r#","linear_predictors":["#);
+    for (i, pred) in result.linear_predictors.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*pred));
+    }
+    json.push(']');
 
     // Add family info
     json.push_str(&format!(
@@ -756,6 +884,151 @@ fn format_glm_result(result: &GlmResult) -> String {
     }
     json.push_str("]]");
 
+    // Add leverage (hat values)
+    json.push_str(r#","leverage":["#);
+    for (i, val) in result.leverage.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add Cook's distance
+    json.push_str(r#","cooks_distance":["#);
+    for (i, val) in result.cooks_distance.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add additional required fields for deserialization
+    // Add control
+    json.push_str(&format!(
+        r#","control":{{"epsilon":{},"maxit":{},"trace":{}}}"#,
+        result.control.epsilon,
+        result.control.maxit,
+        result.control.trace
+    ));
+
+    // Add method
+    json.push_str(&format!(r#","method":"{}""#, result.method));
+
+    // Add contrasts
+    json.push_str(r#","contrasts":{"#);
+    let mut first = true;
+    for (key, val) in &result.contrasts {
+        if !first {
+            json.push(',');
+        }
+        first = false;
+        json.push_str(&format!(r#""{}":"{}""#, key, val));
+    }
+    json.push('}');
+
+    // Add xlevels
+    json.push_str(r#","xlevels":{"#);
+    first = true;
+    for (key, vals) in &result.xlevels {
+        if !first {
+            json.push(',');
+        }
+        first = false;
+        json.push_str(&format!(r#""{}":["#, key));
+        for (i, v) in vals.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}""#, v));
+        }
+        json.push(']');
+    }
+    json.push('}');
+
+    // Add data
+    json.push_str(&format!(r#","data":"{}""#, result.data));
+
+    // Add offset
+    if let Some(offset) = &result.offset {
+        json.push_str(r#","offset":["#);
+        for (i, val) in offset.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+        json.push(']');
+    } else {
+        json.push_str(r#","offset":null"#);
+    }
+
+    // Add backward compatibility fields
+    json.push_str(&format!(r#","qr_rank":{}"#, result.qr_rank));
+    json.push_str(&format!(r#","tol":{}"#, result.tol));
+    json.push_str(&format!(r#","pivoted":{}"#, result.pivoted));
+    json.push_str(&format!(r#","dispersion":{}"#, format_json_number(result.dispersion)));
+
+    if let Some(na_action) = &result.na_action {
+        json.push_str(&format!(r#","na_action":"{}""#, na_action));
+    } else {
+        json.push_str(r#","na_action":null"#);
+    }
+
+    // Add response_variable_name, predictor_variable_names, factor_levels, reference_levels
+    json.push_str(&format!(r#","response_variable_name":"{}""#, result.response_variable_name));
+
+    json.push_str(r#","predictor_variable_names":["#);
+    for (i, name) in result.predictor_variable_names.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format!(r#""{}""#, name));
+    }
+    json.push(']');
+
+    json.push_str(r#","factor_levels":{"#);
+    first = true;
+    for (key, vals) in &result.factor_levels {
+        if !first {
+            json.push(',');
+        }
+        first = false;
+        json.push_str(&format!(r#""{}":["#, key));
+        for (i, v) in vals.iter().enumerate() {
+            if i > 0 {
+                json.push(',');
+            }
+            json.push_str(&format!(r#""{}""#, v));
+        }
+        json.push(']');
+    }
+    json.push('}');
+
+    json.push_str(r#","reference_levels":{"#);
+    first = true;
+    for (key, val) in &result.reference_levels {
+        if !first {
+            json.push(',');
+        }
+        first = false;
+        json.push_str(&format!(r#""{}":"{}""#, key, val));
+    }
+    json.push('}');
+
+    // Add deviance_explained_percent
+    json.push_str(&format!(
+        r#","deviance_explained_percent":{}"#,
+        format_json_number(result.deviance_explained_percent)
+    ));
+
+    // Add f_p_value
+    json.push_str(&format!(
+        r#","f_p_value":{}"#,
+        format_json_number(result.f_p_value)
+    ));
+
     json.push('}');
     json
 }
@@ -778,4 +1051,353 @@ fn format_json_number(value: f64) -> String {
     } else {
         value.to_string()
     }
+}
+
+/// WASM export for GLM summary
+///
+/// Returns coefficient table with test statistics and p-values
+#[wasm_bindgen]
+pub fn glm_summary_wasm(result_json: &str) -> String {
+    use super::glm_diagnostics::GlmSummaryTable;
+
+    // Parse GLM result from JSON
+    let result: GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
+    };
+
+    // Compute summary
+    let summary = match result.summary() {
+        Ok(s) => s,
+        Err(e) => return format_error(&e),
+    };
+
+    // Format as JSON
+    format_summary_table(&summary)
+}
+
+/// WASM export for standardized residuals
+///
+/// Returns rstandard() values
+#[wasm_bindgen]
+pub fn glm_rstandard_wasm(result_json: &str, residual_type: &str) -> String {
+    // Parse GLM result from JSON
+    let result: GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
+    };
+
+    // Compute rstandard
+    let rstandard = match result.rstandard(residual_type) {
+        Ok(r) => r,
+        Err(e) => return format_error(&e),
+    };
+
+    // Format as JSON array
+    format_vector(&rstandard)
+}
+
+/// WASM export for studentized residuals
+///
+/// Returns rstudent() values
+#[wasm_bindgen]
+pub fn glm_rstudent_wasm(result_json: &str) -> String {
+    // Parse GLM result from JSON
+    let result: GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
+    };
+
+    // Compute rstudent
+    let rstudent = match result.rstudent() {
+        Ok(r) => r,
+        Err(e) => return format_error(&e),
+    };
+
+    // Format as JSON array
+    format_vector(&rstudent)
+}
+
+/// WASM export for influence measures
+///
+/// Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
+#[wasm_bindgen]
+pub fn glm_influence_wasm(result_json: &str) -> String {
+    use super::glm_diagnostics::GlmInfluence;
+
+    // Parse GLM result from JSON
+    let result: GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
+    };
+
+    // Compute influence measures
+    let influence = match result.influence() {
+        Ok(i) => i,
+        Err(e) => return format_error(&e),
+    };
+
+    // Format as JSON
+    format_influence(&influence)
+}
+
+/// GLM confint() - Compute confidence intervals for coefficients
+#[wasm_bindgen]
+pub fn glm_confint_wasm(result_json: &str, level: f64) -> String {
+    // Parse GLM result
+    let result: super::types_results::GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => {
+            return format!(r#"{{"error":"Failed to parse GLM result: {}"}}"#, e);
+        }
+    };
+
+    // Compute confint
+    let confint = match result.confint(level) {
+        Ok(ci) => ci,
+        Err(e) => {
+            return format!(r#"{{"error":"{}"}}"#, e);
+        }
+    };
+
+    // Format as JSON
+    format_confint(&confint)
+}
+
+/// GLM predict() - Make predictions on new data
+#[wasm_bindgen]
+pub fn glm_predict_wasm(result_json: &str, newdata_json: &str, pred_type: &str) -> String {
+    // Parse GLM result
+    let result: super::types_results::GlmResult = match serde_json::from_str(result_json) {
+        Ok(r) => r,
+        Err(e) => {
+            return format!(r#"{{"error":"Failed to parse GLM result: {}"}}"#, e);
+        }
+    };
+
+    // Parse newdata (expecting array of arrays: [[1, 2, 3], [4, 5, 6], ...])
+    let newdata: Vec<Vec<f64>> = match serde_json::from_str(newdata_json) {
+        Ok(d) => d,
+        Err(e) => {
+            return format!(r#"{{"error":"Failed to parse newdata: {}"}}"#, e);
+        }
+    };
+
+    // Make predictions
+    let predictions = match result.predict(&newdata, pred_type) {
+        Ok(pred) => pred,
+        Err(e) => {
+            return format!(r#"{{"error":"{}"}}"#, e);
+        }
+    };
+
+    // Format as JSON array
+    let pred_str = predictions
+        .iter()
+        .map(|x| format_json_number(*x))
+        .collect::<Vec<_>>()
+        .join(",");
+    format!("[{}]", pred_str)
+}
+
+/// Format confint as JSON
+fn format_confint(confint: &super::glm_diagnostics::GlmConfint) -> String {
+    let mut json = String::new();
+    json.push('{');
+
+    // Add names
+    json.push_str(r#""names":["#);
+    for (i, name) in confint.names.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format!(r#""{}""#, name));
+    }
+    json.push(']');
+
+    // Add lower bounds
+    json.push_str(r#","lower":["#);
+    for (i, val) in confint.lower.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add upper bounds
+    json.push_str(r#","upper":["#);
+    for (i, val) in confint.upper.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    json.push('}');
+    json
+}
+
+/// Format summary table as JSON
+fn format_summary_table(summary: &super::glm_diagnostics::GlmSummaryTable) -> String {
+    let mut json = String::new();
+    json.push('{');
+
+    // Add names
+    json.push_str(r#""names":["#);
+    for (i, name) in summary.names.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format!(r#""{}""#, name));
+    }
+    json.push(']');
+
+    // Add estimate
+    json.push_str(r#","estimate":["#);
+    for (i, val) in summary.estimate.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add std_error
+    json.push_str(r#","std_error":["#);
+    for (i, val) in summary.std_error.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add statistic
+    json.push_str(r#","statistic":["#);
+    for (i, val) in summary.statistic.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add p_value
+    json.push_str(r#","p_value":["#);
+    for (i, val) in summary.p_value.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add dispersion
+    json.push_str(&format!(
+        r#","dispersion":{}"#,
+        format_json_number(summary.dispersion)
+    ));
+
+    // Add is_fixed_dispersion
+    json.push_str(&format!(
+        r#","is_fixed_dispersion":{}"#,
+        summary.is_fixed_dispersion
+    ));
+
+    json.push('}');
+    json
+}
+
+/// Format influence measures as JSON
+fn format_influence(influence: &super::glm_diagnostics::GlmInfluence) -> String {
+    let mut json = String::new();
+    json.push('{');
+
+    // Add dfbeta (n x p matrix)
+    json.push_str(r#""dfbeta":[["#);
+    for (i, row) in influence.dfbeta.iter().enumerate() {
+        if i > 0 {
+            json.push_str("],[");
+        }
+        for (j, val) in row.iter().enumerate() {
+            if j > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+    }
+    json.push_str("]]");
+
+    // Add dfbetas (n x p matrix)
+    json.push_str(r#","dfbetas":[["#);
+    for (i, row) in influence.dfbetas.iter().enumerate() {
+        if i > 0 {
+            json.push_str("],[");
+        }
+        for (j, val) in row.iter().enumerate() {
+            if j > 0 {
+                json.push(',');
+            }
+            json.push_str(&format_json_number(*val));
+        }
+    }
+    json.push_str("]]");
+
+    // Add dffits
+    json.push_str(r#","dffits":["#);
+    for (i, val) in influence.dffits.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add covratio
+    json.push_str(r#","covratio":["#);
+    for (i, val) in influence.covratio.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add cook's distance
+    json.push_str(r#","cooks_distance":["#);
+    for (i, val) in influence.cooks_distance.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    // Add hat values
+    json.push_str(r#","hat":["#);
+    for (i, val) in influence.hat.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+
+    json.push('}');
+    json
+}
+
+/// Format vector as JSON array
+fn format_vector(vec: &[f64]) -> String {
+    let mut json = String::from("[");
+    for (i, val) in vec.iter().enumerate() {
+        if i > 0 {
+            json.push(',');
+        }
+        json.push_str(&format_json_number(*val));
+    }
+    json.push(']');
+    json
 }

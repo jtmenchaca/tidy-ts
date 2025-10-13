@@ -213,30 +213,14 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
     [[15, 16, 17], [18, 19, 20]], // Factor A level 2: [B1, B2]
   ];
 
-  const twoWayTestA = s.compare.multiGroups.centralTendency.toEachOther({
+  const twoWayTest = s.compare.multiGroups.centralTendency.toEachOther({
     data: twoWayData,
     parametric: "parametric",
     design: "two-way",
-    testType: "factorA",
-  });
-  console.log(`  Complete test result:`, JSON.stringify(twoWayTestA, null, 2));
-  const twoWayTestB = s.compare.multiGroups.centralTendency.toEachOther({
-    data: twoWayData,
-    parametric: "parametric",
-    design: "two-way",
-    testType: "factorB",
-  });
-  console.log(`  Complete test result:`, JSON.stringify(twoWayTestB, null, 2));
-
-  const twoWayInteraction = s.compare.multiGroups.centralTendency.toEachOther({
-    data: twoWayData,
-    parametric: "parametric",
-    design: "two-way",
-    testType: "interaction",
   });
   console.log(
-    `  Complete test result:`,
-    JSON.stringify(twoWayInteraction, null, 2),
+    `  Two-way ANOVA result (all effects):`,
+    JSON.stringify(twoWayTest, null, 2),
   );
 
   // Compare proportions across multiple groups

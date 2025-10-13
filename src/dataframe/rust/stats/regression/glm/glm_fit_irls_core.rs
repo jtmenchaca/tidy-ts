@@ -153,11 +153,13 @@ pub fn run_irls_iteration(
         let mut x_weighted = Vec::new();
         let mut z_weighted = Vec::new();
 
+        let mut good_idx = 0;
         for (i, &is_good) in good.iter().enumerate() {
             if is_good {
-                let row: Vec<f64> = x[i].iter().map(|&x_ij| x_ij * w[i]).collect();
+                let row: Vec<f64> = x[i].iter().map(|&x_ij| x_ij * w[good_idx]).collect();
                 x_weighted.push(row);
-                z_weighted.push(z[i] * w[i]);
+                z_weighted.push(z[good_idx] * w[good_idx]);
+                good_idx += 1;
             }
         }
 
@@ -221,16 +223,32 @@ pub fn run_irls_iteration(
         // Store old coefficients for step halving
         coefold = Some(coef.clone());
 
-        // Updating coefficients
+        // Updating coefficients with pivot permutation (matching R's glm.fit)
+        // R does: start[fit$pivot] <- fit$coefficients
+        // This handles rank-deficient cases where some coefficients should be NA
 
-        // Update coefficients directly (no pivot permutation needed)
-        *coef = qr_result.coefficients.clone();
+        let rank = qr_result.rank;
+        let pivot = &qr_result.pivot;
+        let p = coef.len();
+
+        // Set all coefficients to NaN first
+        for c in coef.iter_mut() {
+            *c = f64::NAN;
+        }
+
+        // Only update coefficients up to rank, using pivot permutation
+        for i in 0..rank.min(qr_result.coefficients.len()) {
+            let pivot_idx = pivot[i] as usize - 1; // R uses 1-based indexing
+            if pivot_idx < p {
+                coef[pivot_idx] = qr_result.coefficients[i];
+            }
+        }
 
         // Coefficients updated
 
         // Updating eta and mu
 
-        // Update eta and mu
+        // Update eta and mu, treating NaN coefficients as 0
         *eta = offset
             .iter()
             .enumerate()
@@ -238,7 +256,13 @@ pub fn run_irls_iteration(
                 o + x[i]
                     .iter()
                     .zip(coef.iter())
-                    .map(|(x_ij, &c_j)| x_ij * c_j)
+                    .map(|(x_ij, &c_j)| {
+                        if c_j.is_nan() {
+                            0.0
+                        } else {
+                            x_ij * c_j
+                        }
+                    })
                     .sum::<f64>()
             })
             .collect();
@@ -261,7 +285,8 @@ pub fn run_irls_iteration(
         // Calculating deviance
 
         // Calculate new deviance using the family-specific deviance
-        let dev = deviance_fn.deviance(y, mu, weights).unwrap_or(0.0);
+        let dev = deviance_fn.deviance(y, mu, weights)
+            .map_err(|e| format!("Failed to calculate deviance at iteration {}: {}", iter_count, e))?;
 
         // Deviance calculated
 

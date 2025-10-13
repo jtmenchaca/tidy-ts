@@ -840,6 +840,45 @@ export function glm_fit_wasm(
   options_json?: string | null,
 ): string;
 /**
+ * WASM export for GLM summary
+ *
+ * Returns coefficient table with test statistics and p-values
+ */
+export function glm_summary_wasm(result_json: string): string;
+/**
+ * WASM export for standardized residuals
+ *
+ * Returns rstandard() values
+ */
+export function glm_rstandard_wasm(
+  result_json: string,
+  residual_type: string,
+): string;
+/**
+ * WASM export for studentized residuals
+ *
+ * Returns rstudent() values
+ */
+export function glm_rstudent_wasm(result_json: string): string;
+/**
+ * WASM export for influence measures
+ *
+ * Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
+ */
+export function glm_influence_wasm(result_json: string): string;
+/**
+ * GLM confint() - Compute confidence intervals for coefficients
+ */
+export function glm_confint_wasm(result_json: string, level: number): string;
+/**
+ * GLM predict() - Make predictions on new data
+ */
+export function glm_predict_wasm(
+  result_json: string,
+  newdata_json: string,
+  pred_type: string,
+): string;
+/**
  * WASM export for Anderson-Darling normality test
  */
 export function anderson_darling_test(

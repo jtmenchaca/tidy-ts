@@ -1,5 +1,32 @@
 # Tidy-TS Architecture
 
+
+NOTE: MINIMIZE USE OF BASH FILES LIKE THIS when developing.  This requires custom approval every time. 
+``` bash
+
+cat > /Users/jtmenchaca/tidy-ts/tests/glm/realistic-demo.test.ts << 'EOF'
+/**
+ * GLM API Demonstration
+ * 
+ * Simple examples showing all GLM functionality.
+ */
+
+import { createDataFrame } from "../../mod.ts";
+import { glm } from "../../src/dataframe/ts/wasm/glm-functions.ts";
+import { expect } from "@std/expect";
+
+Deno.test("GLM Demo 1: Logistic Regression", () => {
+  console.log("\n=== Logistic Regression ===\n");
+
+  const data = createDataFrame([
+    { y: 0, x1: 1.2, x2: 3 },
+    { y: 1, x1: 2.5, x2: 5 },
+    { y: 0, x1: 1.8, x2: 2 },
+    { y: 1, x1: 3.2, x2: 7 },
+    { y: 1, x1: 2.9, x2: 6 },
+    ...
+```
+
 Notes:
 - When debugging an issue, use the root/tests/bugs directory and make a [issue].test.ts file using the style of our other tests. 
 - Here's a demo of how the dataframe library works:

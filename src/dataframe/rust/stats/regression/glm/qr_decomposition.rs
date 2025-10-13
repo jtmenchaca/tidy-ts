@@ -353,3 +353,59 @@ pub fn cdqrls(
         pivoted,
     })
 }
+
+/// Apply Q from Householder QR to a vector y
+/// This computes Q * y where Q is stored in Householder form
+/// Following R's dqrsl with job code 10000 for computing Q*y
+///
+/// The key difference from Q^T*y:
+/// - Q^T*y: Apply transforms in FORWARD order (0..ju)
+/// - Q*y:   Apply transforms in REVERSE order (ju-1..0)
+pub fn apply_qy(qr: &[f64], qraux: &[f64], y: &[f64], n: usize, k: usize) -> Vec<f64> {
+    let mut result = y.to_vec();
+
+    // Apply Householder transformations in REVERSE order to compute Q*y
+    let ju = k.min(n.saturating_sub(1));
+
+    for jj in (0..ju).rev() {
+        if qraux[jj] != 0.0 {
+            // In packed QR format:
+            // - qraux[jj] stores the ORIGINAL diagonal element before Householder
+            // - qr[i,jj] for i>=jj stores the Householder vector components
+            // - The diagonal of the Householder vector is stored in qraux[jj]
+            // - Below-diagonal components are in qr[i,jj] for i>jj
+
+            // Compute dot product: t = v^T * result
+            // where v is the Householder vector
+            let mut t = 0.0;
+
+            // Diagonal term: use qraux[jj] as the diagonal of Householder vector
+            t += qraux[jj] * result[jj];
+
+            // Below-diagonal terms
+            for i in (jj + 1)..n {
+                let idx = i + jj * n; // column-major indexing
+                if idx < qr.len() {
+                    t += qr[idx] * result[i];
+                }
+            }
+
+            // Scale: t = -t / v[diagonal] where v[diagonal] = qraux[jj]
+            t = -t / qraux[jj];
+
+            // Apply Householder transform: result += t * v
+            // Diagonal term
+            result[jj] += t * qraux[jj];
+
+            // Below-diagonal terms
+            for i in (jj + 1)..n {
+                let idx = i + jj * n;
+                if idx < qr.len() {
+                    result[i] += t * qr[idx];
+                }
+            }
+        }
+    }
+
+    result
+}

@@ -50,6 +50,7 @@ deno task test-stats-tests
 **ANOVA Tests:**
 - One-way ANOVA
 - Welch ANOVA
+- Two-way ANOVA
 
 **Categorical Tests:**
 - Chi-square test

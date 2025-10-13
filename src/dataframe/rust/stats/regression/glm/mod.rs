@@ -16,7 +16,9 @@
 // Core GLM modules (in dependency order) - public for internal use but not exported
 pub mod glm_aic;
 pub mod glm_control;
+pub mod glm_diagnostics;
 pub mod glm_fit_core;
+pub mod serde_special_floats;
 pub mod glm_fit_core_calculation;
 pub mod glm_fit_core_initialization;
 pub mod glm_fit_core_validation;

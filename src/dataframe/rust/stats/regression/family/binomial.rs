@@ -216,14 +216,14 @@ impl DevianceFunction for BinomialDeviance {
 
         let dev_resid = 2.0 * weight * (y_log_y(y, mu) + y_log_y(1.0 - y, 1.0 - mu));
 
-        // R returns sqrt of deviance residual squared, handling infinity
+        // R returns the deviance contribution (not sqrt)
         if dev_resid.is_infinite() {
             Ok(f64::INFINITY)
         } else if dev_resid < 0.0 {
             // This shouldn't happen mathematically, but handle numerical issues
             Ok(0.0)
         } else {
-            Ok(dev_resid.sqrt())
+            Ok(dev_resid)
         }
     }
 

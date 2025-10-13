@@ -1,4 +1,5 @@
 import { compare } from "./index.ts";
+import { expect } from "@std/expect";
 
 Deno.test("twoGroups.distributions.toEachOther - auto method selection", () => {
   const x = [1, 2, 3, 4, 5];
@@ -177,7 +178,7 @@ Deno.test("multiGroups.centralTendency.toEachOther - skewed data", () => {
   console.log("Skewed data multi-group test:", result);
 });
 
-Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA factor A", () => {
+Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA complete results", () => {
   // Two-way data as 3D array: [factorA][factorB][values]
   const twoWayData = [
     [[1, 2], [3, 4]], // A1: B1=[1,2], B2=[3,4]
@@ -189,8 +190,28 @@ Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA factor A", ()
     data: twoWayData,
     parametric: "parametric",
     design: "two-way",
-    testType: "factorA",
   });
 
-  console.log("Two-way ANOVA factor A result:", result);
+  console.log("Two-way ANOVA complete result:", result);
+
+  // Verify the result contains all three effects
+  expect(result.test_name).toBe("Two-way ANOVA");
+  expect(result.factor_a).toBeDefined();
+  expect(result.factor_b).toBeDefined();
+  expect(result.interaction).toBeDefined();
+
+  // Verify factor A results (should be highly significant)
+  expect(result.factor_a.p_value).toBeLessThan(0.001);
+  expect(result.factor_a.degrees_of_freedom).toBe(2); // 3 levels - 1
+
+  // Verify factor B results (should be significant)
+  expect(result.factor_b.p_value).toBeLessThan(0.01);
+  expect(result.factor_b.degrees_of_freedom).toBe(1); // 2 levels - 1
+
+  // Verify interaction results (should be non-significant for this simple additive data)
+  expect(result.interaction.degrees_of_freedom).toBe(2); // (3-1) * (2-1)
+
+  // Verify anova table
+  expect(result.anova_table).toBeDefined();
+  expect(result.anova_table.length).toBe(5); // A, B, AxB, Error, Total
 });

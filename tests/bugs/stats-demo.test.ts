@@ -483,7 +483,6 @@ Deno.test("Stats API Demo - New Compare API - Multiple Groups", () => {
     s.compare.multiGroups.centralTendency.toEachOther({
       data: twoWayData,
       design: "two-way",
-      testType: "factorA",
       parametric: "parametric",
       alpha: 0.05,
     }),

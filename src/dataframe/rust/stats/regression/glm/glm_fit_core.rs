@@ -80,7 +80,6 @@ pub fn glm_fit(
     // Get family functions
     let variance = family.variance();
     let linkinv = family.linkinv();
-    let dev_resids = family.dev_resids();
     let deviance_fn = family.deviance();
     let aic = family.aic();
     let mu_eta = family.mu_eta();
@@ -109,7 +108,7 @@ pub fn glm_fit(
     // Calculate initial deviance
     let mut devold = calculate_initial_deviance(&y, &mu, &weights, &|y, mu, w| {
         deviance_fn.deviance(y, mu, w)
-    });
+    })?;
     let mut boundary = false;
     let mut conv = false;
     let mut iter = 0;
@@ -193,10 +192,36 @@ pub fn glm_fit(
     };
     let (w, good) = calculate_working_weights(&weights, &mu, &eta, &variance_fn, &mu_eta);
 
+    // Calculate deviance residuals: sign(y - mu) * sqrt(dev_resids(y, mu, wts))
+    let dev_resids_fn = family.dev_resids();
+    let dev_contributions = dev_resids_fn(&y, &mu, &weights);
+    let deviance_residuals: Vec<f64> = y.iter()
+        .zip(mu.iter())
+        .zip(dev_contributions.iter())
+        .map(|((&y_i, &mu_i), &dev_i)| {
+            let sign = if y_i > mu_i { 1.0 } else { -1.0 };
+            sign * dev_i.max(0.0).sqrt()
+        })
+        .collect();
+
+    // Calculate Pearson residuals: (y - mu) * sqrt(wts) / sqrt(variance(mu))
+    let pearson_residuals: Vec<f64> = y.iter()
+        .zip(mu.iter())
+        .zip(weights.iter())
+        .map(|((&y_i, &mu_i), &w_i)| {
+            let var_i = variance.variance(mu_i).unwrap_or(1.0);
+            if var_i > 0.0 {
+                (y_i - mu_i) * w_i.sqrt() / var_i.sqrt()
+            } else {
+                0.0
+            }
+        })
+        .collect();
+
     // Calculate null deviance
     let nulldev = calculate_null_deviance(&y, &weights, &offset, intercept, &linkinv, &|y, mu, w| {
         deviance_fn.deviance(y, mu, w)
-    });
+    })?;
 
     // Calculate degrees of freedom
     // Use the rank returned by the IRLS weighted least squares solve when available
@@ -243,7 +268,7 @@ pub fn glm_fit(
             .zip(mu.iter())
             .map(|(&y_i, &mu_i)| y_i - mu_i)
             .collect(),
-        pearson_residuals: residuals.clone(),
+        pearson_residuals: pearson_residuals.clone(),
         effects: irls_qr_result
             .as_ref()
             .map(|qr| qr.effects.clone())
@@ -271,12 +296,14 @@ pub fn glm_fit(
             qr: irls_qr_result
                 .as_ref()
                 .map(|qr| {
-                    // Convert 1D QR matrix to 2D format
+                    // Convert 1D QR matrix (column-major) to 2D format (row-major)
+                    // QR decomposition stores data column-major: qr[i + j*n]
                     let mut qr_2d = vec![vec![0.0; p]; y.len()];
                     for i in 0..y.len() {
                         for j in 0..p {
-                            if i * p + j < qr.qr.len() {
-                                qr_2d[i][j] = qr.qr[i * p + j];
+                            let idx = i + j * y.len(); // column-major indexing
+                            if idx < qr.qr.len() {
+                                qr_2d[i][j] = qr.qr[idx];
                             }
                         }
                     }
@@ -391,14 +418,20 @@ pub fn glm_fit(
         } else {
             1.0
         },
-        deviance_residuals: residuals.clone(),
+        deviance_residuals: deviance_residuals.clone(),
         covariance_matrix: {
             // Calculate covariance matrix from R matrix
             // Cov = (X'X)^(-1) * σ² = R^(-1) * (R^(-1))' * σ²
-            let sigma_squared = if resdf > 0 {
-                devold / resdf as f64
-            } else {
-                1.0
+            // For binomial and poisson, dispersion is fixed at 1.0 (matching R's summary.glm)
+            let sigma_squared = match family.name() {
+                "binomial" | "poisson" => 1.0,
+                _ => {
+                    if resdf > 0 {
+                        devold / resdf as f64
+                    } else {
+                        1.0
+                    }
+                }
             };
 
             // Get R matrix from QR result
@@ -462,10 +495,16 @@ pub fn glm_fit(
         standard_errors: {
             // Calculate standard errors from covariance matrix diagonal
             // SE = sqrt(diag(Cov)) = sqrt(diag((X'X)^(-1) * σ²))
-            let sigma_squared = if resdf > 0 {
-                devold / resdf as f64
-            } else {
-                1.0
+            // For binomial and poisson, dispersion is fixed at 1.0 (matching R's summary.glm)
+            let sigma_squared = match family.name() {
+                "binomial" | "poisson" => 1.0,
+                _ => {
+                    if resdf > 0 {
+                        devold / resdf as f64
+                    } else {
+                        1.0
+                    }
+                }
             };
 
             // Get R matrix and compute (X'X)^(-1) = R^(-1) * (R^(-1))'
@@ -646,7 +685,119 @@ pub fn glm_fit(
                 })
                 .collect()
         },
-        leverage: Vec::new(),       // TODO: Calculate leverage
-        cooks_distance: Vec::new(), // TODO: Calculate Cook's distance
+        leverage: {
+            // Calculate leverage (hat values) following R's lminfl.f algorithm:
+            // For each column j=1..k: compute Q*e_j and accumulate squared values
+            // hat[i] = sum_j (Q*e_j)[i]^2 where e_j is the j-th unit vector
+            // This is equivalent to computing row sums of Q^2
+
+            use super::qr_decomposition::apply_qy;
+
+            if let Some(ref qr) = irls_qr_result {
+                let n_obs = y.len();
+                let mut hat_values = vec![0.0; n_obs];
+                let qr_rank = qr.rank;  // Use rank, not p
+
+                // For each column j of the rank (matching R's loop over k)
+                for j in 0..qr_rank {
+                    // Create unit vector e_j
+                    let mut e_j = vec![0.0; n_obs];
+                    if j < n_obs {
+                        e_j[j] = 1.0;
+                    }
+
+                    // Compute Q * e_j using the QR decomposition
+                    let q_ej = apply_qy(&qr.qr, &qr.qraux, &e_j, n_obs, qr_rank);
+
+                    // Accumulate squared values: hat[i] += (Q*e_j)[i]^2
+                    for i in 0..n_obs {
+                        hat_values[i] += q_ej[i] * q_ej[i];
+                    }
+                }
+
+                // Cap hat values following R's two-stage approach:
+                // 1. lminfl.f line 94: if hat >= 1 - qr_tol, set to 1
+                // 2. lm.influence.R line 118: if hat > 1 - 10*eps, set to 1
+                //
+                // The second capping is critical for preventing massive Cook's D values
+                // when hat is numerically very close to 1 (e.g., 0.999999998)
+                let qr_tol = qr.tol;
+                let eps_tol = 10.0 * f64::EPSILON; // 10 * 2.22e-16 ≈ 2.22e-15
+                for i in 0..n_obs {
+                    if hat_values[i] >= 1.0 - qr_tol || hat_values[i] > 1.0 - eps_tol {
+                        hat_values[i] = 1.0;
+                    }
+                }
+
+                hat_values
+            } else {
+                vec![0.0; y.len()]
+            }
+        },
+        cooks_distance: {
+            // Calculate Cook's distance: D_i = (r_i^2 / (p * dispersion)) * (h_i / (1 - h_i)^2)
+            // where r_i is the Pearson residual, h_i is leverage, p is number of parameters
+
+            // First calculate leverage (same formula as above)
+            use super::qr_decomposition::apply_qy;
+
+            let hat_values = if let Some(ref qr) = irls_qr_result {
+                let n_obs = y.len();
+                let mut hat_vals = vec![0.0; n_obs];
+                let qr_rank = qr.rank;  // Use rank, not p
+
+                // For each column j of the rank (matching R's loop over k)
+                for j in 0..qr_rank {
+                    // Create unit vector e_j
+                    let mut e_j = vec![0.0; n_obs];
+                    if j < n_obs {
+                        e_j[j] = 1.0;
+                    }
+
+                    // Compute Q * e_j using the QR decomposition
+                    let q_ej = apply_qy(&qr.qr, &qr.qraux, &e_j, n_obs, qr_rank);
+
+                    // Accumulate squared values: hat[i] += (Q*e_j)[i]^2
+                    for i in 0..n_obs {
+                        hat_vals[i] += q_ej[i] * q_ej[i];
+                    }
+                }
+
+                hat_vals
+            } else {
+                vec![0.0; y.len()]
+            };
+
+            // Calculate Cook's distance for each observation
+            // Formula from R: (pearson_res/(1-hat))^2 * hat/(dispersion * p)
+            // Dispersion is 1.0 for binomial and poisson, estimated for others
+            let dispersion = match family.name() {
+                "binomial" | "poisson" | "quasibinomial" | "quasipoisson" => 1.0,
+                _ => {
+                    if resdf > 0 {
+                        devold / resdf as f64
+                    } else {
+                        1.0
+                    }
+                }
+            };
+
+            // Use Pearson residuals already computed
+            let mut cooks_d = Vec::with_capacity(y.len());
+            for i in 0..y.len() {
+                let h_i = hat_values[i];
+                let pr = pearson_residuals[i];
+
+                // Cook's distance formula from R
+                let denominator = 1.0 - h_i;
+                let cooks_di = if denominator.abs() > 1e-10 && p > 0 {
+                    (pr / denominator).powi(2) * h_i / (dispersion * p as f64)
+                } else {
+                    0.0
+                };
+                cooks_d.push(cooks_di);
+            }
+            cooks_d
+        }
     })
 }

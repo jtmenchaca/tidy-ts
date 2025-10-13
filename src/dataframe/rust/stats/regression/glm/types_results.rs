@@ -117,16 +117,40 @@ pub struct GlmResult {
     /// Parameter names (33. model_matrix_column_names)
     pub model_matrix_column_names: Vec<String>,
     /// Residual standard error (34. residual_standard_error)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub residual_standard_error: f64,
     /// R-squared (35. r_squared)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub r_squared: f64,
     /// Adjusted R-squared (36. adjusted_r_squared)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub adjusted_r_squared: f64,
     /// Percentage of deviance explained (37. deviance_explained_percent)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub deviance_explained_percent: f64,
     /// Overall F-statistic (38. f_statistic)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub f_statistic: f64,
     /// F-test p-value (39. f_p_value)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64"
+    )]
     pub f_p_value: f64,
     /// Sample size (40. n_observations)
     pub n_observations: usize,
@@ -151,8 +175,16 @@ pub struct GlmResult {
     /// P-values for coefficients (48b. p_values)
     pub p_values: Vec<f64>,
     /// Leverage values (49. leverage)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_vec_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64"
+    )]
     pub leverage: Vec<f64>,
     /// Cook's distance (50. cooks_distance)
+    #[serde(
+        serialize_with = "crate::stats::regression::glm::serde_special_floats::serialize_vec_f64",
+        deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64"
+    )]
     pub cooks_distance: Vec<f64>,
 
     // Additional fields for backward compatibility

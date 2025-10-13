@@ -97,48 +97,18 @@ export function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
 }): OneWayAnovaWithPostHocResult;
 
-// Two-way ANOVA overloads
+// Two-way ANOVA overload
 export function centralTendencyToEachOther({
   data,
   parametric,
   alpha,
   design,
-  testType,
 }: {
   data: number[][][];
   parametric: "parametric";
   design: "two-way";
-  testType: "factorA";
   alpha?: number;
-}): OneWayAnovaWithPostHocResult;
-
-export function centralTendencyToEachOther({
-  data,
-  parametric,
-  alpha,
-  design,
-  testType,
-}: {
-  data: number[][][];
-  parametric: "parametric";
-  design: "two-way";
-  testType: "factorB";
-  alpha?: number;
-}): OneWayAnovaWithPostHocResult;
-
-export function centralTendencyToEachOther({
-  data,
-  parametric,
-  alpha,
-  design,
-  testType,
-}: {
-  data: number[][][];
-  parametric: "parametric";
-  design: "two-way";
-  testType: "interaction";
-  alpha?: number;
-}): OneWayAnovaWithPostHocResult;
+}): TwoWayAnovaTestResult;
 
 export function centralTendencyToEachOther({
   groups,
@@ -175,7 +145,6 @@ export function centralTendencyToEachOther({
   parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   design?: "one-way" | "two-way";
-  testType?: "factorA" | "factorB" | "interaction";
   assumeEqualVariances?: boolean;
 }):
   | OneWayAnovaWithPostHocResult
@@ -188,6 +157,7 @@ export function centralTendencyToEachOther({
       throw new Error("Two-way ANOVA requires parametric=true");
     }
 
+    // Two-way ANOVA always returns complete results with all three effects: factor_a, factor_b, and interaction
     return twoWayAnova({ data, alpha });
   }
 

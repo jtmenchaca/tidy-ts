@@ -42,6 +42,8 @@ interface RRegressionTestParameters
 
 export interface RegressionTestResult {
   coefficients?: number[];
+  conf_lower?: number[];
+  conf_upper?: number[];
   residuals?: number[];
   fitted_values?: number[];
   deviance?: number;
@@ -145,6 +147,9 @@ export async function callRobustRust(
       const { glmFit } = await import(
         "../../src/dataframe/ts/wasm/glm-functions.ts"
       );
+      const { initWasm, wasmInternal } = await import(
+        "../../src/dataframe/ts/wasm/wasm-init.ts"
+      );
 
       // Create data object with all predictor variables
       const data: { [key: string]: any } = {
@@ -168,8 +173,17 @@ export async function callRobustRust(
         data,
       );
 
+      // Compute profile likelihood confidence intervals via WASM
+      initWasm();
+      const resultJson = JSON.stringify(result);
+      const level = 1 - (params.options?.alpha || 0.05);
+      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
+      const confint = JSON.parse(confintJson);
+
       return {
         coefficients: result.coefficients,
+        conf_lower: confint.lower,
+        conf_upper: confint.upper,
         residuals: result.residuals,
         fitted_values: result.fitted_values,
         deviance: result.deviance,
@@ -208,53 +222,25 @@ export async function callRobustRust(
         data,
       );
 
+      // Compute profile likelihood confidence intervals via WASM
+      const { initWasm, wasmInternal } = await import(
+        "../../src/dataframe/ts/wasm/wasm-init.ts"
+      );
+      initWasm();
+      const resultJson = JSON.stringify(result);
+      const level = 1 - (params.options?.alpha || 0.05);
+      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
+      const confint = JSON.parse(confintJson);
+
       return {
         coefficients: result.coefficients,
+        conf_lower: confint.lower,
+        conf_upper: confint.upper,
         residuals: result.residuals,
         fitted_values: result.fitted_values,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.binomial",
-        family: "binomial",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.binomial.log": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      // Convert data to the format expected by WASM GLM
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      // Add all predictor variables
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "binomial",
-        "log",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.binomial.log",
         family: "binomial",
         call: result.call,
         formula: result.formula,
@@ -288,280 +274,25 @@ export async function callRobustRust(
         data,
       );
 
+      // Compute profile likelihood confidence intervals via WASM
+      const { initWasm, wasmInternal } = await import(
+        "../../src/dataframe/ts/wasm/wasm-init.ts"
+      );
+      initWasm();
+      const resultJson = JSON.stringify(result);
+      const level = 1 - (params.options?.alpha || 0.05);
+      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
+      const confint = JSON.parse(confintJson);
+
       return {
         coefficients: result.coefficients,
+        conf_lower: confint.lower,
+        conf_upper: confint.upper,
         residuals: result.residuals,
         fitted_values: result.fitted_values,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.poisson",
-        family: "poisson",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    // Additional GLM test types with different link functions
-    case "glm.gaussian.log": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "gaussian",
-        "log",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.gaussian.log",
-        family: "gaussian",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.gaussian.inverse": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "gaussian",
-        "inverse",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.gaussian.inverse",
-        family: "gaussian",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.binomial.probit": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "binomial",
-        "probit",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.binomial.probit",
-        family: "binomial",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.binomial.cauchit": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "binomial",
-        "cauchit",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.binomial.cauchit",
-        family: "binomial",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.binomial.cloglog": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "binomial",
-        "cloglog",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.binomial.cloglog",
-        family: "binomial",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.poisson.identity": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "poisson",
-        "identity",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.poisson.identity",
-        family: "poisson",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.poisson.sqrt": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "poisson",
-        "sqrt",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.poisson.sqrt",
         family: "poisson",
         call: result.call,
         formula: result.formula,
@@ -595,89 +326,25 @@ export async function callRobustRust(
         data,
       );
 
+      // Compute profile likelihood confidence intervals via WASM
+      const { initWasm, wasmInternal } = await import(
+        "../../src/dataframe/ts/wasm/wasm-init.ts"
+      );
+      initWasm();
+      const resultJson = JSON.stringify(result);
+      const level = 1 - (params.options?.alpha || 0.05);
+      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
+      const confint = JSON.parse(confintJson);
+
       return {
         coefficients: result.coefficients,
+        conf_lower: confint.lower,
+        conf_upper: confint.upper,
         residuals: result.residuals,
         fitted_values: result.fitted_values,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.gamma",
-        family: "gamma",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.gamma.identity": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "gamma",
-        "identity",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.gamma.identity",
-        family: "gamma",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.gamma.log": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "gamma",
-        "log",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.gamma.log",
         family: "gamma",
         call: result.call,
         formula: result.formula,
@@ -711,89 +378,25 @@ export async function callRobustRust(
         data,
       );
 
+      // Compute profile likelihood confidence intervals via WASM
+      const { initWasm, wasmInternal } = await import(
+        "../../src/dataframe/ts/wasm/wasm-init.ts"
+      );
+      initWasm();
+      const resultJson = JSON.stringify(result);
+      const level = 1 - (params.options?.alpha || 0.05);
+      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
+      const confint = JSON.parse(confintJson);
+
       return {
         coefficients: result.coefficients,
+        conf_lower: confint.lower,
+        conf_upper: confint.upper,
         residuals: result.residuals,
         fitted_values: result.fitted_values,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.inverse.gaussian",
-        family: "inverse_gaussian",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.inverse.gaussian.identity": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "inverse_gaussian",
-        "identity",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.inverse.gaussian.identity",
-        family: "inverse_gaussian",
-        call: result.call,
-        formula: result.formula,
-      };
-    }
-
-    case "glm.inverse.gaussian.log": {
-      const { glmFit } = await import(
-        "../../src/dataframe/ts/wasm/glm-functions.ts"
-      );
-
-      const data: { [key: string]: number[] } = {
-        y: params.data!.y!,
-      };
-
-      Object.keys(params.data!).forEach((key) => {
-        if (
-          key !== "y" && key !== "formula" && key !== "weights" &&
-          key !== "offset"
-        ) {
-          data[key] = (params.data as any)[key];
-        }
-      });
-
-      const result = glmFit(
-        params.data!.formula!,
-        "inverse_gaussian",
-        "log",
-        data,
-      );
-
-      return {
-        coefficients: result.coefficients,
-        residuals: result.residuals,
-        fitted_values: result.fitted_values,
-        deviance: result.deviance,
-        aic: result.aic,
-        method: "glm.inverse.gaussian.log",
         family: "inverse_gaussian",
         call: result.call,
         formula: result.formula,

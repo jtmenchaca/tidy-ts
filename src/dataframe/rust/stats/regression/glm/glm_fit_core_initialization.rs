@@ -84,7 +84,8 @@ pub fn calculate_initial_deviance(
     mu: &[f64],
     weights: &[f64],
     deviance_fn: &dyn Fn(&[f64], &[f64], &[f64]) -> Result<f64, &'static str>,
-) -> f64 {
+) -> Result<f64, String> {
     // Use the family's deviance, not the sum of deviance residual magnitudes
-    deviance_fn(y, mu, weights).unwrap_or_else(|_| 0.0)
+    deviance_fn(y, mu, weights)
+        .map_err(|e| format!("Failed to calculate initial deviance: {}", e))
 }

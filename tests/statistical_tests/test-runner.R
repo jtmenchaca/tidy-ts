@@ -428,8 +428,8 @@ result <- switch(test_type,
     )
   },
   
-  # Two-way ANOVA tests
-  "aov.two.factorA" = {
+  # Two-way ANOVA test
+  "aov.two" = {
     two_way_data <- data$twoWayData
     a_levels <- two_way_data$aLevels
     b_levels <- two_way_data$bLevels
@@ -470,122 +470,14 @@ result <- switch(test_type,
     model <- aov(value ~ factor(factor_a) * factor(factor_b), data = df_data)
     summary_result <- summary(model)
     
-    # Extract factor A results
+    # Extract factor A results (primary result)
     f_stat <- summary_result[[1]][1, "F value"]
     p_val <- summary_result[[1]][1, "Pr(>F)"]
     
     list(
       test_statistic = f_stat,
       p_value = p_val,
-      method = "aov.two.factorA",
-      alternative = "two.sided",
-      alpha = alpha
-    )
-  },
-
-  "aov.two.factorB" = {
-    two_way_data <- data$twoWayData
-    a_levels <- two_way_data$aLevels
-    b_levels <- two_way_data$bLevels
-    cell_sizes <- two_way_data$cellSizes
-    data_values <- two_way_data$data
-    
-    # Convert flat data to 3D structure
-    data_3d <- array(NA, dim = c(a_levels, b_levels, max(cell_sizes)))
-    data_index <- 1
-    
-    for (a in 1:a_levels) {
-      for (b in 1:b_levels) {
-        cell_size <- cell_sizes[(a-1) * b_levels + b]
-        if (cell_size > 0) {
-          data_3d[a, b, 1:cell_size] <- data_values[data_index:(data_index + cell_size - 1)]
-          data_index <- data_index + cell_size
-        }
-      }
-    }
-    
-    # Create data frame for two-way ANOVA
-    df_data <- data.frame()
-    for (a in 1:a_levels) {
-      for (b in 1:b_levels) {
-        cell_size <- cell_sizes[(a-1) * b_levels + b]
-        if (cell_size > 0) {
-          values <- data_3d[a, b, 1:cell_size]
-          df_data <- rbind(df_data, data.frame(
-            value = values,
-            factor_a = rep(a, cell_size),
-            factor_b = rep(b, cell_size)
-          ))
-        }
-      }
-    }
-    
-    # Two-way ANOVA
-    model <- aov(value ~ factor(factor_a) * factor(factor_b), data = df_data)
-    summary_result <- summary(model)
-    
-    # Extract factor B results
-    f_stat <- summary_result[[1]][2, "F value"]
-    p_val <- summary_result[[1]][2, "Pr(>F)"]
-    
-    list(
-      test_statistic = f_stat,
-      p_value = p_val,
-      method = "aov.two.factorB",
-      alternative = "two.sided",
-      alpha = alpha
-    )
-  },
-
-  "aov.two.interaction" = {
-    two_way_data <- data$twoWayData
-    a_levels <- two_way_data$aLevels
-    b_levels <- two_way_data$bLevels
-    cell_sizes <- two_way_data$cellSizes
-    data_values <- two_way_data$data
-    
-    # Convert flat data to 3D structure
-    data_3d <- array(NA, dim = c(a_levels, b_levels, max(cell_sizes)))
-    data_index <- 1
-    
-    for (a in 1:a_levels) {
-      for (b in 1:b_levels) {
-        cell_size <- cell_sizes[(a-1) * b_levels + b]
-        if (cell_size > 0) {
-          data_3d[a, b, 1:cell_size] <- data_values[data_index:(data_index + cell_size - 1)]
-          data_index <- data_index + cell_size
-        }
-      }
-    }
-    
-    # Create data frame for two-way ANOVA
-    df_data <- data.frame()
-    for (a in 1:a_levels) {
-      for (b in 1:b_levels) {
-        cell_size <- cell_sizes[(a-1) * b_levels + b]
-        if (cell_size > 0) {
-          values <- data_3d[a, b, 1:cell_size]
-          df_data <- rbind(df_data, data.frame(
-            value = values,
-            factor_a = rep(a, cell_size),
-            factor_b = rep(b, cell_size)
-          ))
-        }
-      }
-    }
-    
-    # Two-way ANOVA
-    model <- aov(value ~ factor(factor_a) * factor(factor_b), data = df_data)
-    summary_result <- summary(model)
-    
-    # Extract interaction results
-    f_stat <- summary_result[[1]][3, "F value"]
-    p_val <- summary_result[[1]][3, "Pr(>F)"]
-    
-    list(
-      test_statistic = f_stat,
-      p_value = p_val,
-      method = "aov.two.interaction",
+      method = "aov.two",
       alternative = "two.sided",
       alpha = alpha
     )

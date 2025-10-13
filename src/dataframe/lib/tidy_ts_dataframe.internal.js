@@ -2105,6 +2105,180 @@ export function glm_fit_wasm(
 }
 
 /**
+ * WASM export for GLM summary
+ *
+ * Returns coefficient table with test statistics and p-values
+ * @param {string} result_json
+ * @returns {string}
+ */
+export function glm_summary_wasm(result_json) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_summary_wasm(ptr0, len0);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+
+/**
+ * WASM export for standardized residuals
+ *
+ * Returns rstandard() values
+ * @param {string} result_json
+ * @param {string} residual_type
+ * @returns {string}
+ */
+export function glm_rstandard_wasm(result_json, residual_type) {
+  let deferred3_0;
+  let deferred3_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      residual_type,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_rstandard_wasm(ptr0, len0, ptr1, len1);
+    deferred3_0 = ret[0];
+    deferred3_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred3_0, deferred3_1, 1);
+  }
+}
+
+/**
+ * WASM export for studentized residuals
+ *
+ * Returns rstudent() values
+ * @param {string} result_json
+ * @returns {string}
+ */
+export function glm_rstudent_wasm(result_json) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_rstudent_wasm(ptr0, len0);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+
+/**
+ * WASM export for influence measures
+ *
+ * Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
+ * @param {string} result_json
+ * @returns {string}
+ */
+export function glm_influence_wasm(result_json) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_influence_wasm(ptr0, len0);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+
+/**
+ * GLM confint() - Compute confidence intervals for coefficients
+ * @param {string} result_json
+ * @param {number} level
+ * @returns {string}
+ */
+export function glm_confint_wasm(result_json, level) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_confint_wasm(ptr0, len0, level);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+  }
+}
+
+/**
+ * GLM predict() - Make predictions on new data
+ * @param {string} result_json
+ * @param {string} newdata_json
+ * @param {string} pred_type
+ * @returns {string}
+ */
+export function glm_predict_wasm(result_json, newdata_json, pred_type) {
+  let deferred4_0;
+  let deferred4_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      newdata_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(
+      pred_type,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len2 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_predict_wasm(ptr0, len0, ptr1, len1, ptr2, len2);
+    deferred4_0 = ret[0];
+    deferred4_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+  }
+}
+
+/**
  * WASM export for Anderson-Darling normality test
  * @param {Float64Array} x
  * @param {number} alpha

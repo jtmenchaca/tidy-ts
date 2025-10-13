@@ -163,6 +163,7 @@ function getTestConfig() {
     // ANOVA tests
     "aov.one": true, // ✅ Working (anovaOneWay)
     "aov.welch": true, // ✅ Working (welchAnovaOneWay)
+    "aov.two": true, // ✅ Working (twoWayAnova)
 
     // Chi-square and exact tests
     "chisq.test": true, // ✅ Working (chiSquareTest)
@@ -234,7 +235,7 @@ async function runStatisticalTestGroup(
   return results;
 }
 
-const testCount = 2; // Number of test cases per test type
+const testCount = 5; // Number of test cases per test type
 
 // Get enabled test types for comprehensive testing
 const testConfig = getTestConfig();
@@ -469,6 +470,18 @@ Deno.test("anova.welch", async () => {
   await runStatisticalTestGroup(
     "Welch ANOVA Tests",
     "aov.welch",
+    testCount,
+    generateTestCase,
+    runRobustComparison,
+    [10, 30],
+    INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
+  );
+});
+
+Deno.test("anova.two-way", async () => {
+  await runStatisticalTestGroup(
+    "Two-Way ANOVA Tests",
+    "aov.two",
     testCount,
     generateTestCase,
     runRobustComparison,

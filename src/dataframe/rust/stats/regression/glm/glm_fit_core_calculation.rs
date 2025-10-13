@@ -51,7 +51,7 @@ pub fn calculate_null_deviance(
     intercept: bool,
     linkinv: &dyn Fn(&[f64]) -> Vec<f64>,
     deviance_fn: &dyn Fn(&[f64], &[f64], &[f64]) -> Result<f64, &'static str>,
-) -> f64 {
+) -> Result<f64, String> {
     let n = y.len();
     let wtdmu = if intercept {
         weights
@@ -64,7 +64,8 @@ pub fn calculate_null_deviance(
         linkinv(offset)[0] // Assuming single value for null model
     };
 
-    deviance_fn(y, &vec![wtdmu; n], weights).unwrap_or(0.0)
+    deviance_fn(y, &vec![wtdmu; n], weights)
+        .map_err(|e| format!("Failed to calculate null deviance: {}", e))
 }
 
 /// Calculates degrees of freedom

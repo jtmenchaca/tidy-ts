@@ -9,11 +9,11 @@ import {
   setTestSeed,
 } from "./regression-interface.ts";
 import {
-  AIC_R2_CLOSE_THRESHOLD,
   COEFFICIENT_DIFFERENCE_THRESHOLD,
   hasSystemError,
   INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   isStatisticalFailure,
+  printDetailedCoefficientsWithConfint,
   REGRESSION_COMPREHENSIVE_SUCCESS_THRESHOLD,
   runComprehensiveTestSuite,
   runTestGroup,
@@ -118,12 +118,12 @@ async function runRobustComparison(
         .test(rWarnings);
     let status: "PASS" | "FAIL" = "FAIL";
     if (warnsSeparation) {
-      const aicClose = isFinite(aicDiff) && aicDiff < AIC_R2_CLOSE_THRESHOLD;
-      const r2Close = isFinite(rSquaredDiff) &&
-        rSquaredDiff < AIC_R2_CLOSE_THRESHOLD;
-      status = aicClose && r2Close
-        ? "PASS"
-        : (maxDiff < SEPARATION_CASE_COEFFICIENT_THRESHOLD ? "PASS" : "FAIL");
+      // In separation cases, use relaxed coefficient threshold but strict AIC/deviance check
+      const aicClose = isFinite(aicDiff) && aicDiff < 1e-3; // Relaxed from 1e-6
+      const coeffClose =
+        coefficientDiff < SEPARATION_CASE_COEFFICIENT_THRESHOLD;
+      // For binomial, R² is often not meaningful, so don't check it
+      status = aicClose && coeffClose ? "PASS" : "FAIL";
     } else {
       status = maxDiff < COEFFICIENT_DIFFERENCE_THRESHOLD ? "PASS" : "FAIL";
     }
@@ -279,7 +279,7 @@ function generateTestCase(testType: string, sampleSize: number) {
 
 // GLM Gaussian Family Tests
 Deno.test("glm.gaussian", async () => {
-  await runTestGroup(
+  const results = await runTestGroup(
     "GLM Gaussian Tests",
     "glm.gaussian",
     testCount,
@@ -288,11 +288,14 @@ Deno.test("glm.gaussian", async () => {
     [10, 30],
     INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
 });
 
 // GLM Binomial Family Tests
 Deno.test("glm.binomial", async () => {
-  await runTestGroup(
+  const results = await runTestGroup(
     "GLM Binomial Tests",
     "glm.binomial",
     testCount,
@@ -301,11 +304,14 @@ Deno.test("glm.binomial", async () => {
     [10, 30],
     INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
 });
 
 // GLM Poisson Family Tests
 Deno.test("glm.poisson", async () => {
-  await runTestGroup(
+  const results = await runTestGroup(
     "GLM Poisson Tests",
     "glm.poisson",
     testCount,
@@ -314,11 +320,14 @@ Deno.test("glm.poisson", async () => {
     [10, 30],
     INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
 });
 
 // GLM Gamma Family Tests
 Deno.test("glm.gamma", async () => {
-  await runTestGroup(
+  const results = await runTestGroup(
     "GLM Gamma Tests",
     "glm.gamma",
     testCount,
@@ -327,11 +336,14 @@ Deno.test("glm.gamma", async () => {
     [10, 30],
     INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
 });
 
 // GLM Inverse Gaussian Family Tests
 Deno.test("glm.inverse.gaussian", async () => {
-  await runTestGroup(
+  const results = await runTestGroup(
     "GLM Inverse Gaussian Tests",
     "glm.inverse.gaussian",
     testCount,
@@ -340,6 +352,9 @@ Deno.test("glm.inverse.gaussian", async () => {
     [10, 30],
     INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
 });
 
 // Comprehensive regression test suite

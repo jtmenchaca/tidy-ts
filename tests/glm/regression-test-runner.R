@@ -50,8 +50,16 @@ result <- switch(test_type,
     # Fit GLM
     model <- glm(as.formula(formula_str), data = df, family = gaussian())
     
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      confint(model, level = 1 - alpha),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+    
     list(
       coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -67,12 +75,33 @@ result <- switch(test_type,
   "glm.binomial" = {
     formula_str <- if (is.null(data$formula)) "y ~ x" else data$formula
     df <- create_dataframe_from_json(data, formula_str)
-    
-    # Fit GLM
-    model <- glm(as.formula(formula_str), data = df, family = binomial())
-    
+
+    # Fit GLM and capture warnings from both R and C code
+    warn_msgs <- character(0)
+    stderr_output <- capture.output(
+      model <- withCallingHandlers(
+        glm(as.formula(formula_str), data = df, family = binomial()),
+        warning = function(w) {
+          warn_msgs <<- c(warn_msgs, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      ),
+      type = "message"
+    )
+
+    # Combine R warnings and stderr output
+    all_warnings <- c(warn_msgs, stderr_output)
+
+    # Compute confidence intervals (suppress profiling messages)
+    conf_int <- tryCatch(
+      suppressMessages(confint(model, level = 1 - alpha)),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+
     list(
       coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -80,7 +109,8 @@ result <- switch(test_type,
       method = "glm.binomial",
       family = "binomial",
       call = deparse(model$call),
-      formula = formula_str
+      formula = formula_str,
+      warnings = if (length(all_warnings) > 0) paste(all_warnings, collapse = "; ") else NULL
     )
   },
   
@@ -120,8 +150,16 @@ result <- switch(test_type,
     # Fit GLM
     model <- glm(as.formula(formula_str), data = df, family = poisson())
     
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      confint(model, level = 1 - alpha),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+    
     list(
       coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -193,7 +231,7 @@ result <- switch(test_type,
   "glm.binomial.probit" = {
     y <- as.numeric(data$y)
     formula_str <- if (is.null(data$formula)) "y ~ x" else data$formula
-    
+
     # Create data frame with all predictors
     df <- data.frame(y = y)
     for (var_name in names(data)) {
@@ -201,12 +239,33 @@ result <- switch(test_type,
         df[[var_name]] <- as.numeric(data[[var_name]])
       }
     }
-    
-    # Fit GLM with probit link
-    model <- glm(as.formula(formula_str), data = df, family = binomial(link = "probit"))
-    
+
+    # Fit GLM with probit link and capture warnings
+    warn_msgs <- character(0)
+    stderr_output <- capture.output(
+      model <- withCallingHandlers(
+        glm(as.formula(formula_str), data = df, family = binomial(link = "probit")),
+        warning = function(w) {
+          warn_msgs <<- c(warn_msgs, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      ),
+      type = "message"
+    )
+
+    # Combine R warnings and stderr output
+    all_warnings <- c(warn_msgs, stderr_output)
+
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      suppressMessages(confint(model, level = 1 - alpha)),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+
     list(
       coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -214,14 +273,15 @@ result <- switch(test_type,
       method = "glm.binomial.probit",
       family = "binomial",
       call = deparse(model$call),
-      formula = formula_str
+      formula = formula_str,
+      warnings = if (length(all_warnings) > 0) paste(all_warnings, collapse = "; ") else NULL
     )
   },
 
   "glm.binomial.cauchit" = {
     y <- as.numeric(data$y)
     formula_str <- if (is.null(data$formula)) "y ~ x" else data$formula
-    
+
     # Create data frame with all predictors
     df <- data.frame(y = y)
     for (var_name in names(data)) {
@@ -229,12 +289,33 @@ result <- switch(test_type,
         df[[var_name]] <- as.numeric(data[[var_name]])
       }
     }
-    
-    # Fit GLM with cauchit link
-    model <- glm(as.formula(formula_str), data = df, family = binomial(link = "cauchit"))
-    
+
+    # Fit GLM with cauchit link and capture warnings
+    warn_msgs <- character(0)
+    stderr_output <- capture.output(
+      model <- withCallingHandlers(
+        glm(as.formula(formula_str), data = df, family = binomial(link = "cauchit")),
+        warning = function(w) {
+          warn_msgs <<- c(warn_msgs, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      ),
+      type = "message"
+    )
+
+    # Combine R warnings and stderr output
+    all_warnings <- c(warn_msgs, stderr_output)
+
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      suppressMessages(confint(model, level = 1 - alpha)),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+
     list(
       coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -242,7 +323,8 @@ result <- switch(test_type,
       method = "glm.binomial.cauchit",
       family = "binomial",
       call = deparse(model$call),
-      formula = formula_str
+      formula = formula_str,
+      warnings = if (length(all_warnings) > 0) paste(all_warnings, collapse = "; ") else NULL
     )
   },
 
@@ -337,8 +419,16 @@ result <- switch(test_type,
     # Fit GLM with gamma family
     model <- glm(as.formula(formula_str), data = df, family = Gamma(link = "inverse"))
     
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      confint(model, level = 1 - alpha),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+    
     list(
       coefficients = as.numeric(coef(model)),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),
@@ -413,8 +503,16 @@ result <- switch(test_type,
     # Fit GLM with inverse gaussian family
     model <- glm(as.formula(formula_str), data = df, family = inverse.gaussian(link = "1/mu^2"))
     
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      confint(model, level = 1 - alpha),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+    
     list(
       coefficients = as.numeric(coef(model)),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
       residuals = as.numeric(residuals(model)),
       fitted_values = as.numeric(fitted(model)),
       deviance = deviance(model),

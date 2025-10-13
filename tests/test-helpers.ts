@@ -527,6 +527,126 @@ export function printDetailedCoefficients(results: TestResult[]): void {
   }
 }
 
+// Print detailed coefficient and confidence interval comparison
+export function printDetailedCoefficientsWithConfint(
+  results: TestResult[],
+): void {
+  console.log("\n" + "=".repeat(140));
+  console.log("📊 DETAILED COEFFICIENT AND CONFIDENCE INTERVAL COMPARISON");
+  console.log("=".repeat(140));
+
+  for (const result of results) {
+    if (result.status === "ERROR") continue;
+
+    console.log(`\n🔬 ${result.testName}`);
+    console.log("-".repeat(140));
+
+    // Print R² and AIC values
+    const rR2 = typeof result.rResult?.r_squared === "number"
+      ? result.rResult.r_squared
+      : 0;
+    const rustR2 = typeof result.rustResult?.r_squared === "number"
+      ? result.rustResult.r_squared
+      : 0;
+    const rAic = typeof result.rResult?.aic === "number"
+      ? result.rResult.aic
+      : 0;
+    const rustAic = typeof result.rustResult?.aic === "number"
+      ? result.rustResult.aic
+      : 0;
+
+    console.log("Model Metrics:");
+    console.log(
+      `  R²:  R=${rR2.toFixed(8)}, Rust=${rustR2.toFixed(8)}, Diff=${
+        Math.abs(rR2 - rustR2).toExponential(3)
+      }`,
+    );
+    console.log(
+      `  AIC: R=${rAic.toFixed(8)}, Rust=${rustAic.toFixed(8)}, Diff=${
+        Math.abs(rAic - rustAic).toExponential(3)
+      }`,
+    );
+    console.log();
+
+    const rCoefs = result.rResult?.coefficients || [];
+    const rustCoefs = result.rustResult?.coefficients || [];
+    const rConfLower = result.rResult?.conf_lower || [];
+    const rConfUpper = result.rResult?.conf_upper || [];
+    const rustConfLower = result.rustResult?.conf_lower || [];
+    const rustConfUpper = result.rustResult?.conf_upper || [];
+    const maxLength = Math.max(rCoefs.length, rustCoefs.length);
+
+    console.log("COEFFICIENTS:");
+    console.log(
+      "Index".padEnd(8) + "R Coefficient".padEnd(20) +
+        "Rust Coefficient".padEnd(20) + "Difference".padEnd(15) +
+        "Abs Diff".padEnd(15),
+    );
+    console.log("-".repeat(140));
+
+    for (let i = 0; i < maxLength; i++) {
+      const rCoef = rCoefs[i] || 0;
+      const rustCoef = rustCoefs[i] || 0;
+      const diff = rCoef - rustCoef;
+      const absDiff = Math.abs(diff);
+
+      console.log(
+        i.toString().padEnd(8) +
+          (typeof rCoef === "number" ? rCoef.toFixed(8) : String(rCoef)).padEnd(
+            20,
+          ) +
+          (typeof rustCoef === "number"
+            ? rustCoef.toFixed(8)
+            : String(rustCoef)).padEnd(20) +
+          (typeof diff === "number" ? diff.toExponential(3) : String(diff))
+            .padEnd(15) +
+          (typeof absDiff === "number"
+            ? absDiff.toExponential(3)
+            : String(absDiff)).padEnd(15),
+      );
+    }
+
+    console.log();
+    console.log("CONFIDENCE INTERVALS:");
+    console.log(
+      "Index".padEnd(8) + "R Lower".padEnd(18) + "R Upper".padEnd(18) +
+        "Rust Lower".padEnd(18) + "Rust Upper".padEnd(18) +
+        "Lower Diff".padEnd(15) + "Upper Diff".padEnd(15),
+    );
+    console.log("-".repeat(140));
+
+    for (let i = 0; i < maxLength; i++) {
+      const rLower = rConfLower[i];
+      const rUpper = rConfUpper[i];
+      const rustLower = rustConfLower[i];
+      const rustUpper = rustConfUpper[i];
+
+      const lowerDiff =
+        typeof rLower === "number" && typeof rustLower === "number"
+          ? Math.abs(rLower - rustLower)
+          : NaN;
+      const upperDiff =
+        typeof rUpper === "number" && typeof rustUpper === "number"
+          ? Math.abs(rUpper - rustUpper)
+          : NaN;
+
+      console.log(
+        i.toString().padEnd(8) +
+          (typeof rLower === "number" ? rLower.toFixed(8) : "N/A").padEnd(18) +
+          (typeof rUpper === "number" ? rUpper.toFixed(8) : "N/A").padEnd(18) +
+          (typeof rustLower === "number" ? rustLower.toFixed(8) : "N/A").padEnd(
+            18,
+          ) +
+          (typeof rustUpper === "number" ? rustUpper.toFixed(8) : "N/A").padEnd(
+            18,
+          ) +
+          (!isNaN(lowerDiff) ? lowerDiff.toExponential(3) : "N/A").padEnd(15) +
+          (!isNaN(upperDiff) ? upperDiff.toExponential(3) : "N/A").padEnd(15),
+      );
+    }
+  }
+}
+
 // Print results in a nice format
 export function printComparisonResults(results: TestResult[]): void {
   console.log("\n" + "=".repeat(140));

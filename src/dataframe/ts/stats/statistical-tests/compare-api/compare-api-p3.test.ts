@@ -1,38 +1,66 @@
 import { expect } from "@std/expect";
 import { compare } from "./index.ts";
 
-Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA factor B", () => {
-  const twoWayData = [
-    [[1, 2], [3, 4]], // A1: B1=[1,2], B2=[3,4]
-    [[5, 6], [7, 8]], // A2: B1=[5,6], B2=[7,8]
-    [[9, 10], [11, 12]], // A3: B1=[9,10], B2=[11,12]
+Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA with interaction", () => {
+  // Data designed to show an interaction effect
+  // Factor A: Low vs High intensity
+  // Factor B: Morning vs Evening
+  // Interaction: High intensity in morning is much better than expected
+  const twoWayDataWithInteraction = [
+    [[10, 12, 11], [8, 9, 10]], // Low intensity: Morning slightly better than evening
+    [[25, 28, 27], [15, 16, 14]], // High intensity: Morning MUCH better than evening (interaction!)
   ];
 
   const result = compare.multiGroups.centralTendency.toEachOther({
-    data: twoWayData,
+    data: twoWayDataWithInteraction,
     parametric: "parametric",
     design: "two-way",
-    testType: "factorB",
   });
 
-  console.log("Two-way ANOVA factor B result:", result);
+  console.log("Two-way ANOVA with interaction result:", result);
+
+  // Verify all three effects are present
+  expect(result.factor_a).toBeDefined();
+  expect(result.factor_b).toBeDefined();
+  expect(result.interaction).toBeDefined();
+
+  // With this data, interaction should be significant
+  expect(result.interaction.p_value).toBeLessThan(0.05);
+
+  // Factor A (intensity) should also be significant
+  expect(result.factor_a.p_value).toBeLessThan(0.05);
+
+  // Factor B (time of day) should be significant
+  expect(result.factor_b.p_value).toBeLessThan(0.05);
 });
 
-Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA interaction", () => {
-  const twoWayData = [
-    [[1, 2], [3, 4]], // A1: B1=[1,2], B2=[3,4]
-    [[5, 6], [7, 8]], // A2: B1=[5,6], B2=[7,8]
-    [[9, 10], [11, 12]], // A3: B1=[9,10], B2=[11,12]
+Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA no interaction", () => {
+  // Data designed to show NO interaction (purely additive effects)
+  // Factor A adds 4, Factor B adds 2, no interaction
+  const twoWayDataNoInteraction = [
+    [[1, 2, 1], [3, 4, 3]], // A1: B1=~1, B2=~3 (diff=2)
+    [[5, 6, 5], [7, 8, 7]], // A2: B1=~5, B2=~7 (diff=2, same!)
   ];
 
   const result = compare.multiGroups.centralTendency.toEachOther({
-    data: twoWayData,
+    data: twoWayDataNoInteraction,
     parametric: "parametric",
     design: "two-way",
-    testType: "interaction",
   });
 
-  console.log("Two-way ANOVA interaction result:", result);
+  console.log("Two-way ANOVA no interaction result:", result);
+
+  // Verify all three effects are present
+  expect(result.factor_a).toBeDefined();
+  expect(result.factor_b).toBeDefined();
+  expect(result.interaction).toBeDefined();
+
+  // Both main effects should be significant
+  expect(result.factor_a.p_value).toBeLessThan(0.001);
+  expect(result.factor_b.p_value).toBeLessThan(0.001);
+
+  // Interaction should NOT be significant (p > 0.05)
+  expect(result.interaction.p_value).toBeGreaterThan(0.05);
 });
 
 Deno.test("multiGroups.proportions.toEachOther - larger contingency table", () => {
