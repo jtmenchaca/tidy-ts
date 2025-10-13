@@ -140,7 +140,7 @@ a Creative Commons Attribution 4.0 International License (CC BY
   example, functions that summarize over potentially null values require
   the developer to explicitly handle missing data before returning
   numeric output. This type-safe approach is illustrated in Example 1,
-  which demonstrates how a simple data analysis workflow maintains type
+  which demonstrates how a simple data analysis workflow carries type
   information through transformations, grouping, and aggregation.</p>
   <disp-quote>
     <p><bold>Example 1: Type-Safe Data Transformation
@@ -168,17 +168,19 @@ const analysis = sales
   </disp-quote>
   <p>Tidy-TS also includes support for statistical hypothesis testing
   (Example 2). These functions are validated against R using randomized
-  test suites to ensure parity in results. Output from statistical tests
-  is returned in typed objects that contain test names, effect sizes,
-  p-values, confidence intervals, and other relevant statistics in a
-  structured format. Providing these features natively is a priority for
-  this work, particularly as research applications increasingly converge
-  data collection and data analysis through technologies like TypeScript
-  and interactive applications. Example 2 demonstrates how Tidy-TS
-  exposes statistical tests directly and via an API that guides users to
-  the correct test based on their intention, invoking the tidyverse
-  philosophy of human-centered design. Both methods return the same
-  structured, typed results.</p>
+  test suites to ensure parity in results. The validation framework
+  compares test statistics and p-values across implementations,
+  requiring differences to be within 1e-4 tolerance. Output from
+  statistical tests is returned in typed objects that contain test
+  names, effect sizes, p-values, confidence intervals, and other
+  relevant statistics in a structured format. Providing these features
+  natively is a priority for this work, particularly as research
+  applications increasingly converge data collection and data analysis
+  through technologies like TypeScript and interactive applications.
+  Example 2 demonstrates how Tidy-TS exposes statistical tests directly
+  and via an API that guides users to the correct test based on their
+  intention - invoking the tidyverse philosophy of human-centered
+  design. Both methods return the same structured, typed results.</p>
   <disp-quote>
     <p><bold>Example 2: Statistical Hypothesis Testing with Type
     Safety</bold></p>
@@ -237,8 +239,8 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
   create dataframes using their provided types directly.</p>
   <p>Tidy-TS ultimately builds on lessons from tools like pandas, dplyr,
   and Polars and adapts them for modern Typescript development needs.
-  Tidy-TS is tested on each commit with a suite of over 900 tests and
-  across Node, Bun, Deno, and browser targets.</p>
+  Tidy-TS is tested on each commit with an extensive suite of tests and
+  has been tested Node, Bun, Deno, and browser targets.</p>
 </sec>
 <sec id="research-applications">
   <title>Research applications</title>
