@@ -21,13 +21,21 @@ import { strSplit, strSplitFixed } from "../strings/str_split.ts";
  * ```
  */
 export const str: {
+  /** Detect if strings match a pattern (regex or literal) */
   readonly detect: typeof strDetect;
+  /** Calculate the length of strings */
   readonly length: typeof strLength;
+  /** Replace first occurrence of a pattern in strings */
   readonly replace: typeof strReplace;
+  /** Replace all occurrences of a pattern in strings */
   readonly replaceAll: typeof strReplaceAll;
+  /** Extract first match of a pattern from strings */
   readonly extract: typeof strExtract;
+  /** Extract all matches of a pattern from strings */
   readonly extractAll: typeof strExtractAll;
+  /** Split strings by a delimiter or pattern */
   readonly split: typeof strSplit;
+  /** Split strings by a delimiter into a fixed number of pieces */
   readonly splitFixed: typeof strSplitFixed;
 } = {
   // Basic statistics
