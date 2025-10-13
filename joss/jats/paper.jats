@@ -239,8 +239,8 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
   create dataframes using their provided types directly.</p>
   <p>Tidy-TS ultimately builds on lessons from tools like pandas, dplyr,
   and Polars and adapts them for modern Typescript development needs.
-  Tidy-TS is tested on each commit with an extensive suite of tests and
-  has been tested Node, Bun, Deno, and browser targets.</p>
+  Tidy-TS is tested on each commit with a suite of over 900 tests and
+  across Node, Bun, Deno, and browser targets.</p>
 </sec>
 <sec id="research-applications">
   <title>Research applications</title>
