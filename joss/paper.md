@@ -23,7 +23,7 @@ repository: https://github.com/jtmenchaca/tidy-ts
 
 # Summary
 
-Tidy-TS is a type-safe library for statistical computing, data transformation, and visualization in the TypeScript ecosystem. It introduces a functional grammar for manipulating tabular data using arrays of objects, which are the idiomatic format in JavaScript runtimes. Inspired by the tidyverse philosophy [@Wickham:2019], it brings static typing, schema validation, and compile time guarantees to data workflows in TypeScript.
+Tidy-TS is a type-safe library for statistical computing, data transformation, and visualization in the TypeScript ecosystem. It introduces a functional grammar for manipulating tabular data using arrays of objects, which are the idiomatic format in JavaScript runtimes. These are organized and operated on as DataFrames, following conventions established in statistical computing languages like R and Python. Inspired by the tidyverse philosophy [@Wickham:2019], it brings static typing, schema validation, and compile time guarantees to data workflows in TypeScript.
 
 The library supports pipelines that load data from files, APIs, or databases, apply transformations that preserve type information, run statistical analyses, and produce interactive visualizations using Vega-Lite [@Satyanarayan:2017; @Satyanarayan:2016]. These workflows remain entirely within TypeScript and avoid the need to switch languages for analysis or presentation.
 
@@ -31,14 +31,14 @@ Tidy-TS is designed for use in browsers, servers, and notebooks. It targets team
 
 # Statement of need
 
-JavaScript and TypeScript are widely used for building interactive data applications, but they lack a type-aware and expressive toolkit for statistical computing. Existing libraries like Arquero and Danfo.js offer partial solutions for dataframe operations, but they do not provide a comprehensive type system for a full data analysis pipeline.
+JavaScript and TypeScript are widely used for building interactive data applications, but they lack a type-aware and expressive toolkit for statistical computing. Existing libraries like Arquero and Danfo.js offer partial solutions for DataFrame-style operations, but they do not provide a comprehensive type system for a full data analysis pipeline.
 
 Without a consistent type model, developers are often left writing brittle glue code across loosely coupled tools. Many teams using TypeScript for data ingestion and application logic still rely on Python or R for analysis and modeling. This workflow involves exporting and reimporting data with assumptions about column names, types, and missing values.  Subtle errors such as incorrect joins, inconsistent handling of null and undefined values, or mismatched column references often go undetected until late stages. These issues create avoidable risk in data pipelines. Tidy-TS is designed to minimize this class of error.
 
-This library implements and builds upon a tidyverse-style grammar of data manipulation using TypeScript's type system. Each operation in a pipeline that transforms the data also updates the underlying inferred structure for the compiler, which in turn helps the compiler catch potential errors in downstream transformations, tests, and visualizations. Operations like `mutate`, `select`, `drop`, `join`, `pivot`, and `summarize` all provide and preserve these types. Descriptive statistics follow conventions from R but enforce type correctness at compile time rather than through runtime checks. For example, functions that summarize over potentially null values require the developer to explicitly handle missing data before returning numeric output. This type-safe approach is illustrated in Example 1, which demonstrates how a simple data analysis workflow carries type information through transformations, grouping, and aggregation.
+This library implements and builds upon a tidyverse-style grammar of data manipulation using TypeScript's type system. At its core, Tidy-TS provides a strongly typed DataFrame abstraction that models tabular data as arrays of objects with explicit column types. Each operation in a pipeline that transforms a DataFrame also updates the underlying inferred structure for the compiler, allowing it to detect potential errors in downstream transformations, tests, and visualizations. Operations such as `mutate`, `select`, `drop`, `join`, `pivot`, and `summarize` all preserve and refine type information as data evolve through the workflow. Descriptive statistics follow conventions from R but enforce type correctness at compile time rather than through runtime checks. For example, functions that summarize over potentially null values require the developer to explicitly handle missing data before returning numeric output. This type‑safe approach is illustrated in Example 1, which demonstrates how a DataFrame‑based analysis carries type information through transformations, grouping, and aggregation.
 
 
-> **Example 1: Type-Safe Data Transformation Pipeline**
+> **Example 1: Type-Safe DataFrame Transformations**
 > 
 > ```typescript
 > import { createDataFrame, stats as s } from "@tidy-ts/dataframe";

@@ -79,7 +79,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
   transformation, and visualization in the TypeScript ecosystem. It
   introduces a functional grammar for manipulating tabular data using
   arrays of objects, which are the idiomatic format in JavaScript
-  runtimes. Inspired by the tidyverse philosophy
+  runtimes. These are organized and operated on as DataFrames, following
+  conventions established in statistical computing languages like R and
+  Python. Inspired by the tidyverse philosophy
   (<xref alt="Wickham et al., 2019" rid="ref-WickhamU003A2019" ref-type="bibr">Wickham
   et al., 2019</xref>), it brings static typing, schema validation, and
   compile time guarantees to data workflows in TypeScript.</p>
@@ -113,9 +115,9 @@ a Creative Commons Attribution 4.0 International License (CC BY
   <p>JavaScript and TypeScript are widely used for building interactive
   data applications, but they lack a type-aware and expressive toolkit
   for statistical computing. Existing libraries like Arquero and
-  Danfo.js offer partial solutions for dataframe operations, but they do
-  not provide a comprehensive type system for a full data analysis
-  pipeline.</p>
+  Danfo.js offer partial solutions for DataFrame-style operations, but
+  they do not provide a comprehensive type system for a full data
+  analysis pipeline.</p>
   <p>Without a consistent type model, developers are often left writing
   brittle glue code across loosely coupled tools. Many teams using
   TypeScript for data ingestion and application logic still rely on
@@ -127,24 +129,26 @@ a Creative Commons Attribution 4.0 International License (CC BY
   create avoidable risk in data pipelines. Tidy-TS is designed to
   minimize this class of error.</p>
   <p>This library implements and builds upon a tidyverse-style grammar
-  of data manipulation using TypeScript’s type system. Each operation in
-  a pipeline that transforms the data also updates the underlying
-  inferred structure for the compiler, which in turn helps the compiler
-  catch potential errors in downstream transformations, tests, and
-  visualizations. Operations like <monospace>mutate</monospace>,
+  of data manipulation using TypeScript’s type system. At its core,
+  Tidy-TS provides a strongly typed DataFrame abstraction that models
+  tabular data as arrays of objects with explicit column types. Each
+  operation in a pipeline that transforms a DataFrame also updates the
+  underlying inferred structure for the compiler, allowing it to detect
+  potential errors in downstream transformations, tests, and
+  visualizations. Operations such as <monospace>mutate</monospace>,
   <monospace>select</monospace>, <monospace>drop</monospace>,
   <monospace>join</monospace>, <monospace>pivot</monospace>, and
-  <monospace>summarize</monospace> all provide and preserve these types.
-  Descriptive statistics follow conventions from R but enforce type
-  correctness at compile time rather than through runtime checks. For
-  example, functions that summarize over potentially null values require
-  the developer to explicitly handle missing data before returning
-  numeric output. This type-safe approach is illustrated in Example 1,
-  which demonstrates how a simple data analysis workflow carries type
-  information through transformations, grouping, and aggregation.</p>
+  <monospace>summarize</monospace> all preserve and refine type
+  information as data evolve through the workflow. Descriptive
+  statistics follow conventions from R but enforce type correctness at
+  compile time rather than through runtime checks. For example,
+  functions that summarize over potentially null values require the
+  developer to explicitly handle missing data before returning numeric
+  output. This type‑safe approach is illustrated in Example 1, which
+  demonstrates how a DataFrame‑based analysis carries type information
+  through transformations, grouping, and aggregation.</p>
   <disp-quote>
-    <p><bold>Example 1: Type-Safe Data Transformation
-    Pipeline</bold></p>
+    <p><bold>Example 1: Type-Safe DataFrame Transformations</bold></p>
     <code language="typescript">import { createDataFrame, stats as s } from &quot;@tidy-ts/dataframe&quot;;
 
 const sales = createDataFrame([
