@@ -21,11 +21,9 @@ const model = glm({
   link: "logit",
   data,
   options: {
-    control: {
-      maxit: 25,
-      epsilon: 1e-8,
-      trace: true,
-    },
+    max_iter: 25,
+    epsilon: 1e-8,
+    trace: true,
   },
 });
 

@@ -99,6 +99,17 @@ export const SEPARATION_CASE_COEFFICIENT_THRESHOLD = 1e-1;
 export const AIC_R2_CLOSE_THRESHOLD = 1e-6;
 
 /**
+ * CONFIDENCE_INTERVAL_DIFFERENCE_THRESHOLD: Maximum allowed difference between R and Rust confidence intervals
+ *
+ * Used in regression test comparisons to determine if confidence interval differences
+ * are acceptable. Confidence intervals should be very close between implementations.
+ *
+ * Value: 1e-4 (0.0001, strict threshold for confidence interval agreement)
+ * Used by: regression-tests.test.ts runRobustComparison()
+ */
+export const CONFIDENCE_INTERVAL_DIFFERENCE_THRESHOLD = 1e-4;
+
+/**
  * PATHOLOGICAL_COEFFICIENT_THRESHOLD: Threshold for detecting huge coefficient differences that indicate pathological cases
  *
  * Used in isPathologicalCase() to detect when coefficient differences are so large that

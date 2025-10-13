@@ -293,7 +293,7 @@ export async function callRobustRust(
       );
       const result = proportionTestOneSample({
         data,
-        popProportion: params.data!.proportions!.p0 || 0.5,
+        hypothesizedProportion: params.data!.proportions!.p0 || 0.5,
         alternative,
         alpha,
       });

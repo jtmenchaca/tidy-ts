@@ -267,7 +267,7 @@ Deno.test("Stats API Demo - New Compare API - One Group", () => {
     "  Proportion test:",
     s.compare.oneGroup.proportions.toValue({
       data: binaryData,
-      p: 0.5,
+      hypothesizedProportion: 0.5,
       comparator: "not equal to",
       alpha: 0.05,
     }),

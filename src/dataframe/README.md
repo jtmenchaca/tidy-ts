@@ -137,9 +137,6 @@ Tidy-TS provides a statistical toolkit with 80+ functions across descriptive sta
 ### Descriptive stats
 - **Descriptive**: `s.mean()`, `s.median()`, `s.mode()`, `s.stdev()`, `s.variance()`, `s.min()`, `s.max()`, `s.range()`
 - **Quantiles**: `s.quantile()`, `s.percentileRank()`, `s.iqr()`, `s.quartiles()`
-- **Ranking**: `s.rank()`, `s.denseRank()`, `s.percentileRank()`
-- **Cumulative**: `s.cumsum()`, `s.cummean()`, `s.cummin()`, `s.cummax()`, `s.cumprod()`
-- **Window**: `s.lag()`, `s.lead()`
 
 ### Hypothesis testing
 The library provides many of the commonly needed statistical tests for routine analytics.  These can at times be challenging to navigate for those who are new to statistics, so the library also provides a custom-designed comparison API designed to help you perform the analysis best suited to your needs.  In either approach, you'll receive a neatly typed test result at the end.
@@ -226,10 +223,10 @@ const oneSampleT = s.test.t.oneSample({ data, mu: 100, alternative: "two-sided",
 const independentT = s.test.t.independent({ x: group1, y: group2, alpha: 0.05 });
 const pairedT = s.test.t.paired({ x: before, y: after, alpha: 0.05 });
 const anovaResult = s.test.anova.oneWay([group1, group2, group3], 0.05);
-const mannWhitney = s.test.nonparametric.mannWhitney(group1, group2, 0.05);
+const mannWhitney = s.test.nonparametric.mannWhitney({ x: group1, y: group2, alpha: 0.05 });
 const kruskalWallis = s.test.nonparametric.kruskalWallis([group1, group2], 0.05);
-const pearsonTest = s.test.correlation.pearson(x, y, "two-sided", 0.05);
-const shapiroWilk = s.test.normality.shapiroWilk(data, 0.05);
+const pearsonTest = s.test.correlation.pearson({ x, y, alternative: "two-sided", alpha: 0.05 });
+const shapiroWilk = s.test.normality.shapiroWilk({ data, alpha: 0.05 });
 ```
 
 ### Probability Distributions
@@ -257,7 +254,7 @@ const normalPDFData = s.dist.normal.data({
 });
 
 // Other distributions: beta, gamma, exponential, chi-square, t, f, uniform,
-// weibull, binomial, poisson, geometric, hypergeometric, and more
+// weibull, binomial, poisson, geometric, hypergeometric
 const betaSample = s.dist.beta.random({ alpha: 2, beta: 5 });
 const chiSquareQuantile = s.dist.chiSquare.quantile({ probability: 0.95, degreesOfFreedom: 1 });
 ```
@@ -325,20 +322,21 @@ When using Deno and Jupyter notebooks, charts become interactive with hover tool
 
 ```typescript
 // Interactive chart with tooltips (Jupyter only)
-const interactiveChart = salesData.graph({
-  type: "scatter",
-  mappings: { x: "revenue", y: "quantity", color: "region" },
-  config: {
-    layout: {
+const interactiveChart = salesData
+  .graph({
+    type: "scatter",
+    mappings: { x: "revenue", y: "quantity", color: "region" },
+    config: {
+      layout: {
+        tooltip: {
+          show: true, // default true
+        },
+      },
       tooltip: {
-        show: true, // default true
+        fields: ["region", "revenue", "quantity", "profit", "product"],
       },
     },
-    tooltip: {
-      fields: ["region", "revenue", "quantity", "profit", "product"],
-    },
-  },
-});
+  });
 
 interactiveChart // Chart displays interactively in Jupyter cell
 ```
@@ -409,7 +407,7 @@ const longData = wideData.pivotLonger({
 ### DataFrame Creation & Basics
 - `createDataFrame([...])` - Create from row objects with type inference
 - `createDataFrame({ columns: {...} })` - Create from column arrays
-- `readCSV(), readParquet(), and readArrow()` - Read CSV, parquet, and arrow all with Zod schema validation for strong typing
+- `readCSV(), readJSON(), readParquet(), and readArrow()` - Read CSV, parquet, and arrow all with Zod schema validation for strong typing
 - `nrows()`, `ncols()` - Dimensions
 - `columns()` - Schema info
 - `df.columnName` - Direct readonly access to column arrays (faster)

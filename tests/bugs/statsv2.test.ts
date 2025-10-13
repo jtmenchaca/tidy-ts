@@ -77,7 +77,7 @@ Deno.test("Stats Compare - Hierarchical Test API", () => {
   const proportionData = Array(100).fill(false).map((_, i) => i < 45);
   const propTest = s.compare.oneGroup.proportions.toValue({
     data: proportionData,
-    p: 0.5,
+    hypothesizedProportion: 0.5,
     comparator: "not equal to",
     alpha: 0.05,
   });

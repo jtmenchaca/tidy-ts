@@ -15,19 +15,19 @@ import { to01 } from "../helpers.ts";
  *
  * @param data - Binary data (0/1 or boolean values)
  * @param comparator - Direction of the test ("not equal to", "less than", "greater than")
- * @param p - Hypothesized population proportion (default: 0.5)
+ * @param popProportion - Hypothesized population proportion (default: 0.5)
  * @param alpha - Significance level (default: 0.05)
  * @returns Test results with z-statistic, p-value, and confidence intervals
  */
 export function proportionsToValue({
   data,
-  comparator = "not equal to",
-  p = 0.5,
+  comparator,
+  hypothesizedProportion,
   alpha = 0.05,
 }: {
   data: boolean[] | readonly boolean[];
-  comparator?: "not equal to" | "less than" | "greater than";
-  p?: number;
+  comparator: "not equal to" | "less than" | "greater than";
+  hypothesizedProportion: number;
   alpha?: number;
 }): OneSampleProportionTestResult {
   // ============================================================================
@@ -52,7 +52,7 @@ export function proportionsToValue({
 
   return proportionTestOneSample({
     data: binaryData,
-    popProportion: p,
+    hypothesizedProportion,
     alternative,
     alpha,
   });

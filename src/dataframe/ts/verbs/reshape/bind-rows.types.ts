@@ -45,10 +45,50 @@ type MergeRows<Row1, Row2> =
  * @template Row - The row type of the DataFrame
  */
 export type BindRowsMethod<Row extends object> = {
+  /**
+   * Combine DataFrames vertically (stack rows).
+   *
+   * Stacks rows from multiple DataFrames, creating a union of columns. Missing columns
+   * in any DataFrame become optional and filled with undefined. Columns present in multiple
+   * DataFrames have their types unioned.
+   *
+   * @example
+   * // Combine two DataFrames with same columns
+   * df1.bindRows(df2)
+   *
+   * @example
+   * // Combine DataFrames with different columns
+   * users.bindRows(admins)
+   * // Result has all columns from both, missing values are undefined
+   *
+   * @example
+   * // Combine multiple DataFrames
+   * df1.bindRows(df2, df3, df4)
+   */
   <OtherRow extends object>(
     other: DataFrame<OtherRow>,
   ): DataFrame<Prettify<MergeRows<Row, OtherRow>>>;
 
+  /**
+   * Combine DataFrames vertically (stack rows).
+   *
+   * Stacks rows from multiple DataFrames, creating a union of columns. Missing columns
+   * in any DataFrame become optional and filled with undefined. Columns present in multiple
+   * DataFrames have their types unioned.
+   *
+   * @example
+   * // Combine two DataFrames with same columns
+   * df1.bindRows(df2)
+   *
+   * @example
+   * // Combine DataFrames with different columns
+   * users.bindRows(admins)
+   * // Result has all columns from both, missing values are undefined
+   *
+   * @example
+   * // Combine multiple DataFrames
+   * df1.bindRows(df2, df3, df4)
+   */
   <
     OtherRow1 extends object,
     OtherRow2 extends object,
@@ -57,6 +97,26 @@ export type BindRowsMethod<Row extends object> = {
     other2: DataFrame<OtherRow2>,
   ): DataFrame<Prettify<MergeRows<MergeRows<Row, OtherRow1>, OtherRow2>>>;
 
+  /**
+   * Combine DataFrames vertically (stack rows).
+   *
+   * Stacks rows from multiple DataFrames, creating a union of columns. Missing columns
+   * in any DataFrame become optional and filled with undefined. Columns present in multiple
+   * DataFrames have their types unioned.
+   *
+   * @example
+   * // Combine two DataFrames with same columns
+   * df1.bindRows(df2)
+   *
+   * @example
+   * // Combine DataFrames with different columns
+   * users.bindRows(admins)
+   * // Result has all columns from both, missing values are undefined
+   *
+   * @example
+   * // Combine multiple DataFrames
+   * df1.bindRows(df2, df3, df4)
+   */
   <
     OtherRow1 extends object,
     OtherRow2 extends object,
@@ -71,6 +131,26 @@ export type BindRowsMethod<Row extends object> = {
     >
   >;
 
+  /**
+   * Combine DataFrames vertically (stack rows).
+   *
+   * Stacks rows from multiple DataFrames, creating a union of columns. Missing columns
+   * in any DataFrame become optional and filled with undefined. Columns present in multiple
+   * DataFrames have their types unioned.
+   *
+   * @example
+   * // Combine two DataFrames with same columns
+   * df1.bindRows(df2)
+   *
+   * @example
+   * // Combine DataFrames with different columns
+   * users.bindRows(admins)
+   * // Result has all columns from both, missing values are undefined
+   *
+   * @example
+   * // Combine multiple DataFrames
+   * df1.bindRows(df2, df3, df4)
+   */
   <OtherRow extends object>(
     ...others: DataFrame<OtherRow>[]
   ): DataFrame<Prettify<MergeRows<Row, OtherRow>>>;

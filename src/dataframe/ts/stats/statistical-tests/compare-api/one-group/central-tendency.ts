@@ -36,7 +36,7 @@ export function centralTendencyToValue({
   alpha,
   parametric,
 }: {
-  data: readonly number[];
+  data: readonly number[] | number[];
   hypothesizedValue: number;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
@@ -50,7 +50,7 @@ export function centralTendencyToValue({
   alpha,
   parametric,
 }: {
-  data: readonly number[];
+  data: readonly number[] | number[];
   hypothesizedValue: number;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
@@ -64,7 +64,7 @@ export function centralTendencyToValue({
   alpha,
   parametric,
 }: {
-  data: readonly number[];
+  data: readonly number[] | number[];
   hypothesizedValue: number;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;

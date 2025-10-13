@@ -59,6 +59,7 @@ export interface RegressionTestResult {
   family?: string;
   call?: string;
   formula?: string;
+  warnings?: string;
 }
 
 // =====================================================================================

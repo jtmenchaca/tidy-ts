@@ -20,11 +20,11 @@ console.log("Fields on model:");
 console.log(Object.keys(model).sort());
 
 console.log("\nFields on model.result:");
-console.log(Object.keys(model.result).sort());
+console.log(Object.keys(model.getRawResult()).sort());
 
-console.log("\nDispersion:", model.result.dispersion_parameter);
-console.log("Pearson residuals:", model.result.pearson_residuals);
-console.log("Hat values:", model.result.leverage);
+console.log("\nDispersion:", model.dispersion_parameter);
+console.log("Pearson residuals:", model.residuals({ type: "pearson" }));
+console.log("Hat values:", model.leverage);
 
 const influence = model.influence();
 console.log("\nCook's D from influence():", influence.cooks_distance);
@@ -32,10 +32,12 @@ console.log("\nCook's D from influence():", influence.cooks_distance);
 // Manual calculation to debug
 const disp = 1.0; // binomial uses 1.0
 const p = 2;
+const pearsonRes = model.residuals({ type: "pearson" });
+const hatValues = model.leverage;
 console.log("\nManual Cook's D calculation:");
 for (let i = 0; i < 5; i++) {
-  const pres = model.result.pearson_residuals[i];
-  const h = model.result.leverage[i];
+  const pres = pearsonRes[i];
+  const h = hatValues[i];
   const omh = 1 - h;
   const cook = (pres / omh) ** 2 * h / (disp * p);
   console.log(

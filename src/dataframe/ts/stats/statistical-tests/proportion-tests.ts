@@ -24,12 +24,12 @@ export type {
  */
 export function proportionTestOneSample({
   data,
-  popProportion,
+  hypothesizedProportion,
   alternative = "two-sided",
   alpha = 0.05,
 }: {
   data: boolean[];
-  popProportion: number;
+  hypothesizedProportion: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): OneSampleProportionTestResult {
@@ -41,7 +41,7 @@ export function proportionTestOneSample({
     );
   }
 
-  if (popProportion < 0 || popProportion > 1) {
+  if (hypothesizedProportion < 0 || hypothesizedProportion > 1) {
     throw new Error("Population proportion must be between 0 and 1");
   }
 
@@ -50,7 +50,7 @@ export function proportionTestOneSample({
   const result = proportion_test_one_sample(
     successes,
     n,
-    popProportion,
+    hypothesizedProportion,
     alpha,
     alternative,
   );

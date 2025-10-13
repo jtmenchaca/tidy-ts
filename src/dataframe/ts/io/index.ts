@@ -54,15 +54,23 @@ type WriteParquetFunction = <Row extends Record<string, unknown>>(
 ) => DataFrame<Row>;
 
 /**
- * Read an Arrow file with Zod schema validation and type inference
+ * Read an Arrow file or buffer with Zod schema validation and type inference.
  *
- * @param pathOrBuffer - Either a file path to read from, or an ArrayBuffer with Arrow data
- * @param schema - Zod schema for type validation and conversion
- * @param opts - Options for reading/parsing
- * @returns A properly typed DataFrame based on the Zod schema
+ * Loads Arrow data from a file path (Node.js/Deno) or ArrayBuffer (all environments)
+ * and validates each row against the provided Zod schema. Returns a fully typed
+ * DataFrame based on the schema. Throws an error if validation fails or if used
+ * in a browser environment with a file path.
+ *
+ * @param pathOrBuffer - File path (Node.js/Deno only) or ArrayBuffer containing Arrow data
+ * @param schema - Zod schema for type validation and conversion. The schema defines
+ *   the expected structure and types of each row in the DataFrame.
+ * @param opts - Optional configuration for reading and parsing:
+ *   - NA handling options to specify how missing values are represented
+ *
+ * @returns A Promise resolving to a DataFrame typed according to the schema
  *
  * @example
- * ```ts
+ * // Read from file with validation
  * import { z } from "zod";
  *
  * const schema = z.object({
@@ -72,15 +80,18 @@ type WriteParquetFunction = <Row extends Record<string, unknown>>(
  *   age: z.number().optional(),
  * });
  *
- * // Read from file
- * const df1 = await readArrow("./data.arrow", schema);
+ * const df = await readArrow("./data.arrow", schema);
  *
- * // Parse from ArrayBuffer
+ * @example
+ * // Read from ArrayBuffer
  * const buffer = await Deno.readFile("./data.arrow");
- * const df2 = await readArrow(buffer, schema);
+ * const df = await readArrow(buffer, schema);
  *
- * // Both are typed as DataFrame<z.output<typeof schema>>
- * ```
+ * @example
+ * // With NA handling options
+ * const df = await readArrow("./data.arrow", schema, {
+ *   naStrings: ["NA", "null", ""]
+ * });
  */
 export const readArrow: ReadArrowFunction = (() => {
   // deno-lint-ignore no-process-global
@@ -107,15 +118,26 @@ export const readArrow: ReadArrowFunction = (() => {
 })();
 
 /**
- * Read a CSV file or parse CSV content with Zod schema validation and type inference
+ * Read a CSV file or parse CSV content with Zod schema validation and type inference.
  *
- * @param pathOrContent - Either a file path to read from, or raw CSV content
- * @param schema - Zod schema for type validation and conversion
- * @param opts - Options for reading/parsing
- * @returns A properly typed DataFrame based on the Zod schema
+ * Loads CSV data from a file path (Node.js/Deno) or raw CSV string (all environments)
+ * and validates each row against the provided Zod schema. Returns a fully typed
+ * DataFrame based on the schema. Automatically handles type conversion (strings to
+ * numbers, booleans, etc.) and throws an error if validation fails.
+ *
+ * @param pathOrContent - File path (Node.js/Deno only) or raw CSV string content.
+ *   The function automatically detects whether the input is a file path or CSV content.
+ * @param schema - Zod schema for type validation and conversion. The schema defines
+ *   the expected structure and types of each row in the DataFrame.
+ * @param opts - Optional configuration for CSV parsing:
+ *   - `separator`: Column delimiter (default: ",")
+ *   - `skipEmptyLines`: Skip empty lines (default: true)
+ *   - `naStrings`: Array of strings to treat as NA/missing values
+ *
+ * @returns A Promise resolving to a DataFrame typed according to the schema
  *
  * @example
- * ```ts
+ * // Read from file with validation
  * import { z } from "zod";
  *
  * const schema = z.object({
@@ -125,15 +147,19 @@ export const readArrow: ReadArrowFunction = (() => {
  *   age: z.number().optional(),
  * });
  *
- * // Read from file
- * const df1 = await readCSV("./data.csv", schema);
+ * const df = await readCSV("./data.csv", schema);
  *
- * // Parse from raw content
- * const csvContent = "id,name,email,age\\n1,Alice,alice@example.com,25\\n2,Bob,bob@example.com,30";
- * const df2 = await readCSV(csvContent, schema);
+ * @example
+ * // Parse from raw CSV content
+ * const csvContent = "id,name,email,age\n1,Alice,alice@example.com,25\n2,Bob,bob@example.com,30";
+ * const df = await readCSV(csvContent, schema);
  *
- * // Both are typed as DataFrame<z.output<typeof schema>>
- * ```
+ * @example
+ * // With custom options
+ * const df = await readCSV("./data.tsv", schema, {
+ *   separator: "\t",
+ *   naStrings: ["NA", "null", ""]
+ * });
  */
 export const readCSV: ReadCsvFunction = (() => {
   // deno-lint-ignore no-process-global
@@ -160,15 +186,23 @@ export const readCSV: ReadCsvFunction = (() => {
 })();
 
 /**
- * Read a Parquet file with Zod schema validation and type inference
+ * Read a Parquet file or buffer with Zod schema validation and type inference.
  *
- * @param pathOrBuffer - Either a file path to read from, or an ArrayBuffer with Parquet data
- * @param schema - Zod schema for type validation and conversion
- * @param opts - Options for reading/parsing
- * @returns A properly typed DataFrame based on the Zod schema
+ * Loads Parquet data from a file path (Node.js/Deno) or ArrayBuffer (all environments)
+ * and validates each row against the provided Zod schema. Returns a fully typed
+ * DataFrame based on the schema. Parquet is a columnar storage format that provides
+ * efficient compression and encoding. Throws an error if validation fails.
+ *
+ * @param pathOrBuffer - File path (Node.js/Deno only) or ArrayBuffer containing Parquet data
+ * @param schema - Zod schema for type validation and conversion. The schema defines
+ *   the expected structure and types of each row in the DataFrame.
+ * @param opts - Optional configuration for reading and parsing:
+ *   - NA handling options to specify how missing values are represented
+ *
+ * @returns A Promise resolving to a DataFrame typed according to the schema
  *
  * @example
- * ```ts
+ * // Read from file with validation
  * import { z } from "zod";
  *
  * const schema = z.object({
@@ -178,15 +212,18 @@ export const readCSV: ReadCsvFunction = (() => {
  *   age: z.number().optional(),
  * });
  *
- * // Read from file
- * const df1 = await readParquet("./data.parquet", schema);
+ * const df = await readParquet("./data.parquet", schema);
  *
- * // Parse from ArrayBuffer
+ * @example
+ * // Read from ArrayBuffer
  * const buffer = await Deno.readFile("./data.parquet");
- * const df2 = await readParquet(buffer, schema);
+ * const df = await readParquet(buffer, schema);
  *
- * // Both are typed as DataFrame<z.output<typeof schema>>
- * ```
+ * @example
+ * // With NA handling options
+ * const df = await readParquet("./data.parquet", schema, {
+ *   naStrings: ["NA", "null", ""]
+ * });
  */
 export const readParquet: ReadParquetFunction = (() => {
   // deno-lint-ignore no-process-global
@@ -213,27 +250,39 @@ export const readParquet: ReadParquetFunction = (() => {
 })();
 
 /**
- * Write a DataFrame to a CSV file
+ * Write a DataFrame to a CSV file or trigger browser download.
  *
- * @param dataFrame - The DataFrame to write
- * @param filePath - The file path where to save the CSV file
- * @returns The original DataFrame for chaining
+ * Exports DataFrame data to CSV format. In Node.js/Deno environments, writes to
+ * the specified file path. In browser environments, triggers a file download.
+ * Returns the original DataFrame for method chaining. Automatically handles
+ * proper CSV escaping for special characters.
+ *
+ * @param dataFrame - The DataFrame to export. All columns will be included in
+ *   the output with proper type conversion and escaping.
+ * @param filePath - File path for saving (Node.js/Deno) or download filename (browser).
+ *   In Node.js/Deno, this can be a relative or absolute path.
+ *
+ * @returns A Promise resolving to the original DataFrame for chaining
  *
  * @example
- * ```ts
- * import { createDataFrame } from "tidy-ts/dataframe";
- *
+ * // Write to file (Node.js/Deno)
  * const df = createDataFrame([
  *   { id: 1, name: "Alice", age: 30 },
  *   { id: 2, name: "Bob", age: 25 }
  * ]);
  *
- * // Write to file
- * await writeCSV(df, "./data.csv");
+ * await writeCSV(df, "./output/data.csv");
  *
- * // In browser, this will trigger a download
- * await writeCSV(df, "data.csv");
- * ```
+ * @example
+ * // Trigger download in browser
+ * await writeCSV(df, "exported_data.csv");
+ *
+ * @example
+ * // Chain with other operations
+ * await df
+ *   .filter(row => row.active)
+ *   .select("id", "name", "email")
+ *   .writeCSV("./active_users.csv");
  */
 export const writeCSV: WriteCsvFunction = (() => {
   // deno-lint-ignore no-process-global
@@ -293,27 +342,39 @@ export const writeCSV: WriteCsvFunction = (() => {
 })();
 
 /**
- * Write a DataFrame to a Parquet file
+ * Write a DataFrame to a Parquet file or trigger browser download.
  *
- * @param dataFrame - The DataFrame to write
- * @param filePath - The file path where to save the Parquet file
- * @returns The original DataFrame for chaining
+ * Exports DataFrame data to Parquet format, a columnar storage format that provides
+ * efficient compression and encoding. In Node.js/Deno environments, writes to the
+ * specified file path. In browser environments, triggers a file download. Returns
+ * the original DataFrame for method chaining.
+ *
+ * Note: This function requires a static import rather than the dynamic import used
+ * by other I/O functions. Use: `import { writeParquet } from '@tidy-ts/dataframe/ts/verbs/utility'`
+ *
+ * @param dataFrame - The DataFrame to export. All columns will be included in
+ *   the output with proper type encoding.
+ * @param filePath - File path for saving (Node.js/Deno) or download filename (browser).
+ *   In Node.js/Deno, this can be a relative or absolute path.
+ *
+ * @returns The original DataFrame for chaining (synchronous, unlike writeCSV)
  *
  * @example
- * ```ts
- * import { createDataFrame } from "tidy-ts/dataframe";
+ * // Write to file (Node.js/Deno)
+ * import { writeParquet } from '@tidy-ts/dataframe/ts/verbs/utility';
  *
  * const df = createDataFrame([
  *   { id: 1, name: "Alice", age: 30 },
  *   { id: 2, name: "Bob", age: 25 }
  * ]);
  *
- * // Write to file
- * writeParquet(df, "./data.parquet");
+ * writeParquet(df, "./output/data.parquet");
  *
- * // In browser, this will trigger a download
- * writeParquet(df, "data.parquet");
- * ```
+ * @example
+ * // Chain with other operations
+ * df.filter(row => row.active)
+ *   .select("id", "name", "email")
+ *   .writeParquet("./active_users.parquet");
  */
 export const writeParquet: WriteParquetFunction = (() => {
   // deno-lint-ignore no-process-global

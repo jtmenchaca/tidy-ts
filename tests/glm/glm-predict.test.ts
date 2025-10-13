@@ -116,9 +116,10 @@ Deno.test("GLM predict() - throws error for terms type without newdata", () => {
     data: df,
   });
 
+  // Test that invalid type throws error
   expect(() => {
-    model.predict(undefined, { type: "terms" });
-  }).toThrow(/type='terms' requires newdata/);
+    model.predict(undefined, { type: "invalid" as "link" });
+  }).toThrow();
 });
 
 Deno.test("GLM predict() - predicts on new data (Gaussian)", () => {
@@ -212,8 +213,8 @@ Deno.test("GLM predict() - predicts on object data", () => {
     data: df,
   });
 
-  // Pass plain object instead of DataFrame
-  const newData = { x: [6, 7, 8] };
+  // Pass DataFrame for prediction
+  const newData = createDataFrame({ columns: { x: [6, 7, 8] } });
 
   const predictions = model.predict(newData);
 

@@ -9,7 +9,6 @@
 use super::types_results::{GlmResult, QrDecomposition};
 use crate::stats::distributions::chi_squared::qchisq;
 use crate::stats::distributions::normal::qnorm;
-use crate::stats::distributions::students_t::qt;
 use serde::{Deserialize, Serialize};
 
 /// Summary of GLM fit with coefficient table
@@ -64,8 +63,8 @@ impl GlmResult {
     ///
     /// Matches R's summary.glm() coefficient table
     pub fn summary(&self) -> Result<GlmSummaryTable, String> {
-        let n = self.n_observations;
-        let p = self.rank;
+        let _n = self.n_observations;
+        let _p = self.rank;
 
         if self.coefficients.is_empty() {
             return Err("No coefficients to summarize".to_string());
@@ -161,7 +160,7 @@ impl GlmResult {
     /// Matches R's rstudent.glm()
     pub fn rstudent(&self) -> Result<Vec<f64>, String> {
         let n = self.n_observations;
-        let p = self.rank;
+        let _p = self.rank;
         let dev_res = &self.deviance_residuals;
         let pear_res = &self.pearson_residuals;
         let hat = &self.leverage;
@@ -216,18 +215,18 @@ impl GlmResult {
         }
 
         // Extract Q and R matrices from QR decomposition
-        let Q = extract_q(&self.qr, n, p)?;
-        let R = extract_r(&self.qr, p)?;
+        let q = extract_q(&self.qr, n, p)?;
+        let r = extract_r(&self.qr, p)?;
 
-        // Compute invRQtt = t(backsolve(R, t(Q)))
-        let invRQtt = compute_inv_r_qt(&R, &Q, n, p)?;
+        // Compute inv_rqtt = t(backsolve(R, t(Q)))
+        let inv_rqtt = compute_inv_r_qt(&r, &q, n, p)?;
 
         // Get deviance residuals and leverage
         let dev_res = &self.deviance_residuals;
         let hat = &self.leverage;
 
         // Determine if dispersion is fixed
-        let is_fixed_dispersion =
+        let _is_fixed_dispersion =
             self.family.family == "binomial" || self.family.family == "poisson";
 
         // Compute leave-one-out sigma
@@ -270,10 +269,10 @@ impl GlmResult {
                 continue;
             }
 
-            // Compute dfbeta: invRQtt[i,j] * (e_i / (1 - h_i))
+            // Compute dfbeta: inv_rqtt[i,j] * (e_i / (1 - h_i))
             let factor = e_i / omh;
             for j in 0..p {
-                dfbeta[i][j] = invRQtt[i][j] * factor;
+                dfbeta[i][j] = inv_rqtt[i][j] * factor;
 
                 // Compute dfbetas: dfbeta / se[j]
                 if se[j] > 0.0 && !se[j].is_nan() {
@@ -284,7 +283,7 @@ impl GlmResult {
             }
 
             // Compute standardized residual e*_i
-            let estar = e_i / omh.sqrt();
+            let _estar = e_i / omh.sqrt();
 
             // Compute dffits: e * sqrt(h) / (sigma * (1-h))
             // R formula: e*sqrt(h)/(si*(1-h))
@@ -640,9 +639,9 @@ fn extract_q(qr: &QrDecomposition, n: usize, k: usize) -> Result<Vec<Vec<f64>>, 
     }
 
     // Start with identity matrix
-    let mut Q = vec![vec![0.0; n]; n];
+    let mut q = vec![vec![0.0; n]; n];
     for i in 0..n {
-        Q[i][i] = 1.0;
+        q[i][i] = 1.0;
     }
 
     // Apply Householder transformations in reverse order
@@ -650,23 +649,23 @@ fn extract_q(qr: &QrDecomposition, n: usize, k: usize) -> Result<Vec<Vec<f64>>, 
     for col in 0..n {
         for j in (0..ju).rev() {
             if qr.qraux[j].abs() > 0.0 {
-                // Compute t = -qraux[j] * (Q[j,col] + sum(qr[i,j] * Q[i,col])) / qraux[j]
-                let mut t = qr.qraux[j] * Q[j][col];
+                // Compute t = -qraux[j] * (q[j,col] + sum(qr[i,j] * q[i,col])) / qraux[j]
+                let mut t = qr.qraux[j] * q[j][col];
                 for i in (j + 1)..n {
-                    t += qr.qr[i][j] * Q[i][col];
+                    t += qr.qr[i][j] * q[i][col];
                 }
                 t = -t / qr.qraux[j];
 
-                // Update Q
-                Q[j][col] += t * qr.qraux[j];
+                // Update q
+                q[j][col] += t * qr.qraux[j];
                 for i in (j + 1)..n {
-                    Q[i][col] += t * qr.qr[i][j];
+                    q[i][col] += t * qr.qr[i][j];
                 }
             }
         }
     }
 
-    Ok(Q)
+    Ok(q)
 }
 
 /// Extract R matrix from packed QR decomposition
@@ -677,60 +676,60 @@ fn extract_r(qr: &QrDecomposition, k: usize) -> Result<Vec<Vec<f64>>, String> {
         return Err("QR decomposition is empty".to_string());
     }
 
-    let mut R = vec![vec![0.0; k]; k];
+    let mut r = vec![vec![0.0; k]; k];
     for i in 0..k {
         for j in i..k {
-            R[i][j] = qr.qr[i][j];
+            r[i][j] = qr.qr[i][j];
         }
     }
 
-    Ok(R)
+    Ok(r)
 }
 
-/// Compute invRQtt = t(backsolve(R, t(Q)))
+/// Compute inv_rqtt = t(backsolve(R, t(Q)))
 ///
 /// Matches R's computation for influence measures
 /// R * X = t(Q), solve for X, then transpose
 fn compute_inv_r_qt(
-    R: &[Vec<f64>],
-    Q: &[Vec<f64>],
+    r: &[Vec<f64>],
+    q: &[Vec<f64>],
     n: usize,
     k: usize,
 ) -> Result<Vec<Vec<f64>>, String> {
     // R's backsolve(R, t(Q)) solves R * X = t(Q) where X is k×n
     // t(Q) means we take rows of Q as columns
 
-    let mut X = vec![vec![0.0; n]; k];
+    let mut x = vec![vec![0.0; n]; k];
 
     // For each row j of Q, solve R * x = Q[j,:] and store as column of X
     for j in 0..n {
-        let mut qRow = vec![0.0; k];
+        let mut q_row = vec![0.0; k];
         for i in 0..k {
-            qRow[i] = Q[j][i];
+            q_row[i] = q[j][i];
         }
 
-        let xCol = backsolve(R, &qRow)?;
+        let x_col = backsolve(r, &q_row)?;
         for i in 0..k {
-            X[i][j] = xCol[i];
+            x[i][j] = x_col[i];
         }
     }
 
-    // Transpose X to get invRQtt (n×k)
-    let mut invRQtt = vec![vec![0.0; k]; n];
+    // Transpose X to get inv_rqtt (n×k)
+    let mut inv_rqtt = vec![vec![0.0; k]; n];
     for i in 0..n {
         for j in 0..k {
-            invRQtt[i][j] = X[j][i];
+            inv_rqtt[i][j] = x[j][i];
         }
     }
 
-    Ok(invRQtt)
+    Ok(inv_rqtt)
 }
 
 /// Backsolve upper triangular system R * x = b
 ///
 /// Matches R's backsolve() function
-fn backsolve(R: &[Vec<f64>], b: &[f64]) -> Result<Vec<f64>, String> {
-    let n = R.len();
+fn backsolve(r: &[Vec<f64>], b: &[f64]) -> Result<Vec<f64>, String> {
+    let n = r.len();
     if b.len() != n {
         return Err(format!(
             "Dimension mismatch: R is {}x{}, b is {}",
@@ -746,14 +745,14 @@ fn backsolve(R: &[Vec<f64>], b: &[f64]) -> Result<Vec<f64>, String> {
     for i in (0..n).rev() {
         let mut sum = b[i];
         for j in (i + 1)..n {
-            sum -= R[i][j] * x[j];
+            sum -= r[i][j] * x[j];
         }
 
-        if R[i][i].abs() < 1e-14 {
+        if r[i][i].abs() < 1e-14 {
             return Err(format!("Singular matrix at row {}", i));
         }
 
-        x[i] = sum / R[i][i];
+        x[i] = sum / r[i][i];
     }
 
     Ok(x)
@@ -825,7 +824,7 @@ fn incomplete_beta(x: f64, a: f64, b: f64) -> f64 {
     };
 
     // Compute log of beta function coefficient
-    let lbeta_ab = (ln_gamma(a) + ln_gamma(b) - ln_gamma(a + b));
+    let lbeta_ab = ln_gamma(a) + ln_gamma(b) - ln_gamma(a + b);
     let front = (a * x.ln() + b * (1.0 - x).ln() - lbeta_ab).exp() / a;
 
     // Continued fraction using modified Lentz method
@@ -910,7 +909,7 @@ fn ln_gamma(x: f64) -> f64 {
     tmp -= (x + 0.5) * tmp.ln();
     let mut ser = 1.000000000190015;
 
-    for (j, &c) in COEF.iter().enumerate() {
+    for (_j, &c) in COEF.iter().enumerate() {
         y += 1.0;
         ser += c / y;
     }
@@ -1040,17 +1039,17 @@ mod tests {
 
     #[test]
     fn test_backsolve() {
-        let R = vec![
+        let r = vec![
             vec![2.0, 1.0, 0.0],
             vec![0.0, 3.0, 1.0],
             vec![0.0, 0.0, 4.0],
         ];
         let b = vec![8.0, 13.0, 8.0];
-        let x = backsolve(&R, &b).unwrap();
+        let x = backsolve(&r, &b).unwrap();
 
         // Verify R * x = b
-        assert!((R[0][0] * x[0] + R[0][1] * x[1] + R[0][2] * x[2] - b[0]).abs() < 1e-10);
-        assert!((R[1][1] * x[1] + R[1][2] * x[2] - b[1]).abs() < 1e-10);
-        assert!((R[2][2] * x[2] - b[2]).abs() < 1e-10);
+        assert!((r[0][0] * x[0] + r[0][1] * x[1] + r[0][2] * x[2] - b[0]).abs() < 1e-10);
+        assert!((r[1][1] * x[1] + r[1][2] * x[2] - b[1]).abs() < 1e-10);
+        assert!((r[2][2] * x[2] - b[2]).abs() < 1e-10);
     }
 }

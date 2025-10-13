@@ -10,6 +10,7 @@ import {
 } from "./regression-interface.ts";
 import {
   COEFFICIENT_DIFFERENCE_THRESHOLD,
+  CONFIDENCE_INTERVAL_DIFFERENCE_THRESHOLD,
   hasSystemError,
   INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
   isStatisticalFailure,
@@ -22,6 +23,7 @@ import {
 } from "../test-helpers.ts";
 
 interface ComparisonResult extends TestResult {
+  confIntDiff?: number;
   testParams?: {
     sampleSize: number;
     numPredictors: number;
@@ -104,11 +106,26 @@ async function runRobustComparison(
     );
     const aicDiff = Math.abs((rResult.aic || 0) - (rustResult.aic || 0));
 
-    // Filter out NaN values when computing maxDiff
-    const diffs = [coefficientDiff, rSquaredDiff, aicDiff].filter((d) =>
-      !isNaN(d)
-    );
-    const maxDiff = diffs.length > 0 ? Math.max(...diffs) : 0;
+    // Calculate confidence interval differences
+    const rConfLower = rResult.conf_lower || [];
+    const rConfUpper = rResult.conf_upper || [];
+    const rustConfLower = rustResult.conf_lower || [];
+    const rustConfUpper = rustResult.conf_upper || [];
+
+    let confIntDiff = 0;
+    for (let i = 0; i < maxCoefLength; i++) {
+      const rLower = rConfLower[i];
+      const rUpper = rConfUpper[i];
+      const rustLower = rustConfLower[i];
+      const rustUpper = rustConfUpper[i];
+
+      if (typeof rLower === "number" && typeof rustLower === "number") {
+        confIntDiff = Math.max(confIntDiff, Math.abs(rLower - rustLower));
+      }
+      if (typeof rUpper === "number" && typeof rustUpper === "number") {
+        confIntDiff = Math.max(confIntDiff, Math.abs(rUpper - rustUpper));
+      }
+    }
 
     // Determine status
     // If R reported separation/singularity-like warnings, relax coefficient comparison and
@@ -122,10 +139,16 @@ async function runRobustComparison(
       const aicClose = isFinite(aicDiff) && aicDiff < 1e-3; // Relaxed from 1e-6
       const coeffClose =
         coefficientDiff < SEPARATION_CASE_COEFFICIENT_THRESHOLD;
+      const confIntClose =
+        confIntDiff < CONFIDENCE_INTERVAL_DIFFERENCE_THRESHOLD;
       // For binomial, R² is often not meaningful, so don't check it
-      status = aicClose && coeffClose ? "PASS" : "FAIL";
+      status = aicClose && coeffClose && confIntClose ? "PASS" : "FAIL";
     } else {
-      status = maxDiff < COEFFICIENT_DIFFERENCE_THRESHOLD ? "PASS" : "FAIL";
+      // For normal cases, require coefficient, confidence interval, and overall metric agreement
+      const coeffClose = coefficientDiff < COEFFICIENT_DIFFERENCE_THRESHOLD;
+      const confIntClose =
+        confIntDiff < CONFIDENCE_INTERVAL_DIFFERENCE_THRESHOLD;
+      status = coeffClose && confIntClose ? "PASS" : "FAIL";
     }
 
     // Extract test parameters
@@ -143,6 +166,7 @@ async function runRobustComparison(
       coefficientDiff,
       rSquaredDiff,
       aicDiff,
+      confIntDiff,
       status,
       testParams: {
         sampleSize,

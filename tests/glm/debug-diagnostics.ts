@@ -19,7 +19,7 @@ const model = glm({
 const result = model.getRawResult();
 console.log("\n=== Debug Info ===");
 console.log("Dispersion parameter:", result.dispersion_parameter);
-console.log("Residual deviance:", result.residual_deviance);
+console.log("Residual deviance:", result.deviance);
 console.log("DF residual:", result.df_residual);
 console.log("Residual std error:", result.residual_standard_error);
 console.log("\nDeviance residuals:", result.deviance_residuals);

@@ -9,7 +9,7 @@ Deno.test("One-Sample Proportion Test Spot Check", () => {
 
   const result = stats.test.proportion.oneSample({
     data,
-    popProportion: p0,
+    hypothesizedProportion: p0,
     alternative: "two-sided",
   });
 

@@ -55,7 +55,8 @@ Deno.test("oneGroup.centralTendency.toValue - auto selection with skewed data", 
 Deno.test("oneGroup.proportions.toValue - one-sample proportion test", () => {
   const result = compare.oneGroup.proportions.toValue({
     data: binaryData,
-    p: 0.5,
+    hypothesizedProportion: 0.5,
+    comparator: "not equal to",
   });
 
   console.log("One-sample proportion test result:", result);
@@ -133,7 +134,8 @@ Deno.test("oneGroup.centralTendency.toValue - extreme outliers", () => {
 Deno.test("oneGroup.proportions.toValue - different proportions", () => {
   const result = compare.oneGroup.proportions.toValue({
     data: binaryData,
-    p: 0.3,
+    hypothesizedProportion: 0.3,
+    comparator: "not equal to",
   });
 
   console.log("Proportion test with p=0.3 result:", result);
@@ -142,7 +144,8 @@ Deno.test("oneGroup.proportions.toValue - different proportions", () => {
 Deno.test("oneGroup.proportions.toValue - extreme proportion", () => {
   const result = compare.oneGroup.proportions.toValue({
     data: [true, true, true, true, true],
-    p: 0.1,
+    hypothesizedProportion: 0.1,
+    comparator: "not equal to",
   });
 
   console.log("Extreme proportion test result:", result);

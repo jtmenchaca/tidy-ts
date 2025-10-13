@@ -242,7 +242,7 @@ Deno.test("Statistical Testing with New Compare API", () => {
   console.log("\n1.2 Testing if success rate differs from 50%");
   const proportionTest = stats.compare.oneGroup.proportions.toValue({
     data: successRates,
-    p: 0.5,
+    hypothesizedProportion: 0.5,
     comparator: "not equal to",
     alpha: 0.05,
   });

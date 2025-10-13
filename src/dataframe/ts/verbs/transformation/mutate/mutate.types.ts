@@ -181,7 +181,40 @@ export interface MutateMethod<Row extends object> {
   // ── Async versions (return Promise<DataFrame>) ──────────────────────────────
 
   // ── Grouped — async formulas ───────────────────────────────────────────────
-  /** Grouped DataFrame with async formula functions. */
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Formulas extends Record<
@@ -202,6 +235,40 @@ export interface MutateMethod<Row extends object> {
 
   // ── Grouped — async mixed assignments ──────────────────────────────────────
 
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Assignments extends Record<string, ColumnValue<Row>>,
@@ -219,6 +286,40 @@ export interface MutateMethod<Row extends object> {
 
   // ── Ungrouped — async formulas ──────────────────────────────────────────────
 
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     Formulas extends Record<
       string,
@@ -232,6 +333,40 @@ export interface MutateMethod<Row extends object> {
 
   // ── Ungrouped — async mixed assignments ─────────────────────────────────────
 
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,
   ): AnyPropertyIsAsync<Assignments> extends true
@@ -242,6 +377,40 @@ export interface MutateMethod<Row extends object> {
 
   // ── Grouped — formulas with concurrency options ───────────────────────────
 
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Formulas extends Record<
@@ -260,7 +429,40 @@ export interface MutateMethod<Row extends object> {
   >;
 
   // ── Grouped — assignments with concurrency options ────────────────────────
-
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Assignments extends Record<string, ColumnValue<Row>>,
@@ -276,7 +478,40 @@ export interface MutateMethod<Row extends object> {
   >;
 
   // ── Ungrouped — formulas with concurrency options ──────────────────────────
-
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     Formulas extends Record<
       string,
@@ -288,13 +523,79 @@ export interface MutateMethod<Row extends object> {
   ): Promise<DataFrame<Prettify<RowAfterMutation<Row, Formulas>>>>;
 
   // ── Ungrouped — assignments with concurrency options ───────────────────────
-
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,
     options: ConcurrencyOptions,
   ): Promise<DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>>;
   // ── Grouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
-
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Formulas extends Record<
@@ -310,7 +611,40 @@ export interface MutateMethod<Row extends object> {
   >;
 
   // ── Grouped — mixed assignments (functions | arrays | scalars | null) ───────────
-
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Assignments extends Record<string, ColumnValue<Row>>,
@@ -323,6 +657,40 @@ export interface MutateMethod<Row extends object> {
   >;
 
   // ── Grouped — mixed without scalars (functions | arrays | null) for better inference ─
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     GroupName extends keyof Row,
     Assignments extends {
@@ -341,20 +709,38 @@ export interface MutateMethod<Row extends object> {
 
   // ── Ungrouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
   /**
-   * Add new columns to an ungrouped DataFrame using function expressions.
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
    *
    * @example
-   * ```typescript
-   * const people = createDataFrame([
-   *   { id: 1, name: "Luke", mass: 77, height: 172 },
-   *   { id: 2, name: "C-3PO", mass: 75, height: 167 }
-   * ]);
-   *
-   * const withBMI = people.mutate({
+   * // Add computed columns
+   * df.mutate({
    *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isHeavy: (r) => r.mass > 100
-   * });
-   * ```
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
    */
   <
     Formulas extends Record<
@@ -367,21 +753,38 @@ export interface MutateMethod<Row extends object> {
 
   // ── Ungrouped — mixed assignments with contextual function typing ─────────
   /**
-   * Add new columns with mixed expressions while preserving contextual typing
-   * of function parameters. Function-valued properties receive the full
-   * `(row: Row, idx, df)` signature; arrays/scalars/null are accepted unchanged.
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
    *
    * @example
-   * ```typescript
-   * const df = createDataFrame([{ a: 1 }, { a: 2 }]);
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
    *
-   * const result = df.mutate({
-   *   fromArray: [10, 20],           // Array values
-   *   fromScalar: 100,               // Scalar repeated
-   *   computed: (row) => row.a * 2,  // Computed function
-   *   deleted: null                  // Delete column
-   * });
-   * ```
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
    */
   <A extends Record<string, unknown>>(
     assignments: WithContextForFunctions<Row, A>,
@@ -390,6 +793,40 @@ export interface MutateMethod<Row extends object> {
     : DataFrame<Prettify<RowAfterMutation<Row, A>>>;
 
   // ── Ungrouped — mixed without scalars (functions | arrays | null) for better inference ─────
+  /**
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
+   */
   <
     Assignments extends {
       [key: string]:
@@ -403,7 +840,38 @@ export interface MutateMethod<Row extends object> {
 
   // ── Ungrouped — fallback for mixed assignments (functions | arrays | scalars | null) ─────────
   /**
-   * Fallback overload for mixed assignments when specific type inference fails.
+   * Add or modify columns using expressions.
+   *
+   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
+   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
+   * within each group. Async functions return a PromisedDataFrame.
+   *
+   * @example
+   * // Add computed columns
+   * df.mutate({
+   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
+   *   isAdult: (r) => r.age >= 18
+   * })
+   *
+   * @example
+   * // Mix functions, arrays, and scalars
+   * df.mutate({
+   *   computed: (row) => row.a * 2,
+   *   fromArray: [10, 20, 30],
+   *   constant: "fixed_value"
+   * })
+   *
+   * @example
+   * // Async operations with concurrency
+   * await df.mutate({
+   *   data: async (row) => await fetchData(row.id)
+   * }, { concurrency: 10 })
+   *
+   * @example
+   * // Grouped operations
+   * df.groupBy("category").mutate({
+   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
+   * })
    */
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,

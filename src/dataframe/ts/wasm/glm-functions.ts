@@ -625,8 +625,8 @@ export class GLM<Row extends Record<string, number>> {
    * @param options - Prediction options
    * @returns Array of predictions
    */
-  predict(
-    newdata?: DataFrame<Row>,
+  predict<NewRow extends Record<string, unknown> = Row>(
+    newdata?: DataFrame<NewRow>,
     options: { type?: "link" | "response" } = {},
   ): number[] {
     const type = options.type || "response";

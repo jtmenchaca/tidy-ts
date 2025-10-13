@@ -5,18 +5,26 @@ import * as fs from "node:fs/promises";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 
 /**
- * Read a JSON file with Zod schema validation and type inference
+ * Read a JSON file with Zod schema validation and type inference.
  *
- * @param filePath - Path to the JSON file
- * @param schema - Zod schema for type validation
- * @returns For array schemas, returns a DataFrame. Otherwise returns the validated data.
+ * Loads JSON data from a file and validates it against a Zod schema. For array schemas
+ * containing objects, automatically returns a DataFrame. For other schemas, returns the
+ * validated data with inferred types. Throws an error if validation fails or if the
+ * file cannot be read.
+ *
+ * @param filePath - Path to the JSON file to read (Node.js/Deno only)
+ * @param schema - Zod schema for validation and type inference. Can be any Zod type:
+ *   - `z.object({...})`: Returns a validated object
+ *   - `z.array(z.object({...}))`: Returns a DataFrame with typed rows
+ *   - Other Zod types: Returns validated data with inferred type
+ *
+ * @returns For array of objects, returns a DataFrame. For other types, returns the
+ *   validated data with schema-inferred type.
  *
  * @example
- * ```ts
+ * // Read a simple configuration object
  * import { z } from "zod";
- * import { readJSON } from "@tidy-ts/dataframe";
  *
- * // For a simple object
  * const ConfigSchema = z.object({
  *   apiUrl: z.string().url(),
  *   timeout: z.number().positive(),
@@ -24,9 +32,9 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  * });
  *
  * const config = await readJSON("./config.json", ConfigSchema);
- * // config is typed as z.infer<typeof ConfigSchema>
  *
- * // For an array of objects (returns DataFrame)
+ * @example
+ * // Read an array of objects as a DataFrame
  * const UserSchema = z.array(z.object({
  *   id: z.number(),
  *   name: z.string(),
@@ -35,8 +43,15 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  * }));
  *
  * const users = await readJSON("./users.json", UserSchema);
- * // users is typed as DataFrame<{id: number, name: string, ...}>
- * ```
+ * // Returns DataFrame<{id: number, name: string, email: string, age?: number}>
+ *
+ * @example
+ * // With complex nested schema
+ * const schema = z.array(z.object({
+ *   user: z.object({ id: z.number(), name: z.string() }),
+ *   posts: z.array(z.object({ title: z.string(), views: z.number() }))
+ * }));
+ * const data = await readJSON("./data.json", schema);
  */
 export async function readJSON<T extends ZodTypeAny>(
   filePath: string,

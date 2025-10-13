@@ -1,20 +1,23 @@
 import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
- * Count method - shorthand for groupBy(...columns).summarize({ n: g => g.nrows() })
+ * Count rows by unique combinations of column values.
  *
- * Requires at least one column name (matches tidyverse behavior).
+ * Groups by the specified columns and returns counts in a new column `n`.
+ * Shorthand for `groupBy(...columns).summarise({ n: g => g.nrows() })`.
  *
  * @example
- * ```typescript
- * // Count rows by single column
+ * // Count by single column
  * df.count("category")
- * // equivalent to: df.groupBy("category").summarize({ n: g => g.nrows() })
  *
- * // Count rows by multiple columns
+ * @example
+ * // Count by multiple columns
  * df.count("category", "status")
- * // equivalent to: df.groupBy("category", "status").summarize({ n: g => g.nrows() })
- * ```
+ *
+ * @example
+ * // Result includes grouping columns plus `n`
+ * df.count("region")
+ * // => { region: string, n: number }
  */
 export type CountMethod<Row extends object> = <K extends keyof Row>(
   column: K,
