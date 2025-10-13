@@ -1,3 +1,0 @@
-- Make a count non-null non-undefined helper
-- Finish out validation for GLM
-- Submit paper.md
