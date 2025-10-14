@@ -9,6 +9,8 @@ import type { DataFrame } from "../dataframe/index.ts";
 export * from "./read_csv.ts";
 export * from "./read_parquet.ts";
 export * from "./read_arrow.ts";
+export * from "./read_xlsx.ts";
+export * from "./write_xlsx.ts";
 export { readJSON } from "./read_json.ts";
 export * from "./write_json.ts";
 
@@ -617,6 +619,123 @@ export const writeParquet: WriteParquetFunction = (() => {
       // This is a limitation - we can't use dynamic imports for sync functions
       throw new Error(
         "writeParquet requires static import. Use: import { writeParquet } from '@tidy-ts/dataframe/ts/verbs/utility'",
+      );
+    };
+  }
+})();
+
+/**
+ * Read an XLSX file with Zod schema validation and type inference.
+ *
+ * Loads XLSX data from a file path (Deno only) and validates each row against
+ * the provided Zod schema. Returns a fully typed DataFrame based on the schema.
+ * Automatically converts Excel serial numbers to proper dates and handles
+ * NA values. Throws an error if validation fails.
+ *
+ * @param path - File path to the XLSX file (Deno only)
+ * @param schema - Zod schema for type validation and conversion. The schema defines
+ *   the expected structure and types of each row in the DataFrame. Types are automatically
+ *   coerced (e.g., string "123" becomes number 123 for z.number() fields, Excel serial
+ *   numbers become Date objects for z.date() fields).
+ * @param opts - Optional NA handling configuration to specify how missing values are represented
+ *
+ * @returns A Promise resolving to a DataFrame typed according to the schema
+ *
+ * @example
+ * // Read from file with validation
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   id: z.number().int(),
+ *   name: z.string().min(1),
+ *   email: z.string().email(),
+ *   createdAt: z.date(),  // Excel serial numbers auto-converted to Date
+ *   age: z.number().optional(),
+ * });
+ *
+ * const df = await readXLSX("./data.xlsx", schema);
+ *
+ * @example
+ * // With NA handling options
+ * const df = await readXLSX("./data.xlsx", schema, {
+ *   naValues: ["NA", "null", ""],
+ *   trim: true
+ * });
+ */
+// deno-lint-ignore no-explicit-any
+type ReadXLSXFunction = <S extends z.ZodObject<any>>(
+  path: string,
+  schema: S,
+  opts?: NAOpts,
+) => Promise<DataFrame<z.infer<S>>>;
+
+export const readXLSX: ReadXLSXFunction = (() => {
+  // deno-lint-ignore no-process-global
+  const isNode = typeof process !== "undefined" && process?.versions?.node;
+  const isDeno = typeof Deno !== "undefined";
+
+  if (isNode || isDeno) {
+    // deno-lint-ignore no-explicit-any
+    return async <S extends z.ZodObject<any>>(
+      path: string,
+      schema: S,
+      opts?: NAOpts,
+    ) => {
+      const { readXLSX } = await import("./read_xlsx.ts");
+      return readXLSX(path, schema, opts);
+    };
+  } else {
+    return () => {
+      throw new Error(
+        "readXLSX is only available in Node.js/Deno environments.",
+      );
+    };
+  }
+})();
+
+/**
+ * Write a DataFrame to an XLSX file.
+ *
+ * Converts a DataFrame to XLSX format and writes it to a file (Deno only).
+ * Automatically handles dates (converts to Excel serial numbers), numbers,
+ * strings, and booleans. Returns the original DataFrame for method chaining.
+ *
+ * @param path - File path where to save the XLSX file
+ * @param df - The DataFrame to write
+ *
+ * @returns A Promise resolving to void
+ *
+ * @example
+ * // Write to file (Deno)
+ * const df = createDataFrame([
+ *   { id: 1, name: "Alice", age: 30, created: new Date(2024, 0, 1) },
+ *   { id: 2, name: "Bob", age: 25, created: new Date(2024, 1, 15) }
+ * ]);
+ *
+ * await writeXLSX("./data.xlsx", df);
+ */
+type WriteXLSXFunction = <Row extends Record<string, unknown>>(
+  path: string,
+  dataFrame: DataFrame<Row>,
+) => Promise<void>;
+
+export const writeXLSX: WriteXLSXFunction = (() => {
+  // deno-lint-ignore no-process-global
+  const isNode = typeof process !== "undefined" && process?.versions?.node;
+  const isDeno = typeof Deno !== "undefined";
+
+  if (isNode || isDeno) {
+    return async <Row extends Record<string, unknown>>(
+      path: string,
+      dataFrame: DataFrame<Row>,
+    ) => {
+      const { writeXLSX } = await import("./write_xlsx.ts");
+      return writeXLSX(path, dataFrame);
+    };
+  } else {
+    return () => {
+      throw new Error(
+        "writeXLSX is only available in Node.js/Deno environments.",
       );
     };
   }
