@@ -667,7 +667,6 @@ export const writeParquet: WriteParquetFunction = (() => {
  * // Read from sheet by index (0-based)
  * const df = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  */
-// deno-lint-ignore no-explicit-any
 interface ReadXLSXOpts extends NAOpts {
   sheet?: string | number;
 }
