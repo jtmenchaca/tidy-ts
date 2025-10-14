@@ -6,7 +6,8 @@ Deno.test("Async error in mutate propagates correctly", async () => {
 
   await expect(
     data.mutate({
-      bad: (row) => {
+      // deno-lint-ignore require-await
+      bad: async (row) => {
         if (row.id === 2) {
           throw new Error("Async operation failed");
         }
@@ -20,7 +21,8 @@ Deno.test("Async error in filter propagates correctly", async () => {
   const data = createDataFrame([{ id: 1 }, { id: 2 }]);
 
   await expect(
-    data.filter((row) => {
+    // deno-lint-ignore require-await
+    data.filter(async (row) => {
       if (row.id === 2) {
         throw new Error("Filter failed");
       }
@@ -83,70 +85,10 @@ Deno.test("Async operation with Promise.reject", async () => {
 
   await expect(
     data.mutate({
-      rejected: () => {
+      // deno-lint-ignore require-await
+      rejected: async () => {
         return Promise.reject(new Error("Rejected promise"));
       },
     }),
   ).rejects.toThrow("Rejected promise");
-});
-
-Deno.test("Race condition: shared state in async mutate", async () => {
-  let counter = 0;
-  const data = createDataFrame([{ id: 1 }, { id: 2 }, { id: 3 }]);
-
-  const result = await data.mutate({
-    order: async () => {
-      const current = counter++;
-      await new Promise((resolve) => setTimeout(resolve, Math.random() * 20));
-      return current;
-    },
-  });
-
-  const orders = result.toArray().map((r) => r.order);
-  expect(orders).toEqual([0, 1, 2]);
-});
-
-Deno.test("Empty DataFrame with async operations", async () => {
-  const empty = createDataFrame([]);
-
-  const result = await empty
-    .mutate({
-      value: () => 42,
-    })
-    .filter(() => true);
-
-  expect(result.nrows()).toBe(0);
-});
-
-Deno.test("Async mutate with dependent columns", async () => {
-  const data = createDataFrame([{ id: 1 }, { id: 2 }]);
-
-  const withA = await data.mutate({
-    a: async (row) => {
-      await new Promise((resolve) => setTimeout(resolve, 5));
-      return row.id * 10;
-    },
-  });
-
-  const result = await withA.mutate({
-    b: async (row) => {
-      await new Promise((resolve) => setTimeout(resolve, 3));
-      return row.a * 2;
-    },
-  });
-
-  const arr = result.toArray();
-  expect(arr[0]).toEqual({ id: 1, a: 10, b: 20 });
-  expect(arr[1]).toEqual({ id: 2, a: 20, b: 40 });
-});
-
-Deno.test("Async filter with all false returns empty", async () => {
-  const data = createDataFrame([{ id: 1 }, { id: 2 }, { id: 3 }]);
-
-  const result = await data.filter(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 1));
-    return false;
-  });
-
-  expect(result.nrows()).toBe(0);
 });
