@@ -637,7 +637,7 @@ export const writeParquet: WriteParquetFunction = (() => {
  *   the expected structure and types of each row in the DataFrame. Types are automatically
  *   coerced (e.g., string "123" becomes number 123 for z.number() fields, Excel serial
  *   numbers become Date objects for z.date() fields).
- * @param opts - Optional NA handling configuration to specify how missing values are represented
+ * @param opts - Optional configuration including NA handling and sheet selection
  *
  * @returns A Promise resolving to a DataFrame typed according to the schema
  *
@@ -656,17 +656,27 @@ export const writeParquet: WriteParquetFunction = (() => {
  * const df = await readXLSX("./data.xlsx", schema);
  *
  * @example
- * // With NA handling options
+ * // Read from specific sheet with NA handling options
  * const df = await readXLSX("./data.xlsx", schema, {
+ *   sheet: "Summary",  // Read specific sheet by name
  *   naValues: ["NA", "null", ""],
  *   trim: true
  * });
+ *
+ * @example
+ * // Read from sheet by index (0-based)
+ * const df = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  */
+// deno-lint-ignore no-explicit-any
+interface ReadXLSXOpts extends NAOpts {
+  sheet?: string | number;
+}
+
 // deno-lint-ignore no-explicit-any
 type ReadXLSXFunction = <S extends z.ZodObject<any>>(
   path: string,
   schema: S,
-  opts?: NAOpts,
+  opts?: ReadXLSXOpts,
 ) => Promise<DataFrame<z.infer<S>>>;
 
 export const readXLSX: ReadXLSXFunction = (() => {
@@ -679,7 +689,7 @@ export const readXLSX: ReadXLSXFunction = (() => {
     return async <S extends z.ZodObject<any>>(
       path: string,
       schema: S,
-      opts?: NAOpts,
+      opts?: ReadXLSXOpts,
     ) => {
       const { readXLSX } = await import("./read_xlsx.ts");
       return readXLSX(path, schema, opts);
@@ -698,25 +708,39 @@ export const readXLSX: ReadXLSXFunction = (() => {
  *
  * Converts a DataFrame to XLSX format and writes it to a file (Deno only).
  * Automatically handles dates (converts to Excel serial numbers), numbers,
- * strings, and booleans. Returns the original DataFrame for method chaining.
+ * strings, and booleans. Supports writing to specific sheets in new or existing files.
  *
  * @param path - File path where to save the XLSX file
- * @param df - The DataFrame to write
+ * @param dataFrame - The DataFrame to write
+ * @param opts - Optional configuration including sheet name
  *
  * @returns A Promise resolving to void
  *
  * @example
- * // Write to file (Deno)
+ * // Write to default sheet (Sheet1)
  * const df = createDataFrame([
  *   { id: 1, name: "Alice", age: 30, created: new Date(2024, 0, 1) },
  *   { id: 2, name: "Bob", age: 25, created: new Date(2024, 1, 15) }
  * ]);
  *
  * await writeXLSX("./data.xlsx", df);
+ *
+ * @example
+ * // Write to specific sheet (adds new or replaces existing)
+ * const users = createDataFrame([{ name: "Alice", age: 30 }]);
+ * const products = createDataFrame([{ product: "Widget", price: 9.99 }]);
+ *
+ * await writeXLSX("./data.xlsx", users, { sheet: "Users" });
+ * await writeXLSX("./data.xlsx", products, { sheet: "Products" });
  */
+interface WriteXLSXOpts {
+  sheet?: string;
+}
+
 type WriteXLSXFunction = <Row extends Record<string, unknown>>(
   path: string,
   dataFrame: DataFrame<Row>,
+  opts?: WriteXLSXOpts,
 ) => Promise<void>;
 
 export const writeXLSX: WriteXLSXFunction = (() => {
@@ -728,9 +752,10 @@ export const writeXLSX: WriteXLSXFunction = (() => {
     return async <Row extends Record<string, unknown>>(
       path: string,
       dataFrame: DataFrame<Row>,
+      opts?: WriteXLSXOpts,
     ) => {
       const { writeXLSX } = await import("./write_xlsx.ts");
-      return writeXLSX(path, dataFrame);
+      return writeXLSX(path, dataFrame, opts);
     };
   } else {
     return () => {
