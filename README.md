@@ -432,6 +432,7 @@ const longData = wideData.pivotLonger({
 ### Aggregation & Grouping
 - `groupBy()` - Group by columns
 - `summarize()` - Aggregate groups (sync & async)
+- `count()` - Count rows by grouping columns (shorthand for groupBy().summarize())
 
 ### Joins & Reshaping
 - `innerJoin()`, `leftJoin()`, `rightJoin()`, `outerJoin()` - Multi-key joins

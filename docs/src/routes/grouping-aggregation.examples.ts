@@ -75,4 +75,11 @@ const basicAnalysis = people
   .arrange("avg_mass", "desc");
 
 basicAnalysis.print("Basic species analysis:");`,
+
+  countShorthand: `// Count shorthand - equivalent to groupBy(...columns).summarise({ n: g => g.nrows() })
+const countBySpecies = people.count("species");
+const countBySpeciesAndYear = people.count("species", "year");
+
+countBySpecies.print("Count by species:");
+countBySpeciesAndYear.print("Count by species and year:");`,
 };

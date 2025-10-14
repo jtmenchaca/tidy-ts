@@ -1,4 +1,5 @@
 import type { DataFrame } from "../../dataframe/index.ts";
+import type { Prettify } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Count rows by unique combinations of column values.
@@ -22,4 +23,4 @@ import type { DataFrame } from "../../dataframe/index.ts";
 export type CountMethod<Row extends object> = <K extends keyof Row>(
   column: K,
   ...additionalColumns: K[]
-) => DataFrame<Pick<Row, K> & { n: number }>;
+) => DataFrame<Prettify<Pick<Row, K> & { n: number }>>;

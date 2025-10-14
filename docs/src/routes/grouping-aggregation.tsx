@@ -42,6 +42,13 @@ function GroupingAggregationComponent() {
         code={groupingExamples.conditionalAggregation}
       />
 
+      <CodeBlock
+        title="Count Shorthand"
+        description="Quick way to count rows by grouping columns"
+        explanation="The count() method is a shorthand for groupBy(...columns).summarise({ n: g => g.nrows() }). It groups by the specified columns and returns counts in a new column 'n'."
+        code={groupingExamples.countShorthand}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Common Aggregation Functions</CardTitle>
@@ -65,6 +72,9 @@ function GroupingAggregationComponent() {
                 </li>
                 <li>
                   • <code>s.uniqueCount()</code> - Count unique values
+                </li>
+                <li>
+                  • <code>df.count("col")</code> - Count by grouping columns
                 </li>
               </ul>
             </div>
