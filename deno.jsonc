@@ -28,7 +28,7 @@
     "test-src": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe",
     "test-examples": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 examples/dataframe",
     "test-examples-bun": "bun test examples/dataframe",
-    "test-examples-node": "npx tsx --test examples/dataframe/*.test.ts",
+    "test-examples-node": "sh -c 'npx tsx examples/dataframe/*.test.ts'",
     "test-examples-all": "deno task test-examples-bun && deno task test-examples-node",
     "test-stats-tests": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/statistical_tests/statistical-tests.test.ts",
     "test-glm": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/glm/regression-tests.test.ts",

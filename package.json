@@ -2,5 +2,8 @@
   "type": "module",
   "dependencies": {
     "@std/expect": "npm:@jsr/std__expect"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2"
   }
 }

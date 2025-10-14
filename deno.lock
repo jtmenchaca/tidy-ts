@@ -18,15 +18,15 @@
     "npm:@resvg/resvg-wasm@*": "2.6.2",
     "npm:@resvg/resvg-wasm@2": "2.6.2",
     "npm:@shikijs/transformers@^3.12.0": "3.12.2",
-    "npm:@tailwindcss/vite@^4.0.9": "4.1.13_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@types+node@22.15.15",
+    "npm:@tailwindcss/vite@^4.0.9": "4.1.13_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@types+node@22.15.15_tsx@4.20.5",
     "npm:@tanstack/react-query@^5.67.0": "5.87.1_react@19.1.1",
     "npm:@tanstack/react-router-devtools@^1.128.0": "1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_react@19.1.1_react-dom@19.1.1__react@19.1.1",
     "npm:@tanstack/react-router@^1.128.0": "1.131.36_react@19.1.1_react-dom@19.1.1__react@19.1.1",
-    "npm:@tanstack/router-plugin@^1.128.0": "1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_react@19.1.1_react-dom@19.1.1__react@19.1.1_@types+node@22.15.15",
+    "npm:@tanstack/router-plugin@^1.128.0": "1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_react@19.1.1_react-dom@19.1.1__react@19.1.1_@types+node@22.15.15_tsx@4.20.5",
     "npm:@types/node@*": "22.15.15",
     "npm:@types/react@^19.1.1": "19.1.12",
     "npm:@uwdata/flechette@^2.2.3": "2.2.3",
-    "npm:@vitejs/plugin-react@^4.5.0": "4.7.0_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_@types+node@22.15.15",
+    "npm:@vitejs/plugin-react@^4.5.0": "4.7.0_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_@types+node@22.15.15_tsx@4.20.5",
     "npm:arquero@^8.0.3": "8.0.3",
     "npm:better-sqlite3@*": "12.2.0",
     "npm:drizzle-orm@*": "0.44.4_better-sqlite3@12.2.0_@libsql+client@0.15.15",
@@ -39,11 +39,13 @@
     "npm:react@^19.1.1": "19.1.1",
     "npm:sharp@0.33": "0.33.5",
     "npm:shiki@^3.12.0": "3.12.2",
+    "npm:tsx@4.20.5": "4.20.5",
+    "npm:tsx@^4.19.2": "4.20.5",
     "npm:url@*": "0.11.4",
     "npm:vega-embed@^7.0.2": "7.0.2_vega@6.2.0_vega-lite@6.4.1__vega@6.2.0",
     "npm:vega-lite@^6.4.1": "6.4.1_vega@6.2.0",
     "npm:vega@^6.2.0": "6.2.0",
-    "npm:vite@^7.0.4": "7.1.5_@types+node@22.15.15_picomatch@4.0.3",
+    "npm:vite@^7.0.4": "7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5",
     "npm:zod@^3.25.67": "3.25.76",
     "npm:zod@^4.1.8": "4.1.8"
   },
@@ -1204,7 +1206,16 @@
         "@tailwindcss/node",
         "@tailwindcss/oxide",
         "tailwindcss",
-        "vite"
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3"
+      ]
+    },
+    "@tailwindcss/vite@4.1.13_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@types+node@22.15.15_tsx@4.20.5": {
+      "integrity": "sha512-0PmqLQ010N58SbMTJ7BVJ4I2xopiQn/5i6nlb4JmxzQf8zcS5+m2Cv6tqh+sfDwtIdjoEnOvwsGQ1hkUi8QEHQ==",
+      "dependencies": [
+        "@tailwindcss/node",
+        "@tailwindcss/oxide",
+        "tailwindcss",
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5"
       ]
     },
     "@tanstack/history@1.131.2": {
@@ -1303,12 +1314,37 @@
         "babel-dead-code-elimination",
         "chokidar",
         "unplugin",
-        "vite",
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3",
         "zod@3.25.76"
       ],
       "optionalPeers": [
         "@tanstack/react-router",
-        "vite"
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3"
+      ]
+    },
+    "@tanstack/router-plugin@1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_react@19.1.1_react-dom@19.1.1__react@19.1.1_@types+node@22.15.15_tsx@4.20.5": {
+      "integrity": "sha512-EU/NopEkQw3AyjZvB33r4uIfUtbU64rbdJDCgGfumv1wpi/B4lJTO9W6iiUsoIsi1mtlNQKbFKNIbx+VyGh19Q==",
+      "dependencies": [
+        "@babel/core",
+        "@babel/plugin-syntax-jsx",
+        "@babel/plugin-syntax-typescript",
+        "@babel/template",
+        "@babel/traverse",
+        "@babel/types",
+        "@tanstack/react-router",
+        "@tanstack/router-core",
+        "@tanstack/router-generator",
+        "@tanstack/router-utils",
+        "@tanstack/virtual-file-routes",
+        "babel-dead-code-elimination",
+        "chokidar",
+        "unplugin",
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5",
+        "zod@3.25.76"
+      ],
+      "optionalPeers": [
+        "@tanstack/react-router",
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5"
       ]
     },
     "@tanstack/router-utils@1.131.2_@babel+core@7.28.4": {
@@ -1420,7 +1456,19 @@
         "@rolldown/pluginutils",
         "@types/babel__core",
         "react-refresh",
-        "vite"
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3"
+      ]
+    },
+    "@vitejs/plugin-react@4.7.0_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_@types+node@22.15.15_tsx@4.20.5": {
+      "integrity": "sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==",
+      "dependencies": [
+        "@babel/core",
+        "@babel/plugin-transform-react-jsx-self",
+        "@babel/plugin-transform-react-jsx-source",
+        "@rolldown/pluginutils",
+        "@types/babel__core",
+        "react-refresh",
+        "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5"
       ]
     },
     "accepts@2.0.0": {
@@ -3549,6 +3597,27 @@
       ],
       "bin": true
     },
+    "vite@7.1.5_@types+node@22.15.15_picomatch@4.0.3_tsx@4.20.5": {
+      "integrity": "sha512-4cKBO9wR75r0BeIWWWId9XK9Lj6La5X846Zw9dFfzMRw38IlTk2iCcUt6hsyiDRcPidc55ZParFYDXi0nXOeLQ==",
+      "dependencies": [
+        "@types/node",
+        "esbuild",
+        "fdir",
+        "picomatch@4.0.3",
+        "postcss",
+        "rollup",
+        "tinyglobby",
+        "tsx"
+      ],
+      "optionalDependencies": [
+        "fsevents"
+      ],
+      "optionalPeers": [
+        "@types/node",
+        "tsx"
+      ],
+      "bin": true
+    },
     "web-streams-polyfill@3.3.3": {
       "integrity": "sha512-d2JWLCivmZYTSIoge9MsgFCZrt571BikcWGYkjC1khllbTeDlGqZ2D8vD8E/lJa8WGWbb7Plm8/XJYV7IJHZZw=="
     },
@@ -3785,7 +3854,8 @@
     ],
     "packageJson": {
       "dependencies": [
-        "npm:@jsr/std__expect@*"
+        "npm:@jsr/std__expect@*",
+        "npm:tsx@^4.19.2"
       ]
     }
   }
