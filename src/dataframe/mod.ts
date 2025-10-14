@@ -17,6 +17,7 @@ export {
   readXLSX,
   writeCSV,
   writeParquet,
+  writeXLSX,
 } from "./ts/io/index.ts";
 
 // Browser setup function
