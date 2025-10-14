@@ -203,13 +203,6 @@ type ReadParquetFunction = <S extends z.ZodObject<any>>(
  * @example
  * // Trigger download in browser
  * await writeCSV(df, "data.csv");
- *
- * @example
- * // Method chaining
- * const result = await df
- *   .filter(row => row.age > 18)
- *   .select("name", "age")
- *   .pipe(df => writeCSV(df, "./adults.csv"));
  */
 type WriteCsvFunction = <Row extends Record<string, unknown>>(
   df: DataFrame<Row>,
@@ -247,13 +240,6 @@ type WriteCsvFunction = <Row extends Record<string, unknown>>(
  * @example
  * // Trigger download in browser
  * writeParquet(df, "data.parquet");
- *
- * @example
- * // Method chaining
- * const result = df
- *   .filter(row => row.age > 18)
- *   .select("name", "age")
- *   .pipe(df => writeParquet(df, "./adults.parquet"));
  */
 type WriteParquetFunction = <Row extends Record<string, unknown>>(
   df: DataFrame<Row>,
@@ -489,13 +475,6 @@ export const readParquet: ReadParquetFunction = (() => {
  * @example
  * // Trigger download in browser
  * await writeCSV(df, "data.csv");
- *
- * @example
- * // Method chaining
- * const result = await df
- *   .filter(row => row.age > 18)
- *   .select("name", "age")
- *   .pipe(df => writeCSV(df, "./adults.csv"));
  */
 export const writeCSV: WriteCsvFunction = (() => {
   // deno-lint-ignore no-process-global
@@ -585,13 +564,6 @@ export const writeCSV: WriteCsvFunction = (() => {
  * @example
  * // Trigger download in browser
  * writeParquet(df, "data.parquet");
- *
- * @example
- * // Method chaining
- * const result = df
- *   .filter(row => row.age > 18)
- *   .select("name", "age")
- *   .pipe(df => writeParquet(df, "./adults.parquet"));
  */
 export const writeParquet: WriteParquetFunction = (() => {
   // deno-lint-ignore no-process-global
