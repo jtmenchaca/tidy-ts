@@ -107,8 +107,8 @@ a Creative Commons Attribution 4.0 International License (CC BY
   2019</xref>;
   <xref alt="Gao et al., 2017" rid="ref-GaoU003A2017" ref-type="bibr">Gao
   et al., 2017</xref>;
-  <xref alt="Khan et al., 2021" rid="ref-KhanU003A2021" ref-type="bibr">Khan
-  et al., 2021</xref>).</p>
+  <xref alt="Khan et al., 2022" rid="ref-KhanU003A2021" ref-type="bibr">Khan
+  et al., 2022</xref>).</p>
 </sec>
 <sec id="statement-of-need">
   <title>Statement of need</title>
@@ -376,12 +376,13 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
       <person-group person-group-type="author">
         <name><surname>Gao</surname><given-names>Zheng</given-names></name>
         <name><surname>Bird</surname><given-names>Christian</given-names></name>
-        <name><surname>Barr</surname><given-names>Earl T</given-names></name>
+        <name><surname>Barr</surname><given-names>Earl T.</given-names></name>
       </person-group>
       <article-title>To type or not to type: Quantifying detectable bugs in JavaScript</article-title>
-      <source>Proceedings of the 39th international conference on software engineering</source>
-      <publisher-name>IEEE Press</publisher-name>
+      <source>2017 IEEE/ACM 39th international conference on software engineering (ICSE)</source>
       <year iso-8601-date="2017">2017</year>
+      <volume></volume>
+      <pub-id pub-id-type="doi">10.1109/ICSE.2017.75</pub-id>
       <fpage>758</fpage>
       <lpage>769</lpage>
     </element-citation>
@@ -400,19 +401,19 @@ const compareAPI = s.compare.oneGroup.centralTendency.toValue({
   <ref id="ref-KhanU003A2021">
     <element-citation publication-type="article-journal">
       <person-group person-group-type="author">
-        <name><surname>Khan</surname><given-names>Sajid</given-names></name>
-        <name><surname>Uddin</surname><given-names>Ghulam</given-names></name>
-        <name><surname>Niazi</surname><given-names>Mahmood</given-names></name>
+        <name><surname>Khan</surname><given-names>Faizan</given-names></name>
+        <name><surname>Chen</surname><given-names>Boqi</given-names></name>
+        <name><surname>Varro</surname><given-names>Daniel</given-names></name>
+        <name><surname>McIntosh</surname><given-names>Shane</given-names></name>
       </person-group>
-      <article-title>A systematic literature review on the empirical evidence for the effectiveness of type systems</article-title>
+      <article-title>An empirical study of type-related defects in python projects</article-title>
       <source>IEEE Transactions on Software Engineering</source>
-      <publisher-name>IEEE</publisher-name>
-      <year iso-8601-date="2021">2021</year>
-      <volume>47</volume>
-      <issue>12</issue>
-      <pub-id pub-id-type="doi">10.1109/TSE.2019.2961751</pub-id>
-      <fpage>2670</fpage>
-      <lpage>2691</lpage>
+      <year iso-8601-date="2022">2022</year>
+      <volume>48</volume>
+      <issue>8</issue>
+      <pub-id pub-id-type="doi">10.1109/TSE.2021.3082068</pub-id>
+      <fpage>3145</fpage>
+      <lpage>3158</lpage>
     </element-citation>
   </ref>
 </ref-list>
