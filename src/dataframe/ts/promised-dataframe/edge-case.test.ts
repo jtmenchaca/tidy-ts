@@ -6,7 +6,7 @@ Deno.test("Async error in mutate propagates correctly", async () => {
 
   await expect(
     data.mutate({
-      bad: async (row) => {
+      bad: (row) => {
         if (row.id === 2) {
           throw new Error("Async operation failed");
         }
@@ -20,7 +20,7 @@ Deno.test("Async error in filter propagates correctly", async () => {
   const data = createDataFrame([{ id: 1 }, { id: 2 }]);
 
   await expect(
-    data.filter(async (row) => {
+    data.filter((row) => {
       if (row.id === 2) {
         throw new Error("Filter failed");
       }
@@ -83,7 +83,7 @@ Deno.test("Async operation with Promise.reject", async () => {
 
   await expect(
     data.mutate({
-      rejected: async () => {
+      rejected: () => {
         return Promise.reject(new Error("Rejected promise"));
       },
     }),
@@ -111,9 +111,9 @@ Deno.test("Empty DataFrame with async operations", async () => {
 
   const result = await empty
     .mutate({
-      value: async () => 42,
+      value: () => 42,
     })
-    .filter(async () => true);
+    .filter(() => true);
 
   expect(result.nrows()).toBe(0);
 });
