@@ -128,6 +128,39 @@ const _typeCheck: DataFrame<{
 
 jediAcademyData.print("DataFrame created from Jedi Academy CSV:");`,
 
+  xlsxReading: `import { readXLSX, type DataFrame } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+// Define Zod schema for XLSX data - handles type conversion and validation
+const JediAcademySchema = z.object({
+  name: z.string(),
+  species: z.string(),
+  homeworld: z.string(),
+  lightsaber_color: z.string(),
+  rank: z.string(),
+  force_sensitivity: z.number(), // XLSX values automatically converted to numbers
+});
+
+// Read XLSX file with schema validation
+const jediAcademyData = await readXLSX("./data/jedi_academy.xlsx", JediAcademySchema);
+
+// Read specific sheet by name or index
+const summaryData = await readXLSX("./data/jedi_academy.xlsx", JediAcademySchema, {
+  sheet: "Summary", // or sheet: 1 for index
+});
+
+// TypeScript knows the exact structure after Zod validation
+const _typeCheck: DataFrame<{
+  name: string;
+  species: string;
+  homeworld: string;
+  lightsaber_color: string;
+  rank: string;
+  force_sensitivity: number;
+}> = jediAcademyData;
+
+jediAcademyData.print("DataFrame created from Jedi Academy XLSX:");`,
+
   parquetReading: `import { readParquet, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
@@ -153,14 +186,21 @@ const JediSchema = z.object({
 const jediData = await readArrow("./data/jedi.arrow", JediSchema);
 jediData.print("DataFrame from Arrow:");`,
 
-  csvWriting: `import { createDataFrame, writeCSV } from "@tidy-ts/dataframe";
+  csvWriting: `import { createDataFrame, writeCSV, writeXLSX, writeParquet } from "@tidy-ts/dataframe";
 
 const jediData = createDataFrame([
   { name: "Luke", force_sensitivity: 9.2 },
   { name: "Yoda", force_sensitivity: 10.0 },
 ]);
 
+// Write to CSV
 await writeCSV(jediData, "./output/jedi.csv");
-await writeCSV(jediData, "./output/jedi.parquet");
+
+// Write to XLSX with sheet selection
+await writeXLSX(jediData, "./output/jedi.xlsx");
+await writeXLSX(jediData, "./output/jedi.xlsx", { sheet: "Jedi Knights" });
+
+// Write to Parquet
+await writeParquet(jediData, "./output/jedi.parquet");
 // No writing to .arrow format currently`,
 };

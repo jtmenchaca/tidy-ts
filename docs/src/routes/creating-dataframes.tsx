@@ -49,22 +49,28 @@ function CreatingDataFramesComponent() {
             4. CSV file with Zod
           </button>
           <button 
+            onClick={() => scrollToSection('xlsx-reading')} 
+            className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
+          >
+            5. XLSX file with Zod
+          </button>
+          <button 
             onClick={() => scrollToSection('parquet-reading')} 
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
-            5. Parquet with Zod
+            6. Parquet with Zod
           </button>
           <button 
             onClick={() => scrollToSection('arrow-reading')} 
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
-            6. Arrow with Zod
+            7. Arrow with Zod
           </button>
           <button 
             onClick={() => scrollToSection('writing-data')} 
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
-            7. Writing CSV and Parquet files
+            8. Writing CSV, XLSX, and Parquet files
           </button>
         </nav>
       </div>
@@ -101,8 +107,16 @@ function CreatingDataFramesComponent() {
       />
 
       <CodeBlock
+        id="xlsx-reading"
+        title="5. XLSX Files with Zod"
+        description="Read Excel files with zero-dependency parsing and schema validation"
+        explanation="XLSX files are parsed using a zero-dependency implementation that handles Excel serial numbers, dates, and various data types. Select specific sheets by name or index. Zod schemas provide type safety and automatic conversion."
+        code={creatingExamples.xlsxReading}
+      />
+
+      <CodeBlock
         id="parquet-reading"
-        title="5. Parquet Files with Zod"
+        title="6. Parquet Files with Zod"
         description="Load Parquet files with schema validation"
         explanation="Use Zod schemas to ensure type safety when reading Parquet files."
         code={creatingExamples.parquetReading}
@@ -110,7 +124,7 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="arrow-reading"
-        title="6. Arrow Data with Zod"
+        title="7. Arrow Data with Zod"
         description="Read Arrow format data with schema validation"
         explanation="Arrow is a columnar data format. Use Zod schemas for type safety when reading Arrow files."
         code={creatingExamples.arrowReading}
@@ -118,9 +132,9 @@ function CreatingDataFramesComponent() {
 
       <CodeBlock
         id="writing-data"
-        title="7. Writing CSV and Parquet Files"
-        description="Export DataFrames to CSV and Parquet formats"
-        explanation="Save your processed data in standard formats."
+        title="8. Writing CSV, XLSX, and Parquet Files"
+        description="Export DataFrames to CSV, XLSX, and Parquet formats"
+        explanation="Save your processed data in standard formats. XLSX writing supports sheet selection and zero-dependency Excel file creation."
         code={creatingExamples.csvWriting}
       />
     </DocPageLayout>

@@ -56,7 +56,7 @@ export const searchIndex: SearchResult[] = [
     title: "Creating DataFrames",
     path: "/creating-dataframes",
     content:
-      "Learn to create DataFrames from arrays, objects, CSV files, and various data sources. TypeScript support included.",
+      "Learn to create DataFrames from arrays, objects, CSV files, XLSX files, and various data sources. TypeScript support included.",
     category: "Core",
     type: "page",
     keywords: [
@@ -65,9 +65,16 @@ export const searchIndex: SearchResult[] = [
       "array",
       "object",
       "csv",
+      "xlsx",
+      "excel",
       "data",
       "source",
       "from",
+      "read",
+      "import",
+      "readXLSX",
+      "writeXLSX",
+      "sheet",
     ],
   },
   {
