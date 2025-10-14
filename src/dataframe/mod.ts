@@ -14,6 +14,7 @@ export {
   readCSV,
   readJSON,
   readParquet,
+  readXLSX,
   writeCSV,
   writeParquet,
 } from "./ts/io/index.ts";

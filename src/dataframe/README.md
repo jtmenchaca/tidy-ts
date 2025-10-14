@@ -355,9 +355,9 @@ const asyncData = await sales
   .filter(async r => await validateRegion(r.region)); // async filtering
 ```
 
-### CSV, Parquet, and Arrow Reading with Zod Validation
+### CSV, XLSX, JSON, Parquet, and Arrow Reading with Zod Validation
 ```typescript
-import {readCSV, readParquet, readArrow } from "@tidy-ts/dataframe"
+import {readCSV, readXLSX, readJSON, readParquet, readArrow } from "@tidy-ts/dataframe"
 // Read CSV with schema validation and error handling
 const PersonSchema = z.object({
   name: z.string(),
@@ -367,11 +367,13 @@ const PersonSchema = z.object({
 });
 
 const dataCSV = await readCSV(pathToCSV, PersonSchema); // uses @std/csv
+const dataXLSX = await readXLSX(pathToXLSX, PersonSchema); // zero-dependency XLSX parsing
+const dataJSON = await readJSON(pathToJSON, PersonSchema); // JSON parsing with schema validation
 const dataParquet = await readParquet(pathToParquet, PersonSchema); // uses hyparquet, only available server-side
 const dataArrow = await readArrow(pathToArrow, PersonSchema); // uses @uwdata/flechette
 
-// You can also write to CSV and Parquet
-import {writeCSV, writeParquet} from "@tidy-ts/dataframe"
+// You can also write to CSV, XLSX, and Parquet
+import {writeCSV, writeXLSX, writeParquet} from "@tidy-ts/dataframe"
 
 const dataframe = createDataFrame([
   { name: "Alice", age: 30, city: "New York", score: 95 },
@@ -379,6 +381,8 @@ const dataframe = createDataFrame([
 ])
 
 await writeCSV(dataframe, pathToSaveCSV);
+await writeXLSX(dataframe, pathToSaveXLSX); // zero-dependency XLSX writing
+await writeXLSX(dataframe, pathToSaveXLSX, { sheet: "Summary" }); // write to specific sheet
 await writeParquet(dataframe, pathToSaveParquet); // uses hyparquet-writer, only available server-side
 // No support for writing Arrow
 ```
@@ -407,7 +411,8 @@ const longData = wideData.pivotLonger({
 ### DataFrame Creation & Basics
 - `createDataFrame([...])` - Create from row objects with type inference
 - `createDataFrame({ columns: {...} })` - Create from column arrays
-- `readCSV(), readJSON(), readParquet(), and readArrow()` - Read CSV, parquet, and arrow all with Zod schema validation for strong typing
+- `readCSV(), readXLSX(), readJSON(), readParquet(), and readArrow()` - Read CSV, XLSX, parquet, and arrow all with Zod schema validation for strong typing
+- `writeCSV(), writeXLSX(), and writeParquet()` - Write DataFrames to CSV, XLSX, and Parquet formats
 - `nrows()`, `ncols()` - Dimensions
 - `columns()` - Schema info
 - `df.columnName` - Direct readonly access to column arrays (faster)
