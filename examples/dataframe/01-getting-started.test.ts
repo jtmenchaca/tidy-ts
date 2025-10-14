@@ -6,7 +6,7 @@ import {
 } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { z } from "zod";
-import { test } from "../../tests/shims/test.ts";
+import { test } from "@tests/shims";
 
 test("Getting Started with DataFrames - Progressive Examples", async () => {
   // ============================================================================

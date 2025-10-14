@@ -1,6 +1,6 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { test } from "../../tests/shims/test.ts";
+import { test } from "@tests/shims";
 
 test("Pattern Detection with strDetect - Progressive Examples", () => {
   // ============================================================================

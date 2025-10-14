@@ -1,6 +1,6 @@
 import { createDataFrame, str } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { test } from "../../tests/shims/test.ts";
+import { test } from "@tests/shims";
 
 test("String Splitting with strSplit", () => {
   console.log("=== String Splitting (strSplit) ===");

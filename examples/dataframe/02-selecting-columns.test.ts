@@ -1,6 +1,6 @@
 import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { test } from "../../tests/shims/test.ts";
+import { test } from "@tests/shims";
 
 test("Selecting and Managing Columns - Progressive Examples", () => {
   // ============================================================================

@@ -6,7 +6,7 @@ import {
   writeCSV,
 } from "@tidy-ts/dataframe";
 import { z } from "zod";
-import { test } from "../../tests/shims/test.ts";
+import { test } from "@tests/shims";
 
 test("Data Input/output/ Operations - Progressive Examples", async () => {
   // ============================================================================
