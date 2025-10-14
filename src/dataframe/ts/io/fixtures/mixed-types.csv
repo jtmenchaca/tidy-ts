@@ -1,0 +1,4 @@
+name,age,score,active,date
+Alice,25,98.5,true,2024-01-15
+Bob,30,87.3,false,2024-02-20
+Charlie,28,92.1,true,2024-03-10

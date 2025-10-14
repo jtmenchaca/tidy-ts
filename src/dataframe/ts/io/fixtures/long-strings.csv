@@ -1,0 +1,4 @@
+id,description
+1,"This is a very long string that contains a lot of text to test how the XLSX reader handles cells with large amounts of text content that might span multiple lines or be very wide"
+2,"Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"
+3,"Another really long description with lots and lots and lots of words to make sure we can handle this properly"

@@ -1,0 +1,5 @@
+text,symbols,unicode
+"Hello, World!","@#$%^&*()","café"
+"Line1
+Line2","<>&","日本語"
+"Tab	here","quotes""test","émojis🎉"
