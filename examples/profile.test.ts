@@ -132,3 +132,140 @@ Deno.test("Detailed Numeric Analysis", async () => {
 
   expect(numericCols.length).toBeGreaterThan(0);
 });
+
+Deno.test("Profile with Entirely Null Columns", () => {
+  const data = createDataFrame([
+    { name: "Alice", age: 30, missing_num: null, missing_str: null },
+    { name: "Bob", age: 25, missing_num: null, missing_str: null },
+    { name: "Charlie", age: 35, missing_num: null, missing_str: null },
+  ]);
+
+  const profile = data.profile();
+
+  profile.print();
+
+  // Should handle entirely null numeric column
+  const missingNumProfile = profile.filter((p) => p.column === "missing_num");
+  expect(missingNumProfile.nrows()).toBe(1);
+  expect(missingNumProfile[0].nulls).toBe(3);
+  expect(missingNumProfile[0].null_pct).toBe("100.0%");
+
+  // Should handle entirely null string column
+  const missingStrProfile = profile.filter((p) => p.column === "missing_str");
+  expect(missingStrProfile.nrows()).toBe(1);
+  expect(missingStrProfile[0].nulls).toBe(3);
+  expect(missingStrProfile[0].null_pct).toBe("100.0%");
+});
+
+Deno.test("Profile with Undefined Values", () => {
+  const data = createDataFrame([
+    { name: "Alice", score: 85, optional: undefined },
+    { name: "Bob", score: undefined, optional: undefined },
+    { name: "Charlie", score: 92, optional: undefined },
+  ]);
+
+  const profile = data.profile();
+
+  profile.print();
+
+  // Check handling of undefined values
+  const scoreProfile = profile.filter((p) => p.column === "score");
+  expect(scoreProfile.nrows()).toBe(1);
+  expect(scoreProfile[0].nulls).toBe(1);
+
+  const optionalProfile = profile.filter((p) => p.column === "optional");
+  expect(optionalProfile.nrows()).toBe(1);
+  expect(optionalProfile[0].nulls).toBe(3);
+  expect(optionalProfile[0].null_pct).toBe("100.0%");
+});
+
+Deno.test("Profile with Mixed Null and Undefined", () => {
+  const data = createDataFrame([
+    { id: 1, value: null },
+    { id: 2, value: undefined },
+    { id: 3, value: 42 },
+    { id: 4, value: null },
+  ]);
+
+  const profile = data.profile();
+
+  const valueProfile = profile.filter((p) => p.column === "value");
+  expect(valueProfile.nrows()).toBe(1);
+  expect(valueProfile[0].type).toBe("numeric");
+  expect(valueProfile[0].nulls).toBe(3);
+  expect(valueProfile[0].null_pct).toBe("75.0%");
+  expect(valueProfile[0].count).toBe(4);
+});
+
+Deno.test("Profile with Single Value Column", () => {
+  const data = createDataFrame([
+    { category: "A", value: null },
+    { category: "A", value: null },
+    { category: "A", value: null },
+  ]);
+
+  const profile = data.profile();
+
+  const categoryProfile = profile.filter((p) => p.column === "category");
+  expect(categoryProfile.nrows()).toBe(1);
+  expect(categoryProfile[0].type).toBe("categorical");
+  expect(categoryProfile[0].unique).toBe(1);
+  expect(categoryProfile[0].top_values).toContain("A");
+});
+
+Deno.test("Profile with Empty DataFrame", () => {
+  const data = createDataFrame([]);
+
+  const profile = data.profile();
+
+  expect(profile.nrows()).toBe(0);
+});
+
+Deno.test("Profile with Mixed Type Column", () => {
+  const data = createDataFrame([
+    { mixed: 1 },
+    { mixed: "text" },
+    { mixed: 2 },
+    { mixed: "more text" },
+  ]);
+
+  const profile = data.profile();
+
+  const mixedProfile = profile.filter((p) => p.column === "mixed");
+  expect(mixedProfile.nrows()).toBe(1);
+  expect(mixedProfile[0].type).toBe("categorical");
+  expect(mixedProfile[0].unique).toBe(4);
+});
+
+Deno.test("Profile with Boolean Column", () => {
+  const data = createDataFrame([
+    { active: true },
+    { active: false },
+    { active: true },
+    { active: true },
+  ]);
+
+  const profile = data.profile();
+
+  const boolProfile = profile.filter((p) => p.column === "active");
+  expect(boolProfile.nrows()).toBe(1);
+  expect(boolProfile[0].type).toBe("categorical");
+  expect(boolProfile[0].unique).toBe(2);
+  expect(boolProfile[0].top_values).toContain("true");
+});
+
+Deno.test("Profile with NaN Values", () => {
+  const data = createDataFrame([
+    { value: 1 },
+    { value: NaN },
+    { value: 2 },
+    { value: 3 },
+  ]);
+
+  const profile = data.profile();
+
+  const valueProfile = profile.filter((p) => p.column === "value");
+  expect(valueProfile.nrows()).toBe(1);
+  // NaN is typeof "number" so treated as numeric
+  expect(valueProfile[0].type).toBe("numeric");
+});

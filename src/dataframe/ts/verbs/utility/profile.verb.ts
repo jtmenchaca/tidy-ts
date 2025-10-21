@@ -40,8 +40,9 @@ export function profile<T extends object>(
     const nullCount = values.length - nonNull.length;
     const nullPct = ((nullCount / values.length) * 100).toFixed(1);
 
-    // Check if numeric
-    const isNumeric = nonNull.every((v: unknown) => typeof v === "number");
+    // Check if numeric (and has at least one non-null value)
+    const isNumeric = nonNull.length > 0 &&
+      nonNull.every((v: unknown) => typeof v === "number");
 
     if (isNumeric) {
       const numericValues = nonNull as number[];
@@ -53,15 +54,15 @@ export function profile<T extends object>(
         count: values.length,
         nulls: nullCount,
         null_pct: `${nullPct}%`,
-        mean: mean(numericValues).toFixed(2),
-        median: median(numericValues).toFixed(2),
-        min: min(numericValues).toFixed(2),
-        max: max(numericValues).toFixed(2),
-        sd: stdev(numericValues).toFixed(2),
-        q1: q1.toFixed(2),
-        q3: q3.toFixed(2),
-        iqr: iqr(numericValues).toFixed(2),
-        variance: variance(numericValues).toFixed(2),
+        mean: mean(numericValues)?.toFixed(2) ?? "N/A",
+        median: median(numericValues)?.toFixed(2) ?? "N/A",
+        min: min(numericValues)?.toFixed(2) ?? "N/A",
+        max: max(numericValues)?.toFixed(2) ?? "N/A",
+        sd: stdev(numericValues)?.toFixed(2) ?? "N/A",
+        q1: q1?.toFixed(2) ?? "N/A",
+        q3: q3?.toFixed(2) ?? "N/A",
+        iqr: iqr(numericValues)?.toFixed(2) ?? "N/A",
+        variance: variance(numericValues)?.toFixed(2) ?? "N/A",
         unique: undefined,
         top_values: undefined,
       };
