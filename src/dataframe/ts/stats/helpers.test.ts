@@ -92,6 +92,7 @@ Deno.test("chunk() - throws on invalid chunk size", () => {
 });
 
 Deno.test("chunk() - throws on non-array input", () => {
+  // deno-lint-ignore no-explicit-any
   expect(() => s.chunk("not an array" as any, 2)).toThrow(
     "First argument must be an array",
   );

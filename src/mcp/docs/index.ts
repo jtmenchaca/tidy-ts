@@ -984,9 +984,9 @@ export const DOCS: Record<string, DocEntry> = {
   },
 
   stdev: {
-    name: "s.sd",
+    name: "s.stdev",
     category: "stats",
-    signature: "s.sd(values: number[], removeNA?: boolean): number | null",
+    signature: "s.stdev(values: number[], removeNA?: boolean): number | null",
     description:
       "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -996,10 +996,10 @@ export const DOCS: Record<string, DocEntry> = {
     ],
     returns: "number | null",
     examples: [
-      "s.sd(42) // Always returns 0 for single value",
-      "s.sd([1, 2, 3, 4, 5]) // sample standard deviation (default)",
-      's.sd([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)',
-      's.sd([1, "2", 3], false) // null (mixed types, removeNA=false)',
+      "s.stdev(42) // Always returns 0 for single value",
+      "s.stdev([1, 2, 3, 4, 5]) // sample standard deviation (default)",
+      's.stdev([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)',
+      's.stdev([1, "2", 3], false) // null (mixed types, removeNA=false)',
     ],
     related: ["variance", "mean"],
   },
@@ -1350,6 +1350,32 @@ export const DOCS: Record<string, DocEntry> = {
     related: ["rank", "denseRank", "quantile"],
   },
 
+  chunk: {
+    name: "s.chunk",
+    category: "stats",
+    signature: "s.chunk<T>(arr: T[], size: number): T[][]",
+    description:
+      "Split an array into chunks of specified size. The last chunk may be smaller if the array length is not evenly divisible by the chunk size.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "arr: Array to split into chunks",
+      "size: Size of each chunk (must be positive integer)",
+    ],
+    returns: "Array of chunks, where each chunk is an array of elements",
+    examples: [
+      "s.chunk([1, 2, 3, 4, 5, 6, 7], 3) // [[1, 2, 3], [4, 5, 6], [7]]",
+      "s.chunk(['a', 'b', 'c', 'd'], 2) // [['a', 'b'], ['c', 'd']]",
+      "s.chunk([1, 2, 3], 1) // [[1], [2], [3]]",
+      "s.chunk([1, 2, 3], 10) // [[1, 2, 3]] (chunk size larger than array)",
+    ],
+    related: [],
+    bestPractices: [
+      "✓ GOOD: Use for batch processing large datasets",
+      "✓ GOOD: Useful for pagination or splitting work into parallel tasks",
+      "✓ GOOD: Works with any array type (numbers, strings, objects)",
+    ],
+  },
+
   // Transformation Functions
   normalize: {
     name: "s.normalize",
@@ -1627,6 +1653,8 @@ export const CATEGORIES = {
     "rank",
     "denseRank",
     "percentileRank",
+    // Utility functions
+    "chunk",
     // Transformation functions
     "normalize",
     "round",

@@ -229,8 +229,9 @@ export function chunk<T>(arr: T[], size: number): T[][] {
     throw new Error("First argument must be an array");
   }
 
-  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
-    arr.slice(i * size, i * size + size)
+  return Array.from(
+    { length: Math.ceil(arr.length / size) },
+    (_, i) => arr.slice(i * size, i * size + size),
   );
 }
 
