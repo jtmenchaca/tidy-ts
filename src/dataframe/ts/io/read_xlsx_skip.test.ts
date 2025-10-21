@@ -4,11 +4,11 @@ import { parseXLSXRaw, readXLSX, readXLSXMetadata } from "./read_xlsx.ts";
 
 Deno.test("parseXLSXRaw - skip parameter skips rows", async () => {
   const rows = await parseXLSXRaw(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
   );
 
   const rowsWithSkip = await parseXLSXRaw(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     { skip: 1 },
   );
 
@@ -25,7 +25,7 @@ Deno.test("readXLSX - skip parameter makes row 1 the header", async () => {
   });
 
   const df = await readXLSX(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     T214Schema,
     { skip: 1 },
   );
@@ -39,7 +39,7 @@ Deno.test("readXLSX - skip parameter makes row 1 the header", async () => {
 
 Deno.test("readXLSXMetadata - returns file structure", async () => {
   const meta = await readXLSXMetadata(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
   );
 
   expect(meta.sheets.length).toBeGreaterThan(0);
@@ -50,7 +50,7 @@ Deno.test("readXLSXMetadata - returns file structure", async () => {
 
 Deno.test("readXLSXMetadata - preview shows first rows", async () => {
   const meta = await readXLSXMetadata(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     { previewRows: 3 },
   );
   console.log("meta", meta);
@@ -63,7 +63,7 @@ Deno.test("readXLSXMetadata - preview shows first rows", async () => {
 
 Deno.test("readXLSXMetadata - custom preview rows", async () => {
   const meta = await readXLSXMetadata(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     { previewRows: 2 },
   );
   console.log("meta", meta);

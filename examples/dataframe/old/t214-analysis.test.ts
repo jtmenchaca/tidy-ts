@@ -3,7 +3,7 @@ import { z } from "zod";
 
 Deno.test("T214 NIH grants analysis - inspect metadata first", async () => {
   const meta = await readXLSXMetadata(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     { previewRows: 3 },
   );
 
@@ -30,7 +30,7 @@ Deno.test("T214 NIH grants analysis - read with skip", async () => {
   });
 
   const grants = await readXLSX(
-    "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+    "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
     T214Schema,
     {
       skip: 1, // Skip the note row, use row 1 as headers

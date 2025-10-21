@@ -1,7 +1,7 @@
 import { parseXLSXRaw } from "../../src/dataframe/ts/io/read_xlsx.ts";
 
 const raw = await parseXLSXRaw(
-  "./src/dataframe/ts/io/fixtures/T214 2024 RES PR GR and R01 EQ_New Appl_Awds_Succ Rate_Fund by Submiss.xlsx",
+  "./src/dataframe/ts/io/fixtures/T214_2024_RES_PR_GR_and_R01_EQ_New_Appl_Awds_Succ_Rate_Fund_by_Submiss.xlsx",
   { skip: 1 },
 );
 
