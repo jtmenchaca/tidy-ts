@@ -315,7 +315,12 @@ function summariseSync<T extends object>(
     // Avoid toColumnarStorage by building columnar store directly
     if (results.length === 0) {
       return tracer.withSpan(df, "create-empty-dataframe", () => {
-        return createDataFrame([]) as unknown as DataFrame<any>;
+        // Build empty columns preserving grouping keys
+        const columns: Record<string, unknown[]> = {};
+        for (const colName of groupingColumns) {
+          columns[String(colName)] = [];
+        }
+        return createDataFrame({ columns }) as unknown as DataFrame<any>;
       });
     }
 

@@ -88,7 +88,13 @@ export function slice<Row extends object>(
         }
       }
 
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     }
 
@@ -168,7 +174,13 @@ export function slice_indices<Row extends object>(
           }
         }
       }
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path
@@ -300,7 +312,13 @@ export function slice_head<Row extends object>(
         }
       }
 
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path - equivalent to slice(0, n)
@@ -388,7 +406,13 @@ export function slice_tail<Row extends object>(
           rebuilt.push(row);
         }
       }
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path - equivalent to slice(-n)
@@ -492,7 +516,13 @@ export function slice_min<Row extends object>(
           rebuilt.push(sorted[i]);
         }
       }
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path
@@ -527,7 +557,11 @@ export function slice_min<Row extends object>(
       const selectedIndices = sortableIndices.slice(0, n);
 
       if (selectedIndices.length === 0) {
-        return createDataFrame([]);
+        return createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        });
       }
 
       const newStore: ColumnarStore = {
@@ -676,7 +710,13 @@ export function slice_max<Row extends object>(
           rebuilt.push(undefinedData[i]);
         }
       }
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path
@@ -711,7 +751,11 @@ export function slice_max<Row extends object>(
       const selectedIndices = sortableIndices.slice(0, n);
 
       if (selectedIndices.length === 0) {
-        return createDataFrame([]);
+        return createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        });
       }
 
       const newStore: ColumnarStore = {
@@ -831,7 +875,13 @@ export function slice_sample<Row extends object>(
         );
         rebuilt.push(...(sampled as Row[]));
       }
-      const out = createDataFrame(rebuilt);
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        }) as unknown as DataFrame<Row>;
       return withGroupsRebuilt(groupedDf, rebuilt, out);
     } else {
       // View-aware ungrouped data path
@@ -860,7 +910,11 @@ export function slice_sample<Row extends object>(
       );
 
       if (selectedIndices.length === 0) {
-        return createDataFrame([]);
+        return createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        });
       }
 
       const newStore: ColumnarStore = {

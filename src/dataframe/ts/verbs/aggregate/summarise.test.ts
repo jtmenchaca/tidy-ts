@@ -292,3 +292,35 @@ Deno.test("summarise with mixed data types", () => {
     names: "A, B, A",
   });
 });
+
+Deno.test("summarise grouped - empty DataFrame preserves grouping columns", () => {
+  const empty = createDataFrame({ columns: { category: [], value: [] } });
+  const result = empty.groupBy("category").summarise({
+    total: (df) => stats.sum(df.value),
+  });
+
+  expect(result.nrows()).toBe(0);
+  expect(result.columns()).toEqual(["category"]);
+});
+
+Deno.test("summarise ungrouped - empty DataFrame", () => {
+  const empty = createDataFrame({ columns: { x: [], y: [] } });
+  const result = empty.summarise({
+    total: (df) => stats.sum(df.x),
+  });
+
+  expect(result.nrows()).toBe(1);
+  expect(result.columns()).toEqual(["total"]);
+});
+
+Deno.test("summarise grouped - multiple grouping keys with empty data", () => {
+  const empty = createDataFrame({
+    columns: { region: [], product: [], sales: [] },
+  });
+  const result = empty.groupBy("region", "product").summarise({
+    total_sales: (df) => stats.sum(df.sales),
+  });
+
+  expect(result.nrows()).toBe(0);
+  expect(result.columns()).toEqual(["region", "product"]);
+});
