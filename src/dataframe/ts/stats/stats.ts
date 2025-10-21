@@ -30,6 +30,7 @@ import { ceiling } from "./transformation/ceiling.ts";
 import { percent } from "./transformation/percent.ts";
 import { count_value } from "./descriptive/counts/count-value.ts";
 import { percentile_rank } from "./ranking/percentile-rank.ts";
+import { chunk } from "./helpers.ts";
 
 // Import statistical tests
 import * as statisticalTests from "./statistical-tests/index.ts";
@@ -157,6 +158,8 @@ export const stats: {
   readonly countValue: typeof count_value;
   /** Calculate percentile rank of values */
   readonly percentileRank: typeof percentile_rank;
+  /** Split an array into chunks of specified size */
+  readonly chunk: typeof chunk;
 
   /** Probability distribution functions (PDF, CDF, quantile, random sampling) */
   readonly dist: {
@@ -540,6 +543,7 @@ export const stats: {
   percent,
   countValue: count_value,
   percentileRank: percentile_rank,
+  chunk,
 
   // Distribution Functions
   dist: {

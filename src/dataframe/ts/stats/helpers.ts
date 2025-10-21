@@ -208,6 +208,33 @@ export function prepareForWASM(
 }
 
 /**
+ * Splits an array into chunks of specified size
+ *
+ * @param arr - Array to split into chunks
+ * @param size - Size of each chunk (must be positive integer)
+ * @returns Array of chunks, where each chunk is an array of elements
+ *
+ * @example
+ * ```typescript
+ * const numbers = [1, 2, 3, 4, 5, 6, 7];
+ * const chunked = chunk(numbers, 3);
+ * // Returns: [[1, 2, 3], [4, 5, 6], [7]]
+ * ```
+ */
+export function chunk<T>(arr: T[], size: number): T[][] {
+  if (size <= 0 || !Number.isInteger(size)) {
+    throw new Error("Chunk size must be a positive integer");
+  }
+  if (!Array.isArray(arr)) {
+    throw new Error("First argument must be an array");
+  }
+
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
+}
+
+/**
  * Standard error messages for descriptive statistics
  */
 export const ERROR_MESSAGES = {

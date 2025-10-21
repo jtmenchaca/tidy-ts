@@ -661,10 +661,31 @@ export const DOCS: Record<string, DocEntry> = {
       "df1.bindRows(df2, df3) // Stack 3 DataFrames",
       "df1.bindRows(df2) // Combine two DataFrames",
     ],
-    related: ["append", "prepend"],
+    related: ["concatDataFrames", "append", "prepend"],
     bestPractices: [
       "✓ GOOD: Automatically handles missing columns - fills with undefined",
       "✓ GOOD: Preserves all columns from all DataFrames",
+    ],
+  },
+
+  concatDataFrames: {
+    name: "concatDataFrames",
+    category: "dataframe",
+    signature: "concatDataFrames(dataframes: DataFrame<any>[]): DataFrame<...>",
+    description:
+      "Standalone function to concatenate an array of DataFrames by rows (vertical binding). Similar to pandas concat or tidyverse's bind_rows.",
+    imports: ['import { concatDataFrames } from "@tidy-ts/dataframe";'],
+    parameters: ["dataframes: Array of DataFrames to combine"],
+    returns: "Combined DataFrame with all rows stacked vertically",
+    examples: [
+      "const combined = concatDataFrames([df1, df2, df3])",
+      "const dataFrames = [df1, df2, df3]; const result = concatDataFrames(dataFrames)",
+    ],
+    related: ["bindRows"],
+    bestPractices: [
+      "✓ GOOD: Use when you have an array of DataFrames to combine",
+      "✓ GOOD: Automatically handles different column sets - fills with undefined",
+      "✓ GOOD: More convenient than df1.bindRows(...rest) when working with arrays",
     ],
   },
 
@@ -1571,6 +1592,7 @@ export const CATEGORIES = {
     "pivotWider",
     "transpose",
     "bindRows",
+    "concatDataFrames",
     "replaceNA",
     "removeNA",
     "removeNull",
