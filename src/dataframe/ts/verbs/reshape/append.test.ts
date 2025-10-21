@@ -78,7 +78,7 @@ Deno.test("append - empty DataFrames", () => {
     { id: 1, name: "Alice" },
   ]);
 
-  const empty = createDataFrame<{ id: number; name: string }>([]);
+  const empty = createDataFrame({ columns: { id: [], name: [] } });
 
   const result1 = df1.append(empty);
   expect(result1.nrows()).toBe(1);

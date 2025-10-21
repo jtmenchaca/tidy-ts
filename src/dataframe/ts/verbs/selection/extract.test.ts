@@ -138,7 +138,7 @@ Deno.test("extractUnique - null and undefined handling", () => {
     category: string | null | undefined;
   };
 
-  const df = createDataFrame<TestRow>([
+  const df = createDataFrame([
     { id: 1, category: "A" },
     { id: 2, category: null },
     { id: 3, category: "B" },

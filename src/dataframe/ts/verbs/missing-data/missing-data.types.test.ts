@@ -42,7 +42,7 @@ Deno.test("removeRowsWithNA - type preservation", () => {
     salary: number;
   }
 
-  const _df = createDataFrame<Employee>([
+  const _df = createDataFrame([
     { id: 1, name: "Alice", department: "Engineering", salary: 90000 },
     { id: 2, name: "Bob", department: null, salary: 85000 },
     { id: 3, name: "Charlie", department: "Marketing", salary: 80000 },
@@ -57,7 +57,7 @@ Deno.test("chaining - type flow through operations", () => {
     category: string | null;
   }
 
-  const df = createDataFrame<Data>([
+  const df = createDataFrame([
     { id: 1, name: "Alice", value: 100, category: "A" },
     { id: 2, name: null, value: 200, category: "B" },
     { id: 3, name: "Charlie", value: null, category: "A" },

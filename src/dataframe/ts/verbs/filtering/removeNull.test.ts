@@ -102,7 +102,7 @@ Deno.test("removeNull with filter", () => {
 });
 
 Deno.test("removeNull on empty DataFrame", () => {
-  const data = createDataFrame<{ id: number; value: string | null }>([]);
+  const data = createDataFrame({ columns: { id: [], value: [] } });
 
   const result = data.removeNull("value");
 

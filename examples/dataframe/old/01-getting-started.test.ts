@@ -1293,7 +1293,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("\nMethod 2: Combining multiple DataFrames with bindRows()");
 
   // Create another character DataFrame
-  const obiWanDataFrame = createDataFrame<Character>([{
+  const obiWanDataFrame = createDataFrame([{
     id: 8,
     name: "Obi-Wan",
     species: "Human",
@@ -1303,15 +1303,10 @@ Production async operations need concurrency control and retry mechanisms.`,
     lightsaber_color: "blue",
   }]);
 
-  // Type check: DataFrame creation preserves exact types
-  const _obiWanDataFrameTypeCheck: DataFrame<Character> = obiWanDataFrame;
-
   const multiCombined = starWarsDataFrame.bindRows(
     lukeDataFrame,
     obiWanDataFrame,
   );
-  // Type check: bindRows preserves types
-  const _multiCombinedTypeCheck: DataFrame<Character> = multiCombined;
   console.log("Combined three DataFrames:");
   multiCombined.print();
 

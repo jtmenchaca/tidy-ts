@@ -67,22 +67,19 @@ Deno.test("bindRows - Multiple DataFrames", () => {
 
 Deno.test("bindRows - Empty DataFrames", () => {
   const df1 = createDataFrame([{ id: 1, name: "Alice" }]);
-  const emptyDf = createDataFrame<{ id: number; name: string }[]>([]);
+  const emptyDf = createDataFrame({ columns: { id: [], name: [] } });
 
   // Binding with empty DataFrame
   const combined1 = df1.bindRows(emptyDf);
-  // @ts-expect-error - correctly has error for binding empty DataFrame with non-empty
   expect(combined1.nrows()).toBe(1);
   expect(combined1[0]).toEqual({ id: 1, name: "Alice" });
 
   // Binding empty DataFrame with non-empty
-  // @ts-expect-error - correctly has error for binding empty DataFrame with non-empty
   const combined2 = emptyDf.bindRows(df1);
   expect(combined2.nrows()).toBe(1);
   expect(combined2[0]).toEqual({ id: 1, name: "Alice" });
 
   // Binding multiple empty DataFrames
-  // @ts-expect-error - correctly has error for binding empty DataFrame with non-empty
   const combined3 = emptyDf.bindRows(emptyDf, emptyDf);
   expect(combined3.nrows()).toBe(0);
 });
@@ -103,11 +100,11 @@ Deno.test("bindRows - Type Safety with Optional Properties", () => {
     city?: string;
   };
 
-  const df1 = createDataFrame<Person[]>([
+  const df1 = createDataFrame([
     { id: 1, name: "Alice", age: 25 },
   ]);
 
-  const df2 = createDataFrame<Person[]>([
+  const df2 = createDataFrame([
     { id: 2, name: "Bob", city: "NYC" },
   ]);
 
@@ -203,15 +200,11 @@ Deno.test("bindRows - Performance with Large DataFrames", () => {
 
 Deno.test("bindRows - Edge Cases", () => {
   // DataFrame with null/undefined values
-  const df1 = createDataFrame<
-    { id: number; name: string; age: number | null; city: string | undefined }[]
-  >([
+  const df1 = createDataFrame([
     { id: 1, name: "Alice", age: null, city: undefined },
   ]);
 
-  const df2 = createDataFrame<
-    { id: number; name: string; age: number; city: string }[]
-  >([
+  const df2 = createDataFrame([
     { id: 2, name: "Bob", age: 30, city: "NYC" },
   ]);
 

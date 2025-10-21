@@ -41,7 +41,7 @@ Deno.test("count() - multiple grouping variables", () => {
 });
 
 Deno.test("count() - empty dataframe with grouping", () => {
-  const df = createDataFrame<{ category: string; value: number }>([]);
+  const df = createDataFrame({ columns: { category: [], value: [] } });
 
   const result = df.count("category");
 

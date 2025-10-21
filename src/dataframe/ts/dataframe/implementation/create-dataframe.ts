@@ -439,30 +439,11 @@ export function createDataFrame<
   schemaOrOptions?: null | DataFrameOptions,
 ): DataFrame<{ [K in keyof T]: T[K][number] }>;
 
-export function createDataFrame(
-  rows: readonly [],
-): DataFrame<never>;
-
-export function createDataFrame<T extends object>(
-  rows: readonly T[],
-  options: DataFrameOptions,
-): DataFrame<T>;
-
 export function createDataFrame<
   R extends readonly object[],
 >(
   rows: R,
   options: DataFrameOptions,
-): DataFrame<R[number]>;
-
-export function createDataFrame<T extends object>(
-  rows: readonly T[],
-): DataFrame<T>;
-
-export function createDataFrame<
-  R extends readonly object[],
->(
-  rows: R,
 ): DataFrame<R[number]>;
 
 export function createDataFrame<
@@ -479,9 +460,11 @@ export function createDataFrame<
   schema: S,
 ): DataFrame<z.infer<S>>;
 
-export function createDataFrame<T extends object>(
-  rows: readonly T[],
-): DataFrame<T>;
+export function createDataFrame<
+  R extends readonly object[],
+>(
+  rows: R,
+): DataFrame<R[number]>;
 export function createDataFrame<
   R extends readonly object[],
   S extends z.ZodObject<any>,
@@ -576,7 +559,9 @@ export function createDataFrame<
       }
     });
 
-    const store = toColumnarStorage(validatedRows);
+    // Extract column names from schema for empty DataFrames
+    const columnNames = Object.keys(schema.shape);
+    const store = toColumnarStorage(validatedRows, columnNames);
     const result = createColumnarDataFrameFromStore(
       store,
       options,

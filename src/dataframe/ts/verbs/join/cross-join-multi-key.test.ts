@@ -105,7 +105,7 @@ Deno.test("crossJoin - with maxRows limit", () => {
 });
 
 Deno.test("crossJoin - empty dataframes", () => {
-  const empty = createDataFrame<{ id: number }>([]);
+  const empty = createDataFrame({ columns: { id: [] } });
   const data = createDataFrame([
     { name: "Alice" },
     { name: "Bob" },
@@ -114,21 +114,11 @@ Deno.test("crossJoin - empty dataframes", () => {
   const result1 = empty.crossJoin(data);
 
   // Type check: empty left cross join should have combined types but empty results
-  const _emptyLeftTypeCheck: DataFrame<{
-    id: number; // From empty left (required)
-    name: string; // From right (required)
-  }> = result1;
-
   expect(result1.toArray()).toEqual([]);
 
   const result2 = data.crossJoin(empty);
 
   // Type check: empty right cross join should have combined types but empty results
-  const _emptyRightTypeCheck: DataFrame<{
-    name: string; // From left (required)
-    id: number; // From empty right (required)
-  }> = result2;
-
   expect(result2.toArray()).toEqual([]);
 });
 

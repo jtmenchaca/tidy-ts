@@ -8,7 +8,7 @@ type TestRow = {
   homeworld: string | undefined;
   species: string | undefined;
 };
-const testData = createDataFrame<TestRow>([
+const testData = createDataFrame([
   { id: 1, name: "Luke", homeworld: "Tatooine", species: "Human" },
   { id: 2, name: "Vader", homeworld: undefined, species: "Human" },
   { id: 3, name: "Leia", homeworld: "Alderaan", species: undefined },
@@ -115,7 +115,7 @@ Deno.test("removeUndefined with filter", () => {
 });
 
 Deno.test("removeUndefined on empty DataFrame", () => {
-  const data = createDataFrame<{ id: number; value: string | undefined }>([]);
+  const data = createDataFrame({ columns: { id: [], value: [] } });
 
   const result = data.removeUndefined("value");
 

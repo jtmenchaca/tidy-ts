@@ -212,7 +212,7 @@ Deno.test("asofJoin - column name conflicts with suffix", () => {
 });
 
 Deno.test("asofJoin - empty left DataFrame", () => {
-  const left = createDataFrame<{ time: number; value: string }>([]);
+  const left = createDataFrame({ columns: { time: [], value: [] } });
 
   const right = createDataFrame([
     { time: 0, price: 10 },
@@ -231,7 +231,7 @@ Deno.test("asofJoin - empty right DataFrame", () => {
     { time: 3, value: "B" },
   ]);
 
-  const right = createDataFrame<{ time: number; price: number }>([]);
+  const right = createDataFrame({ columns: { time: [], price: [] } });
 
   const result = left.asofJoin(right, "time", { direction: "backward" });
 

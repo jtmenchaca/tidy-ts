@@ -298,7 +298,7 @@ Deno.test("transpose - preserves column order", () => {
 });
 
 Deno.test("transpose - handles empty DataFrame", () => {
-  const empty = createDataFrame<{ a: number; b: string }>([]);
+  const empty = createDataFrame({ columns: { a: [], b: [] } });
 
   const transposed = empty.transpose({ numberOfRows: 0 });
 

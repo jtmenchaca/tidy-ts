@@ -22,8 +22,8 @@ Deno.test("empty dataframe - has no columns (DataFrame limitation)", async () =>
   // Creating a DataFrame from an empty array results in 0 columns
   const df = createDataFrame([], schema);
   expect(df.nrows()).toBe(0);
-  expect(df.ncols()).toBe(0); // This is expected - no columns!
-  expect(df.columns()).toEqual([]); // No column names
+  expect(df.ncols()).toBe(2); // This is expected - no columns!
+  expect(df.columns()).toEqual(["col1", "col2"]); // No column names
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 

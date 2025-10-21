@@ -116,8 +116,8 @@ Deno.test("bindRows - with custom id values", () => {
 
 Deno.test("bindRows - empty DataFrames", () => {
   const df1 = createDataFrame([{ id: 1, name: "Alice" }]);
-  const empty1 = createDataFrame<{ id: number; name: string }>([]);
-  const empty2 = createDataFrame<{ id: number; name: string }>([]);
+  const empty1 = createDataFrame({ columns: { id: [], name: [] } });
+  const empty2 = createDataFrame({ columns: { id: [], name: [] } });
 
   const result = df1.bindRows(empty1, empty2);
 
@@ -126,9 +126,9 @@ Deno.test("bindRows - empty DataFrames", () => {
 });
 
 Deno.test("bindRows - all empty DataFrames", () => {
-  const empty1 = createDataFrame<{ id: number; name: string }>([]);
-  const empty2 = createDataFrame<{ id: number; name: string }>([]);
-  const empty3 = createDataFrame<{ id: number; name: string }>([]);
+  const empty1 = createDataFrame({ columns: { id: [], name: [] } });
+  const empty2 = createDataFrame({ columns: { id: [], name: [] } });
+  const empty3 = createDataFrame({ columns: { id: [], name: [] } });
 
   const result = empty1.bindRows(empty2, empty3);
 
