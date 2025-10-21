@@ -1368,11 +1368,54 @@ export const DOCS: Record<string, DocEntry> = {
       "s.chunk([1, 2, 3], 1) // [[1], [2], [3]]",
       "s.chunk([1, 2, 3], 10) // [[1, 2, 3]] (chunk size larger than array)",
     ],
-    related: [],
+    related: ["batch"],
     bestPractices: [
       "✓ GOOD: Use for batch processing large datasets",
       "✓ GOOD: Useful for pagination or splitting work into parallel tasks",
       "✓ GOOD: Works with any array type (numbers, strings, objects)",
+      "✓ GOOD: Combine with s.batch() for concurrent async processing",
+    ],
+  },
+
+  batch: {
+    name: "s.batch",
+    category: "stats",
+    signature:
+      "s.batch<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, options?: ConcurrencyOptions): Promise<R[]>",
+    description:
+      "Process an array of items with an async function, applying concurrency control, batching, and retry logic. Provides fine-grained control over async operations to prevent overwhelming servers.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "items: Array of items to process",
+      "fn: Async function to apply to each item (receives item and index)",
+      "options.concurrency: Maximum number of concurrent operations (default: 1)",
+      "options.batchSize: Process items in batches of this size (default: undefined)",
+      "options.batchDelay: Delay in milliseconds between batches (default: 0)",
+      'options.retry.backoff: Retry strategy - "exponential" | "linear" | "custom"',
+      "options.retry.maxRetries: Maximum retry attempts (default: 3 when retry enabled)",
+      "options.retry.baseDelay: Initial retry delay in ms (default: 100)",
+      "options.retry.maxDelay: Maximum delay between retries in ms (default: 5000)",
+      "options.retry.backoffMultiplier: Multiplier for exponential backoff (default: 2)",
+      "options.retry.shouldRetry: Function to determine if error should trigger retry",
+      "options.retry.onRetry: Callback when retry occurs (error, attempt, taskIndex)",
+    ],
+    returns: "Promise<R[]> - Array of results in same order as input",
+    examples: [
+      "// Basic usage with concurrency limit\nawait s.batch(userIds, async (id) => fetchUser(id), { concurrency: 5 })",
+      "// Batch processing with delays\nawait s.batch(apiCalls, async (call) => makeRequest(call), { batchSize: 100, batchDelay: 50 })",
+      "// With exponential backoff retry\nawait s.batch(tasks, async (task) => processTask(task), {\n  concurrency: 5,\n  retry: {\n    backoff: 'exponential',\n    maxRetries: 3,\n    baseDelay: 100\n  }\n})",
+      "// Combine with s.chunk for batch processing\nconst batches = s.chunk(ids, 300);\nawait s.batch(batches, async (batch) => processBatch(batch), { concurrency: 2 })",
+      "// With custom retry logic\nawait s.batch(items, async (item) => process(item), {\n  retry: {\n    backoff: 'exponential',\n    maxRetries: 5,\n    shouldRetry: (error) => error.message.includes('rate limit')\n  }\n})",
+    ],
+    related: ["chunk"],
+    bestPractices: [
+      "✓ GOOD: Use concurrency limits to prevent overwhelming APIs (concurrency: 5-10)",
+      "✓ GOOD: Use batchSize + batchDelay for rate-limited APIs",
+      "✓ GOOD: Add retry logic for unreliable network operations",
+      "✓ GOOD: Combine s.chunk() and s.batch() for nested batch processing",
+      "✓ GOOD: Use shouldRetry to filter which errors trigger retries",
+      "❌ BAD: Promise.all() with no concurrency control on large arrays",
+      "❌ BAD: No retry logic for network operations",
     ],
   },
 
@@ -1655,6 +1698,7 @@ export const CATEGORIES = {
     "percentileRank",
     // Utility functions
     "chunk",
+    "batch",
     // Transformation functions
     "normalize",
     "round",

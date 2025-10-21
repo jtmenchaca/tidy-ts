@@ -9,6 +9,10 @@ export {
   type PromisedGroupedDataFrame,
 } from "./ts/dataframe/index.ts";
 export { concatDataFrames } from "./ts/verbs/reshape/bind-rows.verb.ts";
+export type {
+  ConcurrencyOptions,
+  RetryConfig,
+} from "./ts/promised-dataframe/concurrency-utils.ts";
 // I/O functions with conditional loading
 export {
   readArrow,

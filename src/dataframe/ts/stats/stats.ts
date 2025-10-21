@@ -31,6 +31,7 @@ import { percent } from "./transformation/percent.ts";
 import { count_value } from "./descriptive/counts/count-value.ts";
 import { percentile_rank } from "./ranking/percentile-rank.ts";
 import { chunk } from "./helpers.ts";
+import { batch } from "./async/batch.ts";
 
 // Import statistical tests
 import * as statisticalTests from "./statistical-tests/index.ts";
@@ -160,6 +161,8 @@ export const stats: {
   readonly percentileRank: typeof percentile_rank;
   /** Split an array into chunks of specified size */
   readonly chunk: typeof chunk;
+  /** Process an array of items with async function and concurrency control */
+  readonly batch: typeof batch;
 
   /** Probability distribution functions (PDF, CDF, quantile, random sampling) */
   readonly dist: {
@@ -544,6 +547,7 @@ export const stats: {
   countValue: count_value,
   percentileRank: percentile_rank,
   chunk,
+  batch,
 
   // Distribution Functions
   dist: {
