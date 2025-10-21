@@ -10,7 +10,10 @@ import { expect } from "@std/expect";
 import { z } from "zod";
 import { readCSVStream } from "../../src/dataframe/ts/io/index.ts";
 
-Deno.test("MIMICEL Full · can import 7.5M rows via streaming", async () => {
+Deno.test({
+  name: "MIMICEL Full · can import 7.5M rows via streaming",
+  ignore: true, // Requires 1GB file and 6GB+ heap: deno test --v8-flags=--max-old-space-size=6491
+  fn: async () => {
   const MimicRow = z.object({
     stay_id: z.number().int(),
     subject_id: z.number().int(),
@@ -86,4 +89,5 @@ Deno.test("MIMICEL Full · can import 7.5M rows via streaming", async () => {
   expect(df[0].subject_id).toBe(11714491);
 
   console.log("\n✓ Successfully imported full 7.5M row dataset!");
+  },
 });

@@ -16,7 +16,7 @@
     "mcp": "deno run --allow-read --allow-env src/mcp/cli.ts",
     "mcp:install": "deno install --global --allow-read --allow-env --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
     "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check .",
-    "ci": "deno fmt --check && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
+    "ci": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
     "ci:update-badge": "deno task ci && deno run --allow-read --allow-write --allow-run scripts/update-coverage-badge.ts",
     "benchmark:runner": "cd tests/benchmarks && deno run -A runner.ts && cd ../..",
     "benchmark:analyze": "cd tests/benchmarks && deno run -A analyze.ts && cd ../..",

@@ -74,7 +74,9 @@ export function concatDataFrames<Row extends Record<string, unknown>>(
   dataFrames: DataFrame<Row>[],
 ): DataFrame<Row> {
   if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
-    throw new Error("concatDataFrames requires a non-empty array of DataFrames");
+    throw new Error(
+      "concatDataFrames requires a non-empty array of DataFrames",
+    );
   }
 
   if (dataFrames.length === 1) {

@@ -843,11 +843,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.mean",
     category: "stats",
     signature: "s.mean(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values.",
+    description:
+      "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: A single number or array of numbers",
-      "removeNA: Whether to exclude null/undefined values (when using mixed arrays)"
+      "removeNA: Whether to exclude null/undefined values (when using mixed arrays)",
     ],
     returns: "number | null - The arithmetic mean of all numeric values",
     examples: [
@@ -944,11 +945,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.mode",
     category: "stats",
     signature: "s.mode(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the mode (most frequent value) of an array. Returns null if no valid values and removeNA=false.",
+    description:
+      "Calculate the mode (most frequent value) of an array. Returns null if no valid values and removeNA=false.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
-      "removeNA: If true, guarantees a number return (throws if no valid values)"
+      "removeNA: If true, guarantees a number return (throws if no valid values)",
     ],
     returns: "number | null",
     examples: [
@@ -964,11 +966,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.sd",
     category: "stats",
     signature: "s.sd(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types.",
+    description:
+      "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
-      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays"
+      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays",
     ],
     returns: "number | null",
     examples: [
@@ -983,12 +986,14 @@ export const DOCS: Record<string, DocEntry> = {
   variance: {
     name: "s.variance",
     category: "stats",
-    signature: "s.variance(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data.",
+    signature:
+      "s.variance(values: number[], removeNA?: boolean): number | null",
+    description:
+      "Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
-      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays"
+      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays",
     ],
     returns: "number | null",
     examples: [
@@ -1003,15 +1008,18 @@ export const DOCS: Record<string, DocEntry> = {
   quantile: {
     name: "s.quantile",
     category: "stats",
-    signature: "s.quantile(data: number[], probs: number | number[], removeNA?: boolean): number | number[] | null",
-    description: "Calculate quantiles of an array of values. Uses R's Type 7 algorithm (default). Accepts single probability or array of probabilities.",
+    signature:
+      "s.quantile(data: number[], probs: number | number[], removeNA?: boolean): number | number[] | null",
+    description:
+      "Calculate quantiles of an array of values. Uses R's Type 7 algorithm (default). Accepts single probability or array of probabilities.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "data: Array of numbers or single number",
       "probs: Probability value(s) between 0 and 1",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
-    returns: "number | number[] | null - Single value or array depending on probs input",
+    returns:
+      "number | number[] | null - Single value or array depending on probs input",
     examples: [
       "const q50 = s.quantile([1, 2, 3, 4, 5], 0.5) // 3 (median)",
       "const [q25, q75] = s.quantile([1, 2, 3, 4, 5], [0.25, 0.75]) // [2, 4]",
@@ -1022,12 +1030,14 @@ export const DOCS: Record<string, DocEntry> = {
   quartiles: {
     name: "s.quartiles",
     category: "stats",
-    signature: "s.quartiles(values: number[], removeNA?: boolean): [number, number, number] | null",
-    description: "Calculate the quartiles (Q25, median/Q50, Q75) of values. Returns null if no valid values.",
+    signature:
+      "s.quartiles(values: number[], removeNA?: boolean): [number, number, number] | null",
+    description:
+      "Calculate the quartiles (Q25, median/Q50, Q75) of values. Returns null if no valid values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or values that can contain null/undefined, or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "[Q25, Q50, Q75] tuple or null",
     examples: [
@@ -1041,11 +1051,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.iqr",
     category: "stats",
     signature: "s.iqr(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values.",
+    description:
+      "Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | null",
     examples: [
@@ -1059,11 +1070,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.range",
     category: "stats",
     signature: "s.range(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the range of values (max - min). Returns null if no valid values.",
+    description:
+      "Calculate the range of values (max - min). Returns null if no valid values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers, or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | null",
     examples: [
@@ -1077,11 +1089,12 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.product",
     category: "stats",
     signature: "s.product(values: number[], removeNA?: boolean): number | null",
-    description: "Calculate the product (multiplication) of all values. Returns null if no valid values.",
+    description:
+      "Calculate the product (multiplication) of all values. Returns null if no valid values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
-      "removeNA: If true, guarantees a number return (throws if no valid values)"
+      "removeNA: If true, guarantees a number return (throws if no valid values)",
     ],
     returns: "number | null",
     examples: [
@@ -1097,12 +1110,14 @@ export const DOCS: Record<string, DocEntry> = {
   cumsum: {
     name: "s.cumsum",
     category: "stats",
-    signature: "s.cumsum(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description: "Calculate cumulative sums for an array of values. Returns array where each element is the sum of all previous elements.",
+    signature:
+      "s.cumsum(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
+    description:
+      "Calculate cumulative sums for an array of values. Returns array where each element is the sum of all previous elements.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | number[] | (number | null)[]",
     examples: [
@@ -1115,12 +1130,14 @@ export const DOCS: Record<string, DocEntry> = {
   cummean: {
     name: "s.cummean",
     category: "stats",
-    signature: "s.cummean(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description: "Calculate cumulative mean of values. Returns an array where each element is the mean of all values up to that point.",
+    signature:
+      "s.cummean(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
+    description:
+      "Calculate cumulative mean of values. Returns an array where each element is the mean of all values up to that point.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | number[] | (number | null)[]",
     examples: [
@@ -1133,12 +1150,14 @@ export const DOCS: Record<string, DocEntry> = {
   cumprod: {
     name: "s.cumprod",
     category: "stats",
-    signature: "s.cumprod(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description: "Calculate cumulative product of numeric values. Returns array where each element is the product of all previous elements.",
+    signature:
+      "s.cumprod(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
+    description:
+      "Calculate cumulative product of numeric values. Returns array where each element is the product of all previous elements.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | number[] | (number | null)[]",
     examples: [
@@ -1151,12 +1170,14 @@ export const DOCS: Record<string, DocEntry> = {
   cummax: {
     name: "s.cummax",
     category: "stats",
-    signature: "s.cummax(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description: "Calculate cumulative maximum of numeric values. Returns array where each element is the max of all previous elements.",
+    signature:
+      "s.cummax(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
+    description:
+      "Calculate cumulative maximum of numeric values. Returns array where each element is the max of all previous elements.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | number[] | (number | null)[]",
     examples: [
@@ -1169,12 +1190,14 @@ export const DOCS: Record<string, DocEntry> = {
   cummin: {
     name: "s.cummin",
     category: "stats",
-    signature: "s.cummin(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description: "Calculate cumulative minimum of numeric values. Returns array where each element is the min of all previous elements.",
+    signature:
+      "s.cummin(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
+    description:
+      "Calculate cumulative minimum of numeric values. Returns array where each element is the min of all previous elements.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types"
+      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
     ],
     returns: "number | number[] | (number | null)[]",
     examples: [
@@ -1187,15 +1210,18 @@ export const DOCS: Record<string, DocEntry> = {
   lag: {
     name: "s.lag",
     category: "stats",
-    signature: 's.lag(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lag(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined',
-    description: "Lag values by k positions (shift forward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
+    signature:
+      "s.lag(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lag(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined",
+    description:
+      "Lag values by k positions (shift forward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "valuesOrColumnName: Array of values to lag OR column name for DataFrame operations",
       "k: Number of positions to lag (default: 1)",
       "defaultValue: Value to fill missing positions (default: undefined)",
     ],
-    returns: "Array with values lagged by k positions OR function for mutate operations",
+    returns:
+      "Array with values lagged by k positions OR function for mutate operations",
     examples: [
       "// Array-based usage",
       "s.lag([1, 2, 3, 4, 5])  // [undefined, 1, 2, 3, 4]",
@@ -1210,15 +1236,18 @@ export const DOCS: Record<string, DocEntry> = {
   lead: {
     name: "s.lead",
     category: "stats",
-    signature: 's.lead(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lead(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined',
-    description: "Lead values by k positions (shift backward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
+    signature:
+      "s.lead(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lead(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined",
+    description:
+      "Lead values by k positions (shift backward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "valuesOrColumnName: Array of values to lead OR column name for DataFrame operations",
       "k: Number of positions to lead (default: 1)",
       "defaultValue: Value to fill missing positions (default: undefined)",
     ],
-    returns: "Array with values led by k positions OR function for mutate operations",
+    returns:
+      "Array with values led by k positions OR function for mutate operations",
     examples: [
       "// Array-based usage",
       "s.lead([1, 2, 3, 4, 5])  // [2, 3, 4, 5, undefined]",
@@ -1234,8 +1263,10 @@ export const DOCS: Record<string, DocEntry> = {
   rank: {
     name: "s.rank",
     category: "stats",
-    signature: 's.rank(values: number[], ties?: "average" | "min" | "max" | "dense", descending?: boolean): number[] | (number | null)[] OR s.rank(values: number[], target: number): number | null',
-    description: "Calculate ranks for an array of values. Supports finding rank of all values or a specific target value. Handles ties using specified method including dense ranking.",
+    signature:
+      's.rank(values: number[], ties?: "average" | "min" | "max" | "dense", descending?: boolean): number[] | (number | null)[] OR s.rank(values: number[], target: number): number | null',
+    description:
+      "Calculate ranks for an array of values. Supports finding rank of all values or a specific target value. Handles ties using specified method including dense ranking.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
@@ -1257,8 +1288,10 @@ export const DOCS: Record<string, DocEntry> = {
   denseRank: {
     name: "s.denseRank",
     category: "stats",
-    signature: "s.denseRank(values: T[], options?: { desc?: boolean }): number[] OR s.denseRank(values: T[], target: T, options?: { desc?: boolean }): number | null",
-    description: "Calculate dense rank of values (no gaps in ranking). Unlike regular rank, has no gaps after tied values. Supports finding rank of all values or a specific target value.",
+    signature:
+      "s.denseRank(values: T[], options?: { desc?: boolean }): number[] OR s.denseRank(values: T[], target: T, options?: { desc?: boolean }): number | null",
+    description:
+      "Calculate dense rank of values (no gaps in ranking). Unlike regular rank, has no gaps after tied values. Supports finding rank of all values or a specific target value.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of values to rank",
@@ -1277,14 +1310,17 @@ export const DOCS: Record<string, DocEntry> = {
   percentileRank: {
     name: "s.percentile_rank",
     category: "stats",
-    signature: "s.percentile_rank(values: number[]): number[] | (number | null)[] OR s.percentile_rank(values: number[], target: number): number | null",
-    description: "Calculate the percentile rank of a value within an array. Returns a value between 0 and 1 representing the percentile rank. If target is not provided, returns percentile ranks for all values.",
+    signature:
+      "s.percentile_rank(values: number[]): number[] | (number | null)[] OR s.percentile_rank(values: number[], target: number): number | null",
+    description:
+      "Calculate the percentile rank of a value within an array. Returns a value between 0 and 1 representing the percentile rank. If target is not provided, returns percentile ranks for all values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
-      "target: Optional - The value to find the percentile rank for (between 0 and 1)"
+      "target: Optional - The value to find the percentile rank for (between 0 and 1)",
     ],
-    returns: "number | null for single target OR number[] | (number | null)[] for all values",
+    returns:
+      "number | null for single target OR number[] | (number | null)[] for all values",
     examples: [
       "s.percentile_rank([1, 2, 3, 4, 5], 3) // 0.6 (3 is at 60th percentile)",
       "s.percentile_rank([10, 20, 30, 40, 50], 25) // 0.4 (25 is at 40th percentile)",
@@ -1297,13 +1333,15 @@ export const DOCS: Record<string, DocEntry> = {
   normalize: {
     name: "s.normalize",
     category: "stats",
-    signature: 's.normalize(values: number[], method?: "minmax" | "zscore"): number[] | (number | null)[] OR s.normalize(values: number[], target: number, method?: "minmax" | "zscore"): number | null',
-    description: 'Normalize values to 0-1 range using min-max normalization or z-score standardization. Supports finding normalized value for all values or a specific target value.',
+    signature:
+      's.normalize(values: number[], method?: "minmax" | "zscore"): number[] | (number | null)[] OR s.normalize(values: number[], target: number, method?: "minmax" | "zscore"): number | null',
+    description:
+      "Normalize values to 0-1 range using min-max normalization or z-score standardization. Supports finding normalized value for all values or a specific target value.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers",
       'method: Normalization method: "minmax" (default) or "zscore"',
-      "target: Optional - The value to find the normalized value for"
+      "target: Optional - The value to find the normalized value for",
     ],
     returns: "number[] for all values OR number | null for target value",
     examples: [
@@ -1318,12 +1356,14 @@ export const DOCS: Record<string, DocEntry> = {
   round: {
     name: "s.round",
     category: "stats",
-    signature: "s.round(value: number | number[], digits?: number): number | number[]",
-    description: "Round a number or all values in an array to a specified number of decimal places.",
+    signature:
+      "s.round(value: number | number[], digits?: number): number | number[]",
+    description:
+      "Round a number or all values in an array to a specified number of decimal places.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "value: Number or array of numbers to round",
-      "digits: Number of decimal places (default: 0)"
+      "digits: Number of decimal places (default: 0)",
     ],
     returns: "number or number[]",
     examples: [
@@ -1339,15 +1379,18 @@ export const DOCS: Record<string, DocEntry> = {
   percent: {
     name: "s.percent",
     category: "stats",
-    signature: "s.percent(numerator: number | null | undefined, denominator: number | null | undefined, decimals?: number): number | null",
-    description: "Calculate a percentage from a numerator and denominator, rounded to a given number of decimals. Returns 0 when denominator is 0 to handle division-by-zero gracefully. Returns null if either numerator or denominator is null/undefined.",
+    signature:
+      "s.percent(numerator: number | null | undefined, denominator: number | null | undefined, decimals?: number): number | null",
+    description:
+      "Calculate a percentage from a numerator and denominator, rounded to a given number of decimals. Returns 0 when denominator is 0 to handle division-by-zero gracefully. Returns null if either numerator or denominator is null/undefined.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "numerator: The portion value",
       "denominator: The total value",
-      "decimals: Number of decimal places to round to (default: 1)"
+      "decimals: Number of decimal places to round to (default: 1)",
     ],
-    returns: "number | null - Percentage (0–100 scale), rounded, or null if inputs are null/undefined",
+    returns:
+      "number | null - Percentage (0–100 scale), rounded, or null if inputs are null/undefined",
     examples: [
       "s.percent(25, 100) // 25.0",
       "s.percent(1, 3) // 33.3",
@@ -1364,7 +1407,8 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.unique",
     category: "stats",
     signature: "s.unique(values: T[]): T[]",
-    description: "Get unique values from an array (WASM-optimized version). Returns unique values in order of first appearance.",
+    description:
+      "Get unique values from an array (WASM-optimized version). Returns unique values in order of first appearance.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: ["values: Array of values to get unique values from"],
     returns: "T[] - array with duplicates removed in order of first appearance",
@@ -1379,13 +1423,15 @@ export const DOCS: Record<string, DocEntry> = {
   covariance: {
     name: "s.covariance",
     category: "stats",
-    signature: "s.covariance(x: number[], y: number[], removeNA?: boolean): number | null",
-    description: "Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs.",
+    signature:
+      "s.covariance(x: number[], y: number[], removeNA?: boolean): number | null",
+    description:
+      "Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "x: First array of numbers",
       "y: Second array of numbers (same length as x)",
-      "removeNA: If true, guarantees a number return (throws if no valid pairs)"
+      "removeNA: If true, guarantees a number return (throws if no valid pairs)",
     ],
     returns: "number | null",
     examples: [
