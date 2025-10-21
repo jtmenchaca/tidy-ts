@@ -4,7 +4,7 @@
   "deno.config": "./deno.jsonc",
   "deno.enablePaths": [
     "src/dataframe",
-    "src/tidy-utils",
+    "src/process",
     "tests",
     "examples",
     "tmp"

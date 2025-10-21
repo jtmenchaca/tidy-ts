@@ -44,6 +44,49 @@ type MergeRows<Row1, Row2> =
   };
 
 /**
+ * Standalone function to concatenate an array of DataFrames by rows (vertical binding).
+ *
+ * This function combines DataFrames by stacking their rows on top of each other,
+ * similar to pandas concat or tidyverse's bind_rows. It handles different column sets
+ * by filling missing columns with undefined.
+ *
+ * @param dataFrames - Array of DataFrames to combine
+ * @returns Combined DataFrame with all rows
+ *
+ * @example
+ * ```ts
+ * // Combine array of DataFrames
+ * const dataFrames = [df1, df2, df3];
+ * const combined = concatDataFrames(dataFrames);
+ *
+ * // Direct usage
+ * const combined = concatDataFrames([df1, df2, df3]);
+ * ```
+ *
+ * @remarks
+ * - Combines DataFrames vertically (row-wise)
+ * - Handles different column sets by filling missing columns with undefined
+ * - Preserves column order (insertion order for intuitive behavior)
+ * - Maintains type safety with optional properties
+ * - Requires at least one DataFrame in the array
+ */
+export function concatDataFrames<Row extends Record<string, unknown>>(
+  dataFrames: DataFrame<Row>[],
+): DataFrame<Row> {
+  if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
+    throw new Error("concatDataFrames requires a non-empty array of DataFrames");
+  }
+
+  if (dataFrames.length === 1) {
+    return dataFrames[0];
+  }
+
+  // Use the first DataFrame and bind all others to it
+  const [first, ...rest] = dataFrames;
+  return first.bindRows(...rest) as unknown as DataFrame<Row>;
+}
+
+/**
  * Bind multiple DataFrames together by rows (vertical binding).
  *
  * This function combines DataFrames by stacking their rows on top of each other,

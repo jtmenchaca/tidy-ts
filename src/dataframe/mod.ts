@@ -8,6 +8,7 @@ export {
   type PromisedDataFrame,
   type PromisedGroupedDataFrame,
 } from "./ts/dataframe/index.ts";
+export { concatDataFrames } from "./ts/verbs/reshape/bind-rows.verb.ts";
 // I/O functions with conditional loading
 export {
   readArrow,
@@ -15,6 +16,7 @@ export {
   readJSON,
   readParquet,
   readXLSX,
+  readXLSXMetadata,
   writeCSV,
   writeParquet,
   writeXLSX,

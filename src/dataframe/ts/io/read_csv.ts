@@ -129,27 +129,28 @@ function autoWrapSchema<T extends z.ZodObject<any>>(schema: T): T {
 
   Object.entries(schema.shape).forEach(([key, value]) => {
     const unwrapped = unwrap(value as ZodTypeAny);
-    let wrapped: ZodTypeAny = unwrapped.base;
 
-    // Determine the appropriate zcsv wrapper based on the base type
-    if (unwrapped.base instanceof z.ZodNumber) {
-      wrapped = zcsv.number(unwrapped.base);
-    } else if (unwrapped.base instanceof z.ZodBoolean) {
-      wrapped = zcsv.boolean(unwrapped.base);
-    } else if (unwrapped.base instanceof z.ZodDate) {
-      wrapped = zcsv.date(unwrapped.base);
-    } else if (unwrapped.base instanceof z.ZodEnum) {
-      wrapped = zcsv.enum(unwrapped.base);
-    } else if (unwrapped.base instanceof z.ZodString) {
-      wrapped = zcsv.string(unwrapped.base);
-    }
-
-    // Re-apply modifiers (optional, nullable, etc.)
-    if (unwrapped.optional) wrapped = wrapped.optional();
-    if (unwrapped.nullable) wrapped = wrapped.nullable();
+    // Build the target schema with modifiers first
+    let target: ZodTypeAny = unwrapped.base;
+    if (unwrapped.optional) target = target.optional();
+    if (unwrapped.nullable) target = target.nullable();
     if (unwrapped.hasDefault) {
       // deno-lint-ignore no-explicit-any
-      wrapped = wrapped.default((unwrapped.base as any)._def.defaultValue());
+      target = target.default((unwrapped.base as any)._def.defaultValue());
+    }
+
+    // Then wrap with preprocessing based on base type
+    let wrapped: ZodTypeAny = target;
+    if (unwrapped.base instanceof z.ZodNumber) {
+      wrapped = zcsv.number(target);
+    } else if (unwrapped.base instanceof z.ZodBoolean) {
+      wrapped = zcsv.boolean(target);
+    } else if (unwrapped.base instanceof z.ZodDate) {
+      wrapped = zcsv.date(target);
+    } else if (unwrapped.base instanceof z.ZodEnum) {
+      wrapped = zcsv.enum(target);
+    } else if (unwrapped.base instanceof z.ZodString) {
+      wrapped = zcsv.string(target);
     }
 
     // @ts-expect-error – runtime merging trick
@@ -286,6 +287,10 @@ function isFilePath(input: string): boolean {
  * // Both are typed as DataFrame<z.output<typeof schema>>
  * ```
  */
+// V8 JavaScript engine maximum string length (~536 million characters)
+// https://source.chromium.org/chromium/chromium/src/+/main:v8/src/objects/string.h
+const MAX_V8_STRING_LENGTH = 0x1fffffe8; // 536,870,888 characters
+
 // deno-lint-ignore no-explicit-any
 export async function readCSV<S extends z.ZodObject<any>>(
   pathOrContent: string,
@@ -295,8 +300,17 @@ export async function readCSV<S extends z.ZodObject<any>>(
   let rawCsv: string;
 
   if (isFilePath(pathOrContent)) {
-    // It's a file path - read the file
+    // It's a file path - check size before reading
     try {
+      const stats = await fs.stat(pathOrContent);
+
+      // If file size exceeds V8's maximum string length, automatically use streaming
+      if (stats.size > MAX_V8_STRING_LENGTH) {
+        // Dynamically import to avoid circular dependencies
+        const { readCSVStream } = await import("./read_csv_stream.ts");
+        return readCSVStream(pathOrContent, schema, opts);
+      }
+
       rawCsv = await fs.readFile(pathOrContent, "utf8");
     } catch (error) {
       throw new Error(

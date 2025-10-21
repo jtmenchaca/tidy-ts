@@ -23,6 +23,8 @@
     "npm:@tanstack/react-router-devtools@^1.128.0": "1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_react@19.1.1_react-dom@19.1.1__react@19.1.1",
     "npm:@tanstack/react-router@^1.128.0": "1.131.36_react@19.1.1_react-dom@19.1.1__react@19.1.1",
     "npm:@tanstack/router-plugin@^1.128.0": "1.131.36_@tanstack+react-router@1.131.36__react@19.1.1__react-dom@19.1.1___react@19.1.1_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_react@19.1.1_react-dom@19.1.1__react@19.1.1_@types+node@22.15.15_tsx@4.20.5",
+    "npm:@tmcp/adapter-valibot@~0.1.4": "0.1.4_tmcp@1.14.0_valibot@1.1.0",
+    "npm:@tmcp/transport-stdio@~0.3.1": "0.3.1_tmcp@1.14.0",
     "npm:@types/node@*": "22.15.15",
     "npm:@types/react@^19.1.1": "19.1.12",
     "npm:@uwdata/flechette@^2.2.3": "2.2.3",
@@ -39,9 +41,11 @@
     "npm:react@^19.1.1": "19.1.1",
     "npm:sharp@0.33": "0.33.5",
     "npm:shiki@^3.12.0": "3.12.2",
+    "npm:tmcp@^1.13.0": "1.14.0",
     "npm:tsx@4.20.5": "4.20.5",
     "npm:tsx@^4.19.2": "4.20.5",
     "npm:url@*": "0.11.4",
+    "npm:valibot@^1.1.0": "1.1.0",
     "npm:vega-embed@^7.0.2": "7.0.2_vega@6.2.0_vega-lite@6.4.1__vega@6.2.0",
     "npm:vega-lite@^6.4.1": "6.4.1_vega@6.2.0",
     "npm:vega@^6.2.0": "6.2.0",
@@ -1099,6 +1103,9 @@
     "@shikijs/vscode-textmate@10.0.2": {
       "integrity": "sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg=="
     },
+    "@standard-schema/spec@1.0.0": {
+      "integrity": "sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA=="
+    },
     "@tailwindcss/node@4.1.13": {
       "integrity": "sha512-eq3ouolC1oEFOAvOMOBAmfCIqZBJuvWvvYWh5h5iOYfe1HFC6+GZ6EIL0JdM3/niGRJmnrOc+8gl9/HGUaaptw==",
       "dependencies": [
@@ -1364,6 +1371,21 @@
     "@tanstack/virtual-file-routes@1.131.2": {
       "integrity": "sha512-VEEOxc4mvyu67O+Bl0APtYjwcNRcL9it9B4HKbNgcBTIOEalhk+ufBl4kiqc8WP1sx1+NAaiS+3CcJBhrqaSRg=="
     },
+    "@tmcp/adapter-valibot@0.1.4_tmcp@1.14.0_valibot@1.1.0": {
+      "integrity": "sha512-/fGCUz/L5RLCYC4L0Mo6s9Z9cSIIPztuHfIkhyo3WjMPTjQWUkFulA47sZSWRTaz5eKQxm5fV1qcfT7zHSuY3Q==",
+      "dependencies": [
+        "@standard-schema/spec",
+        "@valibot/to-json-schema",
+        "tmcp",
+        "valibot"
+      ]
+    },
+    "@tmcp/transport-stdio@0.3.1_tmcp@1.14.0": {
+      "integrity": "sha512-r+eiHa2URw5+lBMRI0t4D84LfcWHam3DsTog/lPZSALIjlYxlFUfAaJ8dgh5gdQnmXiFJfE9hzmN0gIrB6+Lzw==",
+      "dependencies": [
+        "tmcp"
+      ]
+    },
     "@tybys/wasm-util@0.10.0": {
       "integrity": "sha512-VyyPYFlOMNylG45GoAe0xDoLwWuowvf92F9kySqzYh8vmYm7D2u4iUJKa1tOUpS70Ku13ASrOkS4ScXFsTaCNQ==",
       "dependencies": [
@@ -1446,6 +1468,12 @@
     },
     "@uwdata/flechette@2.2.3": {
       "integrity": "sha512-5qMO+KT+udDFwgh+HxQ2memj27bPeCXlJ7bWnmI1wvW8RaoHhSJtI7PHVDd2AONhqXuuDLVkWKaV0G51ozrpWw=="
+    },
+    "@valibot/to-json-schema@1.3.0_valibot@1.1.0": {
+      "integrity": "sha512-82Vv6x7sOYhv5YmTRgSppSqj1nn2pMCk5BqCMGWYp0V/fq+qirrbGncqZAtZ09/lrO40ne/7z8ejwE728aVreg==",
+      "dependencies": [
+        "valibot"
+      ]
     },
     "@vitejs/plugin-react@4.7.0_vite@7.1.5__@types+node@22.15.15__picomatch@4.0.3_@babel+core@7.28.4_@types+node@22.15.15": {
       "integrity": "sha512-gUu9hwfWvvEDBBmgtAowQCojwZmJ5mcLn3aufeCsitijs3+f2NsrPtlAWIR6OPiqljl96GVCUbLe0HyqIpVaoA==",
@@ -2307,6 +2335,9 @@
       "integrity": "sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==",
       "bin": true
     },
+    "json-rpc-2.0@1.7.1": {
+      "integrity": "sha512-JqZjhjAanbpkXIzFE7u8mE/iFblawwlXtONaCvRqI+pyABVz7B4M1EUNpyVW+dZjqgQ2L5HFmZCmOCgUKm00hg=="
+    },
     "json-schema-traverse@0.4.1": {
       "integrity": "sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg=="
     },
@@ -3011,6 +3042,9 @@
     "space-separated-tokens@2.0.2": {
       "integrity": "sha512-PEGlAwrG8yXGXRjW32fGbg66JAlOAwbObuqVoJpv/mRgoWDQfgH1wDPvtzWyUSNAXBGSk8h755YDbbcEy3SH2Q=="
     },
+    "sqids@0.3.0": {
+      "integrity": "sha512-lOQK1ucVg+W6n3FhRwwSeUijxe93b51Bfz5PMRMihVf1iVkl82ePQG7V5vwrhzB11v0NtsR25PSZRGiSomJaJw=="
+    },
     "statuses@2.0.1": {
       "integrity": "sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ=="
     },
@@ -3094,6 +3128,16 @@
       "dependencies": [
         "fdir",
         "picomatch@4.0.3"
+      ]
+    },
+    "tmcp@1.14.0": {
+      "integrity": "sha512-9TUZ6Qm2yNjqXcEyqjvsK38n/7z937ingf2fQtXLcUfcS5n9fsweuWRgKvaDCoCiE4Ibihoy7i+MqUWvHw/VNA==",
+      "dependencies": [
+        "@standard-schema/spec",
+        "json-rpc-2.0",
+        "sqids",
+        "uri-template-matcher",
+        "valibot"
       ]
     },
     "to-regex-range@5.0.1": {
@@ -3206,6 +3250,9 @@
         "punycode@2.3.1"
       ]
     },
+    "uri-template-matcher@1.1.1": {
+      "integrity": "sha512-ooMjzxaqlquLZZU0Y+Ol+RAp5xav3oJ3qc3gO585QFmB9iX88ip8pflaCKKtkwPd40ro2noB8yQG2OhFddmddg=="
+    },
     "url@0.11.4": {
       "integrity": "sha512-oCwdVC7mTuWiPyjLUz/COz5TLk6wgp0RCsN+wHZ2Ekneac9w8uuV0njcbbie2ME+Vs+d6duwmYuR3HgQXs1fOg==",
       "dependencies": [
@@ -3227,6 +3274,9 @@
       "dependencies": [
         "inherits@2.0.3"
       ]
+    },
+    "valibot@1.1.0": {
+      "integrity": "sha512-Nk8lX30Qhu+9txPYTwM0cFlWLdPFsFr6LblzqIySfbZph9+BFsAHsNvHOymEviUepeIW6KFHzpX8TKhbptBXXw=="
     },
     "vary@1.1.2": {
       "integrity": "sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg=="
@@ -3828,6 +3878,8 @@
       "npm:@tanstack/react-router-devtools@^1.128.0",
       "npm:@tanstack/react-router@^1.128.0",
       "npm:@tanstack/router-plugin@^1.128.0",
+      "npm:@tmcp/adapter-valibot@~0.1.4",
+      "npm:@tmcp/transport-stdio@~0.3.1",
       "npm:@types/react-dom@^19.1.1",
       "npm:@types/react@^19.1.1",
       "npm:@uwdata/flechette@^2.2.3",
@@ -3845,6 +3897,8 @@
       "npm:react@^19.1.1",
       "npm:shiki@^3.12.0",
       "npm:tailwindcss@^4.0.9",
+      "npm:tmcp@^1.13.0",
+      "npm:valibot@^1.1.0",
       "npm:vega-embed@^7.0.2",
       "npm:vega-lite@^6.4.1",
       "npm:vega@^6.2.0",

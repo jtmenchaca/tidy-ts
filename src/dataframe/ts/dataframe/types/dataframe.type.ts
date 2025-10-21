@@ -22,14 +22,10 @@ import type {
   ForEachColMethod,
   ForEachRowMethod,
 } from "../../verbs/utility/for-each.types.ts";
+import type { ProfileMethod } from "../../verbs/utility/profile.types.ts";
 import type { SelectMethod } from "../../verbs/selection/select.types.ts";
 import type { DropMethod } from "../../verbs/selection/drop.types.ts";
 import type { ReorderMethod } from "../../verbs/transformation/reorder.types.ts";
-import type {
-  DayMethod,
-  MonthMethod,
-  YearMethod,
-} from "../../verbs/utility/dates.types.ts";
 import type { FilterRowsMethod } from "../../verbs/filtering/filter.types.ts";
 import type { ArrangeMethod } from "../../verbs/sorting/arrange.types.ts";
 import type { DistinctMethod } from "../../verbs/filtering/distinct.types.ts";
@@ -342,6 +338,28 @@ export type DataFrame<Row extends object = object> =
       },
     ): DataFrame<Row>;
 
+    /**
+     * Profile the DataFrame by computing comprehensive statistics for each column.
+     *
+     * For numeric columns: mean, median, min, max, sd, q1, q3, iqr, variance
+     * For categorical columns: unique count, top 3 most frequent values
+     *
+     * @returns A DataFrame with one row per column containing profile statistics
+     *
+     * @example
+     * ```typescript
+     * const data = createDataFrame([
+     *   { name: "Alice", age: 30, score: 85 },
+     *   { name: "Bob", age: 25, score: 92 }
+     * ]);
+     *
+     * const profile = data.profile();
+     * profile.print();
+     * // Shows statistics for each column (name, age, score)
+     * ```
+     */
+    profile: ProfileMethod<Row>;
+
     // ---------- Transformations ----------
     /**
      * This is a mutate method.
@@ -364,9 +382,6 @@ export type DataFrame<Row extends object = object> =
     rename: RenameMethod<Row>;
     drop: DropMethod<Row>;
     reorder: ReorderMethod<Row>;
-    year: YearMethod<Row>;
-    month: MonthMethod<Row>;
-    day: DayMethod<Row>;
 
     // ---------- Joins ----------
     innerJoin: InnerJoinMethod<Row>;

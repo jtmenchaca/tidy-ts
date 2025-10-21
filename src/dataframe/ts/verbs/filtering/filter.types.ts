@@ -49,6 +49,46 @@ type AsyncRowFilter<Row extends object> =
 /** Filtering preserves row shape (values change, shape doesn't). */
 export type RowAfterFilter<Row extends object> = Prettify<Row>;
 
+/**
+ * Filter rows based on one or more predicates.
+ *
+ * Returns rows where all predicates evaluate to true. Supports both synchronous and
+ * asynchronous predicates, boolean arrays, and multiple predicates with AND logic.
+ * Null and undefined predicate results are treated as false.
+ *
+ * @param filterPredicates - One or more predicates to filter rows. Can be:
+ *   - A function `(row, index, df) => boolean` that returns true to keep the row
+ *   - An async function for dynamic filtering (e.g., API calls, database lookups)
+ *   - Multiple predicates (combined with AND logic)
+ *
+ * @returns A new DataFrame containing only rows that match all predicates.
+ *   For async predicates, returns a PromisedDataFrame. For grouped DataFrames,
+ *   filtering is applied within each group.
+ *
+ * @example
+ * // Basic filtering with a predicate function
+ * df.filter(row => row.age > 18)
+ *
+ * @example
+ * // Multiple predicates (AND logic)
+ * df.filter(
+ *   row => row.age > 18,
+ *   row => row.status === "active"
+ * )
+ *
+ * @example
+ * // Async filtering with concurrency control
+ * await df.filter(
+ *   async (row) => await validateUser(row.id),
+ *   { concurrency: 10 }
+ * )
+ *
+ * @example
+ * // Type narrowing with type predicates
+ * const filtered = df.filter((row): row is Row & { age: number } =>
+ *   typeof row.age === 'number'
+ * )
+ */
 export type FilterRowsMethod<Row extends object> = {
   // ── Boolean array predicate (always sync) ──────────────────────────────
   /**

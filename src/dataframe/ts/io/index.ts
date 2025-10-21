@@ -7,9 +7,10 @@ import type { DataFrame } from "../dataframe/index.ts";
 
 // Data I/O functions for reading and writing different formats
 export * from "./read_csv.ts";
+export * from "./read_csv_stream.ts";
 export * from "./read_parquet.ts";
 export * from "./read_arrow.ts";
-export * from "./read_xlsx.ts";
+export { parseXLSXRaw } from "./read_xlsx.ts";
 export * from "./write_xlsx.ts";
 export { readJSON } from "./read_json.ts";
 export * from "./write_json.ts";
@@ -641,6 +642,7 @@ export const writeParquet: WriteParquetFunction = (() => {
  */
 interface ReadXLSXOpts extends NAOpts {
   sheet?: string | number;
+  skip?: number;
 }
 
 // deno-lint-ignore no-explicit-any
@@ -732,6 +734,58 @@ export const writeXLSX: WriteXLSXFunction = (() => {
     return () => {
       throw new Error(
         "writeXLSX is only available in Node.js/Deno environments.",
+      );
+    };
+  }
+})();
+
+/**
+ * Read metadata about an XLSX file without full parsing.
+ *
+ * Useful for inspecting file structure before deciding how to read it.
+ * Shows available sheets and a preview of the first few rows.
+ *
+ * @param path - File path to the XLSX file
+ * @param options - Options for preview (previewRows, sheet)
+ * @returns Promise resolving to metadata object with sheets list and row preview
+ *
+ * @example
+ * // Inspect file to see structure
+ * const meta = await readXLSXMetadata("./data.xlsx", { previewRows: 3 });
+ * console.log("Available sheets:", meta.sheets);
+ * console.log("First rows:", meta.preview.firstRows);
+ *
+ * // If row 0 looks like a note, use skip: 1
+ * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
+ */
+export const readXLSXMetadata: (
+  path: string,
+  options?: { previewRows?: number; sheet?: string | number },
+) => Promise<{
+  sheets: { name: string; index: number }[];
+  defaultSheet: string;
+  preview: {
+    sheetName: string;
+    totalRows: number;
+    firstRows: string[][];
+  };
+}> = (() => {
+  // deno-lint-ignore no-process-global
+  const isNode = typeof process !== "undefined" && process?.versions?.node;
+  const isDeno = typeof Deno !== "undefined";
+
+  if (isNode || isDeno) {
+    return async (
+      path: string,
+      options?: { previewRows?: number; sheet?: string | number },
+    ) => {
+      const { readXLSXMetadata } = await import("./read_xlsx.ts");
+      return readXLSXMetadata(path, options);
+    };
+  } else {
+    return () => {
+      throw new Error(
+        "readXLSXMetadata is only available in Node.js/Deno environments.",
       );
     };
   }

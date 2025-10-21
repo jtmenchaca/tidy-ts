@@ -1,5 +1,3 @@
-import type { DataFrame as _DataFrame } from "../dataframe/index.ts";
-
 /**
  * Async Type Inference Tests
  *

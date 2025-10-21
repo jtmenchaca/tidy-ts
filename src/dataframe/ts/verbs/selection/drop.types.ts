@@ -14,6 +14,28 @@ export type RowAfterDrop<
   ColName extends keyof Row,
 > = Prettify<Omit<Row, ColName>>;
 
+/**
+ * Remove one or more columns from the DataFrame.
+ *
+ * Returns a new DataFrame without the specified columns. The opposite of `select()`.
+ * Works with both regular and grouped DataFrames.
+ *
+ * @example
+ * // Drop a single column
+ * df.drop("tempColumn")
+ *
+ * @example
+ * // Drop multiple columns
+ * df.drop("col1", "col2", "col3")
+ *
+ * @example
+ * // Array syntax
+ * df.drop(["col1", "col2"])
+ *
+ * @example
+ * // Drop from grouped DataFrames
+ * df.groupBy("category").drop("internalId")
+ */
 export type DropMethod<Row extends object> = {
   // Rest parameters syntax
   /**

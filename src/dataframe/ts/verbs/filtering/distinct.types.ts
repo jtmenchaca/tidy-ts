@@ -10,6 +10,25 @@ export type RowAfterDistinct<Row extends object> = Prettify<
   Row
 >;
 
+/**
+ * Remove duplicate rows based on specified columns.
+ *
+ * Returns unique rows, keeping the first occurrence of each unique combination.
+ * If no columns specified, uses all columns. For grouped DataFrames, uniqueness
+ * is determined within each group.
+ *
+ * @example
+ * // Remove all duplicate rows
+ * df.distinct()
+ *
+ * @example
+ * // Unique values based on specific columns
+ * df.distinct("category", "region")
+ *
+ * @example
+ * // Distinct within groups
+ * df.groupBy("year").distinct("product")
+ */
 export type DistinctMethod<Row extends object> = {
   /**
    * Remove duplicate rows based on specified columns.

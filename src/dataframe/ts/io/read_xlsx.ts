@@ -137,7 +137,7 @@ const zxlsx = {
  */
 export async function parseXLSXRaw(
   path: string,
-  opts: { sheet?: string | number } = {},
+  opts: { sheet?: string | number; skip?: number } = {},
 ): Promise<string[][]> {
   const fileData = await Deno.readFile(path);
 
@@ -188,7 +188,15 @@ export async function parseXLSXRaw(
   }
 
   const strings = sharedStrings ? parseSharedStrings(sharedStrings) : [];
-  return parseWorksheet(worksheet, strings);
+  const allRows = parseWorksheet(worksheet, strings);
+
+  // Apply skip if specified
+  const skip = opts.skip ?? 0;
+  if (skip > 0) {
+    return allRows.slice(skip);
+  }
+
+  return allRows;
 }
 
 async function extractFile(
@@ -496,6 +504,7 @@ export function parseXLSXContent<S extends z.ZodObject<any>>(
 
 interface ReadXLSXOpts extends NAOpts {
   sheet?: string | number;
+  skip?: number;
 }
 
 /**
@@ -533,7 +542,10 @@ export async function readXLSX<S extends z.ZodObject<any>>(
   schema: S,
   opts: ReadXLSXOpts = {},
 ): Promise<DataFrame<z.infer<S>>> {
-  const rawRows = await parseXLSXRaw(path, { sheet: opts.sheet });
+  const rawRows = await parseXLSXRaw(path, {
+    sheet: opts.sheet,
+    skip: opts.skip,
+  });
   const rows = parseXLSXContent(rawRows, schema, opts);
 
   // Special case: if rows is empty but we have headers in the XLSX,
@@ -561,4 +573,72 @@ export async function readXLSX<S extends z.ZodObject<any>>(
   }
 
   return createDataFrame(rows, schema);
+}
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  6 · Metadata inspection helper                                           │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * Read metadata about an XLSX file without full parsing
+ *
+ * Useful for inspecting file structure before deciding how to read it.
+ * Shows available sheets and a preview of the first few rows.
+ *
+ * @param path - File path to the XLSX file
+ * @param previewRows - Number of rows to preview (default: 5)
+ * @param sheet - Which sheet to preview (default: first sheet)
+ * @returns Metadata object with sheets list and row preview
+ *
+ * @example
+ * ```ts
+ * const meta = await readXLSXMetadata("./data.xlsx");
+ * console.log("Available sheets:", meta.sheets);
+ * console.log("First rows:", meta.preview.firstRows);
+ *
+ * // If row 0 looks like a note, use skip: 1
+ * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
+ * ```
+ */
+export async function readXLSXMetadata(
+  path: string,
+  { previewRows = 5, sheet }: {
+    previewRows?: number;
+    sheet?: string | number;
+  } = {},
+) {
+  const fileData = await Deno.readFile(path);
+
+  // Get sheet mapping
+  const workbookXml = await extractFile(fileData, "xl/workbook.xml");
+  if (!workbookXml) {
+    throw new Error("No workbook.xml found in XLSX file");
+  }
+
+  const sheetMap = parseWorkbookSheets(workbookXml);
+  if (sheetMap.length === 0) {
+    throw new Error("No sheets found in XLSX file");
+  }
+
+  const sheets = sheetMap.map((s, i) => ({ name: s.name, index: i }));
+  const defaultSheet = sheetMap[0].name;
+
+  // Get preview of specified sheet (or first sheet)
+  const targetSheet = sheet ?? 0;
+  const rawRows = await parseXLSXRaw(path, { sheet: targetSheet });
+  const previewData = rawRows.slice(0, previewRows);
+
+  const sheetName = typeof targetSheet === "number"
+    ? sheetMap[targetSheet].name
+    : targetSheet;
+
+  return {
+    sheets,
+    defaultSheet,
+    preview: {
+      sheetName,
+      totalRows: rawRows.length,
+      firstRows: previewData,
+    },
+  };
 }

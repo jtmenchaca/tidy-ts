@@ -1,0 +1,129 @@
+{
+  "ocel:global-event": {
+    "ocel:activity": "__INVALID__"
+  },
+  "ocel:global-object": {
+    "ocel:type": "__INVALID__"
+  },
+  "ocel:global-log": {
+    "ocel:object-types": [
+      "order",
+      "item"
+    ],
+    "ocel:attribute-names": [
+      "customer",
+      "item_name",
+      "order_priority",
+      "quantity",
+      "unit_price"
+    ],
+    "ocel:version": "1.0",
+    "ocel:ordering": "timestamp"
+  },
+  "ocel:events": {
+    "e1": {
+      "ocel:activity": "Create Order",
+      "ocel:timestamp": "2024-01-15T09:00:00Z",
+      "ocel:vmap": {
+        "order_priority": "high"
+      },
+      "ocel:omap": [
+        "o1"
+      ]
+    },
+    "e2": {
+      "ocel:activity": "Add Item",
+      "ocel:timestamp": "2024-01-15T09:15:00Z",
+      "ocel:vmap": {
+        "item_name": "Widget"
+      },
+      "ocel:omap": [
+        "o1",
+        "i1"
+      ]
+    },
+    "e3": {
+      "ocel:activity": "Add Item",
+      "ocel:timestamp": "2024-01-15T09:20:00Z",
+      "ocel:vmap": {
+        "item_name": "Gadget"
+      },
+      "ocel:omap": [
+        "o1",
+        "i2"
+      ]
+    },
+    "e4": {
+      "ocel:activity": "Confirm Order",
+      "ocel:timestamp": "2024-01-15T09:30:00Z",
+      "ocel:vmap": {},
+      "ocel:omap": [
+        "o1"
+      ]
+    },
+    "e5": {
+      "ocel:activity": "Create Order",
+      "ocel:timestamp": "2024-01-15T10:00:00Z",
+      "ocel:vmap": {
+        "order_priority": "normal"
+      },
+      "ocel:omap": [
+        "o2"
+      ]
+    },
+    "e6": {
+      "ocel:activity": "Add Item",
+      "ocel:timestamp": "2024-01-15T10:10:00Z",
+      "ocel:vmap": {
+        "item_name": "Doohickey"
+      },
+      "ocel:omap": [
+        "o2",
+        "i3"
+      ]
+    },
+    "e7": {
+      "ocel:activity": "Confirm Order",
+      "ocel:timestamp": "2024-01-15T10:20:00Z",
+      "ocel:vmap": {},
+      "ocel:omap": [
+        "o2"
+      ]
+    }
+  },
+  "ocel:objects": {
+    "o1": {
+      "ocel:type": "order",
+      "ocel:ovmap": {
+        "customer": "ACME Corp"
+      }
+    },
+    "i1": {
+      "ocel:type": "item",
+      "ocel:ovmap": {
+        "quantity": 5.0,
+        "unit_price": 100.0
+      }
+    },
+    "i2": {
+      "ocel:type": "item",
+      "ocel:ovmap": {
+        "quantity": 3.0,
+        "unit_price": 50.0
+      }
+    },
+    "o2": {
+      "ocel:type": "order",
+      "ocel:ovmap": {
+        "customer": "TechStart Inc"
+      }
+    },
+    "i3": {
+      "ocel:type": "item",
+      "ocel:ovmap": {
+        "quantity": 10.0,
+        "unit_price": 25.0
+      }
+    }
+  }
+}

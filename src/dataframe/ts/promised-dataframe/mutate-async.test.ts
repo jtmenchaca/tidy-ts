@@ -1,8 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import {
-  createDataFrame,
-  type DataFrame as _DataFrame,
-} from "@tidy-ts/dataframe";
+import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 // Simple async function for testing

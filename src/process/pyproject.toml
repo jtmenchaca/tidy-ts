@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "tidy-ts-process"
+version = "0.1.0"
+description = "Process mining utilities for tidy-ts using OCEL 2.0"
+authors = ["tidy-ts"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.9"
+duckdb = "^1.0.0"
+pm4py = "^2.7.0"
+pandas = "^2.0.0"
+requests = "^2.31.0"
+pyarrow = "^21.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -12,6 +12,33 @@ export type RowAfterArrange<Row extends object> = Prettify<
   Row
 >;
 
+/**
+ * Sort rows by one or more columns.
+ *
+ * Orders rows based on column values in ascending or descending order. Multiple columns
+ * create nested sorting (first by column1, then by column2, etc.). For grouped DataFrames,
+ * sorting is applied within each group.
+ *
+ * @example
+ * // Sort by single column (ascending by default)
+ * df.arrange("age")
+ *
+ * @example
+ * // Sort descending
+ * df.arrange("age", "desc")
+ *
+ * @example
+ * // Sort by multiple columns
+ * df.arrange("lastName", "firstName")
+ *
+ * @example
+ * // Multiple columns with directions
+ * df.arrange(["category", "price"], ["asc", "desc"])
+ *
+ * @example
+ * // Sort within groups
+ * df.groupBy("category").arrange("price", "desc")
+ */
 export type ArrangeMethod<Row extends object> = {
   // Single column overloads
   /**

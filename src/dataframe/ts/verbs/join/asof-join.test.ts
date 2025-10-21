@@ -1,7 +1,4 @@
-import {
-  createDataFrame,
-  type DataFrame as _DataFrame,
-} from "@tidy-ts/dataframe";
+import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 
 Deno.test("asofJoin - basic backward join with numbers", () => {

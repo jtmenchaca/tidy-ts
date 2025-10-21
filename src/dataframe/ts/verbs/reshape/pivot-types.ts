@@ -39,6 +39,12 @@ export type RowAfterPivotLonger<
   & { [ColName in ValuesTo]: Row[ColNames[number]] }
 >;
 
+/**
+ * Pivot DataFrame from long to wide format.
+ *
+ * Transforms data by spreading key-value pairs from multiple rows into multiple columns.
+ * Useful for converting normalized data into a more readable wide format.
+ */
 export type PivotWiderMethod<Row extends object> = {
   <
     NamesFrom extends keyof Row,
@@ -91,6 +97,12 @@ export type PivotWiderMethod<Row extends object> = {
   >;
 };
 
+/**
+ * Pivot DataFrame from wide to long format.
+ *
+ * Transforms data by gathering multiple columns into key-value pairs.
+ * Useful for converting wide data into a normalized long format.
+ */
 export type PivotLongerMethod<Row extends object> = {
   <
     const ColNames extends readonly (keyof Row)[],

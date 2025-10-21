@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "tidy-ts": {
+      "command": "tidy-ts-mcp"
+    }
+  }
+}

@@ -1,4 +1,3 @@
-import type { DataFrame as _DataFrame } from "../../dataframe/index.ts";
 import type {
   MissingColumnCrossTabulate,
   RestrictMethodForEmptyDataFrame,
