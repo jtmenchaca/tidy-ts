@@ -1,9 +1,0 @@
-{
-  "name": "@tidy-ts/process",
-  "version": "0.0.1",
-  "exports": "./mod.ts",
-  "tasks": {
-    "analyze-portal": "poetry run python analyze-portal-messages-flexible.py",
-    "analyze-portal-recode": "poetry run python analyze-portal-messages-flexible.py --recode"
-  }
-}

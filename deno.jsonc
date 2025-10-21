@@ -17,7 +17,7 @@
     "mcp:install": "deno install --global --allow-read --allow-env --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
     "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check .",
     "ci": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
-    "ci:update-badge": "deno task ci && deno run --allow-read --allow-write --allow-run scripts/update-coverage-badge.ts",
+    "ci:no-stats": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs --quiet",
     "benchmark:runner": "cd tests/benchmarks && deno run -A runner.ts && cd ../..",
     "benchmark:analyze": "cd tests/benchmarks && deno run -A analyze.ts && cd ../..",
     "benchmark": "deno task benchmark:runner && deno task benchmark:analyze",
@@ -75,10 +75,10 @@
     "src/tidy-stats/rust",
     "tests/tidy-stats/__pycache__",
     "tests/tidy-stats/.venv",
-    "docs/src/routeTree.gen.ts"
+    "docs/src/routeTree.gen.ts",
+    "tmp/"
   ],
   "workspace": [
-    "src/dataframe",
-    "src/process"
+    "src/dataframe"
   ]
 }

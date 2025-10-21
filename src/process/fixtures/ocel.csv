@@ -1,8 +1,0 @@
-ocel:eid,ocel:activity,ocel:timestamp,ocel:type:Order,ocel:type:Item
-e1,Create Order,2024-01-15 09:00:00,o1,
-e2,Add Item,2024-01-15 09:15:00,o1,i1
-e3,Add Item,2024-01-15 09:20:00,o1,i2
-e4,Confirm Order,2024-01-15 09:30:00,o1,
-e5,Create Order,2024-01-15 10:00:00,o2,
-e6,Add Item,2024-01-15 10:10:00,o2,i3
-e7,Confirm Order,2024-01-15 10:20:00,o2,
