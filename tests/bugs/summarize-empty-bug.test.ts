@@ -33,8 +33,36 @@ Deno.test("summarize with empty data", () => {
   console.log("concatenatedSummary.columns():", concatenatedSummary.columns());
 
   expect(concatenatedSummary.nrows()).toBe(0);
+  expect(concatenatedSummary.ncols()).toBe(2);
+  expect(concatenatedSummary.columns()).toEqual([
+    "order_proc_id",
+    "impression",
+  ]);
+});
+
+Deno.test("summarize ungrouped with empty data", () => {
+  const examplePapDF1 = createDataFrame([], impressionSchema);
+  const examplePapDF2 = createDataFrame([], impressionSchema);
+
+  const papDFArray = [examplePapDF1, examplePapDF2];
+
+  const concatenated = concatDataFrames(papDFArray);
+
+  const concatenatedSummary = concatenated
+    .summarize({
+      impression: (g) => g.impression.join("\n"),
+    });
+
+  concatenatedSummary.print();
+  console.log("concatenatedSummary.nrows():", concatenatedSummary.nrows());
+  console.log("concatenatedSummary.ncols():", concatenatedSummary.ncols());
+  console.log("concatenatedSummary.columns():", concatenatedSummary.columns());
+
+  expect(concatenatedSummary.nrows()).toBe(1);
   expect(concatenatedSummary.ncols()).toBe(1);
-  expect(concatenatedSummary.columns()).toEqual(["order_proc_id"]);
+  expect(concatenatedSummary.columns()).toEqual([
+    "impression",
+  ]);
 });
 
 Deno.test("filter with empty grouped DataFrame", () => {
@@ -110,4 +138,3 @@ Deno.test("slice_sample with empty grouped DataFrame", () => {
   expect(result.columns()).toEqual(["order_proc_id", "line", "impression"]);
   expect(result.nrows()).toBe(0);
 });
-

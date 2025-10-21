@@ -300,7 +300,7 @@ Deno.test("summarise grouped - empty DataFrame preserves grouping columns", () =
   });
 
   expect(result.nrows()).toBe(0);
-  expect(result.columns()).toEqual(["category"]);
+  expect(result.columns()).toEqual(["category", "total"]);
 });
 
 Deno.test("summarise ungrouped - empty DataFrame", () => {
@@ -322,5 +322,5 @@ Deno.test("summarise grouped - multiple grouping keys with empty data", () => {
   });
 
   expect(result.nrows()).toBe(0);
-  expect(result.columns()).toEqual(["region", "product"]);
+  expect(result.columns()).toEqual(["region", "product", "total_sales"]);
 });
