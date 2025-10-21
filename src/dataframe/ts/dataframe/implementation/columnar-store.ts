@@ -20,12 +20,26 @@ export interface ColumnarStore {
 }
 
 /**
- * Convert row-oriented data to columnar storage (optimized like Arquero)
+ * Convert row-oriented data to columnar storage (optimized for performance)
  */
 export function toColumnarStorage<T extends object>(
   rows: readonly T[],
+  explicitColumnNames?: string[],
 ): ColumnarStore {
   if (rows.length === 0) {
+    // If explicit column names provided, preserve them even for empty DataFrame
+    if (explicitColumnNames && explicitColumnNames.length > 0) {
+      const columns: Record<string, unknown[]> = {};
+      for (const colName of explicitColumnNames) {
+        columns[colName] = [];
+      }
+      return {
+        columns,
+        length: 0,
+        columnNames: explicitColumnNames,
+      };
+    }
+
     return {
       columns: {},
       length: 0,
@@ -49,16 +63,16 @@ export function toColumnarStorage<T extends object>(
   const columns: Record<string, unknown[]> = {};
   const len = rows.length;
 
-  // Arquero-style: pre-allocate arrays and cache references
+  // Pre-allocate arrays and cache references for performance
   const add = (name: string) => {
-    const arr = Array(len); // Use Array(len) like Arquero
+    const arr = Array(len); // Pre-allocate array
     columns[name] = arr;
     return arr;
   };
 
-  const cols = columnNames.map(add); // Cache column references like Arquero
+  const cols = columnNames.map(add); // Cache column references
 
-  // Arquero's exact approach: simple nested loops with cached references
+  // Simple nested loops with cached references for performance
   const numCols = columnNames.length;
   const names = columnNames; // Direct reference to column names
 

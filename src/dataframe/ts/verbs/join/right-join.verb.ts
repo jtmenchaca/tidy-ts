@@ -34,6 +34,8 @@ function buildOutputStoreRight(
   leftJoinKeys: string[],
   rightJoinKeys: string[],
   suffixes: { left?: string; right?: string },
+  leftDataFrame: any,
+  rightDataFrame: any,
 ): ColumnarStore {
   const n = rightIdxView.length;
 
@@ -47,9 +49,12 @@ function buildOutputStoreRight(
   }
 
   // Identify conflicting column names (excluding join keys)
+  // Use DataFrame.columns() to get schema even for empty DataFrames
+  const leftColumnNames = leftDataFrame.columns() as string[];
+  const rightColumnNames = rightDataFrame.columns() as string[];
   const { leftNameSet, rightNameSet, leftKeySet } = computeColumnConflicts(
-    left.store.columnNames,
-    right.store.columnNames,
+    leftColumnNames,
+    rightColumnNames,
     leftJoinKeys,
   );
   const suffixLeft = suffixes.left ?? "";
@@ -74,7 +79,7 @@ function buildOutputStoreRight(
   const rightResult = processJoinColumns({
     store: right,
     baseIndices: rightBase,
-    columnNames: right.store.columnNames,
+    columnNames: rightColumnNames,
     nameSet: rightNameSet,
     conflictSet: rightConflictSet,
     keySet: rightKeySet,
@@ -87,7 +92,7 @@ function buildOutputStoreRight(
   const leftResult = processJoinColumns({
     store: left,
     baseIndices: leftBase,
-    columnNames: left.store.columnNames,
+    columnNames: leftColumnNames,
     nameSet: leftNameSet,
     conflictSet: rightNameSet,
     keySet: leftKeySet,
@@ -162,24 +167,48 @@ export function right_join<
   options?: { suffixes?: { left?: string; right?: string } },
 ): (left: DataFrame<LeftRow>) => any {
   return (left: DataFrame<LeftRow>): any => {
-    // Early empty fast-path
+    // Early empty fast-path - right join with empty right = empty result
+    // But preserve schema from both sides
     if (right.nrows() === 0) {
-      return createEmptyJoinResult() as unknown as any;
+      const leftCols = left.columns() as string[];
+      const rightCols = right.columns() as string[];
+      const allCols = [...new Set([...rightCols, ...leftCols])];
+      const columns: Record<string, unknown[]> = {};
+      for (const col of allCols) {
+        columns[col] = [];
+      }
+      return createColumnarDataFrameFromStore({
+        columns,
+        length: 0,
+        columnNames: allCols,
+      }) as unknown as any;
     }
 
-    // If left dataframe is empty, return right dataframe
+    // If left dataframe is empty, return right dataframe with left columns added as undefined
     if (left.nrows() === 0) {
       const R = getStoreAndIndex(right);
       const outCols: Record<string, unknown[]> = {};
       const outNames: string[] = [];
 
+      // Get column names from both DataFrames
+      const leftCols = left.columns() as string[];
+      const rightCols = right.columns() as string[];
+
       // Copy all right columns
-      for (const name of R.store.columnNames) {
+      for (const name of rightCols) {
         outNames.push(name);
         const out = new Array(R.index.length);
         const src = R.store.columns[name];
         for (let i = 0; i < R.index.length; i++) out[i] = src[R.index[i]];
         outCols[name] = out;
+      }
+
+      // Add left columns as undefined
+      for (const name of leftCols) {
+        if (!rightCols.includes(name)) {
+          outNames.push(name);
+          outCols[name] = new Array(R.index.length).fill(undefined);
+        }
       }
 
       return createColumnarDataFrameFromStore({
@@ -296,6 +325,8 @@ export function right_join<
       leftKeys,
       rightKeys,
       suffixes,
+      left,
+      right,
     );
 
     const outDf = createColumnarDataFrameFromStore(

@@ -1,4 +1,4 @@
-// A light, Arquero-style view: keeps a pointer to the column store + optional
+// A light view: keeps a pointer to the column store + optional
 // row index (ordering/subset), optional bitset mask, and cached derived index.
 
 export type BitSet = {
@@ -16,7 +16,7 @@ export type View = {
 };
 
 // ----------------------------------------------------------------------------
-// Bit constants (same convention as Arquero)
+// Bit constants
 // ----------------------------------------------------------------------------
 const ONE = 0x80000000 >>> 0;
 const ALL = 0xFFFFFFFF >>> 0;

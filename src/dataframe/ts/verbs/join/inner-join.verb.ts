@@ -74,6 +74,8 @@ function buildJoinResult(
   rightIndices: number[],
   leftKeys: string[],
   suffixes: { left?: string; right?: string },
+  leftDataFrame: any,
+  rightDataFrame: any,
 ) {
   const n = leftIndices.length;
   const outCols: Record<string, unknown[]> = {};
@@ -82,25 +84,29 @@ function buildJoinResult(
   const leftSuffix = suffixes.left ?? "";
   const rightSuffix = suffixes.right ?? "_y";
   const leftKeySet = new Set(leftKeys);
-  const leftNameSet = new Set(leftStore.columnNames);
+
+  // Use DataFrame.columns() to get schema even for empty DataFrames
+  const leftColumnNames = leftDataFrame.columns() as string[];
+  const rightColumnNames = rightDataFrame.columns() as string[];
+  const leftNameSet = new Set(leftColumnNames);
 
   // Add left columns
-  for (const name of leftStore.columnNames) {
+  for (const name of leftColumnNames) {
     const hasConflict = !leftKeySet.has(name) &&
-      rightStore.columnNames.includes(name);
+      rightColumnNames.includes(name);
     const outName = hasConflict && leftSuffix ? `${name}${leftSuffix}` : name;
     outNames.push(outName);
 
     const src = leftStore.columns[name];
     const dst = new Array(n);
     for (let i = 0; i < n; i++) {
-      dst[i] = src[leftIndices[i]];
+      dst[i] = src?.[leftIndices[i]];
     }
     outCols[outName] = dst;
   }
 
   // Add right columns (skip keys that match left keys)
-  for (const name of rightStore.columnNames) {
+  for (const name of rightColumnNames) {
     if (leftKeySet.has(name) && leftKeys.includes(name)) continue; // Skip duplicate keys
 
     const hasConflict = leftNameSet.has(name);
@@ -110,7 +116,7 @@ function buildJoinResult(
     const src = rightStore.columns[name];
     const dst = new Array(n);
     for (let i = 0; i < n; i++) {
-      dst[i] = src[rightIndices[i]];
+      dst[i] = src?.[rightIndices[i]];
     }
     outCols[outName] = dst;
   }
@@ -163,12 +169,19 @@ export function inner_join<
     const span = tracer.startSpan(left, "inner_join");
 
     try {
-      // Handle empty DataFrames
+      // Handle empty DataFrames - inner join = empty result, but preserve schema
       if (left.nrows() === 0 || right.nrows() === 0) {
+        const leftCols = left.columns() as string[];
+        const rightCols = right.columns() as string[];
+        const allCols = [...new Set([...leftCols, ...rightCols])];
+        const columns: Record<string, unknown[]> = {};
+        for (const col of allCols) {
+          columns[col] = [];
+        }
         return createColumnarDataFrameFromStore({
-          columns: {},
+          columns,
           length: 0,
-          columnNames: [],
+          columnNames: allCols,
         }) as unknown as any;
       }
 
@@ -269,6 +282,8 @@ export function inner_join<
         rightIndices as number[],
         leftKeys,
         suffixes,
+        left,
+        right,
       );
       const outDf = createColumnarDataFrameFromStore(
         outStore,

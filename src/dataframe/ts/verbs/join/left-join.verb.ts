@@ -116,6 +116,7 @@ function buildJoinResultOptimized(
   rightIndices: Uint32Array,
   leftKeys: string[],
   suffixes: { left?: string; right?: string },
+  rightDataFrame: any,
 ) {
   const n = leftIndices.length;
 
@@ -126,7 +127,9 @@ function buildJoinResultOptimized(
   const rightSuffix = suffixes.right ?? "_y";
 
   const leftKeySet = new Set(leftKeys);
-  const rightNameSet = new Set<string>(rightStore.columnNames as string[]);
+  // Use rightDataFrame.columns() to get schema even when empty
+  const rightColumnNames = rightDataFrame.columns() as string[];
+  const rightNameSet = new Set<string>(rightColumnNames);
 
   // ---------- Left columns ----------
   for (let c = 0; c < leftStore.columnNames.length; c++) {
@@ -152,8 +155,7 @@ function buildJoinResultOptimized(
   // ---------- Right columns ----------
   const leftNameSet = new Set<string>(leftStore.columnNames as string[]);
 
-  for (let c = 0; c < rightStore.columnNames.length; c++) {
-    const name = rightStore.columnNames[c] as string;
+  for (const name of rightColumnNames) {
     if (leftKeySet.has(name)) continue;
 
     const hasConflict = leftNameSet.has(name);
@@ -165,12 +167,13 @@ function buildJoinResultOptimized(
     const dst = allocRightArray(n);
 
     // Gather with NULL handling + runs of RIGHT_NULL or same r
+    // If src is undefined (empty DataFrame), all values will be undefined
     let i = 0;
     while (i < n) {
       const r = rightIndices[i]!;
       let j = i + 1;
       while (j < n && rightIndices[j] === r) j++;
-      if (r === RIGHT_NULL) {
+      if (r === RIGHT_NULL || !src) {
         for (let k = i; k < j; k++) (dst as any[])[k] = undefined;
       } else {
         const val = src[r];
@@ -235,12 +238,20 @@ export function left_join<
     const span = tracer.startSpan(left as any, "left_join");
 
     try {
+      // Left join with empty left = empty result, but preserve schema from both sides
       if (left.nrows() === 0) {
         tracer.addEvent(span, "early-return-empty-left");
+        const leftCols = left.columns() as string[];
+        const rightCols = right.columns() as string[];
+        const allCols = [...new Set([...leftCols, ...rightCols])];
+        const columns: Record<string, unknown[]> = {};
+        for (const col of allCols) {
+          columns[col] = [];
+        }
         return createColumnarDataFrameFromStore({
-          columns: {},
+          columns,
           length: 0,
-          columnNames: [],
+          columnNames: allCols,
         }) as unknown as any;
       }
 
@@ -381,6 +392,7 @@ export function left_join<
             rightIdxTA,
             leftKeys,
             suffixes,
+            right,
           );
         },
       );

@@ -295,7 +295,7 @@ function filterRowsSync<Row extends object>(
       }
     }
 
-    // JS path: build AND mask directly in a BitSet (Arquero-style)
+    // JS path: build AND mask directly in a BitSet
     const bs = tracer.withSpan(df, "compute-filter-mask", () => {
       const bitset = createBitSet(nRowsFull);
       computeFilterMaskDirectly_AND(df, predicates, bitset);

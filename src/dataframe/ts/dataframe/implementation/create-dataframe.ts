@@ -516,7 +516,7 @@ export function createDataFrame<
     const columnNames = Object.keys(columnsData);
     if (columnNames.length === 0) {
       // Empty columns - return empty DataFrame
-      const store = toColumnarStorage([]);
+      const store = toColumnarStorage([], []);
       return createColumnarDataFrameFromStore(store, {}) as DataFrame<never>;
     }
 
@@ -542,7 +542,8 @@ export function createDataFrame<
       rowsArray.push(row);
     }
 
-    const store = toColumnarStorage(rowsArray);
+    // Pass column names explicitly to preserve them even if rows are empty
+    const store = toColumnarStorage(rowsArray, columnNames);
     return createColumnarDataFrameFromStore(store, {}) as any;
   }
 

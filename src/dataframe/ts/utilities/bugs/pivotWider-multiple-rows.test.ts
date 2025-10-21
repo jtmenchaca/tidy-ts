@@ -7,12 +7,10 @@ Deno.test("pivotWider multiple rows bug", () => {
   // Create sample data similar to what we have in analyze.ts
   const sampleData = [
     { operation: "filter", library: "tidy-ts", time_ms: 0.115, ratio: 1.0 },
-    { operation: "filter", library: "arquero", time_ms: 0.041, ratio: 0.4 },
     { operation: "filter", library: "pandas", time_ms: 0.189, ratio: 1.6 },
     { operation: "filter", library: "polars", time_ms: 0.518, ratio: 4.5 },
     { operation: "filter", library: "r", time_ms: 0.319, ratio: 2.8 },
     { operation: "sort", library: "tidy-ts", time_ms: 0.061, ratio: 1.0 },
-    { operation: "sort", library: "arquero", time_ms: 0.141, ratio: 2.3 },
     { operation: "sort", library: "pandas", time_ms: 0.275, ratio: 4.5 },
     { operation: "sort", library: "polars", time_ms: 0.23, ratio: 3.8 },
     { operation: "sort", library: "r", time_ms: 0.94, ratio: 15.4 },
@@ -51,7 +49,7 @@ Deno.test("pivotWider multiple rows bug", () => {
     .pivotWider({
       namesFrom: "library",
       valuesFrom: "display",
-      expectedColumns: ["tidy-ts", "arquero", "pandas", "polars", "r"],
+      expectedColumns: ["tidy-ts", "pandas", "polars", "r"],
     })
     .arrange("operation");
 
