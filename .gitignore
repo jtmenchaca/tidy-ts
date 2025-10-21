@@ -52,4 +52,4 @@ z-proposal/
 Claude.md/
 .claude/
 
-tmp/
+tmp/src/dataframe/ts/io/fixtures/T214*.xlsx
