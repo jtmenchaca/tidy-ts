@@ -63,6 +63,7 @@ import type { ReplaceNaMethod } from "../../verbs/missing-data/replace-na.types.
 import type { AppendMethod } from "../../verbs/reshape/append.types.ts";
 import type { PrependMethod } from "../../verbs/reshape/prepend.types.ts";
 import type { ShuffleMethod } from "../../verbs/sorting/shuffle.types.ts";
+import type { UnnestMethod } from "../../verbs/reshape/unnest.types.ts";
 
 import type { Forbid, ForbiddenArrayMethods } from "./forbid.types.ts";
 
@@ -558,6 +559,7 @@ export type DataFrame<Row extends object = object> =
     pivotWider: PivotWiderMethod<Row>;
     pivotLonger: PivotLongerMethod<Row>;
     transpose: TransposeMethod<Row>;
+    unnest: UnnestMethod<Row>;
 
     // ---------- Slicing ----------
     slice: SliceRowsMethod<Row>;

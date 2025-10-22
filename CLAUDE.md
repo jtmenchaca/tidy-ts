@@ -29,6 +29,7 @@ Deno.test("GLM Demo 1: Logistic Regression", () => {
 
 Notes:
 - When debugging an issue, use the root/tests/bugs directory and make a [issue].test.ts file using the style of our other tests. 
+- FOR TESTS, use the -A flag for permissions 'deno test -A [test-name]' 
 - Here's a demo of how the dataframe library works:
 ```typescript
   // Create DataFrame from rows

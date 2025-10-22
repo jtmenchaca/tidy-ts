@@ -36,10 +36,16 @@ export function get_example(server: TidyMcp) {
         };
       }
 
-      // Read the example file
+      // Read the example file - resolve path relative to project root
       let fileContent: string;
       try {
-        fileContent = await Deno.readTextFile(example.path);
+        // Get the project root by finding where src/mcp is located
+        const moduleUrl = new URL(import.meta.url);
+        const modulePath = moduleUrl.pathname;
+        // Go up from src/mcp/handlers/tools to project root (4 levels)
+        const projectRoot = modulePath.split("/").slice(0, -4).join("/");
+        const absolutePath = `${projectRoot}/${example.path}`;
+        fileContent = await Deno.readTextFile(absolutePath);
       } catch (error) {
         return {
           content: [

@@ -648,6 +648,40 @@ export const DOCS: Record<string, DocEntry> = {
     related: ["pivotWider", "pivotLonger"],
   },
 
+  unnest: {
+    name: "unnest",
+    category: "dataframe",
+    signature:
+      "unnest<Col extends ArrayColumns<T>>(column: Col): DataFrame<T with Col: ElementType | null>",
+    description:
+      "Unnest array columns into individual rows. Each array element becomes its own row, with other columns duplicated. Empty arrays become rows with null for the unnested column. Type-safe - only accepts columns containing arrays.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "column: Name of array column to unnest (type-checked at compile time)",
+    ],
+    returns:
+      "DataFrame where array elements are spread into individual rows, array column type becomes ElementType | null",
+    examples: [
+      '// Basic usage\nconst df = createDataFrame([\n  { id: 1, tags: ["admin", "user"] },\n  { id: 2, tags: ["user"] },\n  { id: 3, tags: [] }\n]);\n\ndf.unnest("tags")\n// Result:\n// { id: 1, tags: "admin" }\n// { id: 1, tags: "user" }\n// { id: 2, tags: "user" }\n// { id: 3, tags: null }',
+      '// Unnest with preserved columns\ndf.unnest("vitamins")\n// All other columns are duplicated for each array element',
+      '// Sequential unnesting (flatten nested arrays)\nconst nested = createDataFrame([{ id: 1, matrix: [[1, 2], [3, 4]] }]);\nnested.unnest("matrix").unnest("matrix")\n// First: { id: 1, matrix: [1, 2] }, { id: 1, matrix: [3, 4] }\n// Then:  { id: 1, matrix: 1 }, { id: 1, matrix: 2 }, ...',
+      '// Type safety - compile error on non-array columns\ndf.unnest("name") // ❌ TypeScript error: name is not an array column',
+    ],
+    related: ["pivotLonger", "mutate", "filter"],
+    antiPatterns: [
+      '❌ BAD: Trying to unnest non-array columns - use mutate to extract first',
+      "❌ BAD: Unnesting object columns directly - objects aren't arrays",
+    ],
+    bestPractices: [
+      "✓ GOOD: Only works on array columns - TypeScript enforces this at compile time",
+      "✓ GOOD: Empty arrays preserve the row with null value (matches R's tidyr behavior)",
+      "✓ GOOD: Chain unnest() calls to flatten nested arrays (e.g., number[][])",
+      "✓ GOOD: Other columns are automatically duplicated for each array element",
+      "✓ GOOD: Return type correctly shows Column: ElementType | null",
+      "✓ GOOD: Use mutate first if you need to extract nested arrays from objects",
+    ],
+  },
+
   bindRows: {
     name: "bindRows",
     category: "dataframe",
@@ -778,21 +812,62 @@ export const DOCS: Record<string, DocEntry> = {
     name: "readCSV",
     category: "io",
     signature:
-      "readCSV<T>(path: string, schema?: ZodSchema<T>): Promise<DataFrame<T>>",
-    description: "Read CSV file with optional Zod schema validation.",
+      "readCSV<T>(pathOrContent: string, schema?: ZodSchema<T>, opts?: CsvOptions): Promise<DataFrame<T>>",
+    description:
+      "Read CSV file or parse CSV content with optional Zod schema validation. Returns a DataFrame that you can use with all DataFrame operations. Use readCSVMetadata() first to inspect headers and preview data structure.",
     imports: [
-      'import { readCSV, writeCSV, readXLSX, writeXLSX } from "@tidy-ts/dataframe";',
+      'import { readCSV, writeCSV, readCSVMetadata } from "@tidy-ts/dataframe";',
     ],
     parameters: [
-      "path: File path to CSV",
-      "schema: Optional Zod schema for validation",
+      "pathOrContent: File path to CSV or raw CSV content string",
+      "schema: Optional Zod schema for validation and type conversion",
+      "opts.comma: Field delimiter/comma character (default: ',')",
+      "opts.skipEmptyLines: Skip empty lines (default: true)",
     ],
-    returns: "Promise<DataFrame<T>>",
+    returns:
+      "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
     examples: [
-      'const df = await readCSV("data.csv")',
-      'const df = await readCSV("data.csv", PersonSchema)',
+      '// Read from file\nconst df = await readCSV("data.csv", schema)',
+      '// Parse from string\nconst csv = "name,age\\nAlice,30\\nBob,25";\nconst df = await readCSV(csv, schema)',
+      '// With custom delimiter\nconst df = await readCSV("data.tsv", schema, { comma: "\\t" })',
+      '// Chain with DataFrame operations\nconst result = await readCSV("sales.csv", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
-    related: ["writeCSV", "readXLSX", "readJSON"],
+    related: ["writeCSV", "readCSVMetadata", "readXLSX"],
+    bestPractices: [
+      "✓ GOOD: Use readCSVMetadata() first to inspect headers and structure",
+      "✓ GOOD: Provide a Zod schema for type safety and automatic type conversion",
+      "✓ GOOD: Works with both file paths and raw CSV strings",
+    ],
+  },
+
+  readCSVMetadata: {
+    name: "readCSVMetadata",
+    category: "io",
+    signature:
+      "readCSVMetadata(pathOrContent: string, { previewRows?: number, comma?: string }): Promise<CSVMetadata>",
+    description:
+      "Read metadata about a CSV file without full parsing. Shows column headers and a preview of the first few rows. Use this before readCSV() to understand the file structure and determine the appropriate schema.",
+    imports: [
+      'import { readCSVMetadata, readCSV } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "pathOrContent: File path to CSV or raw CSV content string",
+      "previewRows: Number of rows to preview (default: 5)",
+      'comma: Field delimiter/comma character (default: ",")',
+    ],
+    returns:
+      "Promise<{ headers: string[], totalRows: number, firstRows: string[][], delimiter: string }>",
+    examples: [
+      '// Inspect file structure\nconst meta = await readCSVMetadata("data.csv")\nconsole.log("Columns:", meta.headers)\nconsole.log("Preview:", meta.firstRows)',
+      '// Build schema from headers\nconst meta = await readCSVMetadata("data.csv")\nconst schema = z.object({\n  [meta.headers[0]]: z.number(),\n  [meta.headers[1]]: z.string(),\n  // ...\n})\nconst df = await readCSV("data.csv", schema)',
+      '// Preview TSV file\nconst meta = await readCSVMetadata("data.tsv", { comma: "\\t" })',
+    ],
+    related: ["readCSV"],
+    bestPractices: [
+      "✓ GOOD: Use before readCSV to understand file structure",
+      "✓ GOOD: Check headers to determine appropriate Zod schema",
+      "✓ GOOD: Inspect preview to identify data types and missing values",
+    ],
   },
 
   writeCSV: {
@@ -818,23 +893,64 @@ export const DOCS: Record<string, DocEntry> = {
     name: "readXLSX",
     category: "io",
     signature:
-      "readXLSX<T>(path: string, schema?: ZodSchema<T>, opts?: { sheet?: string }): Promise<DataFrame<T>>",
+      "readXLSX<T>(path: string, schema?: ZodSchema<T>, opts?: { sheet?: string, skip?: number }): Promise<DataFrame<T>>",
     description:
-      "Read XLSX file with optional schema validation and sheet selection.",
+      "Read XLSX file with optional schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). Use readXLSXMetadata() first to inspect sheet names and preview data structure.",
     imports: [
-      'import { readCSV, writeCSV, readXLSX, writeXLSX } from "@tidy-ts/dataframe";',
+      'import { readCSV, writeCSV, readXLSX, writeXLSX, readXLSXMetadata } from "@tidy-ts/dataframe";',
     ],
     parameters: [
       "path: File path to XLSX",
-      "schema: Optional Zod schema",
-      "opts.sheet: Sheet name (default: first sheet)",
+      "schema: Optional Zod schema for type validation and conversion",
+      "opts.sheet: Sheet name or index (default: first sheet)",
+      "opts.skip: Number of rows to skip (useful if first row is a title, not headers)",
     ],
-    returns: "Promise<DataFrame<T>>",
+    returns:
+      "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
     examples: [
-      'const df = await readXLSX("data.xlsx")',
-      'const df = await readXLSX("data.xlsx", PersonSchema, { sheet: "Summary" })',
+      '// Basic usage - returns a DataFrame\nconst df = await readXLSX("data.xlsx")\ndf.print() // Display the data',
+      '// With schema validation\nconst schema = z.object({ name: z.string(), age: z.number() })\nconst df = await readXLSX("data.xlsx", schema)',
+      '// Select specific sheet\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
+      '// Skip header rows (e.g., if row 0 is a title)\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
+      '// Chain with DataFrame operations\nconst result = await readXLSX("sales.xlsx")\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
-    related: ["writeXLSX", "readCSV"],
+    related: ["writeXLSX", "readCSV", "readXLSXMetadata"],
+    bestPractices: [
+      "✓ GOOD: Use readXLSXMetadata() first to inspect sheets and preview structure",
+      "✓ GOOD: Use skip option if first row is a title/note rather than column headers",
+      "✓ GOOD: Provide a Zod schema for type safety and automatic type conversion",
+      "✓ GOOD: Chain DataFrame operations immediately after reading",
+    ],
+  },
+
+  readXLSXMetadata: {
+    name: "readXLSXMetadata",
+    category: "io",
+    signature:
+      "readXLSXMetadata(path: string, { previewRows?: number, sheet?: string | number }): Promise<XLSXMetadata>",
+    description:
+      "Read metadata about an XLSX file without full parsing. Shows available sheets, default sheet, and a preview of the first few rows. Use this before readXLSX() to understand the file structure and determine which sheet to read and whether to skip rows.",
+    imports: [
+      'import { readXLSXMetadata, readXLSX } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "path: File path to XLSX file",
+      "previewRows: Number of rows to preview (default: 5)",
+      "sheet: Which sheet to preview - name or index (default: first sheet)",
+    ],
+    returns:
+      "Promise<{ sheets: SheetInfo[], defaultSheet: string, sheetName: string, headers: string[], totalRows: number, firstRows: string[][] }>",
+    examples: [
+      '// Inspect file structure\nconst meta = await readXLSXMetadata("data.xlsx")\nconsole.log("Sheets:", meta.sheets)\nconsole.log("Headers:", meta.headers)\nconsole.log("Preview:", meta.firstRows)',
+      '// Check if first row needs to be skipped\nconst meta = await readXLSXMetadata("data.xlsx")\nif (meta.firstRows[0][0] === "Report Title") {\n  df = await readXLSX("data.xlsx", schema, { skip: 1 })\n}',
+      '// Preview a specific sheet\nconst meta = await readXLSXMetadata("data.xlsx", { sheet: "Summary", previewRows: 10 })',
+    ],
+    related: ["readXLSX"],
+    bestPractices: [
+      "✓ GOOD: Use before readXLSX to understand file structure",
+      "✓ GOOD: Check preview to determine if skip option is needed",
+      "✓ GOOD: Verify sheet names before reading specific sheets",
+    ],
   },
 
   writeXLSX: {
@@ -1660,6 +1776,7 @@ export const CATEGORIES = {
     "pivotLonger",
     "pivotWider",
     "transpose",
+    "unnest",
     "bindRows",
     "concatDataFrames",
     "replaceNA",
@@ -1668,7 +1785,14 @@ export const CATEGORIES = {
     "removeUndefined",
     "profile",
   ],
-  io: ["readCSV", "writeCSV", "readXLSX", "writeXLSX"],
+  io: [
+    "readCSV",
+    "readCSVMetadata",
+    "writeCSV",
+    "readXLSX",
+    "readXLSXMetadata",
+    "writeXLSX",
+  ],
   stats: [
     // Descriptive statistics
     "mean",

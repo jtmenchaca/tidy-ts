@@ -740,6 +740,60 @@ export const writeXLSX: WriteXLSXFunction = (() => {
 })();
 
 /**
+ * Read metadata about a CSV file without full parsing.
+ *
+ * Useful for inspecting file structure before deciding how to read it.
+ * Shows column headers and a preview of the first few rows.
+ *
+ * @param pathOrContent - File path to CSV or raw CSV content string
+ * @param options - Options for preview (previewRows, comma)
+ * @returns Promise resolving to metadata object with headers and row preview
+ *
+ * @example
+ * // Inspect file to see structure
+ * const meta = await readCSVMetadata("./data.csv", { previewRows: 3 });
+ * console.log("Headers:", meta.headers);
+ * console.log("First rows:", meta.firstRows);
+ *
+ * // Build schema based on headers
+ * const schema = z.object({
+ *   [meta.headers[0]]: z.number(),
+ *   [meta.headers[1]]: z.string(),
+ *   // ...
+ * });
+ * const df = await readCSV("./data.csv", schema);
+ */
+export const readCSVMetadata: (
+  pathOrContent: string,
+  options?: { previewRows?: number; comma?: string },
+) => Promise<{
+  headers: string[];
+  totalRows: number;
+  firstRows: string[][];
+  delimiter: string;
+}> = (() => {
+  // deno-lint-ignore no-process-global
+  const isNode = typeof process !== "undefined" && process?.versions?.node;
+  const isDeno = typeof Deno !== "undefined";
+
+  if (isNode || isDeno) {
+    return async (
+      pathOrContent: string,
+      options?: { previewRows?: number; comma?: string },
+    ) => {
+      const { readCSVMetadata } = await import("./read_csv.ts");
+      return readCSVMetadata(pathOrContent, options);
+    };
+  } else {
+    return () => {
+      throw new Error(
+        "readCSVMetadata is only available in Node.js/Deno environments.",
+      );
+    };
+  }
+})();
+
+/**
  * Read metadata about an XLSX file without full parsing.
  *
  * Useful for inspecting file structure before deciding how to read it.
@@ -753,7 +807,8 @@ export const writeXLSX: WriteXLSXFunction = (() => {
  * // Inspect file to see structure
  * const meta = await readXLSXMetadata("./data.xlsx", { previewRows: 3 });
  * console.log("Available sheets:", meta.sheets);
- * console.log("First rows:", meta.preview.firstRows);
+ * console.log("Headers:", meta.headers);
+ * console.log("First rows:", meta.firstRows);
  *
  * // If row 0 looks like a note, use skip: 1
  * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
@@ -764,11 +819,10 @@ export const readXLSXMetadata: (
 ) => Promise<{
   sheets: { name: string; index: number }[];
   defaultSheet: string;
-  preview: {
-    sheetName: string;
-    totalRows: number;
-    firstRows: string[][];
-  };
+  sheetName: string;
+  headers: string[];
+  totalRows: number;
+  firstRows: string[][];
 }> = (() => {
   // deno-lint-ignore no-process-global
   const isNode = typeof process !== "undefined" && process?.versions?.node;

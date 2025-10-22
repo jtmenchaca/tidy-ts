@@ -632,13 +632,16 @@ export async function readXLSXMetadata(
     ? sheetMap[targetSheet].name
     : targetSheet;
 
+  // Extract headers from first row
+  const headers = rawRows.length > 0 ? rawRows[0] : [];
+  const dataRows = rawRows.slice(1);
+
   return {
     sheets,
     defaultSheet,
-    preview: {
-      sheetName,
-      totalRows: rawRows.length,
-      firstRows: previewData,
-    },
+    sheetName,
+    headers,
+    totalRows: dataRows.length,
+    firstRows: previewData,
   };
 }

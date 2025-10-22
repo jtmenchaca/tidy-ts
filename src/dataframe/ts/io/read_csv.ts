@@ -333,3 +333,88 @@ export async function readCSV<S extends z.ZodObject<any>>(
 
   return createDataFrame(rows, schema);
 }
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  6 · Metadata inspection helper                                           │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * Read metadata about a CSV file without full parsing
+ *
+ * Useful for inspecting file structure before deciding how to read it.
+ * Shows column headers and a preview of the first few rows.
+ *
+ * @param pathOrContent - Either a file path to read from, or raw CSV content
+ * @param previewRows - Number of rows to preview (default: 5)
+ * @param opts - CSV parsing options (delimiter, quote character, etc.)
+ * @returns Metadata object with headers and row preview
+ *
+ * @example
+ * ```ts
+ * const meta = await readCSVMetadata("./data.csv");
+ * console.log("Columns:", meta.headers);
+ * console.log("Preview:", meta.preview);
+ *
+ * // Then read with appropriate schema
+ * const schema = z.object({
+ *   id: z.number(),
+ *   name: z.string(),
+ *   // ... based on headers from metadata
+ * });
+ * const df = await readCSV("./data.csv", schema);
+ * ```
+ */
+export async function readCSVMetadata(
+  pathOrContent: string,
+  { previewRows = 5, ...csvOpts }: CsvOptions & { previewRows?: number } = {},
+) {
+  let rawCsv: string;
+
+  if (isFilePath(pathOrContent)) {
+    try {
+      const stats = await fs.stat(pathOrContent);
+
+      // For very large files, only read enough to get preview
+      if (stats.size > MAX_V8_STRING_LENGTH) {
+        // Read first chunk only for metadata
+        const file = await fs.open(pathOrContent, "r");
+        const buffer = new Uint8Array(Math.min(100000, stats.size)); // Read up to 100KB
+        await file.read(buffer, 0, buffer.length, 0);
+        await file.close();
+        rawCsv = new TextDecoder().decode(buffer);
+      } else {
+        rawCsv = await fs.readFile(pathOrContent, "utf8");
+      }
+    } catch (error) {
+      throw new Error(
+        `Failed to read CSV file '${pathOrContent}': ${
+          (error as Error).message
+        }`,
+      );
+    }
+  } else {
+    rawCsv = pathOrContent;
+  }
+
+  // Parse with skipEmptyLines enabled
+  const csvOptions: CsvOptions = {
+    skipEmptyLines: true,
+    ...csvOpts,
+  };
+  const allRows = parseLines(rawCsv, csvOptions);
+
+  if (allRows.length === 0) {
+    throw new Error("CSV file is empty or has no valid rows");
+  }
+
+  const [headerRow, ...dataRows] = allRows;
+  const headers = headerRow.map((h) => h.trim());
+  const previewData = dataRows.slice(0, previewRows);
+
+  return {
+    headers,
+    totalRows: dataRows.length,
+    firstRows: previewData,
+    delimiter: csvOpts.comma || ",",
+  };
+}

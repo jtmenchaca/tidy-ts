@@ -10,9 +10,9 @@ Deno.test("T214 NIH grants analysis - inspect metadata first", async () => {
   console.log("\n=== T214 File Metadata ===");
   console.log("Available sheets:", meta.sheets);
   console.log("Default sheet:", meta.defaultSheet);
-  console.log("Total rows:", meta.preview.totalRows);
+  console.log("Total rows:", meta.totalRows);
   console.log("\nFirst 3 rows:");
-  meta.preview.firstRows.forEach((row: string[], i: number) => {
+  meta.firstRows.forEach((row: string[], i: number) => {
     console.log(`Row ${i}:`, row.slice(0, 4)); // Show first 4 columns only
   });
 });

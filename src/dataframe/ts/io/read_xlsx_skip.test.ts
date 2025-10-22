@@ -44,8 +44,8 @@ Deno.test("readXLSXMetadata - returns file structure", async () => {
 
   expect(meta.sheets.length).toBeGreaterThan(0);
   expect(meta.defaultSheet).toBeTruthy();
-  expect(meta.preview.totalRows).toBeGreaterThan(0);
-  expect(meta.preview.firstRows.length).toBeGreaterThan(0);
+  expect(meta.totalRows).toBeGreaterThan(0);
+  expect(meta.firstRows.length).toBeGreaterThan(0);
 });
 
 Deno.test("readXLSXMetadata - preview shows first rows", async () => {
@@ -55,10 +55,10 @@ Deno.test("readXLSXMetadata - preview shows first rows", async () => {
   );
   console.log("meta", meta);
 
-  expect(meta.preview.firstRows.length).toBe(3);
-  expect(meta.preview.firstRows[0][0]).toContain("Defined as activity codes");
-  expect(meta.preview.firstRows[1][0]).toBe("FY");
-  expect(meta.preview.firstRows[2][0]).toBe("2015");
+  expect(meta.firstRows.length).toBe(3);
+  expect(meta.firstRows[0][0]).toContain("Defined as activity codes");
+  expect(meta.firstRows[1][0]).toBe("FY");
+  expect(meta.firstRows[2][0]).toBe("2015");
 });
 
 Deno.test("readXLSXMetadata - custom preview rows", async () => {
@@ -68,5 +68,5 @@ Deno.test("readXLSXMetadata - custom preview rows", async () => {
   );
   console.log("meta", meta);
 
-  expect(meta.preview.firstRows.length).toBe(2);
+  expect(meta.firstRows.length).toBe(2);
 });

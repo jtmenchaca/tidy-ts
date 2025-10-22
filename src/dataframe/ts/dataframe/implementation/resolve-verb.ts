@@ -57,6 +57,7 @@ import { count } from "../../verbs/aggregate/count.verb.ts";
 // Pivot
 import { pivot_longer, pivot_wider } from "../../verbs/reshape/pivot.verb.ts";
 import { transpose } from "../../verbs/reshape/transpose.verb.ts";
+import { unnest } from "../../verbs/reshape/unnest.verb.ts";
 
 // Row labels
 import {
@@ -364,6 +365,13 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   if (prop === "transpose") {
     return (expectedRows: number) => {
       return transpose({ numberOfRows: expectedRows })(df as any);
+    };
+  }
+
+  if (prop === "unnest") {
+    return (column: unknown) => {
+      const result = (unnest as any)(column)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
 
