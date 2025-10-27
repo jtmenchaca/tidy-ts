@@ -27,7 +27,6 @@ export const ARRAY_METHODS = new Set<string>([
   "entries",
   "keys",
   "values",
-  "toString",
   "toLocaleString",
   "valueOf",
   "copyWithin",

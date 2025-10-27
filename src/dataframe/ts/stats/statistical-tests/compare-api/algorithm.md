@@ -31,6 +31,7 @@ oneGroup = {
   distribution: { ✅
     toNormal(data): ✅
       RETURN shapiroWilk(data, α=0.05) ✅
+    // What about to other distributions?  KS test
   }
 }
 

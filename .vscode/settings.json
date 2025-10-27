@@ -5,9 +5,12 @@
   "deno.enablePaths": [
     "src/dataframe",
     "src/process",
-    "tests",
-    "examples",
-    "tmp"
+    "tests/bugs",
+    "tests/glm",
+    "tests/gee",
+    "tests/statistical_tests",
+    "tests/new_features",
+    "examples"
   ],
   // This is the only reliable way to completely ignore a file for the Deno language server
   // Exclude does not "ignore" the file it just makes it so it's not checked for errors
@@ -18,6 +21,9 @@
     "examples/benchmarks/python-and-R/__pycache__",
     "node_modules",
     "node_modules/**",
+    "node_modules/.deno",
+    "node_modules/.deno/**",
+    "**/node_modules/.deno/**",
     "docs/node_modules",
     "docs/node_modules/**",
     "**/node_modules/**",
@@ -37,7 +43,7 @@
     "tests/runtimes/",
     "tests/runtimes/**"
   ],
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "[typescript]": {
     "editor.defaultFormatter": "denoland.vscode-deno"
   },

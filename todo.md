@@ -1,0 +1,4 @@
+- Add ev1
+- Add zipf
+- Add pareto
+- Add dirac delta

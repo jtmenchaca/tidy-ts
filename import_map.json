@@ -12,8 +12,6 @@
     "hyparquet-compressors/": "npm:/hyparquet-compressors@^1.1.1/",
     "@deno/wasmbuild": "jsr:@deno/wasmbuild@^0.19.2",
     "@deno/wasmbuild/": "jsr:/@deno/wasmbuild@^0.19.2/",
-    "@hono/hono": "jsr:@hono/hono@^4.8.3",
-    "@hono/hono/": "jsr:/@hono/hono@^4.8.3/",
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@std/csv/": "jsr:/@std/csv@^1.0.6/",
     "@std/dotenv/": "jsr:/@std/dotenv@^0.225.5/",
@@ -38,15 +36,6 @@
     "react-vega": "npm:react-vega@^8.0.0",
     "react-vega/": "npm:/react-vega@^8.0.0/",
 
-    "arquero": "npm:arquero@^8.0.3",
-    "arquero/": "npm:/arquero@^8.0.3/",
-
-    "apache-arrow": "npm:apache-arrow@^17.0.0",
-    "apache-arrow/": "npm:/apache-arrow@^17.0.0/",
-
-    "danfojs": "npm:danfojs@^0.0.9",
-    "danfojs/": "npm:/danfojs@^0.0.9/",
-
     "@tidy-ts/dataframe": "./src/dataframe/mod.ts",
     "@tidy-ts/tidy-stats": "./src/tidy-stats/mod.ts",
     "@tidy-ts/tidy-utils": "./src/tidy-utils/mod.ts",
@@ -69,8 +58,6 @@
     "react-dom/": "npm:/react-dom@^19.1.1/",
     "tailwindcss": "npm:tailwindcss@^4.0.9",
     "tailwindcss/": "npm:/tailwindcss@^4.0.9/",
-    "zustand": "npm:zustand@^5.0.6",
-    "zustand/": "npm:/zustand@^5.0.6/",
     "vite": "npm:vite@^7.0.4",
     "vite/": "npm:/vite@^7.0.4/",
     "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^4.5.0",
@@ -96,6 +83,9 @@
     "@tmcp/adapter-valibot": "npm:@tmcp/adapter-valibot@^0.1.4",
     "@tmcp/adapter-valibot/": "npm:/@tmcp/adapter-valibot@^0.1.4/",
     "valibot": "npm:valibot@^1.1.0",
-    "valibot/": "npm:/valibot@^1.1.0/"
+    "valibot/": "npm:/valibot@^1.1.0/",
+
+    "@openai/agents": "npm:@openai/agents@^0.2.1",
+    "@openai/agents/": "npm:/@openai/agents@^0.2.1/"
   }
 }

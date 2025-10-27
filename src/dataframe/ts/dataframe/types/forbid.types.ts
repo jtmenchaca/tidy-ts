@@ -25,7 +25,6 @@ export type ForbiddenArrayMethods =
   | "join"
   | "entries"
   | "keys"
-  | "toString"
   | "toLocaleString"
   | "valueOf"
   | "copyWithin"

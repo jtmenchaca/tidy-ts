@@ -212,6 +212,26 @@ export type DataFrame<Row extends object = object> =
     toJSON(options?: { space?: number }): string;
 
     /**
+     * Convert DataFrame to a formatted table string.
+     *
+     * Returns a box-drawing table representation of the DataFrame.
+     *
+     * @param options - Optional formatting configuration
+     *   - `maxRows`: Maximum rows to display (default: all)
+     *   - `maxWidth`: Maximum column width (default: 20)
+     *   - `showIndex`: Show row indices (default: false)
+     *
+     * @returns Formatted table string
+     *
+     * @example
+     * console.log(df.toString())
+     *
+     * @example
+     * console.log(df.toString({ maxRows: 10, showIndex: true }))
+     */
+    toString(options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean }): string;
+
+    /**
      * Get the number of rows in the DataFrame.
      *
      * Returns the total count of rows. For grouped DataFrames, returns

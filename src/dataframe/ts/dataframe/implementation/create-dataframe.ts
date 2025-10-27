@@ -131,6 +131,81 @@ export function createColumnarDataFrameFromStore<
     return dataFrameToJSON(dataFrame as any, options);
   };
 
+  // String conversion - formatted table
+  api.toString = (options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean }) => {
+    const { maxRows, maxWidth = 20, showIndex = false } = options || {};
+
+    const tableData = api.toTable({ maxCols: 100, maxWidth, transpose: false });
+
+    if (tableData.length === 0) {
+      return "[Empty DataFrame]";
+    }
+
+    const dataToDisplay = maxRows !== undefined ? tableData.slice(0, maxRows) : tableData;
+    const columns = Object.keys(dataToDisplay[0]);
+    const allColumns = showIndex ? ["(idx)", ...columns] : columns;
+
+    const widths: Record<string, number> = {};
+
+    if (showIndex) {
+      widths["(idx)"] = Math.max("(idx)".length, String(dataToDisplay.length - 1).length);
+    }
+
+    columns.forEach((col) => {
+      widths[col] = Math.max(
+        col.length,
+        ...dataToDisplay.map((row: any) => {
+          const value = row[col];
+          if (value === null) return 6;
+          if (value === undefined) return 11;
+          if (value instanceof Date) return value.toISOString().length;
+          return String(value).length;
+        }),
+      );
+    });
+
+    const lines: string[] = [];
+    const headerRow = allColumns.map((col) => col.padEnd(widths[col])).join(" │ ");
+    const topBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┬─");
+    const middleBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┼─");
+    const bottomBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┴─");
+
+    lines.push("┌─" + topBorder + "─┐");
+    lines.push("│ " + headerRow + " │");
+    lines.push("├─" + middleBorder + "─┤");
+
+    dataToDisplay.forEach((row: any, index: number) => {
+      const rowData = [];
+
+      if (showIndex) {
+        rowData.push(String(index).padEnd(widths["(idx)"]));
+      }
+
+      columns.forEach((col) => {
+        const value = row[col];
+        let displayValue: string;
+
+        if (value === null) {
+          displayValue = "(null)";
+        } else if (value === undefined) {
+          displayValue = "(undefined)";
+        } else if (value instanceof Date) {
+          displayValue = value.toISOString();
+        } else {
+          displayValue = String(value);
+        }
+
+        rowData.push(displayValue.padEnd(widths[col]));
+      });
+
+      lines.push("│ " + rowData.join(" │ ") + " │");
+    });
+
+    lines.push("└─" + bottomBorder + "─┘");
+
+    return lines.join("\n");
+  };
+
   // ---- Tracing utilities ----
   api.getTrace = function () {
     return tracer.getSpans(this);

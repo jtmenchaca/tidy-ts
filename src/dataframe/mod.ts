@@ -28,3 +28,6 @@ export {
 
 // Browser setup function
 export { setupTidyTS } from "./ts/wasm/wasm-init.ts";
+
+// Utilities
+export { LLM } from "./ts/utilities/LLM/LLM.ts";
