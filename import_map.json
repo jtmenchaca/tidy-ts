@@ -89,6 +89,8 @@
     "valibot/": "npm:/valibot@^1.1.0/",
 
     "@openai/agents": "npm:@openai/agents@^0.2.1",
-    "@openai/agents/": "npm:/@openai/agents@^0.2.1/"
+    "@openai/agents/": "npm:/@openai/agents@^0.2.1/",
+    "openai": "npm:openai@^6.7.0",
+    "openai/": "npm:/openai@^6.7.0/"
   }
 }

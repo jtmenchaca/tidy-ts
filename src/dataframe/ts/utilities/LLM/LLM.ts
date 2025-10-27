@@ -1,6 +1,7 @@
 // LLM utility with Zod schema validation and type inference
 import { Agent, type AgentInputItem, run, user } from "@openai/agents";
 import "@std/dotenv/load";
+import OpenAI from "openai";
 import {
   z,
   ZodDate,
@@ -101,7 +102,89 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
 }
 
 /*───────────────────────────────────────────────────────────────────────────┐
-│  2 · main LLM function                                                     │
+│  2 · embeddings API types and function                                    │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/** OpenAI embedding models */
+export type EmbeddingModel =
+  | "text-embedding-3-small"
+  | "text-embedding-3-large"
+  | "text-embedding-ada-002";
+
+/**
+ * Get vector embeddings for text using OpenAI's embeddings API.
+ *
+ * Embeddings are useful for:
+ * - Search (ranking results by relevance)
+ * - Clustering (grouping similar text)
+ * - Recommendations (finding related items)
+ * - Anomaly detection (identifying outliers)
+ * - Classification (categorizing text)
+ *
+ * @param input - Text string or array of text strings to embed
+ * @param model - Embedding model to use (default: "text-embedding-3-large")
+ * @returns Embedding vector (number[]) for single string, or array of vectors (number[][]) for array input
+ *
+ * @example
+ * ```ts
+ * import { LLM } from "@tidy-ts/dataframe";
+ *
+ * // Single text - returns number[]
+ * const embedding = await LLM.embed("Hello world");
+ * console.log(embedding.length); // 3072 for text-embedding-3-large
+ *
+ * // Multiple texts - returns number[][]
+ * const embeddings = await LLM.embed([
+ *   "First document",
+ *   "Second document"
+ * ]);
+ * console.log(embeddings.length); // 2
+ * console.log(embeddings[0].length); // 3072
+ *
+ * // Use smaller model
+ * const smallEmbedding = await LLM.embed(
+ *   "Complex text",
+ *   "text-embedding-3-small"
+ * );
+ * console.log(smallEmbedding.length); // 1536
+ * ```
+ */
+// Overload: single string returns number[]
+export async function getEmbeddings(
+  input: string,
+  model?: EmbeddingModel,
+): Promise<number[]>;
+
+// Overload: array of strings returns number[][]
+export async function getEmbeddings(
+  input: string[],
+  model?: EmbeddingModel,
+): Promise<number[][]>;
+
+// Implementation
+export async function getEmbeddings(
+  input: string | string[],
+  model: EmbeddingModel = "text-embedding-3-large",
+): Promise<number[] | number[][]> {
+  const openai = new OpenAI();
+
+  const response = await openai.embeddings.create({
+    model,
+    input,
+    encoding_format: "float",
+  });
+
+  // Sort by index to maintain input order, then extract embedding vectors
+  const embeddings = response.data
+    .sort((a, b) => a.index - b.index)
+    .map((item) => item.embedding);
+
+  // Return single embedding for string input, array for array input
+  return typeof input === "string" ? embeddings[0] : embeddings;
+}
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  3 · main LLM function                                                     │
 └───────────────────────────────────────────────────────────────────────────*/
 
 /**
@@ -126,13 +209,13 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
  * import { z } from "zod";
  *
  * // Simple string response (no schema)
- * const answer = await LLM({
+ * const answer = await LLM.respond({
  *   userInput: "What is the weather in Tokyo?",
  * });
  * console.log(answer); // Typed as string
  *
  * // Structured response with schema
- * const weather = await LLM({
+ * const weather = await LLM.respond({
  *   userInput: "What is the weather in Tokyo?",
  *   schema: z.object({
  *     weather: z.string(),
@@ -141,7 +224,7 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
  * console.log(weather.weather); // Typed as string
  *
  * // Date fields are automatically converted
- * const event = await LLM({
+ * const event = await LLM.respond({
  *   userInput: "When is the next solar eclipse?",
  *   schema: z.object({
  *     date: z.date(),
@@ -151,7 +234,7 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
  * console.log(event.date.getFullYear()); // Typed as Date object
  *
  * // With conversation context
- * const followUp = await LLM({
+ * const followUp = await LLM.respond({
  *   userInput: "What about tomorrow?",
  *   priorMessages: [
  *     user("What is the weather today?"),
@@ -162,7 +245,7 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
  * ```
  */
 // Overload: with schema
-export async function LLM<T extends z.ZodObject>({
+async function respond<T extends z.ZodObject>({
   userInput,
   priorMessages,
   instructions,
@@ -177,7 +260,7 @@ export async function LLM<T extends z.ZodObject>({
 }): Promise<z.infer<T>>;
 
 // Overload: without schema (returns string)
-export async function LLM({
+async function respond({
   userInput,
   priorMessages,
   instructions,
@@ -190,7 +273,7 @@ export async function LLM({
 }): Promise<string>;
 
 // Implementation
-export async function LLM<T extends z.ZodObject>({
+async function respond<T extends z.ZodObject>({
   userInput,
   priorMessages = [],
   instructions = "You are a helpful assistant.",
@@ -241,3 +324,105 @@ export async function LLM<T extends z.ZodObject>({
 
   return output as z.infer<T> | string;
 }
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  4 · embedding comparison                                                  │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * Compare one embedding against an array of embeddings and return them ordered by similarity.
+ * Uses Euclidean distance as the similarity metric (smaller distance = more similar).
+ *
+ * @param query - The query embedding to compare against
+ * @param candidates - Array of candidate embeddings to compare with
+ * @param n - Optional number of top results to return (default: all results)
+ * @returns Array of objects with index, embedding, and distance, sorted by distance (ascending)
+ *
+ * @example
+ * ```ts
+ * import { LLM } from "@tidy-ts/dataframe";
+ *
+ * // Get embeddings for query and candidates
+ * const query = await LLM.embed("The cat sits on the mat");
+ * const candidates = await LLM.embed([
+ *   "A feline rests on the rug",
+ *   "Python is a programming language",
+ *   "The dog runs in the park"
+ * ]);
+ *
+ * // Find most similar embeddings
+ * const results = LLM.compareEmbeddings({ query, candidates });
+ * console.log(results[0].index); // Index of most similar
+ * console.log(results[0].distance); // Distance to most similar
+ *
+ * // Get only top 2 results
+ * const top2 = LLM.compareEmbeddings({ query, candidates, n: 2 });
+ * console.log(top2.length); // 2
+ * ```
+ */
+function compareEmbeddings({
+  query,
+  candidates,
+  n,
+}: {
+  query: number[];
+  candidates: number[][];
+  n?: number;
+}): Array<{ index: number; embedding: number[]; distance: number }> {
+  // Calculate Euclidean distance for each candidate
+  const results = candidates.map((candidate, index) => {
+    const distance = Math.sqrt(
+      query.reduce((sum, val, i) => sum + Math.pow(val - candidate[i], 2), 0),
+    );
+    return { index, embedding: candidate, distance };
+  });
+
+  // Sort by distance (ascending - smaller is more similar)
+  results.sort((a, b) => a.distance - b.distance);
+
+  // Return top n results if specified
+  return n !== undefined ? results.slice(0, n) : results;
+}
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  5 · LLM utility object                                                    │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/**
+ * LLM utility functions for language models and embeddings.
+ *
+ * @example
+ * ```typescript
+ * import { LLM } from "@tidy-ts/dataframe";
+ * import { z } from "zod";
+ *
+ * // Get embeddings
+ * const embedding = await LLM.embed("Hello world");
+ * console.log(embedding.length); // 3072
+ *
+ * // Get structured response
+ * const result = await LLM.respond({
+ *   userInput: "What is 2+2?",
+ *   schema: z.object({ answer: z.number() }),
+ * });
+ * console.log(result.answer); // 4
+ *
+ * // Compare embeddings
+ * const query = await LLM.embed("cat");
+ * const candidates = await LLM.embed(["dog", "car", "kitten"]);
+ * const results = LLM.compareEmbeddings({ query, candidates, n: 2 });
+ * console.log(results[0].index); // Index of most similar
+ * ```
+ */
+export const LLM: {
+  /** Get vector embeddings for text using OpenAI's embeddings API */
+  readonly embed: typeof getEmbeddings;
+  /** Get structured responses from language models with Zod schema validation */
+  readonly respond: typeof respond;
+  /** Compare embeddings and return them ordered by similarity */
+  readonly compareEmbeddings: typeof compareEmbeddings;
+} = {
+  embed: getEmbeddings,
+  respond,
+  compareEmbeddings,
+};

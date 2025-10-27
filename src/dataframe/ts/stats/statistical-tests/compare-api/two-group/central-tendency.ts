@@ -271,7 +271,7 @@ export async function centralTendencyToEachOther({
 
   // If interpretation is requested, add AI-generated interpretation
   if (interpret) {
-    const llm_input = await LLM({
+    const llm_input = await LLM.respond({
       instructions: `
         You are a helpful assistant that analyzes statistical tests and provides detailed explanations for novices. 
         
