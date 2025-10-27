@@ -27,6 +27,9 @@
     "playwright": "npm:playwright@^1.54.1",
     "playwright/": "npm:/playwright@^1.54.1/",
 
+    "arquero": "npm:arquero@^8.0.3",
+    "arquero/": "npm:/arquero@^8.0.3/",
+
     "vega-lite": "npm:vega-lite@^6.4.1",
     "vega-lite/": "npm:/vega-lite@^6.4.1/",
     "vega": "npm:vega@^6.2.0",

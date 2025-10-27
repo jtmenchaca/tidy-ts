@@ -1,5 +1,6 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
+import { z } from "zod";
 
 Deno.test("Nested DataFrame - basic nested structure", () => {
   const nested = createDataFrame([
@@ -103,7 +104,9 @@ Deno.test("Nested DataFrame - deeply nested DataFrames", () => {
 });
 
 Deno.test("Nested DataFrame - empty nested DataFrame", () => {
-  const emptyNested = createDataFrame<{ value: number }>([]);
+  const emptyNested = createDataFrame([], {
+    schema: z.object({ value: z.number() }),
+  });
 
   const df = createDataFrame([
     { id: 1, data: emptyNested },

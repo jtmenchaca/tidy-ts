@@ -1,7 +1,14 @@
 // LLM utility with Zod schema validation and type inference
-import { Agent, run, user, type AgentInputItem } from "@openai/agents";
+import { Agent, type AgentInputItem, run, user } from "@openai/agents";
 import "@std/dotenv/load";
-import { z, ZodDate, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
+import {
+  z,
+  ZodDate,
+  ZodDefault,
+  ZodNullable,
+  ZodOptional,
+  type ZodTypeAny,
+} from "zod";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -74,8 +81,10 @@ function autoConvertSchema<T extends z.ZodObject<any>>(
       if (unwrapped.optional) converted = converted.optional();
       if (unwrapped.nullable) converted = converted.nullable();
       if (unwrapped.hasDefault) {
-        // deno-lint-ignore no-explicit-any
-        converted = converted.default((unwrapped.base as any)._def.defaultValue());
+        converted = converted.default(
+          // deno-lint-ignore no-explicit-any
+          (unwrapped.base as any)._def.defaultValue(),
+        );
       }
 
       convertedShape[key] = converted;
@@ -199,22 +208,25 @@ export async function LLM<T extends z.ZodObject>({
 
   const agent = conversion
     ? new Agent({
-        name: "agent",
-        model: model,
-        instructions: instructions,
-        outputType: conversion.convertedSchema,
-      })
+      name: "agent",
+      model: model,
+      instructions: instructions,
+      outputType: conversion.convertedSchema,
+    })
     : new Agent({
-        name: "agent",
-        model: model,
-        instructions: instructions,
-      });
+      name: "agent",
+      model: model,
+      instructions: instructions,
+    });
 
   const result = await run(agent, [...priorMessages, user(userInput)]);
   const output = result.finalOutput as z.infer<T> | string;
 
   // Convert datetime strings back to Date objects for fields that were originally z.date()
-  if (conversion && conversion.dateFields.size > 0 && typeof output === "object" && output !== null) {
+  if (
+    conversion && conversion.dateFields.size > 0 &&
+    typeof output === "object" && output !== null
+  ) {
     // deno-lint-ignore no-explicit-any
     const converted: any = { ...output };
     for (const field of conversion.dateFields) {

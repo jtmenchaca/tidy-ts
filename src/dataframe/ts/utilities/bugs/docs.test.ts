@@ -1,6 +1,6 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
-Deno.test("Jedi Intelligence Unit: Homeworld Analysis", () => {
+Deno.test("Jedi Intelligence Unit: Homeworld Analysis", async () => {
   // 1. Load character data
   const characters = createDataFrame([
     {
@@ -92,7 +92,7 @@ Deno.test("Jedi Intelligence Unit: Homeworld Analysis", () => {
   const tatooine = characters.filter((r) => r.homeworld === "Tatooine");
   const others = characters.filter((r) => r.homeworld !== "Tatooine");
 
-  const desertTest = s.compare.twoGroups.centralTendency.toEachOther({
+  const desertTest = await s.compare.twoGroups.centralTendency.toEachOther({
     x: tatooine.mass_kg,
     y: others.mass_kg,
     parametric: "parametric",
@@ -118,7 +118,7 @@ Degrees of freedom: ${desertTest.degrees_of_freedom}
   const humans = analysis.filter((r) => r.species === "Human");
   const droids = analysis.filter((r) => r.species === "Droid");
 
-  const bmiTest = s.compare.twoGroups.centralTendency.toEachOther({
+  const bmiTest = await s.compare.twoGroups.centralTendency.toEachOther({
     x: humans.bmi,
     y: droids.bmi,
     parametric: "nonparametric",

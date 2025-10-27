@@ -1,4 +1,3 @@
-
 // import { createDataFrame, LLM } from "@tidy-ts/dataframe";
 // import { z } from "zod";
 
@@ -27,7 +26,6 @@
 //   // │ Jane │ 25  │ Jane is 25 years ... │
 //   // └──────┴─────┴──────────────────────┘
 // });
-
 
 // Deno.test("test-2", async () => {
 //   const df = createDataFrame([

@@ -669,7 +669,7 @@ export const DOCS: Record<string, DocEntry> = {
     ],
     related: ["pivotLonger", "mutate", "filter"],
     antiPatterns: [
-      '❌ BAD: Trying to unnest non-array columns - use mutate to extract first',
+      "❌ BAD: Trying to unnest non-array columns - use mutate to extract first",
       "❌ BAD: Unnesting object columns directly - objects aren't arrays",
     ],
     bestPractices: [

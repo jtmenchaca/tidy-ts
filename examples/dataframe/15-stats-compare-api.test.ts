@@ -58,12 +58,12 @@ Deno.test("Compare - Normality Test", () => {
   console.log(`  P-value: ${result.p_value}`);
 });
 
-Deno.test("Compare - Two Groups Central Tendency", () => {
+Deno.test("Compare - Two Groups Central Tendency", async () => {
   const x = [1, 2, 3, 4, 5];
   const y = [6, 7, 8, 9, 10];
 
   // Parametric t-test
-  const tTest = s.compare.twoGroups.centralTendency.toEachOther({
+  const tTest = await s.compare.twoGroups.centralTendency.toEachOther({
     x,
     y,
     parametric: "parametric",
@@ -75,7 +75,7 @@ Deno.test("Compare - Two Groups Central Tendency", () => {
   console.log(`  P-value: ${tTest.p_value}`);
 
   // Nonparametric Mann-Whitney U test
-  const mannWhitney = s.compare.twoGroups.centralTendency.toEachOther({
+  const mannWhitney = await s.compare.twoGroups.centralTendency.toEachOther({
     x,
     y,
     parametric: "nonparametric",
@@ -86,12 +86,12 @@ Deno.test("Compare - Two Groups Central Tendency", () => {
   console.log(`  P-value: ${mannWhitney.p_value}`);
 });
 
-Deno.test("Compare - Correlation Tests", () => {
+Deno.test("Compare - Correlation Tests", async () => {
   const x = [1, 2, 3, 4, 5];
   const y = [2, 4, 6, 8, 10];
 
   // Pearson correlation
-  const pearson = s.compare.twoGroups.association.toEachOther({
+  const pearson = await s.compare.twoGroups.association.toEachOther({
     x,
     y,
     method: "pearson",
@@ -103,7 +103,7 @@ Deno.test("Compare - Correlation Tests", () => {
   console.log(`  P-value: ${pearson.p_value}`);
 
   // Spearman correlation
-  const spearman = s.compare.twoGroups.association.toEachOther({
+  const spearman = await s.compare.twoGroups.association.toEachOther({
     x,
     y,
     method: "spearman",
@@ -115,11 +115,11 @@ Deno.test("Compare - Correlation Tests", () => {
   console.log(`  P-value: ${spearman.p_value}`);
 });
 
-Deno.test("Compare - Auto Test Selection", () => {
+Deno.test("Compare - Auto Test Selection", async () => {
   const skewedData = [1, 1, 1, 2, 2, 3, 4, 5, 10, 20];
 
   // Auto mode will choose appropriate test based on data
-  const result = s.compare.oneGroup.centralTendency.toValue({
+  const result = await s.compare.oneGroup.centralTendency.toValue({
     data: skewedData,
     hypothesizedValue: 5,
     parametric: "auto",

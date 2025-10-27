@@ -229,7 +229,9 @@ export type DataFrame<Row extends object = object> =
      * @example
      * console.log(df.toString({ maxRows: 10, showIndex: true }))
      */
-    toString(options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean }): string;
+    toString(
+      options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean },
+    ): string;
 
     /**
      * Get the number of rows in the DataFrame.

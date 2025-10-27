@@ -1,6 +1,6 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
-Deno.test("Homepage Examples Output", () => {
+Deno.test("Homepage Examples Output", async () => {
   console.log("=== Testing Homepage Examples Output ===\n");
 
   // Test 1: Data Creation
@@ -50,7 +50,7 @@ Deno.test("Homepage Examples Output", () => {
   const humans = analysis.filter((r) => r.species === "Human");
   const droids = analysis.filter((r) => r.species === "Droid");
 
-  const bmiTest = s.compare.twoGroups.centralTendency.toEachOther({
+  const bmiTest = await s.compare.twoGroups.centralTendency.toEachOther({
     x: humans.bmi,
     y: droids.bmi,
     parametric: "auto", // Auto-detects appropriate test based on normality

@@ -58,7 +58,7 @@ type MannWhitneyTestResultWithInterpretation = MannWhitneyTestResult & {
  */
 
 // Overload: parametric with interpret
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -77,7 +77,7 @@ export function centralTendencyToEachOther({
 }): Promise<TwoSampleTTestResultWithInterpretation>;
 
 // Overload: parametric without interpret
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -96,7 +96,7 @@ export function centralTendencyToEachOther({
 }): Promise<TwoSampleTTestResult>;
 
 // Overload: nonparametric with interpret
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -115,7 +115,7 @@ export function centralTendencyToEachOther({
 }): Promise<MannWhitneyTestResultWithInterpretation>;
 
 // Overload: nonparametric without interpret
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -134,7 +134,7 @@ export function centralTendencyToEachOther({
 }): Promise<MannWhitneyTestResult>;
 
 // Overload: auto with interpret (returns Promise)
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -150,10 +150,13 @@ export function centralTendencyToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   interpret: true;
-}): Promise<TwoSampleTTestResultWithInterpretation | MannWhitneyTestResultWithInterpretation>;
+}): Promise<
+  | TwoSampleTTestResultWithInterpretation
+  | MannWhitneyTestResultWithInterpretation
+>;
 
 // Overload: auto without interpret
-export function centralTendencyToEachOther({
+export async function centralTendencyToEachOther({
   x,
   y,
   parametric,
@@ -195,7 +198,12 @@ export async function centralTendencyToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   interpret?: boolean;
-}): Promise<TwoSampleTTestResult | MannWhitneyTestResult | TwoSampleTTestResultWithInterpretation | MannWhitneyTestResultWithInterpretation> {
+}): Promise<
+  | TwoSampleTTestResult
+  | MannWhitneyTestResult
+  | TwoSampleTTestResultWithInterpretation
+  | MannWhitneyTestResultWithInterpretation
+> {
   // Convert data to regular arrays and filter out null/undefined/infinite values
   const cleanX = cleanNumeric(x);
   const cleanY = cleanNumeric(y);
@@ -206,7 +214,6 @@ export async function centralTendencyToEachOther({
     : comparator === "less than"
     ? "less"
     : "greater";
-
 
   const nmin = Math.min(cleanX.length, cleanY.length);
 
@@ -264,7 +271,6 @@ export async function centralTendencyToEachOther({
 
   // If interpretation is requested, add AI-generated interpretation
   if (interpret) {
-    
     const llm_input = await LLM({
       instructions: `
         You are a helpful assistant that analyzes statistical tests and provides detailed explanations for novices. 
@@ -294,17 +300,37 @@ export async function centralTendencyToEachOther({
       userInput: `
         INPUT PARAMETERS (user specifications):
         - Test type requested: ${parametric === "auto" ? "auto" : parametric}
-        ${assumeEqualVariances !== undefined ? `- Variance assumption specified: ${assumeEqualVariances ? "equal variances" : "unequal variances"}` : "- Variance assumption: not specified (auto-determined)"}
+        ${
+        assumeEqualVariances !== undefined
+          ? `- Variance assumption specified: ${
+            assumeEqualVariances ? "equal variances" : "unequal variances"
+          }`
+          : "- Variance assumption: not specified (auto-determined)"
+      }
         - Alternative hypothesis: ${comparator}
         - Significance level: ${alpha}
         
         DATA:
-        Group x (n=${cleanX.length}): ${cleanX.slice(0, 10).join(', ')}${cleanX.length > 10 ? '...' : ''}
-        Group y (n=${cleanY.length}): ${cleanY.slice(0, 10).join(', ')}${cleanY.length > 10 ? '...' : ''}
+        Group x (n=${cleanX.length}): ${cleanX.slice(0, 10).join(", ")}${
+        cleanX.length > 10 ? "..." : ""
+      }
+        Group y (n=${cleanY.length}): ${cleanY.slice(0, 10).join(", ")}${
+        cleanY.length > 10 ? "..." : ""
+      }
         
         TEST DECISIONS:
-        - Test actually performed: ${useParametric ? "Independent samples t-test" : "Mann-Whitney U test"}
-        ${useParametric ? `- Variance handling: ${equalVar ? "equal variances (pooled t-test)" : "unequal variances (Welch's t-test)"}` : ""}
+        - Test actually performed: ${
+        useParametric ? "Independent samples t-test" : "Mann-Whitney U test"
+      }
+        ${
+        useParametric
+          ? `- Variance handling: ${
+            equalVar
+              ? "equal variances (pooled t-test)"
+              : "unequal variances (Welch's t-test)"
+          }`
+          : ""
+      }
         
         TEST RESULTS:
         ${JSON.stringify(testResult, null, 2)}

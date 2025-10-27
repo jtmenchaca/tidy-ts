@@ -1,4 +1,4 @@
-import { createDataFrame} from "@tidy-ts/dataframe";
+import { createDataFrame } from "@tidy-ts/dataframe";
 
 Deno.test("toString()", () => {
   const df = createDataFrame([

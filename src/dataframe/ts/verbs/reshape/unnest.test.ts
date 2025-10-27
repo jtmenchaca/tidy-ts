@@ -341,7 +341,9 @@ Deno.test("unnest - column containing objects with nested arrays", () => {
   // The product column itself is not an array, so we can't unnest it
   // To access the nested vitamins array, you'd need to first extract/transform it
   console.log("\nProduct is an object column, not an array column.");
-  console.log("You cannot unnest object properties directly - only array columns.");
+  console.log(
+    "You cannot unnest object properties directly - only array columns.",
+  );
 });
 
 Deno.test("unnest - sequential unnest (flatten nested arrays)", () => {

@@ -84,7 +84,7 @@ Deno.test("Example Test", async () => {
     )
     .culmenLengthMm.filter((x): x is number => x !== null);
 
-  const culmenLengthComparison = s.compare.twoGroups.centralTendency
+  const culmenLengthComparison = await s.compare.twoGroups.centralTendency
     .toEachOther({
       x: adelieData,
       y: chinstrapData,
@@ -125,13 +125,14 @@ Deno.test("Example Test", async () => {
     .filter((row) => row.sex === "FEMALE")
     .bodyMassG.filter((x): x is number => x !== null);
 
-  const bodyMassComparison = s.compare.twoGroups.centralTendency.toEachOther({
-    x: maleData,
-    y: femaleData,
-    parametric: "nonparametric", // Use Mann-Whitney U test
-    comparator: "not equal to",
-    alpha: 0.05,
-  });
+  const bodyMassComparison = await s.compare.twoGroups.centralTendency
+    .toEachOther({
+      x: maleData,
+      y: femaleData,
+      parametric: "nonparametric", // Use Mann-Whitney U test
+      comparator: "not equal to",
+      alpha: 0.05,
+    });
 
   console.log("\nBody Mass Comparison (Male vs Female):");
   console.log(`Test: ${bodyMassComparison.test_name}`);

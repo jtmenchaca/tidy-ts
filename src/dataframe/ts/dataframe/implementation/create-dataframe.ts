@@ -132,7 +132,9 @@ export function createColumnarDataFrameFromStore<
   };
 
   // String conversion - formatted table
-  api.toString = (options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean }) => {
+  api.toString = (
+    options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean },
+  ) => {
     const { maxRows, maxWidth = 20, showIndex = false } = options || {};
 
     const tableData = api.toTable({ maxCols: 100, maxWidth, transpose: false });
@@ -141,14 +143,19 @@ export function createColumnarDataFrameFromStore<
       return "[Empty DataFrame]";
     }
 
-    const dataToDisplay = maxRows !== undefined ? tableData.slice(0, maxRows) : tableData;
+    const dataToDisplay = maxRows !== undefined
+      ? tableData.slice(0, maxRows)
+      : tableData;
     const columns = Object.keys(dataToDisplay[0]);
     const allColumns = showIndex ? ["(idx)", ...columns] : columns;
 
     const widths: Record<string, number> = {};
 
     if (showIndex) {
-      widths["(idx)"] = Math.max("(idx)".length, String(dataToDisplay.length - 1).length);
+      widths["(idx)"] = Math.max(
+        "(idx)".length,
+        String(dataToDisplay.length - 1).length,
+      );
     }
 
     columns.forEach((col) => {
@@ -165,10 +172,18 @@ export function createColumnarDataFrameFromStore<
     });
 
     const lines: string[] = [];
-    const headerRow = allColumns.map((col) => col.padEnd(widths[col])).join(" │ ");
-    const topBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┬─");
-    const middleBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┼─");
-    const bottomBorder = allColumns.map((col) => "─".repeat(widths[col])).join("─┴─");
+    const headerRow = allColumns.map((col) => col.padEnd(widths[col])).join(
+      " │ ",
+    );
+    const topBorder = allColumns.map((col) => "─".repeat(widths[col])).join(
+      "─┬─",
+    );
+    const middleBorder = allColumns.map((col) => "─".repeat(widths[col])).join(
+      "─┼─",
+    );
+    const bottomBorder = allColumns.map((col) => "─".repeat(widths[col])).join(
+      "─┴─",
+    );
 
     lines.push("┌─" + topBorder + "─┐");
     lines.push("│ " + headerRow + " │");

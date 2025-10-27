@@ -1,5 +1,5 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
-import { expect } from "@std/expect";   
+import { expect } from "@std/expect";
 
 Deno.test("Getting Started - Quick Tutorial", () => {
   const sales = createDataFrame([
