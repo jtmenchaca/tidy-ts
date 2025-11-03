@@ -360,7 +360,7 @@ async function respond<T extends z.ZodObject>({
  * console.log(top2.length); // 2
  * ```
  */
-function compareEmbeddings({
+function _compareEmbeddings({
   query,
   candidates,
   n,
@@ -419,10 +419,7 @@ export const LLM: {
   readonly embed: typeof getEmbeddings;
   /** Get structured responses from language models with Zod schema validation */
   readonly respond: typeof respond;
-  /** Compare embeddings and return them ordered by similarity */
-  readonly compareEmbeddings: typeof compareEmbeddings;
 } = {
   embed: getEmbeddings,
   respond,
-  compareEmbeddings,
 };

@@ -25,7 +25,7 @@ Deno.test("validation - special chars are truly preserved", async () => {
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 
@@ -62,7 +62,7 @@ Deno.test("validation - large numbers maintain precision", async () => {
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 
@@ -138,7 +138,7 @@ Deno.test("validation - wide table preserves all columns", async () => {
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const rawReloaded = await parseXLSXRaw(tempPath);
 
     // Verify column count is preserved
@@ -180,7 +180,7 @@ Deno.test("validation - empty cells remain empty, not converted to defaults", as
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 
@@ -210,7 +210,7 @@ Deno.test("validation - dates preserve time information", async () => {
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 
@@ -254,7 +254,7 @@ Deno.test("validation - long strings preserve full content", async () => {
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 
@@ -303,7 +303,7 @@ Deno.test("validation - penguins dataset row count and undefined handling", asyn
 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
     const reloadRows = reloaded.toArray();
 

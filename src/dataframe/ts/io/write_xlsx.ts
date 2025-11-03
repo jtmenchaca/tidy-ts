@@ -15,8 +15,8 @@ interface WriteXLSXOpts {
  * Supports writing to specific sheets. If the file exists, it will be updated
  * with the new sheet data (replacing if the sheet exists, or adding if new).
  *
- * @param path - File path where the XLSX file should be written
  * @param dataFrame - The DataFrame to export
+ * @param path - File path where the XLSX file should be written
  * @param opts - Options including sheet name (defaults to "Sheet1")
  *
  * @returns A Promise that resolves when the file is successfully written
@@ -27,15 +27,15 @@ interface WriteXLSXOpts {
  * const df2 = createDataFrame([{ product: "Widget", price: 9.99 }]);
  *
  * // Write to Sheet1 (default)
- * await writeXLSX("./data.xlsx", df1);
+ * await writeXLSX(df1, "./data.xlsx");
  *
  * // Write to a different sheet in the same file
- * await writeXLSX("./data.xlsx", df2, { sheet: "Products" });
+ * await writeXLSX(df2, "./data.xlsx", { sheet: "Products" });
  * ```
  */
 export async function writeXLSX<T extends Record<string, unknown>>(
-  path: string,
   dataFrame: DataFrame<T>,
+  path: string,
   opts: WriteXLSXOpts = {},
 ): Promise<void> {
   const sheetName = opts.sheet ?? "Sheet1";
@@ -470,7 +470,11 @@ function buildWorksheet<T extends Record<string, unknown>>(
 
 function buildSharedStrings(strings: string[]): string {
   const items = strings
-    .map((str) => `<si><t>${escapeXml(str)}</t></si>`)
+    .map((str) => {
+      const escaped = escapeXml(str);
+      // Add xml:space="preserve" to handle whitespace and special characters correctly
+      return `<si><t xml:space="preserve">${escaped}</t></si>`;
+    })
     .join("");
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -590,7 +594,11 @@ function escapeXml(str: string): string {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+    .replace(/'/g, "&apos;")
+    // Remove control characters that are invalid in XML (except tab, newline, carriage return)
+    // This fixes Excel recovery errors with certain string data
+    // deno-lint-ignore no-control-regex
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 }
 
 /*───────────────────────────────────────────────────────────────────────────┐

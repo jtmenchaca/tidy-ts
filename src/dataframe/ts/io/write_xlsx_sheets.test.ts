@@ -12,7 +12,7 @@ Deno.test("writeXLSX - single sheet with default name", async () => {
     { name: "Bob", age: 25 },
   ]);
 
-  await writeXLSX(TEST_FILE, df);
+  await writeXLSX(df, TEST_FILE);
 
   const schema = z.object({
     name: z.string(),
@@ -33,7 +33,7 @@ Deno.test("writeXLSX - single sheet with custom name", async () => {
     { product: "Gadget", price: 19.99 },
   ]);
 
-  await writeXLSX(TEST_FILE, df, { sheet: "Products" });
+  await writeXLSX(df, TEST_FILE, { sheet: "Products" });
 
   const schema = z.object({
     product: z.string(),
@@ -60,10 +60,10 @@ Deno.test("writeXLSX - multiple sheets in same file", async () => {
   ]);
 
   // Write first sheet
-  await writeXLSX(TEST_FILE, users, { sheet: "Users" });
+  await writeXLSX(users, TEST_FILE, { sheet: "Users" });
 
   // Write second sheet to same file
-  await writeXLSX(TEST_FILE, products, { sheet: "Products" });
+  await writeXLSX(products, TEST_FILE, { sheet: "Products" });
 
   // Read both sheets
   const userSchema = z.object({
@@ -106,10 +106,10 @@ Deno.test("writeXLSX - replace existing sheet", async () => {
   ]);
 
   // Write initial data
-  await writeXLSX(TEST_FILE, df1, { sheet: "Data" });
+  await writeXLSX(df1, TEST_FILE, { sheet: "Data" });
 
   // Replace with new data
-  await writeXLSX(TEST_FILE, df2, { sheet: "Data" });
+  await writeXLSX(df2, TEST_FILE, { sheet: "Data" });
 
   // Read and verify
   const schema = z.object({
@@ -143,9 +143,9 @@ Deno.test("writeXLSX - three sheets in same file", async () => {
   ]);
 
   // Write three sheets
-  await writeXLSX(TEST_FILE, users, { sheet: "Users" });
-  await writeXLSX(TEST_FILE, products, { sheet: "Products" });
-  await writeXLSX(TEST_FILE, orders, { sheet: "Orders" });
+  await writeXLSX(users, TEST_FILE, { sheet: "Users" });
+  await writeXLSX(products, TEST_FILE, { sheet: "Products" });
+  await writeXLSX(orders, TEST_FILE, { sheet: "Orders" });
 
   // Verify all three sheets
   const userSchema = z.object({ id: z.number(), name: z.string() });
@@ -190,13 +190,13 @@ Deno.test("writeXLSX - preserve existing sheets when adding new", async () => {
   ]);
 
   // Write first sheet
-  await writeXLSX(TEST_FILE, sheet1, { sheet: "First" });
+  await writeXLSX(sheet1, TEST_FILE, { sheet: "First" });
 
   // Add second sheet
-  await writeXLSX(TEST_FILE, sheet2, { sheet: "Second" });
+  await writeXLSX(sheet2, TEST_FILE, { sheet: "Second" });
 
   // Add third sheet
-  await writeXLSX(TEST_FILE, sheet3, { sheet: "Third" });
+  await writeXLSX(sheet3, TEST_FILE, { sheet: "Third" });
 
   // Verify all three sheets still exist
   const schema = z.object({
@@ -228,13 +228,13 @@ Deno.test("writeXLSX - replace middle sheet preserves others", async () => {
   const sheet3 = createDataFrame([{ x: 3 }]);
 
   // Create three sheets
-  await writeXLSX(TEST_FILE, sheet1, { sheet: "Sheet1" });
-  await writeXLSX(TEST_FILE, sheet2, { sheet: "Sheet2" });
-  await writeXLSX(TEST_FILE, sheet3, { sheet: "Sheet3" });
+  await writeXLSX(sheet1, TEST_FILE, { sheet: "Sheet1" });
+  await writeXLSX(sheet2, TEST_FILE, { sheet: "Sheet2" });
+  await writeXLSX(sheet3, TEST_FILE, { sheet: "Sheet3" });
 
   // Replace middle sheet
   const newSheet2 = createDataFrame([{ x: 999 }]);
-  await writeXLSX(TEST_FILE, newSheet2, { sheet: "Sheet2" });
+  await writeXLSX(newSheet2, TEST_FILE, { sheet: "Sheet2" });
 
   // Verify all sheets
   const schema = z.object({ x: z.number() });

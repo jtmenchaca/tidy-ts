@@ -218,7 +218,6 @@ export function inner_join<
 
           // Call WASM
           try {
-            console.log("trying WASM");
             const wasmResult = inner_join_typed_multi_u32(
               leftColumnData,
               rightColumnData,
@@ -227,7 +226,7 @@ export function inner_join<
             const rightIndices = Array.from((wasmResult as any).takeRight());
             return { leftIndices, rightIndices };
           } catch {
-            console.log("falling back to JavaScript");
+            // Fallback to JavaScript implementation
             // JavaScript fallback
             const rightMap = new Map<string, number[]>();
 

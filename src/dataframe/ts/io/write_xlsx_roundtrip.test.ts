@@ -26,7 +26,7 @@ Deno.test("roundtrip - mixed-types.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -52,7 +52,7 @@ Deno.test("roundtrip - single-row.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -76,7 +76,7 @@ Deno.test("roundtrip - empty-cells.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -134,7 +134,7 @@ Deno.test("roundtrip - wide-table.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -159,7 +159,7 @@ Deno.test("roundtrip - large-numbers.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -191,7 +191,7 @@ Deno.test("roundtrip - long-strings.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -215,7 +215,7 @@ Deno.test("roundtrip - special-chars.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -239,7 +239,7 @@ Deno.test("roundtrip - date-boolean.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -281,7 +281,7 @@ Deno.test("roundtrip - mtcars.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -329,7 +329,7 @@ Deno.test("roundtrip - penguins.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());
@@ -373,7 +373,7 @@ Deno.test("roundtrip - user-info.xlsx", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
     const reloaded = await readXLSX(tempPath, schema);
 
     expect(reloaded.nrows()).toBe(original.nrows());

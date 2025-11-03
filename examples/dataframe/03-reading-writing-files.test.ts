@@ -86,7 +86,7 @@ Deno.test("File I/O - Write XLSX", async () => {
     { id: 3, name: "Charlie", score: 78 },
   ]);
 
-  await writeXLSX("examples/fixtures/test-output.xlsx", data);
+  await writeXLSX(data, "examples/fixtures/test-output.xlsx");
 
   const readBack = await readXLSX(
     "examples/fixtures/test-output.xlsx",

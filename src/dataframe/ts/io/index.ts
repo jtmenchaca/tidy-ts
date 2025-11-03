@@ -190,7 +190,7 @@ type ReadParquetFunction = <S extends z.ZodObject<any>>(
  * @param path - File path where to save the CSV file. In browsers, this becomes
  *   the download filename.
  *
- * @returns A Promise resolving to the original DataFrame for chaining
+ * @returns A Promise that resolves when the file is written
  *
  * @example
  * // Write to file (Node.js/Deno)
@@ -208,7 +208,7 @@ type ReadParquetFunction = <S extends z.ZodObject<any>>(
 type WriteCsvFunction = <Row extends Record<string, unknown>>(
   df: DataFrame<Row>,
   path: string,
-) => Promise<DataFrame<Row>>;
+) => Promise<void>;
 
 /**
  * Write a DataFrame to a Parquet file.
@@ -488,7 +488,7 @@ export const writeCSV: WriteCsvFunction = (() => {
       path: string,
     ) => {
       const { writeCSV } = await import("../verbs/utility/writeCSV.verb.ts");
-      return writeCSV(df, path);
+      writeCSV(df, path);
     };
   } else {
     return async <Row extends Record<string, unknown>>(
@@ -529,7 +529,6 @@ export const writeCSV: WriteCsvFunction = (() => {
 
       // Add a small delay to ensure download starts before resolving
       await new Promise((resolve) => setTimeout(resolve, 100));
-      return df;
     };
   }
 })();
@@ -597,6 +596,18 @@ export const writeParquet: WriteParquetFunction = (() => {
   }
 })();
 
+interface ReadXLSXOpts extends NAOpts {
+  sheet?: string | number;
+  skip?: number;
+}
+
+// deno-lint-ignore no-explicit-any
+type ReadXLSXFunction = <S extends z.ZodObject<any>>(
+  path: string,
+  schema: S,
+  opts?: ReadXLSXOpts,
+) => Promise<DataFrame<z.infer<S>>>;
+
 /**
  * Read an XLSX file with Zod schema validation and type inference.
  *
@@ -640,18 +651,6 @@ export const writeParquet: WriteParquetFunction = (() => {
  * // Read from sheet by index (0-based)
  * const df = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  */
-interface ReadXLSXOpts extends NAOpts {
-  sheet?: string | number;
-  skip?: number;
-}
-
-// deno-lint-ignore no-explicit-any
-type ReadXLSXFunction = <S extends z.ZodObject<any>>(
-  path: string,
-  schema: S,
-  opts?: ReadXLSXOpts,
-) => Promise<DataFrame<z.infer<S>>>;
-
 export const readXLSX: ReadXLSXFunction = (() => {
   // deno-lint-ignore no-process-global
   const isNode = typeof process !== "undefined" && process?.versions?.node;
@@ -683,8 +682,8 @@ export const readXLSX: ReadXLSXFunction = (() => {
  * Automatically handles dates (converts to Excel serial numbers), numbers,
  * strings, and booleans. Supports writing to specific sheets in new or existing files.
  *
- * @param path - File path where to save the XLSX file
  * @param dataFrame - The DataFrame to write
+ * @param path - File path where to save the XLSX file
  * @param opts - Optional configuration including sheet name
  *
  * @returns A Promise resolving to void
@@ -696,23 +695,23 @@ export const readXLSX: ReadXLSXFunction = (() => {
  *   { id: 2, name: "Bob", age: 25, created: new Date(2024, 1, 15) }
  * ]);
  *
- * await writeXLSX("./data.xlsx", df);
+ * await writeXLSX(df, "./data.xlsx");
  *
  * @example
  * // Write to specific sheet (adds new or replaces existing)
  * const users = createDataFrame([{ name: "Alice", age: 30 }]);
  * const products = createDataFrame([{ product: "Widget", price: 9.99 }]);
  *
- * await writeXLSX("./data.xlsx", users, { sheet: "Users" });
- * await writeXLSX("./data.xlsx", products, { sheet: "Products" });
+ * await writeXLSX(users, "./data.xlsx", { sheet: "Users" });
+ * await writeXLSX(products, "./data.xlsx", { sheet: "Products" });
  */
 interface WriteXLSXOpts {
   sheet?: string;
 }
 
 type WriteXLSXFunction = <Row extends Record<string, unknown>>(
-  path: string,
   dataFrame: DataFrame<Row>,
+  path: string,
   opts?: WriteXLSXOpts,
 ) => Promise<void>;
 
@@ -723,12 +722,12 @@ export const writeXLSX: WriteXLSXFunction = (() => {
 
   if (isNode || isDeno) {
     return async <Row extends Record<string, unknown>>(
-      path: string,
       dataFrame: DataFrame<Row>,
+      path: string,
       opts?: WriteXLSXOpts,
     ) => {
       const { writeXLSX } = await import("./write_xlsx.ts");
-      return writeXLSX(path, dataFrame, opts);
+      await writeXLSX(dataFrame, path, opts);
     };
   } else {
     return () => {

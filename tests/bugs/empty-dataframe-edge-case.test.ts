@@ -28,7 +28,7 @@ Deno.test("empty dataframe - has no columns (DataFrame limitation)", async () =>
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
 
     // Parse raw to see what was actually written
     const raw = await parseXLSXRaw(tempPath);
@@ -53,7 +53,7 @@ Deno.test("empty dataframe - writeXLSX creates valid file", async () => {
 
   try {
     // Should not throw - creates a valid (but empty) XLSX file
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
 
     const fileInfo = await Deno.stat(tempPath);
     expect(fileInfo.size).toBeGreaterThan(0);

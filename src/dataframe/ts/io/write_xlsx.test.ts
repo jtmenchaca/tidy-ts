@@ -20,7 +20,7 @@ Deno.test("writeXLSX - basic write and read roundtrip", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     expect(readDf.nrows()).toBe(3);
@@ -52,7 +52,7 @@ Deno.test("writeXLSX - mixed types with dates and booleans", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     expect(readDf.nrows()).toBe(3);
@@ -90,7 +90,7 @@ Deno.test("writeXLSX - optional fields with undefined values", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     expect(readDf.nrows()).toBe(3);
@@ -127,7 +127,7 @@ Deno.test("writeXLSX - large numbers precision", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     const rows = readDf.toArray();
@@ -157,7 +157,7 @@ Deno.test("writeXLSX - special characters in strings", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     const rows = readDf.toArray();
@@ -183,7 +183,7 @@ Deno.test("writeXLSX - empty dataframe", async () => {
 
   try {
     // Just verify we can write an empty dataframe without errors
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
 
     // Reading back empty dataframes is tricky - the XLSX will have headers but no data rows
     // For now, just verify the write succeeded
@@ -207,7 +207,7 @@ Deno.test("writeXLSX - single row dataframe", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     expect(readDf.nrows()).toBe(1);
@@ -238,7 +238,7 @@ Deno.test("writeXLSX - many columns", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
     const readDf = await readXLSX(tempPath, schema);
 
     expect(readDf.nrows()).toBe(2);

@@ -23,7 +23,7 @@ Deno.test("empty DF with columns - full roundtrip works", async () => {
 
   try {
     // Write it
-    await writeXLSX(tempPath, original);
+    await writeXLSX(original, tempPath);
 
     // Read it back
     const schema = z.object({

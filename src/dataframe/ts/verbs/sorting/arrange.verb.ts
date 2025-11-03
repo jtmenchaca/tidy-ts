@@ -198,7 +198,7 @@ function arrangeWasmStable<Row extends Record<string, unknown>>(
 
 // ---------- Public API overloads ----------
 
-// Sync overloads (current implementation)
+// Single column overload
 export function arrange<Row extends Record<string, unknown>>(
   column: keyof Row,
   direction?: SortDirection,
@@ -206,9 +206,18 @@ export function arrange<Row extends Record<string, unknown>>(
   df: DataFrame<Row> | GroupedDataFrame<Row>,
 ) => DataFrame<Row> | GroupedDataFrame<Row>;
 
+// Variadic columns overload (df.arrange("col1", "col2", "col3"))
+export function arrange<Row extends Record<string, unknown>>(
+  column1: keyof Row,
+  ...columns: (keyof Row)[]
+): (
+  df: DataFrame<Row> | GroupedDataFrame<Row>,
+) => DataFrame<Row> | GroupedDataFrame<Row>;
+
+// Array overload (df.arrange(["col1", "col2"], ["asc", "desc"]))
 export function arrange<Row extends Record<string, unknown>>(
   columns: (keyof Row)[],
-  directions?: SortDirection[],
+  directions?: SortDirection | SortDirection[],
 ): (
   df: DataFrame<Row> | GroupedDataFrame<Row>,
 ) => DataFrame<Row> | GroupedDataFrame<Row>;
@@ -217,7 +226,12 @@ export function arrange<Row extends Record<string, unknown>>(
 
 export function arrange<Row extends Record<string, unknown>>(
   columnOrColumns: keyof Row | (keyof Row)[],
-  directionOrDirections?: SortDirection | SortDirection[],
+  directionOrColumnsOrDirections?:
+    | keyof Row
+    | SortDirection
+    | (keyof Row)[]
+    | SortDirection[],
+  ...additionalColumns: (keyof Row)[]
 ) {
   return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
     const g = df as GroupedDataFrame<Row>;
@@ -225,27 +239,56 @@ export function arrange<Row extends Record<string, unknown>>(
     const api = df as any;
     const store = api.__store;
 
-    // Normalize inputs - handle both single column and array
-    const columns = Array.isArray(columnOrColumns)
-      ? columnOrColumns
-      : [columnOrColumns];
-
+    // Normalize inputs - handle array, single column, and variadic syntax
+    let columns: (keyof Row)[];
     let directions: SortDirection[] = [];
 
-    // Handle different parameter types
-    if (directionOrDirections === undefined) {
-      // No direction specified, default to ascending
-      directions = columns.map(() => "asc");
-    } else if (Array.isArray(directionOrDirections)) {
-      // Array of SortDirections
-      if (directionOrDirections.length === 0) {
+    if (Array.isArray(columnOrColumns)) {
+      // Array syntax: arrange(["col1", "col2"], ["asc", "desc"])
+      columns = columnOrColumns;
+
+      if (directionOrColumnsOrDirections === undefined) {
         directions = columns.map(() => "asc");
-      } else {
-        directions = directionOrDirections;
+      } else if (Array.isArray(directionOrColumnsOrDirections)) {
+        directions = directionOrColumnsOrDirections as SortDirection[];
+      } else if (typeof directionOrColumnsOrDirections === "string") {
+        // Single direction applied to all columns
+        directions = columns.map(() =>
+          directionOrColumnsOrDirections as SortDirection
+        );
       }
     } else {
-      // Single SortDirection
-      directions = columns.map(() => directionOrDirections);
+      // Single column or variadic syntax
+      if (
+        directionOrColumnsOrDirections === "asc" ||
+        directionOrColumnsOrDirections === "desc"
+      ) {
+        // Single column with direction: arrange("col1", "desc")
+        columns = [columnOrColumns];
+        directions = [directionOrColumnsOrDirections];
+      } else if (
+        directionOrColumnsOrDirections === undefined &&
+        additionalColumns.length === 0
+      ) {
+        // Single column, no direction: arrange("col1")
+        columns = [columnOrColumns];
+        directions = ["asc"];
+      } else {
+        // Variadic: arrange("col1", "col2", "col3")
+        // Accept a property key as the second parameter; reject array forms here
+        const maybeSecond = directionOrColumnsOrDirections;
+        const moreCols: (keyof Row)[] = [];
+        const t = typeof maybeSecond;
+        if (t === "string" || t === "number" || t === "symbol") {
+          moreCols.push(maybeSecond as keyof Row);
+        } else if (Array.isArray(maybeSecond)) {
+          throw new Error(
+            "Invalid arrange arguments: use arrange([cols], directions?) for array syntax.",
+          );
+        }
+        columns = [columnOrColumns, ...moreCols, ...additionalColumns];
+        directions = columns.map(() => "asc");
+      }
     }
 
     if (directions.length > 0 && directions.length !== columns.length) {

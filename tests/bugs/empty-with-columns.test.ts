@@ -16,7 +16,7 @@ Deno.test("empty DataFrame with columns - writes headers", async () => {
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
 
     // Check what was written
     const raw = await parseXLSXRaw(tempPath);
@@ -42,7 +42,7 @@ Deno.test("empty DataFrame with columns - raw parse shows headers", async () => 
   const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
 
   try {
-    await writeXLSX(tempPath, df);
+    await writeXLSX(df, tempPath);
 
     // Raw parse shows the headers are there
     const raw = await parseXLSXRaw(tempPath);

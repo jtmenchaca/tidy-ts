@@ -2,7 +2,7 @@
 
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import * as aq from "arquero";
-import { randomBetween, randomIntegerBetween, randomSeeded } from "@std/random"; 
+import { randomBetween, randomIntegerBetween, randomSeeded } from "@std/random";
 
 // Configuration
 const SIZES = [500000];
