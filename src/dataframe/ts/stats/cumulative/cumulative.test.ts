@@ -3,8 +3,7 @@
  */
 
 import { expect } from "@std/expect";
-import { stats } from "@tidy-ts/dataframe";
-import { timeSeriesData } from "../../utilities/test-utils/test-data.ts";
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
 
 Deno.test("cumsum function", () => {
   const values = [1, 2, 3, 4, 5];
@@ -208,6 +207,14 @@ Deno.test("cumulative functions preserve array length", () => {
 });
 
 Deno.test("cumulative functions with time series data", () => {
+  const timeSeriesData = createDataFrame([
+    { date: "2023-01-01", sales: 100 },
+    { date: "2023-01-02", sales: 150 },
+    { date: "2023-01-03", sales: 200 },
+    { date: "2023-01-04", sales: 120 },
+    { date: "2023-01-05", sales: 180 },
+  ]);
+
   const sales = timeSeriesData.extract("sales");
 
   const cumsum = stats.cumsum(sales);

@@ -4,10 +4,6 @@
 
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
-import {
-  singleRowData,
-  starWarsData,
-} from "../utilities/test-utils/test-data.ts";
 
 Deno.test("DataFrame creation from array of objects", () => {
   const data = [
@@ -71,7 +67,20 @@ Deno.test("DataFrame creation with array of typed objects", () => {
 });
 
 Deno.test("DataFrame basic properties", () => {
-  const df = starWarsData;
+  const df = createDataFrame([
+    { id: 1, name: "Luke", mass: 77, species: "Human", homeworld: "Tatooine" },
+    {
+      id: 2,
+      name: "Chewbacca",
+      mass: 112,
+      species: "Wookiee",
+      homeworld: "Kashyyyk",
+    },
+    { id: 3, name: "Han", mass: 80, species: "Human", homeworld: "Corellia" },
+    { id: 4, name: "Leia", mass: 49, species: "Human", homeworld: "Alderaan" },
+    { id: 5, name: "R2-D2", mass: 32, species: "Droid", homeworld: "Naboo" },
+    { id: 6, name: "C-3PO", mass: 75, species: "Droid", homeworld: "Tatooine" },
+  ]);
 
   expect(df.nrows()).toBe(6);
   expect(df.ncols()).toBe(5);
@@ -80,7 +89,20 @@ Deno.test("DataFrame basic properties", () => {
 });
 
 Deno.test("DataFrame row access", () => {
-  const df = starWarsData;
+  const df = createDataFrame([
+    { id: 1, name: "Luke", mass: 77, species: "Human", homeworld: "Tatooine" },
+    {
+      id: 2,
+      name: "Chewbacca",
+      mass: 112,
+      species: "Wookiee",
+      homeworld: "Kashyyyk",
+    },
+    { id: 3, name: "Han", mass: 80, species: "Human", homeworld: "Corellia" },
+    { id: 4, name: "Leia", mass: 49, species: "Human", homeworld: "Alderaan" },
+    { id: 5, name: "R2-D2", mass: 32, species: "Droid", homeworld: "Naboo" },
+    { id: 6, name: "C-3PO", mass: 75, species: "Droid", homeworld: "Tatooine" },
+  ]);
 
   // Test first row
   expect(df[0].name).toBe("Luke");
@@ -92,7 +114,20 @@ Deno.test("DataFrame row access", () => {
 });
 
 Deno.test("DataFrame column access", () => {
-  const df = starWarsData;
+  const df = createDataFrame([
+    { id: 1, name: "Luke", mass: 77, species: "Human", homeworld: "Tatooine" },
+    {
+      id: 2,
+      name: "Chewbacca",
+      mass: 112,
+      species: "Wookiee",
+      homeworld: "Kashyyyk",
+    },
+    { id: 3, name: "Han", mass: 80, species: "Human", homeworld: "Corellia" },
+    { id: 4, name: "Leia", mass: 49, species: "Human", homeworld: "Alderaan" },
+    { id: 5, name: "R2-D2", mass: 32, species: "Droid", homeworld: "Naboo" },
+    { id: 6, name: "C-3PO", mass: 75, species: "Droid", homeworld: "Tatooine" },
+  ]);
 
   const names = df.name;
   expect(names).toEqual(["Luke", "Chewbacca", "Han", "Leia", "R2-D2", "C-3PO"]);
@@ -102,7 +137,20 @@ Deno.test("DataFrame column access", () => {
 });
 
 Deno.test("DataFrame toArray method", () => {
-  const df = starWarsData;
+  const df = createDataFrame([
+    { id: 1, name: "Luke", mass: 77, species: "Human", homeworld: "Tatooine" },
+    {
+      id: 2,
+      name: "Chewbacca",
+      mass: 112,
+      species: "Wookiee",
+      homeworld: "Kashyyyk",
+    },
+    { id: 3, name: "Han", mass: 80, species: "Human", homeworld: "Corellia" },
+    { id: 4, name: "Leia", mass: 49, species: "Human", homeworld: "Alderaan" },
+    { id: 5, name: "R2-D2", mass: 32, species: "Droid", homeworld: "Naboo" },
+    { id: 6, name: "C-3PO", mass: 75, species: "Droid", homeworld: "Tatooine" },
+  ]);
   const array = df.toArray();
 
   expect(Array.isArray(array)).toBe(true);
@@ -117,7 +165,9 @@ Deno.test("DataFrame toArray method", () => {
 });
 
 Deno.test("DataFrame print method", () => {
-  const df = singleRowData;
+  const df = createDataFrame([
+    { id: 1, name: "Test", value: 42 },
+  ]);
 
   // This test just ensures print doesn't throw an error
   expect(() => df.print()).not.toThrow();

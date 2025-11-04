@@ -542,6 +542,13 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
+  if (prop === "removeNulls") {
+    return (fieldOrFields: unknown, ...fields: unknown[]) => {
+      const result = (removeNull as any)(df, fieldOrFields, ...fields);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
   if (prop === "removeUndefined") {
     return (fieldOrFields: unknown, ...fields: unknown[]) => {
       const result = (removeUndefined as any)(df, fieldOrFields, ...fields);

@@ -527,6 +527,51 @@ export type DataFrame<Row extends object = object> =
     };
 
     /**
+     * Remove rows with null values in specified columns.
+     *
+     * Filters out rows where any of the specified columns contain null
+     * (but not undefined). Returns a DataFrame with the affected columns
+     * typed to exclude null. More specific than removeNA.
+     *
+     * Alias for removeNull.
+     *
+     * @param field - Column name(s) to check for null values
+     * @returns DataFrame with rows containing null removed and types narrowed
+     *
+     * @example
+     * // Remove rows where age is null
+     * const cleaned = df.removeNulls("age")
+     *
+     * @example
+     * // Remove rows where any field is null
+     * const cleaned = df.removeNulls("age", "email")
+     */
+    removeNulls: {
+      <Field extends keyof Row>(
+        field: Field,
+      ): DataFrame<
+        Prettify<
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        >
+      >;
+      <Field extends keyof Row>(
+        field: Field,
+        ...fields: Field[]
+      ): DataFrame<
+        Prettify<
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        >
+      >;
+      <Field extends keyof Row>(
+        fields: Field[],
+      ): DataFrame<
+        Prettify<
+          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        >
+      >;
+    };
+
+    /**
      * Remove rows with undefined values in specified columns.
      *
      * Filters out rows where any of the specified columns contain undefined

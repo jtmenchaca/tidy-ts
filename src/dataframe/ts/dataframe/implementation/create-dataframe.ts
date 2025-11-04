@@ -91,8 +91,15 @@ export function createColumnarDataFrameFromStore<
   // Fast, view-aware length
   api.nrows = () => {
     const currentStore = (api as any).__store;
+    const currentView = (api as any).__view;
 
-    return materializeIndex(currentStore.length, (api as any).__view).length;
+    // Fast path: no view transformations
+    if (!currentView || (!currentView.index && !currentView.mask)) {
+      return currentStore.length;
+    }
+
+    // Slow path: materialize index for filtered/transformed views
+    return materializeIndex(currentStore.length, currentView).length;
   };
 
   // Fast row read (no object creation in compute code that uses rowView)
@@ -605,18 +612,19 @@ export function createDataFrame<
       }
     }
 
-    // Convert columns to rows for compatibility with existing storage
-    const rowsArray: object[] = [];
-    for (let i = 0; i < firstLength; i++) {
-      const row: Record<string, unknown> = {};
-      for (const colName of columnNames) {
-        row[colName] = columnsData[colName][i];
-      }
-      rowsArray.push(row);
+    // Create store directly from columns (avoid row conversion)
+    const columns: Record<string, unknown[]> = {};
+    for (const colName of columnNames) {
+      // Copy arrays to ensure they're mutable and detached from input
+      columns[colName] = [...columnsData[colName]];
     }
 
-    // Pass column names explicitly to preserve them even if rows are empty
-    const store = toColumnarStorage(rowsArray, columnNames);
+    const store: ColumnarStore = {
+      columns,
+      columnNames,
+      length: firstLength,
+    };
+
     return createColumnarDataFrameFromStore(store, {}) as any;
   }
 
