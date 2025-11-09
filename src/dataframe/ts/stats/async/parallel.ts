@@ -8,20 +8,19 @@ import {
 } from "../../promised-dataframe/concurrency-utils.ts";
 
 /**
- * Process an array of promises with concurrency control, batching, and retry logic.
+ * Process an array of promises with concurrency control and retry logic.
  * This serves as a replacement for Promise.all with additional async helper features.
  *
- * **Note on retry**: Retry logic requires recreating promises, which isn't possible
- * with already-created promises. For retry functionality, use `s.batch()` instead,
- * which accepts a function that creates promises.
+ * **Retry support**: To enable retry functionality, pass functions that create promises
+ * instead of already-created promises. When retry is enabled and a promise is passed
+ * directly, retry won't work (the same promise will be retried). Pass functions for
+ * full retry support.
  *
- * @param promises - Array of promises to execute
+ * @param promises - Array of promises or functions that create promises
  * @param options - Concurrency control options
  * @param options.concurrency - Maximum concurrent operations (default: Infinity, runs all in parallel)
- * @param options.batchSize - Process promises in batches of this size (default: undefined)
- * @param options.batchDelay - Delay in ms between batches (default: 0)
  * @param options.retry - Retry configuration (default: no retries)
- * **Note**: Retry won't work with already-created promises. Use `s.batch()` for retry support.
+ * **Note**: For retry to work, pass functions `() => Promise<T>` instead of promises.
  * @param options.retry.backoff - Retry strategy: "exponential" | "linear" | "custom"
  * @param options.retry.maxRetries - Maximum retry attempts (default: 3)
  * @param options.retry.baseDelay - Initial retry delay in ms (default: 100)
@@ -42,12 +41,6 @@ import {
  *   fetchUser(3),
  * ], { concurrency: 2 });
  *
- * // Process in batches with delay
- * const results = await s.parallel(
- *   userIds.map(id => fetchUser(id)),
- *   { batchSize: 100, batchDelay: 50 }
- * );
- *
  * // Default behavior (like Promise.all) - all promises run concurrently
  * const results = await s.parallel([
  *   promise1,
@@ -55,31 +48,29 @@ import {
  *   promise3,
  * ]);
  *
- * // For retry functionality, use s.batch() instead:
- * const results = await s.batch(
- *   apiCalls,
- *   async (call) => makeRequest(call),
+ * // With retry - pass functions that create promises
+ * const results = await s.parallel(
+ *   [
+ *     () => makeRequest(apiCall1),
+ *     () => makeRequest(apiCall2),
+ *     () => makeRequest(apiCall3),
+ *   ],
  *   {
  *     concurrency: 5,
  *     retry: {
  *       backoff: "exponential",
  *       maxRetries: 3,
+ *       baseDelay: 100,
  *     }
  *   }
  * );
  * ```
  */
 export function parallel<T>(
-  promises: Array<Promise<T>>,
+  promises: Array<Promise<T> | (() => Promise<T>)>,
   options: {
     /** Maximum number of concurrent async operations (default: Infinity - all in parallel) */
     concurrency?: number;
-
-    /** Batch size for processing chunks (alternative to concurrency limit) */
-    batchSize?: number;
-
-    /** Delay between batches in milliseconds (default: 0) */
-    batchDelay?: number;
 
     /** Retry configuration */
     retry?: {
@@ -113,9 +104,18 @@ export function parallel<T>(
     };
   } = {},
 ): Promise<T[]> {
-  // Convert promises array to tasks array
-  // Each task wraps the promise to enable retry logic
-  const tasks = promises.map((promise, index) => () => promise);
+  // Convert promises/functions array to tasks array
+  // If it's already a function, use it directly (enables retry)
+  // If it's a promise, wrap it in a function (retry won't work, but API is compatible)
+  const tasks = promises.map((promiseOrFn, index) => {
+    if (typeof promiseOrFn === "function") {
+      // It's a function that creates a promise - use it directly for retry support
+      return promiseOrFn;
+    } else {
+      // It's an already-created promise - wrap it (retry won't work)
+      return () => promiseOrFn;
+    }
+  });
 
   // Use existing processConcurrently infrastructure
   // Default concurrency to Infinity to match Promise.all behavior
@@ -123,8 +123,6 @@ export function parallel<T>(
   // but ConcurrencyOptions expects discriminated union
   return processConcurrently(tasks, {
     concurrency: options.concurrency ?? Infinity,
-    batchSize: options.batchSize,
-    batchDelay: options.batchDelay,
     retry: options.retry,
   } as ConcurrencyOptions);
 }

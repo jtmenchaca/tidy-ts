@@ -65,49 +65,36 @@ Deno.test("s.parallel() - with concurrency limit", async () => {
   // Concurrency is controlled at the await level, so this should work
 });
 
-Deno.test("s.parallel() - with batch size", async () => {
-  const promises = [
-    multiply(1, 2),  // 2
-    multiply(2, 2),   // 4
-    multiply(3, 2),   // 6
-    multiply(4, 2),   // 8
-    multiply(5, 2),   // 10
-    multiply(6, 2),   // 12
-    multiply(7, 2),   // 14
-    multiply(8, 2),   // 16
-    multiply(9, 2),   // 18
-    multiply(10, 2),  // 20
-  ];
-  const results = await s.parallel(promises, { batchSize: 3 });
 
-  expect(results).toEqual([2, 4, 6, 8, 10, 12, 14, 16, 18, 20]);
-});
+Deno.test("s.parallel() - with retry on failure (using functions)", async () => {
+  // Retry works when passing functions that create promises
+  let attempts = 0;
 
-Deno.test("s.parallel() - with batch delay", async () => {
-  const start = Date.now();
   const promises = [
-    add(1, 0),      // 1
-    add(1, 0),      // 1
-    add(1, 0),      // 1
-    add(1, 0),      // 1
-    add(1, 0),      // 1
-    add(1, 0),      // 1
+    () => {
+      attempts++;
+      if (attempts === 1) {
+        return Promise.reject(new Error("First attempt fails"));
+      }
+      return Promise.resolve(2);
+    },
+    () => Promise.resolve(4),
   ];
 
-  await s.parallel(promises, {
-    batchSize: 2,
-    batchDelay: 50, // 50ms delay between batches
+  const results = await s.parallel(promises, {
+    retry: {
+      backoff: "exponential",
+      maxRetries: 2,
+      baseDelay: 10,
+    },
   });
 
-  const elapsed = Date.now() - start;
-  // Should have ~100ms delay (2 delays for 3 batches) plus async operation time
-  expect(elapsed).toBeGreaterThanOrEqual(100);
+  expect(results).toEqual([2, 4]);
+  expect(attempts).toBeGreaterThan(1); // Should have retried
 });
 
-Deno.test("s.parallel() - with retry on failure", async () => {
-  // Note: Retry requires recreating promises, which isn't possible with already-created promises
-  // This test documents that retry won't work with the Promise.all-like API
-  // For retry functionality, users should use s.batch() instead
+Deno.test("s.parallel() - retry doesn't work with already-created promises", async () => {
+  // This test documents that retry won't work with already-created promises
   let attempts = 0;
 
   const promises = [
@@ -122,7 +109,6 @@ Deno.test("s.parallel() - with retry on failure", async () => {
   ];
 
   // Retry won't work because the promise is already created and executing
-  // The promise will reject and can't be retried
   try {
     await s.parallel(promises, {
       retry: {
@@ -160,18 +146,16 @@ Deno.test("s.parallel() - empty array", async () => {
   expect(results).toEqual([]);
 });
 
-Deno.test("s.parallel() - with exponential backoff retry", async () => {
-  // Note: Retry doesn't work with already-created promises
-  // This test documents the limitation
+Deno.test("s.parallel() - with exponential backoff retry (using functions)", async () => {
   const retryAttempts: number[] = [];
 
   try {
     await s.parallel(
       [
-        (async () => {
+        () => {
           retryAttempts.push(Date.now());
-          throw new Error("Always fails");
-        })(),
+          return Promise.reject(new Error("Always fails"));
+        },
       ],
       {
         retry: {
@@ -183,24 +167,29 @@ Deno.test("s.parallel() - with exponential backoff retry", async () => {
       },
     );
   } catch {
-    // Expected to fail - retry won't work
+    // Expected to fail after retries
   }
 
-  // Retry won't work, so we'll only have 1 attempt
-  expect(retryAttempts.length).toBe(1);
+  expect(retryAttempts.length).toBe(4); // Initial + 3 retries
+
+  // Check delays are exponential (roughly)
+  if (retryAttempts.length >= 3) {
+    const delay1 = retryAttempts[1] - retryAttempts[0];
+    const delay2 = retryAttempts[2] - retryAttempts[1];
+    expect(delay2).toBeGreaterThan(delay1);
+  }
 });
 
-Deno.test("s.parallel() - with linear backoff retry", async () => {
-  // Note: Retry doesn't work with already-created promises
+Deno.test("s.parallel() - with linear backoff retry (using functions)", async () => {
   const retryAttempts: number[] = [];
 
   try {
     await s.parallel(
       [
-        (async () => {
+        () => {
           retryAttempts.push(Date.now());
-          throw new Error("Always fails");
-        })(),
+          return Promise.reject(new Error("Always fails"));
+        },
       ],
       {
         retry: {
@@ -211,24 +200,22 @@ Deno.test("s.parallel() - with linear backoff retry", async () => {
       },
     );
   } catch {
-    // Expected to fail - retry won't work
+    // Expected to fail after retries
   }
 
-  // Retry won't work, so we'll only have 1 attempt
-  expect(retryAttempts.length).toBe(1);
+  expect(retryAttempts.length).toBe(4); // Initial + 3 retries
 });
 
-Deno.test("s.parallel() - with shouldRetry filter", async () => {
-  // Note: Retry doesn't work with already-created promises
+Deno.test("s.parallel() - with shouldRetry filter (using functions)", async () => {
   let attempts = 0;
 
   try {
     await s.parallel(
       [
-        (async () => {
+        () => {
           attempts++;
-          throw new Error("Network error");
-        })(),
+          return Promise.reject(new Error("Network error"));
+        },
       ],
       {
         retry: {
@@ -244,11 +231,10 @@ Deno.test("s.parallel() - with shouldRetry filter", async () => {
       },
     );
   } catch {
-    // Expected to fail - retry won't work
+    // Expected to fail - stopped by shouldRetry
   }
 
-  // Retry won't work, so we'll only have 1 attempt
-  expect(attempts).toBe(1);
+  expect(attempts).toBe(2); // Stopped by shouldRetry after 2 attempts
 });
 
 Deno.test("s.parallel() - handles mixed success and failure", async () => {
@@ -287,5 +273,46 @@ Deno.test("s.parallel() - works with pending promises", async () => {
   const results = await s.parallel(promises, { concurrency: 2 });
 
   expect(results).toEqual([1, 2, 1]);
+});
+
+Deno.test("s.parallel() - mixing promises and functions", async () => {
+  // Can mix already-created promises with functions
+  const promises = [
+    add(1, 1),           // Promise: 2
+    () => multiply(2, 2), // Function: 4
+    square(2),           // Promise: 4
+    () => add(3, 3),     // Function: 6
+  ];
+
+  const results = await s.parallel(promises);
+
+  expect(results).toEqual([2, 4, 4, 6]);
+});
+
+Deno.test("s.parallel() - retry works with mixed promises and functions", async () => {
+  let attempts = 0;
+
+  const promises = [
+    add(1, 1),           // Promise: 2 (no retry)
+    () => {              // Function: can retry
+      attempts++;
+      if (attempts === 1) {
+        return Promise.reject(new Error("First attempt fails"));
+      }
+      return Promise.resolve(4);
+    },
+    square(2),           // Promise: 4 (no retry)
+  ];
+
+  const results = await s.parallel(promises, {
+    retry: {
+      backoff: "exponential",
+      maxRetries: 2,
+      baseDelay: 10,
+    },
+  });
+
+  expect(results).toEqual([2, 4, 4]);
+  expect(attempts).toBeGreaterThan(1); // Function was retried
 });
 
