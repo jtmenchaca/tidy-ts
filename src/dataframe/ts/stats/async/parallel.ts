@@ -107,7 +107,7 @@ export function parallel<T>(
   // Convert promises/functions array to tasks array
   // If it's already a function, use it directly (enables retry)
   // If it's a promise, wrap it in a function (retry won't work, but API is compatible)
-  const tasks = promises.map((promiseOrFn, index) => {
+  const tasks = promises.map((promiseOrFn, _index) => {
     if (typeof promiseOrFn === "function") {
       // It's a function that creates a promise - use it directly for retry support
       return promiseOrFn;
@@ -126,4 +126,3 @@ export function parallel<T>(
     retry: options.retry,
   } as ConcurrencyOptions);
 }
-

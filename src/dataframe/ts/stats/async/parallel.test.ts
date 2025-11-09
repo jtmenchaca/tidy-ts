@@ -22,9 +22,9 @@ async function square(n: number): Promise<number> {
 
 Deno.test("s.parallel() - basic functionality", async () => {
   const promises = [
-    add(1, 2),    // 3
+    add(1, 2), // 3
     multiply(2, 3), // 6
-    square(4),     // 16
+    square(4), // 16
   ];
   const results = await s.parallel(promises);
 
@@ -33,9 +33,9 @@ Deno.test("s.parallel() - basic functionality", async () => {
 
 Deno.test("s.parallel() - default behavior like Promise.all", async () => {
   const promises = [
-    add(1, 1),      // 2, ~10ms delay
-    multiply(2, 2),  // 4, ~15ms delay
-    square(3),       // 9, ~20ms delay
+    add(1, 1), // 2, ~10ms delay
+    multiply(2, 2), // 4, ~15ms delay
+    square(3), // 9, ~20ms delay
   ];
   const start = Date.now();
   const results = await s.parallel(promises);
@@ -52,10 +52,10 @@ Deno.test("s.parallel() - with concurrency limit", async () => {
   // So concurrency control may not work perfectly in that case
   // This test verifies basic functionality
   const promises = [
-    add(1, 1),      // 2
+    add(1, 1), // 2
     multiply(2, 2), // 4
-    square(2),      // 4
-    add(3, 3),     // 6
+    square(2), // 4
+    add(3, 3), // 6
     multiply(3, 2), // 6
   ];
 
@@ -64,7 +64,6 @@ Deno.test("s.parallel() - with concurrency limit", async () => {
   expect(results).toEqual([2, 4, 4, 6, 6]);
   // Concurrency is controlled at the await level, so this should work
 });
-
 
 Deno.test("s.parallel() - with retry on failure (using functions)", async () => {
   // Retry works when passing functions that create promises
@@ -98,6 +97,7 @@ Deno.test("s.parallel() - retry doesn't work with already-created promises", asy
   let attempts = 0;
 
   const promises = [
+    // deno-lint-ignore require-await
     (async () => {
       attempts++;
       if (attempts === 1) {
@@ -127,10 +127,10 @@ Deno.test("s.parallel() - retry doesn't work with already-created promises", asy
 
 Deno.test("s.parallel() - preserves order", async () => {
   const promises = [
-    add(1, 1),      // 2, ~10ms
+    add(1, 1), // 2, ~10ms
     multiply(2, 2), // 4, ~15ms
-    square(2),       // 4, ~20ms
-    add(4, 4),      // 8, ~10ms
+    square(2), // 4, ~20ms
+    add(4, 4), // 8, ~10ms
     multiply(5, 2), // 10, ~15ms
   ];
 
@@ -253,9 +253,9 @@ Deno.test("s.parallel() - handles mixed success and failure", async () => {
 });
 
 Deno.test("s.parallel() - works with already resolved promises", async () => {
-  const p1 = add(1, 0);  // 1
+  const p1 = add(1, 0); // 1
   const p2 = multiply(1, 2); // 2
-  const p3 = square(1);  // 1
+  const p3 = square(1); // 1
 
   // Promises are already created (but not yet resolved)
   const results = await s.parallel([p1, p2, p3]);
@@ -265,9 +265,9 @@ Deno.test("s.parallel() - works with already resolved promises", async () => {
 
 Deno.test("s.parallel() - works with pending promises", async () => {
   const promises = [
-    add(1, 0),      // 1, ~10ms
+    add(1, 0), // 1, ~10ms
     multiply(1, 2), // 2, ~15ms
-    square(1),      // 1, ~20ms
+    square(1), // 1, ~20ms
   ];
 
   const results = await s.parallel(promises, { concurrency: 2 });
@@ -278,10 +278,10 @@ Deno.test("s.parallel() - works with pending promises", async () => {
 Deno.test("s.parallel() - mixing promises and functions", async () => {
   // Can mix already-created promises with functions
   const promises = [
-    add(1, 1),           // Promise: 2
+    add(1, 1), // Promise: 2
     () => multiply(2, 2), // Function: 4
-    square(2),           // Promise: 4
-    () => add(3, 3),     // Function: 6
+    square(2), // Promise: 4
+    () => add(3, 3), // Function: 6
   ];
 
   const results = await s.parallel(promises);
@@ -293,15 +293,15 @@ Deno.test("s.parallel() - retry works with mixed promises and functions", async 
   let attempts = 0;
 
   const promises = [
-    add(1, 1),           // Promise: 2 (no retry)
-    () => {              // Function: can retry
+    add(1, 1), // Promise: 2 (no retry)
+    () => { // Function: can retry
       attempts++;
       if (attempts === 1) {
         return Promise.reject(new Error("First attempt fails"));
       }
       return Promise.resolve(4);
     },
-    square(2),           // Promise: 4 (no retry)
+    square(2), // Promise: 4 (no retry)
   ];
 
   const results = await s.parallel(promises, {
@@ -315,4 +315,3 @@ Deno.test("s.parallel() - retry works with mixed promises and functions", async 
   expect(results).toEqual([2, 4, 4]);
   expect(attempts).toBeGreaterThan(1); // Function was retried
 });
-
