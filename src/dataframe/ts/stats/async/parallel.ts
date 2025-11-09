@@ -76,7 +76,7 @@ type ExtractPromiseType<T> = T extends () => Promise<infer U> ? U
 export function parallel<
   T extends readonly (Promise<unknown> | (() => Promise<unknown>))[],
 >(
-  promises: T,
+  promises: readonly [...T],
   options: {
     /** Maximum number of concurrent async operations (default: Infinity - all in parallel) */
     concurrency?: number;
@@ -124,7 +124,7 @@ export function parallel<
       // It's an already-created promise - wrap it (retry won't work)
       return () => promiseOrFn;
     }
-  });
+  }) as Array<() => Promise<unknown>>;
 
   // Use existing processConcurrently infrastructure
   // Default concurrency to Infinity to match Promise.all behavior
