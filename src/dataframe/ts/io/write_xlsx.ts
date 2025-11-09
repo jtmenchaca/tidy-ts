@@ -353,7 +353,8 @@ function parseSheetNames(workbookXml: string): string[] {
   let match;
 
   while ((match = sheetRegex.exec(workbookXml)) !== null) {
-    sheetNames.push(match[1]);
+    // Unescape XML entities to get the actual sheet name
+    sheetNames.push(unescapeXml(match[1]));
   }
 
   return sheetNames;
@@ -582,8 +583,14 @@ function columnIndexToLetter(index: number): string {
 }
 
 function dateToExcelSerial(date: Date): number {
+  // Normalize to local midnight to represent a calendar date (not timestamp)
+  const normalizedDate = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  );
   const excelEpoch = new Date(1899, 11, 30);
-  const diff = date.getTime() - excelEpoch.getTime();
+  const diff = normalizedDate.getTime() - excelEpoch.getTime();
   const days = diff / 86400000; // milliseconds in a day
   return days;
 }

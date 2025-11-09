@@ -8,9 +8,6 @@ import type { NAOpts } from "./types.ts";
 └───────────────────────────────────────────────────────────────────────────*/
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 
-const isNA = (s: unknown, na: readonly string[], trim: boolean): boolean =>
-  typeof s === "string" && na.includes(trim ? s.trim() : s);
-
 /** Recursively unwrap .optional() / .nullable() / .default() wrappers */
 const unwrap = (t: ZodTypeAny): {
   base: ZodTypeAny;
@@ -87,15 +84,18 @@ const toBoolean = (s: string): boolean =>
 const toDate = (s: string): Date => {
   const num = Number(s);
 
-  // Auto-detect Excel serial number (dates are typically > 100)
+  // Check if it's a numeric value (Excel serial number)
   // Excel stores dates as days since 1899-12-30, with fractional part for time
-  if (!isNaN(num) && num > 100) {
-    const excelEpoch = new Date(1899, 11, 30); // December 30, 1899
-    const days = Math.floor(num);
-    const timeFraction = num - days;
-    const milliseconds = timeFraction * 86400000; // 24 * 60 * 60 * 1000
+  // Note: negative numbers represent dates before the Excel epoch
+  if (!isNaN(num)) {
+    // Use local epoch to match write_xlsx.ts dateToExcelSerial
+    // Then normalize to local midnight to avoid timezone shifts
+    const excelEpoch = new Date(1899, 11, 30); // December 30, 1899 local
+    const milliseconds = num * 86400000; // Convert days to milliseconds
+    const date = new Date(excelEpoch.getTime() + milliseconds);
 
-    return new Date(excelEpoch.getTime() + (days * 86400000) + milliseconds);
+    // Normalize to local midnight to represent a calendar date (not timestamp)
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
   }
 
   // Try ISO date format (YYYY-MM-DD)
@@ -112,8 +112,20 @@ const toDate = (s: string): Date => {
 };
 
 // internal API (not exported) ----------------------------------------------------
+// Special string handler that doesn't convert "" to undefined
+function makeString(): InputLike<z.ZodString> {
+  return (schema: z.ZodString = undefined as unknown as z.ZodString) =>
+    z.preprocess((val) => {
+      // pass through non-strings
+      if (typeof val !== "string") return val;
+      // For strings, keep empty strings as empty strings (don't convert to undefined)
+      return val;
+      // deno-lint-ignore no-explicit-any
+    }, schema ?? (z.any() as unknown as z.ZodString)) as any;
+}
+
 const zxlsx = {
-  string: make<z.ZodString, (s: string) => string>((s) => s),
+  string: makeString(),
   number: make<z.ZodNumber, (s: string) => number>((s) => toNumber(s)),
   boolean: make<z.ZodBoolean, (s: string) => boolean>((s) => toBoolean(s)),
   date: make<z.ZodDate, (s: string) => Date>((s) => toDate(s)),
@@ -291,7 +303,7 @@ function parseWorkbookSheets(workbookXml: string): SheetInfo[] {
   let match;
 
   while ((match = sheetRegex.exec(workbookXml)) !== null) {
-    const name = match[1];
+    const name = unescapeXml(match[1]); // Unescape XML entities
     const rId = match[2];
 
     // Map relationship ID to sheet number
@@ -307,7 +319,8 @@ function parseWorkbookSheets(workbookXml: string): SheetInfo[] {
 
 function parseSharedStrings(xml: string): string[] {
   const strings: string[] = [];
-  const regex = /<t[^>]*>(.*?)<\/t>/g;
+  // Use 's' flag to match newlines with .
+  const regex = /<t[^>]*>(.*?)<\/t>/gs;
   let match;
 
   while ((match = regex.exec(xml)) !== null) {
@@ -475,12 +488,29 @@ export function parseXLSXContent<S extends z.ZodObject<any>>(
     // Apply NA handling before schema validation
     const naProcessed = Object.fromEntries(
       Object.entries(obj).map(([k, v]) => {
-        if (isNA(v, na, trim)) {
-          // Check if the field is nullable or optional in the original schema
-          const originalField = schema.shape[k];
-          const { optional, nullable } = unwrap(originalField);
+        const originalField = schema.shape[k];
+        const { optional, nullable, base } = unwrap(originalField);
+
+        // Handle empty string cells
+        if (v === "") {
+          // For string fields, check if it's nullable/optional
+          if (base instanceof z.ZodString) {
+            // If nullable or optional, treat empty as null/undefined
+            // Otherwise, treat as actual empty string
+            if (optional || nullable) {
+              return [k, optional ? undefined : null] as const;
+            }
+            return [k, v] as const;
+          }
+          // For other types (number, boolean, date), empty means null/undefined
           return [k, optional ? undefined : nullable ? null : v] as const;
         }
+
+        // Check if this is an NA value (NA, null, etc.)
+        if (typeof v === "string" && na.includes(trim ? v.trim() : v)) {
+          return [k, optional ? undefined : nullable ? null : v] as const;
+        }
+
         return [k, v] as const;
       }),
     );
@@ -558,11 +588,25 @@ export async function readXLSX<S extends z.ZodObject<any>>(
     const wrappedSchema = autoWrapSchema(schema);
     const headersFromSchema = schemaHeaders(wrappedSchema.shape);
 
-    // Create a dummy object with all schema columns set to undefined/null
+    // Create a dummy object with all schema columns set to appropriate defaults
     for (const header of headersFromSchema) {
       const field = schema.shape[header];
-      const { optional, nullable } = unwrap(field);
-      dummyRow[header] = optional ? undefined : nullable ? null : "";
+      const { optional, nullable, base } = unwrap(field);
+
+      // Use appropriate dummy value based on type
+      if (optional) {
+        dummyRow[header] = undefined;
+      } else if (nullable) {
+        dummyRow[header] = null;
+      } else if (base instanceof z.ZodNumber) {
+        dummyRow[header] = 0;
+      } else if (base instanceof z.ZodBoolean) {
+        dummyRow[header] = false;
+      } else if (base instanceof z.ZodDate) {
+        dummyRow[header] = new Date();
+      } else {
+        dummyRow[header] = "";
+      }
     }
 
     // Create DataFrame with dummy row, then filter to empty
