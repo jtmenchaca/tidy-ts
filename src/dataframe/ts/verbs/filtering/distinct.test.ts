@@ -1,128 +1,166 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
 
-Deno.test("distinct - remove exact duplicates", () => {
-  const data = createDataFrame([
-    { name: "Alice", age: 25, city: "NYC", score: 85 },
-    { name: "Bob", age: 30, city: "LA", score: 90 },
-    { name: "Alice", age: 25, city: "NYC", score: 85 }, // Exact duplicate
-    { name: "Charlie", age: 25, city: "NYC", score: 88 },
-    { name: "Bob", age: 30, city: "LA", score: 92 }, // Different score - NOT duplicate
-    { name: "Alice", age: 26, city: "NYC", score: 85 }, // Different age - NOT duplicate
-  ]);
-
-  const result = data.distinct();
-  expect(result.nrows()).toBe(5); // 6 original - 1 exact duplicate = 5
-
-  // Should remove the exact duplicate of Alice (25, NYC, 85)
-  const rows = [...result];
-  const aliceRows = rows.filter((r) => r.name === "Alice");
-  expect(aliceRows).toHaveLength(2); // Alice(25) and Alice(26)
-});
-
-Deno.test("distinct - empty dataframe", () => {
-  const empty = createDataFrame([] as { name: string; age: number }[]);
-  const result = empty.distinct();
-  expect(result.nrows()).toBe(0);
-});
-
-Deno.test("distinct - no duplicates", () => {
-  const data = createDataFrame([
-    { id: 1, value: "a" },
-    { id: 2, value: "b" },
-    { id: 3, value: "c" },
-  ]);
-
-  const result = data.distinct();
-  expect(result.nrows()).toBe(3); // No change
-});
-
-Deno.test("distinct - all duplicates", () => {
+Deno.test("distinct - requires at least one column argument", () => {
   const data = createDataFrame([
     { name: "Alice", age: 25 },
-    { name: "Alice", age: 25 }, // Duplicate
-    { name: "Alice", age: 25 }, // Duplicate
-    { name: "Alice", age: 25 }, // Duplicate
+    { name: "Bob", age: 30 },
   ]);
 
-  const result = data.distinct();
-  expect(result.nrows()).toBe(1); // Only one unique row
-  expect(result[0].name).toBe("Alice");
-  expect(result[0].age).toBe(25);
+  // Should throw when called without arguments
+  expect(() => {
+    // @ts-expect-error - Testing runtime behavior when type checking is bypassed
+    data.distinct();
+  }).toThrow();
+});
+
+Deno.test("distinct - single column returns unique values", () => {
+  const data = createDataFrame([
+    { name: "Alice", age: 25, city: "NYC" },
+    { name: "Bob", age: 30, city: "LA" },
+    { name: "Alice", age: 26, city: "Boston" },
+    { name: "Charlie", age: 25, city: "NYC" },
+    { name: "Bob", age: 35, city: "NYC" },
+  ]);
+
+  const result = data.distinct("name");
+
+  // Should return 3 unique names: Alice, Bob, Charlie
+  expect(result.nrows()).toBe(3);
+
+  // Should only have the 'name' column (SQL-like behavior)
+  expect(result.columns()).toEqual(["name"]);
+
+  const names = [...result].map((r) => r.name).sort();
+  expect(names).toEqual(["Alice", "Bob", "Charlie"]);
+});
+
+Deno.test("distinct - multiple columns return unique combinations", () => {
+  const data = createDataFrame([
+    { region: "North", product: "Widget", quantity: 10 },
+    { region: "North", product: "Widget", quantity: 20 },
+    { region: "South", product: "Widget", quantity: 15 },
+    { region: "North", product: "Gadget", quantity: 5 },
+    { region: "South", product: "Widget", quantity: 25 },
+  ]);
+
+  const result = data.distinct("region", "product");
+
+  // Should return 3 unique combinations: North+Widget, South+Widget, North+Gadget
+  expect(result.nrows()).toBe(3);
+
+  // Should only have the specified columns
+  expect(result.columns()).toEqual(["region", "product"]);
+
+  const combinations = [...result].map((r) => `${r.region}+${r.product}`)
+    .sort();
+  expect(combinations).toEqual([
+    "North+Gadget",
+    "North+Widget",
+    "South+Widget",
+  ]);
 });
 
 Deno.test("distinct - preserves first occurrence", () => {
   const data = createDataFrame([
-    { id: 1, extra: "same" },
-    { id: 2, extra: "unique" },
-    { id: 1, extra: "same" }, // Exact duplicate
+    { category: "A", value: 100 },
+    { category: "B", value: 200 },
+    { category: "A", value: 300 }, // Second occurrence of 'A'
+    { category: "C", value: 400 },
   ]);
 
-  const result = data.distinct();
-  expect(result.nrows()).toBe(2); // Remove the exact duplicate
+  const result = data.distinct("category");
 
-  // Should keep the first occurrence of the duplicated row
-  const rows = [...result];
-  const duplicatedRows = rows.filter((r) => r.id === 1);
-  expect(duplicatedRows).toHaveLength(1);
-  expect(duplicatedRows[0].extra).toBe("same");
+  expect(result.nrows()).toBe(3);
+
+  // Should only return the category column
+  expect(result.columns()).toEqual(["category"]);
+});
+
+Deno.test("distinct - empty dataframe", () => {
+  const empty = createDataFrame([] as { name: string; age: number }[]);
+  const result = empty.distinct("name");
+  expect(result.nrows()).toBe(0);
 });
 
 Deno.test("distinct - handles null and undefined", () => {
   const data = createDataFrame([
-    { id: 1, value: null },
-    { id: 2, value: undefined },
-    { id: 1, value: null }, // Duplicate
-    { id: 3, value: "test" },
+    { id: 1, status: null },
+    { id: 2, status: "active" },
+    { id: 3, status: null },
+    { id: 4, status: undefined },
+    { id: 5, status: "active" },
+    { id: 6, status: undefined },
   ]);
 
-  const result = data.distinct();
-  expect(result.nrows()).toBe(3); // null, undefined, and "test" are all distinct
+  const result = data.distinct("status");
+
+  // Should return 3 unique status values: null, "active", undefined
+  expect(result.nrows()).toBe(3);
+
+  expect(result.columns()).toEqual(["status"]);
 });
 
-Deno.test("distinct - grouped data", () => {
+Deno.test("distinct - grouped data works within groups", () => {
   const data = createDataFrame([
-    { city: "NYC", name: "Alice", age: 25 },
-    { city: "NYC", name: "Bob", age: 30 },
-    { city: "NYC", name: "Alice", age: 25 }, // Duplicate within NYC
-    { city: "LA", name: "Alice", age: 25 }, // Same as NYC Alice, but different group
-    { city: "LA", name: "Charlie", age: 35 },
+    { year: 2023, product: "Widget", sales: 100 },
+    { year: 2023, product: "Gadget", sales: 150 },
+    { year: 2023, product: "Widget", sales: 200 }, // Duplicate product within 2023
+    { year: 2024, product: "Widget", sales: 120 },
+    { year: 2024, product: "Widget", sales: 180 }, // Duplicate product within 2024
   ]);
 
-  const grouped = data.groupBy("city");
-  const result = grouped.distinct();
+  const grouped = data.groupBy("year");
+  const result = grouped.distinct("product");
 
-  expect(result.nrows()).toBe(4); // 5 original - 1 duplicate within NYC = 4
+  // Should have 3 rows: 2 from 2023 (Widget, Gadget), 1 from 2024 (Widget)
+  expect(result.nrows()).toBe(3);
 
   // Should preserve grouping
   expect(result.__groups).toBeDefined();
-  expect(result.__groups?.groupingColumns).toEqual(["city"]);
+  expect(result.__groups?.groupingColumns).toEqual(["year"]);
+
+  // Should include both grouping column and selected column
+  expect(result.columns()).toEqual(["year", "product"]);
 });
 
-Deno.test("distinct - mixed data types", () => {
+Deno.test("distinct - all duplicates returns single row", () => {
   const data = createDataFrame([
-    { id: 1, value: "10" }, // String
-    { id: 2, value: 10 }, // Number
-    { id: 3, value: true }, // Boolean
-    { id: 1, value: "10" }, // Duplicate
-    { id: 4, value: null }, // null
-    { id: 5, value: undefined }, // undefined
+    { status: "active", count: 1 },
+    { status: "active", count: 2 },
+    { status: "active", count: 3 },
+    { status: "active", count: 4 },
   ]);
 
-  const result = data.distinct();
-  expect(result.nrows()).toBe(5); // String "10" ≠ Number 10 ≠ Boolean true ≠ null ≠ undefined
+  const result = data.distinct("status");
+
+  expect(result.nrows()).toBe(1);
+  expect(result[0].status).toBe("active");
+
+  expect(result.columns()).toEqual(["status"]);
 });
 
-Deno.test("distinct - object values", () => {
+Deno.test("distinct - works like SQL SELECT DISTINCT", () => {
   const data = createDataFrame([
-    { id: 1, config: { x: 1, y: 2 } },
-    { id: 2, config: { y: 2, x: 1 } }, // Same values, different key order
-    { id: 1, config: { x: 1, y: 2 } }, // Exact duplicate
-    { id: 3, config: { x: 3, y: 4 } },
+    { customer: "Alice", product: "Book", price: 10 },
+    { customer: "Bob", product: "Book", price: 10 },
+    { customer: "Alice", product: "Pen", price: 2 },
+    { customer: "Bob", product: "Book", price: 12 },
+    { customer: "Alice", product: "Book", price: 10 },
   ]);
 
-  const result = data.distinct();
-  // Objects with same structure but different key order should be treated as distinct
-  // Only the exact duplicate (id: 1, config: {x: 1, y: 2}) should be removed
-  expect(result.nrows()).toBe(3);
+  // Get unique customers
+  const customers = data.distinct("customer");
+  expect(customers.nrows()).toBe(2); // Alice, Bob
+  expect(customers.columns()).toEqual(["customer"]);
+
+  // Get unique products
+  const products = data.distinct("product");
+  expect(products.nrows()).toBe(2); // Book, Pen
+  expect(products.columns()).toEqual(["product"]);
+
+  // Get unique customer+product combinations
+  const customerProducts = data.distinct("customer", "product");
+  expect(customerProducts.nrows()).toBe(3); // Alice+Book, Bob+Book, Alice+Pen
+  expect(customerProducts.columns()).toEqual(["customer", "product"]);
 });

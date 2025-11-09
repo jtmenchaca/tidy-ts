@@ -18,7 +18,7 @@ Deno.test("distinct() should remove duplicate rows", () => {
   console.table(people);
   console.log("Original row count:", people.nrows());
 
-  const unique = people.distinct();
+  const unique = people.distinct("id", "name", "species", "mass", "height");
 
   console.log("After distinct():");
   console.table(unique);

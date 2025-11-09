@@ -85,7 +85,11 @@ Deno.test("mutate with empty grouped DataFrame", () => {
 
 Deno.test("distinct with empty grouped DataFrame", () => {
   const empty = createDataFrame([], impressionSchema);
-  const result = empty.groupBy("order_proc_id").distinct();
+  const result = empty.groupBy("order_proc_id").distinct(
+    "order_proc_id",
+    "line",
+    "impression",
+  );
 
   expect(result.columns()).toEqual(["order_proc_id", "line", "impression"]);
   expect(result.nrows()).toBe(0);

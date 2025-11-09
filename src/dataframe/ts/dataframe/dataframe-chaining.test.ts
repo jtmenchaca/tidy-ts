@@ -191,7 +191,7 @@ Deno.test("createDataFrame - distinct, rename, drop", () => {
   const df = createDataFrame(dupes);
 
   // Distinct on all columns (remove the exact duplicate)
-  const allDistinct = df.distinct();
+  const allDistinct = df.distinct("dept", "level");
   expect(allDistinct.nrows()).toBe(4);
 
   // Distinct by a subset (by dept only)

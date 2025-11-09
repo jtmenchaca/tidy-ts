@@ -123,7 +123,7 @@ function distinctExample() {
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 }, // Exact duplicate
   ]);
 
-  const unique = people.distinct();
+  const unique = people.distinct("id", "name", "species", "mass", "height");
 
   console.table(unique);
 

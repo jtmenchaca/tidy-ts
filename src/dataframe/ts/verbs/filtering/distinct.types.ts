@@ -5,24 +5,27 @@ import type {
   Prettify,
 } from "../../dataframe/index.ts";
 
-/** Distinct preserves row shape (removes duplicates only). */
-export type RowAfterDistinct<Row extends object> = Prettify<
-  Row
+/** Distinct returns only the specified columns (SQL-like behavior). */
+export type RowAfterDistinct<
+  Row extends object,
+  Cols extends keyof Row,
+> = Prettify<
+  Pick<Row, Cols>
 >;
 
 /**
- * Remove duplicate rows based on specified columns.
+ * Get unique combinations of specified columns (SQL DISTINCT).
  *
- * Returns unique rows, keeping the first occurrence of each unique combination.
- * If no columns specified, uses all columns. For grouped DataFrames, uniqueness
- * is determined within each group.
- *
- * @example
- * // Remove all duplicate rows
- * df.distinct()
+ * Returns a DataFrame with only the specified columns, keeping the first occurrence
+ * of each unique combination. Works like SQL's `SELECT DISTINCT col1, col2 FROM table`.
+ * For grouped DataFrames, uniqueness is determined within each group.
  *
  * @example
- * // Unique values based on specific columns
+ * // Get unique regions (returns only region column)
+ * df.distinct("region")
+ *
+ * @example
+ * // Get unique category/region combinations (returns only those 2 columns)
  * df.distinct("category", "region")
  *
  * @example
@@ -31,47 +34,51 @@ export type RowAfterDistinct<Row extends object> = Prettify<
  */
 export type DistinctMethod<Row extends object> = {
   /**
-   * Remove duplicate rows based on specified columns.
+   * Get unique combinations of specified columns (SQL DISTINCT).
    *
-   * Returns unique rows, keeping the first occurrence of each unique combination.
-   * If no columns specified, uses all columns. For grouped DataFrames, uniqueness
-   * is determined within each group.
-   *
-   * @example
-   * // Remove all duplicate rows
-   * df.distinct()
+   * Returns a DataFrame with only the specified columns, keeping the first occurrence
+   * of each unique combination. Works like SQL's `SELECT DISTINCT col1, col2 FROM table`.
+   * For grouped DataFrames, uniqueness is determined within each group.
    *
    * @example
-   * // Unique values based on specific columns
+   * // Get unique regions (returns only region column)
+   * df.distinct("region")
+   *
+   * @example
+   * // Get unique category/region combinations (returns only those 2 columns)
    * df.distinct("category", "region")
    *
    * @example
    * // Distinct within groups
    * df.groupBy("year").distinct("product")
    */
-  <GroupName extends keyof Row>(
+  <GroupName extends keyof Row, Cols extends keyof Row>(
     this: GroupedDataFrame<Row, GroupName>,
-    ...columnNames: Array<keyof Row>
-  ): PreserveGrouping<Row, GroupName, RowAfterDistinct<Row>>;
+    column1: Cols,
+    ...moreColumns: Cols[]
+  ): PreserveGrouping<Row, GroupName, RowAfterDistinct<Row, Cols>>;
 
   /**
-   * Remove duplicate rows based on specified columns.
+   * Get unique combinations of specified columns (SQL DISTINCT).
    *
-   * Returns unique rows, keeping the first occurrence of each unique combination.
-   * If no columns specified, uses all columns. For grouped DataFrames, uniqueness
-   * is determined within each group.
-   *
-   * @example
-   * // Remove all duplicate rows
-   * df.distinct()
+   * Returns a DataFrame with only the specified columns, keeping the first occurrence
+   * of each unique combination. Works like SQL's `SELECT DISTINCT col1, col2 FROM table`.
+   * For grouped DataFrames, uniqueness is determined within each group.
    *
    * @example
-   * // Unique values based on specific columns
+   * // Get unique regions (returns only region column)
+   * df.distinct("region")
+   *
+   * @example
+   * // Get unique category/region combinations (returns only those 2 columns)
    * df.distinct("category", "region")
    *
    * @example
    * // Distinct within groups
    * df.groupBy("year").distinct("product")
    */
-  (...columnNames: Array<keyof Row>): DataFrame<RowAfterDistinct<Row>>;
+  <Cols extends keyof Row>(
+    column1: Cols,
+    ...moreColumns: Cols[]
+  ): DataFrame<RowAfterDistinct<Row, Cols>>;
 };

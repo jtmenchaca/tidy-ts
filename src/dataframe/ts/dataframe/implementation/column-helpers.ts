@@ -131,29 +131,34 @@ export function convertToTypedArrays(
     for (let i = 0; i < len; i++) {
       const v = colData[i];
 
-      // Fast null check
-      if (v == null) {
+      // Distinguish null from undefined
+      if (v === null) {
         out[i] = 0;
+        continue;
+      }
+      if (v === undefined) {
+        out[i] = 1;
         continue;
       }
 
       const t = typeof v;
       if (t === "boolean") {
-        out[i] = v ? 1 : 0;
+        out[i] = v ? 2 : 3;
       } else if (t === "number") {
         const num = v as number;
         out[i] = Number.isNaN(num)
           ? 0xFFFFFFFF
-          : (Math.round(num * 1000) >>> 0);
+          : ((Math.round(num * 1000) >>> 0) + 4);
       } else {
-        // Optimized fast string hash
+        // Optimized fast string hash - offset to avoid collision with special values
         const str = "" + v;
         let hash = 0;
         for (let j = 0, c = 0; j < str.length; j++) {
           c = str.charCodeAt(j);
           hash = (hash * 31 + c) >>> 0;
         }
-        out[i] = hash;
+        // Add offset to avoid collision with null(0), undefined(1), bool(2,3)
+        out[i] = (hash >>> 0) + 4;
       }
     }
 

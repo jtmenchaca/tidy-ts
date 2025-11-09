@@ -453,7 +453,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.distinct) {
       const tidyTime = measure(
         () => {
-          const result = tidyDf.distinct();
+          const result = tidyDf.distinct("id", "value", "category");
           result.printTrace();
           return result;
         },

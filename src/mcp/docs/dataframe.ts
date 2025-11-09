@@ -180,19 +180,23 @@ export const dataframeDocs: Record<string, DocEntry> = {
   distinct: {
     name: "distinct",
     category: "dataframe",
-    signature: "distinct<K extends keyof T>(...columns: K[]): DataFrame<T>",
-    description: "Keep only unique rows (by all columns or specified columns).",
+    signature:
+      "distinct<K extends keyof T>(column1: K, ...moreColumns: K[]): DataFrame<Pick<T, K>>",
+    description:
+      "Get unique combinations of specified columns (SQL DISTINCT). Returns only the specified columns with unique combinations.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
-      "...columns: Columns to check for uniqueness (default: all columns)",
+      "column1: First column to check for uniqueness (required)",
+      "...moreColumns: Additional columns to include in uniqueness check",
     ],
-    returns: "DataFrame<T>",
+    returns:
+      "DataFrame with only the specified columns containing unique combinations",
     examples: [
-      "df.distinct() // Unique rows",
-      'df.distinct("region") // Unique regions',
-      'df.distinct("region", "product")',
+      'df.distinct("region") // Get unique regions (returns only region column)',
+      'df.distinct("region", "product") // Get unique region+product combinations',
+      'df.groupBy("year").distinct("product") // Unique products within each year',
     ],
-    related: ["filter", "groupBy"],
+    related: ["filter", "groupBy", "select"],
   },
 
   rename: {
