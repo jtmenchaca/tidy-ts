@@ -2,3 +2,4 @@
 - Add zipf
 - Add pareto
 - Add dirac delta
+- double check xlsx sheet writing

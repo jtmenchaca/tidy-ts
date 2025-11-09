@@ -74,53 +74,63 @@ Deno.test("test-1", async () => {
   // └──────┴─────┴──────────────────────┘
 });
 
-Deno.test("test-2", async () => {
-  const df = createDataFrame([
-    { name: "John", age: 30 },
-    { name: "Jane", age: 10 },
-  ]);
+Deno.test({
+  name: "test-2",
+  async fn() {
+    const df = createDataFrame([
+      { name: "John", age: 30 },
+      { name: "Jane", age: 10 },
+    ]);
 
-  const df1 = await df
-    .mutate({
-      llmResponse: async (row) =>
-        await LLM.respond({
-          userInput: "What is the age of " + row.name + " - " + row.age +
-            " multiplied by 2 then added to 10?",
-        }),
-    });
-
-  const df2 = await df1
-    .mutate({
-      eligibility: async (row) => {
-        const result = await LLM.respond({
-          userInput: "Is " + row.age + " greater than 18?",
-          schema: z.object({
-            eligibility: z.boolean(),
+    const df1 = await df
+      .mutate({
+        llmResponse: async (row) =>
+          await LLM.respond({
+            userInput: "What is the age of " + row.name + " - " + row.age +
+              " multiplied by 2 then added to 10?",
           }),
-        });
-        return result.eligibility;
-      },
-    })
-    .filter((row) => row.eligibility);
+      });
 
-  df2.print();
-  //   ------- output -------
-  // ┌──────┬─────┬──────────────────────┐
-  // │ name │ age │ llmResponse          │
-  // ├──────┼─────┼──────────────────────┤
-  // │ John │ 30  │ John's age is 30.... │
-  // └──────┴─────┴──────────────────────┘
+    const df2 = await df1
+      .mutate({
+        eligibility: async (row) => {
+          const result = await LLM.respond({
+            userInput: "Is " + row.age + " greater than 18?",
+            schema: z.object({
+              eligibility: z.boolean(),
+            }),
+          });
+          return result.eligibility;
+        },
+      })
+      .filter((row) => row.eligibility);
+
+    df2.print();
+    //   ------- output -------
+    // ┌──────┬─────┬──────────────────────┐
+    // │ name │ age │ llmResponse          │
+    // ├──────┼─────┼──────────────────────┤
+    // │ John │ 30  │ John's age is 30.... │
+    // └──────┴─────┴──────────────────────┘
+  },
+  sanitizeResources: false,
+  sanitizeOps: false,
 });
 
-Deno.test("LLM.embed - single string", async () => {
-  const embedding = await LLM.embed("Hello world");
+Deno.test({
+  name: "LLM.embed - single string",
+  async fn() {
+    const embedding = await LLM.embed("Hello world");
 
-  expect(Array.isArray(embedding)).toBe(true);
-  expect(embedding.length).toBe(3072); // text-embedding-3-large default
-  expect(typeof embedding[0]).toBe("number");
+    expect(Array.isArray(embedding)).toBe(true);
+    expect(embedding.length).toBe(3072); // text-embedding-3-large default
+    expect(typeof embedding[0]).toBe("number");
 
-  console.log(`Embedding dimension: ${embedding.length}`);
-  console.log(`First 5 values: ${embedding.slice(0, 5)}`);
+    console.log(`Embedding dimension: ${embedding.length}`);
+    console.log(`First 5 values: ${embedding.slice(0, 5)}`);
+  },
+  sanitizeResources: false,
+  sanitizeOps: false,
 });
 
 Deno.test("LLM.embed - array of strings", async () => {

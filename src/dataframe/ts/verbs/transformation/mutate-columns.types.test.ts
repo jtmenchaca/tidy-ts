@@ -59,13 +59,34 @@ const _suffixTypeCheck: DataFrame<{
 
 console.log("Suffix mutate_columns type checking passed!");
 
+const new_cols_operations = [{
+  prefix: "new_",
+  suffix: "_value",
+  fn: (col: number) => col * 1.5,
+}] as const;
+
 // 3. Test with both prefix and suffix
-const prefixSuffixMutate = testData
+const prefixSuffixMutate1 = testData
   .mutateColumns({
     colType: "number",
     columns: ["score1"],
-    newColumns: [{ prefix: "new_", suffix: "_value", fn: (col) => col * 1.5 }],
+    newColumns: new_cols_operations,
   });
+
+// 4. Test with both prefix and suffix
+const prefixSuffixMutate2 = testData
+  .mutateColumns({
+    colType: "number",
+    columns: ["score1"],
+    newColumns: [{
+      prefix: "new_",
+      suffix: "_value",
+      fn: (col: number) => col * 1.5,
+    }],
+  });
+
+const _prefixSuffixTypeCheckEquivalent: typeof prefixSuffixMutate1 =
+  prefixSuffixMutate2;
 
 const _prefixSuffixTypeCheck: DataFrame<{
   name: string;
@@ -75,7 +96,7 @@ const _prefixSuffixTypeCheck: DataFrame<{
   score3: number;
   team: string;
   new_score1_value: number;
-}> = prefixSuffixMutate;
+}> = prefixSuffixMutate1;
 
 console.log("Prefix+suffix mutate_columns type checking passed!");
 
@@ -101,37 +122,3 @@ const _stringTypeCheck: DataFrame<{
   name_length: number;
   team_length: number;
 }> = stringMutate;
-
-console.log("String mutate_columns type checking passed!");
-
-// // 5. Single group mutate_columns type check (commented out like in summarise_columns-types.test.ts)
-// const singleGroupMutate = pipe(
-//   testData,
-//   groupBy("team"),
-//   mutateColumns({
-//     colType: "number",
-//     columns: ["score1", "score2"],
-//     newColumns: [
-//       { prefix: "add_1_", fn: (col) => col + 1 },
-//       { prefix: "double_", fn: (col) => col * 2 },
-//     ],
-//   }),
-// );
-
-// // This should preserve the original columns and add new ones
-// const _singleGroupTypeCheck: DataFrame<{
-//   name: string;
-//   age: number;
-//   score1: number;
-//   score2: number;
-//   score3: number;
-//   team: string;
-//   add_1_score1: number;
-//   add_1_score2: number;
-//   double_score1: number;
-//   double_score2: number;
-// }> = singleGroupMutate;
-
-// console.log("Single group mutate_columns type checking passed!");
-
-console.log("All mutate_columns type checking tests completed successfully!");

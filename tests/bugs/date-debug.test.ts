@@ -1,22 +1,23 @@
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame } from "../../src/dataframe/ts/dataframe/index.ts";
+import { writeXLSX } from "../../src/dataframe/ts/io/write_xlsx.ts";
+import { parseXLSXRaw } from "../../src/dataframe/ts/io/read_xlsx.ts";
 
-Deno.test("Debug Date storage", () => {
-  const data = [
-    { id: 1, date: new Date("2024-01-15") },
-    { id: 2, date: new Date("2024-01-16") },
-  ];
+const TEST_FILE = "./test-date-debug.xlsx";
 
-  console.log("Original data:");
-  console.log(data);
+Deno.test("Debug date serialization", async () => {
+  const df = createDataFrame([
+    { date: new Date("1900-01-01") },
+    { date: new Date("1899-12-31") },
+    { date: new Date("2099-12-31") },
+    { date: new Date("1970-01-01") },
+  ]);
 
-  const df = createDataFrame(data);
+  console.log("Original dates:");
+  df.toArray().forEach((r, i) => console.log(`  ${i}:`, r.date));
 
-  console.log("\nDataFrame.toArray():");
-  console.log(df.toArray());
+  await writeXLSX(df, TEST_FILE);
 
-  console.log("\nDirect column access:");
-  console.log("df.date:", df.date);
-
-  console.log("\nPrint DataFrame:");
-  df.print();
+  const raw = await parseXLSXRaw(TEST_FILE);
+  console.log("\nRaw XLSX values:");
+  raw.slice(1).forEach((row, i) => console.log(`  ${i}:`, row[0]));
 });

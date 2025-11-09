@@ -22,7 +22,7 @@ Deno.test("rename multiple columns", () => {
     character_name: "name",
     weight: "mass",
   });
-  console.log("Rename multiple columns result:", result);
+  result.print();
 
   expect(result.toArray()).toEqual([
     { id: 1, character_name: "Luke", weight: 77, species: "Human" },
