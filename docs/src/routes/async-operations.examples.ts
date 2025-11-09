@@ -165,4 +165,43 @@ const errorRows = resultWithErrors.filter(row =>
 
 console.log("Successful ratings:", successfulRatings.nrows());
 console.log("Failed ratings:", errorRows.nrows());`,
+
+  parallelFunction: `import { stats as s } from "@tidy-ts/dataframe";
+
+// Process promises with concurrency control - enhanced Promise.all replacement
+async function fetchData(id: number): Promise<number> {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return id * 2;
+}
+
+// Basic usage - like Promise.all but with concurrency control
+const promises = [
+  fetchData(1),
+  fetchData(2),
+  fetchData(3),
+  fetchData(4),
+  fetchData(5),
+];
+
+const results = await s.parallel(promises, { concurrency: 2 });
+console.log("Results:", results); // [2, 4, 6, 8, 10]
+
+// With retry support - pass functions instead of promises
+const resultsWithRetry = await s.parallel(
+  [
+    () => fetchData(1),
+    () => fetchData(2),
+    () => fetchData(3),
+  ],
+  {
+    concurrency: 2,
+    retry: {
+      backoff: "exponential",
+      maxRetries: 3,
+      baseDelay: 100,
+    },
+  }
+);
+
+console.log("Results with retry:", resultsWithRetry);`,
 };

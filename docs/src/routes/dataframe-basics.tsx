@@ -33,6 +33,13 @@ function DataFrameBasicsComponent() {
         description="The extract(), extractHead(), extractTail(), extractNth(), or extractSample() methods give an easy, chainable way to get mutable data out of a DataFrame.  These values are copies and won't have any effect on the original DataFrame."
         code={dataframeBasicsExamples.extractMethods}
       />
+
+      <CodeBlock
+        title="4. toString() Method"
+        description="Get a string representation of your DataFrame for logging or custom output"
+        explanation="The toString() method returns the same formatted table output as print(), but as a string instead of printing directly to the console. Useful for file logging, custom formatting, or debugging."
+        code={dataframeBasicsExamples.toStringMethod}
+      />
     </DocPageLayout>
   );
 }

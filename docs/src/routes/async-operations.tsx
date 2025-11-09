@@ -56,6 +56,13 @@ function AsyncOperationsComponent() {
         code={asyncOperationsExamples.errorHandling}
       />
 
+      <CodeBlock
+        title="s.parallel() - Promise.all with Concurrency"
+        description="Process multiple promises with concurrency control and retry logic"
+        explanation="The s.parallel() function is an enhanced replacement for Promise.all that supports concurrency limits and retry logic. Pass functions instead of promises for full retry support."
+        code={asyncOperationsExamples.parallelFunction}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Concurrency and Retries</CardTitle>

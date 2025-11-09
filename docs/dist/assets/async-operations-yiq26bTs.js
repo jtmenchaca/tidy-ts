@@ -1,4 +1,4 @@
-import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-Cz0k2CH2.js";import{C as t,a as s,b as n,c as i,d as o}from"./card-BO96Vfv_.js";import{D as c}from"./DocPageLayout-NzwZwcAy.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-B7qsQQY4.js";const r={asyncMutateOperations:`import { createDataFrame } from "@tidy-ts/dataframe";
+import{j as e}from"./radix-BuIbRv-a.js";import{C as a}from"./code-block-BeWNPvCF.js";import{C as t,a as s,b as n,c as i,d as o}from"./card-CUEGTy7I.js";import{D as c}from"./DocPageLayout-DXohhYzn.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./shiki-themes-BheiPiei.js";import"./index-YyKahHUK.js";const r={asyncMutateOperations:`import { createDataFrame } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
@@ -152,4 +152,41 @@ const errorRows = resultWithErrors.filter(row =>
 );
 
 console.log("Successful ratings:", successfulRatings.nrows());
-console.log("Failed ratings:", errorRows.nrows());`};function g(){return e.jsxs(c,{title:"Async Operations with Concurrency Control",description:"Built-in support for asynchronous data transformations with concurrency control",currentPath:"/async-operations",children:[e.jsx(a,{title:"Async Mutate Operations",description:"Add calculated columns using asynchronous functions",explanation:"You can mix synchronous and asynchronous operations in the same mutate() call. Useful for API enrichment, data validation, and external service integration.",code:r.asyncMutateOperations}),e.jsx(a,{title:"Concurrency Control",description:"Control the number of concurrent async operations",explanation:"Limit concurrent operations to prevent overwhelming external services or APIs. This example shows how to use the concurrency parameter.",code:r.concurrencyControl}),e.jsx(a,{title:"Async Filtering",description:"Filter rows based on asynchronous conditions",explanation:"Async filtering is useful for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations.",code:r.asyncFiltering}),e.jsx(a,{title:"Async Aggregation",description:"Handle asynchronous operations in group summaries",explanation:"Group summaries can include async operations to enrich your data with external information while maintaining type safety.",code:r.asyncAggregation}),e.jsx(a,{title:"Error Handling",description:"Gracefully handle async operation failures",explanation:"Async operations can fail, and tidy-ts provides error handling patterns for managing these scenarios in your data pipelines.",code:r.errorHandling}),e.jsxs(t,{children:[e.jsxs(s,{children:[e.jsx(n,{children:"Concurrency and Retries"}),e.jsx(i,{children:"Tidy-ts includes concurrency control and retry mechanisms"})]}),e.jsx(o,{children:e.jsx("div",{children:e.jsx(a,{code:r.concurrencyAndRetries})})})]})]})}export{g as component};
+console.log("Failed ratings:", errorRows.nrows());`,parallelFunction:`import { stats as s } from "@tidy-ts/dataframe";
+
+// Process promises with concurrency control - enhanced Promise.all replacement
+async function fetchData(id: number): Promise<number> {
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return id * 2;
+}
+
+// Basic usage - like Promise.all but with concurrency control
+const promises = [
+  fetchData(1),
+  fetchData(2),
+  fetchData(3),
+  fetchData(4),
+  fetchData(5),
+];
+
+const results = await s.parallel(promises, { concurrency: 2 });
+console.log("Results:", results); // [2, 4, 6, 8, 10]
+
+// With retry support - pass functions instead of promises
+const resultsWithRetry = await s.parallel(
+  [
+    () => fetchData(1),
+    () => fetchData(2),
+    () => fetchData(3),
+  ],
+  {
+    concurrency: 2,
+    retry: {
+      backoff: "exponential",
+      maxRetries: 3,
+      baseDelay: 100,
+    },
+  }
+);
+
+console.log("Results with retry:", resultsWithRetry);`};function w(){return e.jsxs(c,{title:"Async Operations with Concurrency Control",description:"Built-in support for asynchronous data transformations with concurrency control",currentPath:"/async-operations",children:[e.jsx(a,{title:"Async Mutate Operations",description:"Add calculated columns using asynchronous functions",explanation:"You can mix synchronous and asynchronous operations in the same mutate() call. Useful for API enrichment, data validation, and external service integration.",code:r.asyncMutateOperations}),e.jsx(a,{title:"Concurrency Control",description:"Control the number of concurrent async operations",explanation:"Limit concurrent operations to prevent overwhelming external services or APIs. This example shows how to use the concurrency parameter.",code:r.concurrencyControl}),e.jsx(a,{title:"Async Filtering",description:"Filter rows based on asynchronous conditions",explanation:"Async filtering is useful for scenarios where you need to validate data against external APIs, databases, or perform complex async calculations.",code:r.asyncFiltering}),e.jsx(a,{title:"Async Aggregation",description:"Handle asynchronous operations in group summaries",explanation:"Group summaries can include async operations to enrich your data with external information while maintaining type safety.",code:r.asyncAggregation}),e.jsx(a,{title:"Error Handling",description:"Gracefully handle async operation failures",explanation:"Async operations can fail, and tidy-ts provides error handling patterns for managing these scenarios in your data pipelines.",code:r.errorHandling}),e.jsx(a,{title:"s.parallel() - Promise.all with Concurrency",description:"Process multiple promises with concurrency control and retry logic",explanation:"The s.parallel() function is an enhanced replacement for Promise.all that supports concurrency limits and retry logic. Pass functions instead of promises for full retry support.",code:r.parallelFunction}),e.jsxs(t,{children:[e.jsxs(s,{children:[e.jsx(n,{children:"Concurrency and Retries"}),e.jsx(i,{children:"Tidy-ts includes concurrency control and retry mechanisms"})]}),e.jsx(o,{children:e.jsx("div",{children:e.jsx(a,{code:r.concurrencyAndRetries})})})]})]})}export{w as component};

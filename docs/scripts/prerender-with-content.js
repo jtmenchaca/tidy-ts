@@ -31,6 +31,13 @@ const routes = [
 async function prerender() {
   console.log('🚀 Starting prerendering with Playwright...');
   
+  // Remove coverage folder from dist if it exists (copied from public during build)
+  const coveragePath = path.join(__dirname, '..', 'dist', 'coverage');
+  if (fs.existsSync(coveragePath)) {
+    console.log('🧹 Removing coverage folder from dist...');
+    fs.rmSync(coveragePath, { recursive: true, force: true });
+  }
+  
   // Start a local server serving the built dist folder
   const { preview } = await import('vite');
   const server = await preview({

@@ -1,6 +1,4 @@
-// Code examples for DataFrame basics
-export const dataframeBasicsExamples = {
-  dataframeProperties: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import{j as t}from"./radix-BuIbRv-a.js";import{C as e}from"./code-block-BeWNPvCF.js";import{D as s}from"./DocPageLayout-DXohhYzn.js";import"./recharts-BW8nexKl.js";import"./shiki-wKCgTG-o.js";import"./card-CUEGTy7I.js";import"./index-YyKahHUK.js";import"./shiki-themes-BheiPiei.js";const a={dataframeProperties:`import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const jediKnights = createDataFrame([
   { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
@@ -24,9 +22,7 @@ jediKnights.print("Jedi Knights DataFrame:");
     .mutate({
       doubleMass: (r) => r.mass * 2,
     })
-    .print("Jedi Knights DataFrame after mutation:");`,
-
-  basicColumnAccess: `// Get all values from a column - TypeScript knows the exact types
+    .print("Jedi Knights DataFrame after mutation:");`,basicColumnAccess:`// Get all values from a column - TypeScript knows the exact types
 const names = jediKnights.name; // readonly string[] - all names
 const masses = jediKnights.mass; // readonly number[] - all masses
 const species = jediKnights.species; // readonly string[] - all species
@@ -46,9 +42,7 @@ const maxHeightTidy = s.max(jediKnights.height);
   console.log("Average mass:", avgMass);
   console.log("Max height:", maxHeight);
   console.log("Tidy Average mass:", avgMassTidy);
-  console.log("Tidy Max height:", maxHeightTidy);`,
-
-  extractMethods: `// Basic extract - get all values (mutable copy)
+  console.log("Tidy Max height:", maxHeightTidy);`,extractMethods:`// Basic extract - get all values (mutable copy)
 const allNames = jediKnights.extract("name");
 console.log("All names:", allNames);
 
@@ -65,9 +59,7 @@ console.log("Third Jedi:", thirdJedi);
 
 // Random sampling
 const randomJedi = jediKnights.extractSample("name", 2);
-console.log("Random sample:", randomJedi);`,
-
-  toStringMethod: `// Get string representation without printing to console
+console.log("Random sample:", randomJedi);`,toStringMethod:`// Get string representation without printing to console
 const tableString = jediKnights.toString();
 console.log("DataFrame as string:");
 console.log(tableString);
@@ -88,5 +80,4 @@ console.log(logEntry);
 // print() writes to console directly, toString() returns the string
 jediKnights.print("Using print()");
 const str = jediKnights.toString("Using toString()");
-console.log(str);`,
-};
+console.log(str);`};function g(){return t.jsxs(s,{title:"DataFrame Basics",description:"DataFrame properties, column access, and TypeScript integration. Learn the fundamentals before diving into data operations.",currentPath:"/dataframe-basics",children:[t.jsx(e,{title:"1. DataFrame Properties",description:"Get fundamental information about your DataFrame structure",explanation:"You can check basic properties like row count, column names, and print the entire DataFrame to see your data in a clean table format.",code:a.dataframeProperties}),t.jsx(e,{title:"2. Basic Column Access",description:"Access entire columns as typed arrays",explanation:"The easiest way to access the raw data from any column is using dot notation.  This returns a readonly array (to prevent accidental DataFrame mutations) and can be used with any JavaScript array method.",code:a.basicColumnAccess}),t.jsx(e,{title:"3. Extract Methods",description:"The extract(), extractHead(), extractTail(), extractNth(), or extractSample() methods give an easy, chainable way to get mutable data out of a DataFrame.  These values are copies and won't have any effect on the original DataFrame.",code:a.extractMethods}),t.jsx(e,{title:"4. toString() Method",description:"Get a string representation of your DataFrame for logging or custom output",explanation:"The toString() method returns the same formatted table output as print(), but as a string instead of printing directly to the console. Useful for file logging, custom formatting, or debugging.",code:a.toStringMethod})]})}export{g as component};
