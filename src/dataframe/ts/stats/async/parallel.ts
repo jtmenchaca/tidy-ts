@@ -67,7 +67,7 @@ import {
  * ```
  */
 export function parallel<T>(
-  promises: Array<Promise<T> | (() => Promise<T>)>,
+  promises: ReadonlyArray<Promise<T> | (() => Promise<T>)>,
   options: {
     /** Maximum number of concurrent async operations (default: Infinity - all in parallel) */
     concurrency?: number;
