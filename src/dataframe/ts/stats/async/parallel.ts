@@ -8,6 +8,13 @@ import {
 } from "../../promised-dataframe/concurrency-utils.ts";
 
 /**
+ * Extract the resolved type from a Promise or a function that returns a Promise
+ */
+type ExtractPromiseType<T> = T extends () => Promise<infer U> ? U
+  : T extends Promise<infer U> ? U
+  : never;
+
+/**
  * Process an array of promises with concurrency control and retry logic.
  * This serves as a replacement for Promise.all with additional async helper features.
  *
@@ -66,8 +73,10 @@ import {
  * );
  * ```
  */
-export function parallel<T>(
-  promises: ReadonlyArray<Promise<T> | (() => Promise<T>)>,
+export function parallel<
+  T extends readonly (Promise<unknown> | (() => Promise<unknown>))[],
+>(
+  promises: T,
   options: {
     /** Maximum number of concurrent async operations (default: Infinity - all in parallel) */
     concurrency?: number;
@@ -103,7 +112,7 @@ export function parallel<T>(
       onRetry?: (error: unknown, attempt: number, taskIndex: number) => void;
     };
   } = {},
-): Promise<T[]> {
+): Promise<{ [K in keyof T]: Awaited<ExtractPromiseType<T[K]>> }> {
   // Convert promises/functions array to tasks array
   // If it's already a function, use it directly (enables retry)
   // If it's a promise, wrap it in a function (retry won't work, but API is compatible)
@@ -119,10 +128,14 @@ export function parallel<T>(
 
   // Use existing processConcurrently infrastructure
   // Default concurrency to Infinity to match Promise.all behavior
-  // Type assertion needed because retry config uses union type in signature
-  // but ConcurrencyOptions expects discriminated union
+  // Type assertion needed because:
+  // 1. Retry config uses union type in signature but ConcurrencyOptions expects discriminated union
+  // 2. processConcurrently returns Promise<unknown[]> but we need to preserve tuple types
+  // Runtime behavior preserves order, so the cast is safe
   return processConcurrently(tasks, {
     concurrency: options.concurrency ?? Infinity,
     retry: options.retry,
-  } as ConcurrencyOptions);
+  } as ConcurrencyOptions) as Promise<
+    { [K in keyof T]: Awaited<ExtractPromiseType<T[K]>> }
+  >;
 }
