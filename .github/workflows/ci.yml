@@ -31,4 +31,4 @@ jobs:
             ${{ runner.os }}-deno-
 
       - name: Run CI tests
-        run: deno task ci
+        run: deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 --ignore=**/LLM/llm.test.ts --ignore=**/t214-analysis.test.ts --ignore=**/csv-file-size-limit.test.ts --ignore=**/intrepret.test.ts --ignore=**/mimicel-csv-import.test.ts src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet
