@@ -86,6 +86,7 @@ export function makeDataFrameProbe<Row extends object>(
     summariseColumns: () => makeDataFrameProbe(df),
     summarizeColumns: () => makeDataFrameProbe(df),
     crossTabulate: () => makeDataFrameProbe(df),
+    count: () => makeDataFrameProbe(df),
     ungroup: () => makeDataFrameProbe(df),
 
     // Slice methods
@@ -113,6 +114,7 @@ export function makeDataFrameProbe<Row extends object>(
     pivotWider: () => makeDataFrameProbe(df),
     pivotLonger: () => makeDataFrameProbe(df),
     transpose: () => makeDataFrameProbe(df),
+    unnest: () => makeDataFrameProbe(df),
 
     // Row label methods
     setRowLabels: () => makeDataFrameProbe(df),
@@ -125,9 +127,14 @@ export function makeDataFrameProbe<Row extends object>(
     // Utility methods
     dummyCol: () => makeDataFrameProbe(df),
     graph: () => ({}), // Return empty object for graph
+    forEach: () => makeDataFrameProbe(df),
     forEachRow: () => makeDataFrameProbe(df),
     forEachCol: () => makeDataFrameProbe(df),
     replaceNA: () => makeDataFrameProbe(df),
+    removeNA: () => makeDataFrameProbe(df),
+    removeNull: () => makeDataFrameProbe(df),
+    removeNulls: () => makeDataFrameProbe(df),
+    removeUndefined: () => makeDataFrameProbe(df),
     append: () => makeDataFrameProbe(df),
     prepend: () => makeDataFrameProbe(df),
     shuffle: () => makeDataFrameProbe(df),

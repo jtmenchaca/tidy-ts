@@ -43,7 +43,6 @@ import type {
   CrossJoinMethod,
   InnerJoinMethod,
   LeftJoinMethod,
-  LeftJoinParallelMethod,
   OuterJoinMethod,
   RightJoinMethod,
 } from "../../verbs/join/types/index.ts";
@@ -409,7 +408,6 @@ export type DataFrame<Row extends object = object> =
     // ---------- Joins ----------
     innerJoin: InnerJoinMethod<Row>;
     leftJoin: LeftJoinMethod<Row>;
-    leftJoinParallel: LeftJoinParallelMethod<Row>;
     rightJoin: RightJoinMethod<Row>;
     outerJoin: OuterJoinMethod<Row>;
     crossJoin: CrossJoinMethod<Row>;

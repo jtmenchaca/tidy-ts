@@ -4,7 +4,7 @@ import { readXLSX } from "./read_xlsx.ts";
 import { expect } from "@std/expect";
 import { z } from "zod";
 
-const TEST_FILE = "./test-edge-cases.xlsx";
+const TEST_FILE = "/tmp/test-edge-cases.xlsx";
 
 // Helper to ensure clean test file
 async function cleanTestFile() {

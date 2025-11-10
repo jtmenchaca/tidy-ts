@@ -4,7 +4,7 @@ import { readXLSX } from "./read_xlsx.ts";
 import { expect } from "@std/expect";
 import { z } from "zod";
 
-const TEST_FILE = "./test-output-multi-sheet.xlsx";
+const TEST_FILE = "/tmp/test-output-multi-sheet.xlsx";
 
 Deno.test("writeXLSX - single sheet with default name", async () => {
   const df = createDataFrame([

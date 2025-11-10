@@ -10,6 +10,4 @@ Deno.test("toString()", () => {
 
   console.log("--------------------------------");
   console.log(stringval);
-
-  
 });
