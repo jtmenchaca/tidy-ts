@@ -9,7 +9,7 @@ const res = starwars
   .filter((row) => row.mass > 80)
   .select("name", "mass", "species")
   .filter((row) => row.mass > 80)
-  .rename({ original_mass: "mass" })
+  .rename({ mass: "original_mass" })
   .mutate({ new_mass: (row) => row.original_mass * 2 })
   .filter((row) => row.original_mass > 80);
 

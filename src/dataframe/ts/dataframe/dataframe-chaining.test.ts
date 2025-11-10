@@ -204,8 +204,8 @@ Deno.test("createDataFrame - distinct, rename, drop", () => {
     "HR",
   ]);
 
-  // Rename (new: old)
-  const renamed = df.rename({ department: "dept", seniority_level: "level" });
+  // Rename (old: new)
+  const renamed = df.rename({ dept: "department", level: "seniority_level" });
   expect(renamed.toArray()[0]).toEqual({
     department: "Engineering",
     seniority_level: "Senior",

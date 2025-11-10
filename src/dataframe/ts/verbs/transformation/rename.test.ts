@@ -8,7 +8,7 @@ const testData = createDataFrame([
 ]);
 
 Deno.test("rename single column", () => {
-  const result = testData.rename({ weight: "mass" });
+  const result = testData.rename({ mass: "weight" });
   console.log("Rename single column result:", result);
 
   expect(result.toArray()).toEqual([
@@ -19,8 +19,8 @@ Deno.test("rename single column", () => {
 
 Deno.test("rename multiple columns", () => {
   const result = testData.rename({
-    character_name: "name",
-    weight: "mass",
+    name: "character_name",
+    mass: "weight",
   });
   result.print();
 
@@ -40,7 +40,7 @@ Deno.test("rename with empty mapping (no change)", () => {
 Deno.test("rename non-existent column should throw", () => {
   expect(() => {
     // @ts-expect-error - Testing runtime error
-    testData.rename({ weight: "nonexistent" });
+    testData.rename({ nonexistent: "weight" });
   }).toThrow('Column "nonexistent" not found');
 });
 
@@ -56,11 +56,11 @@ Deno.test("rename preserves data types", () => {
   ]);
 
   const result = typedData.rename({
-    string_val: "str",
-    number_val: "num",
-    boolean_val: "bool",
-    array_val: "arr",
-    object_val: "obj",
+    str: "string_val",
+    num: "number_val",
+    bool: "boolean_val",
+    arr: "array_val",
+    obj: "object_val",
   });
 
   console.log("Type preservation result:", result);
@@ -81,7 +81,7 @@ Deno.test("rename with numeric keys", () => {
     { 1: "one", 2: "two", name: "test" },
   ]);
 
-  const result = dataWithNumericKeys.rename({ first: 1, second: 2 });
+  const result = dataWithNumericKeys.rename({ 1: "first", 2: "second" });
   console.log("Numeric keys rename result:", result);
 
   expect(result.toArray()).toEqual([

@@ -236,7 +236,7 @@ test("Joining DataFrames - Progressive Examples", () => {
   // Note: This example assumes your join implementation supports different key names
   // You might need to rename columns first if not supported
   const supplierInventory = inventory
-    .rename({ supplier_code: "vendor_code" }) // Align key names
+    .rename({ vendor_code: "supplier_code" }) // Align key names
     .leftJoin(suppliers, "supplier_code");
 
   console.log("Inventory with supplier info (renamed columns):");

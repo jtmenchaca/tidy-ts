@@ -1,15 +1,5 @@
-// deno-lint-ignore-file no-explicit-any
-import type {
-  ColumnarStore,
-  DataFrame,
-  GroupedDataFrame,
-  Prettify,
-} from "../../dataframe/index.ts";
-import {
-  createDataFrame,
-  materializeIndex,
-  withGroups,
-} from "../../dataframe/index.ts";
+import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
+import type { RowAfterRename } from "./rename.types.ts";
 
 /**
  * Type helper to rename columns in a type.
@@ -17,40 +7,41 @@ import {
  * Creates a new type where specified columns are renamed according to the mapping.
  * Columns not in the mapping are preserved as-is.
  *
+ * Reuses RowAfterRename from rename.types.ts to ensure method and standalone function
+ * share the exact same type logic.
+ *
  * @template Row - The original dataframe type
- * @template RenameMap - The mapping object: { newName: oldName, ... }
+ * @template RenameMap - The mapping object: { oldName: newName, ... }
  */
-type RenameColumns<Row, RenameMap extends Record<string, keyof Row>> = Prettify<
-  & {
-    [ColName in Exclude<keyof Row, RenameMap[keyof RenameMap]>]: Row[ColName];
-  }
-  & { [ColName in keyof RenameMap]: Row[RenameMap[ColName]] }
->;
+type RenameColumns<
+  Row extends object,
+  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
+> = RowAfterRename<Row, RenameMap>;
 
 /**
  * Rename columns in a dataframe.
  *
  * Renames columns according to the provided mapping object. The mapping should
- * be in the format `{ newName: oldName, ... }`. This is a pure rename operation
+ * be in the format `{ oldName: newName, ... }`. This is a pure rename operation
  * - the old column is removed and replaced with the new column name.
  *
- * @param mapping - Object mapping new column names to old column names
+ * @param mapping - Object mapping old column names to new column names
  * @returns A function that takes a DataFrame and returns the renamed DataFrame
  *
  * @example
  * ```ts
  * // Rename a single column
- * pipe(df, rename({ weight: "mass" }))
+ * pipe(df, rename({ mass: "weight" }))
  *
  * // Rename multiple columns
  * pipe(df, rename({
- *   character_name: "name",
- *   weight: "mass",
- *   type: "species"
+ *   name: "character_name",
+ *   mass: "weight",
+ *   species: "type"
  * }))
  *
  * // Rename with numeric keys
- * pipe(df, rename({ first: 1, second: 2 }))
+ * pipe(df, rename({ 1: "first", 2: "second" }))
  *
  * // Empty mapping (no change)
  * pipe(df, rename({}))
@@ -71,7 +62,7 @@ type RenameColumns<Row, RenameMap extends Record<string, keyof Row>> = Prettify<
  */
 export function rename<
   Row extends Record<string, unknown>,
-  RenameMap extends Record<string, keyof Row>,
+  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
 >(mapping: RenameMap) {
   return (
     df: DataFrame<Row> | GroupedDataFrame<Row>,
@@ -79,15 +70,24 @@ export function rename<
     | DataFrame<RenameColumns<Row, RenameMap>>
     | GroupedDataFrame<RenameColumns<Row, RenameMap>> => {
     // Filter out identity renames (oldName === newName) and validate no collisions
-    const filteredMapping: Record<string, keyof Row> = {};
+    const filteredMapping: Record<string, string> = {};
     const newNames = new Set<string>();
+    const oldKeys: string[] = [];
+    const dfColumns = (df as DataFrame<Row>).columns();
 
-    for (const [newName, oldName] of Object.entries(mapping)) {
+    for (const [oldName, newName] of Object.entries(mapping)) {
       const oldNameStr = String(oldName);
       const newNameStr = String(newName);
 
       // Skip identity renames silently
       if (oldNameStr === newNameStr) continue;
+
+      // Validate old column exists
+      if (!dfColumns.includes(oldNameStr)) {
+        throw new ReferenceError(
+          `Column "${oldNameStr}" not found in DataFrame`,
+        );
+      }
 
       // Check for new name collisions
       if (newNames.has(newNameStr)) {
@@ -95,108 +95,37 @@ export function rename<
       }
 
       newNames.add(newNameStr);
-      filteredMapping[newName] = oldName;
+      filteredMapping[oldNameStr] = newNameStr;
+      oldKeys.push(oldNameStr);
     }
 
     // If no actual renames, return original dataframe
-    if (Object.keys(filteredMapping).length === 0) {
-      return df as any;
+    if (oldKeys.length === 0) {
+      return df as unknown as
+        | DataFrame<RenameColumns<Row, RenameMap>>
+        | GroupedDataFrame<
+          RenameColumns<Row, RenameMap>
+        >;
     }
 
-    // View-aware implementation using columnar storage
-    const api: any = df as any;
-    const store = api.__store as ColumnarStore | undefined;
+    // Build mutate spec: { newKey: (r) => r.oldKey, ... }
+    const mutateSpec: Record<string, (r: Row) => unknown> = {};
+    for (const [oldKey, newKey] of Object.entries(filteredMapping)) {
+      mutateSpec[newKey] = (r: Row) => (r as Record<string, unknown>)[oldKey];
+    }
 
-    if (store) {
-      // Columnar path: rename columns and preserve view
-      const idx = materializeIndex(store.length, api.__view);
-
-      // Validate all old column names exist
-      for (const [, oldName] of Object.entries(filteredMapping)) {
-        const oldNameStr = String(oldName);
-        if (!store.columns[oldNameStr]) {
-          throw new ReferenceError(`Column "${oldNameStr}" not found`);
-        }
-      }
-
-      // Create new column mapping
-      const newColumns: Record<string, unknown[]> = {};
-      const newColumnNames: string[] = [];
-
-      for (const colName of store.columnNames) {
-        let newColName = colName;
-
-        // Check if this column is being renamed
-        for (const [newName, oldName] of Object.entries(filteredMapping)) {
-          if (String(oldName) === colName) {
-            newColName = newName;
-            break;
-          }
-        }
-
-        // Copy column data respecting current view
-        const sourceCol = store.columns[colName];
-        const newCol = new Array(idx.length);
-        for (let i = 0; i < idx.length; i++) {
-          newCol[i] = sourceCol[idx[i]];
-        }
-        newColumns[newColName] = newCol;
-        newColumnNames.push(newColName);
-      }
-
-      const newStore: ColumnarStore = {
-        columns: newColumns,
-        columnNames: newColumnNames,
-        length: idx.length,
-      };
-
-      const outDf = createDataFrame([]);
-      (outDf as any).__store = newStore;
-      (outDf as any).__view = {}; // reset view
-
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
-      (outDf as any).__rowView = new RowView(newColumns, newColumnNames);
-
-      return outDf as unknown as DataFrame<RenameColumns<Row, RenameMap>>;
-    } else {
-      // Fallback for non-columnar DataFrames
-      const result: RenameColumns<Row, RenameMap>[] = [];
-      for (const row of df) {
-        const out: Record<string, unknown> = { ...row };
-        for (const [newName, oldName] of Object.entries(filteredMapping)) {
-          const oldNameStr = String(oldName);
-          if (!(oldNameStr in out)) {
-            throw new ReferenceError(`Column "${oldNameStr}" not found`);
-          }
-          out[newName] = out[oldNameStr];
-          delete out[oldNameStr];
-        }
-        result.push(out as unknown as RenameColumns<Row, RenameMap>);
-      }
-
-      const outDf = createDataFrame(result) as DataFrame<
+    // Use mutate method then drop method - TypeScript will infer types from the method calls
+    const mutated = df.mutate(mutateSpec);
+    // Drop the old keys - they're guaranteed to be keys that exist in the mutated dataframe
+    // Cast through unknown to avoid type mismatch between drop's overloads and our usage
+    const dropFn = mutated.drop as unknown as (
+      ...cols: string[]
+    ) => typeof mutated;
+    const result = dropFn(...oldKeys);
+    return result as unknown as
+      | DataFrame<RenameColumns<Row, RenameMap>>
+      | GroupedDataFrame<
         RenameColumns<Row, RenameMap>
       >;
-
-      const grouped = df as GroupedDataFrame<Row, keyof Row>;
-      return grouped.__groups ? withGroups(grouped, outDf) : outDf;
-    }
   };
 }

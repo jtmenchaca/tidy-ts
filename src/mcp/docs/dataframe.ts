@@ -228,15 +228,15 @@ export const dataframeDocs: Record<string, DocEntry> = {
     signature:
       "rename<RenameMap>(mapping: RenameMap): DataFrame<RenamedColumns<T, RenameMap>>",
     description:
-      "Rename columns. Mapping format: { newName: oldName }. Pure rename - old column is removed.",
+      "Rename columns. Mapping format: { oldName: newName }. Pure rename - old column is removed.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
-      "mapping: Object mapping new column names to old column names { newName: oldName }",
+      "mapping: Object mapping old column names to new column names { oldName: newName }",
     ],
     returns: "DataFrame with renamed columns",
     examples: [
-      'df.rename({ weight: "mass" }) // Rename mass to weight',
-      'df.rename({ character_name: "name", weight: "mass" })',
+      'df.rename({ mass: "weight" }) // Rename mass to weight',
+      'df.rename({ name: "character_name", mass: "weight" })',
     ],
     related: ["select", "drop", "mutate"],
   },

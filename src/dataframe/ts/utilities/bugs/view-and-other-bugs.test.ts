@@ -71,8 +71,8 @@ Deno.test("View awareness bugs - fixed verbs should respect filtered/arranged st
   // Test 6: rename should respect the view
   console.log("\n--- Test 6: rename after filter+arrange ---");
   const renameResult = await filteredAndArranged.rename({
-    full_name: "name",
-    amount: "value",
+    name: "full_name",
+    value: "amount",
   });
   renameResult.print();
 
@@ -189,7 +189,7 @@ Deno.test("View awareness edge cases", async () => {
   const emptyHead = await emptyFiltered.head(2);
   expect(emptyHead.nrows()).toBe(0);
 
-  const emptyRename = await emptyFiltered.rename({ full_name: "name" });
+  const emptyRename = await emptyFiltered.rename({ name: "full_name" });
   expect(emptyRename.nrows()).toBe(0);
 
   // Test 2: Single row result
@@ -208,7 +208,7 @@ Deno.test("View awareness edge cases", async () => {
     .arrange("score", "desc") // Should order E, D, C, B
     .head(3) // Should get E, D, C
     .drop("id") // Should remove id column
-    .rename({ full_name: "name" }); // Should rename name to full_name
+    .rename({ name: "full_name" }); // Should rename name to full_name
 
   chainedResult.print();
 

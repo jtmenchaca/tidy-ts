@@ -50,8 +50,8 @@ function mutateExample() {
  * ]);
  *
  * const renamed = people.rename({
- *   weight: "mass",
- *   tallness: "height"
+ *   mass: "weight",
+ *   height: "tallness"
  * });
  *
  * console.table(renamed);
@@ -64,8 +64,8 @@ function renameExample() {
   ]);
 
   const renamed = people.rename({
-    weight: "mass",
-    tallness: "height",
+    mass: "weight",
+    height: "tallness",
   });
 
   console.table(renamed);

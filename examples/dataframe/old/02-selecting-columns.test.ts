@@ -135,10 +135,10 @@ test("Selecting and Managing Columns - Progressive Examples", () => {
   const renamed = starWars
     .select("name", "species", "mass", "height")
     .rename({
-      character: "name",
-      species_type: "species",
-      weight_kg: "mass",
-      height_cm: "height",
+      name: "character",
+      species: "species_type",
+      mass: "weight_kg",
+      height: "height_cm",
     });
 
   console.log("Renamed columns for clarity:");
@@ -154,7 +154,7 @@ test("Selecting and Managing Columns - Progressive Examples", () => {
   const cleaned = starWars
     .drop("id") // Remove ID column
     .select("name", "species", "mass", "height") // Keep specific columns
-    .rename({ character_name: "name" }); // Rename for clarity
+    .rename({ name: "character_name" }); // Rename for clarity
 
   console.log("Chained operations (drop → select → rename):");
   cleaned.print();
@@ -181,9 +181,9 @@ test("Selecting and Managing Columns - Progressive Examples", () => {
   const advancedSelection = starWars
     .select("name", "species", "mass", "height")
     .rename({
-      character_name: "name",
-      weight: "mass",
-      stature: "height",
+      name: "character_name",
+      mass: "weight",
+      height: "stature",
     })
     .drop("species"); // Remove species after renaming others
 
@@ -217,10 +217,10 @@ test("Selecting and Managing Columns - Progressive Examples", () => {
     .drop("id") // Remove unnecessary columns
     .select("name", "species", "mass", "height", "homeworld") // Keep relevant columns
     .rename({
-      character: "name",
-      origin: "homeworld",
-      weight: "mass",
-      stature: "height",
+      name: "character",
+      homeworld: "origin",
+      mass: "weight",
+      height: "stature",
     }) // Rename for clarity
     .mutate({
       bmi: (row) => row.weight / Math.pow(row.stature / 100, 2),
