@@ -301,7 +301,7 @@ export const readArrow: ReadArrowFunction = (() => {
       pathOrBuffer: string | ArrayBuffer,
       schema: S,
       opts: ArrowOptions & NAOpts = {},
-    ) => {
+    ): Promise<DataFrame<z.infer<S>>> => {
       const { readArrow } = await import("./read_arrow.ts");
       return readArrow(pathOrBuffer, schema, opts);
     };
@@ -369,7 +369,7 @@ export const readCSV: ReadCsvFunction = (() => {
       pathOrContent: string,
       schema: S,
       opts?: CsvOptions & NAOpts,
-    ) => {
+    ): Promise<DataFrame<z.infer<S>>> => {
       const { readCSV } = await import("./read_csv.ts");
       return readCSV(pathOrContent, schema, opts);
     };
@@ -437,7 +437,7 @@ export const readParquet: ReadParquetFunction = (() => {
       pathOrBuffer: string | ArrayBuffer,
       schema: S,
       opts: ParquetOptions & NAOpts = {},
-    ) => {
+    ): Promise<DataFrame<z.infer<S>>> => {
       const { readParquet } = await import("./read_parquet.ts");
       return readParquet(pathOrBuffer, schema, opts);
     };
@@ -662,7 +662,7 @@ export const readXLSX: ReadXLSXFunction = (() => {
       path: string,
       schema: S,
       opts?: ReadXLSXOpts,
-    ) => {
+    ): Promise<DataFrame<z.infer<S>>> => {
       const { readXLSX } = await import("./read_xlsx.ts");
       return readXLSX(path, schema, opts);
     };
