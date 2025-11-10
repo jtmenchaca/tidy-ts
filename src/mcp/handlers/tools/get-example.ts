@@ -7,7 +7,7 @@ export function get_example(server: TidyMcp) {
     {
       name: "tidy-get-example",
       description:
-        "Get working code examples for specific use cases. Returns complete, runnable code from the examples directory.",
+        "Get working code examples for specific use cases. Returns complete, self-contained runnable code examples.",
       schema: v.object({
         use_case: v.pipe(
           v.string(),
@@ -17,12 +17,16 @@ export function get_example(server: TidyMcp) {
         ),
       }),
     },
-    async ({ use_case }) => {
+    ({ use_case }) => {
       const example = getExample(use_case);
 
       if (!example) {
         const availableExamples = listExamples()
-          .map((ex) => `- **${ex.name}** (${use_case}): ${ex.description}`)
+          .map((ex) =>
+            `- **${ex.name}** (${
+              ex.name.toLowerCase().replace(/\s+/g, "-")
+            }): ${ex.description}`
+          )
           .join("\n");
 
         return {
@@ -36,30 +40,8 @@ export function get_example(server: TidyMcp) {
         };
       }
 
-      // Read the example file - resolve path relative to project root
-      let fileContent: string;
-      try {
-        // Get the project root by finding where src/mcp is located
-        const moduleUrl = new URL(import.meta.url);
-        const modulePath = moduleUrl.pathname;
-        // Go up from src/mcp/handlers/tools to project root (4 levels)
-        const projectRoot = modulePath.split("/").slice(0, -4).join("/");
-        const absolutePath = `${projectRoot}/${example.path}`;
-        fileContent = await Deno.readTextFile(absolutePath);
-      } catch (error) {
-        return {
-          content: [
-            {
-              type: "text",
-              text:
-                `## Error Reading Example\n\nCould not read example file at \`${example.path}\`.\n\nError: ${error}`,
-            },
-          ],
-        };
-      }
-
       const output =
-        `# ${example.name}\n\n${example.description}\n\n---\n\n\`\`\`typescript\n${fileContent}\n\`\`\`\n`;
+        `# ${example.name}\n\n${example.description}\n\n---\n\n\`\`\`typescript\n${example.code}\n\`\`\`\n\n**Note:** Install tidy-ts with \`npm install @tidy-ts/dataframe\` or \`deno add npm:@tidy-ts/dataframe\` to run this example.`;
 
       return {
         content: [

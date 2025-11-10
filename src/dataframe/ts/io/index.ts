@@ -59,6 +59,15 @@ import type { ParquetOptions } from "./read_parquet.ts";
  *
  * @example
  * // Parse from raw CSV content
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   id: z.number(),
+ *   name: z.string(),
+ *   email: z.string().email(),
+ *   age: z.number(),
+ * });
+ *
  * const csvContent = "id,name,email,age\n1,Alice,alice@example.com,25\n2,Bob,bob@example.com,30";
  * const df = await readCSV(csvContent, schema);
  *
@@ -347,6 +356,15 @@ export const readArrow: ReadArrowFunction = (() => {
  *
  * @example
  * // Parse from raw CSV content
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   id: z.number(),
+ *   name: z.string(),
+ *   email: z.string().email(),
+ *   age: z.number(),
+ * });
+ *
  * const csvContent = "id,name,email,age\n1,Alice,alice@example.com,25\n2,Bob,bob@example.com,30";
  * const df = await readCSV(csvContent, schema);
  *

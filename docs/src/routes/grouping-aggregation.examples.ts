@@ -76,7 +76,7 @@ const basicAnalysis = people
 
 basicAnalysis.print("Basic species analysis:");`,
 
-  countShorthand: `// Count shorthand - equivalent to groupBy(...columns).summarise({ n: g => g.nrows() })
+  countShorthand: `// Count shorthand - equivalent to groupBy(...columns).summarise({ count: g => g.nrows() })
 const countBySpecies = people.count("species");
 const countBySpeciesAndYear = people.count("species", "year");
 

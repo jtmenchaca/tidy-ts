@@ -45,7 +45,7 @@ function GroupingAggregationComponent() {
       <CodeBlock
         title="Count Shorthand"
         description="Quick way to count rows by grouping columns"
-        explanation="The count() method is a shorthand for groupBy(...columns).summarise({ n: g => g.nrows() }). It groups by the specified columns and returns counts in a new column 'n'."
+        explanation="The count() method is a shorthand for groupBy(...columns).summarise({ count: g => g.nrows() }). It groups by the specified columns and returns counts in a new column 'count'."
         code={groupingExamples.countShorthand}
       />
 

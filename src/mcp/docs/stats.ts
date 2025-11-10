@@ -7,7 +7,7 @@ export const statsDocs: Record<string, DocEntry> = {
     category: "stats",
     signature: "s.mean(values: number[], removeNA?: boolean): number | null",
     description:
-      "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values.",
+      "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values. Can be chained with s.round() without assertions.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: A single number or array of numbers",
@@ -19,35 +19,50 @@ export const statsDocs: Record<string, DocEntry> = {
       "s.mean([1, 2, 3, 4]) // 2.5",
       "s.mean([1, 2, null, 4], true) // 2.33",
       'df.groupBy("region").summarize({ avg: group => s.mean(group.sales) })',
+      "// Chain with s.round() - no assertions needed!",
+      'df.groupBy("region").summarize({ avg: group => s.round(s.mean(group.sales), 2) })',
     ],
-    related: ["median", "mode", "sd"],
+    related: ["median", "mode", "sd", "round"],
     antiPatterns: [
       "❌ BAD: values.reduce((a, b) => a + b, 0) / values.length",
+      "❌ BAD: s.round(s.mean(values)!, 2) // Unnecessary - s.round() handles null at runtime",
     ],
     bestPractices: [
       "✓ GOOD: s.mean(values) - built-in, faster, handles edge cases",
-      "Use with df.columnName for direct access: s.mean(df.age)",
+      "✓ GOOD: Use with df.columnName for direct access: s.mean(df.age)",
+      "✓ GOOD: Chain with s.round() directly: s.round(s.mean(values), 2) - no assertions needed",
+      "✓ GOOD: s.round() handles null at runtime, so no need for s.round(s.mean(values)!, 2)",
     ],
   },
 
   median: {
     name: "s.median",
     category: "stats",
-    signature: "s.median(values: number[]): number",
-    description: "Calculate the median (50th percentile).",
+    signature:
+      "s.median(values: number[]): number | s.median(values: (number | null)[], removeNA?: boolean): number | null",
+    description:
+      "Calculate the median (50th percentile). Returns number for clean arrays, or number | null for arrays with nulls/mixed types (when removeNA=false, the default).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
+    parameters: [
+      "values: Array of numbers (or array with nulls)",
+      "removeNA: If true, guarantees number return; if false (default), may return null",
+    ],
+    returns: "number for clean arrays, number | null for arrays with nulls",
     examples: [
-      "s.median([1, 2, 3, 4, 5]) // 3",
-      "s.median(df.sales)",
+      "s.median([1, 2, 3, 4, 5]) // 3 (number)",
+      "s.median(df.sales) // number (if df.sales is clean)",
+      "s.median([1, null, 3, 4]) // 2.5 (number | null - may be null if no valid values)",
+      'df.groupBy("region").summarize({ median_price: group => s.median(group.price) })',
     ],
     related: ["mean", "quantile"],
     antiPatterns: [
       "❌ BAD: [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]",
+      "❌ BAD: s.median(values)! // May be unnecessary - check if array has nulls first",
     ],
     bestPractices: [
       "✓ GOOD: s.median(values) - handles even/odd lengths correctly",
+      "✓ GOOD: For clean arrays, returns number - no assertions needed",
+      "✓ GOOD: For arrays with nulls, returns number | null - handle null appropriately",
     ],
   },
 
@@ -76,14 +91,26 @@ export const statsDocs: Record<string, DocEntry> = {
   max: {
     name: "s.max",
     category: "stats",
-    signature: "s.max(values: number[]): number",
-    description: "Find the maximum value.",
+    signature:
+      "s.max(values: number[]): number | s.max(values: (number | null)[], removeNA?: boolean): number | null",
+    description:
+      "Find the maximum value. Returns number for clean arrays, or number | null for arrays with nulls/mixed types (when removeNA=false, the default).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
+    parameters: [
+      "values: Array of numbers (or array with nulls)",
+      "removeNA: If true, guarantees number return; if false (default), may return null",
+    ],
+    returns: "number for clean arrays, number | null for arrays with nulls",
     examples: [
-      "s.max([1, 2, 3, 4, 5]) // 5",
-      "s.max(df.price)",
+      "s.max([1, 2, 3, 4, 5]) // 5 (number)",
+      "s.max(df.price) // number (if df.price is clean)",
+      "s.max([1, null, 3]) // 3 (number | null - may be null if no valid values)",
+      'df.groupBy("region").summarize({ max_price: group => s.max(group.price) })',
+    ],
+    bestPractices: [
+      "✓ GOOD: For clean number arrays, returns number - no assertions needed",
+      "✓ GOOD: For arrays with nulls, returns number | null - handle null appropriately",
+      "✓ GOOD: Use removeNA: true if you want guaranteed number return",
     ],
     related: ["min", "cummax"],
   },
@@ -91,14 +118,26 @@ export const statsDocs: Record<string, DocEntry> = {
   min: {
     name: "s.min",
     category: "stats",
-    signature: "s.min(values: number[]): number",
-    description: "Find the minimum value.",
+    signature:
+      "s.min(values: number[]): number | s.min(values: (number | null)[], removeNA?: boolean): number | null",
+    description:
+      "Find the minimum value. Returns number for clean arrays, or number | null for arrays with nulls/mixed types (when removeNA=false, the default).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
+    parameters: [
+      "values: Array of numbers (or array with nulls)",
+      "removeNA: If true, guarantees number return; if false (default), may return null",
+    ],
+    returns: "number for clean arrays, number | null for arrays with nulls",
     examples: [
-      "s.min([1, 2, 3, 4, 5]) // 1",
-      "s.min(df.price)",
+      "s.min([1, 2, 3, 4, 5]) // 1 (number)",
+      "s.min(df.price) // number (if df.price is clean)",
+      "s.min([1, null, 3]) // 1 (number | null - may be null if no valid values)",
+      'df.groupBy("region").summarize({ min_price: group => s.min(group.price) })',
+    ],
+    bestPractices: [
+      "✓ GOOD: For clean number arrays, returns number - no assertions needed",
+      "✓ GOOD: For arrays with nulls, returns number | null - handle null appropriately",
+      "✓ GOOD: Use removeNA: true if you want guaranteed number return",
     ],
     related: ["max", "cummin"],
   },
@@ -129,7 +168,7 @@ export const statsDocs: Record<string, DocEntry> = {
     category: "stats",
     signature: "s.stdev(values: number[], removeNA?: boolean): number | null",
     description:
-      "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types.",
+      "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types. Can be chained with s.round() without assertions.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "values: Array of numbers or single number",
@@ -141,8 +180,17 @@ export const statsDocs: Record<string, DocEntry> = {
       "s.stdev([1, 2, 3, 4, 5]) // sample standard deviation (default)",
       's.stdev([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)',
       's.stdev([1, "2", 3], false) // null (mixed types, removeNA=false)',
+      "// Chain with s.round() - no assertions needed!",
+      'df.groupBy("region").summarize({ std: group => s.round(s.stdev(group.sales), 2) })',
     ],
-    related: ["variance", "mean"],
+    antiPatterns: [
+      "❌ BAD: s.round(s.stdev(values)!, 2) // Unnecessary - s.round() handles null at runtime",
+    ],
+    bestPractices: [
+      "✓ GOOD: Chain with s.round() directly: s.round(s.stdev(values), 2) - no assertions needed",
+      "✓ GOOD: s.round() handles null at runtime, so no need for s.round(s.stdev(values)!, 2)",
+    ],
+    related: ["variance", "mean", "round"],
   },
 
   variance: {
@@ -627,23 +675,36 @@ export const statsDocs: Record<string, DocEntry> = {
     name: "s.round",
     category: "stats",
     signature:
-      "s.round(value: number | number[], digits?: number): number | number[]",
+      "s.round(value: number | null | number[], digits?: number): number | null | number[]",
     description:
-      "Round a number or all values in an array to a specified number of decimal places.",
+      "Round a number or all values in an array to a specified number of decimal places. Accepts null values and returns null when given null (useful for chaining with s.mean(), s.stdev(), s.max(), s.min(), or s.median() which return number | null).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "value: Number or array of numbers to round",
+      "value: Number, null, or array of numbers to round",
       "digits: Number of decimal places (default: 0)",
     ],
-    returns: "number or number[]",
+    returns: "number, null, or number[] (returns null if input is null)",
     examples: [
       "s.round(3.14159) // 3",
       "s.round(3.14159, 2) // 3.14",
       "s.round(123.456, 1) // 123.5",
       "s.round(123.456, -1) // 120",
       "s.round([1.234, 2.567, 3.891], 2) // [1.23, 2.57, 3.89]",
+      "s.round(null) // null (returns null when given null)",
+      "// Works with nullable stats functions - no assertions needed!",
+      "s.round(s.mean([1, 2, 3]), 2) // 2.0",
+      "s.round(s.mean([null, null]), 2) // null (mean returns null, round handles it)",
+      "s.round(s.stdev([1, 2, 3]), 2) // 1.0",
+      "s.round(s.max([1, null, 3]), 2) // 3.0 (or null if max returns null)",
+      'df.groupBy("region").summarize({ avg: group => s.round(s.mean(group.sales), 2) })',
     ],
-    related: [],
+    bestPractices: [
+      "✓ GOOD: No need for non-null assertions (!) - s.round() accepts null and returns null",
+      "✓ GOOD: Chain directly: s.round(s.mean(values), 2) - no need for s.round(s.mean(values)!, 2)",
+      "✓ GOOD: Type-safe chaining: s.round() signature includes null, so TypeScript won't complain",
+      "✓ GOOD: Works seamlessly with s.mean(), s.stdev(), s.max(), s.min(), s.median() which return number | null",
+    ],
+    related: ["mean", "stdev", "max", "min", "median"],
   },
 
   percent: {

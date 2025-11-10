@@ -16,8 +16,8 @@ Deno.test("count() - single grouping variable", () => {
   expect(result.ncols()).toBe(2);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "A", n: 3 });
-  expect(rows).toContainEqual({ category: "B", n: 2 });
+  expect(rows).toContainEqual({ category: "A", count: 3 });
+  expect(rows).toContainEqual({ category: "B", count: 2 });
 });
 
 Deno.test("count() - multiple grouping variables", () => {
@@ -35,9 +35,9 @@ Deno.test("count() - multiple grouping variables", () => {
   expect(result.ncols()).toBe(3);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ region: "North", product: "Widget", n: 2 });
-  expect(rows).toContainEqual({ region: "South", product: "Widget", n: 2 });
-  expect(rows).toContainEqual({ region: "North", product: "Gadget", n: 1 });
+  expect(rows).toContainEqual({ region: "North", product: "Widget", count: 2 });
+  expect(rows).toContainEqual({ region: "South", product: "Widget", count: 2 });
+  expect(rows).toContainEqual({ region: "North", product: "Gadget", count: 1 });
 });
 
 Deno.test("count() - empty dataframe with grouping", () => {
@@ -56,7 +56,7 @@ Deno.test("count() - single row with grouping", () => {
   const result = df.count("category");
 
   expect(result.nrows()).toBe(1);
-  expect(result[0]).toEqual({ category: "A", n: 1 });
+  expect(result[0]).toEqual({ category: "A", count: 1 });
 });
 
 Deno.test("count() - all rows in same group", () => {
@@ -69,7 +69,7 @@ Deno.test("count() - all rows in same group", () => {
   const result = df.count("category");
 
   expect(result.nrows()).toBe(1);
-  expect(result[0]).toEqual({ category: "A", n: 3 });
+  expect(result[0]).toEqual({ category: "A", count: 3 });
 });
 
 Deno.test("count() - all rows in different groups", () => {
@@ -84,9 +84,9 @@ Deno.test("count() - all rows in different groups", () => {
   expect(result.nrows()).toBe(3);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "A", n: 1 });
-  expect(rows).toContainEqual({ category: "B", n: 1 });
-  expect(rows).toContainEqual({ category: "C", n: 1 });
+  expect(rows).toContainEqual({ category: "A", count: 1 });
+  expect(rows).toContainEqual({ category: "B", count: 1 });
+  expect(rows).toContainEqual({ category: "C", count: 1 });
 });
 
 Deno.test("count() - with null/undefined values in grouping column", () => {
@@ -103,9 +103,9 @@ Deno.test("count() - with null/undefined values in grouping column", () => {
   expect(result.nrows()).toBe(3);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "A", n: 2 });
-  expect(rows).toContainEqual({ category: null, n: 2 });
-  expect(rows).toContainEqual({ category: undefined, n: 1 });
+  expect(rows).toContainEqual({ category: "A", count: 2 });
+  expect(rows).toContainEqual({ category: null, count: 2 });
+  expect(rows).toContainEqual({ category: undefined, count: 1 });
 });
 
 Deno.test("count() - with mixed data types in grouping column", () => {
@@ -121,9 +121,9 @@ Deno.test("count() - with mixed data types in grouping column", () => {
   expect(result.nrows()).toBe(3);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "1", n: 2 });
-  expect(rows).toContainEqual({ category: "2", n: 1 });
-  expect(rows).toContainEqual({ category: "3", n: 1 });
+  expect(rows).toContainEqual({ category: "1", count: 2 });
+  expect(rows).toContainEqual({ category: "2", count: 1 });
+  expect(rows).toContainEqual({ category: "3", count: 1 });
 });
 
 Deno.test("count() - three grouping variables", () => {
@@ -145,19 +145,19 @@ Deno.test("count() - three grouping variables", () => {
     region: "North",
     product: "Widget",
     status: "Active",
-    n: 2,
+    count: 2,
   });
   expect(rows).toContainEqual({
     region: "North",
     product: "Widget",
     status: "Inactive",
-    n: 1,
+    count: 1,
   });
   expect(rows).toContainEqual({
     region: "South",
     product: "Gadget",
     status: "Active",
-    n: 2,
+    count: 2,
   });
 });
 
@@ -171,7 +171,7 @@ Deno.test("count() - equivalence to groupBy + summarise (single group)", () => {
   const countResult = df.count("category");
   const groupByResult = df
     .groupBy("category")
-    .summarise({ n: (g) => g.nrows() });
+    .summarise({ count: (g) => g.nrows() });
 
   expect(countResult.toArray()).toEqual(groupByResult.toArray());
 });
@@ -187,7 +187,7 @@ Deno.test("count() - equivalence to groupBy + summarise (multiple groups)", () =
   const countResult = df.count("region", "product");
   const groupByResult = df
     .groupBy("region", "product")
-    .summarise({ n: (g) => g.nrows() });
+    .summarise({ count: (g) => g.nrows() });
 
   expect(countResult.toArray()).toEqual(groupByResult.toArray());
 });
@@ -207,8 +207,8 @@ Deno.test("count() - large dataset", () => {
 
   // Each group should have ~333-334 rows (10000 / 30)
   const firstGroup = result.toArray()[0];
-  expect(firstGroup.n).toBeGreaterThanOrEqual(333);
-  expect(firstGroup.n).toBeLessThanOrEqual(334);
+  expect(firstGroup.count).toBeGreaterThanOrEqual(333);
+  expect(firstGroup.count).toBeLessThanOrEqual(334);
 });
 
 Deno.test("count() - chaining with other verbs", () => {
@@ -222,12 +222,12 @@ Deno.test("count() - chaining with other verbs", () => {
 
   const result = df
     .count("region", "product")
-    .filter((row) => row.n > 1)
-    .arrange("n", "desc");
+    .filter((row) => row.count > 1)
+    .arrange("count", "desc");
 
   expect(result.nrows()).toBe(2);
-  expect(result[0]).toEqual({ region: "North", product: "Widget", n: 2 });
-  expect(result[1]).toEqual({ region: "South", product: "Widget", n: 2 });
+  expect(result[0]).toEqual({ region: "North", product: "Widget", count: 2 });
+  expect(result[1]).toEqual({ region: "South", product: "Widget", count: 2 });
 });
 
 Deno.test("count() - numeric grouping column", () => {
@@ -244,9 +244,9 @@ Deno.test("count() - numeric grouping column", () => {
   expect(result.nrows()).toBe(3);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ age: 25, n: 2 });
-  expect(rows).toContainEqual({ age: 30, n: 2 });
-  expect(rows).toContainEqual({ age: 35, n: 1 });
+  expect(rows).toContainEqual({ age: 25, count: 2 });
+  expect(rows).toContainEqual({ age: 30, count: 2 });
+  expect(rows).toContainEqual({ age: 35, count: 1 });
 });
 
 Deno.test("count() - boolean grouping column", () => {
@@ -263,8 +263,8 @@ Deno.test("count() - boolean grouping column", () => {
   expect(result.nrows()).toBe(2);
 
   const rows = result.toArray();
-  expect(rows).toContainEqual({ active: true, n: 3 });
-  expect(rows).toContainEqual({ active: false, n: 2 });
+  expect(rows).toContainEqual({ active: true, count: 3 });
+  expect(rows).toContainEqual({ active: false, count: 2 });
 });
 
 Deno.test("count() - real-world example: message statistics", () => {
@@ -281,17 +281,17 @@ Deno.test("count() - real-world example: message statistics", () => {
   expect(byRole.nrows()).toBe(3);
 
   const roleRows = byRole.toArray();
-  expect(roleRows).toContainEqual({ user_role: "Clinician", n: 3 });
-  expect(roleRows).toContainEqual({ user_role: "RN", n: 1 });
-  expect(roleRows).toContainEqual({ user_role: "MA", n: 1 });
+  expect(roleRows).toContainEqual({ user_role: "Clinician", count: 3 });
+  expect(roleRows).toContainEqual({ user_role: "RN", count: 1 });
+  expect(roleRows).toContainEqual({ user_role: "MA", count: 1 });
 
   // Count by direction (to/from patient)
   const byDirection = messagesWithUsers.count("tofrom_pat_c");
   expect(byDirection.nrows()).toBe(2);
 
   const directionRows = byDirection.toArray();
-  expect(directionRows).toContainEqual({ tofrom_pat_c: "1", n: 3 });
-  expect(directionRows).toContainEqual({ tofrom_pat_c: "2", n: 2 });
+  expect(directionRows).toContainEqual({ tofrom_pat_c: "1", count: 3 });
+  expect(directionRows).toContainEqual({ tofrom_pat_c: "2", count: 2 });
 
   // Count by role and direction
   const byRoleAndDirection = messagesWithUsers.count(

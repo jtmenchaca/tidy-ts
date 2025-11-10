@@ -10,6 +10,7 @@ export const ioDocs: Record<string, DocEntry> = {
       "Read CSV file or parse CSV content with optional Zod schema validation. Returns a DataFrame that you can use with all DataFrame operations. Use readCSVMetadata() first to inspect headers and preview data structure.",
     imports: [
       'import { readCSV, writeCSV, readCSVMetadata } from "@tidy-ts/dataframe";',
+      'import { z } from "zod";',
     ],
     parameters: [
       "pathOrContent: File path to CSV or raw CSV content string",
@@ -20,10 +21,10 @@ export const ioDocs: Record<string, DocEntry> = {
     returns:
       "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
     examples: [
-      '// Read from file\nconst df = await readCSV("data.csv", schema)',
-      '// Parse from string\nconst csv = "name,age\\nAlice,30\\nBob,25";\nconst df = await readCSV(csv, schema)',
-      '// With custom delimiter\nconst df = await readCSV("data.tsv", schema, { comma: "\\t" })',
-      '// Chain with DataFrame operations\nconst result = await readCSV("sales.csv", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
+      '// Read from file with Zod schema\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email(),\n});\n\nconst df = await readCSV("data.csv", schema)',
+      '// Parse from string with schema\nimport { z } from "zod";\n\nconst csv = "name,age\\nAlice,30\\nBob,25";\nconst schema = z.object({\n  name: z.string(),\n  age: z.number(),\n});\nconst df = await readCSV(csv, schema)',
+      '// With nullable fields and custom delimiter\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  score: z.number().nullable(),\n});\nconst df = await readCSV("data.tsv", schema, { comma: "\\t", naValues: [""] })',
+      '// Chain with DataFrame operations\nimport { z } from "zod";\nimport { stats as s } from "@tidy-ts/dataframe";\n\nconst schema = z.object({\n  region: z.string(),\n  amount: z.number(),\n});\nconst result = await readCSV("sales.csv", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
     related: ["writeCSV", "readCSVMetadata", "readXLSX"],
     bestPractices: [
@@ -52,7 +53,7 @@ export const ioDocs: Record<string, DocEntry> = {
       "Promise<{ headers: string[], totalRows: number, firstRows: string[][], delimiter: string }>",
     examples: [
       '// Inspect file structure\nconst meta = await readCSVMetadata("data.csv")\nconsole.log("Columns:", meta.headers)\nconsole.log("Preview:", meta.firstRows)',
-      '// Build schema from headers\nconst meta = await readCSVMetadata("data.csv")\nconst schema = z.object({\n  [meta.headers[0]]: z.number(),\n  [meta.headers[1]]: z.string(),\n  // ...\n})\nconst df = await readCSV("data.csv", schema)',
+      '// Build schema from headers\nimport { z } from "zod";\n\nconst meta = await readCSVMetadata("data.csv")\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email().optional(),\n})\nconst df = await readCSV("data.csv", schema)',
       '// Preview TSV file\nconst meta = await readCSVMetadata("data.tsv", { comma: "\\t" })',
     ],
     related: ["readCSV"],
@@ -91,6 +92,7 @@ export const ioDocs: Record<string, DocEntry> = {
       "Read XLSX file with optional schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). Use readXLSXMetadata() first to inspect sheet names and preview data structure.",
     imports: [
       'import { readCSV, writeCSV, readXLSX, writeXLSX, readXLSXMetadata } from "@tidy-ts/dataframe";',
+      'import { z } from "zod";',
     ],
     parameters: [
       "path: File path to XLSX",
@@ -102,10 +104,10 @@ export const ioDocs: Record<string, DocEntry> = {
       "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
     examples: [
       '// Basic usage - returns a DataFrame\nconst df = await readXLSX("data.xlsx")\ndf.print() // Display the data',
-      '// With schema validation\nconst schema = z.object({ name: z.string(), age: z.number() })\nconst df = await readXLSX("data.xlsx", schema)',
-      '// Select specific sheet\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
-      '// Skip header rows (e.g., if row 0 is a title)\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
-      '// Chain with DataFrame operations\nconst result = await readXLSX("sales.xlsx")\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
+      '// With Zod schema validation\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email(),\n  createdAt: z.date(), // Excel dates auto-converted\n});\n\nconst df = await readXLSX("data.xlsx", schema)',
+      '// With nullable fields and specific sheet\nimport { z } from "zod";\n\nconst schema = z.object({\n  species: z.string(),\n  bill_length_mm: z.number().nullable(),\n  bill_depth_mm: z.number().nullable(),\n  body_mass_g: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
+      '// Skip header rows (e.g., if row 0 is a title)\nimport { z } from "zod";\n\nconst schema = z.object({\n  name: z.string(),\n  value: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
+      '// Chain with DataFrame operations\nimport { z } from "zod";\nimport { stats as s } from "@tidy-ts/dataframe";\n\nconst schema = z.object({\n  region: z.string(),\n  amount: z.number(),\n});\n\nconst result = await readXLSX("sales.xlsx", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
     related: ["writeXLSX", "readCSV", "readXLSXMetadata"],
     bestPractices: [

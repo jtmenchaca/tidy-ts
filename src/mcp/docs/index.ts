@@ -1696,23 +1696,33 @@ export const DOCS: Record<string, DocEntry> = {
     name: "s.round",
     category: "stats",
     signature:
-      "s.round(value: number | number[], digits?: number): number | number[]",
+      "s.round(value: number | null | number[], digits?: number): number | null | number[]",
     description:
-      "Round a number or all values in an array to a specified number of decimal places.",
+      "Round a number or all values in an array to a specified number of decimal places. Accepts null values and returns null when given null (useful for chaining with s.mean(), s.stdev(), s.max(), s.min(), or s.median() which return number | null).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "value: Number or array of numbers to round",
+      "value: Number, null, or array of numbers to round",
       "digits: Number of decimal places (default: 0)",
     ],
-    returns: "number or number[]",
+    returns: "number, null, or number[] (returns null if input is null)",
     examples: [
       "s.round(3.14159) // 3",
       "s.round(3.14159, 2) // 3.14",
       "s.round(123.456, 1) // 123.5",
       "s.round(123.456, -1) // 120",
       "s.round([1.234, 2.567, 3.891], 2) // [1.23, 2.57, 3.89]",
+      "s.round(null) // null (returns null when given null)",
+      "// Works with nullable stats functions - no assertions needed!",
+      "s.round(s.mean([1, 2, 3]), 2) // 2.0",
+      "s.round(s.mean([null, null]), 2) // null (mean returns null, round handles it)",
+      'df.groupBy("region").summarize({ avg: group => s.round(s.mean(group.sales), 2) })',
     ],
-    related: [],
+    bestPractices: [
+      "✓ GOOD: No need for non-null assertions (!) - s.round() accepts null and returns null",
+      "✓ GOOD: Chain directly: s.round(s.mean(values), 2) - no need for s.round(s.mean(values)!, 2)",
+      "✓ GOOD: Type-safe chaining: s.round() signature includes null, so TypeScript won't complain",
+    ],
+    related: ["mean", "stdev", "max", "min", "median"],
   },
 
   percent: {

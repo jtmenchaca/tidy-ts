@@ -4,8 +4,8 @@ import type { Prettify } from "../../dataframe/types/utility-types.ts";
 /**
  * Count rows by unique combinations of column values.
  *
- * Groups by the specified columns and returns counts in a new column `n`.
- * Shorthand for `groupBy(...columns).summarise({ n: g => g.nrows() })`.
+ * Groups by the specified columns and returns counts in a new column `count`.
+ * Shorthand for `groupBy(...columns).summarise({ count: g => g.nrows() })`.
  *
  * @example
  * // Count by single column
@@ -16,11 +16,11 @@ import type { Prettify } from "../../dataframe/types/utility-types.ts";
  * df.count("category", "status")
  *
  * @example
- * // Result includes grouping columns plus `n`
+ * // Result includes grouping columns plus `count`
  * df.count("region")
- * // => { region: string, n: number }
+ * // => { region: string, count: number }
  */
 export type CountMethod<Row extends object> = <K extends keyof Row>(
   column: K,
   ...additionalColumns: K[]
-) => DataFrame<Prettify<Pick<Row, K> & { n: number }>>;
+) => DataFrame<Prettify<Pick<Row, K> & { count: number }>>;

@@ -294,7 +294,7 @@ Deno.test("Grouping - Count Shorthand", () => {
   const countBySpecies = people.count("species");
   expect(countBySpecies.nrows()).toBe(3);
   expect(countBySpecies.columns()).toContain("species");
-  expect(countBySpecies.columns()).toContain("n");
+  expect(countBySpecies.columns()).toContain("count");
 
   const countBySpeciesAndYear = people.count("species", "year");
   expect(countBySpeciesAndYear.nrows()).toBe(4);

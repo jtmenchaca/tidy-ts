@@ -90,9 +90,11 @@ Gets detailed documentation with signatures and examples.
 - Parameter: `topic` - Operation name(s) like "mutate" or ["filter", "select"]
 
 ### `tidy-get-example`
-Fetches complete working code from examples/ directory.
+Fetches complete, self-contained working code examples.
 - Parameter: `use_case` - Example name like "grouping-aggregation"
 - Available: getting-started, creating-dataframes, filtering-rows, transforming-data, grouping-aggregation, joining-dataframes, stats-descriptive, stats-distributions, and more
+
+**Note:** All examples are self-contained within the MCP server and work independently of the tidy-ts repository. Examples use inline data (no external file dependencies) and can be run anywhere after installing tidy-ts.
 
 ## Usage
 

@@ -24,8 +24,8 @@ Deno.test("count() works with PromisedDataFrame (async mutate)", async () => {
 
   expect(result.nrows()).toBe(2);
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "A", n: 2 });
-  expect(rows).toContainEqual({ category: "B", n: 1 });
+  expect(rows).toContainEqual({ category: "A", count: 2 });
+  expect(rows).toContainEqual({ category: "B", count: 1 });
 });
 
 Deno.test("count() after async filter", async () => {
@@ -49,8 +49,8 @@ Deno.test("count() after async filter", async () => {
 
   expect(result.nrows()).toBe(2);
   const rows = result.toArray();
-  expect(rows).toContainEqual({ category: "A", n: 1 }); // id 3
-  expect(rows).toContainEqual({ category: "B", n: 2 }); // id 2, 4
+  expect(rows).toContainEqual({ category: "A", count: 1 }); // id 3
+  expect(rows).toContainEqual({ category: "B", count: 2 }); // id 2, 4
 });
 
 Deno.test("count() in async pipeline", async () => {
@@ -72,7 +72,7 @@ Deno.test("count() in async pipeline", async () => {
 
   expect(result.nrows()).toBe(3);
   const rows = result.toArray();
-  expect(rows).toContainEqual({ user_role: "Clinician", n: 2 });
-  expect(rows).toContainEqual({ user_role: "RN", n: 1 });
-  expect(rows).toContainEqual({ user_role: "MA", n: 1 });
+  expect(rows).toContainEqual({ user_role: "Clinician", count: 2 });
+  expect(rows).toContainEqual({ user_role: "RN", count: 1 });
+  expect(rows).toContainEqual({ user_role: "MA", count: 1 });
 });

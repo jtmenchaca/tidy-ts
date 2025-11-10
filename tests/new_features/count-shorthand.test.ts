@@ -14,7 +14,7 @@ Deno.test("count() shorthand - basic usage", () => {
   const verbose = messages
     .groupBy("user_role")
     .summarize({
-      n: (g) => g.nrows(),
+      count: (g) => g.nrows(),
     });
 
   // Shorthand version
@@ -43,7 +43,7 @@ Deno.test("count() with multiple variables", () => {
   const verbose = messages
     .groupBy("user_role", "tofrom_pat_c")
     .summarize({
-      n: (g) => g.nrows(),
+      count: (g) => g.nrows(),
     });
 
   // Shorthand version
