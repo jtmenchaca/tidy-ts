@@ -56,7 +56,16 @@ const _renamedEmptyTypeCheck: DataFrame<{
   score: number;
 }> = renamedEmpty;
 
-// 5. Test rename with numeric keys
+// 5. Test identity rename (rename column to same name - should be no-op)
+const identityRename = testData.rename({ name: "name" });
+const _identityRenameTypeCheck: DataFrame<{
+  name: string;
+  age: number;
+  city: string;
+  score: number;
+}> = identityRename;
+
+// 6. Test rename with numeric keys
 const dataWithNumericKeys = createDataFrame([
   { 1: "one", 2: "two", name: "test" },
 ]);
@@ -67,7 +76,7 @@ const _renamedNumericTypeCheck: DataFrame<{
   name: string;
 }> = renamedNumeric;
 
-// 6. Test rename preserves non-renamed column types exactly
+// 7. Test rename preserves non-renamed column types exactly
 const renamedPreservesTypes = testData.rename({ name: "userName" });
 const _preservesTypesCheck: DataFrame<{
   userName: string;
@@ -76,7 +85,7 @@ const _preservesTypesCheck: DataFrame<{
   score: number;
 }> = renamedPreservesTypes;
 
-// 7. Test rename with complex types
+// 8. Test rename with complex types
 const complexData = createDataFrame([
   {
     id: 1,
@@ -96,7 +105,7 @@ const _renamedComplexTypeCheck: DataFrame<{
   active: boolean;
 }> = renamedComplex;
 
-// 8. Test rename maintains column order (non-renamed columns stay in place)
+// 9. Test rename maintains column order (non-renamed columns stay in place)
 const renamedMiddle = testData.rename({ age: "yearsOld" });
 const _renamedMiddleTypeCheck: DataFrame<{
   name: string;
@@ -105,7 +114,7 @@ const _renamedMiddleTypeCheck: DataFrame<{
   score: number;
 }> = renamedMiddle;
 
-// 9. Test chained renames
+// 10. Test chained renames
 const chainedRename = testData
   .rename({ name: "userName" })
   .rename({ userName: "fullName" });
@@ -116,7 +125,7 @@ const _chainedRenameTypeCheck: DataFrame<{
   score: number;
 }> = chainedRename;
 
-// 10. Test rename with grouped DataFrame
+// 11. Test rename with grouped DataFrame
 const grouped = testData.groupBy("city");
 const renamedGrouped = grouped.rename({ name: "userName" });
 // Should preserve grouping
@@ -125,17 +134,17 @@ const _renamedGroupedTypeCheck: typeof renamedGrouped extends {
 } ? true
   : false = true;
 
-// 11. Test that renamed columns are not in original position
+// 12. Test that renamed columns are not in original position
 const testNoOldColumn = testData.rename({ name: "userName" });
 // @ts-expect-error - 'name' should not exist after rename
 const _shouldNotHaveName: DataFrame<{ name: string }> = testNoOldColumn;
 
-// 12. Test type narrowing - specific new column names are known
+// 13. Test type narrowing - specific new column names are known
 const narrowed = testData.rename({ score: "finalScore" });
 const extracted = narrowed.extract("finalScore");
 const _extractedTypeCheck: number[] = extracted;
 
-// 13. Test rename with union types
+// 14. Test rename with union types
 const unionData = createDataFrame(
   [
     { type: "a", value: "test" },
@@ -152,7 +161,7 @@ const _renamedUnionTypeCheck: DataFrame<{
   value: string | number;
 }> = renamedUnion;
 
-// 14. Test rename with optional properties
+// 15. Test rename with optional properties
 const optionalData = createDataFrame(
   [
     { required: "test", optional: 42 },
@@ -169,7 +178,7 @@ const _renamedOptionalTypeCheck: DataFrame<{
   optional?: number;
 }> = renamedOptional;
 
-// 15. Test rename with nullable types
+// 16. Test rename with nullable types
 const nullableData = createDataFrame(
   [
     { id: 1, value: "test" },

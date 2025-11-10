@@ -17,22 +17,34 @@ type ProvidedKeys<T> = {
 /**
  * Extract new key values from rename map as a union
  * This preserves literal types better than mapping
+ * Excludes identity renames (where old key equals new key)
  */
-type NewKeyValues<RenameMap> = {
-  [K in keyof RenameMap]: RenameMap[K] extends PropertyKey ? RenameMap[K]
+type NewKeyValues<
+  Row extends object,
+  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
+> = {
+  [K in ProvidedKeys<RenameMap>]: K extends PropertyKey
+    ? RenameMap[K] extends PropertyKey
+      ? K extends RenameMap[K] ? never : RenameMap[K]
+    : never
     : never;
-}[keyof RenameMap];
+}[ProvidedKeys<RenameMap>];
 
 /**
  * Find the old key that maps to a given new key
+ * Excludes identity renames (where old key equals new key)
  */
 type OldKeyForNewKey<
   Row extends object,
   RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
   NewKey extends PropertyKey,
 > = {
-  [OldKey in ProvidedKeys<RenameMap>]: RenameMap[OldKey] extends NewKey
-    ? OldKey extends keyof Row ? OldKey
+  [OldKey in ProvidedKeys<RenameMap>]: OldKey extends PropertyKey
+    ? RenameMap[OldKey] extends PropertyKey
+      ? OldKey extends RenameMap[OldKey] ? never
+      : RenameMap[OldKey] extends NewKey ? OldKey extends keyof Row ? OldKey
+        : never
+      : never
     : never
     : never;
 }[ProvidedKeys<RenameMap>];
@@ -40,17 +52,32 @@ type OldKeyForNewKey<
 /**
  * Build mutate assignments from rename map: { newKey: (r) => r.oldKey }
  * Iterate over new keys first to preserve literal types (like mutate does)
+ * Excludes identity renames (where old key equals new key)
  */
 type MutateAssignmentsFromRename<
   Row extends object,
   RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
 > = {
-  [NewKey in NewKeyValues<Pick<RenameMap, ProvidedKeys<RenameMap>>>]: (
+  [NewKey in NewKeyValues<Row, RenameMap>]: (
     row: Row,
   ) => OldKeyForNewKey<Row, RenameMap, NewKey> extends keyof Row
     ? Row[OldKeyForNewKey<Row, RenameMap, NewKey>]
     : never;
 };
+
+/**
+ * Get the keys that should be dropped (old keys that are actually being renamed)
+ * Excludes identity renames (where old key equals new key)
+ */
+type KeysToDrop<
+  Row extends object,
+  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
+> = {
+  [K in ProvidedKeys<RenameMap>]: K extends PropertyKey
+    ? RenameMap[K] extends PropertyKey ? K extends RenameMap[K] ? never : K
+    : never
+    : never;
+}[ProvidedKeys<RenameMap>];
 
 /** Strongly-typed rename result using mutate + drop composition. */
 export type RowAfterRename<
@@ -59,7 +86,7 @@ export type RowAfterRename<
 > = Row extends unknown ? Prettify<
     RowAfterDrop<
       RowAfterMutation<Row, MutateAssignmentsFromRename<Row, RenameMap>>,
-      & ProvidedKeys<RenameMap>
+      & KeysToDrop<Row, RenameMap>
       & keyof RowAfterMutation<
         Row,
         MutateAssignmentsFromRename<Row, RenameMap>
