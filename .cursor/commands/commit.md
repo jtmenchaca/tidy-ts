@@ -12,13 +12,27 @@ Create a new git commit with a well-formatted message by:
 
 NOTE: run 'deno fmt' prior to the committing in the next step
 
-3. If no files are staged, stage all modified files with `git add .`
-4. Analyze the changes to determine:
+3. **Check and bump package versions if needed:**
+   - For each package in `src/*/deno.jsonc`, check the latest published version
+     on JSR using `deno task check-versions`
+   - Compare the current version in `deno.jsonc` with the latest published
+     version
+   - If the current version is NOT at least 1 patch version greater than the
+     latest published version, increment it:
+     - For `@tidy-ts/dataframe`: Check `src/dataframe/deno.jsonc`
+     - For `@tidy-ts/ai`: Check `src/ai/deno.jsonc`
+   - Version should follow semantic versioning (MAJOR.MINOR.PATCH)
+   - Example: If latest is `1.0.29`, current should be at least `1.0.30` (or
+     higher)
+   - Only bump versions if there are actual changes to commit for that package
+
+4. If no files are staged, stage all modified files with `git add .`
+5. Analyze the changes to determine:
    - Type: feat, fix, docs, style, refactor, test, chore, etc.
    - Scope: component or module affected (optional)
    - Description: concise description of changes
-5. Generate an appropriate commit message based on the changes
-6. Create the commit with `git commit -m "message"`
+6. Generate an appropriate commit message based on the changes
+7. Create the commit with `git commit -m "message"`
 
 ## Commit Message Format
 
@@ -74,7 +88,18 @@ git status
 git diff
 ```
 
-3. Stage changes:
+3. Check and bump package versions:
+
+```bash
+# Check latest published versions on JSR
+deno task check-versions @tidy-ts/dataframe @tidy-ts/ai
+
+# Compare with current versions in deno.jsonc files
+# If current version <= latest published, increment the patch version
+# Example: If latest is 1.0.29, ensure current is at least 1.0.30
+```
+
+4. Stage changes:
 
 ```bash
 # Stage all modified files
@@ -84,7 +109,7 @@ git add .
 git add src/dataframe/ts/verbs/aggregate/count.verb.ts
 ```
 
-4. Create commit with appropriate message:
+5. Create commit with appropriate message:
 
 ```bash
 git commit -m "feat(dataframe): add count() method for grouped operations"

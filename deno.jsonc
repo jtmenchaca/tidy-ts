@@ -40,6 +40,7 @@
     "publish:dataframe": "cd src/dataframe && deno publish",
     "publish:ai": "cd src/ai && deno publish",
     "publish:all": "deno task publish:dataframe && deno task publish:ai",
+    "check-versions": "deno run --allow-net scripts/check-jsr-versions.ts",
     "docs:prerender": "cd docs && bun run prerender && cd ..",
     "joss:local-render": "devkit md2pdf joss/paper.md",
     "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
