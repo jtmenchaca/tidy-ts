@@ -81,20 +81,20 @@ import type { ParquetOptions } from "./read_parquet.ts";
  */
 type ReadCsvFunction = {
   (
-    pathOrContent: string,
+    pathOrContent: string | ArrayBuffer | File | Blob,
     opts: CsvOptions & NAOpts & { no_types: true },
     // deno-lint-ignore no-explicit-any
   ): Promise<DataFrame<any>>;
   // deno-lint-ignore no-explicit-any
   <S extends z.ZodObject<any>>(
-    pathOrContent: string,
+    pathOrContent: string | ArrayBuffer | File | Blob,
     schema: S,
     opts: CsvOptions & NAOpts & { no_types: true },
     // deno-lint-ignore no-explicit-any
   ): Promise<DataFrame<any>>;
   // deno-lint-ignore no-explicit-any
   <S extends z.ZodObject<any>>(
-    pathOrContent: string,
+    pathOrContent: string | ArrayBuffer | File | Blob,
     schema: S,
     opts?: CsvOptions & NAOpts,
   ): Promise<DataFrame<z.infer<S>>>;
@@ -391,28 +391,19 @@ export const readArrow: ReadArrowFunction = (() => {
  * });
  */
 export const readCSV: ReadCsvFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
-
-  if (isNode || isDeno) {
+  // Always allow the function - it handles environment detection internally
+  // deno-lint-ignore no-explicit-any
+  return async <S extends z.ZodObject<any>>(
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    schemaOrOpts?: S | CsvOptions & NAOpts,
+    opts?: CsvOptions & NAOpts,
     // deno-lint-ignore no-explicit-any
-    return async <S extends z.ZodObject<any>>(
-      pathOrContent: string,
-      schema: S,
-      opts?: CsvOptions & NAOpts,
-      // deno-lint-ignore no-explicit-any
-    ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
-      const { readCSV } = await import("./read_csv.ts");
-      return readCSV(pathOrContent, schema, opts);
-    };
-  } else {
-    return () => {
-      throw new Error(
-        "readCSV is only available in Node.js/Deno environments. Use string input instead of file paths in browsers.",
-      );
-    };
-  }
+  ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
+    const { readCSV: readCSVImpl } = await import("./read_csv.ts");
+    // TypeScript can't properly infer the overload, but the runtime function handles it correctly
+    // deno-lint-ignore no-explicit-any
+    return readCSVImpl(pathOrContent as any, schemaOrOpts as any, opts);
+  };
 })();
 
 /**
@@ -636,20 +627,20 @@ interface ReadXLSXOpts extends NAOpts {
 
 type ReadXLSXFunction = {
   (
-    path: string,
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
     opts: ReadXLSXOpts & { no_types: true },
     // deno-lint-ignore no-explicit-any
   ): Promise<DataFrame<any>>;
   // deno-lint-ignore no-explicit-any
   <S extends z.ZodObject<any>>(
-    path: string,
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
     schema: S,
     opts: ReadXLSXOpts & { no_types: true },
     // deno-lint-ignore no-explicit-any
   ): Promise<DataFrame<any>>;
   // deno-lint-ignore no-explicit-any
   <S extends z.ZodObject<any>>(
-    path: string,
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
     schema: S,
     opts?: ReadXLSXOpts,
   ): Promise<DataFrame<z.infer<S>>>;
@@ -658,12 +649,11 @@ type ReadXLSXFunction = {
 /**
  * Read an XLSX file with Zod schema validation and type inference.
  *
- * Loads XLSX data from a file path (Deno only) and validates each row against
- * the provided Zod schema. Returns a fully typed DataFrame based on the schema.
- * Automatically converts Excel serial numbers to proper dates and handles
- * NA values. Throws an error if validation fails.
+ * Loads XLSX data from a file path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+ * and validates each row against the provided Zod schema. Returns a fully typed DataFrame based on the schema.
+ * Automatically converts Excel serial numbers to proper dates and handles NA values. Throws an error if validation fails.
  *
- * @param path - File path to the XLSX file (Deno only)
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
  * @param schema - Zod schema for type validation and conversion. The schema defines
  *   the expected structure and types of each row in the DataFrame. Types are automatically
  *   coerced (e.g., string "123" becomes number 123 for z.number() fields, Excel serial
@@ -673,7 +663,7 @@ type ReadXLSXFunction = {
  * @returns A Promise resolving to a DataFrame typed according to the schema
  *
  * @example
- * // Read from file with validation
+ * // Read from file path (Node.js/Deno)
  * import { z } from "zod";
  *
  * const schema = z.object({
@@ -687,8 +677,15 @@ type ReadXLSXFunction = {
  * const df = await readXLSX("./data.xlsx", schema);
  *
  * @example
- * // Read from specific sheet with NA handling options
- * const df = await readXLSX("./data.xlsx", schema, {
+ * // Read from ArrayBuffer (browser-compatible)
+ * const fileInput = document.querySelector('input[type="file"]');
+ * const file = fileInput.files[0];
+ * const arrayBuffer = await file.arrayBuffer();
+ * const df = await readXLSX(arrayBuffer, schema);
+ *
+ * @example
+ * // Read from File object (browser-compatible)
+ * const df = await readXLSX(file, schema, {
  *   sheet: "Summary",  // Read specific sheet by name
  *   naValues: ["NA", "null", ""],
  *   trim: true
@@ -699,28 +696,19 @@ type ReadXLSXFunction = {
  * const df = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  */
 export const readXLSX: ReadXLSXFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
-
-  if (isNode || isDeno) {
+  // Always allow the function - it handles environment detection internally
+  // deno-lint-ignore no-explicit-any
+  return async <S extends z.ZodObject<any>>(
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    schemaOrOpts?: S | ReadXLSXOpts,
+    opts?: ReadXLSXOpts,
     // deno-lint-ignore no-explicit-any
-    return async <S extends z.ZodObject<any>>(
-      path: string,
-      schema: S,
-      opts?: ReadXLSXOpts,
-      // deno-lint-ignore no-explicit-any
-    ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
-      const { readXLSX } = await import("./read_xlsx.ts");
-      return readXLSX(path, schema, opts);
-    };
-  } else {
-    return () => {
-      throw new Error(
-        "readXLSX is only available in Node.js/Deno environments.",
-      );
-    };
-  }
+  ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
+    const { readXLSX: readXLSXImpl } = await import("./read_xlsx.ts");
+    // TypeScript can't properly infer the overload, but the runtime function handles it correctly
+    // deno-lint-ignore no-explicit-any
+    return readXLSXImpl(pathOrBuffer as any, schemaOrOpts as any, opts);
+  };
 })();
 
 /**
@@ -811,7 +799,7 @@ export const writeXLSX: WriteXLSXFunction = (() => {
  * const df = await readCSV("./data.csv", schema);
  */
 export const readCSVMetadata: (
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   options?: { previewRows?: number; comma?: string },
 ) => Promise<{
   headers: string[];
@@ -819,25 +807,14 @@ export const readCSVMetadata: (
   firstRows: string[][];
   delimiter: string;
 }> = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
-
-  if (isNode || isDeno) {
-    return async (
-      pathOrContent: string,
-      options?: { previewRows?: number; comma?: string },
-    ) => {
-      const { readCSVMetadata } = await import("./read_csv.ts");
-      return readCSVMetadata(pathOrContent, options);
-    };
-  } else {
-    return () => {
-      throw new Error(
-        "readCSVMetadata is only available in Node.js/Deno environments.",
-      );
-    };
-  }
+  // Always allow the function - it handles environment detection internally
+  return async (
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    options?: { previewRows?: number; comma?: string },
+  ) => {
+    const { readCSVMetadata } = await import("./read_csv.ts");
+    return readCSVMetadata(pathOrContent, options);
+  };
 })();
 
 /**
@@ -846,22 +823,28 @@ export const readCSVMetadata: (
  * Useful for inspecting file structure before deciding how to read it.
  * Shows available sheets and a preview of the first few rows.
  *
- * @param path - File path to the XLSX file
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
  * @param options - Options for preview (previewRows, sheet)
  * @returns Promise resolving to metadata object with sheets list and row preview
  *
  * @example
- * // Inspect file to see structure
+ * // Inspect file to see structure (Node.js/Deno)
  * const meta = await readXLSXMetadata("./data.xlsx", { previewRows: 3 });
  * console.log("Available sheets:", meta.sheets);
  * console.log("Headers:", meta.headers);
  * console.log("First rows:", meta.firstRows);
  *
+ * @example
+ * // Inspect file in browser
+ * const fileInput = document.querySelector('input[type="file"]');
+ * const file = fileInput.files[0];
+ * const meta = await readXLSXMetadata(file, { previewRows: 3 });
+ *
  * // If row 0 looks like a note, use skip: 1
- * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
+ * const df = await readXLSX(file, schema, { skip: 1 });
  */
 export const readXLSXMetadata: (
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   options?: { previewRows?: number; sheet?: string | number },
 ) => Promise<{
   sheets: { name: string; index: number }[];
@@ -871,23 +854,12 @@ export const readXLSXMetadata: (
   totalRows: number;
   firstRows: string[][];
 }> = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
-
-  if (isNode || isDeno) {
-    return async (
-      path: string,
-      options?: { previewRows?: number; sheet?: string | number },
-    ) => {
-      const { readXLSXMetadata } = await import("./read_xlsx.ts");
-      return readXLSXMetadata(path, options);
-    };
-  } else {
-    return () => {
-      throw new Error(
-        "readXLSXMetadata is only available in Node.js/Deno environments.",
-      );
-    };
-  }
+  // Always allow the function - it handles environment detection internally
+  return async (
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    options?: { previewRows?: number; sheet?: string | number },
+  ) => {
+    const { readXLSXMetadata } = await import("./read_xlsx.ts");
+    return readXLSXMetadata(pathOrBuffer, options);
+  };
 })();

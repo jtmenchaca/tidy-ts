@@ -9,9 +9,9 @@
     "serve": "bun server.js",
     "test:browser": "playwright test",
     "test:sh": "bash test-runner.sh"
- },
+  },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@latest"
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@1.0.28"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

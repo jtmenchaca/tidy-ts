@@ -8,6 +8,51 @@ import type { NAOpts } from "./types.ts";
 └───────────────────────────────────────────────────────────────────────────*/
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 
+/**
+ * Safely read a file or convert ArrayBuffer/File/Blob to Uint8Array
+ * Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+ * This prevents "Deno is not defined" errors when the module is imported
+ * in non-Deno environments (e.g., during bundling or static analysis)
+ */
+async function readFileSafe(
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
+): Promise<Uint8Array> {
+  // Handle ArrayBuffer, File, or Blob (browser-compatible)
+  if (pathOrBuffer instanceof ArrayBuffer) {
+    return new Uint8Array(pathOrBuffer);
+  }
+
+  if (pathOrBuffer instanceof File || pathOrBuffer instanceof Blob) {
+    const arrayBuffer = await pathOrBuffer.arrayBuffer();
+    return new Uint8Array(arrayBuffer);
+  }
+
+  // Handle file path (string) - requires Node.js or Deno
+  if (typeof pathOrBuffer === "string") {
+    // Check for Deno first
+    if (typeof Deno !== "undefined" && Deno.readFile) {
+      return await Deno.readFile(pathOrBuffer);
+    }
+
+    // Fallback to Node.js fs
+    // deno-lint-ignore no-process-global
+    if (typeof process !== "undefined" && process?.versions?.node) {
+      // Dynamic import to avoid issues in Deno
+      const fs = await import("node:fs/promises");
+      const buffer = await fs.readFile(pathOrBuffer);
+      return new Uint8Array(buffer);
+    }
+
+    throw new Error(
+      "readXLSX with file path requires Deno or Node.js environment. Use ArrayBuffer, File, or Blob in browsers.",
+    );
+  }
+
+  throw new Error(
+    "readXLSX requires a file path (string), ArrayBuffer, File, or Blob.",
+  );
+}
+
 /** Recursively unwrap .optional() / .nullable() / .default() wrappers */
 const unwrap = (t: ZodTypeAny): {
   base: ZodTypeAny;
@@ -143,15 +188,15 @@ const zxlsx = {
 /**
  * Parse XLSX file and return rows as arrays of values (low-level API)
  *
- * @param path - File path to the XLSX file
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments)
  * @param opts - Options including sheet selection
  * @returns Array of rows, where each row is an array of string values
  */
 export async function parseXLSXRaw(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   opts: { sheet?: string | number; skip?: number } = {},
 ): Promise<string[][]> {
-  const fileData = await Deno.readFile(path);
+  const fileData = await readFileSafe(pathOrBuffer);
 
   // Get sheet mapping from workbook.xml
   const workbookXml = await extractFile(fileData, "xl/workbook.xml");
@@ -540,7 +585,7 @@ interface ReadXLSXOpts extends NAOpts {
 /**
  * Read an XLSX file with Zod schema validation and type inference
  *
- * @param path - File path to the XLSX file
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
  * @param schema - Zod schema for type validation and conversion
  * @param opts - Options for parsing (NA values, trim, sheet selection)
  * @returns A properly typed DataFrame based on the Zod schema
@@ -556,19 +601,25 @@ interface ReadXLSXOpts extends NAOpts {
  *   age: z.number().optional(),
  * });
  *
- * // Read from first sheet (default)
+ * // Read from file path (Node.js/Deno)
  * const df = await readXLSX("./data.xlsx", schema);
  *
- * // Read from specific sheet by name
- * const df2 = await readXLSX("./data.xlsx", schema, { sheet: "Sheet2" });
+ * // Read from ArrayBuffer (browser-compatible)
+ * const fileInput = document.querySelector('input[type="file"]');
+ * const file = fileInput.files[0];
+ * const arrayBuffer = await file.arrayBuffer();
+ * const df2 = await readXLSX(arrayBuffer, schema);
+ *
+ * // Read from File object (browser-compatible)
+ * const df3 = await readXLSX(file, schema, { sheet: "Sheet2" });
  *
  * // Read from specific sheet by index (0-based)
- * const df3 = await readXLSX("./data.xlsx", schema, { sheet: 1 });
+ * const df4 = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  * ```
  */
 // Overload: with no_types: true, schema optional, returns DataFrame<any>
 export async function readXLSX(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   opts: ReadXLSXOpts & { no_types: true },
   // deno-lint-ignore no-explicit-any
 ): Promise<DataFrame<any>>;
@@ -576,7 +627,7 @@ export async function readXLSX(
 // Overload: with no_types: true and schema, returns DataFrame<any>
 // deno-lint-ignore no-explicit-any
 export async function readXLSX<S extends z.ZodObject<any>>(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   schema: S,
   opts: ReadXLSXOpts & { no_types: true },
   // deno-lint-ignore no-explicit-any
@@ -585,7 +636,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
 // Overload: default returns typed DataFrame
 // deno-lint-ignore no-explicit-any
 export async function readXLSX<S extends z.ZodObject<any>>(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   schema: S,
   opts?: ReadXLSXOpts,
 ): Promise<DataFrame<z.infer<S>>>;
@@ -593,7 +644,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
 // Implementation
 // deno-lint-ignore no-explicit-any
 export async function readXLSX<S extends z.ZodObject<any>>(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   schemaOrOpts?: S | ReadXLSXOpts,
   opts?: ReadXLSXOpts,
   // deno-lint-ignore no-explicit-any
@@ -614,7 +665,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
     : ((schemaOrOpts as ReadXLSXOpts) || {});
   const noTypes = actualOpts.no_types === true;
 
-  const rawRows = await parseXLSXRaw(path, {
+  const rawRows = await parseXLSXRaw(pathOrBuffer, {
     sheet: actualOpts.sheet,
     skip: actualOpts.skip,
   });
@@ -735,7 +786,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
  * Useful for inspecting file structure before deciding how to read it.
  * Shows available sheets and a preview of the first few rows.
  *
- * @param path - File path to the XLSX file
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
  * @param previewRows - Number of rows to preview (default: 5)
  * @param sheet - Which sheet to preview (default: first sheet)
  * @returns Metadata object with sheets list and row preview
@@ -751,13 +802,13 @@ export async function readXLSX<S extends z.ZodObject<any>>(
  * ```
  */
 export async function readXLSXMetadata(
-  path: string,
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
   { previewRows = 5, sheet }: {
     previewRows?: number;
     sheet?: string | number;
   } = {},
 ) {
-  const fileData = await Deno.readFile(path);
+  const fileData = await readFileSafe(pathOrBuffer);
 
   // Get sheet mapping
   const workbookXml = await extractFile(fileData, "xl/workbook.xml");
@@ -775,7 +826,7 @@ export async function readXLSXMetadata(
 
   // Get preview of specified sheet (or first sheet)
   const targetSheet = sheet ?? 0;
-  const rawRows = await parseXLSXRaw(path, { sheet: targetSheet });
+  const rawRows = await parseXLSXRaw(pathOrBuffer, { sheet: targetSheet });
   const previewData = rawRows.slice(0, previewRows);
 
   const sheetName = typeof targetSheet === "number"

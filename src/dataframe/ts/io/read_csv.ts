@@ -13,6 +13,54 @@ const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 const isNA = (s: unknown, na: readonly string[], trim: boolean): boolean =>
   typeof s === "string" && na.includes(trim ? s.trim() : s);
 
+/**
+ * Safely read a file or convert ArrayBuffer/File/Blob to string
+ * Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+ * This prevents "Deno is not defined" errors when the module is imported
+ * in non-Deno environments (e.g., during bundling or static analysis)
+ */
+async function readFileAsString(
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
+): Promise<string> {
+  // Handle ArrayBuffer, File, or Blob (browser-compatible)
+  if (pathOrBuffer instanceof ArrayBuffer) {
+    const decoder = new TextDecoder("utf-8");
+    return decoder.decode(pathOrBuffer);
+  }
+
+  if (pathOrBuffer instanceof File || pathOrBuffer instanceof Blob) {
+    const arrayBuffer = await pathOrBuffer.arrayBuffer();
+    const decoder = new TextDecoder("utf-8");
+    return decoder.decode(arrayBuffer);
+  }
+
+  // Handle file path (string) - requires Node.js or Deno
+  if (typeof pathOrBuffer === "string") {
+    // Check for Deno first
+    if (typeof Deno !== "undefined" && Deno.readFile) {
+      const fileData = await Deno.readFile(pathOrBuffer);
+      const decoder = new TextDecoder("utf-8");
+      return decoder.decode(fileData);
+    }
+
+    // Fallback to Node.js fs
+    // deno-lint-ignore no-process-global
+    if (typeof process !== "undefined" && process?.versions?.node) {
+      // Dynamic import to avoid issues in Deno
+      const fs = await import("node:fs/promises");
+      return await fs.readFile(pathOrBuffer, "utf8");
+    }
+
+    throw new Error(
+      "readCSV with file path requires Deno or Node.js environment. Use ArrayBuffer, File, Blob, or CSV string in browsers.",
+    );
+  }
+
+  throw new Error(
+    "readCSV requires a file path (string), ArrayBuffer, File, Blob, or CSV content string.",
+  );
+}
+
 /** Recursively unwrap .optional() / .nullable() / .default() wrappers */
 const unwrap = (t: ZodTypeAny): {
   base: ZodTypeAny;
@@ -242,7 +290,16 @@ export function parseRow<S extends z.ZodObject<any>>(
 /**
  * Detects if input is a file path or raw CSV content
  */
-function isFilePath(input: string): boolean {
+function isFilePath(input: string | ArrayBuffer | File | Blob): boolean {
+  // ArrayBuffer, File, or Blob are never file paths
+  if (
+    input instanceof ArrayBuffer || input instanceof File ||
+    input instanceof Blob
+  ) {
+    return false;
+  }
+
+  // For strings, check if it's a file path or CSV content
   // Check if it contains CSV-like content (headers with comma-separated values)
   const lines = input.trim().split("\n");
   if (lines.length >= 2) {
@@ -261,7 +318,7 @@ function isFilePath(input: string): boolean {
 /**
  * Read a CSV file or parse CSV content with Zod schema validation and type inference
  *
- * @param pathOrContent - Either a file path to read from, or raw CSV content
+ * @param pathOrContent - File path (Node.js/Deno), ArrayBuffer/File/Blob (all environments including browsers), or raw CSV content string
  * @param schema - Zod schema for type validation and conversion
  * @param opts - Options for reading/parsing
  * @returns A properly typed DataFrame based on the Zod schema
@@ -277,14 +334,23 @@ function isFilePath(input: string): boolean {
  *   age: z.number().optional(),
  * });
  *
- * // Read from file
+ * // Read from file path (Node.js/Deno)
  * const df1 = await readCSV("./data.csv", schema);
  *
- * // Parse from raw content
+ * // Parse from raw CSV content string
  * const csvContent = "id,name,email,age\\n1,Alice,alice@example.com,25\\n2,Bob,bob@example.com,30";
  * const df2 = await readCSV(csvContent, schema);
  *
- * // Both are typed as DataFrame<z.output<typeof schema>>
+ * // Read from ArrayBuffer (browser-compatible)
+ * const fileInput = document.querySelector('input[type="file"]');
+ * const file = fileInput.files[0];
+ * const arrayBuffer = await file.arrayBuffer();
+ * const df3 = await readCSV(arrayBuffer, schema);
+ *
+ * // Read from File object (browser-compatible)
+ * const df4 = await readCSV(file, schema);
+ *
+ * // All are typed as DataFrame<z.output<typeof schema>>
  * ```
  */
 // V8 JavaScript engine maximum string length (~536 million characters)
@@ -293,7 +359,7 @@ const MAX_V8_STRING_LENGTH = 0x1fffffe8; // 536,870,888 characters
 
 // Overload: with no_types: true, schema optional, returns DataFrame<any>
 export async function readCSV(
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   opts: CsvOptions & NAOpts & { no_types: true },
   // deno-lint-ignore no-explicit-any
 ): Promise<DataFrame<any>>;
@@ -301,7 +367,7 @@ export async function readCSV(
 // Overload: with no_types: true and schema, returns DataFrame<any>
 // deno-lint-ignore no-explicit-any
 export async function readCSV<S extends z.ZodObject<any>>(
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   schema: S,
   opts: CsvOptions & NAOpts & { no_types: true },
   // deno-lint-ignore no-explicit-any
@@ -310,7 +376,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
 // Overload: default returns typed DataFrame
 // deno-lint-ignore no-explicit-any
 export async function readCSV<S extends z.ZodObject<any>>(
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   schema: S,
   opts?: CsvOptions & NAOpts,
 ): Promise<DataFrame<z.infer<S>>>;
@@ -318,7 +384,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
 // Implementation
 // deno-lint-ignore no-explicit-any
 export async function readCSV<S extends z.ZodObject<any>>(
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   schemaOrOpts?: S | CsvOptions & NAOpts,
   opts?: CsvOptions & NAOpts,
   // deno-lint-ignore no-explicit-any
@@ -345,21 +411,28 @@ export async function readCSV<S extends z.ZodObject<any>>(
   if (!schema && noTypes) {
     // Need to read file first
     if (isFilePath(pathOrContent)) {
+      // It's a file path - read it
       try {
-        const stats = await fs.stat(pathOrContent);
-        if (stats.size > MAX_V8_STRING_LENGTH) {
-          throw new Error("Schema is required for streaming CSV files");
+        // Check file size if it's a string path (Node.js/Deno)
+        if (typeof pathOrContent === "string") {
+          const stats = await fs.stat(pathOrContent);
+          if (stats.size > MAX_V8_STRING_LENGTH) {
+            throw new Error("Schema is required for streaming CSV files");
+          }
         }
-        rawCsv = await fs.readFile(pathOrContent, "utf8");
+        rawCsv = await readFileAsString(pathOrContent);
       } catch (error) {
         throw new Error(
-          `Failed to read CSV file '${pathOrContent}': ${
-            (error as Error).message
-          }`,
+          `Failed to read CSV file: ${(error as Error).message}`,
         );
       }
     } else {
-      rawCsv = pathOrContent;
+      // It's ArrayBuffer, File, Blob, or CSV content string
+      if (typeof pathOrContent === "string") {
+        rawCsv = pathOrContent;
+      } else {
+        rawCsv = await readFileAsString(pathOrContent);
+      }
     }
 
     // Parse CSV without schema validation
@@ -414,26 +487,31 @@ export async function readCSV<S extends z.ZodObject<any>>(
   if (isFilePath(pathOrContent)) {
     // It's a file path - check size before reading
     try {
-      const stats = await fs.stat(pathOrContent);
+      // Check file size if it's a string path (Node.js/Deno)
+      if (typeof pathOrContent === "string") {
+        const stats = await fs.stat(pathOrContent);
 
-      // If file size exceeds V8's maximum string length, automatically use streaming
-      if (stats.size > MAX_V8_STRING_LENGTH) {
-        // Dynamically import to avoid circular dependencies
-        const { readCSVStream } = await import("./read_csv_stream.ts");
-        return readCSVStream(pathOrContent, schema, actualOpts);
+        // If file size exceeds V8's maximum string length, automatically use streaming
+        if (stats.size > MAX_V8_STRING_LENGTH) {
+          // Dynamically import to avoid circular dependencies
+          const { readCSVStream } = await import("./read_csv_stream.ts");
+          return readCSVStream(pathOrContent, schema, actualOpts);
+        }
       }
 
-      rawCsv = await fs.readFile(pathOrContent, "utf8");
+      rawCsv = await readFileAsString(pathOrContent);
     } catch (error) {
       throw new Error(
-        `Failed to read CSV file '${pathOrContent}': ${
-          (error as Error).message
-        }`,
+        `Failed to read CSV file: ${(error as Error).message}`,
       );
     }
   } else {
-    // It's raw CSV content - use directly
-    rawCsv = pathOrContent;
+    // It's ArrayBuffer, File, Blob, or raw CSV content string
+    if (typeof pathOrContent === "string") {
+      rawCsv = pathOrContent;
+    } else {
+      rawCsv = await readFileAsString(pathOrContent);
+    }
   }
 
   // Parse the CSV content with skipEmptyLines enabled by default to handle trailing newlines
@@ -480,35 +558,45 @@ export async function readCSV<S extends z.ZodObject<any>>(
  * ```
  */
 export async function readCSVMetadata(
-  pathOrContent: string,
+  pathOrContent: string | ArrayBuffer | File | Blob,
   { previewRows = 5, ...csvOpts }: CsvOptions & { previewRows?: number } = {},
 ) {
   let rawCsv: string;
 
   if (isFilePath(pathOrContent)) {
+    // It's a file path - read it
     try {
-      const stats = await fs.stat(pathOrContent);
+      // Check file size if it's a string path (Node.js/Deno)
+      if (typeof pathOrContent === "string") {
+        const stats = await fs.stat(pathOrContent);
 
-      // For very large files, only read enough to get preview
-      if (stats.size > MAX_V8_STRING_LENGTH) {
-        // Read first chunk only for metadata
-        const file = await fs.open(pathOrContent, "r");
-        const buffer = new Uint8Array(Math.min(100000, stats.size)); // Read up to 100KB
-        await file.read(buffer, 0, buffer.length, 0);
-        await file.close();
-        rawCsv = new TextDecoder().decode(buffer);
+        // For very large files, only read enough to get preview
+        if (stats.size > MAX_V8_STRING_LENGTH) {
+          // Read first chunk only for metadata
+          const file = await fs.open(pathOrContent, "r");
+          const buffer = new Uint8Array(Math.min(100000, stats.size)); // Read up to 100KB
+          await file.read(buffer, 0, buffer.length, 0);
+          await file.close();
+          rawCsv = new TextDecoder().decode(buffer);
+        } else {
+          rawCsv = await fs.readFile(pathOrContent, "utf8");
+        }
       } else {
-        rawCsv = await fs.readFile(pathOrContent, "utf8");
+        // ArrayBuffer/File/Blob - read full content (metadata function)
+        rawCsv = await readFileAsString(pathOrContent);
       }
     } catch (error) {
       throw new Error(
-        `Failed to read CSV file '${pathOrContent}': ${
-          (error as Error).message
-        }`,
+        `Failed to read CSV file: ${(error as Error).message}`,
       );
     }
   } else {
-    rawCsv = pathOrContent;
+    // It's ArrayBuffer, File, Blob, or CSV content string
+    if (typeof pathOrContent === "string") {
+      rawCsv = pathOrContent;
+    } else {
+      rawCsv = await readFileAsString(pathOrContent);
+    }
   }
 
   // Parse with skipEmptyLines enabled
