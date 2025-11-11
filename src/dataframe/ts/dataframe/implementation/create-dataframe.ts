@@ -464,6 +464,8 @@ export interface DataFrameOptions extends ConcurrencyOptions {
   schema?: z.ZodObject<any> | null;
   /** Enable operation tracing for performance profiling */
   trace?: boolean;
+  /** When true, returns DataFrame<any> instead of typed DataFrame */
+  no_types?: boolean;
 }
 
 /**
@@ -533,8 +535,22 @@ export function createDataFrame<
   T extends Record<string, readonly unknown[]>,
 >(
   options: { columns: T },
+  schemaOrOptions: DataFrameOptions & { no_types: true },
+): DataFrame<any>;
+
+export function createDataFrame<
+  T extends Record<string, readonly unknown[]>,
+>(
+  options: { columns: T },
   schemaOrOptions?: null | DataFrameOptions,
 ): DataFrame<{ [K in keyof T]: T[K][number] }>;
+
+export function createDataFrame<
+  R extends readonly object[],
+>(
+  rows: R,
+  options: DataFrameOptions & { no_types: true },
+): DataFrame<any>;
 
 export function createDataFrame<
   R extends readonly object[],
@@ -573,7 +589,8 @@ export function createDataFrame<
   | DataFrame<R[number]>
   | DataFrame<z.infer<S>>
   | DataFrame<never>
-  | DataFrame<{ [K in keyof T]: T[K][number] }> {
+  | DataFrame<{ [K in keyof T]: T[K][number] }>
+  | DataFrame<any> {
   // Check for conflicting rows and columns first
   if (
     rows && typeof rows === "object" && !Array.isArray(rows) &&
@@ -597,7 +614,18 @@ export function createDataFrame<
     if (columnNames.length === 0) {
       // Empty columns - return empty DataFrame
       const store = toColumnarStorage([], []);
-      return createColumnarDataFrameFromStore(store, {}) as DataFrame<never>;
+      const isOptions = schemaOrOptions &&
+        typeof schemaOrOptions === "object" &&
+        !(schemaOrOptions instanceof z.ZodObject) &&
+        schemaOrOptions !== null;
+      const options = isOptions ? schemaOrOptions as DataFrameOptions : {};
+      const noTypes = isOptions &&
+        (schemaOrOptions as DataFrameOptions).no_types === true;
+      const result = createColumnarDataFrameFromStore(
+        store,
+        options,
+      ) as DataFrame<never>;
+      return noTypes ? (result as unknown as DataFrame<any>) : result;
     }
 
     const firstLength = columnsData[columnNames[0]].length;
@@ -625,7 +653,17 @@ export function createDataFrame<
       length: firstLength,
     };
 
-    return createColumnarDataFrameFromStore(store, {}) as any;
+    // Check for no_types in options
+    const isOptions = schemaOrOptions &&
+      typeof schemaOrOptions === "object" &&
+      !(schemaOrOptions instanceof z.ZodObject) &&
+      schemaOrOptions !== null;
+    const options = isOptions ? schemaOrOptions as DataFrameOptions : {};
+    const noTypes = isOptions &&
+      (schemaOrOptions as DataFrameOptions).no_types === true;
+    const result = createColumnarDataFrameFromStore(store, options) as any;
+
+    return noTypes ? (result as unknown as DataFrame<any>) : result;
   }
 
   // Original row-based logic
@@ -641,6 +679,8 @@ export function createDataFrame<
     ? (schemaOrOptions as DataFrameOptions).schema
     : schemaOrOptions as S | null;
   const options = isOptions ? schemaOrOptions as DataFrameOptions : {};
+  const noTypes = isOptions &&
+    (schemaOrOptions as DataFrameOptions).no_types === true;
 
   // If schema is provided, validate each row
   if (schema && schema instanceof z.ZodObject) {
@@ -665,7 +705,7 @@ export function createDataFrame<
       options,
     ) as unknown as DataFrame<z.infer<S>>;
 
-    return result;
+    return noTypes ? (result as unknown as DataFrame<any>) : result;
   }
 
   const store = toColumnarStorage(rowsArray as R);
@@ -674,5 +714,5 @@ export function createDataFrame<
     options,
   ) as unknown as DataFrame<R[number]>;
 
-  return result;
+  return noTypes ? (result as unknown as DataFrame<any>) : result;
 }
