@@ -14,8 +14,6 @@
     "@deno/wasmbuild/": "jsr:/@deno/wasmbuild@^0.19.2/",
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@std/csv/": "jsr:/@std/csv@^1.0.6/",
-    "@std/dotenv/": "jsr:/@std/dotenv@^0.225.5/",
-    "@std/dotenv/load": "jsr:@std/dotenv@^0.225.5/load",
     "@std/expect": "jsr:@std/expect@^1.0.15",
     "@std/expect/": "jsr:/@std/expect@^1.0.15/",
     "@std/path": "jsr:@std/path@^1.0.8",
@@ -91,6 +89,8 @@
     "@openai/agents": "npm:@openai/agents@^0.2.1",
     "@openai/agents/": "npm:/@openai/agents@^0.2.1/",
     "openai": "npm:openai@^6.7.0",
-    "openai/": "npm:/openai@^6.7.0/"
+    "openai/": "npm:/openai@^6.7.0/",
+    "dotenv": "npm:dotenv@^17.2.3",
+    "dotenv/": "npm:/dotenv@^17.2.3/"
   }
 }

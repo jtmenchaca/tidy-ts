@@ -1,6 +1,6 @@
 // LLM utility with Zod schema validation and type inference
 import { Agent, type AgentInputItem, run, user } from "@openai/agents";
-import "@std/dotenv/load";
+import { config } from "dotenv";
 import OpenAI from "openai";
 import {
   z,
@@ -10,6 +10,9 @@ import {
   ZodOptional,
   type ZodTypeAny,
 } from "zod";
+
+// Load environment variables from .env file
+config();
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
