@@ -832,31 +832,39 @@ export const DOCS: Record<string, DocEntry> = {
     name: "readCSV",
     category: "io",
     signature:
-      "readCSV<T>(pathOrContent: string, schema?: ZodSchema<T>, opts?: CsvOptions): Promise<DataFrame<T>>",
+      "readCSV<T>(pathOrContent: string, schema?: ZodSchema<T>, opts?: CsvOptions): Promise<DataFrame<T>>\nreadCSV(pathOrContent: string, opts: { no_types: true }): Promise<DataFrame<any>>\nreadCSV<T>(pathOrContent: string, schema: ZodSchema<T>, opts: { no_types: true }): Promise<DataFrame<any>>",
     description:
-      "Read CSV file or parse CSV content with optional Zod schema validation. Returns a DataFrame that you can use with all DataFrame operations. Use readCSVMetadata() first to inspect headers and preview data structure.",
+      "Read CSV file or parse CSV content with optional Zod schema validation. Returns a DataFrame that you can use with all DataFrame operations. Use readCSVMetadata() first to inspect headers and preview data structure. When `no_types: true`, returns DataFrame<any> without strict type checking, useful for dynamic or unknown schemas.",
     imports: [
       'import { readCSV, writeCSV, readCSVMetadata } from "@tidy-ts/dataframe";',
     ],
     parameters: [
       "pathOrContent: File path to CSV or raw CSV content string",
-      "schema: Optional Zod schema for validation and type conversion",
+      "schema: Optional Zod schema for validation and type conversion (required unless no_types is true)",
       "opts.comma: Field delimiter/comma character (default: ',')",
       "opts.skipEmptyLines: Skip empty lines (default: true)",
+      "opts.no_types: When true, returns DataFrame<any> instead of typed DataFrame. Schema is optional when true.",
     ],
     returns:
-      "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
+      "Promise<DataFrame<T>> or Promise<DataFrame<any>> - A DataFrame object with all standard operations",
     examples: [
-      '// Read from file\nconst df = await readCSV("data.csv", schema)',
+      '// Read from file with schema\nconst df = await readCSV("data.csv", schema)',
       '// Parse from string\nconst csv = "name,age\\nAlice,30\\nBob,25";\nconst df = await readCSV(csv, schema)',
       '// With custom delimiter\nconst df = await readCSV("data.tsv", schema, { comma: "\\t" })',
+      '// Without schema - returns DataFrame<any>\nconst df = await readCSV("data.csv", { no_types: true })\n// All values remain as strings, but methods work',
+      '// With schema but no_types - validation occurs but returns DataFrame<any>\nconst df = await readCSV("data.csv", schema, { no_types: true })',
       '// Chain with DataFrame operations\nconst result = await readCSV("sales.csv", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
     related: ["writeCSV", "readCSVMetadata", "readXLSX"],
     bestPractices: [
       "✓ GOOD: Use readCSVMetadata() first to inspect headers and structure",
       "✓ GOOD: Provide a Zod schema for type safety and automatic type conversion",
+      "✓ GOOD: Use no_types: true when schema is truly unknown or dynamic",
       "✓ GOOD: Works with both file paths and raw CSV strings",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using no_types when you know the schema - you lose type safety",
+      "❌ BAD: Reading large files without schema - use streaming readCSVStream instead",
     ],
   },
 
@@ -913,33 +921,39 @@ export const DOCS: Record<string, DocEntry> = {
     name: "readXLSX",
     category: "io",
     signature:
-      "readXLSX<T>(path: string, schema?: ZodSchema<T>, opts?: { sheet?: string, skip?: number }): Promise<DataFrame<T>>",
+      "readXLSX<T>(path: string, schema?: ZodSchema<T>, opts?: ReadXLSXOpts): Promise<DataFrame<T>>\nreadXLSX(path: string, opts: { no_types: true }): Promise<DataFrame<any>>\nreadXLSX<T>(path: string, schema: ZodSchema<T>, opts: { no_types: true }): Promise<DataFrame<any>>",
     description:
-      "Read XLSX file with optional schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). Use readXLSXMetadata() first to inspect sheet names and preview data structure.",
+      "Read XLSX file with optional schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). Use readXLSXMetadata() first to inspect sheet names and preview data structure. When `no_types: true`, returns DataFrame<any> without strict type checking and preserves original types from XLSX (numbers, booleans).",
     imports: [
       'import { readCSV, writeCSV, readXLSX, writeXLSX, readXLSXMetadata } from "@tidy-ts/dataframe";',
     ],
     parameters: [
       "path: File path to XLSX",
-      "schema: Optional Zod schema for type validation and conversion",
+      "schema: Optional Zod schema for type validation and conversion (required unless no_types is true)",
       "opts.sheet: Sheet name or index (default: first sheet)",
       "opts.skip: Number of rows to skip (useful if first row is a title, not headers)",
+      "opts.no_types: When true, returns DataFrame<any> instead of typed DataFrame. Schema is optional when true. Preserves original XLSX types (numbers, booleans).",
     ],
     returns:
-      "Promise<DataFrame<T>> - A DataFrame object with all standard operations",
+      "Promise<DataFrame<T>> or Promise<DataFrame<any>> - A DataFrame object with all standard operations",
     examples: [
-      '// Basic usage - returns a DataFrame\nconst df = await readXLSX("data.xlsx")\ndf.print() // Display the data',
-      '// With schema validation\nconst schema = z.object({ name: z.string(), age: z.number() })\nconst df = await readXLSX("data.xlsx", schema)',
+      '// Basic usage - requires schema\nconst schema = z.object({ name: z.string(), age: z.number() })\nconst df = await readXLSX("data.xlsx", schema)',
+      '// Without schema - returns DataFrame<any>\nconst df = await readXLSX("data.xlsx", { no_types: true })\n// Types are inferred from XLSX (numbers, booleans preserved)',
+      '// With schema but no_types - validation occurs but returns DataFrame<any>\nconst df = await readXLSX("data.xlsx", schema, { no_types: true })',
       '// Select specific sheet\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
       '// Skip header rows (e.g., if row 0 is a title)\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
-      '// Chain with DataFrame operations\nconst result = await readXLSX("sales.xlsx")\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
+      '// Chain with DataFrame operations\nconst result = await readXLSX("sales.xlsx", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
     related: ["writeXLSX", "readCSV", "readXLSXMetadata"],
     bestPractices: [
       "✓ GOOD: Use readXLSXMetadata() first to inspect sheets and preview structure",
       "✓ GOOD: Use skip option if first row is a title/note rather than column headers",
       "✓ GOOD: Provide a Zod schema for type safety and automatic type conversion",
+      "✓ GOOD: Use no_types: true when schema is unknown or dynamic",
       "✓ GOOD: Chain DataFrame operations immediately after reading",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using no_types when you know the schema - you lose type safety",
     ],
   },
 
