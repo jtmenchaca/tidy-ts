@@ -3,10 +3,6 @@ import type { DataFrame } from "../dataframe/index.ts";
 import type { GraphOptions } from "./graph.ts";
 import { graphReact } from "./graph.ts";
 
-// Core render deps (work server-side)
-import * as vegaLite from "vega-lite";
-import * as vega from "vega";
-
 // File system for cross-runtime compatibility
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -74,6 +70,11 @@ export async function vlToSVG(
   vlSpec: any,
   opts?: { width?: number; height?: number },
 ): Promise<string> {
+  // Dynamic imports to avoid webpack trying to resolve Node.js-only dependencies (canvas)
+  // when bundling for browser environments
+  const vegaLite = await import("vega-lite");
+  const vega = await import("vega");
+
   const vg = vegaLite.compile(vlSpec).spec;
 
   // Override Vega dimensions if specified

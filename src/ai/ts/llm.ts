@@ -130,7 +130,7 @@ export type EmbeddingModel =
  *
  * @example
  * ```ts
- * import { LLM } from "@tidy-ts/dataframe";
+ * import { LLM } from "@tidy-ts/ai";
  *
  * // Single text - returns number[]
  * const embedding = await LLM.embed("Hello world");
@@ -208,7 +208,7 @@ export async function getEmbeddings(
  *
  * @example
  * ```ts
- * import { LLM } from "@tidy-ts/dataframe";
+ * import { LLM } from "@tidy-ts/ai";
  * import { z } from "zod";
  *
  * // Simple string response (no schema)
@@ -343,7 +343,7 @@ async function respond<T extends z.ZodObject>({
  *
  * @example
  * ```ts
- * import { LLM } from "@tidy-ts/dataframe";
+ * import { LLM } from "@tidy-ts/ai";
  *
  * // Get embeddings for query and candidates
  * const query = await LLM.embed("The cat sits on the mat");

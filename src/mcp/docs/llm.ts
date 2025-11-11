@@ -9,7 +9,7 @@ export const llmDocs: Record<string, DocEntry> = {
       'LLM.embed(input: string | string[], model?: "text-embedding-3-small" | "text-embedding-3-large" | "text-embedding-ada-002"): Promise<number[] | number[][]>',
     description:
       "Get vector embeddings for text using OpenAI's embeddings API. Single string returns number[], array returns number[][]. Default model is text-embedding-3-large (3072 dimensions).",
-    imports: ['import { LLM } from "@tidy-ts/dataframe";'],
+    imports: ['import { LLM } from "@tidy-ts/ai";'],
     parameters: [
       "input: Text string or array of text strings to embed",
       'model: Embedding model (default: "text-embedding-3-large")',
@@ -43,7 +43,7 @@ export const llmDocs: Record<string, DocEntry> = {
     description:
       "Get structured responses from language models with Zod schema validation. Returns string without schema, typed object with schema. Automatically converts z.date() fields.",
     imports: [
-      'import { LLM } from "@tidy-ts/dataframe"',
+      'import { LLM } from "@tidy-ts/ai"',
       'import { z } from "zod"',
     ],
     parameters: [
@@ -77,7 +77,7 @@ export const llmDocs: Record<string, DocEntry> = {
       "LLM.compareEmbeddings({ query, candidates, n? }): Array<{ index: number; embedding: number[]; distance: number }>",
     description:
       "Compare one embedding against an array of embeddings and return them ordered by similarity. Uses Euclidean distance (smaller = more similar).",
-    imports: ['import { LLM } from "@tidy-ts/dataframe";'],
+    imports: ['import { LLM } from "@tidy-ts/ai";'],
     parameters: [
       "query: The query embedding to compare against",
       "candidates: Array of candidate embeddings to compare with",

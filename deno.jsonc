@@ -37,6 +37,9 @@
     "test-gee": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/gee/",
     "test-runtimes": "cd tests/runtimes && bash test-runner.sh",
     "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib",
+    "publish:dataframe": "cd src/dataframe && deno publish",
+    "publish:ai": "cd src/ai && deno publish",
+    "publish:all": "deno task publish:dataframe && deno task publish:ai",
     "docs:prerender": "cd docs && bun run prerender && cd ..",
     "joss:local-render": "devkit md2pdf joss/paper.md",
     "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
@@ -79,6 +82,7 @@
     "tmp/"
   ],
   "workspace": [
-    "src/dataframe"
+    "src/dataframe",
+    "src/ai"
   ]
 }

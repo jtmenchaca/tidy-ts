@@ -17,21 +17,6 @@ import {
   residuals_twoSample,
   smallSample2,
 } from "../helpers.ts";
-import { LLM } from "../../../../utilities/LLM/LLM.ts";
-
-/**
- * Extended Two Sample T Test Result with optional AI interpretation
- */
-type TwoSampleTTestResultWithInterpretation = TwoSampleTTestResult & {
-  ai_interpretation?: string;
-};
-
-/**
- * Extended Mann-Whitney Test Result with optional AI interpretation
- */
-type MannWhitneyTestResultWithInterpretation = MannWhitneyTestResult & {
-  ai_interpretation?: string;
-};
 
 /**
  * Compare the central tendencies of two independent groups.
@@ -53,19 +38,17 @@ type MannWhitneyTestResultWithInterpretation = MannWhitneyTestResult & {
  * @param assumeEqualVariances - Assume equal variances for t-test (optional: if not provided, uses Brown-Forsythe Levene test to auto-detect)
  * @param comparator - Direction of the test ("not equal to", "less than", "greater than"), where "greater than" means x > y
  * @param alpha - Significance level (default: 0.05)
- * @param interpret - If true, adds AI-generated interpretation to the results
- * @returns Test results with statistic, p-value, and effect size (optionally with AI interpretation)
+ * @returns Test results with statistic, p-value, and effect size
  */
 
-// Overload: parametric with interpret
-export async function centralTendencyToEachOther({
+// Overload: parametric
+export function centralTendencyToEachOther({
   x,
   y,
   parametric,
   assumeEqualVariances,
   comparator,
   alpha,
-  interpret,
 }: {
   x: readonly number[];
   y: readonly number[];
@@ -73,37 +56,16 @@ export async function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-  interpret: true;
-}): Promise<TwoSampleTTestResultWithInterpretation>;
+}): TwoSampleTTestResult;
 
-// Overload: parametric without interpret
-export async function centralTendencyToEachOther({
+// Overload: nonparametric
+export function centralTendencyToEachOther({
   x,
   y,
   parametric,
   assumeEqualVariances,
   comparator,
   alpha,
-  interpret,
-}: {
-  x: readonly number[];
-  y: readonly number[];
-  parametric: "parametric";
-  assumeEqualVariances?: boolean;
-  comparator?: "not equal to" | "less than" | "greater than";
-  alpha?: number;
-  interpret?: false;
-}): Promise<TwoSampleTTestResult>;
-
-// Overload: nonparametric with interpret
-export async function centralTendencyToEachOther({
-  x,
-  y,
-  parametric,
-  assumeEqualVariances,
-  comparator,
-  alpha,
-  interpret,
 }: {
   x: readonly number[];
   y: readonly number[];
@@ -111,37 +73,16 @@ export async function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-  interpret: true;
-}): Promise<MannWhitneyTestResultWithInterpretation>;
+}): MannWhitneyTestResult;
 
-// Overload: nonparametric without interpret
-export async function centralTendencyToEachOther({
+// Overload: auto
+export function centralTendencyToEachOther({
   x,
   y,
   parametric,
   assumeEqualVariances,
   comparator,
   alpha,
-  interpret,
-}: {
-  x: readonly number[];
-  y: readonly number[];
-  parametric: "nonparametric";
-  assumeEqualVariances?: boolean;
-  comparator?: "not equal to" | "less than" | "greater than";
-  alpha?: number;
-  interpret?: false;
-}): Promise<MannWhitneyTestResult>;
-
-// Overload: auto with interpret (returns Promise)
-export async function centralTendencyToEachOther({
-  x,
-  y,
-  parametric,
-  assumeEqualVariances,
-  comparator,
-  alpha,
-  interpret,
 }: {
   x: readonly number[];
   y: readonly number[];
@@ -149,39 +90,15 @@ export async function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-  interpret: true;
-}): Promise<
-  | TwoSampleTTestResultWithInterpretation
-  | MannWhitneyTestResultWithInterpretation
->;
+}): TwoSampleTTestResult | MannWhitneyTestResult;
 
-// Overload: auto without interpret
-export async function centralTendencyToEachOther({
-  x,
-  y,
-  parametric,
-  assumeEqualVariances,
-  comparator,
-  alpha,
-  interpret,
-}: {
-  x: readonly number[];
-  y: readonly number[];
-  parametric?: "parametric" | "nonparametric" | "auto";
-  assumeEqualVariances?: boolean;
-  comparator?: "not equal to" | "less than" | "greater than";
-  alpha?: number;
-  interpret?: false;
-}): Promise<TwoSampleTTestResult | MannWhitneyTestResult>;
-
-export async function centralTendencyToEachOther({
+export function centralTendencyToEachOther({
   x,
   y,
   parametric = "auto",
   assumeEqualVariances,
   comparator = "not equal to",
   alpha = 0.05,
-  interpret = false,
 }: {
   x:
     | readonly number[]
@@ -197,13 +114,7 @@ export async function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-  interpret?: boolean;
-}): Promise<
-  | TwoSampleTTestResult
-  | MannWhitneyTestResult
-  | TwoSampleTTestResultWithInterpretation
-  | MannWhitneyTestResultWithInterpretation
-> {
+}): TwoSampleTTestResult | MannWhitneyTestResult {
   // Convert data to regular arrays and filter out null/undefined/infinite values
   const cleanX = cleanNumeric(x);
   const cleanY = cleanNumeric(y);
@@ -267,90 +178,6 @@ export async function centralTendencyToEachOther({
       alternative,
       alpha,
     });
-  }
-
-  // If interpretation is requested, add AI-generated interpretation
-  if (interpret) {
-    const llm_input = await LLM.respond({
-      instructions: `
-        You are a helpful assistant that analyzes statistical tests and provides detailed explanations for novices. 
-        
-        When explaining test statistics, explain not just what they represent but also what the magnitude means:
-        - Put the observed value in context by comparing it to typical values or thresholds for that specific test
-        - Explain whether the value suggests a small, moderate, or large effect size using standard descriptive categories
-        - Reference appropriate benchmarks for the specific statistic (don't use generic thresholds)
-        - Use phrases like "for these sample sizes" or "given the degrees of freedom" to contextualize magnitude
-        - Avoid subjective value judgments like "meaningful" - use descriptive categorical language instead (small, medium, large)
-        
-        Also explain:
-        - Why the chosen test was appropriate for these data
-        - What assumptions underlie the test (e.g., the test ASSUMES groups are independent, ASSUMES normality, ASSUMES equal variances) - use language like "the test assumes..." not "the groups are independent because..."
-        - How these choices affect the interpretation
-        
-        Tone and language:
-        - Use neutral, descriptive language (e.g., "large effect" not "meaningful effect" or "important effect")
-        - Avoid subjective value judgments - stick to statistical descriptions
-
-        If using a term that could be considered jargon, use the term as appropriate but include a definition of the term in your response.
-
-        Structure your response into sections that align with the relevant sections of the test configuration and test results.
-        
-        Structure your response in text, not markdown. You only need to include the interpretation in your response. Do not say anything like "Certainly!" or another greeting. Do not offer further follow up questions. This is a one-time response and not a conversation.
-      `,
-      userInput: `
-        INPUT PARAMETERS (user specifications):
-        - Test type requested: ${parametric === "auto" ? "auto" : parametric}
-        ${
-        assumeEqualVariances !== undefined
-          ? `- Variance assumption specified: ${
-            assumeEqualVariances ? "equal variances" : "unequal variances"
-          }`
-          : "- Variance assumption: not specified (auto-determined)"
-      }
-        - Alternative hypothesis: ${comparator}
-        - Significance level: ${alpha}
-        
-        DATA:
-        Group x (n=${cleanX.length}): ${cleanX.slice(0, 10).join(", ")}${
-        cleanX.length > 10 ? "..." : ""
-      }
-        Group y (n=${cleanY.length}): ${cleanY.slice(0, 10).join(", ")}${
-        cleanY.length > 10 ? "..." : ""
-      }
-        
-        TEST DECISIONS:
-        - Test actually performed: ${
-        useParametric ? "Independent samples t-test" : "Mann-Whitney U test"
-      }
-        ${
-        useParametric
-          ? `- Variance handling: ${
-            equalVar
-              ? "equal variances (pooled t-test)"
-              : "unequal variances (Welch's t-test)"
-          }`
-          : ""
-      }
-        
-        TEST RESULTS:
-        ${JSON.stringify(testResult, null, 2)}
-        
-        Please analyze the results. Start by explaining what test was performed and why. Then explain what the results mean, including the assumptions of the test.
-      `,
-    });
-
-    // Add interpretation to the result
-    if (useParametric) {
-      return {
-        ...testResult,
-        ai_interpretation: llm_input,
-      } as TwoSampleTTestResultWithInterpretation;
-    } else {
-      return {
-        ...testResult,
-        ai_interpretation: llm_input,
-      } as MannWhitneyTestResultWithInterpretation;
-    }
   }
 
   return testResult;

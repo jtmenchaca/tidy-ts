@@ -21,8 +21,12 @@ const isBrowser = typeof window !== "undefined" &&
 const isDeno = typeof Deno !== "undefined";
 
 // For Deno: pre-load WASM at module initialization using top-level await
+// Note: Dynamic import with expression is intentional for Deno WASM loading.
+// Webpack will warn about this, but it's harmless as this code only runs in Deno.
 if (isDeno && !isBrowser) {
   const wasmUrl = new URL("../../lib/tidy_ts_dataframe.wasm", import.meta.url);
+  // webpackIgnore: true - This dynamic import is Deno-specific and won't execute in browser bundles
+  // @ts-ignore - Dynamic import with expression is intentional
   const wasmExports = await import(wasmUrl.href);
 
   // Deno 2.1+ returns the instantiated WASM exports directly

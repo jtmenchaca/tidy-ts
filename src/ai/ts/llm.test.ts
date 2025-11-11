@@ -1,4 +1,5 @@
-import { createDataFrame, LLM } from "@tidy-ts/dataframe";
+import { createDataFrame } from "@tidy-ts/dataframe";
+import { LLM } from "@tidy-ts/ai";
 import { expect } from "@std/expect";
 import { z } from "zod";
 
