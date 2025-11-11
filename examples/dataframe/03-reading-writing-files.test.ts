@@ -64,19 +64,29 @@ Deno.test("File I/O - Write CSV", async () => {
     { id: 3, name: "Charlie", score: 78 },
   ]);
 
-  await writeCSV(data, "examples/fixtures/test-output.csv");
+  const testFile = "./tmp/test-output.csv";
 
-  const readBack = await readCSV(
-    "examples/fixtures/test-output.csv",
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      score: z.number(),
-    }),
-  );
+  try {
+    await writeCSV(data, testFile);
 
-  expect(readBack.nrows()).toBe(3);
-  expect(readBack[0].name).toBe("Alice");
+    const readBack = await readCSV(
+      testFile,
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        score: z.number(),
+      }),
+    );
+
+    expect(readBack.nrows()).toBe(3);
+    expect(readBack[0].name).toBe("Alice");
+  } finally {
+    try {
+      await Deno.remove(testFile);
+    } catch {
+      // Ignore if file doesn't exist
+    }
+  }
 });
 
 Deno.test("File I/O - Write XLSX", async () => {
@@ -86,19 +96,29 @@ Deno.test("File I/O - Write XLSX", async () => {
     { id: 3, name: "Charlie", score: 78 },
   ]);
 
-  await writeXLSX(data, "examples/fixtures/test-output.xlsx");
+  const testFile = "./tmp/test-output.xlsx";
 
-  const readBack = await readXLSX(
-    "examples/fixtures/test-output.xlsx",
-    z.object({
-      id: z.number(),
-      name: z.string(),
-      score: z.number(),
-    }),
-  );
+  try {
+    await writeXLSX(data, testFile);
 
-  expect(readBack.nrows()).toBe(3);
-  expect(readBack[0].name).toBe("Alice");
+    const readBack = await readXLSX(
+      testFile,
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        score: z.number(),
+      }),
+    );
+
+    expect(readBack.nrows()).toBe(3);
+    expect(readBack[0].name).toBe("Alice");
+  } finally {
+    try {
+      await Deno.remove(testFile);
+    } catch {
+      // Ignore if file doesn't exist
+    }
+  }
 });
 
 Deno.test("File I/O - CSV with String Data", async () => {
