@@ -291,13 +291,125 @@ function isFilePath(input: string): boolean {
 // https://source.chromium.org/chromium/chromium/src/+/main:v8/src/objects/string.h
 const MAX_V8_STRING_LENGTH = 0x1fffffe8; // 536,870,888 characters
 
+// Overload: with no_types: true, schema optional, returns DataFrame<any>
+export async function readCSV(
+  pathOrContent: string,
+  opts: CsvOptions & NAOpts & { no_types: true },
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<any>>;
+
+// Overload: with no_types: true and schema, returns DataFrame<any>
 // deno-lint-ignore no-explicit-any
 export async function readCSV<S extends z.ZodObject<any>>(
   pathOrContent: string,
   schema: S,
-  opts: CsvOptions & NAOpts = {},
-): Promise<DataFrame<z.infer<S>>> {
-  let rawCsv: string;
+  opts: CsvOptions & NAOpts & { no_types: true },
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<any>>;
+
+// Overload: default returns typed DataFrame
+// deno-lint-ignore no-explicit-any
+export async function readCSV<S extends z.ZodObject<any>>(
+  pathOrContent: string,
+  schema: S,
+  opts?: CsvOptions & NAOpts,
+): Promise<DataFrame<z.infer<S>>>;
+
+// Implementation
+// deno-lint-ignore no-explicit-any
+export async function readCSV<S extends z.ZodObject<any>>(
+  pathOrContent: string,
+  schemaOrOpts?: S | CsvOptions & NAOpts,
+  opts?: CsvOptions & NAOpts,
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
+  let rawCsv: string | undefined;
+
+  // Determine if second param is schema or options
+  const isSchema = schemaOrOpts &&
+    typeof schemaOrOpts === "object" &&
+    !("no_types" in schemaOrOpts) &&
+    !("naValues" in schemaOrOpts) &&
+    !("trim" in schemaOrOpts) &&
+    !("delimiter" in schemaOrOpts) &&
+    !("skipEmptyLines" in schemaOrOpts) &&
+    schemaOrOpts instanceof z.ZodObject;
+
+  const schema = isSchema ? schemaOrOpts as S : undefined;
+  const actualOpts = isSchema
+    ? (opts || {})
+    : ((schemaOrOpts as CsvOptions & NAOpts) || {});
+  const noTypes = actualOpts.no_types === true;
+
+  // If no schema provided but no_types is true, parse without validation
+  if (!schema && noTypes) {
+    // Need to read file first
+    if (isFilePath(pathOrContent)) {
+      try {
+        const stats = await fs.stat(pathOrContent);
+        if (stats.size > MAX_V8_STRING_LENGTH) {
+          throw new Error("Schema is required for streaming CSV files");
+        }
+        rawCsv = await fs.readFile(pathOrContent, "utf8");
+      } catch (error) {
+        throw new Error(
+          `Failed to read CSV file '${pathOrContent}': ${
+            (error as Error).message
+          }`,
+        );
+      }
+    } else {
+      rawCsv = pathOrContent;
+    }
+
+    // Parse CSV without schema validation
+    const { parseCSV } = await import("./csv-parser.ts");
+    const csvOptions: CsvOptions = {
+      skipEmptyLines: true,
+      ...actualOpts,
+    };
+    const parsedRows = parseCSV(rawCsv, csvOptions);
+
+    if (parsedRows.length === 0) {
+      return createDataFrame([], { no_types: true });
+    }
+
+    const rawHeaders = parsedRows[0];
+    const headers = rawHeaders.map((h) => String(h).trim()).filter((h) =>
+      h !== ""
+    );
+
+    // If only headers (no data rows), create empty DataFrame with column structure
+    if (parsedRows.length === 1) {
+      const emptyRow: Record<string, unknown> = {};
+      for (const header of headers) {
+        emptyRow[header] = "";
+      }
+      return createDataFrame([emptyRow], { no_types: true }).filter(() =>
+        false
+      );
+    }
+
+    const rows: Record<string, unknown>[] = [];
+
+    for (let i = 1; i < parsedRows.length; i++) {
+      const row: Record<string, unknown> = {};
+      // Map each header to its corresponding column value
+      for (let j = 0; j < rawHeaders.length; j++) {
+        const header = String(rawHeaders[j]).trim();
+        if (header !== "") {
+          row[header] = parsedRows[i][j] ?? "";
+        }
+      }
+      rows.push(row);
+    }
+
+    return createDataFrame(rows, { no_types: true });
+  }
+
+  if (!schema) {
+    throw new Error("Schema is required when no_types is not set");
+  }
 
   if (isFilePath(pathOrContent)) {
     // It's a file path - check size before reading
@@ -308,7 +420,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
       if (stats.size > MAX_V8_STRING_LENGTH) {
         // Dynamically import to avoid circular dependencies
         const { readCSVStream } = await import("./read_csv_stream.ts");
-        return readCSVStream(pathOrContent, schema, opts);
+        return readCSVStream(pathOrContent, schema, actualOpts);
       }
 
       rawCsv = await fs.readFile(pathOrContent, "utf8");
@@ -327,10 +439,13 @@ export async function readCSV<S extends z.ZodObject<any>>(
   // Parse the CSV content with skipEmptyLines enabled by default to handle trailing newlines
   const csvOptions: CsvOptions & NAOpts = {
     skipEmptyLines: true,
-    ...opts,
+    ...actualOpts,
   };
   const rows = parseCSVContent(rawCsv, schema, csvOptions);
 
+  if (noTypes) {
+    return createDataFrame(rows, { schema, no_types: true });
+  }
   return createDataFrame(rows, schema);
 }
 

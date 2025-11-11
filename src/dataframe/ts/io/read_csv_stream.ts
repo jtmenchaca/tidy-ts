@@ -220,12 +220,31 @@ function autoWrapSchema<T extends z.ZodObject<any>>(schema: T): T {
  * const df = await readCSVStream("./large-file.csv", schema);
  * ```
  */
+// Overload: with no_types: true, schema required for streaming, returns DataFrame<any>
+// deno-lint-ignore no-explicit-any
+export async function readCSVStream<S extends z.ZodObject<any>>(
+  path: string,
+  schema: S,
+  opts: CSVOptions & NAOpts & { no_types: true },
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<any>>;
+
+// Overload: default returns typed DataFrame
+// deno-lint-ignore no-explicit-any
+export async function readCSVStream<S extends z.ZodObject<any>>(
+  path: string,
+  schema: S,
+  opts?: CSVOptions & NAOpts,
+): Promise<DataFrame<z.infer<S>>>;
+
+// Implementation
 // deno-lint-ignore no-explicit-any
 export async function readCSVStream<S extends z.ZodObject<any>>(
   path: string,
   schema: S,
   opts: CSVOptions & NAOpts = {},
-): Promise<DataFrame<z.infer<S>>> {
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
   // Check file size and estimate memory requirements by sampling actual rows
   const stats = await fs.promises.stat(path);
   const fileSizeBytes = stats.size;
@@ -392,5 +411,9 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
     }
   }
 
+  const noTypes = opts.no_types === true;
+  if (noTypes) {
+    return createDataFrame(rows, { schema, no_types: true });
+  }
   return createDataFrame(rows, schema);
 }

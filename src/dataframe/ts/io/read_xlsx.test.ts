@@ -216,3 +216,129 @@ Deno.test("readXLSX - error on missing columns", async () => {
     expect((error as Error).message).toContain("missing_column");
   }
 });
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  no_types option tests                                                     │
+└───────────────────────────────────────────────────────────────────────────*/
+Deno.test("readXLSX - no_types without schema", async () => {
+  const df = await readXLSX(
+    "src/dataframe/ts/io/fixtures/single-row.xlsx",
+    { no_types: true },
+  );
+
+  expect(df.nrows()).toBe(1);
+  expect(df.ncols()).toBe(3);
+  expect(df.columns()).toEqual(["name", "age", "city"]);
+
+  const rows = df.toArray();
+  expect(rows[0].name).toBe("Alice");
+  expect(rows[0].age).toBe(30);
+  expect(rows[0].city).toBe("Seattle");
+
+  // Test DataFrame operations work
+  const filtered = df.filter((row) => row.age > 25);
+  expect(filtered.nrows()).toBe(1);
+
+  const mutated = df.mutate({ doubleAge: (row) => row.age * 2 });
+  expect(mutated.nrows()).toBe(1);
+  expect(mutated.toArray()[0].doubleAge).toBe(60);
+});
+
+Deno.test("readXLSX - no_types with schema validation", async () => {
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+    city: z.string(),
+  });
+
+  const df = await readXLSX(
+    "src/dataframe/ts/io/fixtures/single-row.xlsx",
+    schema,
+    { no_types: true },
+  );
+
+  expect(df.nrows()).toBe(1);
+  expect(df.ncols()).toBe(3);
+
+  const rows = df.toArray();
+  // Schema validation still happens, but returns DataFrame<any>
+  expect(rows[0].name).toBe("Alice");
+  expect(rows[0].age).toBe(30);
+  expect(rows[0].city).toBe("Seattle");
+
+  // Test DataFrame operations work
+  const grouped = df.groupBy("city");
+  const summarized = grouped.summarize({
+    count: (g) => g.nrows(),
+    avgAge: (g) => {
+      const ages = g.toArray().map((r) => r.age);
+      return ages.reduce((a, b) => a + b, 0) / ages.length;
+    },
+  });
+  expect(summarized.nrows()).toBe(1);
+  expect(summarized.toArray()[0].avgAge).toBe(30);
+});
+
+Deno.test("readXLSX - no_types with mixed types", async () => {
+  const df = await readXLSX(
+    "src/dataframe/ts/io/fixtures/mixed-types.xlsx",
+    { no_types: true },
+  );
+
+  expect(df.nrows()).toBe(3);
+  expect(df.ncols()).toBe(5);
+
+  const rows = df.toArray();
+  expect(rows[0].name).toBe("Alice");
+  expect(typeof rows[0].age).toBe("number");
+  expect(typeof rows[0].score).toBe("number");
+  expect(typeof rows[0].active).toBe("boolean");
+
+  // Test chaining operations
+  const result = df
+    .filter((row) => row.active)
+    .mutate({ scorePlus10: (row) => row.score + 10 })
+    .select("name", "scorePlus10")
+    .arrange("scorePlus10", "desc");
+
+  expect(result.nrows()).toBeGreaterThan(0);
+  expect(result.ncols()).toBe(2);
+});
+
+Deno.test("readXLSX - no_types with empty file", async () => {
+  // Create an empty XLSX file for testing
+  const { writeXLSX } = await import("./write_xlsx.ts");
+  const { createDataFrame } = await import("../dataframe/index.ts");
+
+  const emptyDf = createDataFrame([]);
+  const tempFile = "./tmp/test-empty.xlsx";
+  await writeXLSX(emptyDf, tempFile);
+
+  try {
+    const df = await readXLSX(tempFile, { no_types: true });
+
+    expect(df.nrows()).toBe(0);
+    expect(df.ncols()).toBe(0);
+    expect(df.isEmpty()).toBe(true);
+  } finally {
+    try {
+      await Deno.remove(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+});
+
+Deno.test("readXLSX - no_types with sheet selection", async () => {
+  const df = await readXLSX(
+    "src/dataframe/ts/io/fixtures/penguins.xlsx",
+    { no_types: true, sheet: 0 },
+  );
+
+  expect(df.nrows()).toBeGreaterThan(0);
+  expect(df.ncols()).toBeGreaterThan(0);
+
+  // Test operations work
+  const distinct = df.distinct("species");
+  expect(distinct.nrows()).toBeGreaterThan(0);
+});

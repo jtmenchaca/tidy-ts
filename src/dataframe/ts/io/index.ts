@@ -79,12 +79,26 @@ import type { ParquetOptions } from "./read_parquet.ts";
  *   trim: true
  * });
  */
-// deno-lint-ignore no-explicit-any
-type ReadCsvFunction = <S extends z.ZodObject<any>>(
-  pathOrContent: string,
-  schema: S,
-  opts?: CsvOptions & NAOpts,
-) => Promise<DataFrame<z.infer<S>>>;
+type ReadCsvFunction = {
+  (
+    pathOrContent: string,
+    opts: CsvOptions & NAOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrContent: string,
+    schema: S,
+    opts: CsvOptions & NAOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrContent: string,
+    schema: S,
+    opts?: CsvOptions & NAOpts,
+  ): Promise<DataFrame<z.infer<S>>>;
+};
 
 /**
  * Read an Arrow file or buffer with Zod schema validation and type inference.
@@ -387,7 +401,8 @@ export const readCSV: ReadCsvFunction = (() => {
       pathOrContent: string,
       schema: S,
       opts?: CsvOptions & NAOpts,
-    ): Promise<DataFrame<z.infer<S>>> => {
+      // deno-lint-ignore no-explicit-any
+    ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
       const { readCSV } = await import("./read_csv.ts");
       return readCSV(pathOrContent, schema, opts);
     };
@@ -619,12 +634,26 @@ interface ReadXLSXOpts extends NAOpts {
   skip?: number;
 }
 
-// deno-lint-ignore no-explicit-any
-type ReadXLSXFunction = <S extends z.ZodObject<any>>(
-  path: string,
-  schema: S,
-  opts?: ReadXLSXOpts,
-) => Promise<DataFrame<z.infer<S>>>;
+type ReadXLSXFunction = {
+  (
+    path: string,
+    opts: ReadXLSXOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    path: string,
+    schema: S,
+    opts: ReadXLSXOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    path: string,
+    schema: S,
+    opts?: ReadXLSXOpts,
+  ): Promise<DataFrame<z.infer<S>>>;
+};
 
 /**
  * Read an XLSX file with Zod schema validation and type inference.
@@ -680,7 +709,8 @@ export const readXLSX: ReadXLSXFunction = (() => {
       path: string,
       schema: S,
       opts?: ReadXLSXOpts,
-    ): Promise<DataFrame<z.infer<S>>> => {
+      // deno-lint-ignore no-explicit-any
+    ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
       const { readXLSX } = await import("./read_xlsx.ts");
       return readXLSX(path, schema, opts);
     };

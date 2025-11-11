@@ -566,17 +566,114 @@ interface ReadXLSXOpts extends NAOpts {
  * const df3 = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  * ```
  */
+// Overload: with no_types: true, schema optional, returns DataFrame<any>
+export async function readXLSX(
+  path: string,
+  opts: ReadXLSXOpts & { no_types: true },
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<any>>;
+
+// Overload: with no_types: true and schema, returns DataFrame<any>
 // deno-lint-ignore no-explicit-any
 export async function readXLSX<S extends z.ZodObject<any>>(
   path: string,
   schema: S,
-  opts: ReadXLSXOpts = {},
-): Promise<DataFrame<z.infer<S>>> {
+  opts: ReadXLSXOpts & { no_types: true },
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<any>>;
+
+// Overload: default returns typed DataFrame
+// deno-lint-ignore no-explicit-any
+export async function readXLSX<S extends z.ZodObject<any>>(
+  path: string,
+  schema: S,
+  opts?: ReadXLSXOpts,
+): Promise<DataFrame<z.infer<S>>>;
+
+// Implementation
+// deno-lint-ignore no-explicit-any
+export async function readXLSX<S extends z.ZodObject<any>>(
+  path: string,
+  schemaOrOpts?: S | ReadXLSXOpts,
+  opts?: ReadXLSXOpts,
+  // deno-lint-ignore no-explicit-any
+): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
+  // Determine if second param is schema or options
+  const isSchema = schemaOrOpts &&
+    typeof schemaOrOpts === "object" &&
+    !("no_types" in schemaOrOpts) &&
+    !("naValues" in schemaOrOpts) &&
+    !("trim" in schemaOrOpts) &&
+    !("sheet" in schemaOrOpts) &&
+    !("skip" in schemaOrOpts) &&
+    schemaOrOpts instanceof z.ZodObject;
+
+  const schema = isSchema ? schemaOrOpts as S : undefined;
+  const actualOpts = isSchema
+    ? (opts || {})
+    : ((schemaOrOpts as ReadXLSXOpts) || {});
+  const noTypes = actualOpts.no_types === true;
+
   const rawRows = await parseXLSXRaw(path, {
-    sheet: opts.sheet,
-    skip: opts.skip,
+    sheet: actualOpts.sheet,
+    skip: actualOpts.skip,
   });
-  const rows = parseXLSXContent(rawRows, schema, opts);
+
+  // If no schema provided but no_types is true, parse without validation
+  if (!schema && noTypes) {
+    if (rawRows.length === 0) {
+      return createDataFrame([], { no_types: true });
+    }
+
+    const headers = rawRows[0].map((h) => String(h).trim());
+    const rows: Record<string, unknown>[] = [];
+
+    for (let i = 1; i < rawRows.length; i++) {
+      const row: Record<string, unknown> = {};
+      for (let j = 0; j < headers.length; j++) {
+        const cellValue = rawRows[i][j];
+        // Try to infer types from XLSX values (numbers, booleans, dates)
+        if (cellValue === "" || cellValue === undefined || cellValue === null) {
+          row[headers[j]] = "";
+        } else {
+          const trimmed = String(cellValue).trim();
+          const lowerHeader = headers[j].toLowerCase();
+          // Check for boolean column names
+          const isLikelyBoolean = lowerHeader.includes("active") ||
+            lowerHeader.includes("enabled") ||
+            lowerHeader.includes("flag") ||
+            lowerHeader.includes("is_") ||
+            lowerHeader.startsWith("is");
+
+          if (trimmed === "TRUE" || trimmed === "true") {
+            row[headers[j]] = true;
+          } else if (trimmed === "FALSE" || trimmed === "false") {
+            row[headers[j]] = false;
+          } else if (isLikelyBoolean && (trimmed === "1" || trimmed === "0")) {
+            // For likely boolean columns, treat 1/0 as booleans
+            row[headers[j]] = trimmed === "1";
+          } else {
+            // Try to parse as number
+            const num = Number(trimmed);
+            if (!isNaN(num) && isFinite(num) && trimmed !== "") {
+              row[headers[j]] = num;
+            } else {
+              row[headers[j]] = cellValue;
+            }
+          }
+        }
+      }
+      rows.push(row);
+    }
+
+    return createDataFrame(rows, { no_types: true });
+  }
+
+  if (!schema) {
+    throw new Error("Schema is required when no_types is not set");
+  }
+
+  const rows = parseXLSXContent(rawRows, schema, actualOpts);
 
   // Special case: if rows is empty but we have headers in the XLSX,
   // we need to create a DataFrame with the correct columns
@@ -584,7 +681,6 @@ export async function readXLSX<S extends z.ZodObject<any>>(
     // We have headers but no data rows
     // Create a single dummy row with the schema structure, then filter it out
     const dummyRow: Record<string, unknown> = {};
-    // const headersFromXlsx = rawRows[0].map((h) => h.trim());
     const wrappedSchema = autoWrapSchema(schema);
     const headersFromSchema = schemaHeaders(wrappedSchema.shape);
 
@@ -610,12 +706,22 @@ export async function readXLSX<S extends z.ZodObject<any>>(
     }
 
     // Create DataFrame with dummy row, then filter to empty
+    if (noTypes) {
+      // @ts-ignore - filter returns correct type but TypeScript can't infer it
+      return createDataFrame([dummyRow as z.infer<S>], {
+        schema,
+        no_types: true,
+      }).filter(() => false);
+    }
     // @ts-ignore - filter returns correct type but TypeScript can't infer it
     return createDataFrame([dummyRow as z.infer<S>], schema).filter(() =>
       false
     );
   }
 
+  if (noTypes) {
+    return createDataFrame(rows, { schema, no_types: true });
+  }
   return createDataFrame(rows, schema);
 }
 

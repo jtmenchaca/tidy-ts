@@ -247,3 +247,132 @@ Anakin Skywalker,Human,Tatooine,blue,Jedi Knight,9.8`;
     9.8,
   ]);
 });
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  8 · no_types option - without schema                                     │
+└───────────────────────────────────────────────────────────────────────────*/
+Deno.test("readCSV · no_types without schema", async () => {
+  const csvContent = `id,name,age,active
+1,Alice,30,true
+2,Bob,25,false
+3,Charlie,35,true`;
+
+  const df = await readCSV(csvContent, { no_types: true });
+
+  expect(df.nrows()).toBe(3);
+  expect(df.ncols()).toBe(4);
+  expect(df.columns()).toEqual(["id", "name", "age", "active"]);
+
+  const rows = df.toArray();
+  expect(rows[0].id).toBe("1"); // Without schema, values remain as strings
+  expect(rows[0].name).toBe("Alice");
+  expect(rows[0].age).toBe("30");
+  expect(rows[0].active).toBe("true");
+
+  // Test that DataFrame methods work
+  const filtered = df.filter((row) => row.age === "30");
+  expect(filtered.nrows()).toBe(1);
+
+  const mutated = df.mutate({ doubleAge: (row) => Number(row.age) * 2 });
+  expect(mutated.nrows()).toBe(3);
+  expect(mutated.toArray()[0].doubleAge).toBe(60);
+});
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  9 · no_types option - with schema                                        │
+└───────────────────────────────────────────────────────────────────────────*/
+Deno.test("readCSV · no_types with schema validation", async () => {
+  const Row = z.object({
+    id: z.number().int(),
+    name: z.string(),
+    age: z.number(),
+    active: z.boolean(),
+  });
+
+  const csvContent = `id,name,age,active
+1,Alice,30,true
+2,Bob,25,false
+3,Charlie,35,true`;
+
+  const df = await readCSV(csvContent, Row, {
+    no_types: true,
+  });
+
+  expect(df.nrows()).toBe(3);
+  expect(df.ncols()).toBe(4);
+
+  const rows = df.toArray();
+  // Schema validation still happens, but returns DataFrame<any>
+  expect(rows[0].id).toBe(1); // Validated and coerced by schema
+  expect(rows[0].name).toBe("Alice");
+  expect(rows[0].age).toBe(30);
+  expect(rows[0].active).toBe(true);
+
+  // Test DataFrame operations work
+  const filtered = df.filter((row) => row.age > 25);
+  expect(filtered.nrows()).toBe(2);
+
+  const grouped = df.groupBy("active");
+  const summarized = grouped.summarize({
+    avgAge: (g) => {
+      const ages = g.toArray().map((r) => r.age);
+      return ages.reduce((a, b) => a + b, 0) / ages.length;
+    },
+  });
+  expect(summarized.nrows()).toBe(2);
+});
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  10 · no_types option - empty CSV                                          │
+└───────────────────────────────────────────────────────────────────────────*/
+Deno.test("readCSV · no_types with empty CSV", async () => {
+  const csvContent = `id,name
+`;
+
+  const df = await readCSV(csvContent, { no_types: true });
+
+  expect(df.nrows()).toBe(0);
+  expect(df.ncols()).toBe(2);
+  expect(df.columns()).toEqual(["id", "name"]);
+  expect(df.isEmpty()).toBe(true);
+});
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  11 · no_types option - file reading                                       │
+└───────────────────────────────────────────────────────────────────────────*/
+Deno.test("readCSV · no_types with file path", async () => {
+  const testCsv = `id,name,score
+1,Alice,85
+2,Bob,92
+3,Charlie,78`;
+
+  const tempFile = "./tmp/test-no-types.csv";
+  await Deno.writeTextFile(tempFile, testCsv);
+
+  try {
+    const df = await readCSV(tempFile, { no_types: true });
+
+    expect(df.nrows()).toBe(3);
+    expect(df.ncols()).toBe(3);
+
+    const rows = df.toArray();
+    expect(rows[0].id).toBe("1");
+    expect(rows[0].name).toBe("Alice");
+    expect(rows[0].score).toBe("85");
+
+    // Test chaining operations
+    const result = df
+      .filter((row) => Number(row.score) > 80)
+      .mutate({ scoreNum: (row) => Number(row.score) })
+      .arrange("scoreNum", "desc");
+
+    expect(result.nrows()).toBe(2); // Only 2 rows have score > 80 (85 and 92, not 78)
+    expect(result.toArray()[0].scoreNum).toBe(92);
+  } finally {
+    try {
+      await Deno.remove(tempFile);
+    } catch {
+      // Ignore cleanup errors
+    }
+  }
+});
