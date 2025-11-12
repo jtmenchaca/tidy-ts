@@ -7,7 +7,6 @@ import { currentRuntime, Runtime } from "./detect.ts";
 
 // Lazy-loaded Node.js modules
 let _fs: typeof import("node:fs/promises") | null = null;
-let _fsSync: typeof import("node:fs") | null = null;
 let _path: typeof import("node:path") | null = null;
 let _process: typeof import("node:process") | null = null;
 let _fileURLToPath: typeof import("node:url").fileURLToPath | null = null;
@@ -18,7 +17,6 @@ let _fileURLToPath: typeof import("node:url").fileURLToPath | null = null;
 export async function ensureNodeModules(): Promise<void> {
   if (currentRuntime !== Runtime.Deno && !_fs) {
     _fs = await import("node:fs/promises");
-    _fsSync = await import("node:fs");
     _path = await import("node:path");
     _process = await import("node:process");
     const urlModule = await import("node:url");
@@ -36,14 +34,11 @@ if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
     if (typeof require !== "undefined") {
       // CommonJS or Node.js with require available
       // @ts-ignore - require may not be typed in all environments
-      const nodeFs = require("node:fs");
-      // @ts-ignore - require may not be typed in all environments
       const nodePath = require("node:path");
       // @ts-ignore - require may not be typed in all environments
       const nodeUrl = require("node:url");
       // @ts-ignore - require may not be typed in all environments
       const nodeProcess = require("node:process");
-      _fsSync = nodeFs;
       _path = nodePath;
       _fileURLToPath = nodeUrl.fileURLToPath;
       _process = nodeProcess;
@@ -87,13 +82,6 @@ export async function getFsPromises(): Promise<
     throw new Error("File system API not available");
   }
   return _fs;
-}
-
-/**
- * Get Node.js fs module (synchronous)
- */
-export function getFsSync(): typeof import("node:fs") | null {
-  return _fsSync;
 }
 
 /**

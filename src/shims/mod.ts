@@ -19,9 +19,6 @@ export { env } from "./env.ts";
 // Process management
 export { args, exit, getArgs, importMeta } from "./process.ts";
 
-// Deno compatibility shim
-export { Deno as DenoShim } from "./deno-shim.ts";
-
 // Cross-runtime testing framework
 export { test, type TestSubject, type WrappedTestOptions } from "./test.ts";
 

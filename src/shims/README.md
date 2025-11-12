@@ -131,19 +131,25 @@ if (importMeta.main) {
   console.log("Running as main script");
 }
 
+// Get current module URL
+const moduleUrl = importMeta.url;
+
 // Get current file path
 const currentFile = importMeta.getFilename();
 const currentDir = importMeta.getDirname();
+
+// Convert URL to file path
+const path = importMeta.urlToPath("file:///path/to/file.ts");
 ```
 
 ## Testing Framework
 
-The testing framework provides a unified API across runtimes:
+The testing framework provides a unified API across runtimes. The `test` function accepts either a simple async function or a test subject with context and done callback.
 
 ```typescript
 import { test } from "@tidy-ts/shims";
 
-// Simple async test
+// Simple async test (recommended)
 test("my test", async () => {
   const result = await someAsyncOperation();
   if (result !== expected) {
@@ -160,7 +166,7 @@ test(
   { timeout: 5000, skip: false }
 );
 
-// Test with callback pattern
+// Test with callback pattern (for callback-style async operations)
 test("callback test", (context, done) => {
   someAsyncOperation((err, result) => {
     if (err) {
@@ -170,6 +176,13 @@ test("callback test", (context, done) => {
     done();
   });
 }, { waitForCallback: true });
+
+// Test with runtime-specific context
+test("test with context", (context, done) => {
+  // context varies by runtime (Deno.TestContext, Node.js TestContext, etc.)
+  // Use done() to signal completion for callback-style tests
+  done();
+}, { waitForCallback: true });
 ```
 
 ### Test Options
@@ -178,21 +191,47 @@ test("callback test", (context, done) => {
 - `skip?: boolean` - Skip this test
 - `waitForCallback?: boolean` - Wait for done callback (for callback-style tests)
 
-## Deno Compatibility Shim
+### Test Function Signatures
 
-For code that needs Deno-specific APIs:
+The `test` function accepts two forms:
+
+1. **Simple async function**: `test(name: string, fn: () => void | Promise<void>, options?)`
+   - Use this for most tests - just throw an error to fail
+   
+2. **Test subject with context**: `test(name: string, fn: (context, done) => void | Promise<void>, options?)`
+   - Use this when you need runtime-specific test context or callback pattern
+   - Set `waitForCallback: true` in options to wait for `done()` callback
+
+## Error Types
+
+The package exports error types for better error handling:
 
 ```typescript
-import { DenoShim } from "@tidy-ts/shims";
+import { UnavailableAPIError, UnsupportedRuntimeError } from "@tidy-ts/shims";
 
-// Read directory synchronously
-for (const entry of DenoShim.readDirSync("./dir")) {
-  console.log(entry.name, entry.isFile, entry.isDirectory);
+try {
+  // Some operation that might fail
+} catch (error) {
+  if (error instanceof UnavailableAPIError) {
+    console.error(`API not available: ${error.message}`);
+  } else if (error instanceof UnsupportedRuntimeError) {
+    console.error(`Unsupported runtime: ${error.message}`);
+  }
 }
+```
 
-// Read file synchronously
-const data = DenoShim.readFileSync("./file.bin");
-const text = DenoShim.readTextFileSync("./file.txt");
+- `UnavailableAPIError` - Thrown when a required API is not available in the current runtime
+- `UnsupportedRuntimeError` - Thrown when the runtime is not supported
+
+## Compression Stream Polyfill
+
+The package automatically initializes polyfills for `CompressionStream` and `DecompressionStream` when imported. This ensures these Web Streams Compression APIs are available in Node.js and Bun environments that don't natively support them.
+
+```typescript
+import "@tidy-ts/shims"; // Automatically initializes compression polyfills
+
+// Now CompressionStream and DecompressionStream are available
+const stream = new CompressionStream("deflate");
 ```
 
 ## License
