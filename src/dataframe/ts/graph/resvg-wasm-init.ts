@@ -2,7 +2,13 @@
 // Following the pattern from @src/dataframe/ts/wasm/wasm-init.ts
 // deno-lint-ignore-file no-explicit-any
 
-import { dirname, fileURLToPath, readFileSync, resolve } from "@tidy-ts/shims";
+import {
+  dirname,
+  fileURLToPath,
+  pathToFileURL,
+  readFileSync,
+  resolve,
+} from "@tidy-ts/shims";
 
 // Lazy import the local resvg JS glue code (v2.6.3-alpha.0) to avoid top-level await
 let resvgGlue: any = null;
@@ -78,8 +84,8 @@ export async function initResvgWasm(): Promise<any> {
     "./resvg-wasm-2.6.3-alpha.0_bg.wasm",
   );
 
-  // Use the initWasm function with the file path
-  const wasmUrl = new URL(wasmPath, `file://${wasmPath}`);
+  // Convert file path to file URL (handles Windows paths correctly)
+  const wasmUrl = pathToFileURL(wasmPath);
 
   const initFunc = resvgGlue.initWasm;
   if (initFunc) {

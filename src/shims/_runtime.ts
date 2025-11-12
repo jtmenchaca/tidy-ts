@@ -7,7 +7,10 @@ import { currentRuntime, Runtime } from "./detect.ts";
 
 // Import node:path and node:url directly - all runtimes (Node.js, Bun, Deno) support these natively
 import * as _pathModule from "node:path";
-import { fileURLToPath as _fileURLToPathFn } from "node:url";
+import {
+  fileURLToPath as _fileURLToPathFn,
+  pathToFileURL as _pathToFileURLFn,
+} from "node:url";
 
 // Lazy-loaded Node.js modules
 let _fs: typeof import("node:fs/promises") | null = null;
@@ -18,6 +21,8 @@ let _process: typeof import("node:process") | null = null;
 const _path: typeof import("node:path") = _pathModule;
 const _fileURLToPath: typeof import("node:url").fileURLToPath =
   _fileURLToPathFn;
+const _pathToFileURL: typeof import("node:url").pathToFileURL =
+  _pathToFileURLFn;
 
 /**
  * Lazy load Node.js modules for async operations
@@ -112,6 +117,13 @@ export function getProcessModule(): typeof import("node:process") | null {
  */
 export function getFileURLToPath(): typeof import("node:url").fileURLToPath {
   return _fileURLToPath;
+}
+
+/**
+ * Get Node.js pathToFileURL function
+ */
+export function getPathToFileURL(): typeof import("node:url").pathToFileURL {
+  return _pathToFileURL;
 }
 
 /**

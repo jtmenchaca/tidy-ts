@@ -26,7 +26,7 @@ export {
 } from "./fs.ts";
 
 // Path utilities
-export { dirname, fileURLToPath, resolve } from "./path.ts";
+export { dirname, fileURLToPath, pathToFileURL, resolve } from "./path.ts";
 
 // Environment variables
 export { env } from "./env.ts";

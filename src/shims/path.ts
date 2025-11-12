@@ -3,7 +3,7 @@
  * Provides runtime-agnostic path operations that work with Deno, Bun, and Node.js
  */
 
-import { getPathModule } from "./_runtime.ts";
+import { getPathModule, getPathToFileURL } from "./_runtime.ts";
 import { importMeta } from "./process.ts";
 
 /**
@@ -56,4 +56,19 @@ export function resolve(...paths: string[]): string {
  */
 export function fileURLToPath(url: string): string {
   return importMeta.urlToPath(url);
+}
+
+/**
+ * Convert a file path to a file URL
+ *
+ * @param path - The file path to convert
+ * @returns The file URL
+ * @example
+ * ```ts
+ * import { pathToFileURL } from "@tidy-ts/shims";
+ * const url = pathToFileURL("/path/to/file.ts"); // "file:///path/to/file.ts"
+ * ```
+ */
+export function pathToFileURL(path: string): URL {
+  return getPathToFileURL()(path);
 }
