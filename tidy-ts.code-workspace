@@ -56,6 +56,7 @@
 		},
 		"typescript.tsdk": "node_modules/typescript/lib",
 		"deno.enable": true,
+		
 		"deno.codeLens.implementations": true,
 		"deno.codeLens.references": true,
 		"deno.codeLens.referencesAllFunctions": true,
@@ -64,3 +65,4 @@
 	}
 	
 }
+ 

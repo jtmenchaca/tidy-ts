@@ -2,6 +2,8 @@
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
+// Polyfill CompressionStream/DecompressionStream for environments without native support
+import "./compression-polyfill.ts";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -256,6 +258,38 @@ export async function parseXLSXRaw(
   return allRows;
 }
 
+/**
+ * Decompress deflate-compressed data using DecompressionStream (polyfilled if needed)
+ */
+async function decompressDeflate(
+  compData: Uint8Array,
+  uncompSize: number,
+): Promise<Uint8Array> {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error(
+      "DecompressionStream is not available. This requires a modern browser, Node.js 18+, Deno, or Bun (with zlib polyfill).",
+    );
+  }
+
+  const decompressed = new Uint8Array(uncompSize);
+  const stream = new DecompressionStream("deflate-raw");
+  const writer = stream.writable.getWriter();
+  // @ts-ignore - Uint8Array type mismatch
+  writer.write(compData);
+  writer.close();
+
+  const reader = stream.readable.getReader();
+  let position = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    decompressed.set(value, position);
+    position += value.length;
+  }
+
+  return decompressed;
+}
+
 async function extractFile(
   zipData: Uint8Array,
   filename: string,
@@ -312,21 +346,7 @@ async function extractFile(
         return new TextDecoder().decode(compData);
       } else if (compMethod === 8) {
         // Deflate compression
-        const decompressed = new Uint8Array(uncompSize);
-        const stream = new DecompressionStream("deflate-raw");
-        const writer = stream.writable.getWriter();
-        writer.write(compData);
-        writer.close();
-
-        const reader = stream.readable.getReader();
-        let position = 0;
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          decompressed.set(value, position);
-          position += value.length;
-        }
-
+        const decompressed = await decompressDeflate(compData, uncompSize);
         return new TextDecoder().decode(decompressed);
       }
     }

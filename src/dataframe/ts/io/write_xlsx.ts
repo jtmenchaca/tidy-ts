@@ -1,5 +1,7 @@
 // Zero-dependency XLSX writer for DataFrames
 import type { DataFrame } from "../dataframe/index.ts";
+// Polyfill CompressionStream/DecompressionStream for environments without native support
+import "./compression-polyfill.ts";
 
 interface WriteXLSXOpts {
   sheet?: string;
@@ -318,6 +320,12 @@ async function extractFileFromZip(
 }
 
 async function decompressDeflate(data: Uint8Array): Promise<Uint8Array> {
+  if (typeof DecompressionStream === "undefined") {
+    throw new Error(
+      "DecompressionStream is not available. This requires a modern browser, Node.js 18+, Deno, or Bun (with zlib polyfill).",
+    );
+  }
+
   const stream = new DecompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
   // @ts-ignore - Uint8Array type mismatch
@@ -693,6 +701,12 @@ async function createZip(files: ZipFiles): Promise<Uint8Array> {
 }
 
 async function compressDeflate(data: Uint8Array): Promise<Uint8Array> {
+  if (typeof CompressionStream === "undefined") {
+    throw new Error(
+      "CompressionStream is not available. This requires a modern browser, Node.js 18+, Deno, or Bun (with zlib polyfill).",
+    );
+  }
+
   const stream = new CompressionStream("deflate-raw");
   const writer = stream.writable.getWriter();
   // @ts-ignore - Uint8Array type mismatch between ArrayBufferLike and ArrayBuffer
