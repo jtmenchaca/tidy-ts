@@ -1,7 +1,9 @@
 // Zero-dependency XLSX writer for DataFrames
 import type { DataFrame } from "../dataframe/index.ts";
 // Polyfill CompressionStream/DecompressionStream for environments without native support
-import "./compression-polyfill.ts";
+// Import from shims package for cross-runtime compatibility
+// This ensures compression APIs are available before use
+import "@tidy-ts/shims";
 
 interface WriteXLSXOpts {
   sheet?: string;

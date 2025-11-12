@@ -3,7 +3,9 @@ import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
 // Polyfill CompressionStream/DecompressionStream for environments without native support
-import "./compression-polyfill.ts";
+// Import from shims package for cross-runtime compatibility
+// This ensures compression APIs are available before use
+import "@tidy-ts/shims";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │

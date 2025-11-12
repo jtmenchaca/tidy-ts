@@ -11,7 +11,8 @@
     "test:sh": "bash test-runner.sh"
   },
   "dependencies": {
-    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@1.0.28"
+    "@tidy-ts/dataframe": "npm:@jsr/tidy-ts__dataframe@1.0.28",
+    "@tidy-ts/shims": "file:../../src/shims"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

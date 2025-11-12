@@ -1,0 +1,33 @@
+{
+  "name": "@ungap/compression-stream",
+  "version": "0.2.0",
+  "main": "index.js",
+  "module": "index.js",
+  "type": "module",
+  "keywords": [
+    "Bun",
+    "CompressionStream",
+    "DecompressionStream"
+  ],
+  "author": "Andrea Giammarchi",
+  "license": "MIT",
+  "description": "A De/CompressionStream for Bun",
+  "exports": {
+    ".": "./index.js",
+    "./poly": "./polyfill.js"
+  },
+  "files": [
+    "index.js",
+    "polyfill.js",
+    "facade.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ungap/compression-stream.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ungap/compression-stream/issues"
+  },
+  "homepage": "https://github.com/ungap/compression-stream#readme"
+}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🧪 Testing @tidy-ts/dataframe across JavaScript runtimes..."
+echo "🧪 Testing @tidy-ts/dataframe and @tidy-ts/shims across JavaScript runtimes..."
 echo ""
 
 # Colors for output
@@ -10,9 +10,46 @@ BLUE='\033[0;34m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No Color
 
+# Test shims first
+echo -e "${BLUE}🔧 Testing @tidy-ts/shims...${NC}"
+
+# Test Node.js shims
+if command -v node &> /dev/null; then
+    echo -e "${YELLOW}  Testing shims with Node.js...${NC}"
+    if NODE_OPTIONS="--disable-warning=ExperimentalWarning" node --loader tsx shims-test.test.ts 2>&1 | grep -q "All shims tests passed"; then
+        echo -e "${GREEN}  ✅ Node.js shims test passed${NC}"
+    else
+        echo -e "${RED}  ❌ Node.js shims test failed${NC}"
+        NODE_OPTIONS="--disable-warning=ExperimentalWarning" node --loader tsx shims-test.test.ts 2>&1 | tail -5
+    fi
+fi
+
+# Test Bun shims
+if command -v bun &> /dev/null; then
+    echo -e "${YELLOW}  Testing shims with Bun...${NC}"
+    if bun shims-test.test.ts 2>&1 | grep -q "All shims tests passed"; then
+        echo -e "${GREEN}  ✅ Bun shims test passed${NC}"
+    else
+        echo -e "${RED}  ❌ Bun shims test failed${NC}"
+        bun shims-test.test.ts 2>&1 | tail -5
+    fi
+fi
+
+# Test Deno shims
+if command -v deno &> /dev/null; then
+    echo -e "${YELLOW}  Testing shims with Deno...${NC}"
+    if deno run --allow-read --allow-write --allow-env --allow-net --import-map ../../import_map.json shims-test.test.ts 2>&1 | grep -q "All shims tests passed"; then
+        echo -e "${GREEN}  ✅ Deno shims test passed${NC}"
+    else
+        echo -e "${RED}  ❌ Deno shims test failed${NC}"
+        deno run --allow-read --allow-write --allow-env --allow-net --import-map ../../import_map.json shims-test.test.ts 2>&1 | tail -5
+    fi
+fi
+
+echo ""
 
 # Test Node.js
-echo -e "${BLUE}🟢 Testing with Node.js...${NC}"
+echo -e "${BLUE}🟢 Testing @tidy-ts/dataframe with Node.js...${NC}"
 if command -v node &> /dev/null; then
     echo -e "${YELLOW}  Running minimal test...${NC}"
     if NODE_OPTIONS="--disable-warning=ExperimentalWarning" node minimal.test.ts; then
@@ -33,7 +70,7 @@ fi
 echo ""
 
 # Test Bun
-echo -e "${BLUE}🥖 Testing with Bun...${NC}"
+echo -e "${BLUE}🥖 Testing @tidy-ts/dataframe with Bun...${NC}"
 if command -v bun &> /dev/null; then
     echo -e "${YELLOW}  Running minimal test...${NC}"
     if bun minimal.test.ts; then

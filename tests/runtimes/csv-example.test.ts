@@ -1,4 +1,5 @@
 import { readCSV, writeCSV } from "@tidy-ts/dataframe";
+import { readTextFile, writeTextFile, currentRuntime, Runtime } from "@tidy-ts/shims";
 import { z } from "zod";
 
 const componentIDSchema = z.object({
@@ -19,12 +20,18 @@ const componentIDSchema = z.object({
   DFLT_UNITS: z.string().nullable(),
 });
 
-const csv = await readCSV("./component_names.csv",
-  componentIDSchema,
-);
+console.log(`Running CSV example test on ${currentRuntime}`);
+
+// Read CSV file using shims for cross-runtime compatibility
+const csvContent = await readTextFile("./component_names.csv");
+const csv = await readCSV(csvContent, componentIDSchema);
 
 const baseNames = csv.distinct("BASE_NAME").select("BASE_NAME");
 
-await writeCSV(baseNames, "./base_names.csv");
+// Write CSV using shims
+const csvOutput = await writeCSV(baseNames);
+await writeTextFile("./base_names.csv", csvOutput);
 
-console.log(baseNames);
+console.log("✅ CSV operations completed successfully");
+console.log(`Found ${baseNames.nrows()} distinct base names`);
+baseNames.print();

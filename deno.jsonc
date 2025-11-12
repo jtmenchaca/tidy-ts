@@ -84,6 +84,7 @@
   ],
   "workspace": [
     "src/dataframe",
-    "src/ai"
+    "src/ai",
+    "src/shims"
   ]
 }
