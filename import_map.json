@@ -76,7 +76,6 @@
     "@shikijs/transformers/": "npm:/@shikijs/transformers@^3.12.0/",
 
     "@tests/shims": "./tests/shims/test.ts",
-    "@tidy-ts/shims": "./src/shims/mod.ts",
 
     "tmcp": "npm:tmcp@^1.13.0",
     "tmcp/": "npm:/tmcp@^1.13.0/",
