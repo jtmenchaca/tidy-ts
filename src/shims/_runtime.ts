@@ -5,22 +5,31 @@
 
 import { currentRuntime, Runtime } from "./detect.ts";
 
+// Import node:path and node:url directly - all runtimes (Node.js, Bun, Deno) support these natively
+import * as _pathModule from "node:path";
+import { fileURLToPath as _fileURLToPathFn } from "node:url";
+
 // Lazy-loaded Node.js modules
 let _fs: typeof import("node:fs/promises") | null = null;
-let _path: typeof import("node:path") | null = null;
+let _fsSync: typeof import("node:fs") | null = null;
 let _process: typeof import("node:process") | null = null;
-let _fileURLToPath: typeof import("node:url").fileURLToPath | null = null;
+
+// Path and URL modules are always available (loaded at top level)
+const _path: typeof import("node:path") = _pathModule;
+const _fileURLToPath: typeof import("node:url").fileURLToPath =
+  _fileURLToPathFn;
 
 /**
  * Lazy load Node.js modules for async operations
+ * Note: path and fileURLToPath are loaded at top level, so this only loads fs/process
  */
 export async function ensureNodeModules(): Promise<void> {
-  if (currentRuntime !== Runtime.Deno && !_fs) {
+  // Load fs and process only for Node.js/Bun (Deno has its own APIs)
+  if (
+    !_fs && (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)
+  ) {
     _fs = await import("node:fs/promises");
-    _path = await import("node:path");
     _process = await import("node:process");
-    const urlModule = await import("node:url");
-    _fileURLToPath = urlModule.fileURLToPath;
   }
 }
 
@@ -34,14 +43,12 @@ if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
     if (typeof require !== "undefined") {
       // CommonJS or Node.js with require available
       // @ts-ignore - require may not be typed in all environments
-      const nodePath = require("node:path");
-      // @ts-ignore - require may not be typed in all environments
-      const nodeUrl = require("node:url");
-      // @ts-ignore - require may not be typed in all environments
       const nodeProcess = require("node:process");
-      _path = nodePath;
-      _fileURLToPath = nodeUrl.fileURLToPath;
+      // @ts-ignore - require may not be typed in all environments
+      const nodeFs = require("node:fs");
+      // Path and fileURLToPath are already loaded at top level via ESM imports
       _process = nodeProcess;
+      _fsSync = nodeFs;
     } else {
       // ESM context - process is available on globalThis
       // Other modules will be loaded lazily via ensureNodeModules()
@@ -60,6 +67,8 @@ if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
     }
   }
 }
+
+// Path and fileURLToPath are already loaded at top level via ESM imports
 
 /**
  * Get Deno namespace if available
@@ -87,7 +96,7 @@ export async function getFsPromises(): Promise<
 /**
  * Get Node.js path module
  */
-export function getPathModule(): typeof import("node:path") | null {
+export function getPathModule(): typeof import("node:path") {
   return _path;
 }
 
@@ -101,8 +110,25 @@ export function getProcessModule(): typeof import("node:process") | null {
 /**
  * Get Node.js fileURLToPath function
  */
-export function getFileURLToPath():
-  | typeof import("node:url").fileURLToPath
-  | null {
+export function getFileURLToPath(): typeof import("node:url").fileURLToPath {
   return _fileURLToPath;
+}
+
+/**
+ * Get Node.js fs sync module
+ */
+export function getFsSync(): typeof import("node:fs") | null {
+  return _fsSync;
+}
+
+/**
+ * Ensure fs sync module is loaded
+ */
+export async function ensureFsSync(): Promise<void> {
+  if (
+    !_fsSync &&
+    (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)
+  ) {
+    _fsSync = await import("node:fs");
+  }
 }

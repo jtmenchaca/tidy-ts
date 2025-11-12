@@ -2,6 +2,7 @@
 // Exports all data input/output functions
 // deno-lint-ignore-file no-unused-vars
 
+import { currentRuntime, Runtime } from "@tidy-ts/shims";
 import type { z } from "zod";
 import type { DataFrame } from "../dataframe/index.ts";
 
@@ -314,11 +315,11 @@ type WriteParquetFunction = <Row extends Record<string, unknown>>(
  * });
  */
 export const readArrow: ReadArrowFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
 
-  if (isNode || isDeno) {
+  if (isNode || isDeno || isBun) {
     // deno-lint-ignore no-explicit-any
     return async <S extends z.ZodObject<any>>(
       pathOrBuffer: string | ArrayBuffer,
@@ -451,11 +452,11 @@ export const readCSV: ReadCsvFunction = (() => {
  * });
  */
 export const readParquet: ReadParquetFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
 
-  if (isNode || isDeno) {
+  if (isNode || isDeno || isBun) {
     // deno-lint-ignore no-explicit-any
     return async <S extends z.ZodObject<any>>(
       pathOrBuffer: string | ArrayBuffer,
@@ -502,11 +503,11 @@ export const readParquet: ReadParquetFunction = (() => {
  * await writeCSV(df, "data.csv");
  */
 export const writeCSV: WriteCsvFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
 
-  if (isNode || isDeno) {
+  if (isNode || isDeno || isBun) {
     return async <Row extends Record<string, unknown>>(
       df: DataFrame<Row>,
       path: string,
@@ -590,11 +591,11 @@ export const writeCSV: WriteCsvFunction = (() => {
  * writeParquet(df, "data.parquet");
  */
 export const writeParquet: WriteParquetFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
 
-  if (isNode || isDeno) {
+  if (isNode || isDeno || isBun) {
     return <Row extends Record<string, unknown>>(
       df: DataFrame<Row>,
       path: string,
@@ -758,11 +759,11 @@ type WriteXLSXFunction = <Row extends Record<string, unknown>>(
 ) => Promise<void>;
 
 export const writeXLSX: WriteXLSXFunction = (() => {
-  // deno-lint-ignore no-process-global
-  const isNode = typeof process !== "undefined" && process?.versions?.node;
-  const isDeno = typeof Deno !== "undefined";
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
 
-  if (isNode || isDeno) {
+  if (isNode || isDeno || isBun) {
     return async <Row extends Record<string, unknown>>(
       dataFrame: DataFrame<Row>,
       path: string,

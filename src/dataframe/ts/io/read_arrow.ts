@@ -1,7 +1,7 @@
 // Arrow reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodType } from "zod";
 import { tableFromIPC } from "@uwdata/flechette";
-import * as fs from "node:fs/promises";
+import { readFile } from "@tidy-ts/shims";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
 
@@ -310,11 +310,12 @@ export async function readArrow<S extends z.ZodObject<any>>(
   if (isFilePath(pathOrBuffer)) {
     // It's a file path - read the file
     try {
-      const fileData = await fs.readFile(pathOrBuffer as string);
-      // Convert Buffer to ArrayBuffer properly
-      buffer = new ArrayBuffer(fileData.length);
-      const view = new Uint8Array(buffer);
-      view.set(fileData);
+      const fileData = await readFile(pathOrBuffer as string);
+      // Convert Uint8Array to ArrayBuffer
+      buffer = fileData.buffer.slice(
+        fileData.byteOffset,
+        fileData.byteOffset + fileData.byteLength,
+      ) as ArrayBuffer;
     } catch (error) {
       throw new Error(
         `Failed to read Arrow file '${pathOrBuffer}': ${

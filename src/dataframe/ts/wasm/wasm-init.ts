@@ -1,8 +1,13 @@
 // deno-lint-ignore-file no-explicit-any
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import {
+  currentRuntime,
+  dirname,
+  fileURLToPath,
+  readFileSync,
+  resolve,
+  Runtime,
+} from "@tidy-ts/shims";
 import * as wasmInternal from "../../lib/tidy_ts_dataframe.internal.js";
 
 // Export wasmInternal for use by other modules
@@ -16,9 +21,8 @@ let compiledModule: WebAssembly.Module | null = null;
 let preloadPromise: Promise<void> | null = null;
 
 // Runtime detection helpers
-const isBrowser = typeof window !== "undefined" &&
-  typeof document !== "undefined";
-const isDeno = typeof Deno !== "undefined";
+const isBrowser = currentRuntime === Runtime.Browser;
+const isDeno = currentRuntime === Runtime.Deno;
 
 // For Deno: pre-load WASM at module initialization using top-level await
 // Note: Dynamic import with expression is intentional for Deno WASM loading.
@@ -133,14 +137,14 @@ export function getWasmBytes(): ArrayBuffer {
   if (wasmBytesCache) return wasmBytesCache;
 
   // Lazy load: only read the file when this function is actually called
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const wasmPath = path.resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
-  const buf = fs.readFileSync(wasmPath); // Node Buffer
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const wasmPath = resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
+  const buf = readFileSync(wasmPath);
   // Make a standalone ArrayBuffer view (structured-clone friendly)
   wasmBytesCache = buf.buffer.slice(
     buf.byteOffset,
     buf.byteOffset + buf.byteLength,
-  );
+  ) as ArrayBuffer;
   return wasmBytesCache;
 }
 
@@ -167,14 +171,21 @@ export function initWasm(): any {
   }
 
   // Node/Bun: original sync path using file system
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const wasmPath = path.resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const wasmPath = resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
 
   // Read WASM file as buffer
-  const wasmBuffer = fs.readFileSync(wasmPath);
+  const wasmBuffer = readFileSync(wasmPath);
 
   // Instantiate WebAssembly module with imports
-  const wasmModuleInstance = new WebAssembly.Module(wasmBuffer);
+  // Ensure we have an ArrayBuffer (not SharedArrayBuffer)
+  const wasmArrayBuffer = wasmBuffer.buffer instanceof ArrayBuffer
+    ? wasmBuffer.buffer.slice(
+      wasmBuffer.byteOffset,
+      wasmBuffer.byteOffset + wasmBuffer.byteLength,
+    )
+    : new Uint8Array(wasmBuffer).buffer;
+  const wasmModuleInstance = new WebAssembly.Module(wasmArrayBuffer);
 
   // Filter out non-function exports for WebAssembly imports
   const wasmImports: Record<string, any> = {};

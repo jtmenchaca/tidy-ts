@@ -3,6 +3,8 @@
  * Extracted from @anywidget/deno to reduce dependencies.
  */
 
+import { currentRuntime, Runtime } from "@tidy-ts/shims";
+
 // Buffer handling utility
 function remove_buffers<T extends Record<string, unknown>>(
   state: T,
@@ -34,9 +36,16 @@ function remove_buffers<T extends Record<string, unknown>>(
 // Get Jupyter broadcast function (with fallback for non-Jupyter environments)
 const jupyter_broadcast = (() => {
   try {
-    return typeof Deno !== "undefined"
-      ? Deno.jupyter.broadcast
-      : async () => {};
+    if (currentRuntime === Runtime.Deno) {
+      // @ts-ignore - Deno.jupyter is Deno-specific
+      const deno = (globalThis as {
+        Deno?: {
+          jupyter?: { broadcast?: (...args: unknown[]) => Promise<void> };
+        };
+      }).Deno;
+      return deno?.jupyter?.broadcast ?? (async () => {});
+    }
+    return async () => {};
   } catch (_) {
     return async () => {};
   }

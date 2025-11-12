@@ -4,7 +4,8 @@
   "deno.config": "./deno.jsonc",
   "deno.enablePaths": [
     "src/dataframe",
-    "src/process",
+    "src/ai",
+    "src/shims",
     "tests/bugs",
     "tests/glm",
     "tests/gee",

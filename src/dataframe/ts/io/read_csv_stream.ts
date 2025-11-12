@@ -2,6 +2,7 @@
 import { z, type ZodTypeAny } from "zod";
 import * as fs from "node:fs";
 import * as readline from "node:readline";
+import { stat } from "@tidy-ts/shims";
 import type { CSVOptions } from "./csv-parser.ts";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
@@ -246,7 +247,7 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
   // deno-lint-ignore no-explicit-any
 ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
   // Check file size and estimate memory requirements by sampling actual rows
-  const stats = await fs.promises.stat(path);
+  const stats = await stat(path);
   const fileSizeBytes = stats.size;
 
   const wrappedSchema = autoWrapSchema(schema);

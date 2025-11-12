@@ -4,9 +4,13 @@ import type { GraphOptions } from "./graph.ts";
 import { graphReact } from "./graph.ts";
 
 // File system for cross-runtime compatibility
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import {
+  dirname,
+  fileURLToPath,
+  readFileSync,
+  resolve,
+  writeFileSync,
+} from "@tidy-ts/shims";
 
 // PNG rendering using local resvg WASM (no network required)
 import { initResvgWasm } from "./resvg-wasm-init.ts";
@@ -112,7 +116,7 @@ export async function svgToPNG(
   // Load Inter font files as buffers
   const fontBuffers: Uint8Array[] = [];
   try {
-    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const currentDir = dirname(fileURLToPath(import.meta.url));
     const fontFiles = [
       "Inter_18pt-Regular.ttf",
       "Inter_18pt-Medium.ttf",
@@ -120,9 +124,9 @@ export async function svgToPNG(
     ];
 
     for (const fontFile of fontFiles) {
-      const fontFilePath = path.resolve(currentDir, "fonts", fontFile);
-      const fontData = fs.readFileSync(fontFilePath);
-      fontBuffers.push(new Uint8Array(fontData));
+      const fontFilePath = resolve(currentDir, "fonts", fontFile);
+      const fontData = readFileSync(fontFilePath);
+      fontBuffers.push(fontData);
     }
   } catch (e) {
     console.warn(
@@ -196,7 +200,7 @@ export async function saveGraphAsSVG<T extends Record<string, unknown>>(
 
   const vl = buildStandaloneVlSpec(df, spec, { width, height, background });
   const svg = await vlToSVG(vl, { width, height });
-  fs.writeFileSync(filename, svg, "utf8");
+  writeFileSync(filename, svg);
 }
 
 export async function saveGraphAsPNG<T extends Record<string, unknown>>(
@@ -249,5 +253,5 @@ export async function saveGraphAsPNG<T extends Record<string, unknown>>(
   const clampedScale = Math.max(1, Math.min(4, scale));
   const png = await svgToPNG(svg, pngWidth, pngHeight, clampedScale);
 
-  fs.writeFileSync(filename, png);
+  writeFileSync(filename, png);
 }

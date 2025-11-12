@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any no-unused-vars require-await
 
+import { currentRuntime, Runtime } from "@tidy-ts/shims";
 import {
   createColumnarDataFrameFromStore,
   type DataFrame,
@@ -33,7 +34,7 @@ const RIGHT_NULL: number = 0xFFFFFFFF; // must match the WASM/Rust sentinel (u32
 
 const PAR_DEFAULT_WORKERS = (typeof navigator !== "undefined" &&
   (navigator as any).hardwareConcurrency) ||
-  (typeof Deno !== "undefined" ? 4 : 4);
+  (currentRuntime === Runtime.Deno ? 4 : 4);
 
 const PAR_MIN_LEFT_ROWS = 200_000; // heuristic: when to consider parallel
 const PAR_MAX_WORKERS = 32;

@@ -38,9 +38,7 @@
     "react-vega/": "npm:/react-vega@^8.0.0/",
 
     "@tidy-ts/dataframe": "./src/dataframe/mod.ts",
-    "@tidy-ts/tidy-stats": "./src/tidy-stats/mod.ts",
-    "@tidy-ts/tidy-utils": "./src/tidy-utils/mod.ts",
-    "@tidy-ts/tidy-compare": "./src/tidy-compare/mod.ts",
+    "@tidy-ts/shims": "./src/shims/mod.ts",
 
     "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.0.9",
     "@tailwindcss/vite/": "npm:/@tailwindcss/vite@^4.0.9/",

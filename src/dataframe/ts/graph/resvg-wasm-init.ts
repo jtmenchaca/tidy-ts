@@ -2,9 +2,7 @@
 // Following the pattern from @src/dataframe/ts/wasm/wasm-init.ts
 // deno-lint-ignore-file no-explicit-any
 
-import * as fs from "node:fs";
-import * as path from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname, fileURLToPath, readFileSync, resolve } from "@tidy-ts/shims";
 
 // Lazy import the local resvg JS glue code (v2.6.3-alpha.0) to avoid top-level await
 let resvgGlue: any = null;
@@ -46,18 +44,18 @@ export function getResvgWasmBytes(): ArrayBuffer {
   if (resvgWasmBytesCache) return resvgWasmBytesCache;
 
   // Lazy load: only read the file when this function is actually called
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const wasmPath = path.resolve(
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const wasmPath = resolve(
     currentDir,
     "./resvg-wasm-2.6.3-alpha.0_bg.wasm",
   );
-  const buf = fs.readFileSync(wasmPath); // Node Buffer
+  const buf = readFileSync(wasmPath);
 
   // Make a standalone ArrayBuffer view (structured-clone friendly)
   resvgWasmBytesCache = buf.buffer.slice(
     buf.byteOffset,
     buf.byteOffset + buf.byteLength,
-  );
+  ) as ArrayBuffer;
 
   return resvgWasmBytesCache;
 }
@@ -74,8 +72,8 @@ export async function initResvgWasm(): Promise<any> {
   }
 
   // Get path to WASM file
-  const currentDir = path.dirname(fileURLToPath(import.meta.url));
-  const wasmPath = path.resolve(
+  const currentDir = dirname(fileURLToPath(import.meta.url));
+  const wasmPath = resolve(
     currentDir,
     "./resvg-wasm-2.6.3-alpha.0_bg.wasm",
   );

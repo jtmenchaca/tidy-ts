@@ -11,7 +11,22 @@
 export { currentRuntime, getCurrentRuntime, Runtime } from "./detect.ts";
 
 // File system APIs
-export { mkdir, readTextFile, remove, writeTextFile } from "./fs.ts";
+export {
+  mkdir,
+  open,
+  readFile,
+  readFileSync,
+  readTextFile,
+  remove,
+  stat,
+  writeFile,
+  writeFileSync,
+  writeTextFile,
+  writeTextFileSync,
+} from "./fs.ts";
+
+// Path utilities
+export { dirname, fileURLToPath, resolve } from "./path.ts";
 
 // Environment variables
 export { env } from "./env.ts";

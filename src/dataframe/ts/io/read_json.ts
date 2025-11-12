@@ -1,7 +1,7 @@
 // JSON reading with Zod schema validation and type inference
 
 import type { z, ZodTypeAny } from "zod";
-import * as fs from "node:fs/promises";
+import { readTextFile } from "@tidy-ts/shims";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 
 /**
@@ -62,7 +62,7 @@ export async function readJSON<T extends ZodTypeAny>(
     : z.infer<T>
 > {
   // Read the JSON file
-  const rawContent = await fs.readFile(filePath, "utf8");
+  const rawContent = await readTextFile(filePath);
 
   // Parse JSON
   const data = JSON.parse(rawContent);

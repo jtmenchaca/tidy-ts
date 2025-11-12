@@ -3,7 +3,7 @@ import type { DataFrame } from "../dataframe/index.ts";
 // Polyfill CompressionStream/DecompressionStream for environments without native support
 // Import from shims package for cross-runtime compatibility
 // This ensures compression APIs are available before use
-import "@tidy-ts/shims";
+import { readFile, writeFile } from "@tidy-ts/shims";
 
 interface WriteXLSXOpts {
   sheet?: string;
@@ -49,7 +49,7 @@ export async function writeXLSX<T extends Record<string, unknown>>(
   // Check if file exists and is valid XLSX
   let existingFile: Uint8Array | null = null;
   try {
-    existingFile = await Deno.readFile(path);
+    existingFile = await readFile(path);
     // Verify it's a valid XLSX by checking for ZIP signature
     if (
       existingFile.length < 4 ||
@@ -100,7 +100,7 @@ async function createNewXLSX<T extends Record<string, unknown>>(
   });
 
   // Write to file
-  await Deno.writeFile(path, zipBuffer);
+  await writeFile(path, zipBuffer);
 }
 
 async function updateXLSXWithSheet<T extends Record<string, unknown>>(
@@ -206,7 +206,7 @@ async function updateXLSXWithSheet<T extends Record<string, unknown>>(
   const zipBuffer = await createZip(files);
 
   // Write to file
-  await Deno.writeFile(path, zipBuffer);
+  await writeFile(path, zipBuffer);
 }
 
 async function extractAllSheets(

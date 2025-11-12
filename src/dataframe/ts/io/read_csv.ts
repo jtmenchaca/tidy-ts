@@ -1,9 +1,9 @@
 // CSV reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { type CSVOptions, parseCSV } from "./csv-parser.ts";
-import * as fs from "node:fs/promises";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
+import { open, readTextFile, stat } from "@tidy-ts/shims";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -34,26 +34,9 @@ async function readFileAsString(
     return decoder.decode(arrayBuffer);
   }
 
-  // Handle file path (string) - requires Node.js or Deno
+  // Handle file path (string) - requires Node.js, Deno, or Bun
   if (typeof pathOrBuffer === "string") {
-    // Check for Deno first
-    if (typeof Deno !== "undefined" && Deno.readFile) {
-      const fileData = await Deno.readFile(pathOrBuffer);
-      const decoder = new TextDecoder("utf-8");
-      return decoder.decode(fileData);
-    }
-
-    // Fallback to Node.js fs
-    // deno-lint-ignore no-process-global
-    if (typeof process !== "undefined" && process?.versions?.node) {
-      // Dynamic import to avoid issues in Deno
-      const fs = await import("node:fs/promises");
-      return await fs.readFile(pathOrBuffer, "utf8");
-    }
-
-    throw new Error(
-      "readCSV with file path requires Deno or Node.js environment. Use ArrayBuffer, File, Blob, or CSV string in browsers.",
-    );
+    return await readTextFile(pathOrBuffer);
   }
 
   throw new Error(
@@ -415,7 +398,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
       try {
         // Check file size if it's a string path (Node.js/Deno)
         if (typeof pathOrContent === "string") {
-          const stats = await fs.stat(pathOrContent);
+          const stats = await stat(pathOrContent);
           if (stats.size > MAX_V8_STRING_LENGTH) {
             throw new Error("Schema is required for streaming CSV files");
           }
@@ -489,7 +472,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
     try {
       // Check file size if it's a string path (Node.js/Deno)
       if (typeof pathOrContent === "string") {
-        const stats = await fs.stat(pathOrContent);
+        const stats = await stat(pathOrContent);
 
         // If file size exceeds V8's maximum string length, automatically use streaming
         if (stats.size > MAX_V8_STRING_LENGTH) {
@@ -568,18 +551,18 @@ export async function readCSVMetadata(
     try {
       // Check file size if it's a string path (Node.js/Deno)
       if (typeof pathOrContent === "string") {
-        const stats = await fs.stat(pathOrContent);
+        const stats = await stat(pathOrContent);
 
         // For very large files, only read enough to get preview
         if (stats.size > MAX_V8_STRING_LENGTH) {
           // Read first chunk only for metadata
-          const file = await fs.open(pathOrContent, "r");
+          const file = await open(pathOrContent, "r");
           const buffer = new Uint8Array(Math.min(100000, stats.size)); // Read up to 100KB
           await file.read(buffer, 0, buffer.length, 0);
           await file.close();
           rawCsv = new TextDecoder().decode(buffer);
         } else {
-          rawCsv = await fs.readFile(pathOrContent, "utf8");
+          rawCsv = await readTextFile(pathOrContent);
         }
       } else {
         // ArrayBuffer/File/Blob - read full content (metadata function)

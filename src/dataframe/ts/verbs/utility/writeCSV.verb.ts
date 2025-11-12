@@ -1,10 +1,9 @@
+import { currentRuntime, Runtime, writeTextFileSync } from "@tidy-ts/shims";
 import { stringify } from "@std/csv/stringify";
-import * as fs from "node:fs";
 import type { DataFrame } from "../../dataframe/index.ts";
 
 // Runtime detection helpers
-const isBrowser = typeof window !== "undefined" &&
-  typeof document !== "undefined";
+const isBrowser = currentRuntime === Runtime.Browser;
 
 /**
  * Convert a DataFrame to CSV string format using @std/csv/stringify
@@ -54,9 +53,9 @@ export function writeCSV<Row extends Record<string, unknown>>(
 ): DataFrame<Row> {
   const csvString = dataFrameToCSV(dataFrame);
 
-  // Use node:fs for file writing (works in both Node.js and Deno)
+  // Use shims for cross-runtime file writing
   try {
-    fs.writeFileSync(filePath, csvString, "utf8");
+    writeTextFileSync(filePath, csvString);
   } catch (error) {
     // Browser environment fallback - trigger download
     if (isBrowser) {

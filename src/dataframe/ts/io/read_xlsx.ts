@@ -2,10 +2,7 @@
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
-// Polyfill CompressionStream/DecompressionStream for environments without native support
-// Import from shims package for cross-runtime compatibility
-// This ensures compression APIs are available before use
-import "@tidy-ts/shims";
+import { readFile } from "@tidy-ts/shims";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -31,25 +28,9 @@ async function readFileSafe(
     return new Uint8Array(arrayBuffer);
   }
 
-  // Handle file path (string) - requires Node.js or Deno
+  // Handle file path (string) - requires Node.js, Deno, or Bun
   if (typeof pathOrBuffer === "string") {
-    // Check for Deno first
-    if (typeof Deno !== "undefined" && Deno.readFile) {
-      return await Deno.readFile(pathOrBuffer);
-    }
-
-    // Fallback to Node.js fs
-    // deno-lint-ignore no-process-global
-    if (typeof process !== "undefined" && process?.versions?.node) {
-      // Dynamic import to avoid issues in Deno
-      const fs = await import("node:fs/promises");
-      const buffer = await fs.readFile(pathOrBuffer);
-      return new Uint8Array(buffer);
-    }
-
-    throw new Error(
-      "readXLSX with file path requires Deno or Node.js environment. Use ArrayBuffer, File, or Blob in browsers.",
-    );
+    return await readFile(pathOrBuffer);
   }
 
   throw new Error(

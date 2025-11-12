@@ -142,8 +142,9 @@ export const importMeta: {
     }
 
     const process = getProcessModule();
+    // fileURLToPath is always available - loaded at top level
     const fileURLToPath = getFileURLToPath();
-    if (!process || !fileURLToPath) {
+    if (!process) {
       return false;
     }
 
@@ -175,18 +176,8 @@ export const importMeta: {
    * @throws {UnavailableAPIError} If URL utilities are not available
    */
   urlToPath(url: string): string {
-    const deno = getDenoNamespace();
-    if (deno) {
-      // @ts-ignore - fileURLToPath exists on Deno but may not be in types
-      // deno-lint-ignore no-explicit-any
-      return (deno as any).fileURLToPath(url);
-    }
-
+    // Use node:url which works in Deno, Bun, and Node.js
     const fileURLToPath = getFileURLToPath();
-    if (!fileURLToPath) {
-      throw new UnavailableAPIError("urlToPath()", currentRuntime);
-    }
-
     return fileURLToPath(url);
   },
 

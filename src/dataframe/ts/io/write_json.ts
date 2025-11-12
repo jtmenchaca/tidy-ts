@@ -1,6 +1,6 @@
 // JSON writing utilities for DataFrame export
 
-import * as fs from "node:fs/promises";
+import { writeTextFile } from "@tidy-ts/shims";
 import type { DataFrame } from "../dataframe/index.ts";
 
 /**
@@ -52,7 +52,7 @@ export async function writeJSON<T extends Record<string, unknown>>(
 ): Promise<void> {
   try {
     const jsonContent = dataFrameToJSON(dataFrame, options);
-    await fs.writeFile(filePath, jsonContent, "utf8");
+    await writeTextFile(filePath, jsonContent);
   } catch (error) {
     throw new Error(
       `Failed to write JSON file: ${
