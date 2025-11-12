@@ -657,10 +657,11 @@ type ReadXLSXFunction = {
  * @param schema - Zod schema for type validation and conversion. The schema defines
  *   the expected structure and types of each row in the DataFrame. Types are automatically
  *   coerced (e.g., string "123" becomes number 123 for z.number() fields, Excel serial
- *   numbers become Date objects for z.date() fields).
- * @param opts - Optional configuration including NA handling and sheet selection
+ *   numbers become Date objects for z.date() fields). Optional when `no_types: true` is set.
+ * @param opts - Optional configuration including NA handling, sheet selection, and `no_types` option.
+ *   When `no_types: true` is set, returns `DataFrame<any>` without schema validation.
  *
- * @returns A Promise resolving to a DataFrame typed according to the schema
+ * @returns A Promise resolving to a DataFrame typed according to the schema, or `DataFrame<any>` if `no_types: true`
  *
  * @example
  * // Read from file path (Node.js/Deno)
@@ -694,6 +695,11 @@ type ReadXLSXFunction = {
  * @example
  * // Read from sheet by index (0-based)
  * const df = await readXLSX("./data.xlsx", schema, { sheet: 1 });
+ *
+ * @example
+ * // Read without schema validation using no_types
+ * const df = await readXLSX("./data.xlsx", { no_types: true });
+ * // Returns DataFrame<any> - useful for dynamic or unknown schemas
  */
 export const readXLSX: ReadXLSXFunction = (() => {
   // Always allow the function - it handles environment detection internally

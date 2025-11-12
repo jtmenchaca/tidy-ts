@@ -17,6 +17,7 @@ export type {
 export {
   readArrow,
   readCSV,
+  readCSVMetadata,
   readJSON,
   readParquet,
   readXLSX,
