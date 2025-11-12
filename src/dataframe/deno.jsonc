@@ -2,5 +2,8 @@
   "name": "@tidy-ts/dataframe",
   "version": "1.0.33",
   "exports": "./mod.ts",
-  "license": "MIT"
+  "license": "MIT",
+  "imports": {
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims@0.0.2"
+  }
 }

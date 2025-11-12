@@ -2310,6 +2310,13 @@
         "npm:@jsr/std__expect@*",
         "npm:tsx@^4.19.2"
       ]
+    },
+    "members": {
+      "src/dataframe": {
+        "dependencies": [
+          "jsr:@tidy-ts/shims@0.0.2"
+        ]
+      }
     }
   }
 }
