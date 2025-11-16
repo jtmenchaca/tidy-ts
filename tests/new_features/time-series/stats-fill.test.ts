@@ -64,7 +64,7 @@ Deno.test("stats.forwardFill() - can be used in rolling with wrapper", () => {
   expect(result[3].filled).toBe(20); // [null, 20] -> [null, 20] -> 20
 });
 
-Deno.test("stats.backwardFill() - can be used in resample with wrapper", () => {
+Deno.test("stats.backwardFill() - can be used in downsample with wrapper", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00"), price: null },
     { timestamp: new Date("2023-01-01T11:00:00"), price: null },
@@ -72,16 +72,20 @@ Deno.test("stats.backwardFill() - can be used in resample with wrapper", () => {
     { timestamp: new Date("2023-01-01T13:00:00"), price: null },
   ]);
 
-  // Resample to daily - backward fill with wrapper to return last value
-  const result = df.resample("timestamp", "1D", {
-    price: (values: unknown[]) => {
-      const filled = stats.backwardFill(values);
-      return filled[filled.length - 1]; // Return last filled value
+  // Downsample to daily - backward fill with wrapper to return last value
+  const result = df.downsample({
+    timeColumn: "timestamp",
+    frequency: "1D",
+    aggregations: {
+      price: (values: unknown[]) => {
+        const filled = stats.backwardFill(values);
+        return filled[filled.length - 1]; // Return last filled value
+      },
     },
   });
 
   // Should backward fill: [null, null, 100, null] -> [100, 100, 100, 100] -> 100
   expect(result.nrows()).toBe(1);
-  // The actual result depends on how resample groups - let's just check it works
+  // The actual result depends on how downsample groups - let's just check it works
   expect(result[0].price).toBeDefined();
 });

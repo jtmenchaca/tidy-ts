@@ -62,6 +62,8 @@ import type { FillForwardMethod } from "../../verbs/missing-data/fill-forward.ty
 import type { FillBackwardMethod } from "../../verbs/missing-data/fill-backward.types.ts";
 import type { InterpolateMethod } from "../../verbs/missing-data/interpolate.types.ts";
 import type { ResampleMethod } from "../../verbs/utility/resample.types.ts";
+import type { DownsampleMethod } from "../../verbs/utility/downsample.types.ts";
+import type { UpsampleMethod } from "../../verbs/utility/upsample.types.ts";
 // import type { FilterNaMethod } from "../../verbs/missing-data/filter-na.types.ts";
 import type { AppendMethod } from "../../verbs/reshape/append.types.ts";
 import type { PrependMethod } from "../../verbs/reshape/prepend.types.ts";
@@ -208,6 +210,8 @@ export type DataFrame<Row extends object = object> =
     bind: BindRowsMethod<Row>;
 
     resample: ResampleMethod<Row>;
+    downsample: DownsampleMethod<Row>;
+    upsample: UpsampleMethod<Row>;
 
     // ---------- Missing Data ----------
     replaceNA: ReplaceNaMethod<Row>;

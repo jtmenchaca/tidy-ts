@@ -3,7 +3,6 @@ import type {
   GroupedDataFrame,
   Prettify,
 } from "../../dataframe/index.ts";
-import type { PreserveGrouping } from "../../dataframe/index.ts";
 import type {
   ColumnTypeMismatchDate,
   EmptyDataFrameResample,
@@ -14,33 +13,28 @@ import type {
 /**
  * Frequency specification for resampling.
  *
- * Supports common time periods:
- * - Seconds: "1S", "5S", "15S", "30S"
- * - Minutes: "1min", "5min", "15min", "30min"
- * - Hours: "1H"
- * - Days: "1D"
- * - Weeks: "1W"
- * - Months: "1M"
- * - Quarters: "1Q"
- * - Years: "1Y"
+ * Supports common time periods as strings (e.g., "1H", "6H", "15min")
+ * or as objects (e.g., { value: 6, unit: "h" }) or as raw milliseconds (number).
  *
- * Or custom milliseconds as a number.
+ * Pattern: `<number><unit>` where unit is:
+ * - S: seconds
+ * - min: minutes
+ * - H: hours
+ * - D: days
+ * - W: weeks
+ * - M: months (calendar-aware)
+ * - Q: quarters (calendar-aware)
+ * - Y: years (calendar-aware)
  */
 export type Frequency =
-  | "1S"
-  | "5S"
-  | "15S"
-  | "30S"
-  | "1min"
-  | "5min"
-  | "15min"
-  | "30min"
-  | "1H"
-  | "1D"
-  | "1W"
-  | "1M"
-  | "1Q"
-  | "1Y"
+  | `${number}S`
+  | `${number}min`
+  | `${number}H`
+  | `${number}D`
+  | `${number}W`
+  | `${number}M`
+  | `${number}Q`
+  | `${number}Y`
   | number
   | {
     value: number;
@@ -136,33 +130,95 @@ type RowAfterResample<
 >;
 
 /**
+ * Named arguments for resample method.
+ */
+export type ResampleArgs<
+  Row extends object,
+  TimeCol extends keyof Row,
+  Options extends ResampleOptions<Row>,
+> = {
+  timeColumn: RestrictEmptyDataFrame<
+    Row,
+    ValidateDateColumn<Row, TimeCol, ColumnTypeMismatchDate>,
+    EmptyDataFrameResample
+  >;
+  frequency: Frequency;
+  metrics: Options;
+  startDate?: Date;
+  endDate?: Date;
+};
+
+/**
  * Resample method for DataFrame.
  *
- * Resamples time-series data to a different frequency.
+ * Resamples time-series data to a different frequency. Supports both downsampling (aggregating)
+ * and upsampling (filling). The time column must be of type Date (or Date | null).
+ *
+ * **Downsampling** (aggregation): Groups rows by time buckets and applies aggregation functions.
+ * Use this when converting from higher frequency to lower frequency (e.g., hourly to daily).
+ *
+ * **Upsampling** (filling): Generates a time sequence and fills missing values.
+ * Use this when converting from lower frequency to higher frequency (e.g., daily to hourly).
  *
  * @example
- * // Downsample hourly to daily (using stats functions like rolling)
- * df.resample("timestamp", "1D", {
- *   price: stats.mean,
- *   volume: stats.sum
- * })
+ * // Downsample hourly to daily
+ * const daily = df.resample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1D",
+ *   metrics: {
+ *     price: stats.mean,
+ *     volume: stats.sum
+ *   }
+ * });
  *
  * @example
  * // Upsample daily to hourly with forward fill
- * df.resample("timestamp", "1H", {
- *   method: stats.forwardFill
- * })
+ * const hourly = df.resample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1H",
+ *   metrics: {
+ *     method: stats.forwardFill
+ *   }
+ * });
  *
  * @example
  * // Per-column fill methods
- * df.resample("timestamp", "1H", {
- *   price: stats.forwardFill,
- *   volume: stats.backwardFill
- * })
+ * const hourly = df.resample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1H",
+ *   metrics: {
+ *     price: stats.forwardFill,
+ *     volume: stats.backwardFill
+ *   }
+ * });
+ *
+ * @example
+ * // With startDate and endDate for fiscal year alignment
+ * const fiscalQ2 = df.resample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1M",
+ *   metrics: {
+ *     sales: stats.sum
+ *   },
+ *   startDate: new Date("2023-04-01"),
+ *   endDate: new Date("2023-06-30")
+ * });
+ *
+ * @example
+ * // Works with grouped DataFrames
+ * const result = df.groupBy("symbol").resample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1D",
+ *   metrics: {
+ *     price: stats.mean
+ *   },
+ *   startDate: new Date("2023-01-01"),
+ *   endDate: new Date("2023-12-31")
+ * });
  */
 export type ResampleMethod<Row extends object> = {
   /**
-   * Resample time-series data to a different frequency (grouped DataFrame overload).
+   * Resample time-series data to a different frequency (grouped DataFrame).
    *
    * Resamples time-series data by either downsampling (aggregating) or upsampling (filling).
    * The time column must be of type Date (or Date | null).
@@ -173,17 +229,26 @@ export type ResampleMethod<Row extends object> = {
    * **Upsampling** (filling): Generates a time sequence and fills missing values.
    * Use this when converting from lower frequency to higher frequency (e.g., daily to hourly).
    *
-   * @param timeColumn - Name of the Date column to use for resampling
-   * @param frequency - Target frequency (e.g., "1D", "1H", "15min", "1W", "1M")
-   * @param options - Resampling options
+   * @param args - Named arguments object
+   * @param args.timeColumn - Name of the Date column to use for resampling
+   * @param args.frequency - Target frequency (e.g., "1D", "1H", "15min", "1W", "1M")
+   * @param args.metrics - Resampling metrics
    *   - For downsampling: object mapping column names to aggregation functions (e.g., `{ price: stats.mean, volume: stats.sum }`)
    *   - For upsampling: object with `method` key (e.g., `{ method: stats.forwardFill }`) or per-column fill methods
+   * @param args.startDate - Optional: Start date for resampling period
+   * @param args.endDate - Optional: End date for resampling period
    * @returns Grouped DataFrame with resampled data (preserves grouping)
    *
    * @example
-   * // Resample grouped data
-   * const result = df.groupBy("symbol").resample("timestamp", "1D", {
-   *   price: stats.mean
+   * // Resample grouped data with consistent date ranges
+   * const result = df.groupBy("symbol").resample({
+   *   timeColumn: "timestamp",
+   *   frequency: "1D",
+   *   metrics: {
+   *     price: stats.mean
+   *   },
+   *   startDate: new Date("2023-01-01"),
+   *   endDate: new Date("2023-12-31")
    * });
    */
   <
@@ -192,21 +257,16 @@ export type ResampleMethod<Row extends object> = {
     Options extends ResampleOptions<Row>,
   >(
     this: GroupedDataFrame<Row, GroupName>,
-    timeColumn: RestrictEmptyDataFrame<
-      Row,
-      ValidateDateColumn<Row, TimeCol, ColumnTypeMismatchDate>,
-      EmptyDataFrameResample
-    >,
-    frequency: Frequency,
-    options: Options,
-  ): PreserveGrouping<
-    Row,
-    GroupName,
-    RowAfterResample<Row, TimeCol, Options>
+    args: ResampleArgs<Row, TimeCol, Options>,
+  ): DataFrame<
+    Prettify<
+      & Pick<Row, GroupName> // Include group columns
+      & RowAfterResample<Row, TimeCol, Options> // Include resampled columns
+    >
   >;
 
   /**
-   * Resample time-series data to a different frequency (regular DataFrame overload).
+   * Resample time-series data to a different frequency (regular DataFrame).
    *
    * Resamples time-series data by either downsampling (aggregating) or upsampling (filling).
    * The time column must be of type Date (or Date | null).
@@ -217,36 +277,56 @@ export type ResampleMethod<Row extends object> = {
    * **Upsampling** (filling): Generates a time sequence and fills missing values.
    * Use this when converting from lower frequency to higher frequency (e.g., daily to hourly).
    *
-   * @param timeColumn - Name of the Date column to use for resampling
-   * @param frequency - Target frequency (e.g., "1D", "1H", "15min", "1W", "1M")
-   * @param options - Resampling options
+   * @param args - Named arguments object
+   * @param args.timeColumn - Name of the Date column to use for resampling
+   * @param args.frequency - Target frequency (e.g., "1D", "1H", "15min", "1W", "1M")
+   * @param args.metrics - Resampling metrics
    *   - For downsampling: object mapping column names to aggregation functions (e.g., `{ price: stats.mean, volume: stats.sum }`)
    *   - For upsampling: object with `method` key (e.g., `{ method: stats.forwardFill }`) or per-column fill methods
+   * @param args.startDate - Optional: Start date for resampling period. If provided, always starts from this date (hard constraint).
+   *   - If data starts before startDate: truncates and starts from startDate
+   *   - If data starts after startDate: starts from startDate and forward-fills nulls until first data point
+   * @param args.endDate - Optional: End date for resampling period. If provided, always extends to this date.
+   *   - Forward-fills if needed when endDate is after last data point
    * @returns DataFrame with resampled data
    *
    * @example
    * // Downsample hourly to daily
-   * const daily = df.resample("timestamp", "1D", {
-   *   price: stats.mean,
-   *   volume: stats.sum
+   * const daily = df.resample({
+   *   timeColumn: "timestamp",
+   *   frequency: "1D",
+   *   metrics: {
+   *     price: stats.mean,
+   *     volume: stats.sum
+   *   }
    * });
    *
    * @example
    * // Upsample daily to hourly with forward fill
-   * const hourly = df.resample("timestamp", "1H", {
-   *   method: stats.forwardFill
+   * const hourly = df.resample({
+   *   timeColumn: "timestamp",
+   *   frequency: "1H",
+   *   metrics: {
+   *     method: stats.forwardFill
+   *   }
+   * });
+   *
+   * @example
+   * // With startDate and endDate for consistent date ranges
+   * const result = df.resample({
+   *   timeColumn: "timestamp",
+   *   frequency: "1D",
+   *   metrics: {
+   *     price: stats.mean
+   *   },
+   *   startDate: new Date("2023-01-01"),
+   *   endDate: new Date("2023-12-31")
    * });
    */
   <
     TimeCol extends keyof Row,
     Options extends ResampleOptions<Row>,
   >(
-    timeColumn: RestrictEmptyDataFrame<
-      Row,
-      ValidateDateColumn<Row, TimeCol, ColumnTypeMismatchDate>,
-      EmptyDataFrameResample
-    >,
-    frequency: Frequency,
-    options: Options,
+    args: ResampleArgs<Row, TimeCol, Options>,
   ): DataFrame<RowAfterResample<Row, TimeCol, Options>>;
 };

@@ -441,9 +441,10 @@ export async function readCSV<S extends z.ZodObject<any>>(
       for (const header of headers) {
         emptyRow[header] = "";
       }
-      return createDataFrame([emptyRow], { no_types: true }).filter(() =>
-        false
-      );
+      return (
+        createDataFrame([emptyRow], { no_types: true }).filter(() => false)
+        // deno-lint-ignore no-explicit-any
+      ) as unknown as DataFrame<any>;
     }
 
     const rows: Record<string, unknown>[] = [];

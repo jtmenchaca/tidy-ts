@@ -85,7 +85,8 @@ import { profile } from "../../verbs/utility/profile.verb.ts";
 
 // Row binding
 import { bind_rows } from "../../verbs/reshape/bind-rows.verb.ts";
-import { resample } from "../../verbs/utility/resample.verb.ts";
+import { downsample } from "../../verbs/utility/downsample.verb.ts";
+import { upsample } from "../../verbs/utility/upsample.verb.ts";
 
 // Chain wrappers for seamless async thenableDataFrameing
 import { thenableDataFrame } from "../../promised-dataframe/index.ts";
@@ -606,9 +607,16 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (...a: unknown[]) => (bind_rows as any)(...a)(df);
   }
 
-  if (prop === "resample") {
-    return (timeColumn: unknown, frequency: unknown, options: unknown) => {
-      const result = (resample as any)(timeColumn, frequency, options)(df);
+  if (prop === "downsample") {
+    return (args: unknown) => {
+      const result = (downsample as any)(args)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "upsample") {
+    return (args: unknown) => {
+      const result = (upsample as any)(args)(df);
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
