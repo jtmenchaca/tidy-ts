@@ -317,8 +317,8 @@ df.resample("timestamp", "1D", { price: "last", volume: "sum" })
 
 // 3. Feature Engineering: Rolling averages
 df.mutate({
-  ma7: stats.rolling("price", 7, stats.mean),
-  ma30: stats.rolling("price", 30, stats.mean),
+  ma7: stats.rolling({ column: "price", windowSize: 7, fn: stats.mean }),
+  ma30: stats.rolling({ column: "price", windowSize: 30, fn: stats.mean }),
   prev_price: stats.lag("price", 1)
 })
 
@@ -340,7 +340,7 @@ df.resample("timestamp", "1H", { temperature: "mean" })
 
 // 3. Feature Engineering: Rolling stats
 df.mutate({
-  temp_24h_avg: stats.rolling("temperature", 24, stats.mean),
+  temp_24h_avg: stats.rolling({ column: "temperature", windowSize: 24, fn: stats.mean }),
   temp_change: (row) => row.temperature - stats.lag("temperature", 1)
 })
 ```

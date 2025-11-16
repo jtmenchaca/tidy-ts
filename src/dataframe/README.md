@@ -10,18 +10,17 @@ Type-safe data analytics and statistics framework for TypeScript. Built for mode
 
 ## Key Features
 
-- **Type-Safe DataFrames**: Full TypeScript support with automatic column typing
-- **Async Operations**: Built-in support for asynchronous data transformations with concurrency control
-- **Multi-Format Data Import**: Read CSV, Parquet, and Arrow files with Zod schema validation
-- **Data Analytics**: Group, aggregate, join, reshape, and analyze data
-- **Statistics Toolkit**: 80+ functions across descriptive statistics, hypothesis testing, and standard distributions functions
-- **Data Visualization**: Create charts with an integrated API backed by Vega
-- **Interactive Charts**: Jupyter notebook integration with hover tooltips
-- **Data Reshaping**: Pivot wider, pivot longer, and transpose with type safety
+- **Type-Safe DataFrames**: Full TypeScript support with automatic column typing and compile-time safety
+- **Data Analytics**: Group, aggregate, join, reshape, and analyze data with a fluent API
+- **Statistics Toolkit**: 80+ functions for descriptive statistics, hypothesis testing, and probability distributions
 - **High Performance**: Columnar storage with WASM-backed operations for critical paths
-- **Method Chaining**: Fluent API for data transformations
+- **Multi-Format I/O**: Read/write CSV, XLSX, JSON, Parquet, and Arrow files with Zod schema validation
+- **Data Visualization**: Create interactive charts with Vega-backed visualization (Jupyter notebook support)
+- **Async Operations**: Built-in support for asynchronous data transformations with concurrency control
+- **Time-Series Support**: Resampling, missing data handling, as-of joins, and rolling windows
 
 ## Installation
+
 ```bash
 deno add jsr:@tidy-ts/dataframe // Deno
 bunx jsr add @tidy-ts/dataframe // bun
@@ -31,6 +30,7 @@ yarn add jsr:@tidy-ts/dataframe // yarn
 ```
 
 ### Browser Setup
+
 For browser environments, call `setupTidyTS()` once before using any tidy-ts functions:
 
 ```typescript
@@ -38,18 +38,12 @@ import { setupTidyTS, createDataFrame, stats } from "@tidy-ts/dataframe";
 
 // Required in browsers - call once at app startup
 await setupTidyTS();
-
-// Then use normally
-const df = createDataFrame([{a: 1, b: 2}, {a: 3, b: 4}]);
-const sum = stats.sum(df.a); // 4
 ```
 
- **Note**: `setupTidyTS()` is only needed in browsers. Deno / Bun / Node.js work without any setup.
-
 ## Quick Start
+
 ```typescript
-import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  
-// import { createDataFrame, s } from "@tidy-ts/dataframe" works as well
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Create DataFrame from rows
 const sales = createDataFrame([
@@ -58,212 +52,133 @@ const sales = createDataFrame([
   { region: "East", product: "Widget", quantity: 8, price: 100 },
 ]);
 
-// Or create DataFrame from columns
-const salesFromColumns = createDataFrame({
-  columns: {
-    region: ["North", "South", "East"],
-    product: ["Widget", "Widget", "Widget"], 
-    quantity: [10, 20, 8],
-    price: [100, 100, 100]
-  }
-});
-
 // Complete data analysis workflow
 const analysis = sales
   .mutate({ 
-    // Use 'row' to access a neatly typed row while defining new columns - no type casting needed
     revenue: (row) => row.quantity * row.price,
-
-    // Use standard function syntax for more complicated calculations.  The DataFrame will keep track of the types. 
-    totalTax: (row) => {
-      const taxRate = 0.08;
-      const taxPerItem = taxRate * row.price;
-      const totalTax = taxPerItem * row.quantity;
-      return totalTax
-    },
-
-    // Use 'index' to get the current row number, sometimes helpful for indexing into external arrays
-    row_number: (_row, index) => index,
-    
-    // Use 'df' to access the entire DataFrame when needed for a calculation
-    moreQuantityThanAvg: (row, _index, df) => row.quantity > s.mean(df.quantity)
+    moreThanAvg: (row, _index, df) => row.quantity > s.mean(df.quantity)
   })
   .groupBy("region")
   .summarize({
     total_revenue: (group) => s.sum(group.revenue),
     avg_quantity: (group) => s.mean(group.quantity),
-    product_count: (group) => group.nrows() // We have some helpers to calculate commonly needed values
+    product_count: (group) => group.nrows()
   })
   .arrange("total_revenue", "desc");
 
-// Pretty print the table with the .print() method
 analysis.print("Sales Analysis");
 ```
 
-### Database Integration
+📖 **[Learn more →](https://jtmenchaca.github.io/tidy-ts/getting-started)**
+
+## Core Operations
+
+### DataFrame Creation & Manipulation
+- `createDataFrame([...])` - Create from row objects with type inference
+- `createDataFrame({ columns: {...} })` - Create from column arrays
+- `select()`, `drop()` - Column selection
+- `filter()`, `slice()` - Row filtering (sync & async)
+- `mutate()` - Add/transform columns with functions, arrays, or scalars (sync & async)
+- `arrange()` - Sort data
+- `distinct()` - Unique rows
+- `nrows()`, `ncols()` - Dimensions
+- `df.columnName` - Direct readonly access to column arrays
+
+### Aggregation & Grouping
+- `groupBy()` - Group by columns
+- `summarize()` - Aggregate groups (sync & async)
+- `count()` - Count rows by grouping columns
+
+### Joins & Reshaping
+- `innerJoin()`, `leftJoin()`, `rightJoin()`, `outerJoin()` - Multi-key joins
+- `asofJoin()` - Nearest key match for time-series data
+- `pivotLonger()`, `pivotWider()` - Reshape data with type safety
+- `transpose()` - Flip rows and columns with type safety
+- `bindRows()` - Concatenate DataFrames
+
+### Missing Data
+- `replaceNA()`, `removeNA()` - Handle missing values
+- `fillForward()`, `fillBackward()` - Forward/backward fill
+- `interpolate()` - Linear or spline interpolation
+
+## Features Overview
+
+### Statistical Analysis
+
+80+ statistical functions including descriptive stats, hypothesis testing, and probability distributions. Features both direct test APIs and an intent-driven comparison API to help choose the right test.
+
 ```typescript
-import { createDataFrame, stats } from "@tidy-ts/dataframe";
-import { DatabaseSync } from "node:sqlite";
-import { drizzle } from "npm:drizzle-orm/libsql";
-import { createClient } from "npm:@libsql/client";
-
-// Raw SQLite
-const db = new DatabaseSync("data.db");
-const employees = db.prepare("SELECT * FROM employees").all();
-const employeesDF = createDataFrame(employees, EmployeeSchema);
-
-// Drizzle ORM  
-const client = createClient({ url: "file:data.db" });
-const db = drizzle(client);
-const employees = await db.select().from(employeesTable).all();
-const employeesDF = createDataFrame(employees); // Auto-inferred types
-
-// DataFrame analysis
-const summary = employeesDF
-  .filter(row => row.salary > 80000)
-  .groupBy("department")
-  .summarize({
-    count: (group) => group.nrows(),
-    avg_salary: (group) => stats.round(stats.mean(group.salary), 0)
-  })
-  .arrange("avg_salary", "desc");
-
-summary.print("High Earners by Department");
-```
-
-## Statistical Analysis
-Tidy-TS provides a statistical toolkit with 80+ functions across descriptive stats, hypothesis testing, and probability distributions.
-
-### Descriptive stats
-- **Descriptive**: `s.mean()`, `s.median()`, `s.mode()`, `s.stdev()`, `s.variance()`, `s.min()`, `s.max()`, `s.range()`
-- **Quantiles**: `s.quantile()`, `s.percentileRank()`, `s.iqr()`, `s.quartiles()`
-
-### Hypothesis testing
-The library provides many of the commonly needed statistical tests for routine analytics.  These can at times be challenging to navigate for those who are new to statistics, so the library also provides a custom-designed comparison API designed to help you perform the analysis best suited to your needs.  In either approach, you'll receive a neatly typed test result at the end.
-
-All tests available are rigorously vetted against results in R using testing against randomly generated data.  You can find the comparison suites on [GitHub](https://github.com/jtmenchaca/tidy-ts). 
-
- ```typescript
 import { stats as s } from "@tidy-ts/dataframe";
 
-// Create test "height" data for 6 individuals
-const heights = [170, 165, 180, 175, 172, 168];
+// Descriptive statistics
+const mean = s.mean([1, 2, 3, 4, 5]);
+const median = s.median([1, 2, 3, 4, 5]);
 
-// Direct test API
-// Access specific statistical tests
-const directTest = s.test.t.oneSample({
-  data: heights,
+// Hypothesis testing - Direct API
+const tTest = s.test.t.oneSample({
+  data: [170, 165, 180, 175, 172, 168],
   mu: 170,
   alternative: "two-sided",
   alpha: 0.05
 });
 
-// Compare API
-// Intent-driven design options to assist with picking
-// the correct test.
-const compareAPI = s.compare.oneGroup.centralTendency.toValue({
-  data: heights,
-  comparator: "not equal to" // or "less than" | "greater than"
+// Hypothesis testing - Compare API (intent-driven)
+const comparison = s.compare.oneGroup.centralTendency.toValue({
+  data: [170, 165, 180, 175, 172, 168],
+  comparator: "not equal to",
   hypothesizedValue: 170,
-  parametric: "parametric", // or "nonparametric" | "auto"
+  parametric: "auto",
   alpha: 0.05
 });
 
-// Both return the same typed result:
-// {
-//   test_name: "One-sample t-test",
-//   p_value: 0.47...,
-//   effect_size: { value: 0.31..., name: "Cohen's D" },
-//   test_statistic: { value: 0.76..., name: "T-Statistic" },
-//   confidence_interval: { lower: 166.08..., upper: 177.24..., 
-//     confidence_level: 0.95 },
-//   degrees_of_freedom: 5,
-//   alpha: 0.05,
-//   alternative: "Two-Sided"
-// }
-
-  const group1 = [23, 45, 67, 34, 56, 78, 29, 41, 52, 38]; // Hours spent studying per week
-  const group2 = [78, 85, 92, 73, 88, 95, 69, 81, 89, 76]; // Final exam scores
-  const groupComparison = s.compare.twoGroups.association.toEachOther({
-    x: group1,
-    y: group2,
-    method: "pearson", // Use "auto" for help choosing the right correlation test
-  });
-  console.log(groupComparison);
-
-// Two-group comparison result: {
-//   test_name: "Pearson correlation test",
-//   p_value: 0.0003...,
-//   effect_size: { value: 0.90..., name: "Pearson's R" },
-//   test_statistic: { value: 5.95..., name: "T-Statistic" },
-//   confidence_interval: {
-//     lower: 0.63...,
-//     upper: 0.97...,
-//     confidence_level: 0.95
-//   },
-//   degrees_of_freedom: 8,
-//   alpha: 0.05
-// }
-
-// Here are the various functions that the compare API exposes for use.  
-// Each has various options to help both beginner and experienced users feel confident in what they're getting.
-s.compare.oneGroup.centralTendency.toValue(...)
-s.compare.oneGroup.proportions.toValue(...)
-s.compare.oneGroup.distribution.toNormal(...)
-s.compare.twoGroups.centralTendency.toEachOther(...)
-s.compare.twoGroups.association.toEachOther(...)
-s.compare.twoGroups.proportions.toEachOther(...)
-s.compare.twoGroups.distributions.toEachOther(...)
-s.compare.multiGroups.centralTendency.toEachOther(...)
-s.compare.multiGroups.proportions.toEachOther(...)
-
-
-// If you'd prefer to have the specific test instead, we provide that via the test API as well. 
-const oneSampleT = s.test.t.oneSample({ data, mu: 100, alternative: "two-sided", alpha: 0.05 });
-const independentT = s.test.t.independent({ x: group1, y: group2, alpha: 0.05 });
-const pairedT = s.test.t.paired({ x: before, y: after, alpha: 0.05 });
-const anovaResult = s.test.anova.oneWay([group1, group2, group3], 0.05);
-const mannWhitney = s.test.nonparametric.mannWhitney({ x: group1, y: group2, alpha: 0.05 });
-const kruskalWallis = s.test.nonparametric.kruskalWallis([group1, group2], 0.05);
-const pearsonTest = s.test.correlation.pearson({ x, y, alternative: "two-sided", alpha: 0.05 });
-const shapiroWilk = s.test.normality.shapiroWilk({ data, alpha: 0.05 });
+// Probability distributions
+const normalSample = s.dist.normal.random({ mean: 0, standardDeviation: 1, sampleSize: 10 });
+const quantile = s.dist.normal.quantile({ probability: 0.975, mean: 0, standardDeviation: 1 });
 ```
 
-### Probability Distributions
-The library also provides 16 probability distributions, each with functions for random values, density, probability, quantile, and data generation. 
+📖 **[Statistical Analysis Guide →](https://jtmenchaca.github.io/tidy-ts/stats-module)**
 
-**Continuous distributions:** normal, beta, gamma, exponential, chi-square, t, F, uniform, Weibull, log-normal, and Wilcoxon
-**Discrete distributions:** binomial, Poisson, geometric, negative binomial, and hypergeometric.
+### Time-Series Operations
+
+Comprehensive time-series functionality for handling temporal data with missing values, resampling, and advanced joins.
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
-// Individual distribution functions
-const randomValue = s.dist.normal.random({ mean: 0, standardDeviation: 1, sampleSize: 10 });        // Random sample
-const density = s.dist.normal.density({ at: 0, mean: 0, standardDeviation: 1});        // PDF at x=0
-const probability = s.dist.normal.probability({ at: 1.96, mean: 0, standardDeviation: 1 });  // CDF (P-value)
-const quantile = s.dist.normal.quantile({ probability: 0.975, mean: 0, standardDeviation: 1 });  // Critical value
+// Missing data handling
+const timeSeries = createDataFrame([
+  { timestamp: new Date("2023-01-01"), price: 100 },
+  { timestamp: new Date("2023-01-02"), price: null },
+  { timestamp: new Date("2023-01-04"), price: 110 },
+]);
 
-// Generate distribution data for visualization
-const normalPDFData = s.dist.normal.data({
-  mean: 0,
-  standardDeviation: 2,
-  type: "pdf",
-  range: [-4, 4],
-  points: 100,
+const filled = timeSeries.fillForward("price");
+const interpolated = timeSeries.interpolate("price", "timestamp", "linear");
+
+// Resampling
+const daily = hourlyData.resample("timestamp", "1D", {
+  price: s.last,
+  volume: s.sum
 });
 
-// Other distributions: beta, gamma, exponential, chi-square, t, f, uniform,
-// weibull, binomial, poisson, geometric, hypergeometric
-const betaSample = s.dist.beta.random({ alpha: 2, beta: 5 });
-const chiSquareQuantile = s.dist.chiSquare.quantile({ probability: 0.95, degreesOfFreedom: 1 });
+// As-of joins
+const joined = trades.asofJoin(quotes, "time", { 
+  direction: "backward",
+  tolerance: 1000,
+  group_by: ["symbol"]
+});
+
+// Rolling windows
+const rollingMean = s.rolling({ values: prices, windowSize: 7, fn: (window) => s.mean(window) });
 ```
 
-## Data Visualization
-'@tidy-ts/dataframe' also provides data visualization tools directly from DataFrames backed by [Vega](https://vega.github.io):
+📖 **[Time-Series Guide →](https://jtmenchaca.github.io/tidy-ts/)**
+
+### Data Visualization
+
+Create interactive charts directly from DataFrames with Vega-backed visualization.
 
 ```typescript
-// Interactive scatter plot with configuration
 const chart = salesData
   .mutate({
     revenue: (r) => r.quantity * r.price,
@@ -278,177 +193,103 @@ const chart = salesData
       size: "profit",
     },
     config: {
-      layout: {
-        title: "Sales Analysis",
-        description: "Revenue vs quantity by region, sized by profit",
-        width: 700,
-        height: 400,
-      },
-      xAxis: {
-        label: "Revenue ($)",
-        domain: [0, 2200],
-      },
-      yAxis: {
-        label: "Quantity",
-        domain: [0, 25],
-      },
-      scatter: {
-        pointSize: 100,
-        pointOpacity: 0.8,
-      },
+      layout: { title: "Sales Analysis", width: 700, height: 400 },
       color: { scheme: "professional" },
-      legend: {
-        show: true,
-        position: "right",
-      },
-      grid: {
-        show: true,
-      },
     }
   });
 
-// Export charts as PNG or SVG
 await chart.savePNG({ filename: "sales-chart.png" });
-await chart.saveSVG({ filename: "sales-chart.svg" });
 ```
 
+📖 **[Visualization Guide →](https://jtmenchaca.github.io/tidy-ts/)**
 
-**Chart Types**: scatter, line, bar, area  
-**Aesthetics**: color, size, series, tooltips, legends  
-**Styling**: 9 color schemes, custom themes, interactive features
+### Data I/O
 
-### Interactive Charts in Jupyter + Deno
-When using Deno and Jupyter notebooks, charts become interactive with hover tooltips:
+Read and write multiple formats with Zod schema validation for type safety.
 
 ```typescript
-// Interactive chart with tooltips (Jupyter only)
-const interactiveChart = salesData
-  .graph({
-    type: "scatter",
-    mappings: { x: "revenue", y: "quantity", color: "region" },
-    config: {
-      layout: {
-        tooltip: {
-          show: true, // default true
-        },
-      },
-      tooltip: {
-        fields: ["region", "revenue", "quantity", "profit", "product"],
-      },
-    },
-  });
+import { readCSV, readXLSX, readJSON, readParquet, readArrow, writeCSV, writeXLSX, writeParquet } from "@tidy-ts/dataframe";
+import { z } from "zod";
 
-interactiveChart // Chart displays interactively in Jupyter cell
-```
-
-## Other Features
-
-### Async Operations with Concurrency Control
-```typescript
-// Async data transformations with built-in concurrency control
-const asyncData = await sales
-  .mutate({
-    // Mix sync and async operations
-    revenue: r => r.quantity * r.price, // sync
-    market_data: async r => await fetchMarketData(r.region), // async
-  }, { concurrency: 3 }) // Limit concurrent operations
-  .filter(async r => await validateRegion(r.region)); // async filtering
-```
-
-### CSV, XLSX, JSON, Parquet, and Arrow Reading with Zod Validation
-```typescript
-import {readCSV, readXLSX, readJSON, readParquet, readArrow } from "@tidy-ts/dataframe"
-// Read CSV with schema validation and error handling
 const PersonSchema = z.object({
   name: z.string(),
   age: z.number(),
   city: z.string(),
-  score: z.number().nullable(),
 });
 
-const dataCSV = await readCSV(pathToCSV, PersonSchema); // uses @std/csv
-const dataXLSX = await readXLSX(pathToXLSX, PersonSchema); // zero-dependency XLSX parsing
-const dataJSON = await readJSON(pathToJSON, PersonSchema); // JSON parsing with schema validation
-const dataParquet = await readParquet(pathToParquet, PersonSchema); // uses hyparquet, only available server-side
-const dataArrow = await readArrow(pathToArrow, PersonSchema); // uses @uwdata/flechette
+// Read with schema validation
+const dataCSV = await readCSV(pathToCSV, PersonSchema);
+const dataXLSX = await readXLSX(pathToXLSX, PersonSchema);
+const dataParquet = await readParquet(pathToParquet, PersonSchema);
 
-// You can also write to CSV, XLSX, and Parquet
-import {writeCSV, writeXLSX, writeParquet} from "@tidy-ts/dataframe"
-
-const dataframe = createDataFrame([
-  { name: "Alice", age: 30, city: "New York", score: 95 },
-  { name: "Bob", age: 25, city: "San Francisco", score: 87 },
-])
-
+// Write
 await writeCSV(dataframe, pathToSaveCSV);
-await writeXLSX(dataframe, pathToSaveXLSX); // zero-dependency XLSX writing
-await writeXLSX(dataframe, pathToSaveXLSX, { sheet: "Summary" }); // write to specific sheet
-await writeParquet(dataframe, pathToSaveParquet); // uses hyparquet-writer, only available server-side
-// No support for writing Arrow
+await writeXLSX(dataframe, pathToSaveXLSX, { sheet: "Summary" });
+await writeParquet(dataframe, pathToSaveParquet);
 ```
 
-### Data Reshaping Operations
+📖 **[Data I/O Guide →](https://jtmenchaca.github.io/tidy-ts/data-io)**
+
+### Database Integration
+
+Seamlessly integrate with SQLite, Drizzle ORM, and other database libraries.
+
 ```typescript
-// Spread data from long to wide format
-const wideData = salesLong.pivotWider({
-  names_from: "product",
-  values_from: "sales",
-  expected_columns: ["Widget A", "Widget B"] // Needed to maintain typing, can be used without it though if necessary
-});
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { DatabaseSync } from "node:sqlite";
 
-// Transpose data with type safety
-const transposed = quarterlyData.transpose({ number_of_rows: 4 }); // Number of rows argument needed to help keep type safety
+// Raw SQLite
+const db = new DatabaseSync("data.db");
+const employees = db.prepare("SELECT * FROM employees").all();
+const employeesDF = createDataFrame(employees, EmployeeSchema);
 
-// Convert data from wide to long format
-const longData = wideData.pivotLonger({
-  cols: ["math", "science", "english"],
-  names_to: "subject",
-  values_to: "score"
-});
+// Drizzle ORM
+import { drizzle } from "npm:drizzle-orm/libsql";
+const employees = await db.select().from(employeesTable).all();
+const employeesDF = createDataFrame(employees); // Auto-inferred types
 ```
-## Core Operations
 
-### DataFrame Creation & Basics
-- `createDataFrame([...])` - Create from row objects with type inference
-- `createDataFrame({ columns: {...} })` - Create from column arrays
-- `readCSV(), readXLSX(), readJSON(), readParquet(), and readArrow()` - Read CSV, XLSX, parquet, and arrow all with Zod schema validation for strong typing
-- `writeCSV(), writeXLSX(), and writeParquet()` - Write DataFrames to CSV, XLSX, and Parquet formats
-- `nrows()`, `ncols()` - Dimensions
-- `columns()` - Schema info
-- `df.columnName` - Direct readonly access to column arrays (faster)
-- `extract()`, `extractHead()`, `extractTail()`, `extractNth()`, `extractSample()` - Extract mutable copies of column values
+📖 **[Database Integration →](https://jtmenchaca.github.io/tidy-ts/)**
 
-### Data Manipulation
-- `select()`, `drop()` - Column selection
-- `filter()`, `slice()` - Row filtering (sync & async)
-- `mutate()` - Add/transform columns with functions, arrays, or scalars (sync & async)
-- `arrange()` - Sort data
-- `distinct()` - Unique rows
-- `replaceNA()` - Handle missing data with smart imputation
+### Async Operations
 
-### Aggregation & Grouping
-- `groupBy()` - Group by columns
-- `summarize()` - Aggregate groups (sync & async)
-- `count()` - Count rows by grouping columns (shorthand for groupBy().summarize())
+Mix sync and async operations seamlessly with built-in concurrency control.
 
-### Joins & Reshaping
-- `innerJoin()`, `leftJoin()`, `rightJoin()`, `outerJoin()` - Multi-key joins
-- `pivotLonger()`, `pivotWider()` - Reshape data with type safety
-- `transpose()` - Flip rows and columns with type safety
-- `bindRows()` - Concatenate DataFrames
+```typescript
+const asyncData = await sales
+  .mutate({
+    revenue: r => r.quantity * r.price, // sync
+    market_data: async r => await fetchMarketData(r.region), // async
+  }, { concurrency: 3 })
+  .filter(async r => await validateRegion(r.region));
+```
 
+📖 **[Full Documentation →](https://jtmenchaca.github.io/tidy-ts/)**
 
 ## Documentation
-Visit the [documentation website](https://jtmenchaca.github.io/tidy-ts/) for tutorials and API reference.
+
+Visit the [documentation website](https://jtmenchaca.github.io/tidy-ts/) for:
+- Complete API reference
+- Detailed tutorials and examples
+- Time-series operations guide
+- Statistical analysis guide
+- Data visualization guide
+- And much more!
 
 ## Architecture
-- **Columnar Storage**: Memory-efficient column-major storage
-- **Lazy Evaluation**: Views use BitSet masks for copy-free operations
-- **WASM Integration**: Performance-critical operations in Rust/WASM
-- **Type Safety**: Full TypeScript type inference and checking
+
+Tidy-TS is built on a modern, performance-focused architecture:
+
+- **Columnar Storage**: Memory-efficient column-major storage for cache-friendly operations
+- **Lazy Evaluation**: Views use BitSet masks for copy-free filtering and sorting
+- **Copy-on-Write**: Share unmodified columns between DataFrames to minimize memory usage
+- **WASM Integration**: Performance-critical operations (joins, sorting, grouping) compiled to WebAssembly
+- **Type Safety**: Full TypeScript type inference and checking throughout the API
 
 ## Issues
+
 If you encounter any problems or have feature requests, please open an issue on [GitHub](https://github.com/jtmenchaca/tidy-ts/issues).
 
 ## License
+
 MIT

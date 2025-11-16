@@ -11,7 +11,11 @@ Deno.test("rolling() - rolling mean over last 3 rows", () => {
   ]);
 
   const result = df.mutate({
-    rolling_mean: stats.rolling("price", 3, stats.mean),
+    rolling_mean: stats.rolling({
+      column: "price",
+      windowSize: 3,
+      fn: stats.mean,
+    }),
   }).print();
 
   expect(result[0].rolling_mean).toBe(100); // single value
@@ -30,7 +34,11 @@ Deno.test("rolling() - rolling sum over last 2 rows", () => {
   ]);
 
   const result = df.mutate({
-    rolling_sum: stats.rolling("value", 2, stats.sum),
+    rolling_sum: stats.rolling({
+      column: "value",
+      windowSize: 2,
+      fn: stats.sum,
+    }),
   }).print();
 
   expect(result[0].rolling_sum).toBe(10); // single value
@@ -41,7 +49,7 @@ Deno.test("rolling() - rolling sum over last 2 rows", () => {
 
 Deno.test("rolling() - array-based usage", () => {
   const values = [1, 2, 3, 4, 5];
-  const result = stats.rolling(values, 3, stats.mean);
+  const result = stats.rolling({ values, windowSize: 3, fn: stats.mean });
 
   expect(result).toEqual([1, 1.5, 2, 3, 4]);
 });
@@ -55,7 +63,11 @@ Deno.test("rolling() - with max function", () => {
   ]);
 
   const result = df.mutate({
-    rolling_max: stats.rolling("value", 2, stats.max),
+    rolling_max: stats.rolling({
+      column: "value",
+      windowSize: 2,
+      fn: stats.max,
+    }),
   }).print();
 
   expect(result[0].rolling_max).toBe(10); // single value

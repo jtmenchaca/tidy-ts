@@ -48,9 +48,13 @@ Deno.test("stats.forwardFill() - can be used in rolling with wrapper", () => {
   // rolling() expects function to return single value
   // You can wrap forwardFill to return last value
   const result = df.mutate({
-    filled: stats.rolling("value", 2, (window) => {
-      const filled = stats.forwardFill(window);
-      return filled[filled.length - 1]; // Return last filled value
+    filled: stats.rolling({
+      column: "value",
+      windowSize: 2,
+      fn: (window) => {
+        const filled = stats.forwardFill(window);
+        return filled[filled.length - 1]; // Return last filled value
+      },
     }),
   });
 

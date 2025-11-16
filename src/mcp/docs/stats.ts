@@ -417,25 +417,27 @@ export const statsDocs: Record<string, DocEntry> = {
     name: "s.rolling",
     category: "stats",
     signature:
-      "s.rolling(columnName: string, windowSize: number, fn: (window: T[]) => R): (row, index, df) => R OR s.rolling(values: T[], windowSize: number, fn: (window: T[]) => R): R[]",
+      "s.rolling({ column: string, windowSize: number, fn: (window: T[]) => R }): (row, index, df) => R OR s.rolling({ values: T[], windowSize: number, fn: (window: T[]) => R }): R[]",
     description:
       "Apply a function over a rolling window of values. Supports both array-based usage and DataFrame column usage (for mutate operations). The window includes the current value and the previous (windowSize - 1) values.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "columnNameOrValues: Column name (for DataFrame) or array of values",
-      "windowSize: Size of the rolling window (number of values to include)",
-      "fn: Function to apply to each window - receives array of window values, returns single value",
+      "options: Configuration object",
+      "  - column: Column name (for DataFrame operations) OR",
+      "  - values: Array of values (for array-based usage)",
+      "  - windowSize: Size of the rolling window (number of values to include)",
+      "  - fn: Function to apply to each window - receives array of window values, returns single value",
     ],
     returns:
       "Array of results (array-based) OR function for mutate operations (column-based)",
     examples: [
       "// DataFrame column usage",
-      'df.mutate({ rolling_mean: s.rolling("price", 3, s.mean) })',
-      'df.mutate({ rolling_sum: s.rolling("value", 2, s.sum) })',
+      'df.mutate({ rolling_mean: s.rolling({ column: "price", windowSize: 3, fn: s.mean }) })',
+      'df.mutate({ rolling_sum: s.rolling({ column: "value", windowSize: 2, fn: s.sum }) })',
       "// Array-based usage",
-      "s.rolling([1, 2, 3, 4, 5], 3, s.mean) // [1, 1.5, 2, 3, 4]",
+      "s.rolling({ values: [1, 2, 3, 4, 5], windowSize: 3, fn: s.mean }) // [1, 1.5, 2, 3, 4]",
       "// Custom function",
-      'df.mutate({ rolling_max: s.rolling("value", 2, (window) => Math.max(...window)) })',
+      'df.mutate({ rolling_max: s.rolling({ column: "value", windowSize: 2, fn: (window) => Math.max(...window) }) })',
     ],
     related: ["cumsum", "cummean", "lag", "lead"],
     bestPractices: [
@@ -579,7 +581,7 @@ export const statsDocs: Record<string, DocEntry> = {
       "// Use in resample for upsampling",
       'df.resample("timestamp", "1H", { method: s.forwardFill })',
       "// Use with wrapper in rolling",
-      'df.mutate({ filled: s.rolling("value", 2, (window) => s.forwardFill(window)[window.length - 1]) })',
+      'df.mutate({ filled: s.rolling({ column: "value", windowSize: 2, fn: (window) => s.forwardFill(window)[window.length - 1] }) })',
     ],
     related: ["backwardFill", "lag", "lead"],
     bestPractices: [
@@ -643,7 +645,7 @@ export const statsDocs: Record<string, DocEntry> = {
       "// Linear interpolation with numbers\ns.interpolate([100, null, null, 200], [1, 2, 3, 4], 'linear')\n// Returns: [100, 133.33, 166.67, 200]",
       "// Spline interpolation\ns.interpolate([100, null, null, 200], [1, 2, 3, 4], 'spline')",
       "// With Dates\nconst dates = [new Date('2023-01-01'), null, null, new Date('2023-01-04')];\ns.interpolate(dates, [1, 2, 3, 4], 'linear')",
-      "// Use in mutate for DataFrame operations\ndf.mutate({\n  interpolated: s.rolling('value', 3, (window) => {\n    return s.interpolate(window, [1, 2, 3], 'linear')[1];\n  })\n})",
+      "// Use in mutate for DataFrame operations\ndf.mutate({\n  interpolated: s.rolling({ column: 'value', windowSize: 3, fn: (window) => {\n    return s.interpolate(window, [1, 2, 3], 'linear')[1];\n  } })\n})",
     ],
     related: ["forwardFill", "backwardFill", "lag", "lead"],
     bestPractices: [

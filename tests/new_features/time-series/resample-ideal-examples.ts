@@ -276,7 +276,11 @@ Deno.test("Ideal: Complete time-series analysis workflow", () => {
     })
     .mutate({
       daily_return: (row) => (row.close - row.open) / row.open,
-      volatility: stats.rolling("close", 20, stats.sd),
+      volatility: stats.rolling({
+        column: "close",
+        windowSize: 20,
+        fn: stats.sd,
+      }),
     })
     .filter((row) => row.daily_return !== null);
 
@@ -294,7 +298,7 @@ Deno.test("Ideal: Complete time-series analysis workflow", () => {
   //   })
   //   .mutate({
   //     daily_return: (row) => (row.close - row.open) / row.open,
-  //     volatility: stats.rolling("close", 20, stats.sd),
+  //     volatility: stats.rolling({ column: "close", windowSize: 20, fn: stats.sd }),
   //   })
   //   .filter(row => row.daily_return !== null);
 });
