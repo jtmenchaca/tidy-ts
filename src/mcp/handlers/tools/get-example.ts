@@ -3,21 +3,26 @@ import * as v from "valibot";
 import { getExample, listExamples } from "../../docs/examples.ts";
 
 export function get_example(server: TidyMcp) {
+  const schema = v.object({
+    use_case: v.pipe(
+      v.string(),
+      v.description(
+        'The use case or example name (e.g., "getting-started", "grouping-aggregation", "stats-descriptive")',
+      ),
+    ),
+  });
+
+  type Input = v.InferInput<typeof schema>;
+
   server.tool(
     {
       name: "tidy-get-example",
       description:
         "Get working code examples for specific use cases. Returns complete, self-contained runnable code examples.",
-      schema: v.object({
-        use_case: v.pipe(
-          v.string(),
-          v.description(
-            'The use case or example name (e.g., "getting-started", "grouping-aggregation", "stats-descriptive")',
-          ),
-        ),
-      }),
+      // deno-lint-ignore no-explicit-any
+      schema: schema as any,
     },
-    ({ use_case }) => {
+    ({ use_case }: Input) => {
       const example = getExample(use_case);
 
       if (!example) {

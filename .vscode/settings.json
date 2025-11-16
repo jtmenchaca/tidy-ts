@@ -6,6 +6,7 @@
     "src/dataframe",
     "src/ai",
     "src/shims",
+    "src/mcp",
     "tests/bugs",
     "tests/glm",
     "tests/gee",

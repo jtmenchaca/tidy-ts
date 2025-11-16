@@ -27,7 +27,15 @@ export function stringifyCell(v: unknown): string {
   }
   if (typeof v === "boolean") return v ? "true" : "false";
   if (v instanceof Date) {
-    return v.toISOString();
+    // Format date in local time (ISO-like format without Z suffix)
+    const year = v.getFullYear();
+    const month = String(v.getMonth() + 1).padStart(2, "0");
+    const day = String(v.getDate()).padStart(2, "0");
+    const hours = String(v.getHours()).padStart(2, "0");
+    const minutes = String(v.getMinutes()).padStart(2, "0");
+    const seconds = String(v.getSeconds()).padStart(2, "0");
+    const ms = String(v.getMilliseconds()).padStart(3, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}`;
   }
   try {
     return JSON.stringify(v);

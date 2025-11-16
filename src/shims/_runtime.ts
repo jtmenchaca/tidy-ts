@@ -12,6 +12,9 @@ import {
   pathToFileURL as _pathToFileURLFn,
 } from "node:url";
 
+// Import createRequire for ESM contexts (safe to import in all runtimes)
+import { createRequire } from "node:module";
+
 // Lazy-loaded Node.js modules
 let _fs: typeof import("node:fs/promises") | null = null;
 let _fsSync: typeof import("node:fs") | null = null;
@@ -56,7 +59,7 @@ if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
       _fsSync = nodeFs;
     } else {
       // ESM context - process is available on globalThis
-      // Other modules will be loaded lazily via ensureNodeModules()
+      // fsSync will be lazy-loaded via ensureFsSyncSync() when needed
       // @ts-ignore - process may not be typed in all environments
       if (typeof globalThis.process !== "undefined") {
         // @ts-ignore - process may not be typed in all environments
@@ -127,14 +130,37 @@ export function getPathToFileURL(): typeof import("node:url").pathToFileURL {
 }
 
 /**
- * Get Node.js fs sync module
+ * Get Node.js fs sync module (lazy-loads if needed)
  */
 export function getFsSync(): typeof import("node:fs") | null {
+  if (
+    !_fsSync &&
+    (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)
+  ) {
+    try {
+      // Try to use require if available (CommonJS)
+      // @ts-ignore - require may not be typed in all environments
+      if (typeof require !== "undefined") {
+        // @ts-ignore - require may not be typed in all environments
+        _fsSync = require("node:fs");
+        return _fsSync;
+      }
+      // ESM context - use createRequire for synchronous loading
+      const requireFn = createRequire(import.meta.url);
+      // @ts-ignore - require may not be typed in all environments
+      _fsSync = requireFn("node:fs");
+      return _fsSync;
+    } catch {
+      // If synchronous loading fails, return null
+      // The caller should handle this gracefully
+      return null;
+    }
+  }
   return _fsSync;
 }
 
 /**
- * Ensure fs sync module is loaded
+ * Ensure fs sync module is loaded (async version)
  */
 export async function ensureFsSync(): Promise<void> {
   if (

@@ -4,6 +4,8 @@ import { median } from "./descriptive/central-tendency/median.ts";
 import { mode } from "./descriptive/central-tendency/mode.ts";
 import { min } from "./aggregate/min.ts";
 import { max } from "./aggregate/max.ts";
+import { first } from "./aggregate/first.ts";
+import { last } from "./aggregate/last.ts";
 import { product } from "./aggregate/product.ts";
 import { range } from "./descriptive/spread/range.ts";
 import { variance } from "./descriptive/spread/variance.ts";
@@ -24,6 +26,10 @@ import { cummean } from "./cumulative/cummean.ts";
 import { cummax } from "./cumulative/cummax.ts";
 import { lag } from "./window/lag.ts";
 import { lead } from "./window/lead.ts";
+import { rolling } from "./window/rolling.ts";
+import { forwardFill } from "./window/forward-fill.ts";
+import { backwardFill } from "./window/backward-fill.ts";
+import { interpolate } from "./window/interpolate.ts";
 import { round } from "./transformation/round.ts";
 import { floor } from "./transformation/floor.ts";
 import { ceiling } from "./transformation/ceiling.ts";
@@ -108,6 +114,10 @@ export const stats: {
   readonly min: typeof min;
   /** Find the maximum value */
   readonly max: typeof max;
+  /** Get the first value in an array */
+  readonly first: typeof first;
+  /** Get the last value in an array */
+  readonly last: typeof last;
   /** Calculate the product of all values */
   readonly product: typeof product;
   /** Calculate the range (max - min) */
@@ -148,6 +158,14 @@ export const stats: {
   readonly lag: typeof lag;
   /** Shift values backward (lead) */
   readonly lead: typeof lead;
+  /** Apply function over rolling window */
+  readonly rolling: typeof rolling;
+  /** Forward fill null/undefined values in an array */
+  readonly forwardFill: typeof forwardFill;
+  /** Backward fill null/undefined values in an array */
+  readonly backwardFill: typeof backwardFill;
+  /** Interpolate null/undefined values using linear or spline interpolation */
+  readonly interpolate: typeof interpolate;
   /** Round values to specified decimal places */
   readonly round: typeof round;
   /** Round values down to nearest integer */
@@ -515,6 +533,8 @@ export const stats: {
   mode,
   min,
   max,
+  first,
+  last,
   product,
 
   // Spread statistics
@@ -543,6 +563,10 @@ export const stats: {
   normalize,
   lag,
   lead,
+  rolling,
+  forwardFill,
+  backwardFill,
+  interpolate,
   round,
   floor,
   ceiling,

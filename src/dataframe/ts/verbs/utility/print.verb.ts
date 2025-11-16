@@ -2,6 +2,21 @@
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 
 /**
+ * Format a Date in local time (ISO-like format without Z suffix).
+ * Shows the date/time as it appears in local timezone.
+ */
+function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  const ms = String(date.getMilliseconds()).padStart(3, "0");
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${ms}`;
+}
+
+/**
  * Print DataFrame contents to console with optional formatting.
  *
  * Displays a formatted table representation of the DataFrame in the console.
@@ -186,7 +201,7 @@ function printTable(
         const value = (row as any)[col];
         if (value === null) return "(null)".length;
         if (value === undefined) return "(undefined)".length;
-        if (value instanceof Date) return value.toISOString().length;
+        if (value instanceof Date) return formatDateLocal(value).length;
         return String(value).length;
       }),
     );
@@ -227,7 +242,8 @@ function printTable(
       } else if (value === undefined) {
         displayValue = "(undefined)";
       } else if (value instanceof Date) {
-        displayValue = value.toISOString();
+        // Format date in local time (ISO-like format without Z)
+        displayValue = formatDateLocal(value);
       } else {
         displayValue = String(value);
       }

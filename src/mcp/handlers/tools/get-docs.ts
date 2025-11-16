@@ -3,21 +3,26 @@ import * as v from "valibot";
 import { DOCS, getDocumentation } from "../../docs/index.ts";
 
 export function get_docs(server: TidyMcp) {
+  const schema = v.object({
+    topic: v.pipe(
+      v.union([v.string(), v.array(v.string())]),
+      v.description(
+        'Operation name(s) to get documentation for (e.g., "mutate", "groupBy", "mean", ["filter", "select"])',
+      ),
+    ),
+  });
+
+  type Input = v.InferInput<typeof schema>;
+
   server.tool(
     {
       name: "tidy-get-docs",
       description:
         "Get detailed documentation for specific DataFrame operations or statistics functions. Supports single topic or array of topics.",
-      schema: v.object({
-        topic: v.pipe(
-          v.union([v.string(), v.array(v.string())]),
-          v.description(
-            'Operation name(s) to get documentation for (e.g., "mutate", "groupBy", "mean", ["filter", "select"])',
-          ),
-        ),
-      }),
+      // deno-lint-ignore no-explicit-any
+      schema: schema as any,
     },
-    ({ topic }) => {
+    ({ topic }: Input) => {
       const topics = Array.isArray(topic) ? topic : [topic];
 
       const results = topics.map((t) => {

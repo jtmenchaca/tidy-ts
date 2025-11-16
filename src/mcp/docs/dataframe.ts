@@ -626,7 +626,44 @@ export const dataframeDocs: Record<string, DocEntry> = {
     examples: [
       'df.outerJoin(other, { on: "id" })',
     ],
-    related: ["innerJoin", "leftJoin", "rightJoin"],
+    related: ["innerJoin", "leftJoin", "rightJoin", "asofJoin"],
+  },
+
+  asofJoin: {
+    name: "asofJoin",
+    category: "dataframe",
+    signature:
+      "asofJoin<OtherRow extends object, K extends keyof T & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest', tolerance?: number, group_by?: (keyof T & keyof OtherRow)[] }): DataFrame<...>",
+    description:
+      "Join DataFrames by nearest key match (as-of join). Joins on a sorted column (typically timestamps), matching each left row with the 'nearest' right row based on direction. Useful for time-series data where exact matches aren't required.",
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "other: DataFrame to join with",
+      "by: Column name to join on (must exist in both DataFrames)",
+      "options.direction: 'backward' (default) - match prior value, 'forward' - match next value, 'nearest' - closest value",
+      "options.tolerance: Optional maximum time difference allowed (in milliseconds for Dates)",
+      "options.group_by: Optional columns to group by before matching (e.g., by symbol)",
+    ],
+    returns: "DataFrame with columns from both DataFrames",
+    examples: [
+      '// Join trades to nearest prior quotes (backward)\nconst trades = createDataFrame([\n  { time: 1, symbol: "AAPL", quantity: 100 },\n  { time: 3, symbol: "AAPL", quantity: 200 },\n]);\nconst quotes = createDataFrame([\n  { time: 0, symbol: "AAPL", price: 150.0 },\n  { time: 2, symbol: "AAPL", price: 151.0 },\n]);\ntrades.asofJoin(quotes, "time", { direction: "backward" })\n// Matches trade at time 1 to quote at time 0, trade at time 3 to quote at time 2',
+      '// Forward-looking join\nconst events = createDataFrame([\n  { timestamp: 1, event: "start" },\n]);\nconst logs = createDataFrame([\n  { timestamp: 2, log: "processing" },\n]);\nevents.asofJoin(logs, "timestamp", { direction: "forward" })',
+      '// Join with tolerance (within 1000ms)\ntrades.asofJoin(quotes, "time", {\n  direction: "nearest",\n  tolerance: 1000\n})',
+      '// Group by symbol before matching\ntrades.asofJoin(quotes, "time", {\n  direction: "backward",\n  group_by: ["symbol"]\n})',
+    ],
+    related: ["innerJoin", "leftJoin", "resample"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where exact timestamp matches aren't required",
+      "✓ GOOD: Backward direction (default) is most common - matches to prior observations",
+      "✓ GOOD: Use tolerance to limit how far back/forward to look",
+      "✓ GOOD: Use group_by when joining multiple time series (e.g., multiple stocks)",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using on unsorted data - asofJoin requires sorted by column",
+      "❌ BAD: Expecting exact matches - this is for nearest matches",
+    ],
   },
 
   // Reshaping
@@ -758,6 +795,62 @@ export const dataframeDocs: Record<string, DocEntry> = {
     ],
   },
 
+  resample: {
+    name: "resample",
+    category: "dataframe",
+    signature:
+      "resample(timeColumn: keyof T, frequency: Frequency, options: ResampleOptions<T>): DataFrame<...>",
+    description:
+      "Resample time-series data to a different frequency. Supports both downsampling (aggregating) and upsampling (filling). The time column must be of type Date (or Date | null). Downsampling groups rows by time buckets and applies aggregation functions. Upsampling generates a time sequence and fills missing values.",
+    imports: [
+      'import { createDataFrame, stats } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "timeColumn: Name of the Date column to use for resampling",
+      "frequency: Target frequency string or object:",
+      "  - Seconds: '1S', '5S', '15S', '30S'",
+      "  - Minutes: '1min', '5min', '15min', '30min'",
+      "  - Hours: '1H'",
+      "  - Days: '1D'",
+      "  - Weeks: '1W'",
+      "  - Months: '1M'",
+      "  - Quarters: '1Q'",
+      "  - Years: '1Y'",
+      "  - Custom: number (milliseconds) or { value: number, unit: 'ms' | 's' | 'min' | 'h' | 'd' | 'w' | 'M' | 'Q' | 'Y' }",
+      "options: Resampling options object:",
+      "  - For downsampling: { columnName: aggregationFunction, ... }",
+      "    * Use stats.mean, stats.sum, stats.max, stats.min, stats.first, stats.last",
+      "    * Can create new columns (e.g., { open: stats.first, high: stats.max, low: stats.min, close: stats.last })",
+      "  - For upsampling: { method: fillFunction } or { columnName: fillFunction, ... }",
+      "    * Use stats.forwardFill or stats.backwardFill",
+      "    * Or specify per-column: { price: stats.forwardFill, volume: stats.backwardFill }",
+    ],
+    returns: "DataFrame with resampled data",
+    examples: [
+      '// Downsample hourly to daily\nconst hourly = createDataFrame([\n  { timestamp: new Date("2023-01-01T10:00:00"), price: 100, volume: 10 },\n  { timestamp: new Date("2023-01-01T11:00:00"), price: 110, volume: 20 },\n  { timestamp: new Date("2023-01-01T12:00:00"), price: 120, volume: 30 },\n  { timestamp: new Date("2023-01-02T10:00:00"), price: 130, volume: 40 },\n]);\nconst daily = hourly.resample("timestamp", "1D", {\n  price: stats.mean,\n  volume: stats.sum\n})\n// Result: 2 rows (one per day)\n// Day 1: price = 110 (mean of 100, 110, 120), volume = 60 (sum of 10, 20, 30)\n// Day 2: price = 130, volume = 40',
+      '// Downsample with OHLC pattern (Open, High, Low, Close)\nconst ohlc = df.resample("timestamp", "1D", {\n  open: stats.first,  // First price in period\n  high: stats.max,    // Highest price\n  low: stats.min,     // Lowest price\n  close: stats.last   // Last price\n})',
+      '// Upsample daily to hourly with forward fill\nconst daily = createDataFrame([\n  { timestamp: new Date("2023-01-01T10:00:00"), value: 100 },\n  { timestamp: new Date("2023-01-01T12:00:00"), value: 200 },\n]);\nconst hourly = daily.resample("timestamp", "1H", {\n  method: stats.forwardFill\n})\n// Result: 3 rows (10:00, 11:00, 12:00)\n// 10:00: value = 100\n// 11:00: value = 100 (forward filled)\n// 12:00: value = 200',
+      '// Upsample with per-column fill methods\nconst hourly = daily.resample("timestamp", "1H", {\n  price: stats.forwardFill,\n  volume: stats.backwardFill\n})',
+      '// Works with grouped DataFrames\nconst result = df.groupBy("symbol").resample("timestamp", "1D", {\n  price: stats.mean\n})',
+      '// Custom frequency\nconst result = df.resample("timestamp", { value: 30, unit: "min" }, {\n  price: stats.mean\n})',
+    ],
+    related: ["fillForward", "fillBackward", "groupBy", "summarize"],
+    bestPractices: [
+      "✓ GOOD: Use downsampling when converting from higher to lower frequency (e.g., hourly → daily)",
+      "✓ GOOD: Use upsampling when converting from lower to higher frequency (e.g., daily → hourly)",
+      "✓ GOOD: The time column must be of type Date (or Date | null) - TypeScript enforces this",
+      "✓ GOOD: For downsampling, use aggregation functions like stats.mean, stats.sum, stats.max, stats.min, stats.first, stats.last",
+      "✓ GOOD: For upsampling, use fill methods like stats.forwardFill or stats.backwardFill",
+      "✓ GOOD: Preserves grouping when called on grouped DataFrames",
+      "✓ GOOD: Can create new columns during downsampling (e.g., OHLC pattern)",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using non-Date column for timeColumn - TypeScript will error",
+      "❌ BAD: Using string shortcuts for aggregation/fill methods - use function references (stats.mean, not 'mean')",
+      "❌ BAD: Trying to resample empty DataFrame - TypeScript will error",
+    ],
+  },
+
   // Missing Data
   replaceNA: {
     name: "replaceNA",
@@ -840,6 +933,99 @@ export const dataframeDocs: Record<string, DocEntry> = {
       'df.removeUndefined("email") // Remove rows with undefined email',
     ],
     related: ["removeNA", "removeNull", "replaceNA"],
+  },
+
+  fillForward: {
+    name: "fillForward",
+    category: "dataframe",
+    signature:
+      "fillForward(...columnNames: (keyof T & string)[]): DataFrame<T>",
+    description:
+      "Forward fill null/undefined values in specified columns. Replaces null/undefined values with the last non-null value before them. Values at the start that are null/undefined remain null/undefined.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "...columnNames: Column name(s) to forward fill",
+    ],
+    returns: "DataFrame with forward-filled values",
+    examples: [
+      '// Forward fill a single column\nconst df = createDataFrame([\n  { value: 10 },\n  { value: null },\n  { value: null },\n  { value: 20 },\n  { value: null },\n]);\nconst filled = df.fillForward("value")\n// Result:\n// { value: 10 }\n// { value: 10 }  // filled from previous\n// { value: 10 }  // filled from previous\n// { value: 20 }\n// { value: 20 }  // filled from previous',
+      '// Forward fill multiple columns\ndf.fillForward("price", "volume")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: 100 },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: null },\n  { timestamp: new Date("2023-01-04"), price: 110 },\n]);\ntimeSeries.fillForward("price")',
+    ],
+    related: ["fillBackward", "replaceNA", "removeNA"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to carry forward the last known value",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Creates a new DataFrame without modifying the original",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the start to be filled - they remain null/undefined",
+      "❌ BAD: Using on non-time-series data where backward fill might be more appropriate",
+    ],
+  },
+
+  fillBackward: {
+    name: "fillBackward",
+    category: "dataframe",
+    signature:
+      "fillBackward(...columnNames: (keyof T & string)[]): DataFrame<T>",
+    description:
+      "Backward fill null/undefined values in specified columns. Replaces null/undefined values with the next non-null value after them. Values at the end that are null/undefined remain null/undefined.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "...columnNames: Column name(s) to backward fill",
+    ],
+    returns: "DataFrame with backward-filled values",
+    examples: [
+      '// Backward fill a single column\nconst df = createDataFrame([\n  { value: null },\n  { value: null },\n  { value: 10 },\n  { value: null },\n  { value: 20 },\n]);\nconst filled = df.fillBackward("value")\n// Result:\n// { value: 10 }  // filled from next\n// { value: 10 }  // filled from next\n// { value: 10 }\n// { value: 20 }  // filled from next\n// { value: 20 }',
+      '// Backward fill multiple columns\ndf.fillBackward("price", "volume")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: null },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: 100 },\n  { timestamp: new Date("2023-01-04"), price: null },\n]);\ntimeSeries.fillBackward("price")',
+    ],
+    related: ["fillForward", "replaceNA", "removeNA"],
+    bestPractices: [
+      "✓ GOOD: Use when you want to fill missing values from future observations",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Creates a new DataFrame without modifying the original",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the end to be filled - they remain null/undefined",
+      "❌ BAD: Using on non-time-series data where forward fill might be more appropriate",
+    ],
+  },
+
+  interpolate: {
+    name: "interpolate",
+    category: "dataframe",
+    signature:
+      "interpolate<ValueCol extends keyof T & string, XCol extends keyof T & string>(valueColumn: ValueCol, xColumn: XCol, method: 'linear' | 'spline'): DataFrame<T>",
+    description:
+      "Interpolate null/undefined values in a column using linear or spline interpolation. Requires an x-axis column to define spacing between points. Interpolates missing values by estimating them based on surrounding known values.",
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "valueColumn: Column name containing values to interpolate (numbers or Dates)",
+      "xColumn: Column name containing x-axis values (numeric or Date, required)",
+      "method: Interpolation method - 'linear' or 'spline'",
+    ],
+    returns: "DataFrame with interpolated values replacing nulls",
+    examples: [
+      '// Linear interpolation with numeric x-axis\nconst df = createDataFrame([\n  { timestamp: 1, value: 100 },\n  { timestamp: 2, value: null },\n  { timestamp: 3, value: null },\n  { timestamp: 4, value: 200 },\n]);\ndf.interpolate("value", "timestamp", "linear")\n// Results in interpolated values for the null entries',
+      '// Linear interpolation with Date x-axis\ndf.interpolate("price", "date", "linear")',
+      '// Spline interpolation\ndf.interpolate("temperature", "timestamp", "spline")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: 100 },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: null },\n  { timestamp: new Date("2023-01-04"), price: 110 },\n]);\ntimeSeries.interpolate("price", "timestamp", "linear")',
+    ],
+    related: ["fillForward", "fillBackward", "resample"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to estimate missing values based on surrounding data",
+      "✓ GOOD: Linear interpolation is faster and works with fewer points",
+      "✓ GOOD: Spline interpolation provides smoother curves but requires at least 4 points",
+      "✓ GOOD: Only interpolates values that have both previous and next non-null values",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting leading/trailing nulls to be interpolated - they remain null (no bounds)",
+      "❌ BAD: Using spline with fewer than 4 points - falls back to linear",
+    ],
   },
 
   // Profiling

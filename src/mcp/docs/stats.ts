@@ -139,7 +139,63 @@ export const statsDocs: Record<string, DocEntry> = {
       "✓ GOOD: For arrays with nulls, returns number | null - handle null appropriately",
       "✓ GOOD: Use removeNA: true if you want guaranteed number return",
     ],
-    related: ["max", "cummin"],
+    related: ["max", "cummin", "first", "last"],
+  },
+
+  first: {
+    name: "s.first",
+    category: "stats",
+    signature: "s.first(values: T[] | T, removeNA?: boolean): T | null",
+    description:
+      "Get the first value from an array. Returns the first element, or null if array is empty. Supports single values, dates, and arrays with nulls (when removeNA=true).",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "values: Array of values, single value, or Date",
+      "removeNA: If true, returns first non-null value; if false (default), returns first element (may be null)",
+    ],
+    returns: "T | null - First value or null if empty",
+    examples: [
+      "s.first([1, 2, 3, 4, 5]) // 1",
+      "s.first([null, 2, 3], false) // null",
+      "s.first([null, 2, 3], true) // 2",
+      "s.first(42) // 42",
+      "s.first([new Date('2023-01-01'), new Date('2023-01-02')]) // Date('2023-01-01')",
+      "df.summarize({ first_price: group => s.first(group.price) })",
+    ],
+    related: ["last", "min", "max"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data to get opening values (e.g., OHLC pattern)",
+      "✓ GOOD: Use removeNA=true to skip nulls at the start",
+      "✓ GOOD: Works with dates, numbers, and other types",
+    ],
+  },
+
+  last: {
+    name: "s.last",
+    category: "stats",
+    signature: "s.last(values: T[] | T, removeNA?: boolean): T | null",
+    description:
+      "Get the last value from an array. Returns the last element, or null if array is empty. Supports single values, dates, and arrays with nulls (when removeNA=true).",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "values: Array of values, single value, or Date",
+      "removeNA: If true, returns last non-null value; if false (default), returns last element (may be null)",
+    ],
+    returns: "T | null - Last value or null if empty",
+    examples: [
+      "s.last([1, 2, 3, 4, 5]) // 5",
+      "s.last([1, 2, null], false) // null",
+      "s.last([1, 2, null], true) // 2",
+      "s.last(42) // 42",
+      "s.last([new Date('2023-01-01'), new Date('2023-01-02')]) // Date('2023-01-02')",
+      "df.summarize({ last_price: group => s.last(group.price) })",
+    ],
+    related: ["first", "min", "max"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data to get closing values (e.g., OHLC pattern)",
+      "✓ GOOD: Use removeNA=true to skip nulls at the end",
+      "✓ GOOD: Works with dates, numbers, and other types",
+    ],
   },
 
   mode: {
@@ -354,7 +410,43 @@ export const statsDocs: Record<string, DocEntry> = {
       "s.cummean([1, 2, 3, 4])  // [1, 1.5, 2, 2.5]",
       "s.cummean([1, null, 3, 4, 5], true)  // [1, 1, 2, 2.5, 3]",
     ],
-    related: ["cumsum", "mean"],
+    related: ["cumsum", "mean", "rolling"],
+  },
+
+  rolling: {
+    name: "s.rolling",
+    category: "stats",
+    signature:
+      "s.rolling(columnName: string, windowSize: number, fn: (window: T[]) => R): (row, index, df) => R OR s.rolling(values: T[], windowSize: number, fn: (window: T[]) => R): R[]",
+    description:
+      "Apply a function over a rolling window of values. Supports both array-based usage and DataFrame column usage (for mutate operations). The window includes the current value and the previous (windowSize - 1) values.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "columnNameOrValues: Column name (for DataFrame) or array of values",
+      "windowSize: Size of the rolling window (number of values to include)",
+      "fn: Function to apply to each window - receives array of window values, returns single value",
+    ],
+    returns:
+      "Array of results (array-based) OR function for mutate operations (column-based)",
+    examples: [
+      "// DataFrame column usage",
+      'df.mutate({ rolling_mean: s.rolling("price", 3, s.mean) })',
+      'df.mutate({ rolling_sum: s.rolling("value", 2, s.sum) })',
+      "// Array-based usage",
+      "s.rolling([1, 2, 3, 4, 5], 3, s.mean) // [1, 1.5, 2, 3, 4]",
+      "// Custom function",
+      'df.mutate({ rolling_max: s.rolling("value", 2, (window) => Math.max(...window)) })',
+    ],
+    related: ["cumsum", "cummean", "lag", "lead"],
+    bestPractices: [
+      "✓ GOOD: Use for moving averages, rolling sums, and other window-based calculations",
+      "✓ GOOD: Window size determines how many previous values to include",
+      "✓ GOOD: First few values use smaller windows (partial windows)",
+      "✓ GOOD: Works with any aggregation function (s.mean, s.sum, s.max, s.min, etc.)",
+    ],
+    antiPatterns: [
+      "❌ BAD: Manually slicing arrays and applying functions - use s.rolling() instead",
+    ],
   },
 
   cumprod: {
@@ -466,7 +558,105 @@ export const statsDocs: Record<string, DocEntry> = {
       "// Column-based usage in mutate",
       'df.mutate({ next_sales: s.lead("sales", 1, 0) })',
     ],
-    related: ["lag"],
+    related: ["lag", "forwardFill", "backwardFill"],
+  },
+
+  forwardFill: {
+    name: "s.forwardFill",
+    category: "stats",
+    signature: "s.forwardFill(values: T[]): T[]",
+    description:
+      "Forward fill null/undefined values in an array. Replaces null/undefined values with the last non-null value before them. Values at the start that are null/undefined remain null/undefined. Returns a new array with filled values.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "values: Array of values (may contain null/undefined)",
+    ],
+    returns: "T[] - Array with forward-filled values",
+    examples: [
+      "s.forwardFill([10, null, null, 20, null]) // [10, 10, 10, 20, 20]",
+      "s.forwardFill([10, undefined, null, 20]) // [10, 10, 10, 20]",
+      "s.forwardFill([null, null, 10, 20]) // [null, null, 10, 20]",
+      "// Use in resample for upsampling",
+      'df.resample("timestamp", "1H", { method: s.forwardFill })',
+      "// Use with wrapper in rolling",
+      'df.mutate({ filled: s.rolling("value", 2, (window) => s.forwardFill(window)[window.length - 1]) })',
+    ],
+    related: ["backwardFill", "lag", "lead"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to carry forward the last known value",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Returns a new array - does not modify the original",
+      "✓ GOOD: Use with resample() for upsampling time-series data",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the start to be filled - they remain null/undefined",
+    ],
+  },
+
+  backwardFill: {
+    name: "s.backwardFill",
+    category: "stats",
+    signature: "s.backwardFill(values: T[]): T[]",
+    description:
+      "Backward fill null/undefined values in an array. Replaces null/undefined values with the next non-null value after them. Values at the end that are null/undefined remain null/undefined. Returns a new array with filled values.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "values: Array of values (may contain null/undefined)",
+    ],
+    returns: "T[] - Array with backward-filled values",
+    examples: [
+      "s.backwardFill([null, null, 10, null, 20]) // [10, 10, 10, 20, 20]",
+      "s.backwardFill([null, undefined, 10, 20]) // [10, 10, 10, 20]",
+      "s.backwardFill([10, 20, null, null]) // [10, 20, null, null]",
+      "// Use in resample for upsampling",
+      'df.resample("timestamp", "1H", { method: s.backwardFill })',
+      "// Use with wrapper in resample",
+      'df.resample("timestamp", "1D", { price: (values) => s.backwardFill(values)[values.length - 1] })',
+    ],
+    related: ["forwardFill", "lag", "lead"],
+    bestPractices: [
+      "✓ GOOD: Use when you want to fill missing values from future observations",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Returns a new array - does not modify the original",
+      "✓ GOOD: Use with resample() for upsampling time-series data",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the end to be filled - they remain null/undefined",
+    ],
+  },
+
+  interpolate: {
+    name: "s.interpolate",
+    category: "stats",
+    signature:
+      "s.interpolate<T extends number | Date>(values: (T | null | undefined)[], xValues: (number | Date)[], method: 'linear' | 'spline'): T[]",
+    description:
+      "Interpolate null/undefined values in an array using linear or spline interpolation. Requires an x-axis array to define spacing between points. Interpolates missing values by estimating them based on surrounding known values. Unlike forward/backward fill (which copy values), interpolation calculates intermediate values using mathematical methods.",
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "values: Array of values (may contain nulls) - numbers or Dates",
+      "xValues: Array of numeric or Date values defining x-axis spacing (required)",
+      "method: Interpolation method - 'linear' or 'spline'",
+    ],
+    returns: "T[] - Array with interpolated values (same length as input)",
+    examples: [
+      "// Linear interpolation with numbers\ns.interpolate([100, null, null, 200], [1, 2, 3, 4], 'linear')\n// Returns: [100, 133.33, 166.67, 200]",
+      "// Spline interpolation\ns.interpolate([100, null, null, 200], [1, 2, 3, 4], 'spline')",
+      "// With Dates\nconst dates = [new Date('2023-01-01'), null, null, new Date('2023-01-04')];\ns.interpolate(dates, [1, 2, 3, 4], 'linear')",
+      "// Use in mutate for DataFrame operations\ndf.mutate({\n  interpolated: s.rolling('value', 3, (window) => {\n    return s.interpolate(window, [1, 2, 3], 'linear')[1];\n  })\n})",
+    ],
+    related: ["forwardFill", "backwardFill", "lag", "lead"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to estimate missing values based on surrounding data",
+      "✓ GOOD: Linear interpolation is faster and works with fewer points",
+      "✓ GOOD: Spline interpolation provides smoother curves but requires at least 4 points",
+      "✓ GOOD: Only interpolates values that have both previous and next non-null values",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting leading/trailing nulls to be interpolated - they remain null (no bounds)",
+      "❌ BAD: Using spline with fewer than 4 points - falls back to linear",
+      "❌ BAD: Arrays must have same length - values and xValues must match",
+    ],
   },
 
   // Ranking Functions

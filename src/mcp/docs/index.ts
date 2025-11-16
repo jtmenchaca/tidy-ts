@@ -1,3 +1,5 @@
+import { statsDocs } from "./stats.ts";
+
 export interface DocEntry {
   name: string;
   category: string;
@@ -611,7 +613,44 @@ export const DOCS: Record<string, DocEntry> = {
     examples: [
       'df.outerJoin(other, { on: "id" })',
     ],
-    related: ["innerJoin", "leftJoin", "rightJoin"],
+    related: ["innerJoin", "leftJoin", "rightJoin", "asofJoin"],
+  },
+
+  asofJoin: {
+    name: "asofJoin",
+    category: "dataframe",
+    signature:
+      "asofJoin<OtherRow extends object, K extends keyof T & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest', tolerance?: number, group_by?: (keyof T & keyof OtherRow)[] }): DataFrame<...>",
+    description:
+      "Join DataFrames by nearest key match (as-of join). Joins on a sorted column (typically timestamps), matching each left row with the 'nearest' right row based on direction. Useful for time-series data where exact matches aren't required.",
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "other: DataFrame to join with",
+      "by: Column name to join on (must exist in both DataFrames)",
+      "options.direction: 'backward' (default) - match prior value, 'forward' - match next value, 'nearest' - closest value",
+      "options.tolerance: Optional maximum time difference allowed (in milliseconds for Dates)",
+      "options.group_by: Optional columns to group by before matching (e.g., by symbol)",
+    ],
+    returns: "DataFrame with columns from both DataFrames",
+    examples: [
+      '// Join trades to nearest prior quotes (backward)\nconst trades = createDataFrame([\n  { time: 1, symbol: "AAPL", quantity: 100 },\n  { time: 3, symbol: "AAPL", quantity: 200 },\n]);\nconst quotes = createDataFrame([\n  { time: 0, symbol: "AAPL", price: 150.0 },\n  { time: 2, symbol: "AAPL", price: 151.0 },\n]);\ntrades.asofJoin(quotes, "time", { direction: "backward" })\n// Matches trade at time 1 to quote at time 0, trade at time 3 to quote at time 2',
+      '// Forward-looking join\nconst events = createDataFrame([\n  { timestamp: 1, event: "start" },\n]);\nconst logs = createDataFrame([\n  { timestamp: 2, log: "processing" },\n]);\nevents.asofJoin(logs, "timestamp", { direction: "forward" })',
+      '// Join with tolerance (within 1000ms)\ntrades.asofJoin(quotes, "time", {\n  direction: "nearest",\n  tolerance: 1000\n})',
+      '// Group by symbol before matching\ntrades.asofJoin(quotes, "time", {\n  direction: "backward",\n  group_by: ["symbol"]\n})',
+    ],
+    related: ["innerJoin", "leftJoin", "resample"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where exact timestamp matches aren't required",
+      "✓ GOOD: Backward direction (default) is most common - matches to prior observations",
+      "✓ GOOD: Use tolerance to limit how far back/forward to look",
+      "✓ GOOD: Use group_by when joining multiple time series (e.g., multiple stocks)",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using on unsorted data - asofJoin requires sorted by column",
+      "❌ BAD: Expecting exact matches - this is for nearest matches",
+    ],
   },
 
   // Reshaping
@@ -743,6 +782,62 @@ export const DOCS: Record<string, DocEntry> = {
     ],
   },
 
+  resample: {
+    name: "resample",
+    category: "dataframe",
+    signature:
+      "resample(timeColumn: keyof T, frequency: Frequency, options: ResampleOptions<T>): DataFrame<...>",
+    description:
+      "Resample time-series data to a different frequency. Supports both downsampling (aggregating) and upsampling (filling). The time column must be of type Date (or Date | null). Downsampling groups rows by time buckets and applies aggregation functions. Upsampling generates a time sequence and fills missing values.",
+    imports: [
+      'import { createDataFrame, stats } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "timeColumn: Name of the Date column to use for resampling",
+      "frequency: Target frequency string or object:",
+      "  - Seconds: '1S', '5S', '15S', '30S'",
+      "  - Minutes: '1min', '5min', '15min', '30min'",
+      "  - Hours: '1H'",
+      "  - Days: '1D'",
+      "  - Weeks: '1W'",
+      "  - Months: '1M'",
+      "  - Quarters: '1Q'",
+      "  - Years: '1Y'",
+      "  - Custom: number (milliseconds) or { value: number, unit: 'ms' | 's' | 'min' | 'h' | 'd' | 'w' | 'M' | 'Q' | 'Y' }",
+      "options: Resampling options object:",
+      "  - For downsampling: { columnName: aggregationFunction, ... }",
+      "    * Use stats.mean, stats.sum, stats.max, stats.min, stats.first, stats.last",
+      "    * Can create new columns (e.g., { open: stats.first, high: stats.max, low: stats.min, close: stats.last })",
+      "  - For upsampling: { method: fillFunction } or { columnName: fillFunction, ... }",
+      "    * Use stats.forwardFill or stats.backwardFill",
+      "    * Or specify per-column: { price: stats.forwardFill, volume: stats.backwardFill }",
+    ],
+    returns: "DataFrame with resampled data",
+    examples: [
+      '// Downsample hourly to daily\nconst hourly = createDataFrame([\n  { timestamp: new Date("2023-01-01T10:00:00"), price: 100, volume: 10 },\n  { timestamp: new Date("2023-01-01T11:00:00"), price: 110, volume: 20 },\n  { timestamp: new Date("2023-01-01T12:00:00"), price: 120, volume: 30 },\n  { timestamp: new Date("2023-01-02T10:00:00"), price: 130, volume: 40 },\n]);\nconst daily = hourly.resample("timestamp", "1D", {\n  price: stats.mean,\n  volume: stats.sum\n})\n// Result: 2 rows (one per day)\n// Day 1: price = 110 (mean of 100, 110, 120), volume = 60 (sum of 10, 20, 30)\n// Day 2: price = 130, volume = 40',
+      '// Downsample with OHLC pattern (Open, High, Low, Close)\nconst ohlc = df.resample("timestamp", "1D", {\n  open: stats.first,  // First price in period\n  high: stats.max,    // Highest price\n  low: stats.min,     // Lowest price\n  close: stats.last   // Last price\n})',
+      '// Upsample daily to hourly with forward fill\nconst daily = createDataFrame([\n  { timestamp: new Date("2023-01-01T10:00:00"), value: 100 },\n  { timestamp: new Date("2023-01-01T12:00:00"), value: 200 },\n]);\nconst hourly = daily.resample("timestamp", "1H", {\n  method: stats.forwardFill\n})\n// Result: 3 rows (10:00, 11:00, 12:00)\n// 10:00: value = 100\n// 11:00: value = 100 (forward filled)\n// 12:00: value = 200',
+      '// Upsample with per-column fill methods\nconst hourly = daily.resample("timestamp", "1H", {\n  price: stats.forwardFill,\n  volume: stats.backwardFill\n})',
+      '// Works with grouped DataFrames\nconst result = df.groupBy("symbol").resample("timestamp", "1D", {\n  price: stats.mean\n})',
+      '// Custom frequency\nconst result = df.resample("timestamp", { value: 30, unit: "min" }, {\n  price: stats.mean\n})',
+    ],
+    related: ["fillForward", "fillBackward", "groupBy", "summarize"],
+    bestPractices: [
+      "✓ GOOD: Use downsampling when converting from higher to lower frequency (e.g., hourly → daily)",
+      "✓ GOOD: Use upsampling when converting from lower to higher frequency (e.g., daily → hourly)",
+      "✓ GOOD: The time column must be of type Date (or Date | null) - TypeScript enforces this",
+      "✓ GOOD: For downsampling, use aggregation functions like stats.mean, stats.sum, stats.max, stats.min, stats.first, stats.last",
+      "✓ GOOD: For upsampling, use fill methods like stats.forwardFill or stats.backwardFill",
+      "✓ GOOD: Preserves grouping when called on grouped DataFrames",
+      "✓ GOOD: Can create new columns during downsampling (e.g., OHLC pattern)",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using non-Date column for timeColumn - TypeScript will error",
+      "❌ BAD: Using string shortcuts for aggregation/fill methods - use function references (stats.mean, not 'mean')",
+      "❌ BAD: Trying to resample empty DataFrame - TypeScript will error",
+    ],
+  },
+
   // Missing Data
   replaceNA: {
     name: "replaceNA",
@@ -825,6 +920,99 @@ export const DOCS: Record<string, DocEntry> = {
       'df.removeUndefined("email") // Remove rows with undefined email',
     ],
     related: ["removeNA", "removeNull", "replaceNA"],
+  },
+
+  fillForward: {
+    name: "fillForward",
+    category: "dataframe",
+    signature:
+      "fillForward(...columnNames: (keyof T & string)[]): DataFrame<T>",
+    description:
+      "Forward fill null/undefined values in specified columns. Replaces null/undefined values with the last non-null value before them. Values at the start that are null/undefined remain null/undefined.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "...columnNames: Column name(s) to forward fill",
+    ],
+    returns: "DataFrame with forward-filled values",
+    examples: [
+      '// Forward fill a single column\nconst df = createDataFrame([\n  { value: 10 },\n  { value: null },\n  { value: null },\n  { value: 20 },\n  { value: null },\n]);\nconst filled = df.fillForward("value")\n// Result:\n// { value: 10 }\n// { value: 10 }  // filled from previous\n// { value: 10 }  // filled from previous\n// { value: 20 }\n// { value: 20 }  // filled from previous',
+      '// Forward fill multiple columns\ndf.fillForward("price", "volume")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: 100 },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: null },\n  { timestamp: new Date("2023-01-04"), price: 110 },\n]);\ntimeSeries.fillForward("price")',
+    ],
+    related: ["fillBackward", "replaceNA", "removeNA"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to carry forward the last known value",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Creates a new DataFrame without modifying the original",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the start to be filled - they remain null/undefined",
+      "❌ BAD: Using on non-time-series data where backward fill might be more appropriate",
+    ],
+  },
+
+  fillBackward: {
+    name: "fillBackward",
+    category: "dataframe",
+    signature:
+      "fillBackward(...columnNames: (keyof T & string)[]): DataFrame<T>",
+    description:
+      "Backward fill null/undefined values in specified columns. Replaces null/undefined values with the next non-null value after them. Values at the end that are null/undefined remain null/undefined.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "...columnNames: Column name(s) to backward fill",
+    ],
+    returns: "DataFrame with backward-filled values",
+    examples: [
+      '// Backward fill a single column\nconst df = createDataFrame([\n  { value: null },\n  { value: null },\n  { value: 10 },\n  { value: null },\n  { value: 20 },\n]);\nconst filled = df.fillBackward("value")\n// Result:\n// { value: 10 }  // filled from next\n// { value: 10 }  // filled from next\n// { value: 10 }\n// { value: 20 }  // filled from next\n// { value: 20 }',
+      '// Backward fill multiple columns\ndf.fillBackward("price", "volume")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: null },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: 100 },\n  { timestamp: new Date("2023-01-04"), price: null },\n]);\ntimeSeries.fillBackward("price")',
+    ],
+    related: ["fillForward", "replaceNA", "removeNA"],
+    bestPractices: [
+      "✓ GOOD: Use when you want to fill missing values from future observations",
+      "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
+      "✓ GOOD: Creates a new DataFrame without modifying the original",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting values at the end to be filled - they remain null/undefined",
+      "❌ BAD: Using on non-time-series data where forward fill might be more appropriate",
+    ],
+  },
+
+  interpolate: {
+    name: "interpolate",
+    category: "dataframe",
+    signature:
+      "interpolate<ValueCol extends keyof T & string, XCol extends keyof T & string>(valueColumn: ValueCol, xColumn: XCol, method: 'linear' | 'spline'): DataFrame<T>",
+    description:
+      "Interpolate null/undefined values in a column using linear or spline interpolation. Requires an x-axis column to define spacing between points. Interpolates missing values by estimating them based on surrounding known values.",
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "valueColumn: Column name containing values to interpolate (numbers or Dates)",
+      "xColumn: Column name containing x-axis values (numeric or Date, required)",
+      "method: Interpolation method - 'linear' or 'spline'",
+    ],
+    returns: "DataFrame with interpolated values replacing nulls",
+    examples: [
+      '// Linear interpolation with numeric x-axis\nconst df = createDataFrame([\n  { timestamp: 1, value: 100 },\n  { timestamp: 2, value: null },\n  { timestamp: 3, value: null },\n  { timestamp: 4, value: 200 },\n]);\ndf.interpolate("value", "timestamp", "linear")\n// Results in interpolated values for the null entries',
+      '// Linear interpolation with Date x-axis\ndf.interpolate("price", "date", "linear")',
+      '// Spline interpolation\ndf.interpolate("temperature", "timestamp", "spline")',
+      '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: 100 },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: null },\n  { timestamp: new Date("2023-01-04"), price: 110 },\n]);\ntimeSeries.interpolate("price", "timestamp", "linear")',
+    ],
+    related: ["fillForward", "fillBackward", "resample"],
+    bestPractices: [
+      "✓ GOOD: Use for time-series data where you want to estimate missing values based on surrounding data",
+      "✓ GOOD: Linear interpolation is faster and works with fewer points",
+      "✓ GOOD: Spline interpolation provides smoother curves but requires at least 4 points",
+      "✓ GOOD: Only interpolates values that have both previous and next non-null values",
+    ],
+    antiPatterns: [
+      "❌ BAD: Expecting leading/trailing nulls to be interpolated - they remain null (no bounds)",
+      "❌ BAD: Using spline with fewer than 4 points - falls back to linear",
+    ],
   },
 
   // I/O Operations
@@ -1145,966 +1333,9 @@ export const DOCS: Record<string, DocEntry> = {
     ],
   },
 
-  // Statistics - Descriptive
-  mean: {
-    name: "s.mean",
-    category: "stats",
-    signature: "s.mean(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: A single number or array of numbers",
-      "removeNA: Whether to exclude null/undefined values (when using mixed arrays)",
-    ],
-    returns: "number | null - The arithmetic mean of all numeric values",
-    examples: [
-      "s.mean(5) // 5",
-      "s.mean([1, 2, 3, 4]) // 2.5",
-      "s.mean([1, 2, null, 4], true) // 2.33",
-      'df.groupBy("region").summarize({ avg: group => s.mean(group.sales) })',
-    ],
-    related: ["median", "mode", "sd"],
-    antiPatterns: [
-      "❌ BAD: values.reduce((a, b) => a + b, 0) / values.length",
-    ],
-    bestPractices: [
-      "✓ GOOD: s.mean(values) - built-in, faster, handles edge cases",
-      "Use with df.columnName for direct access: s.mean(df.age)",
-    ],
-  },
-
-  median: {
-    name: "s.median",
-    category: "stats",
-    signature: "s.median(values: number[]): number",
-    description: "Calculate the median (50th percentile).",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
-    examples: [
-      "s.median([1, 2, 3, 4, 5]) // 3",
-      "s.median(df.sales)",
-    ],
-    related: ["mean", "quantile"],
-    antiPatterns: [
-      "❌ BAD: [...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]",
-    ],
-    bestPractices: [
-      "✓ GOOD: s.median(values) - handles even/odd lengths correctly",
-    ],
-  },
-
-  sum: {
-    name: "s.sum",
-    category: "stats",
-    signature: "s.sum(values: number[]): number",
-    description: "Calculate the sum of all values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
-    examples: [
-      "s.sum([1, 2, 3, 4, 5]) // 15",
-      "s.sum(df.revenue)",
-      'df.groupBy("region").summarize({ total: group => s.sum(group.sales) })',
-    ],
-    related: ["mean", "cumsum"],
-    antiPatterns: [
-      "❌ BAD: values.reduce((a, b) => a + b, 0)",
-    ],
-    bestPractices: [
-      "✓ GOOD: s.sum(values) - clearer intent, handles edge cases",
-    ],
-  },
-
-  max: {
-    name: "s.max",
-    category: "stats",
-    signature: "s.max(values: number[]): number",
-    description: "Find the maximum value.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
-    examples: [
-      "s.max([1, 2, 3, 4, 5]) // 5",
-      "s.max(df.price)",
-    ],
-    related: ["min", "cummax"],
-  },
-
-  min: {
-    name: "s.min",
-    category: "stats",
-    signature: "s.min(values: number[]): number",
-    description: "Find the minimum value.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of numbers"],
-    returns: "number",
-    examples: [
-      "s.min([1, 2, 3, 4, 5]) // 1",
-      "s.min(df.price)",
-    ],
-    related: ["max", "cummin"],
-  },
-
-  // Additional Descriptive Statistics
-  mode: {
-    name: "s.mode",
-    category: "stats",
-    signature: "s.mode(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the mode (most frequent value) of an array. Returns null if no valid values and removeNA=false.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or single number",
-      "removeNA: If true, guarantees a number return (throws if no valid values)",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.mode(42) // Always returns the single value",
-      "s.mode([1, 1, 2, 3, 3, 3]) // 3 (always number for clean array)",
-      "s.mode([null, 2, 3], false) // 3 (or null if no valid values)",
-      "s.mode([null, 2, 3], true) // 3 (guaranteed number or throws)",
-    ],
-    related: ["mean", "median", "unique"],
-  },
-
-  stdev: {
-    name: "s.stdev",
-    category: "stats",
-    signature: "s.stdev(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or single number",
-      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.stdev(42) // Always returns 0 for single value",
-      "s.stdev([1, 2, 3, 4, 5]) // sample standard deviation (default)",
-      's.stdev([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)',
-      's.stdev([1, "2", 3], false) // null (mixed types, removeNA=false)',
-    ],
-    related: ["variance", "mean"],
-  },
-
-  variance: {
-    name: "s.variance",
-    category: "stats",
-    signature:
-      "s.variance(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or single number",
-      "removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.variance(42) // Always returns 0 for single value",
-      "s.variance([1, 2, 3, 4, 5]) // sample variance (default)",
-      's.variance([1, "2", 3], true) // 1 (variance of [1, 3] with removeNA=true)',
-      's.variance([1, "2", 3], false) // null (mixed types, removeNA=false)',
-    ],
-    related: ["sd", "mean"],
-  },
-
-  quantile: {
-    name: "s.quantile",
-    category: "stats",
-    signature:
-      "s.quantile(data: number[], probs: number | number[], removeNA?: boolean): number | number[] | null",
-    description:
-      "Calculate quantiles of an array of values. Uses R's Type 7 algorithm (default). Accepts single probability or array of probabilities.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "data: Array of numbers or single number",
-      "probs: Probability value(s) between 0 and 1",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns:
-      "number | number[] | null - Single value or array depending on probs input",
-    examples: [
-      "const q50 = s.quantile([1, 2, 3, 4, 5], 0.5) // 3 (median)",
-      "const [q25, q75] = s.quantile([1, 2, 3, 4, 5], [0.25, 0.75]) // [2, 4]",
-    ],
-    related: ["median", "quartiles", "iqr"],
-  },
-
-  quartiles: {
-    name: "s.quartiles",
-    category: "stats",
-    signature:
-      "s.quartiles(values: number[], removeNA?: boolean): [number, number, number] | null",
-    description:
-      "Calculate the quartiles (Q25, median/Q50, Q75) of values. Returns null if no valid values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or values that can contain null/undefined, or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "[Q25, Q50, Q75] tuple or null",
-    examples: [
-      "s.quartiles(42) // Always returns [42, 42, 42] for single value",
-      "const [q25, q50, q75] = s.quartiles([1, 2, 3, 4, 5]) // [2, 3, 4]",
-    ],
-    related: ["quantile", "iqr", "median"],
-  },
-
-  iqr: {
-    name: "s.iqr",
-    category: "stats",
-    signature: "s.iqr(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.iqr(42) // Always returns 0 for single value",
-      "const iqr_val = s.iqr([1, 2, 3, 4, 5]) // 2 (4 - 2)",
-    ],
-    related: ["quartiles", "quantile", "range"],
-  },
-
-  range: {
-    name: "s.range",
-    category: "stats",
-    signature: "s.range(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the range of values (max - min). Returns null if no valid values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers, or single number",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.range(42) // Always returns 0 for single value",
-      "const r = s.range([1, 5, 3, 9, 2]) // 8 (9 - 1)",
-    ],
-    related: ["max", "min", "iqr"],
-  },
-
-  product: {
-    name: "s.product",
-    category: "stats",
-    signature: "s.product(values: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the product (multiplication) of all values. Returns null if no valid values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers or single number",
-      "removeNA: If true, guarantees a number return (throws if no valid values)",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.product(5) // 5",
-      "s.product([1, 2, 3, 4]) // 24",
-      "s.product([2, null, 3], false) // null (due to null)",
-      "s.product([2, null, 3], true) // 6 (ignoring null)",
-    ],
-    related: ["sum", "cumprod"],
-  },
-
-  // Window Functions
-  cumsum: {
-    name: "s.cumsum",
-    category: "stats",
-    signature:
-      "s.cumsum(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description:
-      "Calculate cumulative sums for an array of values. Returns array where each element is the sum of all previous elements.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | number[] | (number | null)[]",
-    examples: [
-      "s.cumsum([1, 2, 3, 4, 5]) // [1, 3, 6, 10, 15]",
-      "s.cumsum([1, null, 3, 4], true) // [1, 1, 4, 8] - removes nulls",
-    ],
-    related: ["sum", "cummean", "cumprod"],
-  },
-
-  cummean: {
-    name: "s.cummean",
-    category: "stats",
-    signature:
-      "s.cummean(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description:
-      "Calculate cumulative mean of values. Returns an array where each element is the mean of all values up to that point.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | number[] | (number | null)[]",
-    examples: [
-      "s.cummean([1, 2, 3, 4])  // [1, 1.5, 2, 2.5]",
-      "s.cummean([1, null, 3, 4, 5], true)  // [1, 1, 2, 2.5, 3]",
-    ],
-    related: ["cumsum", "mean"],
-  },
-
-  cumprod: {
-    name: "s.cumprod",
-    category: "stats",
-    signature:
-      "s.cumprod(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description:
-      "Calculate cumulative product of numeric values. Returns array where each element is the product of all previous elements.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | number[] | (number | null)[]",
-    examples: [
-      "s.cumprod([1, 2, 3, 4, 5]) // [1, 2, 6, 24, 120]",
-      "s.cumprod([1, null, 3, 4], true) // [1, 1, 3, 12] - removes nulls",
-    ],
-    related: ["cumsum", "product"],
-  },
-
-  cummax: {
-    name: "s.cummax",
-    category: "stats",
-    signature:
-      "s.cummax(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description:
-      "Calculate cumulative maximum of numeric values. Returns array where each element is the max of all previous elements.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | number[] | (number | null)[]",
-    examples: [
-      "s.cummax([1, 2, 3, 4, 5]) // [1, 2, 3, 4, 5]",
-      "s.cummax([1, null, 3, 4], true) // [1, 1, 3, 4] - removes nulls",
-    ],
-    related: ["cummin", "max"],
-  },
-
-  cummin: {
-    name: "s.cummin",
-    category: "stats",
-    signature:
-      "s.cummin(values: number[], removeNA?: boolean): number | number[] | (number | null)[]",
-    description:
-      "Calculate cumulative minimum of numeric values. Returns array where each element is the min of all previous elements.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "removeNA: If true, removes non-numeric values; if false, returns null for mixed types",
-    ],
-    returns: "number | number[] | (number | null)[]",
-    examples: [
-      "s.cummin([1, 2, 3, 4, 5]) // [1, 1, 1, 1, 1]",
-      "s.cummin([1, null, 3, 4], true) // [1, 1, 1, 1] - removes nulls",
-    ],
-    related: ["cummax", "min"],
-  },
-
-  lag: {
-    name: "s.lag",
-    category: "stats",
-    signature:
-      "s.lag(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lag(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined",
-    description:
-      "Lag values by k positions (shift forward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "valuesOrColumnName: Array of values to lag OR column name for DataFrame operations",
-      "k: Number of positions to lag (default: 1)",
-      "defaultValue: Value to fill missing positions (default: undefined)",
-    ],
-    returns:
-      "Array with values lagged by k positions OR function for mutate operations",
-    examples: [
-      "// Array-based usage",
-      "s.lag([1, 2, 3, 4, 5])  // [undefined, 1, 2, 3, 4]",
-      "s.lag([1, 2, 3, 4, 5], 2)  // [undefined, undefined, 1, 2, 3]",
-      "s.lag([1, 2, 3, 4, 5], 1, 0)  // [0, 1, 2, 3, 4]",
-      "// Column-based usage in mutate",
-      'df.mutate({ prev_sales: s.lag("sales", 1, 0) })',
-    ],
-    related: ["lead"],
-  },
-
-  lead: {
-    name: "s.lead",
-    category: "stats",
-    signature:
-      "s.lead(values: T[], k?: number, defaultValue?: T): (T | undefined)[] OR s.lead(columnName: string, k?: number, defaultValue?: T): (row, index, df) => T | undefined",
-    description:
-      "Lead values by k positions (shift backward, filling with default). Supports two usage patterns: array-based and column-based (for use in mutate).",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "valuesOrColumnName: Array of values to lead OR column name for DataFrame operations",
-      "k: Number of positions to lead (default: 1)",
-      "defaultValue: Value to fill missing positions (default: undefined)",
-    ],
-    returns:
-      "Array with values led by k positions OR function for mutate operations",
-    examples: [
-      "// Array-based usage",
-      "s.lead([1, 2, 3, 4, 5])  // [2, 3, 4, 5, undefined]",
-      "s.lead([1, 2, 3, 4, 5], 2)  // [3, 4, 5, undefined, undefined]",
-      "s.lead([1, 2, 3, 4, 5], 1, 0)  // [2, 3, 4, 5, 0]",
-      "// Column-based usage in mutate",
-      'df.mutate({ next_sales: s.lead("sales", 1, 0) })',
-    ],
-    related: ["lag"],
-  },
-
-  // Ranking Functions
-  rank: {
-    name: "s.rank",
-    category: "stats",
-    signature:
-      's.rank(values: number[], ties?: "average" | "min" | "max" | "dense", descending?: boolean): number[] | (number | null)[] OR s.rank(values: number[], target: number): number | null',
-    description:
-      "Calculate ranks for an array of values. Supports finding rank of all values or a specific target value. Handles ties using specified method including dense ranking.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      'ties: How to handle ties: "average" (default), "min", "max", "dense"',
-      "descending: Whether to rank in descending order (default: false = ascending)",
-      "target: Optional - The value to find the rank for (returns single rank)",
-    ],
-    returns: "number[] for all ranks OR number | null for target rank",
-    examples: [
-      "s.rank([3, 1, 4, 1, 5]) // [3, 1.5, 4, 1.5, 5] (average)",
-      's.rank([3, 1, 4, 1, 5], "min") // [3, 1, 4, 1, 5]',
-      's.rank([3, 1, 4, 1, 5], "max") // [3, 2, 4, 2, 5]',
-      's.rank([3, 1, 4, 1, 5], "average", true) // descending order',
-      "s.rank([3, 1, 4, 1, 5], 3) // 3 (rank of value 3)",
-    ],
-    related: ["denseRank", "percentileRank"],
-  },
-
-  denseRank: {
-    name: "s.denseRank",
-    category: "stats",
-    signature:
-      "s.denseRank(values: T[], options?: { desc?: boolean }): number[] OR s.denseRank(values: T[], target: T, options?: { desc?: boolean }): number | null",
-    description:
-      "Calculate dense rank of values (no gaps in ranking). Unlike regular rank, has no gaps after tied values. Supports finding rank of all values or a specific target value.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of values to rank",
-      "options: Ranking options with desc for descending order (default: false)",
-      "target: Optional - The value to find the dense rank for (returns single rank)",
-    ],
-    returns: "number[] for all ranks OR number | null for target rank",
-    examples: [
-      "s.denseRank([10, 20, 20, 30])  // [1, 2, 2, 3] (no gap after ties)",
-      "s.denseRank([5, 3, 8, 3, 1])   // [3, 2, 4, 2, 1]",
-      "s.denseRank([10, 20, 20, 30], { desc: true })  // [4, 3, 3, 1]",
-    ],
-    related: ["rank", "percentileRank"],
-  },
-
-  percentileRank: {
-    name: "s.percentile_rank",
-    category: "stats",
-    signature:
-      "s.percentile_rank(values: number[]): number[] | (number | null)[] OR s.percentile_rank(values: number[], target: number): number | null",
-    description:
-      "Calculate the percentile rank of a value within an array. Returns a value between 0 and 1 representing the percentile rank. If target is not provided, returns percentile ranks for all values.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      "target: Optional - The value to find the percentile rank for (between 0 and 1)",
-    ],
-    returns:
-      "number | null for single target OR number[] | (number | null)[] for all values",
-    examples: [
-      "s.percentile_rank([1, 2, 3, 4, 5], 3) // 0.6 (3 is at 60th percentile)",
-      "s.percentile_rank([10, 20, 30, 40, 50], 25) // 0.4 (25 is at 40th percentile)",
-      "s.percentile_rank([1, 2, 3, 4, 5]) // [0.2, 0.4, 0.6, 0.8, 1.0]",
-    ],
-    related: ["rank", "denseRank", "quantile"],
-  },
-
-  chunk: {
-    name: "s.chunk",
-    category: "stats",
-    signature: "s.chunk<T>(arr: T[], size: number): T[][]",
-    description:
-      "Split an array into chunks of specified size. The last chunk may be smaller if the array length is not evenly divisible by the chunk size.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "arr: Array to split into chunks",
-      "size: Size of each chunk (must be positive integer)",
-    ],
-    returns: "Array of chunks, where each chunk is an array of elements",
-    examples: [
-      "s.chunk([1, 2, 3, 4, 5, 6, 7], 3) // [[1, 2, 3], [4, 5, 6], [7]]",
-      "s.chunk(['a', 'b', 'c', 'd'], 2) // [['a', 'b'], ['c', 'd']]",
-      "s.chunk([1, 2, 3], 1) // [[1], [2], [3]]",
-      "s.chunk([1, 2, 3], 10) // [[1, 2, 3]] (chunk size larger than array)",
-    ],
-    related: ["batch"],
-    bestPractices: [
-      "✓ GOOD: Use for batch processing large datasets",
-      "✓ GOOD: Useful for pagination or splitting work into parallel tasks",
-      "✓ GOOD: Works with any array type (numbers, strings, objects)",
-      "✓ GOOD: Combine with s.batch() for concurrent async processing",
-    ],
-  },
-
-  batch: {
-    name: "s.batch",
-    category: "stats",
-    signature:
-      "s.batch<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, options?: ConcurrencyOptions): Promise<R[]>",
-    description:
-      "Process an array of items with an async function, applying concurrency control, batching, and retry logic. Provides fine-grained control over async operations to prevent overwhelming servers.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "items: Array of items to process",
-      "fn: Async function to apply to each item (receives item and index)",
-      "options.concurrency: Maximum number of concurrent operations (default: 1)",
-      "options.batchSize: Process items in batches of this size (default: undefined)",
-      "options.batchDelay: Delay in milliseconds between batches (default: 0)",
-      'options.retry.backoff: Retry strategy - "exponential" | "linear" | "custom"',
-      "options.retry.maxRetries: Maximum retry attempts (default: 3 when retry enabled)",
-      "options.retry.baseDelay: Initial retry delay in ms (default: 100)",
-      "options.retry.maxDelay: Maximum delay between retries in ms (default: 5000)",
-      "options.retry.backoffMultiplier: Multiplier for exponential backoff (default: 2)",
-      "options.retry.shouldRetry: Function to determine if error should trigger retry",
-      "options.retry.onRetry: Callback when retry occurs (error, attempt, taskIndex)",
-    ],
-    returns: "Promise<R[]> - Array of results in same order as input",
-    examples: [
-      "// Basic usage with concurrency limit\nawait s.batch(userIds, async (id) => fetchUser(id), { concurrency: 5 })",
-      "// Batch processing with delays\nawait s.batch(apiCalls, async (call) => makeRequest(call), { batchSize: 100, batchDelay: 50 })",
-      "// With exponential backoff retry\nawait s.batch(tasks, async (task) => processTask(task), {\n  concurrency: 5,\n  retry: {\n    backoff: 'exponential',\n    maxRetries: 3,\n    baseDelay: 100\n  }\n})",
-      "// Combine with s.chunk for batch processing\nconst batches = s.chunk(ids, 300);\nawait s.batch(batches, async (batch) => processBatch(batch), { concurrency: 2 })",
-      "// With custom retry logic\nawait s.batch(items, async (item) => process(item), {\n  retry: {\n    backoff: 'exponential',\n    maxRetries: 5,\n    shouldRetry: (error) => error.message.includes('rate limit')\n  }\n})",
-    ],
-    related: ["chunk"],
-    bestPractices: [
-      "✓ GOOD: Use concurrency limits to prevent overwhelming APIs (concurrency: 5-10)",
-      "✓ GOOD: Use batchSize + batchDelay for rate-limited APIs",
-      "✓ GOOD: Add retry logic for unreliable network operations",
-      "✓ GOOD: Combine s.chunk() and s.batch() for nested batch processing",
-      "✓ GOOD: Use shouldRetry to filter which errors trigger retries",
-      "❌ BAD: Promise.all() with no concurrency control on large arrays",
-      "❌ BAD: No retry logic for network operations",
-    ],
-  },
-
-  // Transformation Functions
-  normalize: {
-    name: "s.normalize",
-    category: "stats",
-    signature:
-      's.normalize(values: number[], method?: "minmax" | "zscore"): number[] | (number | null)[] OR s.normalize(values: number[], target: number, method?: "minmax" | "zscore"): number | null',
-    description:
-      "Normalize values to 0-1 range using min-max normalization or z-score standardization. Supports finding normalized value for all values or a specific target value.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "values: Array of numbers",
-      'method: Normalization method: "minmax" (default) or "zscore"',
-      "target: Optional - The value to find the normalized value for",
-    ],
-    returns: "number[] for all values OR number | null for target value",
-    examples: [
-      "s.normalize([10, 20, 30]) // [0, 0.5, 1] (min-max normalization)",
-      's.normalize([10, 20, 30], "zscore") // z-scores with mean=0, std=1',
-      "s.normalize([10, 20, 30], 20) // 0.5 (20 is halfway between 10 and 30)",
-      's.normalize([10, 20, 30], 20, "zscore") // z-score of 20',
-    ],
-    related: ["sd", "mean"],
-  },
-
-  round: {
-    name: "s.round",
-    category: "stats",
-    signature:
-      "s.round(value: number | null | number[], digits?: number): number | null | number[]",
-    description:
-      "Round a number or all values in an array to a specified number of decimal places. Accepts null values and returns null when given null (useful for chaining with s.mean(), s.stdev(), s.max(), s.min(), or s.median() which return number | null).",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "value: Number, null, or array of numbers to round",
-      "digits: Number of decimal places (default: 0)",
-    ],
-    returns: "number, null, or number[] (returns null if input is null)",
-    examples: [
-      "s.round(3.14159) // 3",
-      "s.round(3.14159, 2) // 3.14",
-      "s.round(123.456, 1) // 123.5",
-      "s.round(123.456, -1) // 120",
-      "s.round([1.234, 2.567, 3.891], 2) // [1.23, 2.57, 3.89]",
-      "s.round(null) // null (returns null when given null)",
-      "// Works with nullable stats functions - no assertions needed!",
-      "s.round(s.mean([1, 2, 3]), 2) // 2.0",
-      "s.round(s.mean([null, null]), 2) // null (mean returns null, round handles it)",
-      'df.groupBy("region").summarize({ avg: group => s.round(s.mean(group.sales), 2) })',
-    ],
-    bestPractices: [
-      "✓ GOOD: No need for non-null assertions (!) - s.round() accepts null and returns null",
-      "✓ GOOD: Chain directly: s.round(s.mean(values), 2) - no need for s.round(s.mean(values)!, 2)",
-      "✓ GOOD: Type-safe chaining: s.round() signature includes null, so TypeScript won't complain",
-    ],
-    related: ["mean", "stdev", "max", "min", "median"],
-  },
-
-  percent: {
-    name: "s.percent",
-    category: "stats",
-    signature:
-      "s.percent(numerator: number | null | undefined, denominator: number | null | undefined, decimals?: number): number | null",
-    description:
-      "Calculate a percentage from a numerator and denominator, rounded to a given number of decimals. Returns 0 when denominator is 0 to handle division-by-zero gracefully. Returns null if either numerator or denominator is null/undefined.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "numerator: The portion value",
-      "denominator: The total value",
-      "decimals: Number of decimal places to round to (default: 1)",
-    ],
-    returns:
-      "number | null - Percentage (0–100 scale), rounded, or null if inputs are null/undefined",
-    examples: [
-      "s.percent(25, 100) // 25.0",
-      "s.percent(1, 3) // 33.3",
-      "s.percent(2, 3, 2) // 66.67",
-      "s.percent(5, 0) // 0 (handles division by zero)",
-      "s.percent(0, 100) // 0.0",
-      "s.percent(null, 100) // null",
-    ],
-    related: ["round"],
-  },
-
-  // Utility Functions
-  unique: {
-    name: "s.unique",
-    category: "stats",
-    signature: "s.unique(values: T[]): T[]",
-    description:
-      "Get unique values from an array (WASM-optimized version). Returns unique values in order of first appearance.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: ["values: Array of values to get unique values from"],
-    returns: "T[] - array with duplicates removed in order of first appearance",
-    examples: [
-      "s.unique([1, 2, 1, 3, 2]) // [1, 2, 3]",
-      's.unique(["a", "b", "a", "c"]) // ["a", "b", "c"]',
-      "s.unique([true, false, true]) // [true, false]",
-    ],
-    related: ["distinct", "mode"],
-  },
-
-  covariance: {
-    name: "s.covariance",
-    category: "stats",
-    signature:
-      "s.covariance(x: number[], y: number[], removeNA?: boolean): number | null",
-    description:
-      "Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "x: First array of numbers",
-      "y: Second array of numbers (same length as x)",
-      "removeNA: If true, guarantees a number return (throws if no valid pairs)",
-    ],
-    returns: "number | null",
-    examples: [
-      "s.covariance([1, 2, 3], [1, 2, 3]) // 1",
-      "s.covariance([1, 2, 3], [3, 2, 1]) // -1",
-      "s.covariance([1, null, 3], [1, 2, 3], false) // null (due to null)",
-      "s.covariance([1, null, 3], [1, 2, 3], true) // 2 (ignoring null pair)",
-    ],
-    related: ["s.test.correlation.pearson", "variance"],
-  },
-
-  // Statistics - Tests
-  tTest: {
-    name: "s.test.t.oneSample",
-    category: "stats",
-    signature:
-      "s.test.t.oneSample({ data, mu, alternative?, alpha? }): TestResult",
-    description:
-      "One-sample t-test. Tests if mean differs from a hypothesized value.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "data: Array of numbers",
-      "mu: Hypothesized mean",
-      'alternative: "two-sided" (default), "less", or "greater"',
-      "alpha: Significance level (default: 0.05)",
-    ],
-    returns:
-      "TestResult with p_value, test_statistic, confidence_interval, etc.",
-    examples: [
-      's.test.t.oneSample({ data: heights, mu: 170, alternative: "two-sided", alpha: 0.05 })',
-    ],
-    related: ["s.test.t.independent", "s.test.t.paired", "s.compare"],
-  },
-
-  compareAPI: {
-    name: "s.compare",
-    category: "stats",
-    signature: "s.compare.{scenario}.{test}(...)",
-    description:
-      "Intent-driven statistical testing API. Helps you choose the right test based on your comparison goal.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "Scenarios: oneGroup, twoGroups, multiGroups",
-      "Tests: centralTendency, proportions, distribution, association",
-      "Options: parametric/nonparametric/auto, comparator type, alpha",
-    ],
-    returns: "TestResult",
-    examples: [
-      's.compare.oneGroup.centralTendency.toValue({ data, hypothesizedValue: 100, parametric: "auto" })',
-      's.compare.twoGroups.centralTendency.toEachOther({ x, y, paired: false, parametric: "parametric" })',
-      's.compare.twoGroups.association.toEachOther({ x, y, method: "pearson" })',
-    ],
-    related: ["s.test", "s.dist"],
-  },
-
-  // Profiling
-  profile: {
-    name: "profile",
-    category: "dataframe",
-    signature: "profile(): DataFrame<ColumnProfile>",
-    description:
-      "Profile a DataFrame by computing comprehensive statistics for each column. Returns a DataFrame with one row per column.",
-    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
-    parameters: [],
-    returns:
-      "DataFrame with columns: column, type, count, nulls, null_pct, mean, median, min, max, sd, q1, q3, iqr, variance (numeric), unique, top_values (categorical)",
-    examples: [
-      "df.profile().print()",
-      "const stats = penguins.profile()",
-      "df.profile().filter(p => p.type === 'numeric')",
-    ],
-    related: ["summarize", "mean", "median", "stdev"],
-    bestPractices: [
-      "Use profile() for quick exploratory data analysis",
-      "Filter the profile result to focus on numeric or categorical columns",
-      "Combine with .print() for immediate visual inspection",
-    ],
-  },
-
-  // Distributions
-  normalDist: {
-    name: "s.dist.normal",
-    category: "stats",
-    signature: "s.dist.normal.{function}(...)",
-    description: "Normal (Gaussian) distribution functions.",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "random({ mean, standardDeviation, sampleSize }): Generate random values",
-      "density({ at, mean, standardDeviation }): PDF at x",
-      "probability({ at, mean, standardDeviation }): CDF (cumulative probability)",
-      "quantile({ probability, mean, standardDeviation }): Inverse CDF (critical value)",
-      'data({ mean, standardDeviation, type: "pdf" | "cdf", range, points }): Generate data for plotting',
-    ],
-    returns: "number or number[]",
-    examples: [
-      "s.dist.normal.random({ mean: 0, standardDeviation: 1, sampleSize: 100 })",
-      "s.dist.normal.probability({ at: 1.96, mean: 0, standardDeviation: 1 }) // ~0.975",
-      "s.dist.normal.quantile({ probability: 0.975, mean: 0, standardDeviation: 1 }) // ~1.96",
-    ],
-    related: ["s.dist.t", "s.dist.chiSquare", "s.dist.beta"],
-  },
-
-  // LLM Utilities
-  LLMEmbed: {
-    name: "LLM.embed",
-    category: "llm",
-    signature:
-      'LLM.embed(input: string | string[], model?: "text-embedding-3-small" | "text-embedding-3-large" | "text-embedding-ada-002"): Promise<number[] | number[][]>',
-    description:
-      "Get vector embeddings for text using OpenAI's embeddings API. Single string returns number[], array returns number[][]. Default model is text-embedding-3-large (3072 dimensions).",
-    imports: ['import { LLM } from "@tidy-ts/ai";'],
-    parameters: [
-      "input: Text string or array of text strings to embed",
-      'model: Embedding model (default: "text-embedding-3-large")',
-      "  - text-embedding-3-small: 1536 dimensions, faster, lower cost",
-      "  - text-embedding-3-large: 3072 dimensions, better quality (default)",
-      "  - text-embedding-ada-002: Legacy model, 1536 dimensions",
-    ],
-    returns:
-      "Promise<number[]> for single string, Promise<number[][]> for array",
-    examples: [
-      '// Single text\nconst embedding = await LLM.embed("Hello world")\nconsole.log(embedding.length) // 3072',
-      '// Multiple texts\nconst embeddings = await LLM.embed(["doc1", "doc2", "doc3"])\nconsole.log(embeddings.length) // 3\nconsole.log(embeddings[0].length) // 3072',
-      '// Use smaller/faster model\nconst embedding = await LLM.embed("text", "text-embedding-3-small")\nconsole.log(embedding.length) // 1536',
-      '// Use with DataFrame\nconst df = createDataFrame([{ text: "cat" }, { text: "dog" }])\nconst withEmbeddings = await df.mutate({\n  embedding: async (row) => await LLM.embed(row.text)\n})',
-    ],
-    related: ["LLM.compareEmbeddings", "LLM.respond"],
-    bestPractices: [
-      "✓ GOOD: Use text-embedding-3-large for best quality (default)",
-      "✓ GOOD: Use text-embedding-3-small for faster/cheaper embeddings",
-      "✓ GOOD: Batch multiple texts in an array for efficiency",
-      "✓ GOOD: Store embeddings in vector databases for similarity search",
-      "Environment variable OPENAI_API_KEY must be set",
-    ],
-  },
-
-  LLMRespond: {
-    name: "LLM.respond",
-    category: "llm",
-    signature:
-      "LLM.respond({ userInput, schema?, priorMessages?, instructions?, model? }): Promise<string | T>",
-    description:
-      "Get structured responses from language models with Zod schema validation. Returns string without schema, typed object with schema. Automatically converts z.date() fields.",
-    imports: [
-      'import { LLM } from "@tidy-ts/ai"',
-      'import { z } from "zod"',
-    ],
-    parameters: [
-      "userInput: The prompt/question to send to the LLM",
-      "schema: Optional Zod schema for structured output",
-      "priorMessages: Optional conversation history for context",
-      'instructions: System instructions (default: "You are a helpful assistant.")',
-      'model: OpenAI model - "gpt-4.1-mini" (default), "gpt-4.1", "gpt-5-mini"',
-    ],
-    returns: "Promise<string> without schema, Promise<T> with schema",
-    examples: [
-      '// Simple string response\nconst answer = await LLM.respond({\n  userInput: "What is 2+2?"\n})\nconsole.log(answer) // "4"',
-      '// Structured response\nconst result = await LLM.respond({\n  userInput: "Analyze this data",\n  schema: z.object({\n    summary: z.string(),\n    confidence: z.number()\n  })\n})\nconsole.log(result.summary, result.confidence)',
-      '// Date handling\nconst event = await LLM.respond({\n  userInput: "When is the next solar eclipse?",\n  schema: z.object({\n    date: z.date(),\n    location: z.string()\n  })\n})\nconsole.log(event.date.getFullYear()) // Date object',
-      '// Use with DataFrame\nconst df = createDataFrame([{ question: "What is 2+2?" }])\nconst withAnswers = await df.mutate({\n  answer: async (row) => await LLM.respond({\n    userInput: row.question\n  })\n})',
-    ],
-    related: ["LLM.embed", "LLM.compareEmbeddings"],
-    bestPractices: [
-      "✓ GOOD: Use Zod schemas for type-safe structured output",
-      "✓ GOOD: Use z.date() for date fields - auto-converted to Date objects",
-      "✓ GOOD: Provide clear system instructions for consistent behavior",
-      "✓ GOOD: Use priorMessages for conversation context",
-      "Environment variable OPENAI_API_KEY must be set",
-    ],
-  },
-
-  LLMCompareEmbeddings: {
-    name: "LLM.compareEmbeddings",
-    category: "llm",
-    signature:
-      "LLM.compareEmbeddings({ query, candidates, n? }): Array<{ index: number; embedding: number[]; distance: number }>",
-    description:
-      "Compare one embedding against an array of embeddings and return them ordered by similarity. Uses Euclidean distance (smaller = more similar).",
-    imports: ['import { LLM } from "@tidy-ts/ai";'],
-    parameters: [
-      "query: The query embedding to compare against",
-      "candidates: Array of candidate embeddings to compare with",
-      "n: Optional number of top results to return (default: all)",
-    ],
-    returns:
-      "Array of { index, embedding, distance } sorted by distance (ascending)",
-    examples: [
-      '// Find similar texts\nconst query = await LLM.embed("The cat sits on the mat")\nconst candidates = await LLM.embed([\n  "A feline rests on the rug",\n  "Python is a programming language",\n  "The dog runs in the park"\n])\n\nconst results = LLM.compareEmbeddings({ query, candidates })\nconsole.log(results[0].index) // Index of most similar\nconsole.log(results[0].distance) // Similarity score',
-      "// Get top N results\nconst top3 = LLM.compareEmbeddings({ query, candidates, n: 3 })\nconsole.log(top3.length) // 3",
-      '// Semantic search with DataFrame\nconst documents = createDataFrame([\n  { id: 1, text: "Machine learning tutorial" },\n  { id: 2, text: "Cooking recipes" },\n  { id: 3, text: "Deep learning guide" }\n])\n\nconst query = await LLM.embed("AI tutorials")\nconst docEmbeddings = await LLM.embed(documents.extract("text"))\nconst results = LLM.compareEmbeddings({ query, candidates: docEmbeddings, n: 2 })\n\n// Get top matching documents\nconst topDocs = results.map(r => documents.toArray()[r.index])',
-    ],
-    related: ["LLM.embed", "LLM.respond"],
-    bestPractices: [
-      "✓ GOOD: Use for semantic search and similarity matching",
-      "✓ GOOD: Limit results with n parameter for performance",
-      "✓ GOOD: Store embeddings once, compare many times",
-      "✓ GOOD: Use with vector databases for large-scale search",
-      "Distance metric: Euclidean distance (L2 norm)",
-      "Results sorted by distance: smaller distance = more similar",
-    ],
-  },
-
-  // Visualization
-  graph: {
-    name: "graph",
-    category: "dataframe",
-    signature: "graph(spec: GraphOptions<T>): TidyGraphWidget",
-    description:
-      "Create an interactive Vega-Lite visualization from the DataFrame. Supports scatter plots, line charts, bar charts, and area charts. The widget can be displayed in Jupyter notebooks, web applications, or saved as SVG/PNG. Automatically infers axis types (temporal for Date, quantitative for numbers, ordinal otherwise).",
-    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "spec: Graph specification object with:",
-      "  - type: Chart type - 'scatter', 'line', 'bar', or 'area'",
-      "  - mappings: Column mappings - { x, y, color?, series?, size?, shape? }",
-      "    * x: Column name, accessor function, or array for X-axis (required)",
-      "    * y: Column name, accessor function, or array for Y-axis (required)",
-      "    * color: Optional column/accessor/array for color encoding (categorical or continuous)",
-      "      - If not specified but series is provided, series is used for color",
-      "    * series: Optional column/accessor/array for grouping multiple lines/bars/areas",
-      "    * size: Optional column/accessor/array for point size encoding (scatter only, numeric)",
-      "    * shape: Optional column/accessor/array for point shape encoding (scatter only, categorical)",
-      "  - config: Optional styling configuration:",
-      "    * layout: { title?, description?, width?: number | 'container', height?: number }",
-      "      - width defaults to 'container' (fills parent), height defaults to 400",
-      "    * xAxis/yAxis: { label?, domain?: [min, max]?, tickFormat?, hide? }",
-      "      - domain filters data to only show points within range and enables clipping",
-      "      - For Date axes, tickFormat defaults to '%b %Y'",
-      "      - Non-quantitative x-axes get -45° label angle automatically",
-      "    * grid: { show?: boolean (default: true), vertical?, horizontal? }",
-      "    * color: { scheme?, colors?: string[] }",
-      "      - schemes: 'default', 'blue', 'green', 'red', 'purple', 'orange', 'vibrant', 'professional', 'high_contrast'",
-      "      - colors: Custom array of hex/rgb/hsl color strings",
-      "    * legend: { show?: boolean (default: true when color/series used), position?, fontSize?, titleFontSize? }",
-      "      - positions: 'top', 'bottom', 'left', 'right', 'top-left', 'top-right', 'bottom-left', 'bottom-right'",
-      "      - fontSize defaults to 12, titleFontSize defaults to 13",
-      "    * tooltip: { show?: boolean (default: true) }",
-      "    * interactivity: { zoom?: boolean, pan?: boolean }",
-      "      - Enables zoom/pan via interval selection bound to scales",
-      "    * accessibility: { layer?: boolean } - Adds accessibility layer for screen readers",
-      "    * animation: { duration?: number } - Animation duration in milliseconds",
-      "    * scatter: { pointSize?: number (default: 60), pointOpacity?: number (default: 0.8) }",
-      "    * line: { style?: 'monotone'|'linear'|'step'|'basis'|'cardinal' (default: 'linear'), dots?: boolean (default: false), strokeWidth?: number (default: 2), connectNulls?: boolean (default: false) }",
-      "    * bar: { stacked?: boolean (default: false), radius?: number (default: 4) }",
-      "    * area: { stacked?: boolean (default: false), style?: 'monotone'|'linear'|'step'|'basis'|'cardinal' (default: 'linear'), strokeWidth?: number (default: 1), opacity?: number (default: 0.7) }",
-      "  - tooltip: Optional tooltip customization - { fields?: string[], format?: Record<string, (v: unknown) => string> }",
-      "    - fields: Array of column names to show in tooltip (default: all columns)",
-      "    - format: Custom formatter functions for specific fields",
-    ],
-    returns:
-      "TidyGraphWidget with display() and save methods:\n  - savePNG({ filename, width?, height?, background?, scale? }): Promise<void>\n    - scale: Resolution multiplier 1-4 (default: 1, clamped to 1-4)\n  - saveSVG({ filename, width?, height?, background? }): Promise<void>\n    - width/height default to 700x400 if not specified in layout or save options",
-    examples: [
-      '// Scatter plot with color encoding\ndf.graph({\n  type: "scatter",\n  mappings: { x: "age", y: "income", color: "category" }\n})',
-      '// Using accessor functions\nconst chart = df.graph({\n  type: "scatter",\n  mappings: {\n    x: (row) => row.age,\n    y: (row) => row.income * 1.1,\n    color: "category"\n  }\n})',
-      '// Line chart with custom styling and domain filtering\ndf.graph({\n  type: "line",\n  mappings: { x: "date", y: "value", series: "category" },\n  config: {\n    layout: { title: "Sales Over Time", width: 800, height: 400 },\n    line: { style: "monotone", strokeWidth: 3, dots: true },\n    yAxis: { domain: [0, 1000], label: "Sales ($)" }\n  }\n})',
-      '// Bar chart with stacking\nconst chart = df.graph({\n  type: "bar",\n  mappings: { x: "category", y: "count", series: "region" },\n  config: {\n    color: { scheme: "vibrant" },\n    bar: { stacked: true, radius: 8 }\n  }\n})',
-      '// Area chart with custom tooltip fields\ndf.graph({\n  type: "area",\n  mappings: { x: "date", y: "value", series: "region" },\n  config: { area: { stacked: true, opacity: 0.7 } },\n  tooltip: { fields: ["date", "value", "region"] }\n})',
-      '// Save as PNG with high resolution\nconst chart = df.graph({ type: "scatter", mappings: { x: "x", y: "y" } })\nawait chart.savePNG({ filename: "chart.png", width: 800, height: 600, scale: 2 })\nawait chart.saveSVG({ filename: "chart.svg", width: 800, height: 600 })',
-      '// Scatter plot with multiple aesthetics and custom tooltip formatting\nsalesData\n  .mutate({\n    revenue: (r) => r.quantity * r.price,\n    profit: (r) => r.quantity * r.price * 0.2,\n  })\n  .graph({\n    type: "scatter",\n    mappings: {\n      x: "revenue",\n      y: "quantity",\n      color: "region",\n      size: "profit",\n    },\n    config: {\n      layout: { title: "Sales Analysis", width: 700, height: 400 },\n      scatter: { pointSize: 100, pointOpacity: 0.8 },\n      color: { scheme: "professional" },\n      legend: { show: true, position: "right" },\n      xAxis: { domain: [0, 5000], label: "Revenue ($)" },\n    },\n    tooltip: {\n      fields: ["revenue", "quantity", "region", "profit"],\n      format: { revenue: (v) => `$${Number(v).toFixed(2)}` }\n    }\n  })',
-      '// Date axis with automatic temporal formatting\ndf.graph({\n  type: "line",\n  mappings: { x: "date", y: "value" },\n  config: {\n    layout: { title: "Time Series" },\n    // Date axis automatically gets "%b %Y" format\n  }\n})',
-    ],
-    related: ["mutate", "filter", "groupBy"],
-    bestPractices: [
-      "✓ GOOD: Use scatter plots for correlation analysis and multi-dimensional data",
-      "✓ GOOD: Use line charts for trends and time series data",
-      "✓ GOOD: Use bar charts for categorical comparisons",
-      "✓ GOOD: Use area charts for cumulative data and part-to-whole relationships",
-      "✓ GOOD: Chain with mutate() to create derived columns for visualization",
-      "✓ GOOD: Use color schemes like 'professional' or 'vibrant' for better aesthetics",
-      "✓ GOOD: Export charts as PNG/SVG for reports and presentations",
-      "✓ GOOD: Use series mapping for multiple lines/bars/areas",
-      "✓ GOOD: Configure tooltip.fields to show only relevant columns",
-      "✓ GOOD: Use domain filtering to focus on specific data ranges",
-      "✓ GOOD: Use scale: 2-4 for high-resolution PNG exports",
-      "✓ GOOD: All row fields are automatically available in tooltips unless filtered",
-      "✓ GOOD: Date columns are automatically detected and formatted as temporal axes",
-      "Charts are interactive in Jupyter notebooks with hover tooltips",
-      "Backed by Vega-Lite for high-quality visualizations",
-      "When domain is specified, data is filtered and chart is clipped to that range",
-    ],
-    antiPatterns: [
-      "❌ BAD: Using scatter plots for time series (use line charts instead)",
-      "❌ BAD: Using bar charts for continuous numeric data (use line charts)",
-      "❌ BAD: Not specifying mappings.x and mappings.y (required)",
-      "❌ BAD: Using 'container' width in savePNG/saveSVG (use numeric width)",
-      "❌ BAD: Using scale > 4 (will be clamped to 4)",
-    ],
-  },
+  // Statistics documentation merged from stats.ts
+  // (See stats.ts for all stats function documentation)
+  ...statsDocs,
 };
 
 // Category groupings for list-operations
@@ -2139,16 +1370,21 @@ export const CATEGORIES = {
     "leftJoin",
     "rightJoin",
     "outerJoin",
+    "asofJoin",
     "pivotLonger",
     "pivotWider",
     "transpose",
     "unnest",
     "bindRows",
     "concatDataFrames",
+    "resample",
     "replaceNA",
     "removeNA",
     "removeNull",
     "removeUndefined",
+    "fillForward",
+    "fillBackward",
+    "interpolate",
     "profile",
     "graph",
   ],
@@ -2186,8 +1422,15 @@ export const CATEGORIES = {
     "cumprod",
     "cummax",
     "cummin",
+    "rolling",
     "lag",
     "lead",
+    "forwardFill",
+    "backwardFill",
+    "interpolate",
+    // Aggregation functions
+    "first",
+    "last",
     // Ranking functions
     "rank",
     "denseRank",

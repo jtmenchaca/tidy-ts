@@ -776,7 +776,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
   if (noTypes) {
     return createDataFrame(rows, { schema, no_types: true });
   }
-  return createDataFrame(rows, schema);
+  return createDataFrame(rows, schema) as unknown as DataFrame<z.infer<S>>;
 }
 
 /*───────────────────────────────────────────────────────────────────────────┐

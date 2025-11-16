@@ -3,29 +3,34 @@ import * as v from "valibot";
 import { getOperationsByCategory } from "../../docs/index.ts";
 
 export function list_operations(server: TidyMcp) {
+  const schema = v.object({
+    category: v.optional(
+      v.pipe(
+        v.union([
+          v.literal("dataframe"),
+          v.literal("stats"),
+          v.literal("io"),
+          v.literal("all"),
+        ]),
+        v.description(
+          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), or "all" (default)',
+        ),
+      ),
+      "all",
+    ),
+  });
+
+  type Input = v.InferInput<typeof schema>;
+
   server.tool(
     {
       name: "tidy-list-operations",
       description:
         "Lists all available DataFrame operations, statistics functions, and I/O operations by category. Use this to discover what operations are available in tidy-ts.",
-      schema: v.object({
-        category: v.optional(
-          v.pipe(
-            v.union([
-              v.literal("dataframe"),
-              v.literal("stats"),
-              v.literal("io"),
-              v.literal("all"),
-            ]),
-            v.description(
-              'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), or "all" (default)',
-            ),
-          ),
-          "all",
-        ),
-      }),
+      // deno-lint-ignore no-explicit-any
+      schema: schema as any,
     },
-    ({ category = "all" }) => {
+    ({ category = "all" }: Input) => {
       const operations = getOperationsByCategory(category);
 
       // Group by category for better organization

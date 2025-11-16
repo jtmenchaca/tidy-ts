@@ -37,6 +37,8 @@ export type EmptyDataFrameForEach =
   "🚨 Cannot iterate over empty DataFrame - no rows to process! Try adding data first with createDataFrame([...rows])";
 export type EmptyDataFrameSummarise =
   "🚨 Cannot summarise empty DataFrame - no rows to summarise! Try adding data first with createDataFrame([...rows])";
+export type EmptyDataFrameResample =
+  "🚨 Cannot resample empty DataFrame - no time column available! Try adding data first with createDataFrame([...rows])";
 
 /**
  * Column type validation error messages
@@ -47,6 +49,8 @@ export type ColumnTypeMismatchString =
   "🚨 Column type mismatch - expected string values but found non-string data. Use col_type: 'string' only with string columns.";
 export type ColumnTypeMismatchBoolean =
   "🚨 Column type mismatch - expected boolean values but found non-boolean data. Use col_type: 'boolean' only with boolean columns.";
+export type ColumnTypeMismatchDate =
+  "🚨 Column type mismatch - resample() requires a Date column for the time column. The specified column must be of type Date (or Date | null).";
 
 /**
  * Missing column validation error messages
@@ -135,6 +139,17 @@ export type ValidateColumnType<
   ExpectedType,
   ErrorMsg extends string,
 > = Row[ColName] extends ExpectedType ? ColName : ErrorMessage<ErrorMsg>;
+
+/**
+ * Check if a column type includes Date (handles Date, Date | null, Date | undefined, etc.)
+ */
+export type ValidateDateColumn<
+  Row extends object,
+  ColName extends keyof Row,
+  ErrorMsg extends string,
+> = Row[ColName] extends Date ? ColName
+  : Date extends Row[ColName] ? ColName
+  : ErrorMessage<ErrorMsg>;
 
 /**
  * Helper type for join key validation

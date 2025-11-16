@@ -1,45 +1,53 @@
 import type { TidyMcp } from "../../index.ts";
 import * as v from "valibot";
-import { readXLSXMetadata } from "../../../dataframe/ts/io/read_xlsx.ts";
-import { readCSVMetadata } from "../../../dataframe/ts/io/read_csv.ts";
+import {
+  readCSVMetadata,
+  readXLSXMetadata,
+  // deno-lint-ignore no-import-prefix
+} from "jsr:/@tidy-ts/dataframe@^1.0.35/";
 
 export function get_file_structure(server: TidyMcp) {
+  const schema = v.object({
+    path: v.pipe(
+      v.string(),
+      v.description("The file path to the CSV or XLSX file"),
+    ),
+    preview_rows: v.optional(
+      v.pipe(
+        v.number(),
+        v.description("Number of rows to preview (default: 5)"),
+      ),
+      5,
+    ),
+    sheet: v.optional(
+      v.pipe(
+        v.union([v.string(), v.number()]),
+        v.description(
+          "For XLSX only: Which sheet to preview - name (string) or index (number, 0-based). Defaults to first sheet.",
+        ),
+      ),
+    ),
+    comma: v.optional(
+      v.pipe(
+        v.string(),
+        v.description(
+          'For CSV only: Field delimiter/comma character (default: ",")',
+        ),
+      ),
+    ),
+  });
+
+  type Input = v.InferInput<typeof schema>;
+
   server.tool(
     {
       name: "tidy-get-file-structure",
       description:
         "Inspect the structure of a CSV or XLSX file without full parsing. Automatically detects file type and shows headers/sheets and a preview of the first few rows. Use this before reading files to understand their structure.",
-      schema: v.object({
-        path: v.pipe(
-          v.string(),
-          v.description("The file path to the CSV or XLSX file"),
-        ),
-        preview_rows: v.optional(
-          v.pipe(
-            v.number(),
-            v.description("Number of rows to preview (default: 5)"),
-          ),
-          5,
-        ),
-        sheet: v.optional(
-          v.pipe(
-            v.union([v.string(), v.number()]),
-            v.description(
-              "For XLSX only: Which sheet to preview - name (string) or index (number, 0-based). Defaults to first sheet.",
-            ),
-          ),
-        ),
-        comma: v.optional(
-          v.pipe(
-            v.string(),
-            v.description(
-              'For CSV only: Field delimiter/comma character (default: ",")',
-            ),
-          ),
-        ),
-      }),
+      // deno-lint-ignore no-explicit-any
+      schema: schema as any,
     },
-    async ({ path, preview_rows, sheet, comma }) => {
+    async ({ path, preview_rows, sheet, comma }: Input) => {
       try {
         // Detect file type from extension
         const extension = path.toLowerCase().split(".").pop();

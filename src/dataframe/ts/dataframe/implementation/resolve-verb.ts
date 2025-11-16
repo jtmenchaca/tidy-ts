@@ -21,6 +21,9 @@ import { drop } from "../../verbs/selection/drop.verb.ts";
 import { reorder } from "../../verbs/transformation/reorder.verb.ts";
 import { ungroup } from "../../verbs/grouping/ungroup.verb.ts";
 import { replaceNA } from "../../verbs/missing-data/replace-na.verb.ts";
+import { fillForward } from "../../verbs/missing-data/fill-forward.verb.ts";
+import { fillBackward } from "../../verbs/missing-data/fill-backward.verb.ts";
+import { interpolate } from "../../verbs/missing-data/interpolate.verb.ts";
 import {
   removeNA,
   removeNull,
@@ -82,6 +85,7 @@ import { profile } from "../../verbs/utility/profile.verb.ts";
 
 // Row binding
 import { bind_rows } from "../../verbs/reshape/bind-rows.verb.ts";
+import { resample } from "../../verbs/utility/resample.verb.ts";
 
 // Chain wrappers for seamless async thenableDataFrameing
 import { thenableDataFrame } from "../../promised-dataframe/index.ts";
@@ -528,6 +532,27 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
+  if (prop === "fillForward") {
+    return (...columnNames: unknown[]) => {
+      const result = (fillForward as any)(...columnNames)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "fillBackward") {
+    return (...columnNames: unknown[]) => {
+      const result = (fillBackward as any)(...columnNames)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "interpolate") {
+    return (valueColumn: unknown, xColumn: unknown, method: unknown) => {
+      const result = (interpolate as any)(valueColumn, xColumn, method)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
   if (prop === "removeNA") {
     return (fieldOrFields: unknown, ...fields: unknown[]) => {
       const result = (removeNA as any)(df, fieldOrFields, ...fields);
@@ -579,6 +604,13 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
 
   if (prop === "bindRows" || prop === "bind") {
     return (...a: unknown[]) => (bind_rows as any)(...a)(df);
+  }
+
+  if (prop === "resample") {
+    return (timeColumn: unknown, frequency: unknown, options: unknown) => {
+      const result = (resample as any)(timeColumn, frequency, options)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
   }
 
   // Note: Essential DataFrame properties like print, nrows, etc.
