@@ -1,4 +1,8 @@
-import type { DataFrame } from "../../dataframe/index.ts";
+import type {
+  DataFrame,
+  GroupedDataFrame,
+  Prettify,
+} from "../../dataframe/index.ts";
 
 /**
  * Frequency specification for time-series operations.
@@ -44,26 +48,27 @@ export type Frequency =
 export type AggregationFunction<T extends object> = (...args: any[]) => any;
 
 /**
- * Map of column names to their aggregation functions.
- */
-export type AggregationMap<T extends Record<string, unknown>> = {
-  [K in string]: AggregationFunction<T>;
-};
-
-/**
  * Result row type after downsampling.
+ * Uses ReturnType directly like summarise to properly infer return types.
+ * The conditional type ensures ReturnType is properly evaluated.
  */
-type RowAfterDownsample<
+export type RowAfterDownsample<
   Row extends Record<string, unknown>,
   TimeCol extends keyof Row,
-  Aggregations extends AggregationMap<Row>,
-> =
+  // deno-lint-ignore no-explicit-any
+  Aggregations extends Record<string, (...args: any[]) => any>,
+> = Prettify<
   & {
-    [K in keyof Aggregations]: unknown;
+    [K in keyof Aggregations]: Aggregations[K] extends (
+      // deno-lint-ignore no-explicit-any
+      ...args: any[]
+    ) => infer R ? R
+      : ReturnType<Aggregations[K]>;
   }
   & {
     [K in TimeCol]: Date;
-  };
+  }
+>;
 
 /**
  * Arguments for downsample operation.
@@ -71,7 +76,7 @@ type RowAfterDownsample<
 export type DownsampleArgs<
   Row extends Record<string, unknown>,
   TimeCol extends keyof Row,
-  Aggregations extends AggregationMap<Row>,
+  Aggregations,
 > = {
   timeColumn: TimeCol;
   frequency: Frequency;
@@ -82,11 +87,47 @@ export type DownsampleArgs<
 
 /**
  * Method signature for downsample on DataFrame.
+ * Uses the same pattern as resample to preserve function return types and group columns.
  */
-export type DownsampleMethod<Row extends object> = <
-  TimeCol extends keyof Row,
-  Aggregations extends AggregationMap<Row & Record<string, unknown>>,
->(
-  args: DownsampleArgs<Row & Record<string, unknown>, TimeCol, Aggregations>,
-  // deno-lint-ignore no-explicit-any
-) => DataFrame<any>;
+export interface DownsampleMethod<Row extends object> {
+  /**
+   * Downsample grouped DataFrame - preserves group columns in result.
+   */
+  <
+    GroupName extends keyof Row,
+    TimeCol extends keyof Row & string,
+    Aggregations extends Record<
+      string,
+      // deno-lint-ignore no-explicit-any
+      (...args: any[]) => any
+    >,
+  >(
+    this: GroupedDataFrame<Row, GroupName>,
+    args: DownsampleArgs<Row & Record<string, unknown>, TimeCol, Aggregations>,
+  ): DataFrame<
+    Prettify<
+      & Pick<Row, GroupName> // Include group columns
+      & RowAfterDownsample<
+        Row & Record<string, unknown>,
+        TimeCol,
+        Aggregations
+      > // Include downsampled columns
+    >
+  >;
+
+  /**
+   * Downsample regular DataFrame.
+   */
+  <
+    TimeCol extends keyof Row & string,
+    Aggregations extends Record<
+      string,
+      // deno-lint-ignore no-explicit-any
+      (...args: any[]) => any
+    >,
+  >(
+    args: DownsampleArgs<Row & Record<string, unknown>, TimeCol, Aggregations>,
+  ): DataFrame<
+    RowAfterDownsample<Row & Record<string, unknown>, TimeCol, Aggregations>
+  >;
+}

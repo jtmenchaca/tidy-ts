@@ -10,10 +10,11 @@ export function list_operations(server: TidyMcp) {
           v.literal("dataframe"),
           v.literal("stats"),
           v.literal("io"),
+          v.literal("llm"),
           v.literal("all"),
         ]),
         v.description(
-          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), or "all" (default)',
+          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), "llm" (LLM utilities), or "all" (default)',
         ),
       ),
       "all",
@@ -51,6 +52,7 @@ export function list_operations(server: TidyMcp) {
         dataframe: "DataFrame Operations",
         stats: "Statistics Functions",
         io: "I/O Operations",
+        llm: "LLM Utilities",
       };
 
       for (const [cat, ops] of Object.entries(grouped)) {

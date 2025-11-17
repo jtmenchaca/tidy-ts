@@ -1,5 +1,5 @@
 import { expect } from "@std/expect";
-import { createDataFrame, stats } from "@tidy-ts/dataframe";
+import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
 
 Deno.test("downsample() - downsample hourly to daily", () => {
   const df = createDataFrame([
@@ -17,6 +17,12 @@ Deno.test("downsample() - downsample hourly to daily", () => {
       volume: stats.sum,
     },
   });
+
+  const _typeCheck: DataFrame<{
+    timestamp: Date;
+    price: number;
+    volume: number;
+  }> = result;
 
   expect(result.nrows()).toBe(2);
   expect(result[0].price).toBe(110); // (100 + 110 + 120) / 3

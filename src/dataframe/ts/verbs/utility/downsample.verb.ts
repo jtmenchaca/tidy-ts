@@ -3,8 +3,8 @@ import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { createDataFrame } from "../../dataframe/index.ts";
 import type {
   AggregationFunction,
-  AggregationMap,
   DownsampleArgs,
+  RowAfterDownsample,
 } from "./downsample.types.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
@@ -24,7 +24,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
   timeColumn: keyof T,
   frequency: Frequency,
   frequencyMs: number,
-  aggregations: AggregationMap<T>,
+  aggregations: Record<string, (...args: any[]) => any>,
   startDate?: Date,
   endDate?: Date,
 ): DataFrame<any> {
@@ -524,14 +524,18 @@ function downsampleImpl<T extends Record<string, unknown>>(
 export function downsample<
   T extends Record<string, unknown>,
   TimeCol extends keyof T,
-  Aggregations extends AggregationMap<T>,
+  Aggregations extends Record<string, (...args: any[]) => any>,
 >(
   args: DownsampleArgs<T, TimeCol, Aggregations>,
 ) {
-  return (df: DataFrame<T> | GroupedDataFrame<T, keyof T>): DataFrame<any> => {
+  return (
+    df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
+  ): DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>> => {
     const rows = Array.from(df);
     if (rows.length === 0) {
-      return createDataFrame([]) as unknown as DataFrame<any>;
+      return createDataFrame([]) as unknown as DataFrame<
+        RowAfterDownsample<T, TimeCol, Aggregations>
+      >;
     }
 
     const frequencyMs = frequencyToMs(args.frequency);
@@ -543,6 +547,6 @@ export function downsample<
       args.aggregations,
       args.startDate,
       args.endDate,
-    );
+    ) as unknown as DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>>;
   };
 }
