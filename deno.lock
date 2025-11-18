@@ -11,17 +11,20 @@
     "jsr:@std/assert@^1.0.13": "1.0.13",
     "jsr:@std/bytes@^1.0.6": "1.0.6",
     "jsr:@std/cli@^1.0.11": "1.0.20",
+    "jsr:@std/collections@^1.1.3": "1.1.3",
     "jsr:@std/csv@^1.0.6": "1.0.6",
     "jsr:@std/encoding@^1.0.6": "1.0.10",
     "jsr:@std/expect@^1.0.15": "1.0.16",
     "jsr:@std/fmt@^1.0.4": "1.0.8",
     "jsr:@std/fmt@~1.0.2": "1.0.8",
+    "jsr:@std/front-matter@*": "1.0.9",
     "jsr:@std/fs@1": "1.0.19",
     "jsr:@std/fs@^1.0.10": "1.0.19",
     "jsr:@std/internal@^1.0.10": "1.0.10",
     "jsr:@std/internal@^1.0.6": "1.0.10",
     "jsr:@std/internal@^1.0.7": "1.0.10",
     "jsr:@std/internal@^1.0.9": "1.0.10",
+    "jsr:@std/path@*": "1.1.2",
     "jsr:@std/path@1": "1.1.2",
     "jsr:@std/path@^1.0.8": "1.1.2",
     "jsr:@std/path@^1.1.1": "1.1.2",
@@ -30,6 +33,8 @@
     "jsr:@std/streams@^1.0.9": "1.0.10",
     "jsr:@std/tar@~0.1.4": "0.1.7",
     "jsr:@std/text@~1.0.7": "1.0.16",
+    "jsr:@std/toml@^1.0.3": "1.0.11",
+    "jsr:@std/yaml@^1.0.5": "1.0.10",
     "npm:@jsr/std__expect@*": "1.0.17",
     "npm:@libsql/client@*": "0.15.15",
     "npm:@openai/agents@~0.2.1": "0.2.1_zod@4.1.8",
@@ -121,6 +126,9 @@
     "@std/cli@1.0.20": {
       "integrity": "a8c384a2c98cec6ec6a2055c273a916e2772485eb784af0db004c5ab8ba52333"
     },
+    "@std/collections@1.1.3": {
+      "integrity": "bf8b0818886df6a32b64c7d3b037a425111f28278d69fd0995aeb62777c986b0"
+    },
     "@std/csv@1.0.6": {
       "integrity": "52ef0e62799a0028d278fa04762f17f9bd263fad9a8e7f98c14fbd371d62d9fd",
       "dependencies": [
@@ -139,6 +147,13 @@
     },
     "@std/fmt@1.0.8": {
       "integrity": "71e1fc498787e4434d213647a6e43e794af4fd393ef8f52062246e06f7e372b7"
+    },
+    "@std/front-matter@1.0.9": {
+      "integrity": "ee6201d06674cbef137dda2252f62477450b48249e7d8d9ab57a30f85ff6f051",
+      "dependencies": [
+        "jsr:@std/toml",
+        "jsr:@std/yaml"
+      ]
     },
     "@std/fs@1.0.19": {
       "integrity": "051968c2b1eae4d2ea9f79a08a3845740ef6af10356aff43d3e2ef11ed09fb06",
@@ -173,6 +188,15 @@
     },
     "@std/text@1.0.16": {
       "integrity": "ddb9853b75119a2473857d691cf1ec02ad90793a2e8b4a4ac49d7354281a0cf8"
+    },
+    "@std/toml@1.0.11": {
+      "integrity": "e084988b872ca4bad6aedfb7350f6eeed0e8ba88e9ee5e1590621c5b5bb8f715",
+      "dependencies": [
+        "jsr:@std/collections"
+      ]
+    },
+    "@std/yaml@1.0.10": {
+      "integrity": "245706ea3511cc50c8c6d00339c23ea2ffa27bd2c7ea5445338f8feff31fa58e"
     }
   },
   "npm": {

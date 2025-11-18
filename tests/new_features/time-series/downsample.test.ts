@@ -143,6 +143,7 @@ Deno.test("downsample() - with grouped data", () => {
     frequency: "1D",
     aggregations: {
       price: stats.mean,
+      timestamp: stats.first,
     },
   });
 

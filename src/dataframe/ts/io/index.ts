@@ -718,10 +718,20 @@ export const readXLSX: ReadXLSXFunction = (() => {
   };
 })();
 
+interface WriteXLSXOpts {
+  sheet?: string;
+}
+
+type WriteXLSXFunction = <Row extends Record<string, unknown>>(
+  dataFrame: DataFrame<Row>,
+  path: string,
+  opts?: WriteXLSXOpts,
+) => Promise<void>;
+
 /**
  * Write a DataFrame to an XLSX file.
  *
- * Converts a DataFrame to XLSX format and writes it to a file (Deno only).
+ * Converts a DataFrame to XLSX format and writes it to a file (Node.js/Deno/Bun only).
  * Automatically handles dates (converts to Excel serial numbers), numbers,
  * strings, and booleans. Supports writing to specific sheets in new or existing files.
  *
@@ -748,16 +758,6 @@ export const readXLSX: ReadXLSXFunction = (() => {
  * await writeXLSX(users, "./data.xlsx", { sheet: "Users" });
  * await writeXLSX(products, "./data.xlsx", { sheet: "Products" });
  */
-interface WriteXLSXOpts {
-  sheet?: string;
-}
-
-type WriteXLSXFunction = <Row extends Record<string, unknown>>(
-  dataFrame: DataFrame<Row>,
-  path: string,
-  opts?: WriteXLSXOpts,
-) => Promise<void>;
-
 export const writeXLSX: WriteXLSXFunction = (() => {
   const isNode = currentRuntime === Runtime.Node;
   const isDeno = currentRuntime === Runtime.Deno;
