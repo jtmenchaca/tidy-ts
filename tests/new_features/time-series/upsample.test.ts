@@ -168,3 +168,172 @@ Deno.test("upsample() - upsample with backward fill and endDate", () => {
   // Values before 12:00 should be backward filled from 12:00 value
   expect(result[1].value).toBe(200); // 11:00 backward filled
 });
+
+// ============================================================================
+// Tests for grouped DataFrames
+// ============================================================================
+
+Deno.test("upsample() - with grouped data", () => {
+  const df = createDataFrame([
+    { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "AAPL", price: 150 },
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 151 },
+    { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "MSFT", price: 300 },
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "MSFT", price: 301 },
+  ]);
+
+  const result = df.groupBy("symbol").upsample({
+    timeColumn: "timestamp",
+    frequency: "1H",
+    fillMethod: "forward",
+  });
+
+  // Should have 3 rows per symbol (10:00, 11:00, 12:00) = 6 total rows
+  expect(result.nrows()).toBe(6);
+
+  // Check AAPL group
+  const aapl = result.filter((row) => row.symbol === "AAPL");
+  expect(aapl.nrows()).toBe(3);
+  expect(aapl[0].price).toBe(150); // 10:00
+  expect(aapl[1].price).toBe(150); // 11:00 forward filled
+  expect(aapl[2].price).toBe(151); // 12:00
+
+  // Check MSFT group
+  const msft = result.filter((row) => row.symbol === "MSFT");
+  expect(msft.nrows()).toBe(3);
+  expect(msft[0].price).toBe(300); // 10:00
+  expect(msft[1].price).toBe(300); // 11:00 forward filled
+  expect(msft[2].price).toBe(301); // 12:00
+});
+
+Deno.test("upsample() - with grouped data and startDate/endDate", () => {
+  const df = createDataFrame([
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 150 },
+    { timestamp: new Date("2023-01-01T13:00:00Z"), symbol: "AAPL", price: 151 },
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "MSFT", price: 300 },
+    { timestamp: new Date("2023-01-01T13:00:00Z"), symbol: "MSFT", price: 301 },
+  ]);
+
+  const result = df.groupBy("symbol").upsample({
+    timeColumn: "timestamp",
+    frequency: "1H",
+    fillMethod: "forward",
+    startDate: new Date("2023-01-01T10:00:00Z"),
+    endDate: new Date("2023-01-01T15:00:00Z"),
+  });
+
+  // Should have 6 rows per symbol (10:00-15:00) = 12 total rows
+  expect(result.nrows()).toBe(12);
+
+  // Check AAPL group
+  const aapl = result.filter((row) => row.symbol === "AAPL");
+  expect(aapl.nrows()).toBe(6);
+  expect(aapl[0].timestamp.getTime()).toBe(
+    new Date("2023-01-01T10:00:00Z").getTime(),
+  );
+  expect(aapl[0].price).toBe(150); // Forward filled from first value
+  expect(aapl[2].price).toBe(150); // Actual first value at 12:00
+  expect(aapl[3].price).toBe(151); // Actual second value at 13:00
+  expect(aapl[5].price).toBe(151); // Forward filled to end
+
+  // Check MSFT group
+  const msft = result.filter((row) => row.symbol === "MSFT");
+  expect(msft.nrows()).toBe(6);
+  expect(msft[0].timestamp.getTime()).toBe(
+    new Date("2023-01-01T10:00:00Z").getTime(),
+  );
+  expect(msft[0].price).toBe(300); // Forward filled from first value
+  expect(msft[2].price).toBe(300); // Actual first value at 12:00
+  expect(msft[3].price).toBe(301); // Actual second value at 13:00
+  expect(msft[5].price).toBe(301); // Forward filled to end
+});
+
+Deno.test("upsample() - with grouped data and backward fill", () => {
+  const df = createDataFrame([
+    { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "AAPL", price: 150 },
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 151 },
+    { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "MSFT", price: 300 },
+    { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "MSFT", price: 301 },
+  ]);
+
+  const result = df.groupBy("symbol").upsample({
+    timeColumn: "timestamp",
+    frequency: "1H",
+    fillMethod: "backward",
+    endDate: new Date("2023-01-01T15:00:00Z"),
+  });
+
+  // Should have 6 rows per symbol (10:00-15:00) = 12 total rows
+  expect(result.nrows()).toBe(12);
+
+  // Check AAPL group
+  const aapl = result.filter((row) => row.symbol === "AAPL");
+  expect(aapl.nrows()).toBe(6);
+  expect(aapl[0].price).toBe(150); // 10:00 actual value
+  expect(aapl[1].price).toBe(151); // 11:00 backward filled from 12:00
+  expect(aapl[2].price).toBe(151); // 12:00 actual value
+  expect(aapl[5].price).toBe(151); // 15:00 backward filled
+
+  // Check MSFT group
+  const msft = result.filter((row) => row.symbol === "MSFT");
+  expect(msft.nrows()).toBe(6);
+  expect(msft[0].price).toBe(300); // 10:00 actual value
+  expect(msft[1].price).toBe(301); // 11:00 backward filled from 12:00
+  expect(msft[2].price).toBe(301); // 12:00 actual value
+  expect(msft[5].price).toBe(301); // 15:00 backward filled
+});
+
+Deno.test("upsample() - with multiple grouping columns", () => {
+  const df = createDataFrame([
+    {
+      timestamp: new Date("2023-01-01T10:00:00Z"),
+      region: "US",
+      symbol: "AAPL",
+      price: 150,
+    },
+    {
+      timestamp: new Date("2023-01-01T12:00:00Z"),
+      region: "US",
+      symbol: "AAPL",
+      price: 151,
+    },
+    {
+      timestamp: new Date("2023-01-01T10:00:00Z"),
+      region: "EU",
+      symbol: "AAPL",
+      price: 155,
+    },
+    {
+      timestamp: new Date("2023-01-01T12:00:00Z"),
+      region: "EU",
+      symbol: "AAPL",
+      price: 156,
+    },
+  ]);
+
+  const result = df.groupBy("region", "symbol").upsample({
+    timeColumn: "timestamp",
+    frequency: "1H",
+    fillMethod: "forward",
+  });
+
+  // Should have 3 rows per group (10:00, 11:00, 12:00) = 6 total rows
+  expect(result.nrows()).toBe(6);
+
+  // Check US-AAPL group
+  const usAapl = result.filter(
+    (row) => row.region === "US" && row.symbol === "AAPL",
+  );
+  expect(usAapl.nrows()).toBe(3);
+  expect(usAapl[0].price).toBe(150);
+  expect(usAapl[1].price).toBe(150); // forward filled
+  expect(usAapl[2].price).toBe(151);
+
+  // Check EU-AAPL group
+  const euAapl = result.filter(
+    (row) => row.region === "EU" && row.symbol === "AAPL",
+  );
+  expect(euAapl.nrows()).toBe(3);
+  expect(euAapl[0].price).toBe(155);
+  expect(euAapl[1].price).toBe(155); // forward filled
+  expect(euAapl[2].price).toBe(156);
+});
