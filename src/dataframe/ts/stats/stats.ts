@@ -786,7 +786,17 @@ export const stats: {
   },
 };
 
-// Export stats with alias 's' for convenience
+/**
+ * Alias for {@link stats} - provides a shorter name for convenience.
+ *
+ * @example
+ * ```typescript
+ * import { s } from "@tidy-ts/dataframe";
+ *
+ * const mean = s.mean([1, 2, 3, 4, 5]); // 3
+ * const sum = s.sum([1, 2, 3]); // 6
+ * ```
+ */
 export { stats as s };
 
 // Also export the stats constant as default
