@@ -49,7 +49,13 @@ type HealthcareHistoryRow = {
  * Each row represents a status change for a topic.
  */
 function generateHealthcareHistory(): DataFrame<HealthcareHistoryRow> {
-  const data: HealthcareHistoryRow[] = [];
+  const data: {
+    pat_id: string;
+    snapshot_date: Date;
+    topic_id: number;
+    topic_name: string;
+    topic_status: "Due Soon" | "Overdue" | "Not Due";
+  }[] = [];
 
   const scenarios = [
     {

@@ -25,6 +25,17 @@
         "panel": "new"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "deno: test current file",
+      "type": "shell",
+      "command": "deno test -A ${file}",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
     }
   ]
 }

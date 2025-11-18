@@ -1,7 +1,8 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("upsample() - upsample with forward fill", () => {
+test("upsample() - upsample with forward fill", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 200 },
@@ -19,7 +20,7 @@ Deno.test("upsample() - upsample with forward fill", () => {
   expect(result[2].value).toBe(200);
 });
 
-Deno.test("upsample() - upsample with backward fill", () => {
+test("upsample() - upsample with backward fill", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 200 },
@@ -41,7 +42,7 @@ Deno.test("upsample() - upsample with backward fill", () => {
 // Tests for startDate and endDate parameters
 // ============================================================================
 
-Deno.test("upsample() - upsample with startDate before first data point", () => {
+test("upsample() - upsample with startDate before first data point", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T14:00:00Z"), value: 200 },
@@ -66,7 +67,7 @@ Deno.test("upsample() - upsample with startDate before first data point", () => 
   expect(result[4].value).toBe(200); // Actual second value at 14:00
 });
 
-Deno.test("upsample() - upsample with startDate after first data point (truncate)", () => {
+test("upsample() - upsample with startDate after first data point (truncate)", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T11:00:00Z"), value: 110 },
@@ -95,7 +96,7 @@ Deno.test("upsample() - upsample with startDate after first data point (truncate
   expect(beforeStart.nrows()).toBe(0); // Truncated
 });
 
-Deno.test("upsample() - upsample with endDate after last data point", () => {
+test("upsample() - upsample with endDate after last data point", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 200 },
@@ -118,7 +119,7 @@ Deno.test("upsample() - upsample with endDate after last data point", () => {
   expect(lastRow.value).toBe(200); // Forward filled from last actual value
 });
 
-Deno.test("upsample() - upsample with both startDate and endDate", () => {
+test("upsample() - upsample with both startDate and endDate", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T13:00:00Z"), value: 200 },
@@ -144,7 +145,7 @@ Deno.test("upsample() - upsample with both startDate and endDate", () => {
   expect(result[5].value).toBe(200); // Forward filled to end
 });
 
-Deno.test("upsample() - upsample with backward fill and endDate", () => {
+test("upsample() - upsample with backward fill and endDate", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), value: 100 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), value: 200 },
@@ -173,7 +174,7 @@ Deno.test("upsample() - upsample with backward fill and endDate", () => {
 // Tests for grouped DataFrames
 // ============================================================================
 
-Deno.test("upsample() - with grouped data", () => {
+test("upsample() - with grouped data", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "AAPL", price: 150 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 151 },
@@ -205,7 +206,7 @@ Deno.test("upsample() - with grouped data", () => {
   expect(msft[2].price).toBe(301); // 12:00
 });
 
-Deno.test("upsample() - with grouped data and startDate/endDate", () => {
+test("upsample() - with grouped data and startDate/endDate", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 150 },
     { timestamp: new Date("2023-01-01T13:00:00Z"), symbol: "AAPL", price: 151 },
@@ -247,7 +248,7 @@ Deno.test("upsample() - with grouped data and startDate/endDate", () => {
   expect(msft[5].price).toBe(301); // Forward filled to end
 });
 
-Deno.test("upsample() - with grouped data and backward fill", () => {
+test("upsample() - with grouped data and backward fill", () => {
   const df = createDataFrame([
     { timestamp: new Date("2023-01-01T10:00:00Z"), symbol: "AAPL", price: 150 },
     { timestamp: new Date("2023-01-01T12:00:00Z"), symbol: "AAPL", price: 151 },
@@ -282,7 +283,7 @@ Deno.test("upsample() - with grouped data and backward fill", () => {
   expect(msft[5].price).toBe(301); // 15:00 backward filled
 });
 
-Deno.test("upsample() - with multiple grouping columns", () => {
+test("upsample() - with multiple grouping columns", () => {
   const df = createDataFrame([
     {
       timestamp: new Date("2023-01-01T10:00:00Z"),
