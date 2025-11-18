@@ -347,6 +347,8 @@ Deno.test("readCSV · no_types with file path", async () => {
 3,Charlie,78`;
 
   const tempFile = "./tmp/test-no-types.csv";
+  // Ensure directory exists before writing
+  await Deno.mkdir("./tmp", { recursive: true });
   await Deno.writeTextFile(tempFile, testCsv);
 
   try {

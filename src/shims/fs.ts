@@ -76,16 +76,22 @@ export async function writeFile(
   options?: { create?: boolean; mode?: number },
 ): Promise<void> {
   const deno = getDenoNamespace();
+  const path = getPathModule();
+
+  // Ensure directory exists (works in all runtimes)
+  const dir = path.dirname(filePath);
+
   if (deno) {
+    try {
+      await deno.mkdir(dir, { recursive: true });
+    } catch {
+      // Directory might already exist, ignore
+    }
     return await deno.writeFile(filePath, data, options);
   }
 
   const fs = await getFsPromises();
-  // Path is always available - loaded at top level
-  const path = getPathModule();
-
   // Ensure directory exists
-  const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
   // Node.js fs.writeFile accepts Uint8Array directly
   await fs.writeFile(filePath, data);
@@ -110,16 +116,22 @@ export async function writeTextFile(
   options?: { create?: boolean; mode?: number },
 ): Promise<void> {
   const deno = getDenoNamespace();
+  const path = getPathModule();
+
+  // Ensure directory exists (works in all runtimes)
+  const dir = path.dirname(filePath);
+
   if (deno) {
+    try {
+      await deno.mkdir(dir, { recursive: true });
+    } catch {
+      // Directory might already exist, ignore
+    }
     return await deno.writeTextFile(filePath, data, options);
   }
 
   const fs = await getFsPromises();
-  // Path is always available - loaded at top level
-  const path = getPathModule();
-
   // Ensure directory exists
-  const dir = path.dirname(filePath);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(filePath, data, "utf-8");
 }
@@ -316,7 +328,17 @@ export function writeFileSync(
   data: Uint8Array | string,
 ): void {
   const deno = getDenoNamespace();
+  const path = getPathModule();
+
+  // Ensure directory exists (works in all runtimes)
+  const dir = path.dirname(filePath);
+
   if (deno) {
+    try {
+      deno.mkdirSync(dir, { recursive: true });
+    } catch {
+      // Directory might already exist, ignore
+    }
     if (typeof data === "string") {
       deno.writeTextFileSync(filePath, data);
     } else {
@@ -330,10 +352,7 @@ export function writeFileSync(
   if (!fs) {
     throw new UnavailableAPIError("writeFileSync()", currentRuntime);
   }
-  // Path is always available - loaded at top level
-  const path = getPathModule();
   // Ensure directory exists
-  const dir = path.dirname(filePath);
   try {
     fs.mkdirSync(dir, { recursive: true });
   } catch {
