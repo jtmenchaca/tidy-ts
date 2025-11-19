@@ -1,5 +1,5 @@
 - Add ev1
 - Add zipf
-- Add pareto
+- [x] Add pareto
 - Add dirac delta
 - double check xlsx sheet writing

@@ -1,17 +1,28 @@
 {
   "lockfileVersion": 1,
+  "configVersion": 0,
   "workspaces": {
     "": {
       "dependencies": {
+        "@std/csv": "npm:@jsr/std__csv",
         "@std/expect": "npm:@jsr/std__expect",
+        "@tidy-ts/shims": "npm:@jsr/tidy-ts__shims",
       },
     },
   },
   "packages": {
     "@jsr/std__assert": ["@jsr/std__assert@1.0.15", "https://npm.jsr.io/~/11/@jsr/std__assert/1.0.15.tgz", { "dependencies": { "@jsr/std__internal": "^1.0.12" } }, "sha512-iaekOy2yP8hMA5pN5PHMXic4MH0pRggviqTvPd4iEMkS66lDOFTV0uxDRwRc3ia4btRB39QiSUXJPpVZCQu8nA=="],
 
+    "@jsr/std__bytes": ["@jsr/std__bytes@1.0.6", "https://npm.jsr.io/~/11/@jsr/std__bytes/1.0.6.tgz", {}, "sha512-St6yKggjFGhxS52IFLJWvkchRFbAKg2Xh8UxA4S1EGz7GJ2Ui+ssDDldj/w2c8vCxvl6qgR0HaYbKeFJNqujmA=="],
+
     "@jsr/std__internal": ["@jsr/std__internal@1.0.12", "https://npm.jsr.io/~/11/@jsr/std__internal/1.0.12.tgz", {}, "sha512-6xReMW9p+paJgqoFRpOE2nogJFvzPfaLHLIlyADYjKMUcwDyjKZxryIbgcU+gxiTygn8yCjld1HoI0ET4/iZeA=="],
 
+    "@jsr/std__streams": ["@jsr/std__streams@1.0.14", "https://npm.jsr.io/~/11/@jsr/std__streams/1.0.14.tgz", { "dependencies": { "@jsr/std__bytes": "^1.0.6" } }, "sha512-GMVeAQ8jJ0d5hCbqnQRLvA59dpP+fe+ugr1ge3cfEEFUaAh8zGnZuePOWioJ26Mor0925xKag6A6SDEgUDR1XA=="],
+
+    "@std/csv": ["@jsr/std__csv@1.0.6", "https://npm.jsr.io/~/11/@jsr/std__csv/1.0.6.tgz", { "dependencies": { "@jsr/std__streams": "^1.0.9" } }, "sha512-9n/SZzjolPQ907gUPksQU3EFURwRl4GA9V6MylA8hpSkpxhcj6J98zDpn9EmDqgE2A4L9MnlUvFhRpeWl+Y/ZQ=="],
+
     "@std/expect": ["@jsr/std__expect@1.0.17", "https://npm.jsr.io/~/11/@jsr/std__expect/1.0.17.tgz", { "dependencies": { "@jsr/std__assert": "^1.0.14", "@jsr/std__internal": "^1.0.10" } }, "sha512-+1wHqnotlmsLVrD9nAPTN0ITanwLCYmd9likMB7vn3/4vkTmotv/qUnzwtvegj7utgHrckR4Ksl1NDR8iaW3RQ=="],
+
+    "@tidy-ts/shims": ["@jsr/tidy-ts__shims@0.0.5", "https://npm.jsr.io/~/11/@jsr/tidy-ts__shims/0.0.5.tgz", {}, "sha512-c2+NpiYGNAKQbVsUfnXgb3iihIQ3AXBgHrdJFdUYQcpZe27eCMS+t+L60RAMwma2YHeuAw8wkHMhxiR4wfF0Ww=="],
   }
 }

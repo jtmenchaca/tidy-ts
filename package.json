@@ -1,9 +1,8 @@
 {
   "type": "module",
   "dependencies": {
-    "@std/expect": "npm:@jsr/std__expect"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.2"
+    "@std/expect": "npm:@jsr/std__expect",
+    "@std/csv": "npm:@jsr/std__csv",
+    "@tidy-ts/shims": "npm:@jsr/tidy-ts__shims"
   }
 }

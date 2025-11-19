@@ -51,7 +51,7 @@ export type AggregationFunction<T extends object> = (...args: any[]) => any;
  * Result row type after downsampling.
  * Uses ReturnType directly like summarise to properly infer return types.
  * The conditional type ensures ReturnType is properly evaluated.
- * 
+ *
  * Note: TimeCol is excluded from aggregations mapping to ensure it's always typed as Date,
  * even if it appears in the aggregations object.
  */
