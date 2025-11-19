@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { type DataFrame, readJSON } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { remove, test, writeTextFile } from "@tidy-ts/shims";
 
 // Define a Zod schema for JSON user data
 const UserSchema = z.object({
@@ -13,7 +14,7 @@ const UserSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
-Deno.test("readJSON type inference for single object", async () => {
+test("readJSON type inference for single object", async () => {
   const userJson = {
     id: 1,
     name: "Alice",
@@ -24,7 +25,7 @@ Deno.test("readJSON type inference for single object", async () => {
   };
 
   const tempFile = "./temp_user_single.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(userJson));
+  await writeTextFile(tempFile, JSON.stringify(userJson));
 
   try {
     const user = await readJSON(tempFile, UserSchema);
@@ -43,7 +44,7 @@ Deno.test("readJSON type inference for single object", async () => {
     expect(user.name).toBe("Alice");
     expect(user.active).toBe(true);
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
@@ -68,7 +69,7 @@ Deno.test("readJSON type inference for array returns DataFrame", async () => {
   ];
 
   const tempFile = "./temp_users_array.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(usersJson));
+  await writeTextFile(tempFile, JSON.stringify(usersJson));
 
   try {
     const users = await readJSON(tempFile, UsersArraySchema);
@@ -87,7 +88,7 @@ Deno.test("readJSON type inference for array returns DataFrame", async () => {
     expect(users[0].name).toBe("Alice");
     expect(users[1].name).toBe("Bob");
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
@@ -109,7 +110,7 @@ Deno.test("readJSON type inference with nullable fields", async () => {
   };
 
   const tempFile = "./temp_product.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(product));
+  await writeTextFile(tempFile, JSON.stringify(product));
 
   try {
     const result = await readJSON(tempFile, ProductSchema);
@@ -125,7 +126,7 @@ Deno.test("readJSON type inference with nullable fields", async () => {
 
     expect(result.discount).toBe(null);
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
@@ -157,7 +158,7 @@ Deno.test("readJSON type inference with nested objects", async () => {
   };
 
   const tempFile = "./temp_order.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(order));
+  await writeTextFile(tempFile, JSON.stringify(order));
 
   try {
     const result = await readJSON(tempFile, OrderSchema);
@@ -179,6 +180,6 @@ Deno.test("readJSON type inference with nested objects", async () => {
     expect(result.customer.name).toBe("Alice");
     expect(result.items.length).toBe(2);
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });

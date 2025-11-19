@@ -1,6 +1,7 @@
 import { readXLSX } from "./read_xlsx.ts";
 import { writeXLSX } from "./write_xlsx.ts";
 import { expect } from "@std/expect";
+import { remove, test } from "@tidy-ts/shims";
 import { z } from "zod";
 
 /**
@@ -10,7 +11,7 @@ import { z } from "zod";
  * read back by readXLSX with identical data.
  */
 
-Deno.test("roundtrip - mixed-types.xlsx", async () => {
+test("roundtrip - mixed-types.xlsx", async () => {
   const schema = z.object({
     name: z.string(),
     age: z.number(),
@@ -34,7 +35,7 @@ Deno.test("roundtrip - mixed-types.xlsx", async () => {
     expect(reloaded.columns()).toEqual(original.columns());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -58,7 +59,7 @@ Deno.test("roundtrip - single-row.xlsx", async () => {
     expect(reloaded.nrows()).toBe(original.nrows());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -82,7 +83,7 @@ Deno.test("roundtrip - empty-cells.xlsx", async () => {
     expect(reloaded.nrows()).toBe(original.nrows());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -141,7 +142,7 @@ Deno.test("roundtrip - wide-table.xlsx", async () => {
     expect(reloaded.ncols()).toBe(original.ncols());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -174,7 +175,7 @@ Deno.test("roundtrip - large-numbers.xlsx", async () => {
       expect(reloadRows[i].scientific).toBeCloseTo(origRows[i].scientific, 10);
     }
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -197,7 +198,7 @@ Deno.test("roundtrip - long-strings.xlsx", async () => {
     expect(reloaded.nrows()).toBe(original.nrows());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -221,7 +222,7 @@ Deno.test("roundtrip - special-chars.xlsx", async () => {
     expect(reloaded.nrows()).toBe(original.nrows());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -254,7 +255,7 @@ Deno.test("roundtrip - date-boolean.xlsx", async () => {
       expect(reloadRows[i].when.getTime()).toBe(origRows[i].when.getTime());
     }
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -306,7 +307,7 @@ Deno.test("roundtrip - mtcars.xlsx", async () => {
       expect(reloadRows[i].carb).toBe(origRows[i].carb);
     }
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -355,7 +356,7 @@ Deno.test("roundtrip - penguins.xlsx", async () => {
       }
     }
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
@@ -379,6 +380,6 @@ Deno.test("roundtrip - user-info.xlsx", async () => {
     expect(reloaded.nrows()).toBe(original.nrows());
     expect(reloaded.toArray()).toEqual(original.toArray());
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });

@@ -4,6 +4,7 @@ import { tableFromIPC } from "@uwdata/flechette";
 import { readFile } from "@tidy-ts/shims";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
+import { currentRuntime, Runtime } from "@tidy-ts/shims";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -300,7 +301,7 @@ function isFilePath(input: string | ArrayBuffer): boolean {
  * ```
  */
 // deno-lint-ignore no-explicit-any
-export async function readArrow<S extends z.ZodObject<any>>(
+async function readArrowImpl<S extends z.ZodObject<any>>(
   pathOrBuffer: string | ArrayBuffer,
   schema: S,
   opts: ArrowOptions & NAOpts = {},
@@ -360,3 +361,34 @@ export async function readArrow<S extends z.ZodObject<any>>(
 
   return createDataFrame(rows, schema);
 }
+
+// Dynamic export with runtime detection
+// deno-lint-ignore no-explicit-any
+export const readArrow: <S extends z.ZodObject<any>>(
+  pathOrBuffer: string | ArrayBuffer,
+  schema: S,
+  opts?: ArrowOptions & NAOpts,
+) => Promise<DataFrame<z.infer<S>>> = (() => {
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
+
+  if (isNode || isDeno || isBun) {
+    // deno-lint-ignore no-explicit-any
+    return async <S extends z.ZodObject<any>>(
+      pathOrBuffer: string | ArrayBuffer,
+      schema: S,
+      opts: ArrowOptions & NAOpts = {},
+    ): Promise<DataFrame<z.infer<S>>> => {
+      return await readArrowImpl(pathOrBuffer, schema, opts);
+    };
+  } else {
+    return () => {
+      return Promise.reject(
+        new Error(
+          "readArrow is only available in Node.js/Deno environments. Use ArrayBuffer input instead of file paths in browsers.",
+        ),
+      );
+    };
+  }
+})();

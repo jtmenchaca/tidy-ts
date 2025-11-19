@@ -2,9 +2,10 @@ import { writeXLSX } from "./write_xlsx.ts";
 import { readXLSX } from "./read_xlsx.ts";
 import { createDataFrame } from "../dataframe/index.ts";
 import { expect } from "@std/expect";
+import { remove, stat, test } from "@tidy-ts/shims";
 import { z } from "zod";
 
-Deno.test("writeXLSX - basic write and read roundtrip", async () => {
+test("writeXLSX - basic write and read roundtrip", async () => {
   const schema = z.object({
     name: z.string(),
     age: z.number(),
@@ -17,7 +18,8 @@ Deno.test("writeXLSX - basic write and read roundtrip", async () => {
     { name: "Charlie", age: 35, city: "Boston" },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -31,11 +33,11 @@ Deno.test("writeXLSX - basic write and read roundtrip", async () => {
     expect(rows[1]).toEqual({ name: "Bob", age: 25, city: "Portland" });
     expect(rows[2]).toEqual({ name: "Charlie", age: 35, city: "Boston" });
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - mixed types with dates and booleans", async () => {
+test("writeXLSX - mixed types with dates and booleans", async () => {
   const schema = z.object({
     id: z.number(),
     name: z.string(),
@@ -49,7 +51,8 @@ Deno.test("writeXLSX - mixed types with dates and booleans", async () => {
     { id: 3, name: "Charlie", active: true, created: new Date(2025, 11, 31) },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -70,11 +73,11 @@ Deno.test("writeXLSX - mixed types with dates and booleans", async () => {
     expect(rows[2].created.getFullYear()).toBe(2025);
     expect(rows[2].created.getMonth()).toBe(11);
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - optional fields with undefined values", async () => {
+test("writeXLSX - optional fields with undefined values", async () => {
   const schema = z.object({
     col1: z.string().optional(),
     col2: z.string().optional(),
@@ -87,7 +90,8 @@ Deno.test("writeXLSX - optional fields with undefined values", async () => {
     { col1: "x", col2: "y", col3: "z" },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -108,11 +112,11 @@ Deno.test("writeXLSX - optional fields with undefined values", async () => {
     expect(rows[2].col2).toBe("y");
     expect(rows[2].col3).toBe("z");
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - large numbers precision", async () => {
+test("writeXLSX - large numbers precision", async () => {
   const schema = z.object({
     id: z.number(),
     value: z.number(),
@@ -124,7 +128,8 @@ Deno.test("writeXLSX - large numbers precision", async () => {
     { id: 2, value: 9876543210, scientific: 3.14e-5 },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -137,11 +142,11 @@ Deno.test("writeXLSX - large numbers precision", async () => {
     expect(rows[1].value).toBe(9876543210);
     expect(rows[1].scientific).toBeCloseTo(3.14e-5, 6);
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - special characters in strings", async () => {
+test("writeXLSX - special characters in strings", async () => {
   const schema = z.object({
     text: z.string(),
   });
@@ -154,7 +159,8 @@ Deno.test("writeXLSX - special characters in strings", async () => {
     { text: "Greater than: >value>" },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -167,11 +173,11 @@ Deno.test("writeXLSX - special characters in strings", async () => {
     expect(rows[3].text).toBe("Less than: <value>");
     expect(rows[4].text).toBe("Greater than: >value>");
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - empty dataframe", async () => {
+test("writeXLSX - empty dataframe", async () => {
   const schema = z.object({
     col1: z.string(),
     col2: z.number(),
@@ -179,7 +185,8 @@ Deno.test("writeXLSX - empty dataframe", async () => {
 
   const df = createDataFrame([], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     // Just verify we can write an empty dataframe without errors
@@ -187,14 +194,14 @@ Deno.test("writeXLSX - empty dataframe", async () => {
 
     // Reading back empty dataframes is tricky - the XLSX will have headers but no data rows
     // For now, just verify the write succeeded
-    const fileInfo = await Deno.stat(tempPath);
+    const fileInfo = await stat(tempPath);
     expect(fileInfo.size).toBeGreaterThan(0);
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - single row dataframe", async () => {
+test("writeXLSX - single row dataframe", async () => {
   const schema = z.object({
     name: z.string(),
     value: z.number(),
@@ -204,7 +211,8 @@ Deno.test("writeXLSX - single row dataframe", async () => {
     { name: "single", value: 42 },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -214,11 +222,11 @@ Deno.test("writeXLSX - single row dataframe", async () => {
     const rows = readDf.toArray();
     expect(rows[0]).toEqual({ name: "single", value: 42 });
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });
 
-Deno.test("writeXLSX - many columns", async () => {
+test("writeXLSX - many columns", async () => {
   const schema = z.object({
     a: z.string(),
     b: z.string(),
@@ -235,7 +243,8 @@ Deno.test("writeXLSX - many columns", async () => {
     { a: "a", b: "b", c: "c", d: "d", e: "e", f: "f", g: "g", h: "h" },
   ], schema);
 
-  const tempPath = await Deno.makeTempFile({ suffix: ".xlsx" });
+  // Create temp file path manually since shims doesn't have makeTempFile
+  const tempPath = `./temp-${Date.now()}.xlsx`;
 
   try {
     await writeXLSX(df, tempPath);
@@ -250,6 +259,6 @@ Deno.test("writeXLSX - many columns", async () => {
     expect(rows[1].a).toBe("a");
     expect(rows[1].h).toBe("h");
   } finally {
-    await Deno.remove(tempPath);
+    await remove(tempPath);
   }
 });

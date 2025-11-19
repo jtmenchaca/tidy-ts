@@ -1,5 +1,6 @@
 // tests/readArrow.test.ts
 import { expect } from "@std/expect";
+import { remove, test, writeFile } from "@tidy-ts/shims";
 import { z } from "zod";
 import { type DataFrame, readArrow } from "@tidy-ts/dataframe";
 import {
@@ -47,7 +48,7 @@ function tableToBuffer(table: Table): ArrayBuffer {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  1 · basic inference + coercion                                           │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · primitive coercion & type-inference", async () => {
+test("readArrow · primitive coercion & type-inference", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -89,7 +90,7 @@ Deno.test("readArrow · primitive coercion & type-inference", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  2 · NA handling (nullable vs optional)                                   │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · NA handling for nullable / optional", async () => {
+test("readArrow · NA handling for nullable / optional", async () => {
   const Row = z.object({
     score: z.number().nullable(), // null → null
     rating: z.number().optional(), // null → undefined
@@ -121,7 +122,7 @@ Deno.test("readArrow · NA handling for nullable / optional", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  3 · date & boolean coercion                                              │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · date & boolean coercion", async () => {
+test("readArrow · date & boolean coercion", async () => {
   const Row = z.object({
     id: z.number().int(),
     ok: z.boolean(),
@@ -161,7 +162,7 @@ Deno.test("readArrow · date & boolean coercion", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  4 · validation error bubbles out                                         │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · throws on invalid row", async () => {
+test("readArrow · throws on invalid row", async () => {
   const Row = z.object({
     id: z.number().positive(),
   });
@@ -184,7 +185,7 @@ Deno.test("readArrow · throws on invalid row", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  5 · file reading with readArrow()                                       │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow() · file reading with schema validation", async () => {
+test("readArrow() · file reading with schema validation", async () => {
   const JediSchema = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -210,7 +211,7 @@ Deno.test("readArrow() · file reading with schema validation", async () => {
   });
   const buffer = tableToBuffer(table);
   const tempFile = "./temp_jedi.arrow";
-  await Deno.writeFile(tempFile, new Uint8Array(buffer));
+  await writeFile(tempFile, new Uint8Array(buffer));
 
   try {
     console.log("Reading Arrow file with schema validation...");
@@ -242,7 +243,7 @@ Deno.test("readArrow() · file reading with schema validation", async () => {
   } finally {
     // Clean up temporary file
     try {
-      await Deno.remove(tempFile);
+      await remove(tempFile);
     } catch {
       // Ignore cleanup errors
     }
@@ -252,7 +253,7 @@ Deno.test("readArrow() · file reading with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · type inference test (similar to docs issue)                         │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · type inference with complex schema", async () => {
+test("readArrow · type inference with complex schema", async () => {
   // Define Zod schema for Arrow data - handles type conversion and validation
   const JediAcademySchema = z.object({
     name: z.string(),
@@ -338,7 +339,7 @@ Deno.test("readArrow · type inference with complex schema", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  7 · column filtering                                                     │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readArrow · column filtering", async () => {
+test("readArrow · column filtering", async () => {
   const Row = z.object({
     name: z.string(),
     age: z.number(),

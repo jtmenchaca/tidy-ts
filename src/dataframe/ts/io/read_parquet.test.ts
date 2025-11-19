@@ -1,12 +1,13 @@
 // tests/readParquet.test.ts
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 import { z } from "zod";
 import { type DataFrame, readParquet } from "@tidy-ts/dataframe";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  1 · basic inference + coercion                                            │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · basic string coercion & type-inference", async () => {
+test("readParquet · basic string coercion & type-inference", async () => {
   const Row = z.object({
     String: z.string().optional(),
   });
@@ -28,7 +29,7 @@ Deno.test("readParquet · basic string coercion & type-inference", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  2 · NA handling (nullable vs optional)                                    │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · NA handling for nullable / optional", async () => {
+test("readParquet · NA handling for nullable / optional", async () => {
   const Row = z.object({
     String: z.string().nullable(), // null → null for first row (if any nulls)
   });
@@ -49,7 +50,7 @@ Deno.test("readParquet · NA handling for nullable / optional", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  3 · column selection                                                      │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · column selection", async () => {
+test("readParquet · column selection", async () => {
   const Row = z.object({
     String: z.string(),
   });
@@ -69,7 +70,7 @@ Deno.test("readParquet · column selection", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  4 · date & boolean coercion                                               │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · string coercion with zparquet helpers", async () => {
+test("readParquet · string coercion with zparquet helpers", async () => {
   const Row = z.object({
     String: z.string().min(1),
   });
@@ -87,7 +88,7 @@ Deno.test("readParquet · string coercion with zparquet helpers", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  5 · validation error bubbles out                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · throws on invalid schema", async () => {
+test("readParquet · throws on invalid schema", async () => {
   const Row = z.object({
     NonExistentColumn: z.number().positive(),
   });
@@ -104,7 +105,7 @@ Deno.test("readParquet · throws on invalid schema", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · file reading with readParquet()                                     │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet() · file reading with schema validation", async () => {
+test("readParquet() · file reading with schema validation", async () => {
   const Row = z.object({
     String: z.string().min(1),
   });
@@ -129,7 +130,7 @@ Deno.test("readParquet() · file reading with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  7 · type inference test (similar to docs issue)                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · type inference with complex schema", async () => {
+test("readParquet · type inference with complex schema", async () => {
   // Define Zod schema for Parquet data - handles type conversion and validation
   const StringSchema = z.object({
     String: z.string(),
@@ -160,7 +161,7 @@ Deno.test("readParquet · type inference with complex schema", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  8 · row range selection                                                   │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readParquet · row range selection", async () => {
+test("readParquet · row range selection", async () => {
   const Row = z.object({
     String: z.string(),
   });

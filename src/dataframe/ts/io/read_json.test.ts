@@ -1,8 +1,9 @@
 import { expect } from "@std/expect";
+import { remove, test, writeTextFile } from "@tidy-ts/shims";
 import { z } from "zod";
 import { readJSON } from "@tidy-ts/dataframe";
 
-Deno.test("readJSON: validates simple object", async () => {
+test("readJSON: validates simple object", async () => {
   const schema = z.object({
     name: z.string(),
     age: z.number(),
@@ -17,7 +18,7 @@ Deno.test("readJSON: validates simple object", async () => {
 
   // Create temporary file
   const tempFile = "./temp_simple.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(testData));
+  await writeTextFile(tempFile, JSON.stringify(testData));
 
   try {
     const result = await readJSON(tempFile, schema);
@@ -29,11 +30,11 @@ Deno.test("readJSON: validates simple object", async () => {
     // Type check
     const _typeCheck: { name: string; age: number; active: boolean } = result;
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
-Deno.test("readJSON: returns DataFrame for array data", async () => {
+test("readJSON: returns DataFrame for array data", async () => {
   const UserSchema = z.array(z.object({
     id: z.number(),
     name: z.string(),
@@ -48,7 +49,7 @@ Deno.test("readJSON: returns DataFrame for array data", async () => {
   ];
 
   const tempFile = "./temp_users.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(users));
+  await writeTextFile(tempFile, JSON.stringify(users));
 
   try {
     const df = await readJSON(tempFile, UserSchema);
@@ -58,11 +59,11 @@ Deno.test("readJSON: returns DataFrame for array data", async () => {
     expect(df[1].score).toBeUndefined();
     expect(df[2].score).toBe(88);
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
-Deno.test("readJSON: throws on validation error", async () => {
+test("readJSON: throws on validation error", async () => {
   const schema = z.object({
     email: z.string().email(),
     age: z.number().positive(),
@@ -74,18 +75,18 @@ Deno.test("readJSON: throws on validation error", async () => {
   };
 
   const tempFile = "./temp_invalid.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(invalidData));
+  await writeTextFile(tempFile, JSON.stringify(invalidData));
 
   try {
     await expect(readJSON(tempFile, schema)).rejects.toThrow(
       "JSON validation failed",
     );
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
-Deno.test("readJSON: handles complex nested schema", async () => {
+test("readJSON: handles complex nested schema", async () => {
   const ConfigSchema = z.object({
     app: z.object({
       name: z.string(),
@@ -114,7 +115,7 @@ Deno.test("readJSON: handles complex nested schema", async () => {
   };
 
   const tempFile = "./temp_config.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(configData));
+  await writeTextFile(tempFile, JSON.stringify(configData));
 
   try {
     const result = await readJSON(tempFile, ConfigSchema);
@@ -124,11 +125,11 @@ Deno.test("readJSON: handles complex nested schema", async () => {
     expect(result.features).toEqual(["auth", "logging"]);
     expect(result.optional).toBeUndefined();
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });
 
-Deno.test("readJSON: handles empty array", async () => {
+test("readJSON: handles empty array", async () => {
   const EmptyArraySchema = z.array(z.object({
     id: z.number(),
   }));
@@ -136,7 +137,7 @@ Deno.test("readJSON: handles empty array", async () => {
   const emptyData: unknown[] = [];
 
   const tempFile = "./temp_empty.json";
-  await Deno.writeTextFile(tempFile, JSON.stringify(emptyData));
+  await writeTextFile(tempFile, JSON.stringify(emptyData));
 
   try {
     const result = await readJSON(tempFile, EmptyArraySchema);
@@ -145,6 +146,6 @@ Deno.test("readJSON: handles empty array", async () => {
     expect(Array.isArray(result)).toBe(true);
     expect(result).toHaveLength(0);
   } finally {
-    await Deno.remove(tempFile).catch(() => {});
+    await remove(tempFile).catch(() => {});
   }
 });

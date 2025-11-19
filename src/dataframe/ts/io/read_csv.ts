@@ -340,33 +340,9 @@ function isFilePath(input: string | ArrayBuffer | File | Blob): boolean {
 // https://source.chromium.org/chromium/chromium/src/+/main:v8/src/objects/string.h
 const MAX_V8_STRING_LENGTH = 0x1fffffe8; // 536,870,888 characters
 
-// Overload: with no_types: true, schema optional, returns DataFrame<any>
-export async function readCSV(
-  pathOrContent: string | ArrayBuffer | File | Blob,
-  opts: CsvOptions & NAOpts & { no_types: true },
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<any>>;
-
-// Overload: with no_types: true and schema, returns DataFrame<any>
-// deno-lint-ignore no-explicit-any
-export async function readCSV<S extends z.ZodObject<any>>(
-  pathOrContent: string | ArrayBuffer | File | Blob,
-  schema: S,
-  opts: CsvOptions & NAOpts & { no_types: true },
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<any>>;
-
-// Overload: default returns typed DataFrame
-// deno-lint-ignore no-explicit-any
-export async function readCSV<S extends z.ZodObject<any>>(
-  pathOrContent: string | ArrayBuffer | File | Blob,
-  schema: S,
-  opts?: CsvOptions & NAOpts,
-): Promise<DataFrame<z.infer<S>>>;
-
 // Implementation
 // deno-lint-ignore no-explicit-any
-export async function readCSV<S extends z.ZodObject<any>>(
+async function readCSVImpl<S extends z.ZodObject<any>>(
   pathOrContent: string | ArrayBuffer | File | Blob,
   schemaOrOpts?: S | CsvOptions & NAOpts,
   opts?: CsvOptions & NAOpts,
@@ -511,6 +487,41 @@ export async function readCSV<S extends z.ZodObject<any>>(
   return createDataFrame(rows, schema);
 }
 
+// Dynamic export with runtime detection
+// Always allow the function - it handles environment detection internally
+export const readCSV: {
+  (
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    opts: CsvOptions & NAOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    schema: S,
+    opts: CsvOptions & NAOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    schema: S,
+    opts?: CsvOptions & NAOpts,
+  ): Promise<DataFrame<z.infer<S>>>;
+} = (() => {
+  // deno-lint-ignore no-explicit-any
+  return async <S extends z.ZodObject<any>>(
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    schemaOrOpts?: S | CsvOptions & NAOpts,
+    opts?: CsvOptions & NAOpts,
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
+    // TypeScript can't properly infer the overload, but the runtime function handles it correctly
+    // deno-lint-ignore no-explicit-any
+    return await readCSVImpl(pathOrContent as any, schemaOrOpts as any, opts);
+  };
+})();
+
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · Metadata inspection helper                                           │
 └───────────────────────────────────────────────────────────────────────────*/
@@ -541,7 +552,7 @@ export async function readCSV<S extends z.ZodObject<any>>(
  * const df = await readCSV("./data.csv", schema);
  * ```
  */
-export async function readCSVMetadata(
+async function readCSVMetadataImpl(
   pathOrContent: string | ArrayBuffer | File | Blob,
   { previewRows = 5, ...csvOpts }: CsvOptions & { previewRows?: number } = {},
 ) {
@@ -605,3 +616,22 @@ export async function readCSVMetadata(
     delimiter: csvOpts.comma || ",",
   };
 }
+
+// Dynamic export with runtime detection
+// Always allow the function - it handles environment detection internally
+export const readCSVMetadata: (
+  pathOrContent: string | ArrayBuffer | File | Blob,
+  options?: { previewRows?: number; comma?: string },
+) => Promise<{
+  headers: string[];
+  totalRows: number;
+  firstRows: string[][];
+  delimiter: string;
+}> = (() => {
+  return async (
+    pathOrContent: string | ArrayBuffer | File | Blob,
+    options?: { previewRows?: number; comma?: string },
+  ) => {
+    return await readCSVMetadataImpl(pathOrContent, options);
+  };
+})();

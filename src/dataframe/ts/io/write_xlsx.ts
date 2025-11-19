@@ -4,6 +4,7 @@ import type { DataFrame } from "../dataframe/index.ts";
 // Import from shims package for cross-runtime compatibility
 // This ensures compression APIs are available before use
 import { readFile, writeFile } from "@tidy-ts/shims";
+import { currentRuntime, Runtime } from "@tidy-ts/shims";
 
 interface WriteXLSXOpts {
   sheet?: string;
@@ -37,7 +38,7 @@ interface WriteXLSXOpts {
  * await writeXLSX(df2, "./data.xlsx", { sheet: "Products" });
  * ```
  */
-export async function writeXLSX<T extends Record<string, unknown>>(
+async function writeXLSXImpl<T extends Record<string, unknown>>(
   dataFrame: DataFrame<T>,
   path: string,
   opts: WriteXLSXOpts = {},
@@ -829,3 +830,32 @@ function crc32(data: Uint8Array): number {
 
   return (crc ^ 0xffffffff) >>> 0;
 }
+
+// Dynamic export with runtime detection
+export const writeXLSX: <Row extends Record<string, unknown>>(
+  dataFrame: DataFrame<Row>,
+  path: string,
+  opts?: WriteXLSXOpts,
+) => Promise<void> = (() => {
+  const isNode = currentRuntime === Runtime.Node;
+  const isDeno = currentRuntime === Runtime.Deno;
+  const isBun = currentRuntime === Runtime.Bun;
+
+  if (isNode || isDeno || isBun) {
+    return async <Row extends Record<string, unknown>>(
+      dataFrame: DataFrame<Row>,
+      path: string,
+      opts?: WriteXLSXOpts,
+    ) => {
+      await writeXLSXImpl(dataFrame, path, opts);
+    };
+  } else {
+    return () => {
+      return Promise.reject(
+        new Error(
+          "writeXLSX is only available in Node.js/Deno environments.",
+        ),
+      );
+    };
+  }
+})();

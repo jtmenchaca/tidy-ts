@@ -2,6 +2,7 @@ import { createDataFrame } from "../dataframe/index.ts";
 import { writeXLSX } from "./write_xlsx.ts";
 import { readXLSX } from "./read_xlsx.ts";
 import { expect } from "@std/expect";
+import { remove, test, writeFile } from "@tidy-ts/shims";
 import { z } from "zod";
 
 const TEST_FILE = "/tmp/test-edge-cases.xlsx";
@@ -9,13 +10,13 @@ const TEST_FILE = "/tmp/test-edge-cases.xlsx";
 // Helper to ensure clean test file
 async function cleanTestFile() {
   try {
-    await Deno.remove(TEST_FILE);
+    await remove(TEST_FILE);
   } catch {
     // File doesn't exist, that's fine
   }
 }
 
-Deno.test("writeXLSX edge case - empty DataFrame", async () => {
+test("writeXLSX edge case - empty DataFrame", async () => {
   await cleanTestFile();
 
   const df = createDataFrame([
@@ -402,7 +403,7 @@ Deno.test("writeXLSX edge case - overwriting corrupt file", async () => {
   await cleanTestFile();
 
   // Write corrupt data to file
-  await Deno.writeFile(
+  await writeFile(
     TEST_FILE,
     new TextEncoder().encode("not a valid xlsx file"),
   );

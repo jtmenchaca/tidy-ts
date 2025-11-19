@@ -1,8 +1,9 @@
 import { readXLSX } from "./read_xlsx.ts";
 import { expect } from "@std/expect";
+import { readFile, remove, test } from "@tidy-ts/shims";
 import { z } from "zod";
 
-Deno.test("readXLSX - basic schema validation", async () => {
+test("readXLSX - basic schema validation", async () => {
   const schema = z.object({
     name: z.string(),
     age: z.number(),
@@ -322,7 +323,7 @@ Deno.test("readXLSX - no_types with empty file", async () => {
     expect(df.isEmpty()).toBe(true);
   } finally {
     try {
-      await Deno.remove(tempFile);
+      await remove(tempFile);
     } catch {
       // Ignore cleanup errors
     }
@@ -355,13 +356,15 @@ Deno.test("readXLSX - ArrayBuffer input", async () => {
   });
 
   // Read file into ArrayBuffer
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/single-row.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
 
   // Read from ArrayBuffer
   const df = await readXLSX(arrayBuffer, schema);
@@ -385,13 +388,15 @@ Deno.test("readXLSX - File input", async () => {
   });
 
   // Read file into ArrayBuffer, then create File object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/single-row.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const file = new File([arrayBuffer], "single-row.xlsx", {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -418,13 +423,15 @@ Deno.test("readXLSX - Blob input", async () => {
   });
 
   // Read file into ArrayBuffer, then create Blob object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/single-row.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const blob = new Blob([arrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -445,13 +452,15 @@ Deno.test("readXLSX - Blob input", async () => {
 
 Deno.test("readXLSX - ArrayBuffer with no_types", async () => {
   // Read file into ArrayBuffer
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/mixed-types.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
 
   // Read from ArrayBuffer with no_types
   const df = await readXLSX(arrayBuffer, { no_types: true });
@@ -478,13 +487,15 @@ Deno.test("readXLSX - File with sheet selection", async () => {
   });
 
   // Read file into ArrayBuffer, then create File object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/penguins.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const file = new File([arrayBuffer], "penguins.xlsx", {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -508,13 +519,15 @@ Deno.test("readXLSX - Blob with options", async () => {
   });
 
   // Read file into ArrayBuffer, then create Blob object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/single-row.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const blob = new Blob([arrayBuffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -542,13 +555,15 @@ Deno.test("readXLSX - ArrayBuffer with date and boolean fields", async () => {
   });
 
   // Read file into ArrayBuffer
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/date-boolean.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
 
   // Read from ArrayBuffer
   const df = await readXLSX(arrayBuffer, schema);
@@ -575,13 +590,15 @@ Deno.test("readXLSX - File with no_types and schema validation", async () => {
   });
 
   // Read file into ArrayBuffer, then create File object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/single-row.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const file = new File([arrayBuffer], "single-row.xlsx", {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
@@ -617,11 +634,13 @@ Deno.test("readXLSX - Blob with empty file", async () => {
 
   try {
     // Read file into ArrayBuffer, then create Blob object
-    const fileData = await Deno.readFile(tempFile);
-    const arrayBuffer = fileData.buffer.slice(
-      fileData.byteOffset,
-      fileData.byteOffset + fileData.byteLength,
-    );
+    const fileData = await readFile(tempFile);
+    // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+    const arrayBuffer =
+      fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+        fileData.byteLength === fileData.buffer.byteLength
+        ? fileData.buffer
+        : fileData.slice().buffer;
     const blob = new Blob([arrayBuffer], {
       type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     });
@@ -634,7 +653,7 @@ Deno.test("readXLSX - Blob with empty file", async () => {
     expect(df.isEmpty()).toBe(true);
   } finally {
     try {
-      await Deno.remove(tempFile);
+      await remove(tempFile);
     } catch {
       // Ignore cleanup errors
     }
@@ -675,13 +694,15 @@ Deno.test("readXLSX - File with large dataset", async () => {
   });
 
   // Read file into ArrayBuffer, then create File object
-  const fileData = await Deno.readFile(
+  const fileData = await readFile(
     "src/dataframe/ts/io/fixtures/penguins.xlsx",
   );
-  const arrayBuffer = fileData.buffer.slice(
-    fileData.byteOffset,
-    fileData.byteOffset + fileData.byteLength,
-  );
+  // Convert Uint8Array to ArrayBuffer (not SharedArrayBuffer)
+  const arrayBuffer =
+    fileData.buffer instanceof ArrayBuffer && fileData.byteOffset === 0 &&
+      fileData.byteLength === fileData.buffer.byteLength
+      ? fileData.buffer
+      : fileData.slice().buffer;
   const file = new File([arrayBuffer], "penguins.xlsx", {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });

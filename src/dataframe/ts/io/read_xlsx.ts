@@ -620,33 +620,9 @@ interface ReadXLSXOpts extends NAOpts {
  * const df4 = await readXLSX("./data.xlsx", schema, { sheet: 1 });
  * ```
  */
-// Overload: with no_types: true, schema optional, returns DataFrame<any>
-export async function readXLSX(
-  pathOrBuffer: string | ArrayBuffer | File | Blob,
-  opts: ReadXLSXOpts & { no_types: true },
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<any>>;
-
-// Overload: with no_types: true and schema, returns DataFrame<any>
-// deno-lint-ignore no-explicit-any
-export async function readXLSX<S extends z.ZodObject<any>>(
-  pathOrBuffer: string | ArrayBuffer | File | Blob,
-  schema: S,
-  opts: ReadXLSXOpts & { no_types: true },
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<any>>;
-
-// Overload: default returns typed DataFrame
-// deno-lint-ignore no-explicit-any
-export async function readXLSX<S extends z.ZodObject<any>>(
-  pathOrBuffer: string | ArrayBuffer | File | Blob,
-  schema: S,
-  opts?: ReadXLSXOpts,
-): Promise<DataFrame<z.infer<S>>>;
-
 // Implementation
 // deno-lint-ignore no-explicit-any
-export async function readXLSX<S extends z.ZodObject<any>>(
+async function readXLSXImpl<S extends z.ZodObject<any>>(
   pathOrBuffer: string | ArrayBuffer | File | Blob,
   schemaOrOpts?: S | ReadXLSXOpts,
   opts?: ReadXLSXOpts,
@@ -779,6 +755,41 @@ export async function readXLSX<S extends z.ZodObject<any>>(
   return createDataFrame(rows, schema) as unknown as DataFrame<z.infer<S>>;
 }
 
+// Dynamic export with runtime detection
+// Always allow the function - it handles environment detection internally
+export const readXLSX: {
+  (
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    opts: ReadXLSXOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    schema: S,
+    opts: ReadXLSXOpts & { no_types: true },
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<any>>;
+  // deno-lint-ignore no-explicit-any
+  <S extends z.ZodObject<any>>(
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    schema: S,
+    opts?: ReadXLSXOpts,
+  ): Promise<DataFrame<z.infer<S>>>;
+} = (() => {
+  // deno-lint-ignore no-explicit-any
+  return async <S extends z.ZodObject<any>>(
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    schemaOrOpts?: S | ReadXLSXOpts,
+    opts?: ReadXLSXOpts,
+    // deno-lint-ignore no-explicit-any
+  ): Promise<DataFrame<z.infer<S>> | DataFrame<any>> => {
+    // TypeScript can't properly infer the overload, but the runtime function handles it correctly
+    // deno-lint-ignore no-explicit-any
+    return await readXLSXImpl(pathOrBuffer as any, schemaOrOpts as any, opts);
+  };
+})();
+
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · Metadata inspection helper                                           │
 └───────────────────────────────────────────────────────────────────────────*/
@@ -804,7 +815,7 @@ export async function readXLSX<S extends z.ZodObject<any>>(
  * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
  * ```
  */
-export async function readXLSXMetadata(
+async function readXLSXMetadataImpl(
   pathOrBuffer: string | ArrayBuffer | File | Blob,
   { previewRows = 5, sheet }: {
     previewRows?: number;
@@ -849,3 +860,24 @@ export async function readXLSXMetadata(
     firstRows: previewData,
   };
 }
+
+// Dynamic export with runtime detection
+// Always allow the function - it handles environment detection internally
+export const readXLSXMetadata: (
+  pathOrBuffer: string | ArrayBuffer | File | Blob,
+  options?: { previewRows?: number; sheet?: string | number },
+) => Promise<{
+  sheets: { name: string; index: number }[];
+  defaultSheet: string;
+  sheetName: string;
+  headers: string[];
+  totalRows: number;
+  firstRows: string[][];
+}> = (() => {
+  return async (
+    pathOrBuffer: string | ArrayBuffer | File | Blob,
+    options?: { previewRows?: number; sheet?: string | number },
+  ) => {
+    return await readXLSXMetadataImpl(pathOrBuffer, options);
+  };
+})();

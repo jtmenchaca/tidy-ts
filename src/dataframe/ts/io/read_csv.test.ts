@@ -1,12 +1,13 @@
 // tests/readCSV.test.ts
 import { expect } from "@std/expect";
+import { mkdir, remove, test, writeTextFile } from "@tidy-ts/shims";
 import { z } from "zod";
 import { type DataFrame, readCSV } from "@tidy-ts/dataframe";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  1 · basic inference + coercion                                            │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · primitive coercion & type-inference", async () => {
+test("readCSV · primitive coercion & type-inference", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -44,7 +45,7 @@ Deno.test("readCSV · primitive coercion & type-inference", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  2 · NA handling (nullable vs optional)                                    │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · NA handling for nullable / optional", async () => {
+test("readCSV · NA handling for nullable / optional", async () => {
   const Row = z.object({
     score: z.number().nullable(), // "NA" → null
     rating: z.number().optional(), // "NA" → undefined
@@ -69,7 +70,7 @@ Deno.test("readCSV · NA handling for nullable / optional", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  3 · column-name cleaning                                                  │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · snake_case header cleaning", async () => {
+test("readCSV · snake_case header cleaning", async () => {
   const Row = z.object({
     user_id: z.number().int(),
     full_name: z.string(),
@@ -95,7 +96,7 @@ Deno.test("readCSV · snake_case header cleaning", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  4 · date & boolean coercion                                               │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · date & boolean coercion", async () => {
+test("readCSV · date & boolean coercion", async () => {
   const Row = z.object({
     id: z.number().int(),
     ok: z.boolean(),
@@ -126,7 +127,7 @@ Deno.test("readCSV · date & boolean coercion", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  5 · validation error bubbles out                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · throws on invalid row", async () => {
+test("readCSV · throws on invalid row", async () => {
   const Row = z.object({
     id: z.number().positive(),
   });
@@ -141,7 +142,7 @@ Deno.test("readCSV · throws on invalid row", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · file reading with readCSV()                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV() · file reading with schema validation", async () => {
+test("readCSV() · file reading with schema validation", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string().min(1),
@@ -157,7 +158,7 @@ Deno.test("readCSV() · file reading with schema validation", async () => {
 3,Bob Johnson,bob@example.com,,true`;
 
   const tempFile = "./temp_test.csv";
-  await Deno.writeTextFile(tempFile, testCsv);
+  await writeTextFile(tempFile, testCsv);
 
   try {
     console.log("Reading CSV file with schema validation...");
@@ -187,7 +188,7 @@ Deno.test("readCSV() · file reading with schema validation", async () => {
   } finally {
     // Clean up temporary file
     try {
-      await Deno.remove(tempFile);
+      await remove(tempFile);
     } catch {
       // Ignore cleanup errors
     }
@@ -197,7 +198,7 @@ Deno.test("readCSV() · file reading with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  7 · type inference test (similar to docs issue)                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · type inference with complex schema", async () => {
+test("readCSV · type inference with complex schema", async () => {
   // CSV data as string - Jedi Academy enrollment records
   const jediAcademyCsv =
     `name,species,homeworld,lightsaber_color,rank,force_sensitivity
@@ -251,7 +252,7 @@ Anakin Skywalker,Human,Tatooine,blue,Jedi Knight,9.8`;
 /*───────────────────────────────────────────────────────────────────────────┐
 │  8 · no_types option - without schema                                     │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · no_types without schema", async () => {
+test("readCSV · no_types without schema", async () => {
   const csvContent = `id,name,age,active
 1,Alice,30,true
 2,Bob,25,false
@@ -281,7 +282,7 @@ Deno.test("readCSV · no_types without schema", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  9 · no_types option - with schema                                        │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · no_types with schema validation", async () => {
+test("readCSV · no_types with schema validation", async () => {
   const Row = z.object({
     id: z.number().int(),
     name: z.string(),
@@ -325,7 +326,7 @@ Deno.test("readCSV · no_types with schema validation", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  10 · no_types option - empty CSV                                          │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · no_types with empty CSV", async () => {
+test("readCSV · no_types with empty CSV", async () => {
   const csvContent = `id,name
 `;
 
@@ -340,7 +341,7 @@ Deno.test("readCSV · no_types with empty CSV", async () => {
 /*───────────────────────────────────────────────────────────────────────────┐
 │  11 · no_types option - file reading                                       │
 └───────────────────────────────────────────────────────────────────────────*/
-Deno.test("readCSV · no_types with file path", async () => {
+test("readCSV · no_types with file path", async () => {
   const testCsv = `id,name,score
 1,Alice,85
 2,Bob,92
@@ -348,8 +349,8 @@ Deno.test("readCSV · no_types with file path", async () => {
 
   const tempFile = "./tmp/test-no-types.csv";
   // Ensure directory exists before writing
-  await Deno.mkdir("./tmp", { recursive: true });
-  await Deno.writeTextFile(tempFile, testCsv);
+  await mkdir("./tmp", { recursive: true });
+  await writeTextFile(tempFile, testCsv);
 
   try {
     const df = await readCSV(tempFile, { no_types: true });
@@ -372,7 +373,7 @@ Deno.test("readCSV · no_types with file path", async () => {
     expect(result.toArray()[0].scoreNum).toBe(92);
   } finally {
     try {
-      await Deno.remove(tempFile);
+      await remove(tempFile);
     } catch {
       // Ignore cleanup errors
     }
