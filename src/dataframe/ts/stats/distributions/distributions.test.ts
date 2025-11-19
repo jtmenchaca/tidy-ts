@@ -7,6 +7,7 @@ import {
   df,
   dgamma,
   dnorm,
+  dpareto,
   dpois,
   dt,
   pbeta,
@@ -16,6 +17,7 @@ import {
   pf,
   pgamma,
   pnorm,
+  ppareto,
   ppois,
   pt,
   qbeta,
@@ -25,6 +27,7 @@ import {
   qf,
   qgamma,
   qnorm,
+  qpareto,
   qpois,
   qt,
 } from "./index.ts";
@@ -166,6 +169,19 @@ Deno.test("t-Distribution - basic usage", () => {
 
   const quantile = qt({ probability: 0.95, degreesOfFreedom: df }); // p=0.95, df=5
   expect(quantile).toBeGreaterThan(0); // Positive for upper tail
+});
+
+Deno.test("Pareto Distribution - basic usage", () => {
+  const scale = 1, shape = 2;
+
+  const pdf = dpareto({ at: 2, scale, shape }); // x=2, xm=1, alpha=2
+  expect(pdf).toBeCloseTo(0.25, 3); // 2*1^2 / 2^3 = 0.25
+
+  const cdf = ppareto({ at: 2, scale, shape }); // x=2, xm=1, alpha=2
+  expect(cdf).toBeCloseTo(0.75, 3); // 1 - (1/2)^2 = 0.75
+
+  const quantile = qpareto({ probability: 0.75, scale, shape }); // p=0.75, xm=1, alpha=2
+  expect(quantile).toBeCloseTo(2, 3); // Inverse of CDF
 });
 
 Deno.test("Distribution Properties - comprehensive check", () => {

@@ -55,6 +55,7 @@ import * as hypergeometric from "./distributions/hypergeometric.ts";
 import * as logNormal from "./distributions/log-normal.ts";
 import * as negativeBinomial from "./distributions/negative-binomial.ts";
 import * as normal from "./distributions/normal.ts";
+import * as pareto from "./distributions/pareto.ts";
 import * as poisson from "./distributions/poisson.ts";
 import * as tDist from "./distributions/t-distribution.ts";
 import * as uniform from "./distributions/uniform.ts";
@@ -312,6 +313,19 @@ export const stats: {
       readonly quantile: typeof logNormal.qlnorm;
       /** Generate random samples */
       readonly random: typeof logNormal.rlnorm;
+    };
+    /** Pareto distribution */
+    readonly pareto: {
+      /** Probability density function */
+      readonly density: typeof pareto.dpareto;
+      /** Cumulative distribution function */
+      readonly probability: typeof pareto.ppareto;
+      /** Quantile function (inverse CDF) */
+      readonly quantile: typeof pareto.qpareto;
+      /** Generate random samples */
+      readonly random: typeof pareto.rpareto;
+      /** Generate dataset from distribution */
+      readonly data: typeof pareto.paretoData;
     };
     /** Wilcoxon rank-sum distribution */
     readonly wilcoxon: {
@@ -647,6 +661,13 @@ export const stats: {
       probability: logNormal.plnorm,
       quantile: logNormal.qlnorm,
       random: logNormal.rlnorm,
+    },
+    pareto: {
+      density: pareto.dpareto,
+      probability: pareto.ppareto,
+      quantile: pareto.qpareto,
+      random: pareto.rpareto,
+      data: pareto.paretoData,
     },
     wilcoxon: {
       density: wilcoxon.dwilcox,

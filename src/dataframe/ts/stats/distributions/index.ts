@@ -12,6 +12,7 @@ import * as hypergeometric from "./hypergeometric.ts";
 import * as logNormal from "./log-normal.ts";
 import * as negativeBinomial from "./negative-binomial.ts";
 import * as normal from "./normal.ts";
+import * as pareto from "./pareto.ts";
 import * as poisson from "./poisson.ts";
 import * as tDist from "./t-distribution.ts";
 import * as uniform from "./uniform.ts";
@@ -117,6 +118,14 @@ export const dist = {
     random: logNormal.rlnorm,
   },
 
+  pareto: {
+    density: pareto.dpareto,
+    probability: pareto.ppareto,
+    quantile: pareto.qpareto,
+    random: pareto.rpareto,
+    data: pareto.paretoData,
+  },
+
   wilcoxon: {
     density: wilcoxon.dwilcox,
     probability: wilcoxon.pwilcox,
@@ -175,6 +184,7 @@ export * from "./hypergeometric.ts";
 export * from "./log-normal.ts";
 export * from "./negative-binomial.ts";
 export * from "./normal.ts";
+export * from "./pareto.ts";
 export * from "./poisson.ts";
 export * from "./t-distribution.ts";
 export * from "./uniform.ts";
