@@ -1,8 +1,9 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { writeCSV } from "./writeCSV.verb.ts";
+import { readTextFile, remove, stat, test } from "@tidy-ts/shims";
+import { writeCSV } from "./write_csv.ts";
 
-Deno.test("writeCSV() basic functionality", () => {
+test("writeCSV() basic functionality", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice", age: 30 },
     { id: 2, name: "Bob", age: 25 },
@@ -11,13 +12,13 @@ Deno.test("writeCSV() basic functionality", () => {
   const tempFile = "./test-basic.csv";
   writeCSV(df, tempFile);
 
-  const content = Deno.readTextFileSync(tempFile);
+  const content = await readTextFile(tempFile);
   expect(content).toBe("id,name,age\r\n1,Alice,30\r\n2,Bob,25\r\n");
 
-  Deno.removeSync(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeCSV() no options needed", () => {
+test("writeCSV() no options needed", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice" },
     { id: 2, name: "Bob" },
@@ -26,13 +27,13 @@ Deno.test("writeCSV() no options needed", () => {
   const tempFile = "./test-simple.csv";
   writeCSV(df, tempFile);
 
-  const content = Deno.readTextFileSync(tempFile);
+  const content = await readTextFile(tempFile);
   expect(content).toBe("id,name\r\n1,Alice\r\n2,Bob\r\n");
 
-  Deno.removeSync(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeCSV() chaining works", () => {
+test("writeCSV() chaining works", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice", age: 30 },
     { id: 2, name: "Bob", age: 25 },
@@ -50,23 +51,23 @@ Deno.test("writeCSV() chaining works", () => {
   expect(result[0].name).toBe("Alice");
   expect(result[0].doubleAge).toBe(60);
 
-  expect(Deno.statSync(tempFile).isFile).toBe(true);
-  Deno.removeSync(tempFile);
+  expect((await stat(tempFile)).isFile).toBe(true);
+  await remove(tempFile);
 });
 
-Deno.test("writeCSV() empty DataFrame", () => {
+test("writeCSV() empty DataFrame", async () => {
   const emptyDf = createDataFrame([]);
   const tempFile = "./test-empty.csv";
 
   writeCSV(emptyDf, tempFile);
 
-  const content = Deno.readTextFileSync(tempFile);
+  const content = await readTextFile(tempFile);
   expect(content).toBe("");
 
-  Deno.removeSync(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeCSV() with special characters", () => {
+test("writeCSV() with special characters", async () => {
   const df = createDataFrame([
     { name: "Alice, Smith", description: 'He said "Hello"' },
     { name: "Bob\nJohnson", description: "Line\nbreak" },
@@ -75,10 +76,10 @@ Deno.test("writeCSV() with special characters", () => {
   const tempFile = "./test-special.csv";
   writeCSV(df, tempFile);
 
-  const content = Deno.readTextFileSync(tempFile);
+  const content = await readTextFile(tempFile);
   expect(content).toContain('"Alice, Smith"');
   expect(content).toContain('"He said ""Hello"""');
   expect(content).toContain('"Bob\nJohnson"');
 
-  Deno.removeSync(tempFile);
+  await remove(tempFile);
 });

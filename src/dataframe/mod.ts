@@ -22,6 +22,7 @@ export {
   readParquet,
   readXLSX,
   readXLSXMetadata,
+  writeArrow,
   writeCSV,
   writeParquet,
   writeXLSX,

@@ -4,7 +4,7 @@ import {
   parquetWriteBuffer,
   parquetWriteFile,
 } from "hyparquet-writer";
-import type { DataFrame } from "../../dataframe/index.ts";
+import type { DataFrame } from "../dataframe/index.ts";
 
 /**
  * Convert a DataFrame to Parquet column-oriented format for hyparquet-writer
@@ -80,7 +80,7 @@ function dataFrameToColumnData<T extends Record<string, unknown>>(
  * writeParquet(df, "data.parquet");
  * ```
  */
-export function writeParquet<Row extends Record<string, unknown>>(
+function writeParquetImpl<Row extends Record<string, unknown>>(
   dataFrame: DataFrame<Row>,
   filePath: string,
 ): DataFrame<Row> {
@@ -118,3 +118,17 @@ export function writeParquet<Row extends Record<string, unknown>>(
   // Return the same DataFrame for chaining
   return dataFrame;
 }
+
+// Dynamic export with runtime detection
+// Since writeParquet is synchronous and we're in the same file, we can call the implementation directly
+export const writeParquet: <Row extends Record<string, unknown>>(
+  df: DataFrame<Row>,
+  path: string,
+) => DataFrame<Row> = (() => {
+  return <Row extends Record<string, unknown>>(
+    df: DataFrame<Row>,
+    path: string,
+  ) => {
+    return writeParquetImpl(df, path);
+  };
+})();

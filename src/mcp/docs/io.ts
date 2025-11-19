@@ -274,7 +274,7 @@ export const ioDocs: Record<string, DocEntry> = {
     description:
       "Write DataFrame to Parquet file. Automatically infers column types. Requires static import. Efficient columnar format for large datasets.",
     imports: [
-      'import { writeParquet } from "@tidy-ts/dataframe/ts/verbs/utility";',
+      'import { writeParquet } from "@tidy-ts/dataframe/ts/io";',
     ],
     parameters: [
       "df: DataFrame to write",
@@ -282,7 +282,7 @@ export const ioDocs: Record<string, DocEntry> = {
     ],
     returns: "DataFrame<T> - Original DataFrame for chaining",
     examples: [
-      '// Write to Parquet file\nimport { writeParquet } from "@tidy-ts/dataframe/ts/verbs/utility";\n\nconst df = createDataFrame([\n  { id: 1, name: "Alice", age: 30 },\n  { id: 2, name: "Bob", age: 25 }\n]);\nwriteParquet(df, "output.parquet")',
+      '// Write to Parquet file\nimport { writeParquet } from "@tidy-ts/dataframe/ts/io";\n\nconst df = createDataFrame([\n  { id: 1, name: "Alice", age: 30 },\n  { id: 2, name: "Bob", age: 25 }\n]);\nwriteParquet(df, "output.parquet")',
     ],
     related: ["readParquet", "writeCSV"],
     bestPractices: [

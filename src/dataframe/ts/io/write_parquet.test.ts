@@ -1,9 +1,10 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { readFile, remove, stat, test } from "@tidy-ts/shims";
 import { parquetReadObjects } from "hyparquet";
-import { writeParquet } from "./writeParquet.verb.ts";
+import { writeParquet } from "./write_parquet.ts";
 
-Deno.test("writeParquet() basic functionality", async () => {
+test("writeParquet() basic functionality", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice", age: 30 },
     { id: 2, name: "Bob", age: 25 },
@@ -13,11 +14,9 @@ Deno.test("writeParquet() basic functionality", async () => {
   writeParquet(df, tempFile);
 
   // Read back the file to verify
-  const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(
-    uint8Array.byteOffset,
-    uint8Array.byteOffset + uint8Array.byteLength,
-  );
+  const uint8Array = await readFile(tempFile);
+  // Convert to ArrayBuffer (not SharedArrayBuffer) for hyparquet compatibility
+  const buffer = new Uint8Array(uint8Array).buffer;
   const data = await parquetReadObjects({ file: buffer });
 
   expect(data.length).toBe(2);
@@ -28,10 +27,10 @@ Deno.test("writeParquet() basic functionality", async () => {
   expect(data[1].name).toBe("Bob");
   expect(data[1].age).toBe(25);
 
-  await Deno.remove(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeParquet() no options needed", async () => {
+test("writeParquet() no options needed", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice" },
     { id: 2, name: "Bob" },
@@ -41,11 +40,9 @@ Deno.test("writeParquet() no options needed", async () => {
   writeParquet(df, tempFile);
 
   // Read back and verify
-  const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(
-    uint8Array.byteOffset,
-    uint8Array.byteOffset + uint8Array.byteLength,
-  );
+  const uint8Array = await readFile(tempFile);
+  // Convert to ArrayBuffer (not SharedArrayBuffer) for hyparquet compatibility
+  const buffer = new Uint8Array(uint8Array).buffer;
   const data = await parquetReadObjects({ file: buffer });
 
   expect(data.length).toBe(2);
@@ -54,10 +51,10 @@ Deno.test("writeParquet() no options needed", async () => {
   expect(data[1].id).toBe(2);
   expect(data[1].name).toBe("Bob");
 
-  await Deno.remove(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeParquet() chaining works", async () => {
+test("writeParquet() chaining works", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice", age: 30 },
     { id: 2, name: "Bob", age: 25 },
@@ -76,21 +73,19 @@ Deno.test("writeParquet() chaining works", async () => {
   expect(result[0].doubleAge).toBe(60);
 
   // Verify file was written
-  expect((await Deno.stat(tempFile)).isFile).toBe(true);
+  expect((await stat(tempFile)).isFile).toBe(true);
 
   // Verify file contents
-  const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(
-    uint8Array.byteOffset,
-    uint8Array.byteOffset + uint8Array.byteLength,
-  );
+  const uint8Array = await readFile(tempFile);
+  // Convert to ArrayBuffer (not SharedArrayBuffer) for hyparquet compatibility
+  const buffer = new Uint8Array(uint8Array).buffer;
   const data = await parquetReadObjects({ file: buffer });
   expect(data.length).toBe(2); // Original data before mutation
 
-  await Deno.remove(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeParquet() empty DataFrame", () => {
+test("writeParquet() empty DataFrame", async () => {
   const emptyDf = createDataFrame([]);
   const tempFile = "./test-empty.parquet";
 
@@ -103,13 +98,13 @@ Deno.test("writeParquet() empty DataFrame", () => {
 
   // Clean up - file may not exist if hyparquet-writer handles empty data differently
   try {
-    Deno.removeSync(tempFile);
+    await remove(tempFile);
   } catch {
     // Ignore if file doesn't exist
   }
 });
 
-Deno.test("writeParquet() with different data types", async () => {
+test("writeParquet() with different data types", async () => {
   const df = createDataFrame([
     {
       name: "Alice",
@@ -129,11 +124,9 @@ Deno.test("writeParquet() with different data types", async () => {
   writeParquet(df, tempFile);
 
   // Read back and verify types are preserved
-  const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(
-    uint8Array.byteOffset,
-    uint8Array.byteOffset + uint8Array.byteLength,
-  );
+  const uint8Array = await readFile(tempFile);
+  // Convert to ArrayBuffer (not SharedArrayBuffer) for hyparquet compatibility
+  const buffer = new Uint8Array(uint8Array).buffer;
   const data = await parquetReadObjects({ file: buffer });
 
   expect(data.length).toBe(2);
@@ -147,10 +140,10 @@ Deno.test("writeParquet() with different data types", async () => {
   expect(data[0].passed).toBe(true);
   expect(data[0].count).toBe(42);
 
-  await Deno.remove(tempFile);
+  await remove(tempFile);
 });
 
-Deno.test("writeParquet() with null values", async () => {
+test("writeParquet() with null values", async () => {
   const df = createDataFrame([
     { id: 1, name: "Alice", score: 95.5 },
     { id: 2, name: "Bob", score: null },
@@ -161,11 +154,9 @@ Deno.test("writeParquet() with null values", async () => {
   writeParquet(df, tempFile);
 
   // Read back and verify nulls are preserved
-  const uint8Array = await Deno.readFile(tempFile);
-  const buffer = uint8Array.buffer.slice(
-    uint8Array.byteOffset,
-    uint8Array.byteOffset + uint8Array.byteLength,
-  );
+  const uint8Array = await readFile(tempFile);
+  // Convert to ArrayBuffer (not SharedArrayBuffer) for hyparquet compatibility
+  const buffer = new Uint8Array(uint8Array).buffer;
   const data = await parquetReadObjects({ file: buffer });
 
   expect(data.length).toBe(3);
@@ -173,5 +164,5 @@ Deno.test("writeParquet() with null values", async () => {
   expect(data[1].score).toBeNull();
   expect(data[2].name).toBeNull();
 
-  await Deno.remove(tempFile);
+  await remove(tempFile);
 });
