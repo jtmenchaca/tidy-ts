@@ -2,6 +2,7 @@ import { statsDocs } from "./stats.ts";
 import { dataframeDocs } from "./dataframe.ts";
 import { ioDocs } from "./io.ts";
 import { llmDocs } from "./llm.ts";
+import { shimsDocs } from "./shims.ts";
 import type { DocEntry } from "./mcp-types.ts";
 
 export const DOCS: Record<string, DocEntry> = {
@@ -16,6 +17,9 @@ export const DOCS: Record<string, DocEntry> = {
 
   // LLM utilities
   ...llmDocs,
+
+  // Cross-runtime shims
+  ...shimsDocs,
 };
 
 // Category groupings for list-operations
@@ -136,6 +140,40 @@ export const CATEGORIES = {
     "LLMEmbed",
     "LLMRespond",
     "LLMCompareEmbeddings",
+  ],
+  shims: [
+    // Runtime Detection
+    "getCurrentRuntime",
+    "currentRuntime",
+    // File System Operations
+    "readFile",
+    "readTextFile",
+    "writeFile",
+    "writeTextFile",
+    "mkdir",
+    "stat",
+    "remove",
+    "open",
+    "readFileSync",
+    "writeFileSync",
+    "writeTextFileSync",
+    // Path Utilities
+    "resolve",
+    "dirname",
+    "fileURLToPath",
+    "pathToFileURL",
+    // Environment Variables
+    "env",
+    // Process Management
+    "args",
+    "getArgs",
+    "exit",
+    "importMeta",
+    // Testing Framework
+    "test",
+    // Error Types
+    "UnavailableAPIError",
+    "UnsupportedRuntimeError",
   ],
   all: Object.keys(DOCS),
 };
