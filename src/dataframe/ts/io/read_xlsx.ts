@@ -755,6 +755,41 @@ async function readXLSXImpl<S extends z.ZodObject<any>>(
   return createDataFrame(rows, schema) as unknown as DataFrame<z.infer<S>>;
 }
 
+/**
+ * Read an XLSX file with Zod schema validation and type inference
+ *
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+ * @param schema - Zod schema for type validation and conversion
+ * @param opts - Options for parsing (NA values, trim, sheet selection)
+ * @returns A properly typed DataFrame based on the Zod schema
+ *
+ * @example
+ * ```ts
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   id: z.number().int(),
+ *   name: z.string().min(1),
+ *   email: z.string().email(),
+ *   age: z.number().optional(),
+ * });
+ *
+ * // Read from file path (Node.js/Deno)
+ * const df = await readXLSX("./data.xlsx", schema);
+ *
+ * // Read from ArrayBuffer (browser-compatible)
+ * const fileInput = document.querySelector('input[type="file"]');
+ * const file = fileInput.files[0];
+ * const arrayBuffer = await file.arrayBuffer();
+ * const df2 = await readXLSX(arrayBuffer, schema);
+ *
+ * // Read from File object (browser-compatible)
+ * const df3 = await readXLSX(file, schema, { sheet: "Sheet2" });
+ *
+ * // Read from specific sheet by index (0-based)
+ * const df4 = await readXLSX("./data.xlsx", schema, { sheet: 1 });
+ * ```
+ */
 // Dynamic export with runtime detection
 // Always allow the function - it handles environment detection internally
 export const readXLSX: {
@@ -861,6 +896,27 @@ async function readXLSXMetadataImpl(
   };
 }
 
+/**
+ * Read metadata about an XLSX file without full parsing
+ *
+ * Useful for inspecting file structure before deciding how to read it.
+ * Shows available sheets and a preview of the first few rows.
+ *
+ * @param pathOrBuffer - File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+ * @param previewRows - Number of rows to preview (default: 5)
+ * @param sheet - Which sheet to preview (default: first sheet)
+ * @returns Metadata object with sheets list and row preview
+ *
+ * @example
+ * ```ts
+ * const meta = await readXLSXMetadata("./data.xlsx");
+ * console.log("Available sheets:", meta.sheets);
+ * console.log("First rows:", meta.preview.firstRows);
+ *
+ * // If row 0 looks like a note, use skip: 1
+ * const df = await readXLSX("./data.xlsx", schema, { skip: 1 });
+ * ```
+ */
 // Dynamic export with runtime detection
 // Always allow the function - it handles environment detection internally
 export const readXLSXMetadata: (

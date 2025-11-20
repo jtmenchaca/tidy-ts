@@ -119,6 +119,29 @@ function writeParquetImpl<Row extends Record<string, unknown>>(
   return dataFrame;
 }
 
+/**
+ * Write a DataFrame to a Parquet file
+ *
+ * @param dataFrame - The DataFrame to write
+ * @param filePath - The file path where to save the Parquet file
+ * @returns The original DataFrame for chaining
+ *
+ * @example
+ * ```ts
+ * import { createDataFrame } from "tidy-ts/dataframe";
+ *
+ * const df = createDataFrame([
+ *   { id: 1, name: "Alice", age: 30 },
+ *   { id: 2, name: "Bob", age: 25 }
+ * ]);
+ *
+ * // Write to file
+ * writeParquet(df, "./data.parquet");
+ *
+ * // In browser, this will trigger a download
+ * writeParquet(df, "data.parquet");
+ * ```
+ */
 // Dynamic export with runtime detection
 // Since writeParquet is synchronous and we're in the same file, we can call the implementation directly
 export const writeParquet: <Row extends Record<string, unknown>>(

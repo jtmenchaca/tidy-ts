@@ -362,6 +362,35 @@ async function readArrowImpl<S extends z.ZodObject<any>>(
   return createDataFrame(rows, schema);
 }
 
+/**
+ * Read an Arrow file with Zod schema validation and type inference
+ *
+ * @param pathOrBuffer - Either a file path to read from, or an ArrayBuffer with Arrow data
+ * @param schema - Zod schema for type validation and conversion
+ * @param opts - Options for reading/parsing
+ * @returns A properly typed DataFrame based on the Zod schema
+ *
+ * @example
+ * ```ts
+ * import { z } from "zod";
+ *
+ * const schema = z.object({
+ *   id: z.number().int(),
+ *   name: z.string().min(1),
+ *   email: z.string().email(),
+ *   age: z.number().optional(),
+ * });
+ *
+ * // Read from file
+ * const df1 = await readArrow("./data.arrow", schema);
+ *
+ * // Parse from ArrayBuffer
+ * const buffer = await Deno.readFile("./data.arrow");
+ * const df2 = await readArrow(buffer, schema);
+ *
+ * // Both are typed as DataFrame<z.output<typeof schema>>
+ * ```
+ */
 // Dynamic export with runtime detection
 // deno-lint-ignore no-explicit-any
 export const readArrow: <S extends z.ZodObject<any>>(
