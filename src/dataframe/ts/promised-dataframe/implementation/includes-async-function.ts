@@ -154,23 +154,48 @@ export function isAsyncFunction(
   fn: unknown,
   testArgs: unknown[] = [],
 ): boolean {
-  if (typeof fn !== "function") return false;
+  console.log(
+    "[isAsyncFunction] Testing function:",
+    fn?.toString().substring(0, 100),
+  );
+
+  if (typeof fn !== "function") {
+    console.log("[isAsyncFunction] Not a function, returning false");
+    return false;
+  }
 
   // Check if declared async
-  if (fn instanceof AsyncFunction) return true;
+  if (fn instanceof AsyncFunction) {
+    console.log("[isAsyncFunction] Detected as AsyncFunction, returning true");
+    return true;
+  }
 
   // Test if it returns a Promise
   try {
+    console.log(
+      "[isAsyncFunction] Calling function with testArgs:",
+      testArgs.length,
+      "args",
+    );
     const result = (fn as any)(...testArgs);
+    console.log("[isAsyncFunction] Function returned, checking if Promise...");
+
     // If it's already a Promise, it's async
     if (returnsPromise(result)) {
+      console.log("[isAsyncFunction] Returns Promise, returning true");
       return true;
     }
 
     // If it's not a Promise, it's sync
+    console.log("[isAsyncFunction] Does not return Promise, returning false");
     return false;
-  } catch (_error) {
+  } catch (error) {
     // If function throws during testing, assume it might be async
+    console.log("[isAsyncFunction] ERROR during execution:", error?.toString());
+    console.log("[isAsyncFunction] Error type:", error?.constructor?.name);
+    console.log(
+      "[isAsyncFunction] Assuming async due to error, returning true",
+    );
     return true;
   }
 }

@@ -97,9 +97,46 @@ import { env } from "@tidy-ts/shims";
 // Get a specific variable
 const apiKey = env.get("API_KEY");
 
+// Set a variable
+env.set("DEBUG", "true");
+
+// Delete a variable
+env.delete("TEMP_VAR");
+
 // Get all variables
 const allEnv = env.toObject();
 ```
+
+### Loading .env Files
+
+The `env` object provides methods to load environment variables from `.env` files:
+
+```typescript
+import { env } from "@tidy-ts/shims";
+
+// Load from a single .env file (exports to environment by default)
+await env.loadFromFile(".env");
+
+// Load from multiple files (later files take precedence in returned object)
+const config = await env.loadFromFile([".env", ".env.local", ".env.production"]);
+
+// Load without exporting to process environment
+const config = await env.loadFromFile(".env", { export: false });
+
+// Synchronous loading
+const configSync = env.loadFromFileSync(".env");
+
+// Load from URL
+const config = await env.loadFromFile(new URL("file:///path/to/.env"));
+```
+
+**Key behaviors:**
+- Files are loaded in order; later files override earlier ones in the returned object
+- When `export: true` (default), variables are set in the process environment
+- Existing environment variables are never overridden (environment takes precedence)
+- If a file doesn't exist, it's silently skipped
+- Supports variable expansion: `${VAR}` or `$VAR` with optional defaults `${VAR:-default}`
+- Handles quoted values, comments, and multiline strings
 
 ### Command Line Arguments
 
