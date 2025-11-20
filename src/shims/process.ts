@@ -83,6 +83,26 @@ function getArgsLazy(): readonly string[] {
   return _args;
 }
 
+/**
+ * Runtime-agnostic command line arguments
+ *
+ * Provides lazy-loaded access to command line arguments across all runtimes.
+ * Arguments are loaded once on first access and cached.
+ *
+ * @example
+ * ```ts
+ * import { args } from "@tidy-ts/shims";
+ *
+ * // Access arguments like an array
+ * const firstArg = args[0];
+ * const allArgs = [...args];
+ *
+ * // Iterate over arguments
+ * for (const arg of args) {
+ *   console.log(arg);
+ * }
+ * ```
+ */
 export const args: readonly string[] = new Proxy([] as readonly string[], {
   get(_target, prop) {
     const actualArgs = getArgsLazy();

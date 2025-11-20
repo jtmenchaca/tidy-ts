@@ -41,6 +41,29 @@ export interface LoadFromFileOptions {
   export?: boolean;
 }
 
+/**
+ * Runtime-agnostic environment variable utilities
+ *
+ * Provides cross-runtime access to environment variables with support for
+ * reading, writing, deleting, and loading from .env files.
+ *
+ * @example
+ * ```ts
+ * import { env } from "@tidy-ts/shims";
+ *
+ * // Get environment variable
+ * const apiKey = env.get("API_KEY");
+ *
+ * // Set environment variable
+ * env.set("DEBUG", "true");
+ *
+ * // Load from .env file
+ * await env.loadFromFile(".env");
+ *
+ * // Get all environment variables
+ * const allVars = env.toObject();
+ * ```
+ */
 export const env: {
   toObject(): Record<string, string>;
   get(key: string): string | undefined;
