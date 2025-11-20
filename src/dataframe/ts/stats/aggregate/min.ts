@@ -11,6 +11,10 @@ import {
   isNA,
 } from "../helpers.ts";
 
+// Math.min/max with spread operator has a limit of ~125k arguments on V8
+// Use a conservative limit to avoid stack overflow
+const SPREAD_OPERATOR_SAFE_LIMIT = 100000;
+
 // Type definitions for Date arrays
 export type CleanDateArray = readonly Date[];
 export type DatesWithNullable =
@@ -120,6 +124,13 @@ export function min(
 
   // Fast path for clean numeric arrays
   if (Array.isArray(values) && isAllFiniteNumbers(values)) {
+    if (values.length > SPREAD_OPERATOR_SAFE_LIMIT) {
+      let min = values[0];
+      for (let i = 1; i < values.length; i++) {
+        if (values[i] < min) min = values[i];
+      }
+      return min;
+    }
     return Math.min(...values);
   }
 
@@ -128,6 +139,14 @@ export function min(
 
   if (validValues.length === 0) {
     return null;
+  }
+
+  if (validValues.length > SPREAD_OPERATOR_SAFE_LIMIT) {
+    let min = validValues[0];
+    for (let i = 1; i < validValues.length; i++) {
+      if (validValues[i] < min) min = validValues[i];
+    }
+    return min;
   }
 
   return Math.min(...validValues);

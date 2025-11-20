@@ -154,48 +154,40 @@ export function isAsyncFunction(
   fn: unknown,
   testArgs: unknown[] = [],
 ): boolean {
-  console.log(
-    "[isAsyncFunction] Testing function:",
-    fn?.toString().substring(0, 100),
-  );
-
   if (typeof fn !== "function") {
-    console.log("[isAsyncFunction] Not a function, returning false");
     return false;
   }
 
   // Check if declared async
   if (fn instanceof AsyncFunction) {
-    console.log("[isAsyncFunction] Detected as AsyncFunction, returning true");
     return true;
   }
 
   // Test if it returns a Promise
   try {
-    console.log(
-      "[isAsyncFunction] Calling function with testArgs:",
-      testArgs.length,
-      "args",
-    );
     const result = (fn as any)(...testArgs);
-    console.log("[isAsyncFunction] Function returned, checking if Promise...");
 
     // If it's already a Promise, it's async
     if (returnsPromise(result)) {
-      console.log("[isAsyncFunction] Returns Promise, returning true");
       return true;
     }
 
     // If it's not a Promise, it's sync
-    console.log("[isAsyncFunction] Does not return Promise, returning false");
     return false;
   } catch (error) {
-    // If function throws during testing, assume it might be async
-    console.log("[isAsyncFunction] ERROR during execution:", error?.toString());
-    console.log("[isAsyncFunction] Error type:", error?.constructor?.name);
-    console.log(
-      "[isAsyncFunction] Assuming async due to error, returning true",
-    );
+    // If function throws during testing, we need to decide if it's async or not
+    // console.log("[isAsyncFunction] ERROR:", error?.toString());
+    // console.log("[isAsyncFunction] Error type:", error?.constructor?.name);
+
+    // Stack overflow and other probe-related errors indicate the probe is incompatible,
+    // not that the function is async. Assume sync in these cases.
+    if (error instanceof RangeError || error instanceof TypeError) {
+      // console.log("[isAsyncFunction] RangeError/TypeError - returning false (sync)");
+      return false;
+    }
+
+    // For other errors, be conservative and assume async
+    // console.log("[isAsyncFunction] Unknown error - returning true (async)");
     return true;
   }
 }
@@ -285,11 +277,15 @@ export function shouldUseAsyncForSummarise<Row extends object>(
   const probeDF = makeDataFrameProbe(df);
 
   if (typeof spec === "function") {
-    return isAsyncFunction(spec, [probeDF]);
+    const result = isAsyncFunction(spec, [probeDF]);
+    // console.log("[shouldUseAsyncForSummarise] spec is function, isAsync:", result);
+    return result;
   }
 
   const functions = Object.values(spec).filter((expr) =>
     typeof expr === "function"
   );
-  return shouldUseAsyncWithRowArgs(df, functions, [probeDF]);
+  const result = shouldUseAsyncWithRowArgs(df, functions, [probeDF]);
+  // console.log("[shouldUseAsyncForSummarise] checked", functions.length, "functions, isAsync:", result);
+  return result;
 }

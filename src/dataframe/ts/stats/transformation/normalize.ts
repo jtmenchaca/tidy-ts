@@ -1,5 +1,9 @@
 import { isNA } from "../../utilities/mod.ts";
 
+// Math.min/max with spread operator has a limit of ~125k arguments on V8
+// Use a conservative limit to avoid stack overflow
+const SPREAD_OPERATOR_SAFE_LIMIT = 100000;
+
 /**
  * Normalize values to 0-1 range using min-max normalization
  *
@@ -117,8 +121,18 @@ export function normalize(
     }
 
     if (normMethod === "minmax") {
-      const minVal = Math.min(...validValues);
-      const maxVal = Math.max(...validValues);
+      const minVal = validValues.length > SPREAD_OPERATOR_SAFE_LIMIT
+        ? validValues.reduce(
+          (min, val) => val < min ? val : min,
+          validValues[0],
+        )
+        : Math.min(...validValues);
+      const maxVal = validValues.length > SPREAD_OPERATOR_SAFE_LIMIT
+        ? validValues.reduce(
+          (max, val) => val > max ? val : max,
+          validValues[0],
+        )
+        : Math.max(...validValues);
       const range = maxVal - minVal;
 
       if (range === 0) {
@@ -145,8 +159,12 @@ export function normalize(
   const normalizedValues = new Array(processArray.length);
 
   if (normMethod === "minmax") {
-    const minVal = Math.min(...validValues);
-    const maxVal = Math.max(...validValues);
+    const minVal = validValues.length > SPREAD_OPERATOR_SAFE_LIMIT
+      ? validValues.reduce((min, val) => val < min ? val : min, validValues[0])
+      : Math.min(...validValues);
+    const maxVal = validValues.length > SPREAD_OPERATOR_SAFE_LIMIT
+      ? validValues.reduce((max, val) => val > max ? val : max, validValues[0])
+      : Math.max(...validValues);
     const range = maxVal - minVal;
 
     if (range === 0) {
