@@ -361,6 +361,7 @@ Deno.test("async detection - testing with actual async function should return Pr
   console.log("Result type:", typeof result);
   console.log("Result constructor:", result.constructor.name);
   console.log("Has nrows:", typeof result.nrows);
+  // deno-lint-ignore no-explicit-any
   console.log("Has then:", typeof (result as any).then);
 
   // This should be a PromisedDataFrame, so we need to await it
