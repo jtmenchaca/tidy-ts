@@ -2,7 +2,6 @@
  * Test normalize with large arrays to ensure no stack overflow
  */
 
-// deno-lint-ignore-file no-explicit-any
 import { normalize } from "../../src/dataframe/ts/stats/transformation/normalize.ts";
 import { expect } from "@std/expect";
 
