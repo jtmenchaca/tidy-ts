@@ -688,6 +688,264 @@ const fittedNormal = s.normal(mean, std);
 console.log(\`Fitted Normal(mean=\${mean}, std=\${std})\`);
 console.log("PDF at mean:", fittedNormal.pdf(mean));`,
   },
+  "shims-env-validation": {
+    name: "Environment Variable Validation",
+    description: "Validate and transform environment variables with type safety",
+    category: "shims",
+    code: `import { env, exit } from "@tidy-ts/shims";
+import { z } from "zod";
+
+// Define schema for required environment variables
+const EnvSchema = z.object({
+  // Application config
+  NODE_ENV: z.enum(["development", "staging", "production"]),
+  PORT: z.coerce.number().min(1024).max(65535),
+  LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+
+  // Database config
+  DATABASE_URL: z.string().url(),
+  DB_POOL_SIZE: z.coerce.number().default(10),
+
+  // API keys (optional in development)
+  API_KEY: z.string().optional(),
+  SECRET_KEY: z.string().min(32),
+}).transform((data) => {
+  // Derive additional config
+  const isDev = data.NODE_ENV === "development";
+  const isProd = data.NODE_ENV === "production";
+
+  // Validate production requirements
+  if (isProd && !data.API_KEY) {
+    throw new Error("API_KEY is required in production");
+  }
+
+  return {
+    ...data,
+    isDev,
+    isProd,
+    isStaging: data.NODE_ENV === "staging",
+  };
+});
+
+type Env = z.infer<typeof EnvSchema>;
+
+// Load and validate environment
+function loadEnv(): Env {
+  const envVars = env.toObject();
+  const result = EnvSchema.safeParse(envVars);
+
+  if (!result.success) {
+    console.error("❌ Invalid environment configuration:");
+    console.error(JSON.stringify(result.error.format(), null, 2));
+    exit(1);
+  }
+
+  return result.data;
+}
+
+// Usage
+const config = loadEnv();
+
+console.log("✅ Environment validated:");
+console.log(\`   Environment: \${config.NODE_ENV}\`);
+console.log(\`   Port: \${config.PORT}\`);
+console.log(\`   Database: \${config.DATABASE_URL ? "✅ Configured" : "❌ Missing"}\`);
+console.log(\`   API Key: \${config.API_KEY ? "✅ Set" : "⚠️  Not set"}\`);
+
+// Type-safe access throughout your app
+export { config };`,
+  },
+  "shims-basic-usage": {
+    name: "Cross-Runtime File Operations",
+    description: "File system operations that work across Deno, Bun, and Node.js",
+    category: "shims",
+    code: `import {
+  readTextFile,
+  writeTextFile,
+  listDir,
+  mkdir,
+  exists,
+  copyFile,
+  rename,
+  remove,
+  stat
+} from "@tidy-ts/shims";
+
+// Create directory structure
+await mkdir("./data/backup", { recursive: true });
+
+// Write a file
+await writeTextFile("./data/config.json", JSON.stringify({
+  version: "1.0.0",
+  name: "My App"
+}, null, 2));
+
+// Read it back
+const content = await readTextFile("./data/config.json");
+console.log("Config:", JSON.parse(content));
+
+// Check if file exists
+if (await exists("./data/config.json")) {
+  console.log("✅ Config file exists");
+}
+
+// Copy file
+await copyFile("./data/config.json", "./data/backup/config.json");
+
+// List directory contents
+const entries = await listDir("./data");
+console.log("\\nFiles in ./data:");
+for (const entry of entries) {
+  const icon = entry.isDirectory ? "📁" : "📄";
+  console.log(\`  \${icon} \${entry.name}\`);
+}
+
+// Get file stats
+const stats = await stat("./data/config.json");
+console.log(\`\\nFile size: \${stats.size} bytes\`);
+console.log(\`Modified: \${stats.mtime}\`);
+
+// Rename file
+await rename("./data/config.json", "./data/config.backup.json");
+
+// Clean up
+await remove("./data", { recursive: true });
+console.log("✅ Cleanup complete");`,
+  },
+  "shims-runtime-detection": {
+    name: "Runtime Detection & Conditional Logic",
+    description: "Detect runtime environment and execute platform-specific code",
+    category: "shims",
+    code: `import {
+  getCurrentRuntime,
+  currentRuntime,
+  Runtime
+} from "@tidy-ts/shims";
+
+// Check current runtime (cached)
+console.log("Running in:", currentRuntime);
+
+// Conditional logic based on runtime
+if (currentRuntime === Runtime.Deno) {
+  console.log("🦕 Using Deno-specific features");
+} else if (currentRuntime === Runtime.Bun) {
+  console.log("🥟 Using Bun-specific features");
+} else if (currentRuntime === Runtime.Node) {
+  console.log("🟢 Using Node.js-specific features");
+}
+
+// Function-based detection (same result, but as function call)
+const runtime = getCurrentRuntime();
+const features = {
+  [Runtime.Deno]: ["Built-in TypeScript", "Secure by default", "Web APIs"],
+  [Runtime.Bun]: ["Fast startup", "Built-in bundler", "JSX support"],
+  [Runtime.Node]: ["Massive ecosystem", "Battle-tested", "Enterprise support"],
+};
+
+console.log(\`\\n\${runtime} features:\`);
+features[runtime]?.forEach(f => console.log(\`  - \${f}\`));
+
+// Use for conditional imports or configuration
+const config = {
+  timeout: currentRuntime === Runtime.Browser ? 5000 : 30000,
+  useNativeModules: currentRuntime !== Runtime.Browser,
+  enableHotReload: currentRuntime === Runtime.Deno,
+};
+
+console.log("\\nConfiguration:", config);`,
+  },
+  "shims-path-utilities": {
+    name: "Path Resolution & URL Conversion",
+    description: "Cross-runtime path operations and import.meta utilities",
+    category: "shims",
+    code: `import {
+  resolve,
+  dirname,
+  fileURLToPath,
+  pathToFileURL,
+  importMeta
+} from "@tidy-ts/shims";
+
+// Path resolution
+const configPath = resolve("./config", "settings.json");
+console.log("Resolved path:", configPath);
+
+// Get directory from path
+const dir = dirname("/path/to/file.txt");
+console.log("Directory:", dir);
+
+// URL conversions
+const filePath = fileURLToPath("file:///Users/me/project/src/index.ts");
+console.log("File path:", filePath);
+
+const fileUrl = pathToFileURL("/Users/me/project/data.json");
+console.log("File URL:", fileUrl.href);
+
+// Import meta utilities (works like import.meta)
+console.log("\\nImport meta utilities:");
+console.log("  Current file:", importMeta.getFilename());
+console.log("  Current dir:", importMeta.getDirname());
+console.log("  Module URL:", importMeta.url);
+console.log("  Is main module:", importMeta.main);
+
+// Convert import.meta.url to path
+const currentFilePath = importMeta.urlToPath();
+console.log("  As path:", currentFilePath);
+
+// Common use case: resolve file relative to current module
+const dataFile = resolve(importMeta.getDirname(), "data", "users.json");
+console.log("\\nData file path:", dataFile);`,
+  },
+  "shims-process-management": {
+    name: "Process & Environment Variables",
+    description: "Access command-line arguments and environment variables",
+    category: "shims",
+    code: `import { args, env, exit } from "@tidy-ts/shims";
+
+// Access command-line arguments
+console.log("Command-line arguments:", args);
+console.log("Number of args:", args.length);
+
+if (args.length > 0) {
+  console.log("First arg:", args[0]);
+}
+
+// Environment variables
+console.log("\\nEnvironment variables:");
+console.log("NODE_ENV:", env.get("NODE_ENV") || "not set");
+console.log("PATH:", env.get("PATH")?.substring(0, 50) + "...");
+
+// Set environment variable (runtime only, not persistent)
+env.set("MY_VAR", "hello");
+console.log("MY_VAR:", env.get("MY_VAR"));
+
+// Get all environment variables
+const allEnv = env.toObject();
+console.log(\`\\nTotal env vars: \${Object.keys(allEnv).length}\`);
+
+// Load from .env file (if it exists)
+try {
+  await env.loadFromFile(".env");
+  console.log("✅ Loaded .env file");
+} catch (error) {
+  console.log("⚠️  No .env file found (optional)");
+}
+
+// Delete environment variable
+env.delete("MY_VAR");
+console.log("MY_VAR after delete:", env.get("MY_VAR"));
+
+// Conditional exit based on validation
+const required = ["NODE_ENV", "DATABASE_URL"];
+const missing = required.filter(key => !env.get(key));
+
+if (missing.length > 0) {
+  console.error(\`❌ Missing required env vars: \${missing.join(", ")}\`);
+  exit(1);  // Exit with error code
+}
+
+console.log("✅ All required env vars present");`,
+  },
 };
 
 export function listExamples(category?: string): ExampleEntry[] {

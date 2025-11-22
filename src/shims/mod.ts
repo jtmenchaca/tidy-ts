@@ -12,12 +12,17 @@ export { currentRuntime, getCurrentRuntime, Runtime } from "./detect.ts";
 
 // File system APIs
 export {
+  copyFile,
+  type DirEntry,
+  exists,
+  listDir,
   mkdir,
   open,
   readFile,
   readFileSync,
   readTextFile,
   remove,
+  rename,
   stat,
   writeFile,
   writeFileSync,

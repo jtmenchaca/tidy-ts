@@ -176,18 +176,13 @@ export function isAsyncFunction(
     return false;
   } catch (error) {
     // If function throws during testing, we need to decide if it's async or not
-    // console.log("[isAsyncFunction] ERROR:", error?.toString());
-    // console.log("[isAsyncFunction] Error type:", error?.constructor?.name);
-
     // Stack overflow and other probe-related errors indicate the probe is incompatible,
     // not that the function is async. Assume sync in these cases.
     if (error instanceof RangeError || error instanceof TypeError) {
-      // console.log("[isAsyncFunction] RangeError/TypeError - returning false (sync)");
       return false;
     }
 
     // For other errors, be conservative and assume async
-    // console.log("[isAsyncFunction] Unknown error - returning true (async)");
     return true;
   }
 }
@@ -277,15 +272,11 @@ export function shouldUseAsyncForSummarise<Row extends object>(
   const probeDF = makeDataFrameProbe(df);
 
   if (typeof spec === "function") {
-    const result = isAsyncFunction(spec, [probeDF]);
-    // console.log("[shouldUseAsyncForSummarise] spec is function, isAsync:", result);
-    return result;
+    return isAsyncFunction(spec, [probeDF]);
   }
 
   const functions = Object.values(spec).filter((expr) =>
     typeof expr === "function"
   );
-  const result = shouldUseAsyncWithRowArgs(df, functions, [probeDF]);
-  // console.log("[shouldUseAsyncForSummarise] checked", functions.length, "functions, isAsync:", result);
-  return result;
+  return shouldUseAsyncWithRowArgs(df, functions, [probeDF]);
 }

@@ -231,13 +231,132 @@ export const shimsDocs: Record<string, DocEntry> = {
       '// Remove directory and contents\nawait remove("./my-dir", { recursive: true });',
       "// Safe to call on non-existent files (no error thrown)\nawait remove('./maybe-exists.txt');",
     ],
-    related: ["writeFile", "mkdir"],
+    related: ["writeFile", "mkdir", "exists"],
     bestPractices: [
       "✓ GOOD: Use recursive: true for directories with contents",
       "✓ GOOD: Safe to call on non-existent paths",
     ],
     antiPatterns: [
       "❌ BAD: Forgetting recursive: true when removing non-empty directories",
+    ],
+  },
+
+  listDir: {
+    name: "listDir",
+    category: "shims",
+    signature: "listDir(dirPath: string): Promise<DirEntry[]>",
+    description:
+      "List files and directories in a directory. Returns an array of directory entries with name and type information. Works consistently across Deno, Bun, and Node.js.",
+    imports: [
+      'import { listDir } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "dirPath: Path to the directory to list",
+    ],
+    returns:
+      "Promise<DirEntry[]> - Array of entries with name, isFile, isDirectory, isSymbolicLink",
+    examples: [
+      '// List directory contents\nimport { listDir } from "@tidy-ts/shims";\n\nconst entries = await listDir("./my-dir");\nfor (const entry of entries) {\n  if (entry.isDirectory) {\n    console.log(`📁 ${entry.name}`);\n  } else {\n    console.log(`📄 ${entry.name}`);\n  }\n}',
+      "// Filter files only\nconst files = entries.filter(e => e.isFile);\nconsole.log(`Found ${files.length} files`);",
+      "// Find subdirectories\nconst dirs = entries.filter(e => e.isDirectory);\ndirs.forEach(dir => console.log(dir.name));",
+    ],
+    related: ["mkdir", "stat", "exists"],
+    bestPractices: [
+      "✓ GOOD: Use to enumerate directory contents",
+      "✓ GOOD: Check isFile and isDirectory to determine entry type",
+      "✓ GOOD: Combine with stat() for detailed file information",
+    ],
+  },
+
+  copyFile: {
+    name: "copyFile",
+    category: "shims",
+    signature:
+      "copyFile(src: string, dest: string, options?: { overwrite?: boolean }): Promise<void>",
+    description:
+      "Copy a file from source to destination. By default overwrites if destination exists. Works consistently across Deno, Bun, and Node.js.",
+    imports: [
+      'import { copyFile } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "src: Source file path",
+      "dest: Destination file path",
+      "options.overwrite: Whether to overwrite existing file (default: true)",
+    ],
+    returns: "Promise<void>",
+    examples: [
+      '// Copy file (overwrites by default)\nimport { copyFile } from "@tidy-ts/shims";\n\nawait copyFile("./source.txt", "./destination.txt");',
+      "// Copy without overwriting\nawait copyFile('./source.txt', './dest.txt', { overwrite: false });\n// Throws error if destination exists",
+      "// Backup file\nconst timestamp = new Date().toISOString().replace(/:/g, '-');\nawait copyFile('./data.json', `./backups/data-${timestamp}.json`);",
+    ],
+    related: ["rename", "readFile", "writeFile"],
+    bestPractices: [
+      "✓ GOOD: Default behavior overwrites existing files",
+      "✓ GOOD: Use overwrite: false to prevent accidental overwrites",
+      "✓ GOOD: Great for creating backups or duplicating files",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using readFile + writeFile when copyFile is simpler",
+    ],
+  },
+
+  rename: {
+    name: "rename",
+    category: "shims",
+    signature: "rename(oldPath: string, newPath: string): Promise<void>",
+    description:
+      "Rename or move a file or directory. Can move across directories. Works consistently across Deno, Bun, and Node.js.",
+    imports: [
+      'import { rename } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "oldPath: Current file or directory path",
+      "newPath: New file or directory path",
+    ],
+    returns: "Promise<void>",
+    examples: [
+      '// Rename file\nimport { rename } from "@tidy-ts/shims";\n\nawait rename("./old-name.txt", "./new-name.txt");',
+      "// Move file to different directory\nawait rename('./file.txt', './archive/file.txt');",
+      "// Rename directory\nawait rename('./old-folder', './new-folder');",
+      "// Move and rename\nawait rename('./data/temp.json', './output/results.json');",
+    ],
+    related: ["copyFile", "remove", "exists"],
+    bestPractices: [
+      "✓ GOOD: Atomic operation (faster than copy + delete)",
+      "✓ GOOD: Works for both files and directories",
+      "✓ GOOD: Can move across directories",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using copyFile + remove when rename is faster",
+    ],
+  },
+
+  exists: {
+    name: "exists",
+    category: "shims",
+    signature: "exists(filePath: string): Promise<boolean>",
+    description:
+      "Check if a file or directory exists. Returns true if path exists, false otherwise. Does not throw errors. Works consistently across Deno, Bun, and Node.js.",
+    imports: [
+      'import { exists } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "filePath: Path to check for existence",
+    ],
+    returns: "Promise<boolean> - true if exists, false otherwise",
+    examples: [
+      '// Check if file exists\nimport { exists } from "@tidy-ts/shims";\n\nif (await exists("./config.json")) {\n  console.log("Config file found");\n} else {\n  console.log("Config file missing");\n}',
+      "// Conditional file creation\nif (!await exists('./data.json')) {\n  await writeTextFile('./data.json', '[]');\n}",
+      "// Check directory\nif (await exists('./logs')) {\n  console.log('Logs directory exists');\n}",
+    ],
+    related: ["stat", "readFile", "writeFile"],
+    bestPractices: [
+      "✓ GOOD: Convenient boolean check for existence",
+      "✓ GOOD: Never throws errors (returns false for non-existent paths)",
+      "✓ GOOD: Use before reading files to avoid errors",
+    ],
+    antiPatterns: [
+      "❌ BAD: Race conditions (file may be deleted between exists() and readFile())",
     ],
   },
 

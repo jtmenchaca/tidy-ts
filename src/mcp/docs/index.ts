@@ -157,6 +157,10 @@ export const CATEGORIES = {
     "readFileSync",
     "writeFileSync",
     "writeTextFileSync",
+    "listDir",
+    "copyFile",
+    "rename",
+    "exists",
     // Path Utilities
     "resolve",
     "dirname",

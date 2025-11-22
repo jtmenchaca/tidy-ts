@@ -14,7 +14,7 @@ import { getLatestVersion } from "./jsr-version-utils.ts";
 async function main() {
   const packages = Deno.args.length > 0
     ? Deno.args
-    : ["@tidy-ts/dataframe", "@tidy-ts/ai"];
+    : ["@tidy-ts/dataframe", "@tidy-ts/ai", "@tidy-ts/shims"];
 
   console.log("Checking JSR package versions...\n");
 

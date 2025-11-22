@@ -421,3 +421,124 @@ export async function remove(
     }
   }
 }
+
+/**
+ * Directory entry returned by listDir
+ */
+export interface DirEntry {
+  /** The name of the file or directory */
+  name: string;
+  /** Whether this is a file */
+  isFile: boolean;
+  /** Whether this is a directory */
+  isDirectory: boolean;
+  /** Whether this is a symbolic link */
+  isSymbolicLink: boolean;
+}
+
+/**
+ * List files and directories in a directory
+ *
+ * @param dirPath - Path to the directory to list
+ * @returns Array of directory entries with name and type information
+ * @throws {UnavailableAPIError} If the file system API is not available
+ * @example
+ * ```ts
+ * import { listDir } from "@tidy-ts/shims";
+ * const entries = await listDir("./my-dir");
+ * for (const entry of entries) {
+ *   console.log(`${entry.name} - ${entry.isDirectory ? 'dir' : 'file'}`);
+ * }
+ * ```
+ */
+export async function listDir(dirPath: string): Promise<DirEntry[]> {
+  // Use node:fs/promises which works in Deno, Bun, and Node.js
+  const fs = await import("node:fs/promises");
+  const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+  return entries.map((entry) => ({
+    name: entry.name,
+    isFile: entry.isFile(),
+    isDirectory: entry.isDirectory(),
+    isSymbolicLink: entry.isSymbolicLink(),
+  }));
+}
+
+/**
+ * Copy a file from source to destination
+ *
+ * @param src - Source file path
+ * @param dest - Destination file path
+ * @param options - Optional copy options
+ * @param options.overwrite - Whether to overwrite existing file (default: true)
+ * @throws {UnavailableAPIError} If the file system API is not available
+ * @example
+ * ```ts
+ * import { copyFile } from "@tidy-ts/shims";
+ * await copyFile("./source.txt", "./destination.txt");
+ * await copyFile("./source.txt", "./dest.txt", { overwrite: false });
+ * ```
+ */
+export async function copyFile(
+  src: string,
+  dest: string,
+  options?: { overwrite?: boolean },
+): Promise<void> {
+  // Use node:fs/promises which works in Deno, Bun, and Node.js
+  const fs = await import("node:fs/promises");
+
+  // Default to overwrite = true (matches Deno behavior)
+  const overwrite = options?.overwrite ?? true;
+
+  if (overwrite) {
+    // Overwrite if exists
+    await fs.copyFile(src, dest);
+  } else {
+    // Use COPYFILE_EXCL flag to fail if destination exists
+    const constants = await import("node:fs");
+    await fs.copyFile(src, dest, constants.constants.COPYFILE_EXCL);
+  }
+}
+
+/**
+ * Rename or move a file or directory
+ *
+ * @param oldPath - Current path
+ * @param newPath - New path
+ * @throws {UnavailableAPIError} If the file system API is not available
+ * @example
+ * ```ts
+ * import { rename } from "@tidy-ts/shims";
+ * await rename("./old-name.txt", "./new-name.txt");
+ * await rename("./old-dir", "./new-dir");
+ * ```
+ */
+export async function rename(oldPath: string, newPath: string): Promise<void> {
+  // Use node:fs/promises which works in Deno, Bun, and Node.js
+  const fs = await import("node:fs/promises");
+  await fs.rename(oldPath, newPath);
+}
+
+/**
+ * Check if a file or directory exists
+ *
+ * @param filePath - Path to check
+ * @returns true if the path exists, false otherwise
+ * @example
+ * ```ts
+ * import { exists } from "@tidy-ts/shims";
+ * if (await exists("./my-file.txt")) {
+ *   console.log("File exists!");
+ * }
+ * ```
+ */
+export async function exists(filePath: string): Promise<boolean> {
+  try {
+    // Use node:fs/promises which works in Deno, Bun, and Node.js
+    const fs = await import("node:fs/promises");
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
