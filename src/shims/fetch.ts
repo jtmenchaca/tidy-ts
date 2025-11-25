@@ -100,51 +100,69 @@ export function defineError<
 // Fetch Error Types
 // ============================================================================
 
+/** Extra properties for NetworkError */
+type NetworkErrorExtra = { message: string; url: string; cause?: Error };
 /** Network-level error (DNS failure, connection refused, etc.) */
-export const NetworkError = defineError(
+export const NetworkError: {
+  new (extra: NetworkErrorExtra): AppError<"NetworkError", NetworkErrorExtra>;
+} = defineError(
   "NetworkError",
-  ({ message, url }: { message: string; url: string; cause?: Error }) =>
-    `Network error: ${message} [${url}]`,
+  ({ message, url }: NetworkErrorExtra) => `Network error: ${message} [${url}]`,
 );
-export type NetworkError = InstanceType<typeof NetworkError>;
+export type NetworkError = AppError<"NetworkError", NetworkErrorExtra>;
 
+/** Extra properties for TimeoutError */
+type TimeoutErrorExtra = { url: string; timeout: number };
 /** Request timed out */
-export const TimeoutError = defineError(
+export const TimeoutError: {
+  new (extra: TimeoutErrorExtra): AppError<"TimeoutError", TimeoutErrorExtra>;
+} = defineError(
   "TimeoutError",
-  ({ url, timeout }: { url: string; timeout: number }) =>
+  ({ url, timeout }: TimeoutErrorExtra) =>
     `Request timed out after ${timeout}ms [${url}]`,
 );
-export type TimeoutError = InstanceType<typeof TimeoutError>;
+export type TimeoutError = AppError<"TimeoutError", TimeoutErrorExtra>;
 
+/** Extra properties for HTTPError */
+type HTTPErrorExtra = {
+  statusCode: number;
+  statusText: string;
+  url: string;
+  body?: unknown;
+  response: Response;
+};
 /** HTTP error (non-2xx status code) */
-export const HTTPError = defineError(
+export const HTTPError: {
+  new (extra: HTTPErrorExtra): AppError<"HTTPError", HTTPErrorExtra>;
+} = defineError(
   "HTTPError",
-  (
-    { statusCode, statusText, url }: {
-      statusCode: number;
-      statusText: string;
-      url: string;
-      body?: unknown;
-      response: Response;
-    },
-  ) => `HTTP ${statusCode} ${statusText} [${url}]`,
+  ({ statusCode, statusText, url }: HTTPErrorExtra) =>
+    `HTTP ${statusCode} ${statusText} [${url}]`,
 );
-export type HTTPError = InstanceType<typeof HTTPError>;
+export type HTTPError = AppError<"HTTPError", HTTPErrorExtra>;
 
+/** Extra properties for ParseError */
+type ParseErrorExtra = { message: string; url: string; cause?: Error };
 /** Failed to parse response body */
-export const ParseError = defineError(
+export const ParseError: {
+  new (extra: ParseErrorExtra): AppError<"ParseError", ParseErrorExtra>;
+} = defineError(
   "ParseError",
-  ({ message, url }: { message: string; url: string; cause?: Error }) =>
+  ({ message, url }: ParseErrorExtra) =>
     `Failed to parse response: ${message} [${url}]`,
 );
-export type ParseError = InstanceType<typeof ParseError>;
+export type ParseError = AppError<"ParseError", ParseErrorExtra>;
 
+/** Extra properties for AbortError */
+type AbortErrorExtra = { url: string };
 /** Request was aborted (by user or signal) */
-export const AbortError = defineError(
+export const AbortError: {
+  new (extra: AbortErrorExtra): AppError<"AbortError", AbortErrorExtra>;
+} = defineError(
   "AbortError",
-  ({ url }: { url: string }) => `Request aborted [${url}]`,
+  ({ url }: AbortErrorExtra) => `Request aborted [${url}]`,
 );
-export type AbortError = InstanceType<typeof AbortError>;
+export type AbortError = AppError<"AbortError", AbortErrorExtra>;
 
 /** Union of all fetch error types */
 export type TidyFetchError =
