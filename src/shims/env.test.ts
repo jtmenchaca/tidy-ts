@@ -4,8 +4,6 @@
 
 import { expect } from "@std/expect";
 import { env } from "./env.ts";
-import { remove, writeTextFile } from "./fs.ts";
-
 Deno.test("env.get() - retrieves environment variable", () => {
   // Set a test variable
   env.set("TEST_VAR_GET", "test_value");
