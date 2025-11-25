@@ -175,6 +175,19 @@ export const CATEGORIES = {
     "importMeta",
     // Testing Framework
     "test",
+    // Enhanced Fetch API
+    "tidyfetch",
+    "tidyfetch.create",
+    "tidyfetch.get",
+    "tidyfetch.post",
+    "tidyfetch.put",
+    "tidyfetch.patch",
+    "tidyfetch.delete",
+    "tidyfetch.raw",
+    "tidyfetch.native",
+    "FetchError",
+    "FetchOptions",
+    "RawResponse",
     // Error Types
     "UnavailableAPIError",
     "UnsupportedRuntimeError",

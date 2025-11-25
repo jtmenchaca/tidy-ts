@@ -775,4 +775,358 @@ export const shimsDocs: Record<string, DocEntry> = {
       "✓ GOOD: Use to gracefully handle unsupported environments",
     ],
   },
+
+  // Enhanced Fetch API
+  tidyfetch: {
+    name: "tidyfetch",
+    category: "shims",
+    signature: "tidyfetch<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Enhanced fetch API with automatic JSON parsing, error handling, retries, timeouts, caching, and interceptors. Returns parsed response data directly. Supports TypeScript generics for type-safe responses. Works identically across Deno, Bun, and Node.js.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+      'import { tidyfetch, FetchError, type FetchOptions } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL to fetch (absolute, or relative if baseURL is provided)",
+      "options.baseURL: Base URL to prepend to all requests",
+      "options.query: Query parameters as an object (auto-appended to URL)",
+      "options.body: Request body (plain objects auto-stringified to JSON)",
+      "options.timeout: Request timeout in milliseconds (default: 0 = no timeout)",
+      "options.retry: Number of retry attempts (default: 0)",
+      "options.retryDelay: Delay between retries in ms (default: 0)",
+      "options.retryStatusCodes: Status codes that trigger retry (default: [408, 429, 500, 502, 503, 504])",
+      "options.cacheTTL: Response cache TTL in ms (default: 0 = no cache)",
+      "options.responseType: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream' (default: 'json')",
+      "options.onRequest: Interceptor called before request is sent",
+      "options.onResponse: Interceptor called after successful response",
+      "options.onResponseError: Interceptor called on error responses",
+      "options.parseResponse: Custom function to parse response body",
+    ],
+    returns: "Promise<T> - The parsed response data with full type inference",
+    examples: [
+      '// Basic GET with type safety\nimport { tidyfetch } from "@tidy-ts/shims";\n\ninterface User { id: number; name: string; email: string; }\n\nconst user = await tidyfetch<User>("/api/users/1");\nconsole.log(user.name); // Full TypeScript inference',
+      '// POST with auto JSON body\nconst newUser = await tidyfetch<User>("/api/users", {\n  method: "POST",\n  body: { name: "Alice", email: "alice@example.com" }\n});',
+      '// With retry and timeout\nconst data = await tidyfetch("/api/flaky", {\n  retry: 3,\n  retryDelay: 1000,\n  timeout: 10000\n});',
+      '// With query parameters\nconst users = await tidyfetch<User[]>("/api/users", {\n  query: { page: 1, limit: 10, active: true }\n}); // → /api/users?page=1&limit=10&active=true',
+      '// With response caching (5 minutes)\nconst config = await tidyfetch("/api/config", { cacheTTL: 300000 });',
+      '// With request cancellation\nconst controller = new AbortController();\nsetTimeout(() => controller.abort(), 5000);\nawait tidyfetch("/api/slow", { signal: controller.signal });',
+    ],
+    related: [
+      "tidyfetch.create",
+      "tidyfetch.get",
+      "tidyfetch.post",
+      "tidyfetch.raw",
+      "FetchError",
+    ],
+    bestPractices: [
+      "✓ GOOD: Use TypeScript generics for type-safe responses",
+      "✓ GOOD: Set timeouts on all production requests",
+      "✓ GOOD: Use retry for idempotent requests to handle transient failures",
+      "✓ GOOD: Use cacheTTL for frequently-requested, rarely-changing data",
+      "✓ GOOD: Use interceptors for logging, auth headers, or error tracking",
+    ],
+    antiPatterns: [
+      "❌ BAD: Retrying non-idempotent requests (POST without idempotency key)",
+      "❌ BAD: Setting very long cache TTLs for dynamic data",
+      "❌ BAD: Not handling FetchError for user-facing error messages",
+    ],
+  },
+
+  "tidyfetch.create": {
+    name: "tidyfetch.create",
+    category: "shims",
+    signature: "tidyfetch.create(defaults: FetchOptions): TidyFetch",
+    description:
+      "Factory function to create a preconfigured tidyfetch instance with default options. Perfect for creating API clients with shared configuration (baseURL, headers, timeout). Per-request options are merged with defaults.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "defaults: Default FetchOptions applied to all requests from this instance",
+    ],
+    returns: "A new tidyfetch function with defaults baked in",
+    examples: [
+      '// Create an API client\nimport { tidyfetch } from "@tidy-ts/shims";\n\nconst api = tidyfetch.create({\n  baseURL: "https://api.example.com",\n  headers: { "Authorization": `Bearer ${token}` },\n  timeout: 10000\n});\n\n// All requests use the defaults\nconst users = await api<User[]>("/users");\nconst posts = await api<Post[]>("/posts", { query: { page: 2 } });',
+      '// Multiple API clients\nconst publicApi = tidyfetch.create({\n  baseURL: "https://api.example.com/public"\n});\n\nconst adminApi = tidyfetch.create({\n  baseURL: "https://api.example.com/admin",\n  headers: { "X-Admin-Token": adminToken }\n});',
+      '// Override defaults per-request\nconst api = tidyfetch.create({ timeout: 5000 });\nawait api("/slow-endpoint", { timeout: 30000 }); // This request has longer timeout',
+    ],
+    related: ["tidyfetch", "FetchOptions"],
+    bestPractices: [
+      "✓ GOOD: Create separate instances for different API services",
+      "✓ GOOD: Set common headers (auth, content-type) in defaults",
+      "✓ GOOD: Set sensible default timeouts",
+    ],
+  },
+
+  "tidyfetch.get": {
+    name: "tidyfetch.get",
+    category: "shims",
+    signature:
+      "tidyfetch.get<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Shorthand for GET requests. Equivalent to tidyfetch(url, { method: 'GET', ...options }). GET requests are typically used to retrieve resources.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL to fetch",
+      "options: Additional FetchOptions (method is set automatically)",
+    ],
+    returns: "Promise<T> - The parsed response data",
+    examples: [
+      '// Basic GET\nconst users = await tidyfetch.get<User[]>("/api/users");',
+      '// GET with query parameters\nconst user = await tidyfetch.get<User>("/api/users/1", {\n  query: { include: "posts,comments" }\n});',
+      '// GET with caching\nconst config = await tidyfetch.get("/api/config", { cacheTTL: 60000 });',
+    ],
+    related: ["tidyfetch", "tidyfetch.post", "tidyfetch.put"],
+    bestPractices: [
+      "✓ GOOD: Use for retrieving resources",
+      "✓ GOOD: Combine with cacheTTL for frequently-accessed data",
+    ],
+  },
+
+  "tidyfetch.post": {
+    name: "tidyfetch.post",
+    category: "shims",
+    signature:
+      "tidyfetch.post<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Shorthand for POST requests. Equivalent to tidyfetch(url, { method: 'POST', ...options }). POST requests are typically used to create new resources. Body objects are auto-stringified to JSON.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL to post to",
+      "options: FetchOptions including body data",
+    ],
+    returns: "Promise<T> - The parsed response data",
+    examples: [
+      '// Create a resource\nconst newUser = await tidyfetch.post<User>("/api/users", {\n  body: { name: "Alice", email: "alice@example.com" }\n});',
+      '// POST with form data\nconst formData = new FormData();\nformData.append("file", file);\nconst result = await tidyfetch.post("/api/upload", { body: formData });',
+    ],
+    related: ["tidyfetch", "tidyfetch.get", "tidyfetch.put", "tidyfetch.patch"],
+    bestPractices: [
+      "✓ GOOD: Use for creating new resources",
+      "✓ GOOD: Body objects are automatically JSON stringified",
+    ],
+  },
+
+  "tidyfetch.put": {
+    name: "tidyfetch.put",
+    category: "shims",
+    signature:
+      "tidyfetch.put<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Shorthand for PUT requests. Equivalent to tidyfetch(url, { method: 'PUT', ...options }). PUT requests are typically used to replace entire resources.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL of the resource to replace",
+      "options: FetchOptions including the new resource data",
+    ],
+    returns: "Promise<T> - The parsed response data",
+    examples: [
+      '// Replace a resource\nconst updated = await tidyfetch.put<User>("/api/users/1", {\n  body: { name: "Alice Smith", email: "alice@example.com", role: "admin" }\n});',
+    ],
+    related: ["tidyfetch", "tidyfetch.patch", "tidyfetch.post"],
+    bestPractices: [
+      "✓ GOOD: Use for full resource replacement",
+      "✓ GOOD: Include all required fields in body",
+    ],
+  },
+
+  "tidyfetch.patch": {
+    name: "tidyfetch.patch",
+    category: "shims",
+    signature:
+      "tidyfetch.patch<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Shorthand for PATCH requests. Equivalent to tidyfetch(url, { method: 'PATCH', ...options }). PATCH requests are typically used for partial updates to resources.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL of the resource to update",
+      "options: FetchOptions including the partial update data",
+    ],
+    returns: "Promise<T> - The parsed response data",
+    examples: [
+      '// Partial update\nconst patched = await tidyfetch.patch<User>("/api/users/1", {\n  body: { email: "newemail@example.com" }\n});',
+      '// Update specific fields\nawait tidyfetch.patch("/api/posts/123", {\n  body: { title: "Updated Title", updatedAt: new Date().toISOString() }\n});',
+    ],
+    related: ["tidyfetch", "tidyfetch.put", "tidyfetch.post"],
+    bestPractices: [
+      "✓ GOOD: Use for partial resource updates",
+      "✓ GOOD: Only include fields that need to change",
+    ],
+  },
+
+  "tidyfetch.delete": {
+    name: "tidyfetch.delete",
+    category: "shims",
+    signature:
+      "tidyfetch.delete<T>(url: string, options?: FetchOptions): Promise<T>",
+    description:
+      "Shorthand for DELETE requests. Equivalent to tidyfetch(url, { method: 'DELETE', ...options }). DELETE requests are used to remove resources.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL of the resource to delete",
+      "options: Additional FetchOptions",
+    ],
+    returns:
+      "Promise<T> - The parsed response data (often void or confirmation)",
+    examples: [
+      '// Delete a resource\nawait tidyfetch.delete("/api/users/1");',
+      '// Delete with confirmation response\nconst result = await tidyfetch.delete<{ success: boolean }>("/api/users/1");\nconsole.log(result.success);',
+      '// Soft delete with body\nawait tidyfetch.delete("/api/posts/123", {\n  body: { reason: "Spam content" }\n});',
+    ],
+    related: ["tidyfetch", "tidyfetch.post"],
+    bestPractices: [
+      "✓ GOOD: Use for removing resources",
+      "✓ GOOD: Handle 204 No Content responses gracefully",
+    ],
+  },
+
+  "tidyfetch.raw": {
+    name: "tidyfetch.raw",
+    category: "shims",
+    signature:
+      "tidyfetch.raw<T>(url: string, options?: FetchOptions): Promise<RawResponse<T>>",
+    description:
+      "Fetch with access to the full Response object plus parsed data. Returns the complete Response with a `_data` property containing parsed data. Use when you need access to response headers, status codes, or other Response properties.",
+    imports: [
+      'import { tidyfetch, type RawResponse } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "url: The URL to fetch",
+      "options: Enhanced FetchOptions",
+    ],
+    returns:
+      "Promise<RawResponse<T>> - Response object with _data property containing parsed data",
+    examples: [
+      '// Access response headers and status\nconst response = await tidyfetch.raw<User>("/api/users/1");\n\nconsole.log(response.status);                     // 200\nconsole.log(response.headers.get("x-rate-limit")); // "100"\nconsole.log(response._data.name);                 // "Alice"',
+      '// Check for specific headers\nconst response = await tidyfetch.raw("/api/data");\nconst etag = response.headers.get("etag");\nconst cacheControl = response.headers.get("cache-control");',
+      '// Clone and read body again\nconst response = await tidyfetch.raw("/api/data");\nconst text = await response.clone().text();',
+    ],
+    related: ["tidyfetch", "RawResponse"],
+    bestPractices: [
+      "✓ GOOD: Use when you need response headers (rate limits, ETags, etc.)",
+      "✓ GOOD: Use for conditional requests with If-None-Match",
+      "✓ GOOD: Access _data for parsed content, clone() for raw body",
+    ],
+  },
+
+  "tidyfetch.native": {
+    name: "tidyfetch.native",
+    category: "shims",
+    signature:
+      "tidyfetch.native(input: RequestInfo, init?: RequestInit): Promise<Response>",
+    description:
+      "Direct access to the native fetch API. Bypasses all tidyfetch enhancements (auto JSON, retries, etc.) and calls globalThis.fetch directly. Use when you need full control over the Response object.",
+    imports: [
+      'import { tidyfetch } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "input: URL or Request object",
+      "init: Standard RequestInit options",
+    ],
+    returns: "Promise<Response> - Standard Response object",
+    examples: [
+      '// Direct fetch access\nconst response = await tidyfetch.native("/api/data");\nconst text = await response.text();',
+      '// Stream handling\nconst response = await tidyfetch.native("/api/stream");\nconst reader = response.body?.getReader();\n// Process stream manually',
+    ],
+    related: ["tidyfetch", "tidyfetch.raw"],
+    bestPractices: [
+      "✓ GOOD: Use for streaming responses",
+      "✓ GOOD: Use when you need full Response control",
+      "✓ GOOD: Use when tidyfetch processing is unnecessary",
+    ],
+  },
+
+  FetchError: {
+    name: "FetchError",
+    category: "shims",
+    signature:
+      "class FetchError extends Error { status?: number; statusText?: string; response?: Response }",
+    description:
+      "Enhanced fetch error thrown when a request returns a non-2xx status code. Provides access to status code, status text, and full Response object for detailed error handling.",
+    imports: [
+      'import { tidyfetch, FetchError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error instance with status, statusText, and response properties",
+    examples: [
+      '// Handle HTTP errors\nimport { tidyfetch, FetchError } from "@tidy-ts/shims";\n\ntry {\n  await tidyfetch("/api/protected");\n} catch (error) {\n  if (error instanceof FetchError) {\n    if (error.status === 401) {\n      console.log("Unauthorized - please login");\n    } else if (error.status === 404) {\n      console.log("Resource not found");\n    }\n    // Access full response for more details\n    const body = await error.response?.text();\n  }\n}',
+      '// Check for specific error types\nif (error instanceof FetchError && error.status === 429) {\n  const retryAfter = error.response?.headers.get("Retry-After");\n  console.log(`Rate limited. Retry after ${retryAfter} seconds`);\n}',
+    ],
+    related: ["tidyfetch"],
+    bestPractices: [
+      "✓ GOOD: Check status code for specific error handling",
+      "✓ GOOD: Access response body for API error details",
+      "✓ GOOD: Check headers for rate limit info on 429 errors",
+    ],
+  },
+
+  FetchOptions: {
+    name: "FetchOptions",
+    category: "shims",
+    signature: "interface FetchOptions extends Omit<RequestInit, 'body'>",
+    description:
+      "Configuration options for tidyfetch requests. Extends standard RequestInit with additional features: query parameters, auto JSON body, retries, timeouts, caching, and interceptors.",
+    imports: [
+      'import { type FetchOptions } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "baseURL?: string - Base URL prepended to all requests",
+      "query?: Record<string, string | number | boolean | undefined> - Query params (undefined filtered out)",
+      "body?: BodyInit | Record<string, unknown> - Body (plain objects auto-stringified)",
+      "timeout?: number - Request timeout in ms (default: 0 = no timeout)",
+      "retry?: number - Number of retry attempts (default: 0)",
+      "retryDelay?: number - Delay between retries in ms (default: 0)",
+      "retryStatusCodes?: number[] - Status codes triggering retry (default: [408, 429, 500, 502, 503, 504])",
+      "cacheTTL?: number - Response cache TTL in ms (default: 0 = no cache)",
+      "responseType?: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream' - How to parse response (default: 'json')",
+      "onRequest?: (context) => void | Promise<void> - Pre-request interceptor",
+      "onResponse?: (context) => void | Promise<void> - Post-response interceptor",
+      "onResponseError?: (context) => void | Promise<void> - Error response interceptor",
+      "parseResponse?: (text: string) => unknown - Custom response parser",
+    ],
+    returns: "N/A (interface)",
+    examples: [
+      '// Full configuration example\nconst options: FetchOptions = {\n  baseURL: "https://api.example.com",\n  query: { page: 1, limit: 10 },\n  body: { name: "Alice" },\n  timeout: 5000,\n  retry: 3,\n  retryDelay: 1000,\n  cacheTTL: 60000,\n  onRequest: ({ request }) => console.log("Fetching:", request.url),\n  onResponse: ({ response }) => console.log("Status:", response.status),\n};',
+    ],
+    related: ["tidyfetch", "tidyfetch.create"],
+    bestPractices: [
+      "✓ GOOD: Set timeout for all production requests",
+      "✓ GOOD: Use interceptors for logging and auth",
+      "✓ GOOD: Use cacheTTL for stable, frequently-accessed data",
+    ],
+  },
+
+  RawResponse: {
+    name: "RawResponse",
+    category: "shims",
+    signature: "interface RawResponse<T> extends Response { _data: T }",
+    description:
+      "Response type returned by tidyfetch.raw(). Extends standard Response with a `_data` property containing the parsed response body. Original Response body is still accessible via clone().",
+    imports: [
+      'import { type RawResponse } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "_data: T - The parsed response body",
+    ],
+    returns: "N/A (interface)",
+    examples: [
+      '// Using RawResponse\nconst response: RawResponse<User> = await tidyfetch.raw<User>("/api/users/1");\n\n// Access parsed data\nconsole.log(response._data.name);\n\n// Access Response properties\nconsole.log(response.status);\nconsole.log(response.headers.get("content-type"));\n\n// Clone and read body again\nconst text = await response.clone().text();',
+    ],
+    related: ["tidyfetch.raw", "tidyfetch"],
+    bestPractices: [
+      "✓ GOOD: Use _data for type-safe parsed content",
+      "✓ GOOD: Use clone() if you need raw body after parsing",
+    ],
+  },
 };

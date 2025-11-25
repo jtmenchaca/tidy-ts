@@ -42,6 +42,14 @@ export { args, exit, getArgs, importMeta } from "./process.ts";
 // Cross-runtime testing framework
 export { test, type TestSubject, type WrappedTestOptions } from "./test.ts";
 
+// Enhanced fetch API
+export {
+  FetchError,
+  type FetchOptions,
+  type RawResponse,
+  tidyfetch,
+} from "./fetch.ts";
+
 // Error types
 export { UnavailableAPIError, UnsupportedRuntimeError } from "./errors.ts";
 
