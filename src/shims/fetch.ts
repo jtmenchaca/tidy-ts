@@ -45,56 +45,7 @@
  * ```
  */
 
-// ============================================================================
-// Result Type System
-// ============================================================================
-
-/**
- * Result type for explicit error handling.
- * Either a successful value or an error, never both.
- */
-export type Result<T, E> =
-  | { ok: true; value: T }
-  | { ok: false; error: E };
-
-/** Create a successful Result */
-export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
-
-/** Create an error Result */
-export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
-
-// ============================================================================
-// Error Type System
-// ============================================================================
-
-/** Helper type for custom errors with additional properties */
-export type AppError<ErrorName extends string, Extra = object> =
-  & Error
-  & Extra
-  & { name: ErrorName };
-
-/**
- * Factory function to create custom error classes with type-safe properties.
- */
-export function defineError<
-  ErrorName extends string,
-  Extra extends object = object,
->(
-  name: ErrorName,
-  messageTemplate: (extra: Extra) => string,
-): { new (extra: Extra): AppError<ErrorName, Extra> } {
-  class CustomError extends Error {
-    constructor(extra: Extra) {
-      super(messageTemplate(extra));
-      Object.setPrototypeOf(this, new.target.prototype);
-      this.name = name;
-      Object.assign(this, extra);
-    }
-  }
-  return CustomError as unknown as {
-    new (extra: Extra): AppError<ErrorName, Extra>;
-  };
-}
+import { type AppError, defineError, err, ok, type Result } from "./result.ts";
 
 // ============================================================================
 // Fetch Error Types
