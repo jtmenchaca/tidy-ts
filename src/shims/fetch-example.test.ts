@@ -2,10 +2,11 @@
  * Enhanced Fetch API Examples
  *
  * Demonstrates the key features of @tidy-ts/shims fetch wrapper
+ * with Result-based error handling.
  */
 
 import { expect } from "@std/expect";
-import { tidyfetch } from "./fetch.ts";
+import { HTTPError, tidyfetch } from "./fetch.ts";
 
 Deno.test("Example: Basic GET with auto JSON parsing", async () => {
   const originalFetch = globalThis.fetch;
@@ -16,11 +17,19 @@ Deno.test("Example: Basic GET with auto JSON parsing", async () => {
         new Response(JSON.stringify({ users: ["Alice", "Bob"] })),
       );
 
-    const data = await tidyfetch<{ users: string[] }>(
+    const result = await tidyfetch<{ users: string[] }>(
       "https://api.example.com/users",
     );
 
-    expect(data.users).toEqual(["Alice", "Bob"]);
+    if (!result.ok) {
+      throw new Error("Request failed");
+    }
+
+    // Result-based: check ok and access value
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.users).toEqual(["Alice", "Bob"]);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -50,7 +59,10 @@ Deno.test("Example: POST with auto JSON stringification", async () => {
       name: "Alice",
       email: "alice@example.com",
     });
-    expect(result.id).toBe(123);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.id).toBe(123);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -78,7 +90,10 @@ Deno.test("Example: Retry on server errors", async () => {
     );
 
     expect(attemptCount).toBe(3);
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.success).toBe(true);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -94,7 +109,7 @@ Deno.test("Example: Factory pattern with shared config", async () => {
       return Promise.resolve(new Response(JSON.stringify({ data: "test" })));
     };
 
-    // Create API client with defaults
+    // Create API client with defaults - returns Result by default
     const api = tidyfetch.create({
       baseURL: "https://api.example.com",
       headers: {
@@ -104,8 +119,9 @@ Deno.test("Example: Factory pattern with shared config", async () => {
       timeout: 5000,
     });
 
-    await api("/users");
+    const result = await api("/users");
 
+    expect(result.ok).toBe(true);
     expect(capturedHeaders?.get("x-api-key")).toBe("secret-key");
     expect(capturedHeaders?.get("user-agent")).toBe("MyApp/1.0");
   } finally {
@@ -194,12 +210,41 @@ Deno.test("Example: TypeScript type safety with generics", async () => {
     }
 
     // Use generic type for full autocompletion and type checking
-    const user = await tidyfetch<User>("https://api.example.com/user/42");
+    const result = await tidyfetch<User>("https://api.example.com/user/42");
 
     // TypeScript knows all properties and their types
-    expect(user.id).toBe(42);
-    expect(user.username).toBe("alice_dev");
-    expect(user.email).toBe("alice@example.com");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.id).toBe(42);
+      expect(result.value.username).toBe("alice_dev");
+      expect(result.value.email).toBe("alice@example.com");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("Example: Handling errors with Result pattern", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = () =>
+      Promise.resolve(
+        new Response(JSON.stringify({ error: "Not Found" }), { status: 404 }),
+      );
+
+    const result = await tidyfetch("https://api.example.com/missing");
+
+    // Check if request failed
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      // Access the typed error
+      expect(result.error).toBeInstanceOf(HTTPError);
+      expect(result.error.name).toBe("HTTPError");
+      if (result.error instanceof HTTPError) {
+        expect(result.error.statusCode).toBe(404);
+      }
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }

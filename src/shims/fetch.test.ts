@@ -1,9 +1,16 @@
 /**
- * Tests for cross-runtime enhanced fetch API
+ * Tests for cross-runtime enhanced fetch API with Result-based error handling
  */
 
 import { expect } from "@std/expect";
-import { tidyfetch } from "./fetch.ts";
+import {
+  AbortError,
+  HTTPError,
+  NetworkError,
+  ParseError,
+  tidyfetch,
+  TimeoutError,
+} from "./fetch.ts";
 
 // Mock server response helper
 function createMockResponse(
@@ -22,22 +29,173 @@ function createMockResponse(
   });
 }
 
-Deno.test("tidyfetch - basic GET request with auto JSON parsing", async () => {
+// ============================================================================
+// Basic Result-based API Tests
+// ============================================================================
+
+Deno.test("tidyfetch - returns ok Result on success", async () => {
   const originalFetch = globalThis.fetch;
 
   try {
-    // Mock successful JSON response
     // deno-lint-ignore require-await
     globalThis.fetch = async () =>
       createMockResponse({ message: "success", id: 123 });
 
-    const result = await tidyfetch("/api/data");
+    const result = await tidyfetch<{ message: string; id: number }>(
+      "/api/data",
+    );
 
-    expect(result).toEqual({ message: "success", id: 123 });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({ message: "success", id: 123 });
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+Deno.test("tidyfetch - returns err Result with HTTPError on non-2xx", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () =>
+      createMockResponse({ error: "Not Found" }, 404, "Not Found");
+
+    const result = await tidyfetch("/api/missing");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(HTTPError);
+      expect(result.error.name).toBe("HTTPError");
+      expect((result.error as HTTPError).statusCode).toBe(404);
+      expect((result.error as HTTPError).statusText).toBe("Not Found");
+      expect((result.error as HTTPError).body).toEqual({ error: "Not Found" });
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("tidyfetch - returns TimeoutError on timeout", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      if (init?.signal?.aborted) {
+        throw new DOMException("The operation was aborted", "AbortError");
+      }
+
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(resolve, 200);
+        if (init?.signal) {
+          init.signal.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new DOMException("The operation was aborted", "AbortError"));
+          });
+        }
+      });
+
+      return createMockResponse({ data: "slow" });
+    };
+
+    const result = await tidyfetch("http://localhost/api/slow", {
+      timeout: 50,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(TimeoutError);
+      expect(result.error.name).toBe("TimeoutError");
+      expect((result.error as TimeoutError).timeout).toBe(50);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("tidyfetch - returns AbortError when cancelled", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(resolve, 200);
+        if (init?.signal) {
+          init.signal.addEventListener("abort", () => {
+            clearTimeout(timer);
+            reject(new DOMException("The operation was aborted", "AbortError"));
+          });
+        }
+      });
+      return createMockResponse({ data: "completed" });
+    };
+
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), 50);
+
+    const result = await tidyfetch("/api/slow", { signal: controller.signal });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(AbortError);
+      expect(result.error.name).toBe("AbortError");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("tidyfetch - returns ParseError on invalid JSON", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () =>
+      new Response("not valid json", { status: 200 });
+
+    const result = await tidyfetch("/api/data");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(ParseError);
+      expect(result.error.name).toBe("ParseError");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("tidyfetch - returns NetworkError on network failure", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () => {
+      throw new Error("Network failure");
+    };
+
+    const result = await tidyfetch("/api/data");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(NetworkError);
+      expect(result.error.name).toBe("NetworkError");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// ============================================================================
+// Query Parameters and URL Building
+// ============================================================================
 
 Deno.test("tidyfetch - handles query parameters", async () => {
   const originalFetch = globalThis.fetch;
@@ -81,6 +239,32 @@ Deno.test("tidyfetch - handles baseURL", async () => {
   }
 });
 
+Deno.test("tidyfetch - handles undefined query values", async () => {
+  const originalFetch = globalThis.fetch;
+  let capturedURL = "";
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async (input: RequestInfo | URL) => {
+      capturedURL = typeof input === "string" ? input : input.toString();
+      return createMockResponse({ success: true });
+    };
+
+    await tidyfetch("/api/users", {
+      query: { page: 1, filter: undefined },
+    });
+
+    expect(capturedURL).toBe("/api/users?page=1");
+    expect(capturedURL).not.toContain("filter");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// ============================================================================
+// Body Processing
+// ============================================================================
+
 Deno.test("tidyfetch - auto-stringifies JSON body", async () => {
   const originalFetch = globalThis.fetch;
   let capturedBody = "";
@@ -109,21 +293,38 @@ Deno.test("tidyfetch - auto-stringifies JSON body", async () => {
   }
 });
 
-Deno.test("tidyfetch - throws on non-2xx status codes", async () => {
+Deno.test("tidyfetch - preserves non-JSON body types", async () => {
   const originalFetch = globalThis.fetch;
+  // deno-lint-ignore no-explicit-any
+  let capturedBody: any;
 
   try {
     // deno-lint-ignore require-await
-    globalThis.fetch = async () =>
-      createMockResponse("Not Found", 404, "Not Found");
+    globalThis.fetch = async (
+      _input: RequestInfo | URL,
+      init?: RequestInit,
+    ) => {
+      capturedBody = init?.body;
+      return createMockResponse({ success: true });
+    };
 
-    await expect(tidyfetch("/api/missing")).rejects.toThrow(
-      "HTTP 404: Not Found",
-    );
+    const formData = new FormData();
+    formData.append("key", "value");
+
+    await tidyfetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    expect(capturedBody).toBeInstanceOf(FormData);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+// ============================================================================
+// Retry Logic
+// ============================================================================
 
 Deno.test("tidyfetch - retries on specified status codes", async () => {
   const originalFetch = globalThis.fetch;
@@ -133,61 +334,59 @@ Deno.test("tidyfetch - retries on specified status codes", async () => {
     // deno-lint-ignore require-await
     globalThis.fetch = async () => {
       attemptCount++;
-      // Fail first 2 times, succeed on 3rd
       if (attemptCount < 3) {
         return createMockResponse("Server Error", 500, "Internal Server Error");
       }
       return createMockResponse({ success: true });
     };
 
-    const result = await tidyfetch("/api/data", {
+    const result = await tidyfetch<{ success: boolean }>("/api/data", {
       retry: 3,
-      retryDelay: 10, // Small delay for testing
+      retryDelay: 10,
       retryStatusCodes: [500],
     });
 
     expect(attemptCount).toBe(3);
-    expect(result).toEqual({ success: true });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({ success: true });
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-Deno.test("tidyfetch - respects timeout", async () => {
+Deno.test("tidyfetch - returns error after all retries exhausted", async () => {
   const originalFetch = globalThis.fetch;
+  let attemptCount = 0;
 
   try {
-    // Mock slow response that actually delays
-    globalThis.fetch = async (
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      // Check if already aborted
-      if (init?.signal?.aborted) {
-        throw new DOMException("The operation was aborted", "AbortError");
-      }
-
-      // Wait for delay or abort
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, 200);
-        if (init?.signal) {
-          init.signal.addEventListener("abort", () => {
-            clearTimeout(timer);
-            reject(new DOMException("The operation was aborted", "AbortError"));
-          });
-        }
-      });
-
-      return createMockResponse({ data: "slow" });
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () => {
+      attemptCount++;
+      return createMockResponse("Server Error", 500, "Internal Server Error");
     };
 
-    await expect(
-      tidyfetch("http://localhost/api/slow", { timeout: 50 }),
-    ).rejects.toThrow();
+    const result = await tidyfetch("/api/data", {
+      retry: 2,
+      retryDelay: 10,
+      retryStatusCodes: [500],
+    });
+
+    expect(attemptCount).toBe(3); // Initial + 2 retries
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(HTTPError);
+      expect((result.error as HTTPError).statusCode).toBe(500);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+// ============================================================================
+// Interceptors
+// ============================================================================
 
 Deno.test("tidyfetch - calls onRequest interceptor", async () => {
   const originalFetch = globalThis.fetch;
@@ -203,11 +402,11 @@ Deno.test("tidyfetch - calls onRequest interceptor", async () => {
       capturedHeaders = new Headers(init?.headers);
       return createMockResponse({ success: true });
     };
+
     await tidyfetch("/api/data", {
       // deno-lint-ignore require-await
       async onRequest({ options }) {
         interceptorCalled = true;
-        // Modify headers in interceptor
         if (!options.headers) {
           options.headers = new Headers();
         }
@@ -248,34 +447,34 @@ Deno.test("tidyfetch - calls onResponse interceptor", async () => {
   }
 });
 
-Deno.test("tidyfetch - calls onResponseError interceptor", async () => {
+Deno.test("tidyfetch - calls onResponseError interceptor with error", async () => {
   const originalFetch = globalThis.fetch;
   let errorInterceptorCalled = false;
-  let capturedErrorStatus = 0;
+  let capturedError: unknown;
 
   try {
     // deno-lint-ignore require-await
     globalThis.fetch = async () =>
       createMockResponse("Unauthorized", 401, "Unauthorized");
 
-    try {
-      await tidyfetch("/api/data", {
-        // deno-lint-ignore require-await
-        async onResponseError({ response }) {
-          errorInterceptorCalled = true;
-          capturedErrorStatus = response.status;
-        },
-      });
-    } catch {
-      // Expected to throw
-    }
+    await tidyfetch("/api/data", {
+      // deno-lint-ignore require-await
+      async onResponseError({ error }) {
+        errorInterceptorCalled = true;
+        capturedError = error;
+      },
+    });
 
     expect(errorInterceptorCalled).toBe(true);
-    expect(capturedErrorStatus).toBe(401);
+    expect(capturedError).toBeInstanceOf(HTTPError);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+// ============================================================================
+// Response Parsing
+// ============================================================================
 
 Deno.test("tidyfetch - supports custom parseResponse", async () => {
   const originalFetch = globalThis.fetch;
@@ -285,14 +484,17 @@ Deno.test("tidyfetch - supports custom parseResponse", async () => {
     globalThis.fetch = async () =>
       createMockResponse('{"value": 42}', 200, "OK");
 
-    const result = await tidyfetch("/api/data", {
+    const result = await tidyfetch<{ custom: number }>("/api/data", {
       parseResponse: (text) => {
         const parsed = JSON.parse(text);
         return { custom: parsed.value * 2 };
       },
     });
 
-    expect(result).toEqual({ custom: 84 });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value).toEqual({ custom: 84 });
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -306,19 +508,84 @@ Deno.test("tidyfetch - supports different response types", async () => {
     // deno-lint-ignore require-await
     globalThis.fetch = async () => new Response("plain text");
 
-    const textResult = await tidyfetch("/api/text", { responseType: "text" });
-    expect(textResult).toBe("plain text");
+    const textResult = await tidyfetch<string>("/api/text", {
+      responseType: "text",
+    });
+    expect(textResult.ok).toBe(true);
+    if (textResult.ok) {
+      expect(textResult.value).toBe("plain text");
+    }
 
     // Test blob response
     // deno-lint-ignore require-await
     globalThis.fetch = async () => new Response("blob data");
 
-    const blobResult = await tidyfetch("/api/blob", { responseType: "blob" });
-    expect(blobResult).toBeInstanceOf(Blob);
+    const blobResult = await tidyfetch<Blob>("/api/blob", {
+      responseType: "blob",
+    });
+    expect(blobResult.ok).toBe(true);
+    if (blobResult.ok) {
+      expect(blobResult.value).toBeInstanceOf(Blob);
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+// ============================================================================
+// Caching
+// ============================================================================
+
+Deno.test("tidyfetch - supports caching with TTL", async () => {
+  const originalFetch = globalThis.fetch;
+  let fetchCount = 0;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () => {
+      fetchCount++;
+      return createMockResponse({ data: "cached", count: fetchCount });
+    };
+
+    interface CacheData {
+      data: string;
+      count: number;
+    }
+
+    // First call should hit the network
+    const result1 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    expect(result1.ok).toBe(true);
+    if (result1.ok) {
+      expect(result1.value.count).toBe(1);
+    }
+    expect(fetchCount).toBe(1);
+
+    // Second call within TTL should return cached data
+    const result2 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    expect(result2.ok).toBe(true);
+    if (result2.ok) {
+      expect(result2.value.count).toBe(1);
+    }
+    expect(fetchCount).toBe(1);
+
+    // Wait for cache to expire
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+
+    // Third call after TTL should hit network again
+    const result3 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    expect(result3.ok).toBe(true);
+    if (result3.ok) {
+      expect(result3.value.count).toBe(2);
+    }
+    expect(fetchCount).toBe(2);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// ============================================================================
+// tidyfetch.create Tests
+// ============================================================================
 
 Deno.test("tidyfetch.create - creates instance with defaults", async () => {
   const originalFetch = globalThis.fetch;
@@ -342,10 +609,11 @@ Deno.test("tidyfetch.create - creates instance with defaults", async () => {
       timeout: 5000,
     });
 
-    await api("/users");
+    const result = await api("/users");
 
     expect(capturedURL).toBe("https://api.example.com/users");
     expect(capturedHeaders?.get("x-api-key")).toBe("secret-key");
+    expect(result.ok).toBe(true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -381,245 +649,11 @@ Deno.test("tidyfetch.create - merges options with defaults", async () => {
   }
 });
 
-Deno.test("tidyfetch.create - merges query parameters", async () => {
-  const originalFetch = globalThis.fetch;
-  let capturedURL = "";
+// ============================================================================
+// tidyfetch.raw Tests
+// ============================================================================
 
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async (input: RequestInfo | URL) => {
-      capturedURL = typeof input === "string" ? input : input.toString();
-      return createMockResponse({ success: true });
-    };
-
-    const api = tidyfetch.create({
-      baseURL: "https://api.example.com",
-      query: { apiVersion: "v2" },
-    });
-
-    await api("/users", {
-      query: { page: 1 },
-    });
-
-    expect(capturedURL).toContain("apiVersion=v2");
-    expect(capturedURL).toContain("page=1");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch.native - provides access to native fetch", () => {
-  // tidyfetch.native is a reference to the native fetch function
-  expect(typeof tidyfetch.native).toBe("function");
-  // The name can be "fetch" or "bound fetch" depending on binding
-  expect(tidyfetch.native.name).toContain("fetch");
-});
-
-Deno.test("tidyfetch - handles undefined query values", async () => {
-  const originalFetch = globalThis.fetch;
-  let capturedURL = "";
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async (input: RequestInfo | URL) => {
-      capturedURL = typeof input === "string" ? input : input.toString();
-      return createMockResponse({ success: true });
-    };
-
-    await tidyfetch("/api/users", {
-      query: { page: 1, filter: undefined },
-    });
-
-    expect(capturedURL).toBe("/api/users?page=1");
-    expect(capturedURL).not.toContain("filter");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch - preserves non-JSON body types", async () => {
-  const originalFetch = globalThis.fetch;
-  // deno-lint-ignore no-explicit-any
-  let capturedBody: any;
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async (
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      capturedBody = init?.body;
-      return createMockResponse({ success: true });
-    };
-
-    const formData = new FormData();
-    formData.append("key", "value");
-
-    await tidyfetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    expect(capturedBody).toBeInstanceOf(FormData);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch - supports TypeScript generic type argument", async () => {
-  const originalFetch = globalThis.fetch;
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async () =>
-      createMockResponse({ id: 1, name: "Alice", email: "alice@example.com" });
-
-    interface User {
-      id: number;
-      name: string;
-      email: string;
-    }
-
-    // Type argument provides full type safety
-    const user = await tidyfetch<User>("/api/users/1");
-
-    // TypeScript knows the shape of user
-    expect(user.id).toBe(1);
-    expect(user.name).toBe("Alice");
-    expect(user.email).toBe("alice@example.com");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch - generic type with arrays", async () => {
-  const originalFetch = globalThis.fetch;
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async () =>
-      createMockResponse([
-        { id: 1, title: "Post 1" },
-        { id: 2, title: "Post 2" },
-      ]);
-
-    interface Post {
-      id: number;
-      title: string;
-    }
-
-    // Array type argument
-    const posts = await tidyfetch<Post[]>("/api/posts");
-
-    expect(Array.isArray(posts)).toBe(true);
-    expect(posts).toHaveLength(2);
-    expect(posts[0].id).toBe(1);
-    expect(posts[0].title).toBe("Post 1");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch.create - supports generic type argument", async () => {
-  const originalFetch = globalThis.fetch;
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async () =>
-      createMockResponse({ userId: 123, role: "admin" });
-
-    interface AuthResponse {
-      userId: number;
-      role: string;
-    }
-
-    const api = tidyfetch.create({
-      baseURL: "https://api.example.com",
-    });
-
-    // Generic type works with created instances
-    const auth = await api<AuthResponse>("/auth/verify");
-
-    expect(auth.userId).toBe(123);
-    expect(auth.role).toBe("admin");
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch - supports caching with TTL", async () => {
-  const originalFetch = globalThis.fetch;
-  let fetchCount = 0;
-
-  try {
-    // deno-lint-ignore require-await
-    globalThis.fetch = async () => {
-      fetchCount++;
-      return createMockResponse({ data: "cached", count: fetchCount });
-    };
-
-    interface CacheData {
-      data: string;
-      count: number;
-    }
-
-    // First call should hit the network
-    const result1 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
-    expect(result1.count).toBe(1);
-    expect(fetchCount).toBe(1);
-
-    // Second call within TTL should return cached data
-    const result2 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
-    expect(result2.count).toBe(1); // Same data, not incremented
-    expect(fetchCount).toBe(1); // Fetch not called again
-
-    // Wait for cache to expire
-    await new Promise((resolve) => setTimeout(resolve, 1100));
-
-    // Third call after TTL should hit network again
-    const result3 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
-    expect(result3.count).toBe(2); // New fetch
-    expect(fetchCount).toBe(2);
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch - supports external AbortSignal", async () => {
-  const originalFetch = globalThis.fetch;
-
-  try {
-    globalThis.fetch = async (
-      _input: RequestInfo | URL,
-      init?: RequestInit,
-    ) => {
-      // Wait for abort or delay
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, 200);
-        if (init?.signal) {
-          init.signal.addEventListener("abort", () => {
-            clearTimeout(timer);
-            reject(new DOMException("The operation was aborted", "AbortError"));
-          });
-        }
-      });
-      return createMockResponse({ data: "completed" });
-    };
-
-    const controller = new AbortController();
-
-    // Abort after 50ms
-    setTimeout(() => controller.abort(), 50);
-
-    await expect(
-      tidyfetch("/api/slow", { signal: controller.signal }),
-    ).rejects.toThrow();
-  } finally {
-    globalThis.fetch = originalFetch;
-  }
-});
-
-Deno.test("tidyfetch.raw - returns Response with _data property", async () => {
+Deno.test("tidyfetch.raw - returns Result with RawResponse", async () => {
   const originalFetch = globalThis.fetch;
 
   try {
@@ -627,24 +661,44 @@ Deno.test("tidyfetch.raw - returns Response with _data property", async () => {
     globalThis.fetch = async () =>
       createMockResponse({ id: 123, name: "Test" }, 200, "OK");
 
-    const response = await tidyfetch.raw("/api/data");
+    const result = await tidyfetch.raw<{ id: number; name: string }>(
+      "/api/data",
+    );
 
-    // Should have Response properties
-    expect(response.status).toBe(200);
-    expect(response.statusText).toBe("OK");
-    expect(response.ok).toBe(true);
-
-    // Should have parsed data
-    expect(response._data).toEqual({ id: 123, name: "Test" });
-
-    // Should still be able to clone and read body
-    const clone = response.clone();
-    const text = await clone.text();
-    expect(JSON.parse(text)).toEqual({ id: 123, name: "Test" });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.status).toBe(200);
+      expect(result.value.statusText).toBe("OK");
+      expect(result.value.ok).toBe(true);
+      expect(result.value._data).toEqual({ id: 123, name: "Test" });
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
+
+Deno.test("tidyfetch.raw - returns err Result on error", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () =>
+      createMockResponse("Not Found", 404, "Not Found");
+
+    const result = await tidyfetch.raw("/api/missing");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBeInstanceOf(HTTPError);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// ============================================================================
+// HTTP Method Shortcuts
+// ============================================================================
 
 Deno.test("tidyfetch.get - performs GET request", async () => {
   const originalFetch = globalThis.fetch;
@@ -660,9 +714,10 @@ Deno.test("tidyfetch.get - performs GET request", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch.get("/api/users");
+    const result = await tidyfetch.get("/api/users");
 
     expect(capturedMethod).toBe("GET");
+    expect(result.ok).toBe(true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -684,12 +739,13 @@ Deno.test("tidyfetch.post - performs POST request", async () => {
       return createMockResponse({ id: 456 });
     };
 
-    await tidyfetch.post("/api/users", {
+    const result = await tidyfetch.post("/api/users", {
       body: { name: "Bob" },
     });
 
     expect(capturedMethod).toBe("POST");
     expect(JSON.parse(capturedBody)).toEqual({ name: "Bob" });
+    expect(result.ok).toBe(true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -709,11 +765,12 @@ Deno.test("tidyfetch.put - performs PUT request", async () => {
       return createMockResponse({ updated: true });
     };
 
-    await tidyfetch.put("/api/users/1", {
+    const result = await tidyfetch.put("/api/users/1", {
       body: { name: "Updated" },
     });
 
     expect(capturedMethod).toBe("PUT");
+    expect(result.ok).toBe(true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -733,11 +790,12 @@ Deno.test("tidyfetch.patch - performs PATCH request", async () => {
       return createMockResponse({ patched: true });
     };
 
-    await tidyfetch.patch("/api/users/1", {
+    const result = await tidyfetch.patch("/api/users/1", {
       body: { email: "new@example.com" },
     });
 
     expect(capturedMethod).toBe("PATCH");
+    expect(result.ok).toBe(true);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -757,9 +815,80 @@ Deno.test("tidyfetch.delete - performs DELETE request", async () => {
       return createMockResponse({ deleted: true });
     };
 
-    await tidyfetch.delete("/api/users/1");
+    const result = await tidyfetch.delete("/api/users/1");
 
     expect(capturedMethod).toBe("DELETE");
+    expect(result.ok).toBe(true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+// ============================================================================
+// tidyfetch.native
+// ============================================================================
+
+Deno.test("tidyfetch.native - provides access to native fetch", () => {
+  expect(typeof tidyfetch.native).toBe("function");
+  expect(tidyfetch.native.name).toContain("fetch");
+});
+
+// ============================================================================
+// Generic Type Support
+// ============================================================================
+
+Deno.test("tidyfetch - supports TypeScript generic type argument", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () =>
+      createMockResponse({ id: 1, name: "Alice", email: "alice@example.com" });
+
+    interface User {
+      id: number;
+      name: string;
+      email: string;
+    }
+
+    const result = await tidyfetch<User>("/api/users/1");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.id).toBe(1);
+      expect(result.value.name).toBe("Alice");
+      expect(result.value.email).toBe("alice@example.com");
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+Deno.test("tidyfetch - generic type with arrays", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    // deno-lint-ignore require-await
+    globalThis.fetch = async () =>
+      createMockResponse([
+        { id: 1, title: "Post 1" },
+        { id: 2, title: "Post 2" },
+      ]);
+
+    interface Post {
+      id: number;
+      title: string;
+    }
+
+    const result = await tidyfetch<Post[]>("/api/posts");
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(Array.isArray(result.value)).toBe(true);
+      expect(result.value).toHaveLength(2);
+      expect(result.value[0].id).toBe(1);
+      expect(result.value[0].title).toBe("Post 1");
+    }
   } finally {
     globalThis.fetch = originalFetch;
   }

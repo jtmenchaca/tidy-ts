@@ -776,16 +776,18 @@ export const shimsDocs: Record<string, DocEntry> = {
     ],
   },
 
-  // Enhanced Fetch API
+  // Enhanced Fetch API with Result-based Error Handling
   tidyfetch: {
     name: "tidyfetch",
     category: "shims",
-    signature: "tidyfetch<T>(url: string, options?: FetchOptions): Promise<T>",
+    signature:
+      "tidyfetch<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Enhanced fetch API with automatic JSON parsing, error handling, retries, timeouts, caching, and interceptors. Returns parsed response data directly. Supports TypeScript generics for type-safe responses. Works identically across Deno, Bun, and Node.js.",
+      "Enhanced fetch API with Result-based error handling, automatic JSON parsing, retries, timeouts, caching, and interceptors. Returns Result<T, TidyFetchError> for type-safe error handling without exceptions. Works identically across Deno, Bun, and Node.js.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
-      'import { tidyfetch, FetchError, type FetchOptions } from "@tidy-ts/shims";',
+      'import { tidyfetch, type Result, type TidyFetchError } from "@tidy-ts/shims";',
+      'import { tidyfetch, HTTPError, NetworkError, TimeoutError } from "@tidy-ts/shims";',
     ],
     parameters: [
       "url: The URL to fetch (absolute, or relative if baseURL is provided)",
@@ -800,62 +802,57 @@ export const shimsDocs: Record<string, DocEntry> = {
       "options.responseType: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream' (default: 'json')",
       "options.onRequest: Interceptor called before request is sent",
       "options.onResponse: Interceptor called after successful response",
-      "options.onResponseError: Interceptor called on error responses",
+      "options.onResponseError: Interceptor called on error (receives typed error object)",
       "options.parseResponse: Custom function to parse response body",
     ],
-    returns: "Promise<T> - The parsed response data with full type inference",
+    returns:
+      "Promise<Result<T, TidyFetchError>> - Result type with ok/error discriminant",
     examples: [
-      '// Basic GET with type safety\nimport { tidyfetch } from "@tidy-ts/shims";\n\ninterface User { id: number; name: string; email: string; }\n\nconst user = await tidyfetch<User>("/api/users/1");\nconsole.log(user.name); // Full TypeScript inference',
-      '// POST with auto JSON body\nconst newUser = await tidyfetch<User>("/api/users", {\n  method: "POST",\n  body: { name: "Alice", email: "alice@example.com" }\n});',
-      '// With retry and timeout\nconst data = await tidyfetch("/api/flaky", {\n  retry: 3,\n  retryDelay: 1000,\n  timeout: 10000\n});',
-      '// With query parameters\nconst users = await tidyfetch<User[]>("/api/users", {\n  query: { page: 1, limit: 10, active: true }\n}); // → /api/users?page=1&limit=10&active=true',
-      '// With response caching (5 minutes)\nconst config = await tidyfetch("/api/config", { cacheTTL: 300000 });',
-      '// With request cancellation\nconst controller = new AbortController();\nsetTimeout(() => controller.abort(), 5000);\nawait tidyfetch("/api/slow", { signal: controller.signal });',
+      '// Basic GET with Result handling\nimport { tidyfetch } from "@tidy-ts/shims";\n\ninterface User { id: number; name: string; }\n\nconst result = await tidyfetch<User>("/api/users/1");\nif (result.ok) {\n  console.log(result.value.name); // Type-safe access\n} else {\n  console.error(result.error.message);\n}',
+      '// POST with auto JSON body\nconst result = await tidyfetch<User>("/api/users", {\n  method: "POST",\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
+      '// Handle specific error types\nimport { tidyfetch, HTTPError, TimeoutError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/data");\nif (!result.ok) {\n  if (result.error instanceof HTTPError) {\n    console.log(`HTTP ${result.error.statusCode}: ${result.error.statusText}`);\n  } else if (result.error instanceof TimeoutError) {\n    console.log("Request timed out");\n  }\n}',
     ],
     related: [
       "tidyfetch.create",
-      "tidyfetch.get",
-      "tidyfetch.post",
       "tidyfetch.raw",
-      "FetchError",
+      "Result",
+      "HTTPError",
+      "TidyFetchError",
     ],
     bestPractices: [
-      "✓ GOOD: Use TypeScript generics for type-safe responses",
+      "✓ GOOD: Check result.ok before accessing result.value",
+      "✓ GOOD: Use instanceof to check specific error types",
       "✓ GOOD: Set timeouts on all production requests",
-      "✓ GOOD: Use retry for idempotent requests to handle transient failures",
-      "✓ GOOD: Use cacheTTL for frequently-requested, rarely-changing data",
-      "✓ GOOD: Use interceptors for logging, auth headers, or error tracking",
+      "✓ GOOD: Use retry for idempotent requests",
     ],
     antiPatterns: [
-      "❌ BAD: Retrying non-idempotent requests (POST without idempotency key)",
-      "❌ BAD: Setting very long cache TTLs for dynamic data",
-      "❌ BAD: Not handling FetchError for user-facing error messages",
+      "❌ BAD: Accessing result.value without checking result.ok",
+      "❌ BAD: Retrying non-idempotent requests",
+      "❌ BAD: Ignoring the error type when handling failures",
     ],
   },
 
   "tidyfetch.create": {
     name: "tidyfetch.create",
     category: "shims",
-    signature: "tidyfetch.create(defaults: FetchOptions): TidyFetch",
+    signature: "tidyfetch.create(defaults: FetchOptions): TidyFetchInstance",
     description:
-      "Factory function to create a preconfigured tidyfetch instance with default options. Perfect for creating API clients with shared configuration (baseURL, headers, timeout). Per-request options are merged with defaults.",
+      "Factory function to create a preconfigured tidyfetch instance with default options. Returns a TidyFetchInstance that returns Result for type-safe error handling. Perfect for creating API clients with shared configuration.",
     imports: [
-      'import { tidyfetch } from "@tidy-ts/shims";',
+      'import { tidyfetch, type TidyFetchInstance } from "@tidy-ts/shims";',
     ],
     parameters: [
       "defaults: Default FetchOptions applied to all requests from this instance",
     ],
-    returns: "A new tidyfetch function with defaults baked in",
+    returns: "TidyFetchInstance - Function returning Result<T, TidyFetchError>",
     examples: [
-      '// Create an API client\nimport { tidyfetch } from "@tidy-ts/shims";\n\nconst api = tidyfetch.create({\n  baseURL: "https://api.example.com",\n  headers: { "Authorization": `Bearer ${token}` },\n  timeout: 10000\n});\n\n// All requests use the defaults\nconst users = await api<User[]>("/users");\nconst posts = await api<Post[]>("/posts", { query: { page: 2 } });',
+      '// Create an API client (returns Result)\nimport { tidyfetch } from "@tidy-ts/shims";\n\nconst api = tidyfetch.create({\n  baseURL: "https://api.example.com",\n  headers: { "Authorization": `Bearer ${token}` },\n  timeout: 10000\n});\n\n// Returns Result\nconst result = await api<User[]>("/users");\nif (result.ok) {\n  console.log(result.value);\n}',
       '// Multiple API clients\nconst publicApi = tidyfetch.create({\n  baseURL: "https://api.example.com/public"\n});\n\nconst adminApi = tidyfetch.create({\n  baseURL: "https://api.example.com/admin",\n  headers: { "X-Admin-Token": adminToken }\n});',
-      '// Override defaults per-request\nconst api = tidyfetch.create({ timeout: 5000 });\nawait api("/slow-endpoint", { timeout: 30000 }); // This request has longer timeout',
     ],
-    related: ["tidyfetch", "FetchOptions"],
+    related: ["tidyfetch", "TidyFetchInstance"],
     bestPractices: [
       "✓ GOOD: Create separate instances for different API services",
-      "✓ GOOD: Set common headers (auth, content-type) in defaults",
-      "✓ GOOD: Set sensible default timeouts",
+      "✓ GOOD: Set common headers and timeout in defaults",
     ],
   },
 
@@ -863,9 +860,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.get",
     category: "shims",
     signature:
-      "tidyfetch.get<T>(url: string, options?: FetchOptions): Promise<T>",
+      "tidyfetch.get<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for GET requests. Equivalent to tidyfetch(url, { method: 'GET', ...options }). GET requests are typically used to retrieve resources.",
+      "Shorthand for GET requests. Returns Result for type-safe error handling. GET requests are typically used to retrieve resources.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
@@ -873,16 +870,15 @@ export const shimsDocs: Record<string, DocEntry> = {
       "url: The URL to fetch",
       "options: Additional FetchOptions (method is set automatically)",
     ],
-    returns: "Promise<T> - The parsed response data",
+    returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Basic GET\nconst users = await tidyfetch.get<User[]>("/api/users");',
-      '// GET with query parameters\nconst user = await tidyfetch.get<User>("/api/users/1", {\n  query: { include: "posts,comments" }\n});',
-      '// GET with caching\nconst config = await tidyfetch.get("/api/config", { cacheTTL: 60000 });',
+      '// Basic GET\nconst result = await tidyfetch.get<User[]>("/api/users");\nif (result.ok) {\n  console.log(result.value);\n}',
+      '// GET with query parameters\nconst result = await tidyfetch.get<User>("/api/users/1", {\n  query: { include: "posts,comments" }\n});',
     ],
     related: ["tidyfetch", "tidyfetch.post", "tidyfetch.put"],
     bestPractices: [
       "✓ GOOD: Use for retrieving resources",
-      "✓ GOOD: Combine with cacheTTL for frequently-accessed data",
+      "✓ GOOD: Check result.ok before accessing result.value",
     ],
   },
 
@@ -890,9 +886,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.post",
     category: "shims",
     signature:
-      "tidyfetch.post<T>(url: string, options?: FetchOptions): Promise<T>",
+      "tidyfetch.post<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for POST requests. Equivalent to tidyfetch(url, { method: 'POST', ...options }). POST requests are typically used to create new resources. Body objects are auto-stringified to JSON.",
+      "Shorthand for POST requests. Returns Result for type-safe error handling. POST requests are typically used to create new resources. Body objects are auto-stringified to JSON.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
@@ -900,10 +896,9 @@ export const shimsDocs: Record<string, DocEntry> = {
       "url: The URL to post to",
       "options: FetchOptions including body data",
     ],
-    returns: "Promise<T> - The parsed response data",
+    returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Create a resource\nconst newUser = await tidyfetch.post<User>("/api/users", {\n  body: { name: "Alice", email: "alice@example.com" }\n});',
-      '// POST with form data\nconst formData = new FormData();\nformData.append("file", file);\nconst result = await tidyfetch.post("/api/upload", { body: formData });',
+      '// Create a resource\nconst result = await tidyfetch.post<User>("/api/users", {\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.get", "tidyfetch.put", "tidyfetch.patch"],
     bestPractices: [
@@ -916,9 +911,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.put",
     category: "shims",
     signature:
-      "tidyfetch.put<T>(url: string, options?: FetchOptions): Promise<T>",
+      "tidyfetch.put<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for PUT requests. Equivalent to tidyfetch(url, { method: 'PUT', ...options }). PUT requests are typically used to replace entire resources.",
+      "Shorthand for PUT requests. Returns Result for type-safe error handling. PUT requests are typically used to replace entire resources.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
@@ -926,9 +921,9 @@ export const shimsDocs: Record<string, DocEntry> = {
       "url: The URL of the resource to replace",
       "options: FetchOptions including the new resource data",
     ],
-    returns: "Promise<T> - The parsed response data",
+    returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Replace a resource\nconst updated = await tidyfetch.put<User>("/api/users/1", {\n  body: { name: "Alice Smith", email: "alice@example.com", role: "admin" }\n});',
+      '// Replace a resource\nconst result = await tidyfetch.put<User>("/api/users/1", {\n  body: { name: "Alice Smith", email: "alice@example.com", role: "admin" }\n});\nif (result.ok) {\n  console.log("Updated:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.patch", "tidyfetch.post"],
     bestPractices: [
@@ -941,9 +936,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.patch",
     category: "shims",
     signature:
-      "tidyfetch.patch<T>(url: string, options?: FetchOptions): Promise<T>",
+      "tidyfetch.patch<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for PATCH requests. Equivalent to tidyfetch(url, { method: 'PATCH', ...options }). PATCH requests are typically used for partial updates to resources.",
+      "Shorthand for PATCH requests. Returns Result for type-safe error handling. PATCH requests are typically used for partial updates to resources.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
@@ -951,10 +946,9 @@ export const shimsDocs: Record<string, DocEntry> = {
       "url: The URL of the resource to update",
       "options: FetchOptions including the partial update data",
     ],
-    returns: "Promise<T> - The parsed response data",
+    returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Partial update\nconst patched = await tidyfetch.patch<User>("/api/users/1", {\n  body: { email: "newemail@example.com" }\n});',
-      '// Update specific fields\nawait tidyfetch.patch("/api/posts/123", {\n  body: { title: "Updated Title", updatedAt: new Date().toISOString() }\n});',
+      '// Partial update\nconst result = await tidyfetch.patch<User>("/api/users/1", {\n  body: { email: "newemail@example.com" }\n});\nif (result.ok) {\n  console.log("Patched:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.put", "tidyfetch.post"],
     bestPractices: [
@@ -967,9 +961,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.delete",
     category: "shims",
     signature:
-      "tidyfetch.delete<T>(url: string, options?: FetchOptions): Promise<T>",
+      "tidyfetch.delete<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for DELETE requests. Equivalent to tidyfetch(url, { method: 'DELETE', ...options }). DELETE requests are used to remove resources.",
+      "Shorthand for DELETE requests. Returns Result for type-safe error handling. DELETE requests are used to remove resources.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
@@ -977,12 +971,10 @@ export const shimsDocs: Record<string, DocEntry> = {
       "url: The URL of the resource to delete",
       "options: Additional FetchOptions",
     ],
-    returns:
-      "Promise<T> - The parsed response data (often void or confirmation)",
+    returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Delete a resource\nawait tidyfetch.delete("/api/users/1");',
-      '// Delete with confirmation response\nconst result = await tidyfetch.delete<{ success: boolean }>("/api/users/1");\nconsole.log(result.success);',
-      '// Soft delete with body\nawait tidyfetch.delete("/api/posts/123", {\n  body: { reason: "Spam content" }\n});',
+      '// Delete a resource\nconst result = await tidyfetch.delete("/api/users/1");\nif (result.ok) {\n  console.log("Deleted successfully");\n}',
+      '// Delete with confirmation response\nconst result = await tidyfetch.delete<{ success: boolean }>("/api/users/1");\nif (result.ok && result.value.success) {\n  console.log("Confirmed deleted");\n}',
     ],
     related: ["tidyfetch", "tidyfetch.post"],
     bestPractices: [
@@ -995,9 +987,9 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.raw",
     category: "shims",
     signature:
-      "tidyfetch.raw<T>(url: string, options?: FetchOptions): Promise<RawResponse<T>>",
+      "tidyfetch.raw<T>(url: string, options?: FetchOptions): Promise<Result<RawResponse<T>, TidyFetchError>>",
     description:
-      "Fetch with access to the full Response object plus parsed data. Returns the complete Response with a `_data` property containing parsed data. Use when you need access to response headers, status codes, or other Response properties.",
+      "Fetch with access to the full Response object plus parsed data. Returns Result containing the complete Response with a `_data` property containing parsed data. Use when you need access to response headers, status codes, or other Response properties.",
     imports: [
       'import { tidyfetch, type RawResponse } from "@tidy-ts/shims";',
     ],
@@ -1006,17 +998,16 @@ export const shimsDocs: Record<string, DocEntry> = {
       "options: Enhanced FetchOptions",
     ],
     returns:
-      "Promise<RawResponse<T>> - Response object with _data property containing parsed data",
+      "Promise<Result<RawResponse<T>, TidyFetchError>> - Result with Response object containing _data property",
     examples: [
-      '// Access response headers and status\nconst response = await tidyfetch.raw<User>("/api/users/1");\n\nconsole.log(response.status);                     // 200\nconsole.log(response.headers.get("x-rate-limit")); // "100"\nconsole.log(response._data.name);                 // "Alice"',
-      '// Check for specific headers\nconst response = await tidyfetch.raw("/api/data");\nconst etag = response.headers.get("etag");\nconst cacheControl = response.headers.get("cache-control");',
-      '// Clone and read body again\nconst response = await tidyfetch.raw("/api/data");\nconst text = await response.clone().text();',
+      '// Access response headers and status\nconst result = await tidyfetch.raw<User>("/api/users/1");\nif (result.ok) {\n  console.log(result.value.status);                     // 200\n  console.log(result.value.headers.get("x-rate-limit")); // "100"\n  console.log(result.value._data.name);                 // "Alice"\n}',
+      '// Check for specific headers\nconst result = await tidyfetch.raw("/api/data");\nif (result.ok) {\n  const etag = result.value.headers.get("etag");\n  const cacheControl = result.value.headers.get("cache-control");\n}',
     ],
     related: ["tidyfetch", "RawResponse"],
     bestPractices: [
       "✓ GOOD: Use when you need response headers (rate limits, ETags, etc.)",
-      "✓ GOOD: Use for conditional requests with If-None-Match",
-      "✓ GOOD: Access _data for parsed content, clone() for raw body",
+      "✓ GOOD: Check result.ok before accessing result.value",
+      "✓ GOOD: Access _data for parsed content",
     ],
   },
 
@@ -1047,27 +1038,239 @@ export const shimsDocs: Record<string, DocEntry> = {
     ],
   },
 
-  FetchError: {
-    name: "FetchError",
+  // Result Type and Error Handling
+  Result: {
+    name: "Result",
     category: "shims",
     signature:
-      "class FetchError extends Error { status?: number; statusText?: string; response?: Response }",
+      "type Result<T, E> = { ok: true; value: T } | { ok: false; error: E }",
     description:
-      "Enhanced fetch error thrown when a request returns a non-2xx status code. Provides access to status code, status text, and full Response object for detailed error handling.",
+      "Type-safe Result type for error handling without exceptions. Used by tidyfetch to return either a successful value or a typed error. Check the `ok` discriminant to determine which variant you have.",
     imports: [
-      'import { tidyfetch, FetchError } from "@tidy-ts/shims";',
+      'import { type Result } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "T: The success value type",
+      "E: The error type",
+    ],
+    returns:
+      "Discriminated union with ok boolean, value (if ok), error (if not ok)",
+    examples: [
+      '// Pattern matching on Result\nimport { tidyfetch, type Result, type TidyFetchError } from "@tidy-ts/shims";\n\nconst result: Result<User, TidyFetchError> = await tidyfetch<User>("/api/user");\n\nif (result.ok) {\n  // TypeScript knows result.value exists\n  console.log(result.value.name);\n} else {\n  // TypeScript knows result.error exists\n  console.error(result.error.message);\n}',
+    ],
+    related: ["ok", "err", "TidyFetchError"],
+    bestPractices: [
+      "✓ GOOD: Always check result.ok before accessing value or error",
+      "✓ GOOD: Use with type guards for full type safety",
+      "✓ GOOD: Prefer over try/catch for expected errors",
+    ],
+  },
+
+  ok: {
+    name: "ok",
+    category: "shims",
+    signature: "ok<T>(value: T): Result<T, never>",
+    description:
+      "Constructor function to create a successful Result. Returns a Result with ok: true and the given value.",
+    imports: [
+      'import { ok } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "value: The success value to wrap",
+    ],
+    returns: "Result<T, never> with ok: true and value property",
+    examples: [
+      '// Create a success Result\nimport { ok, type Result } from "@tidy-ts/shims";\n\nfunction divide(a: number, b: number): Result<number, string> {\n  if (b === 0) return err("Division by zero");\n  return ok(a / b);\n}',
+    ],
+    related: ["err", "Result"],
+    bestPractices: [
+      "✓ GOOD: Use to wrap successful values in Result",
+    ],
+  },
+
+  err: {
+    name: "err",
+    category: "shims",
+    signature: "err<E>(error: E): Result<never, E>",
+    description:
+      "Constructor function to create a failed Result. Returns a Result with ok: false and the given error.",
+    imports: [
+      'import { err } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "error: The error value to wrap",
+    ],
+    returns: "Result<never, E> with ok: false and error property",
+    examples: [
+      '// Create an error Result\nimport { err, ok, type Result } from "@tidy-ts/shims";\n\nfunction parseJSON(str: string): Result<unknown, Error> {\n  try {\n    return ok(JSON.parse(str));\n  } catch (e) {\n    return err(e instanceof Error ? e : new Error(String(e)));\n  }\n}',
+    ],
+    related: ["ok", "Result"],
+    bestPractices: [
+      "✓ GOOD: Use to wrap error values in Result",
+    ],
+  },
+
+  TidyFetchError: {
+    name: "TidyFetchError",
+    category: "shims",
+    signature:
+      "type TidyFetchError = NetworkError | TimeoutError | HTTPError | ParseError | AbortError",
+    description:
+      "Union type of all possible tidyfetch error types. Use with instanceof to narrow to specific error types for detailed error handling.",
+    imports: [
+      'import { type TidyFetchError } from "@tidy-ts/shims";',
+      'import { HTTPError, NetworkError, TimeoutError, ParseError, AbortError } from "@tidy-ts/shims";',
     ],
     parameters: [],
-    returns: "Error instance with status, statusText, and response properties",
+    returns: "Type alias (not a value)",
     examples: [
-      '// Handle HTTP errors\nimport { tidyfetch, FetchError } from "@tidy-ts/shims";\n\ntry {\n  await tidyfetch("/api/protected");\n} catch (error) {\n  if (error instanceof FetchError) {\n    if (error.status === 401) {\n      console.log("Unauthorized - please login");\n    } else if (error.status === 404) {\n      console.log("Resource not found");\n    }\n    // Access full response for more details\n    const body = await error.response?.text();\n  }\n}',
-      '// Check for specific error types\nif (error instanceof FetchError && error.status === 429) {\n  const retryAfter = error.response?.headers.get("Retry-After");\n  console.log(`Rate limited. Retry after ${retryAfter} seconds`);\n}',
+      '// Handle different error types\nimport { tidyfetch, HTTPError, TimeoutError, NetworkError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/data");\nif (!result.ok) {\n  const error = result.error;\n  if (error instanceof HTTPError) {\n    console.log(`HTTP ${error.statusCode}: ${error.statusText}`);\n  } else if (error instanceof TimeoutError) {\n    console.log("Request timed out");\n  } else if (error instanceof NetworkError) {\n    console.log("Network error:", error.cause);\n  }\n}',
     ],
-    related: ["tidyfetch"],
+    related: [
+      "HTTPError",
+      "NetworkError",
+      "TimeoutError",
+      "ParseError",
+      "AbortError",
+    ],
     bestPractices: [
-      "✓ GOOD: Check status code for specific error handling",
-      "✓ GOOD: Access response body for API error details",
-      "✓ GOOD: Check headers for rate limit info on 429 errors",
+      "✓ GOOD: Use instanceof to narrow to specific error types",
+      "✓ GOOD: Handle each error type appropriately",
+    ],
+  },
+
+  HTTPError: {
+    name: "HTTPError",
+    category: "shims",
+    signature:
+      "class HTTPError extends Error { statusCode: number; statusText: string; url: string; body?: unknown; response: Response }",
+    description:
+      "Error returned when server responds with non-2xx status code. Contains status code, status text, URL, response body, and full Response object.",
+    imports: [
+      'import { HTTPError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns:
+      "Error with statusCode, statusText, url, body, response properties",
+    examples: [
+      '// Handle HTTP errors\nimport { tidyfetch, HTTPError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/protected");\nif (!result.ok && result.error instanceof HTTPError) {\n  if (result.error.statusCode === 401) {\n    console.log("Unauthorized - please login");\n  } else if (result.error.statusCode === 404) {\n    console.log("Resource not found");\n  }\n  console.log("Response body:", result.error.body);\n}',
+    ],
+    related: ["TidyFetchError", "NetworkError", "TimeoutError"],
+    bestPractices: [
+      "✓ GOOD: Check statusCode for specific error handling",
+      "✓ GOOD: Access body for API error details",
+      "✓ GOOD: Access response.headers for rate limit info",
+    ],
+  },
+
+  NetworkError: {
+    name: "NetworkError",
+    category: "shims",
+    signature: "class NetworkError extends Error { cause: unknown }",
+    description:
+      "Error returned when a network-level failure occurs (DNS resolution, connection refused, etc.). Contains the original error as cause.",
+    imports: [
+      'import { NetworkError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with cause property containing original error",
+    examples: [
+      '// Handle network errors\nimport { tidyfetch, NetworkError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/data");\nif (!result.ok && result.error instanceof NetworkError) {\n  console.log("Network failed:", result.error.cause);\n  // Show offline message, retry later, etc.\n}',
+    ],
+    related: ["TidyFetchError", "HTTPError", "TimeoutError"],
+    bestPractices: [
+      "✓ GOOD: Show user-friendly offline message",
+      "✓ GOOD: Implement retry logic for transient failures",
+    ],
+  },
+
+  TimeoutError: {
+    name: "TimeoutError",
+    category: "shims",
+    signature: "class TimeoutError extends Error { timeout: number }",
+    description:
+      "Error returned when a request exceeds the configured timeout. Contains the timeout duration that was exceeded.",
+    imports: [
+      'import { TimeoutError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with timeout property (milliseconds)",
+    examples: [
+      '// Handle timeout errors\nimport { tidyfetch, TimeoutError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/slow", { timeout: 5000 });\nif (!result.ok && result.error instanceof TimeoutError) {\n  console.log(`Request timed out after ${result.error.timeout}ms`);\n}',
+    ],
+    related: ["TidyFetchError", "HTTPError", "AbortError"],
+    bestPractices: [
+      "✓ GOOD: Set appropriate timeouts for different operations",
+      "✓ GOOD: Show user feedback for slow operations",
+    ],
+  },
+
+  ParseError: {
+    name: "ParseError",
+    category: "shims",
+    signature:
+      "class ParseError extends Error { body: string; cause: unknown }",
+    description:
+      "Error returned when response body cannot be parsed (e.g., invalid JSON). Contains the raw body text and the original parse error.",
+    imports: [
+      'import { ParseError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with body (raw text) and cause (original error) properties",
+    examples: [
+      '// Handle parse errors\nimport { tidyfetch, ParseError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/data");\nif (!result.ok && result.error instanceof ParseError) {\n  console.log("Failed to parse response:", result.error.body);\n  console.log("Parse error:", result.error.cause);\n}',
+    ],
+    related: ["TidyFetchError", "HTTPError"],
+    bestPractices: [
+      "✓ GOOD: Log raw body for debugging",
+      "✓ GOOD: Consider using responseType: 'text' if JSON not expected",
+    ],
+  },
+
+  AbortError: {
+    name: "AbortError",
+    category: "shims",
+    signature: "class AbortError extends Error { reason?: unknown }",
+    description:
+      "Error returned when a request is cancelled via AbortController. Contains the abort reason if provided.",
+    imports: [
+      'import { AbortError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with optional reason property",
+    examples: [
+      '// Handle aborted requests\nimport { tidyfetch, AbortError } from "@tidy-ts/shims";\n\nconst controller = new AbortController();\nsetTimeout(() => controller.abort("User cancelled"), 5000);\n\nconst result = await tidyfetch("/api/data", { signal: controller.signal });\nif (!result.ok && result.error instanceof AbortError) {\n  console.log("Request aborted:", result.error.reason);\n}',
+    ],
+    related: ["TidyFetchError", "TimeoutError"],
+    bestPractices: [
+      "✓ GOOD: Use AbortController for user-initiated cancellation",
+      "✓ GOOD: Clean up pending requests on component unmount",
+    ],
+  },
+
+  defineError: {
+    name: "defineError",
+    category: "shims",
+    signature:
+      "defineError<Name extends string, Extra extends object>(name: Name, messageTemplate: (extra: Extra) => string): ErrorConstructor",
+    description:
+      "Factory function to create custom typed error classes. Used internally to create HTTPError, NetworkError, etc. Can be used to define your own application-specific errors.",
+    imports: [
+      'import { defineError, type AppError } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "name: The error name (becomes error.name)",
+      "messageTemplate: Function that generates error message from extra properties",
+    ],
+    returns: "Error class constructor that accepts extra properties",
+    examples: [
+      '// Define a custom error\nimport { defineError, type AppError } from "@tidy-ts/shims";\n\nconst ValidationError = defineError(\n  "ValidationError",\n  (extra: { field: string; value: unknown }) =>\n    `Invalid value for ${extra.field}: ${extra.value}`\n);\n\ntype ValidationError = AppError<"ValidationError", { field: string; value: unknown }>;\n\n// Usage\nconst error = new ValidationError({ field: "email", value: "invalid" });\nconsole.log(error.name);    // "ValidationError"\nconsole.log(error.field);   // "email"\nconsole.log(error.message); // "Invalid value for email: invalid"',
+    ],
+    related: ["AppError", "HTTPError", "NetworkError"],
+    bestPractices: [
+      "✓ GOOD: Use for domain-specific error types",
+      "✓ GOOD: Include relevant context in extra properties",
+      "✓ GOOD: Define corresponding type alias with AppError",
     ],
   },
 

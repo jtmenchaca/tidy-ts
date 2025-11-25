@@ -3,7 +3,9 @@
  *
  * Cross-runtime enhanced fetch API for Deno, Bun, and Node.js.
  *
- * tidyfetch provides a better fetch experience with:
+ * tidyfetch provides a Result-based fetch experience with:
+ * - **Result-based error handling** - Returns `Result<T, TidyFetchError>` for explicit error handling
+ * - **Type-safe errors** - Discriminated union of specific error types (HTTPError, TimeoutError, etc.)
  * - **Automatic JSON parsing** - Response bodies are automatically parsed based on content type
  * - **Auto JSON stringification** - Plain objects in body are automatically JSON.stringify'd
  * - **Type-safe responses** - Generic type parameter for full TypeScript inference
@@ -13,43 +15,151 @@
  * - **Response caching** - Simple in-memory TTL-based cache
  * - **HTTP method shortcuts** - Convenient .get(), .post(), .put(), .patch(), .delete()
  * - **Factory pattern** - Create preconfigured instances with tidyfetch.create()
- * - **External AbortSignal** - Full cancellation control
  *
- * @example Basic usage
+ * @example Basic usage with Result
  * ```ts
  * import { tidyfetch } from "@tidy-ts/shims";
  *
- * // Simple GET with auto JSON parsing
- * const users = await tidyfetch<User[]>("/api/users");
+ * const result = await tidyfetch<User>("/api/users/1");
  *
- * // POST with auto JSON body
- * const newUser = await tidyfetch<User>("/api/users", {
- *   method: "POST",
- *   body: { name: "Alice", email: "alice@example.com" }
- * });
+ * if (!result.ok) {
+ *   console.error("Failed:", result.error.message);
+ *   return;
+ * }
+ *
+ * console.log(result.value.name); // TypeScript knows this is User
  * ```
  *
- * @example Factory pattern for API clients
+ * @example Error handling with specific types
  * ```ts
- * const api = tidyfetch.create({
- *   baseURL: "https://api.example.com",
- *   headers: { "Authorization": `Bearer ${token}` },
- *   timeout: 10000
- * });
+ * const result = await tidyfetch<User>("/api/users/1");
  *
- * const users = await api<User[]>("/users");
+ * if (!result.ok) {
+ *   if (result.error instanceof HTTPError) {
+ *     console.log(`HTTP ${result.error.statusCode}: ${result.error.body}`);
+ *   } else if (result.error instanceof TimeoutError) {
+ *     console.log(`Timed out after ${result.error.timeout}ms`);
+ *   }
+ *   return;
+ * }
  * ```
  */
 
+// ============================================================================
+// Result Type System
+// ============================================================================
+
+/**
+ * Result type for explicit error handling.
+ * Either a successful value or an error, never both.
+ */
+export type Result<T, E> =
+  | { ok: true; value: T }
+  | { ok: false; error: E };
+
+/** Create a successful Result */
+export const ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
+
+/** Create an error Result */
+export const err = <E>(error: E): Result<never, E> => ({ ok: false, error });
+
+// ============================================================================
+// Error Type System
+// ============================================================================
+
+/** Helper type for custom errors with additional properties */
+export type AppError<ErrorName extends string, Extra = object> =
+  & Error
+  & Extra
+  & { name: ErrorName };
+
+/**
+ * Factory function to create custom error classes with type-safe properties.
+ */
+export function defineError<
+  ErrorName extends string,
+  Extra extends object = object,
+>(
+  name: ErrorName,
+  messageTemplate: (extra: Extra) => string,
+): { new (extra: Extra): AppError<ErrorName, Extra> } {
+  class CustomError extends Error {
+    constructor(extra: Extra) {
+      super(messageTemplate(extra));
+      Object.setPrototypeOf(this, new.target.prototype);
+      this.name = name;
+      Object.assign(this, extra);
+    }
+  }
+  return CustomError as unknown as {
+    new (extra: Extra): AppError<ErrorName, Extra>;
+  };
+}
+
+// ============================================================================
+// Fetch Error Types
+// ============================================================================
+
+/** Network-level error (DNS failure, connection refused, etc.) */
+export const NetworkError = defineError(
+  "NetworkError",
+  ({ message, url }: { message: string; url: string; cause?: Error }) =>
+    `Network error: ${message} [${url}]`,
+);
+export type NetworkError = InstanceType<typeof NetworkError>;
+
+/** Request timed out */
+export const TimeoutError = defineError(
+  "TimeoutError",
+  ({ url, timeout }: { url: string; timeout: number }) =>
+    `Request timed out after ${timeout}ms [${url}]`,
+);
+export type TimeoutError = InstanceType<typeof TimeoutError>;
+
+/** HTTP error (non-2xx status code) */
+export const HTTPError = defineError(
+  "HTTPError",
+  (
+    { statusCode, statusText, url }: {
+      statusCode: number;
+      statusText: string;
+      url: string;
+      body?: unknown;
+      response: Response;
+    },
+  ) => `HTTP ${statusCode} ${statusText} [${url}]`,
+);
+export type HTTPError = InstanceType<typeof HTTPError>;
+
+/** Failed to parse response body */
+export const ParseError = defineError(
+  "ParseError",
+  ({ message, url }: { message: string; url: string; cause?: Error }) =>
+    `Failed to parse response: ${message} [${url}]`,
+);
+export type ParseError = InstanceType<typeof ParseError>;
+
+/** Request was aborted (by user or signal) */
+export const AbortError = defineError(
+  "AbortError",
+  ({ url }: { url: string }) => `Request aborted [${url}]`,
+);
+export type AbortError = InstanceType<typeof AbortError>;
+
+/** Union of all fetch error types */
+export type TidyFetchError =
+  | NetworkError
+  | TimeoutError
+  | HTTPError
+  | ParseError
+  | AbortError;
+
+// ============================================================================
+// FetchOptions Interface
+// ============================================================================
+
 /**
  * Enhanced fetch options extending the standard RequestInit interface.
- *
- * Extends RequestInit with additional features for better DX:
- * - Query parameter handling
- * - Automatic JSON body serialization
- * - Retry logic configuration
- * - Request/response interceptors
- * - Response caching
  *
  * @example
  * ```ts
@@ -66,189 +176,70 @@
  * ```
  */
 export interface FetchOptions extends Omit<RequestInit, "body"> {
-  /**
-   * Base URL to prepend to the request URL.
-   * Useful for API clients that always hit the same host.
-   * @example baseURL: "https://api.example.com"
-   */
+  /** Base URL to prepend to the request URL */
   baseURL?: string;
 
-  /**
-   * Query parameters to append to the URL.
-   * Undefined values are filtered out. Values are converted to strings.
-   * @example query: { page: 1, limit: 10, search: undefined } → "?page=1&limit=10"
-   */
+  /** Query parameters to append to the URL (undefined values filtered out) */
   query?: Record<string, string | number | boolean | undefined>;
 
-  /**
-   * Request body. Plain objects are automatically JSON.stringify'd with
-   * Content-Type: application/json header. Standard BodyInit types pass through unchanged.
-   * @example body: { name: "Alice" } → '{"name":"Alice"}' with JSON content-type
-   */
+  /** Request body (plain objects auto-stringified to JSON) */
   body?: BodyInit | Record<string, unknown>;
 
-  /**
-   * Request timeout in milliseconds. 0 disables timeout.
-   * When timeout is reached, the request is aborted with an AbortError.
-   * @default 0 (no timeout)
-   * @example timeout: 5000 → 5 second timeout
-   */
+  /** Request timeout in milliseconds (0 = no timeout) */
   timeout?: number;
 
-  /**
-   * Number of times to retry the request on failure.
-   * Only retries on network errors or status codes in retryStatusCodes.
-   * @default 0 (no retries)
-   * @example retry: 3 → Up to 3 retry attempts
-   */
+  /** Number of retry attempts on failure */
   retry?: number;
 
-  /**
-   * Delay in milliseconds between retry attempts.
-   * Applied after each failed attempt before the next retry.
-   * @default 0 (no delay)
-   * @example retryDelay: 1000 → 1 second between retries
-   */
+  /** Delay between retry attempts in milliseconds */
   retryDelay?: number;
 
-  /**
-   * HTTP status codes that should trigger a retry.
-   * Common choices: 408 (Timeout), 429 (Rate Limit), 5xx (Server Errors).
-   * @default [408, 429, 500, 502, 503, 504]
-   */
+  /** HTTP status codes that should trigger a retry */
   retryStatusCodes?: number[];
 
-  /**
-   * Interceptor called before the request is sent.
-   * Use for logging, adding headers, or modifying the request.
-   * @example onRequest: ({ request }) => console.log("Fetching:", request.url)
-   */
+  /** Interceptor called before request is sent */
   onRequest?: (context: {
     request: Request;
     options: FetchOptions;
   }) => void | Promise<void>;
 
-  /**
-   * Interceptor called after a successful response (2xx status).
-   * Use for logging, metrics, or response validation.
-   * @example onResponse: ({ response }) => console.log("Status:", response.status)
-   */
+  /** Interceptor called after successful response */
   onResponse?: (context: {
     request: Request;
     response: Response;
     options: FetchOptions;
   }) => void | Promise<void>;
 
-  /**
-   * Interceptor called when a response has an error status (non-2xx).
-   * Called before retry logic. Use for error logging or custom error handling.
-   * @example onResponseError: ({ response }) => console.error("Error:", response.status)
-   */
+  /** Interceptor called on error responses (before Result is returned) */
   onResponseError?: (context: {
     request: Request;
     response: Response;
     options: FetchOptions;
+    error: TidyFetchError;
   }) => void | Promise<void>;
 
-  /**
-   * Custom function to parse the response body.
-   * Receives raw response text, returns parsed data.
-   * Overrides responseType when provided.
-   * @example parseResponse: (text) => JSON.parse(text, reviver)
-   */
+  /** Custom response parser */
   parseResponse?: (text: string) => unknown;
 
-  /**
-   * Expected response type determining how the response is parsed.
-   * - "json": Parse as JSON (default)
-   * - "text": Return as string
-   * - "blob": Return as Blob
-   * - "arrayBuffer": Return as ArrayBuffer
-   * - "stream": Return ReadableStream body
-   * @default "json"
-   */
+  /** Response type for parsing */
   responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
 
-  /**
-   * Response cache TTL in milliseconds. 0 disables caching.
-   * Caches successful responses in memory keyed by method + URL.
-   * Cached responses are returned without making network requests.
-   * @default 0 (no caching)
-   * @example cacheTTL: 60000 → Cache for 1 minute
-   */
+  /** Response cache TTL in milliseconds (0 = no caching) */
   cacheTTL?: number;
 }
 
 /**
- * Enhanced fetch error with HTTP status information.
- *
- * Thrown when a request returns a non-2xx status code (after retry attempts exhausted).
- * Provides access to the status code, status text, and full Response object.
- *
- * @example
- * ```ts
- * try {
- *   await tidyfetch("/api/protected");
- * } catch (error) {
- *   if (error instanceof FetchError) {
- *     if (error.status === 401) {
- *       console.log("Unauthorized - please login");
- *     } else if (error.status === 404) {
- *       console.log("Resource not found");
- *     }
- *     // Access full response for more details
- *     const body = await error.response?.text();
- *   }
- * }
- * ```
- */
-export class FetchError extends Error {
-  /**
-   * Creates a new FetchError.
-   * @param message - Error message (typically "HTTP {status}: {statusText}")
-   * @param status - HTTP status code (e.g., 404, 500)
-   * @param statusText - HTTP status text (e.g., "Not Found", "Internal Server Error")
-   * @param response - The full Response object for detailed inspection
-   */
-  constructor(
-    message: string,
-    public readonly status?: number,
-    public readonly statusText?: string,
-    public readonly response?: Response,
-  ) {
-    super(message);
-    this.name = "FetchError";
-  }
-}
-
-/**
  * Response object with parsed data attached.
- *
- * Returned by `tidyfetch.raw()`. Extends the standard Response interface
- * with a `_data` property containing the parsed response body.
- * The original Response body is still available via `.clone()`.
- *
- * @typeParam T - Type of the parsed response data
- *
- * @example
- * ```ts
- * const response = await tidyfetch.raw<User>("/api/users/1");
- *
- * // Access parsed data
- * console.log(response._data.name);
- *
- * // Access Response properties
- * console.log(response.status);        // 200
- * console.log(response.headers);       // Headers object
- *
- * // Clone and read body again if needed
- * const text = await response.clone().text();
- * ```
+ * Returned by `tidyfetch.raw()`.
  */
 export interface RawResponse<T = unknown> extends Response {
   /** The parsed response body */
   _data: T;
 }
+
+// ============================================================================
+// Internal Helpers
+// ============================================================================
 
 /** @internal Cache entry for response caching */
 interface CacheEntry {
@@ -259,74 +250,140 @@ interface CacheEntry {
 /** @internal In-memory cache for responses */
 const responseCache = new Map<string, CacheEntry>();
 
+/** @internal Build full URL with query parameters */
+function buildURL(
+  url: string,
+  baseURL?: string,
+  query?: Record<string, string | number | boolean | undefined>,
+): string {
+  let fullURL = baseURL ? `${baseURL}${url}` : url;
+
+  if (query) {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(query)) {
+      if (value !== undefined) {
+        params.append(key, String(value));
+      }
+    }
+    const queryString = params.toString();
+    if (queryString) {
+      fullURL += (fullURL.includes("?") ? "&" : "?") + queryString;
+    }
+  }
+
+  return fullURL;
+}
+
+/** @internal Process body and headers for JSON auto-stringify */
+function processBody(
+  body: BodyInit | Record<string, unknown> | undefined,
+  headers: Headers,
+): BodyInit | undefined {
+  if (
+    body &&
+    typeof body === "object" &&
+    !(body instanceof FormData) &&
+    !(body instanceof URLSearchParams) &&
+    !(body instanceof Blob) &&
+    !(body instanceof ArrayBuffer) &&
+    !(body instanceof ReadableStream)
+  ) {
+    if (!headers.has("content-type")) {
+      headers.set("content-type", "application/json");
+    }
+    return JSON.stringify(body);
+  }
+  return body as BodyInit | undefined;
+}
+
+/** @internal Parse response based on type */
+async function parseResponseBody<T>(
+  response: Response,
+  responseType: string,
+  parseResponse?: (text: string) => unknown,
+  url?: string,
+): Promise<Result<T, ParseError>> {
+  try {
+    let data: T;
+    if (parseResponse) {
+      const text = await response.text();
+      data = parseResponse(text) as T;
+    } else {
+      switch (responseType) {
+        case "json":
+          data = (await response.json()) as T;
+          break;
+        case "text":
+          data = (await response.text()) as T;
+          break;
+        case "blob":
+          data = (await response.blob()) as T;
+          break;
+        case "arrayBuffer":
+          data = (await response.arrayBuffer()) as T;
+          break;
+        case "stream":
+          data = response.body as T;
+          break;
+        default:
+          data = (await response.json()) as T;
+      }
+    }
+    return ok(data);
+  } catch (e) {
+    const cause = e instanceof Error ? e : new Error(String(e));
+    return err(
+      new ParseError({
+        message: cause.message,
+        url: url || "unknown",
+        cause,
+      }),
+    );
+  }
+}
+
+// ============================================================================
+// Main tidyfetch Function
+// ============================================================================
+
 /**
- * Enhanced fetch function with automatic JSON parsing, error handling,
- * retries, timeouts, caching, and interceptors.
- *
- * Features:
- * - **Type-safe**: Pass a generic type for full TypeScript inference
- * - **Auto JSON**: Plain objects in body are stringified, responses are parsed
- * - **Retries**: Configurable retry logic for transient failures
- * - **Timeout**: Built-in request timeout with AbortController
- * - **Caching**: Optional in-memory response caching with TTL
- * - **Interceptors**: Hook into request/response lifecycle
- * - **Cancellation**: Supports external AbortSignal for cancellation
+ * Enhanced fetch function returning Result<T, TidyFetchError>.
  *
  * @typeParam T - Type of the parsed response data
- * @param url - The URL to fetch (absolute, or relative if baseURL is provided)
- * @param options - Enhanced fetch options (see {@link FetchOptions})
- * @returns Promise resolving to the parsed response data
- * @throws {@link FetchError} When response status is not 2xx (after retries)
- * @throws {Error} AbortError when request times out or is cancelled
+ * @param url - The URL to fetch
+ * @param options - Enhanced fetch options
+ * @returns Result with either the parsed data or a typed error
  *
- * @example Basic GET with type safety
+ * @example Basic usage
  * ```ts
- * interface User { id: number; name: string; email: string; }
+ * const result = await tidyfetch<User>("/api/users/1");
  *
- * const user = await tidyfetch<User>('/api/users/1');
- * console.log(user.name); // Full TypeScript inference
+ * if (!result.ok) {
+ *   console.error(result.error.message);
+ *   return;
+ * }
+ *
+ * console.log(result.value.name);
  * ```
  *
- * @example POST with auto JSON body
+ * @example Error type checking
  * ```ts
- * const newUser = await tidyfetch<User>('/api/users', {
- *   method: 'POST',
- *   body: { name: 'Alice', email: 'alice@example.com' }
- * });
- * ```
+ * const result = await tidyfetch<User>("/api/users/1");
  *
- * @example Retry with backoff
- * ```ts
- * const data = await tidyfetch('/api/flaky-endpoint', {
- *   retry: 3,
- *   retryDelay: 1000,
- *   retryStatusCodes: [502, 503, 504],
- *   timeout: 10000
- * });
- * ```
- *
- * @example With caching
- * ```ts
- * // Cache response for 5 minutes
- * const config = await tidyfetch('/api/config', { cacheTTL: 300000 });
- * ```
- *
- * @example With cancellation
- * ```ts
- * const controller = new AbortController();
- * setTimeout(() => controller.abort(), 5000);
- *
- * try {
- *   await tidyfetch('/api/slow', { signal: controller.signal });
- * } catch (e) {
- *   if (e.name === 'AbortError') console.log('Request cancelled');
+ * if (!result.ok) {
+ *   if (result.error instanceof HTTPError) {
+ *     console.log(`HTTP ${result.error.statusCode}`);
+ *   } else if (result.error instanceof TimeoutError) {
+ *     console.log(`Timed out after ${result.error.timeout}ms`);
+ *   }
+ *   return;
  * }
  * ```
  */
 export async function tidyfetch<T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> {
+): Promise<Result<T, TidyFetchError>> {
   const {
     baseURL,
     query,
@@ -344,114 +401,106 @@ export async function tidyfetch<T = unknown>(
     ...fetchOptions
   } = options;
 
-  // Build full URL
-  let fullURL = baseURL ? `${baseURL}${url}` : url;
+  const fullURL = buildURL(url, baseURL, query);
 
-  // Append query parameters
-  if (query) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined) {
-        params.append(key, String(value));
-      }
-    }
-    const queryString = params.toString();
-    if (queryString) {
-      fullURL += (fullURL.includes("?") ? "&" : "?") + queryString;
-    }
-  }
-
-  // Check cache if TTL is set
+  // Check cache
   if (cacheTTL > 0) {
     const cacheKey = `${fetchOptions.method || "GET"}:${fullURL}`;
     const cached = responseCache.get(cacheKey);
     if (cached && Date.now() < cached.expires) {
-      return cached.data as T;
+      return ok(cached.data as T);
     }
   }
 
-  // Auto-stringify JSON body and set content-type
-  let processedBody = fetchOptions.body;
+  // Process body and headers
   const processedHeaders = fetchOptions.headers
     ? new Headers(fetchOptions.headers)
     : new Headers();
-
-  if (
-    processedBody &&
-    typeof processedBody === "object" &&
-    !(processedBody instanceof FormData) &&
-    !(processedBody instanceof URLSearchParams) &&
-    !(processedBody instanceof Blob) &&
-    !(processedBody instanceof ArrayBuffer) &&
-    !(processedBody instanceof ReadableStream)
-  ) {
-    processedBody = JSON.stringify(processedBody);
-    if (!processedHeaders.has("content-type")) {
-      processedHeaders.set("content-type", "application/json");
-    }
-  }
+  const processedBody = processBody(fetchOptions.body, processedHeaders);
 
   let requestInit: RequestInit = {
     ...fetchOptions,
-    body: processedBody as BodyInit,
+    body: processedBody,
     headers: processedHeaders,
   };
 
-  // Call onRequest interceptor and allow it to modify options
+  // Call onRequest interceptor
   if (onRequest) {
-    // For interceptor, we need a valid Request - use a dummy base for relative URLs
     const requestURL = fullURL.startsWith("/")
       ? `http://localhost${fullURL}`
       : fullURL;
     const tempRequest = new Request(requestURL, requestInit);
     await onRequest({ request: tempRequest, options });
 
-    // Re-apply headers in case they were modified in the interceptor
     if (options.headers) {
-      requestInit = {
-        ...requestInit,
-        headers: options.headers,
-      };
+      requestInit = { ...requestInit, headers: options.headers };
     }
   }
 
   // Execute with retry logic
-  let lastError: Error | null = null;
+  let lastError: TidyFetchError | null = null;
 
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {
-      // Setup timeout and merge with user signal if provided
+      // Setup timeout
       const controller = new AbortController();
       const timeoutId = timeout > 0
         ? setTimeout(() => controller.abort(), timeout)
         : null;
 
-      // Merge signals if user provided one
+      // Merge signals
       let combinedSignal: AbortSignal = controller.signal;
       if (userSignal) {
-        // Use AbortSignal.any if available (modern browsers/runtimes)
         if (AbortSignal.any) {
           combinedSignal = AbortSignal.any([controller.signal, userSignal]);
         } else {
-          // Fallback: if user signal is already aborted, use it
           if (userSignal.aborted) {
-            throw new DOMException("The operation was aborted", "AbortError");
+            return err(new AbortError({ url: fullURL }));
           }
-          // Otherwise, listen to both signals
           userSignal.addEventListener("abort", () => controller.abort());
         }
       }
 
-      const fetchInit: RequestInit = {
-        ...requestInit,
-        signal: combinedSignal,
-      };
+      const fetchInit: RequestInit = { ...requestInit, signal: combinedSignal };
 
-      const response = await globalThis.fetch(fullURL, fetchInit);
+      let response: Response;
+      try {
+        response = await globalThis.fetch(fullURL, fetchInit);
+      } catch (fetchError) {
+        if (timeoutId !== null) clearTimeout(timeoutId);
+
+        const e = fetchError instanceof Error
+          ? fetchError
+          : new Error(String(fetchError));
+
+        // Check if it's an abort/timeout
+        if (e.name === "AbortError") {
+          if (timeout > 0) {
+            return err(new TimeoutError({ url: fullURL, timeout }));
+          }
+          return err(new AbortError({ url: fullURL }));
+        }
+
+        // Network error - check if we should retry
+        const networkErr = new NetworkError({
+          message: e.message,
+          url: fullURL,
+          cause: e,
+        });
+
+        if (attempt < retry) {
+          lastError = networkErr;
+          if (retryDelay > 0) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          }
+          continue;
+        }
+
+        return err(networkErr);
+      }
 
       if (timeoutId !== null) clearTimeout(timeoutId);
 
-      // Create a Request object for interceptors
       const requestForInterceptor = new Request(
         fullURL.startsWith("/") ? `http://localhost${fullURL}` : fullURL,
         requestInit,
@@ -459,30 +508,46 @@ export async function tidyfetch<T = unknown>(
 
       // Handle non-ok responses
       if (!response.ok) {
+        // Try to read body for error context
+        let body: unknown;
+        try {
+          body = await response.clone().json();
+        } catch {
+          try {
+            body = await response.clone().text();
+          } catch {
+            body = undefined;
+          }
+        }
+
+        const httpError = new HTTPError({
+          statusCode: response.status,
+          statusText: response.statusText,
+          url: fullURL,
+          body,
+          response,
+        });
+
         // Call onResponseError interceptor
         if (onResponseError) {
           await onResponseError({
             request: requestForInterceptor,
             response,
             options,
+            error: httpError,
           });
         }
 
         // Check if we should retry
         if (retryStatusCodes.includes(response.status) && attempt < retry) {
+          lastError = httpError;
           if (retryDelay > 0) {
             await new Promise((resolve) => setTimeout(resolve, retryDelay));
           }
           continue;
         }
 
-        // Throw error if not retrying
-        throw new FetchError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          response.status,
-          response.statusText,
-          response,
-        );
+        return err(httpError);
       }
 
       // Call onResponse interceptor
@@ -495,112 +560,90 @@ export async function tidyfetch<T = unknown>(
       }
 
       // Parse response
-      let data: T;
-      if (parseResponse) {
-        const text = await response.text();
-        data = parseResponse(text) as T;
-      } else {
-        switch (responseType) {
-          case "json":
-            data = (await response.json()) as T;
-            break;
-          case "text":
-            data = (await response.text()) as T;
-            break;
-          case "blob":
-            data = (await response.blob()) as T;
-            break;
-          case "arrayBuffer":
-            data = (await response.arrayBuffer()) as T;
-            break;
-          case "stream":
-            data = response.body as T;
-            break;
-          default:
-            data = (await response.json()) as T;
-        }
+      const parseResult = await parseResponseBody<T>(
+        response,
+        responseType,
+        parseResponse,
+        fullURL,
+      );
+
+      if (!parseResult.ok) {
+        return parseResult;
       }
 
-      // Store in cache if TTL is set
+      // Store in cache
       if (cacheTTL > 0) {
         const cacheKey = `${fetchOptions.method || "GET"}:${fullURL}`;
         responseCache.set(cacheKey, {
-          data,
+          data: parseResult.value,
           expires: Date.now() + cacheTTL,
         });
       }
 
-      return data;
-    } catch (error) {
-      lastError = error as Error;
+      return parseResult;
+    } catch (e) {
+      // Unexpected error
+      const error = e instanceof Error ? e : new Error(String(e));
+      const networkErr = new NetworkError({
+        message: error.message,
+        url: fullURL,
+        cause: error,
+      });
 
-      // Don't retry on abort errors or if we've exhausted retries
-      if (
-        error instanceof Error &&
-        (error.name === "AbortError" || attempt >= retry)
-      ) {
-        throw error;
+      if (attempt >= retry) {
+        return err(networkErr);
       }
 
-      // Wait before retrying
-      if (attempt < retry && retryDelay > 0) {
+      lastError = networkErr;
+      if (retryDelay > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
     }
   }
 
-  // If we get here, all retries failed
-  throw lastError || new Error("Request failed");
+  // All retries exhausted
+  return err(
+    lastError || new NetworkError({
+      message: "Request failed",
+      url: fullURL,
+    }),
+  );
 }
+
+// ============================================================================
+// tidyfetch.create - Factory function
+// ============================================================================
+
+/** Return type for tidyfetch.create() */
+export type TidyFetchInstance = {
+  <T = unknown>(
+    url: string,
+    options?: FetchOptions,
+  ): Promise<Result<T, TidyFetchError>>;
+};
 
 /**
  * Factory function to create a preconfigured tidyfetch instance.
  *
- * Creates a new fetch function with default options baked in. Perfect for
- * creating API clients with shared configuration (baseURL, headers, timeout).
- * Options passed to individual calls are merged with the defaults.
- *
- * @param defaults - Default options to apply to all requests made with this instance
- * @returns A new tidyfetch function with the defaults applied
- *
- * @example Create an API client
+ * @example
  * ```ts
  * const api = tidyfetch.create({
- *   baseURL: 'https://api.example.com',
- *   headers: { 'Authorization': `Bearer ${token}` },
+ *   baseURL: "https://api.example.com",
+ *   headers: { "Authorization": `Bearer ${token}` },
  *   timeout: 10000
  * });
  *
- * // All requests use the defaults
- * const users = await api<User[]>('/users');
- * const posts = await api<Post[]>('/posts', { query: { page: 2 } });
- * ```
- *
- * @example Create multiple API clients
- * ```ts
- * const publicApi = tidyfetch.create({
- *   baseURL: 'https://api.example.com/public'
- * });
- *
- * const adminApi = tidyfetch.create({
- *   baseURL: 'https://api.example.com/admin',
- *   headers: { 'X-Admin-Token': adminToken }
- * });
- * ```
- *
- * @example Override defaults per-request
- * ```ts
- * const api = tidyfetch.create({ timeout: 5000 });
- *
- * // This request has a longer timeout
- * await api('/slow-endpoint', { timeout: 30000 });
+ * const result = await api<User[]>("/users");
+ * if (result.ok) {
+ *   console.log(result.value);
+ * }
  * ```
  */
-tidyfetch.create = (
-  defaults: FetchOptions,
-): <T = unknown>(url: string, options?: FetchOptions) => Promise<T> => {
-  return <T = unknown>(url: string, options: FetchOptions = {}): Promise<T> => {
-    // Merge headers properly
+tidyfetch.create = (defaults: FetchOptions): TidyFetchInstance => {
+  const instance = <T = unknown>(
+    url: string,
+    options: FetchOptions = {},
+  ): Promise<Result<T, TidyFetchError>> => {
     const mergedHeaders = new Headers(defaults.headers);
     if (options.headers) {
       const optionHeaders = new Headers(options.headers);
@@ -609,11 +652,7 @@ tidyfetch.create = (
       });
     }
 
-    // Merge query parameters
-    const mergedQuery = {
-      ...defaults.query,
-      ...options.query,
-    };
+    const mergedQuery = { ...defaults.query, ...options.query };
 
     const mergedOptions: FetchOptions = {
       ...defaults,
@@ -624,59 +663,33 @@ tidyfetch.create = (
 
     return tidyfetch<T>(url, mergedOptions);
   };
+
+  return instance;
 };
 
+// ============================================================================
+// tidyfetch.raw - Raw Response with Result
+// ============================================================================
+
 /**
- * Fetch with access to the full Response object plus parsed data.
+ * Fetch with access to full Response object plus parsed data.
+ * Returns Result<RawResponse<T>, TidyFetchError>.
  *
- * Unlike the main `tidyfetch()` which returns only the parsed data,
- * `tidyfetch.raw()` returns the complete Response object with the
- * parsed data attached as `_data`. Use this when you need access to
- * response headers, status codes, or other Response properties.
- *
- * @typeParam T - Type of the parsed response data
- * @param url - The URL to fetch
- * @param options - Enhanced fetch options (see {@link FetchOptions})
- * @returns Response object extended with `_data` property (see {@link RawResponse})
- * @throws {@link FetchError} When response status is not 2xx
- *
- * @example Access response headers and status
+ * @example
  * ```ts
- * const response = await tidyfetch.raw<User>('/api/users/1');
+ * const result = await tidyfetch.raw<User>("/api/users/1");
  *
- * console.log(response.status);                    // 200
- * console.log(response.headers.get('x-rate-limit')); // "100"
- * console.log(response._data.name);                // "Alice"
- * ```
- *
- * @example Check for specific headers
- * ```ts
- * const response = await tidyfetch.raw('/api/data');
- *
- * const etag = response.headers.get('etag');
- * const cacheControl = response.headers.get('cache-control');
- *
- * if (cacheControl?.includes('no-cache')) {
- *   // Handle uncacheable response
+ * if (result.ok) {
+ *   console.log(result.value.status);
+ *   console.log(result.value.headers.get("x-rate-limit"));
+ *   console.log(result.value._data.name);
  * }
- * ```
- *
- * @example Conditional requests with ETag
- * ```ts
- * // First request - get ETag
- * const response1 = await tidyfetch.raw('/api/resource');
- * const etag = response1.headers.get('etag');
- *
- * // Subsequent request with If-None-Match
- * const response2 = await tidyfetch.raw('/api/resource', {
- *   headers: { 'If-None-Match': etag }
- * });
  * ```
  */
 tidyfetch.raw = async <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<RawResponse<T>> => {
+): Promise<Result<RawResponse<T>, TidyFetchError>> => {
   const {
     baseURL,
     query,
@@ -693,51 +706,19 @@ tidyfetch.raw = async <T = unknown>(
     ...fetchOptions
   } = options;
 
-  // Build full URL
-  let fullURL = baseURL ? `${baseURL}${url}` : url;
+  const fullURL = buildURL(url, baseURL, query);
 
-  // Append query parameters
-  if (query) {
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(query)) {
-      if (value !== undefined) {
-        params.append(key, String(value));
-      }
-    }
-    const queryString = params.toString();
-    if (queryString) {
-      fullURL += (fullURL.includes("?") ? "&" : "?") + queryString;
-    }
-  }
-
-  // Auto-stringify JSON body and set content-type
-  let processedBody = fetchOptions.body;
   const processedHeaders = fetchOptions.headers
     ? new Headers(fetchOptions.headers)
     : new Headers();
-
-  if (
-    processedBody &&
-    typeof processedBody === "object" &&
-    !(processedBody instanceof FormData) &&
-    !(processedBody instanceof URLSearchParams) &&
-    !(processedBody instanceof Blob) &&
-    !(processedBody instanceof ArrayBuffer) &&
-    !(processedBody instanceof ReadableStream)
-  ) {
-    processedBody = JSON.stringify(processedBody);
-    if (!processedHeaders.has("content-type")) {
-      processedHeaders.set("content-type", "application/json");
-    }
-  }
+  const processedBody = processBody(fetchOptions.body, processedHeaders);
 
   let requestInit: RequestInit = {
     ...fetchOptions,
-    body: processedBody as BodyInit,
+    body: processedBody,
     headers: processedHeaders,
   };
 
-  // Call onRequest interceptor
   if (onRequest) {
     const requestURL = fullURL.startsWith("/")
       ? `http://localhost${fullURL}`
@@ -746,19 +727,14 @@ tidyfetch.raw = async <T = unknown>(
     await onRequest({ request: tempRequest, options });
 
     if (options.headers) {
-      requestInit = {
-        ...requestInit,
-        headers: options.headers,
-      };
+      requestInit = { ...requestInit, headers: options.headers };
     }
   }
 
-  // Execute with retry logic
-  let lastError: Error | null = null;
+  let lastError: TidyFetchError | null = null;
 
   for (let attempt = 0; attempt <= retry; attempt++) {
     try {
-      // Setup timeout and merge with user signal
       const controller = new AbortController();
       const timeoutId = timeout > 0
         ? setTimeout(() => controller.abort(), timeout)
@@ -770,18 +746,47 @@ tidyfetch.raw = async <T = unknown>(
           combinedSignal = AbortSignal.any([controller.signal, userSignal]);
         } else {
           if (userSignal.aborted) {
-            throw new DOMException("The operation was aborted", "AbortError");
+            return err(new AbortError({ url: fullURL }));
           }
           userSignal.addEventListener("abort", () => controller.abort());
         }
       }
 
-      const fetchInit: RequestInit = {
-        ...requestInit,
-        signal: combinedSignal,
-      };
+      const fetchInit: RequestInit = { ...requestInit, signal: combinedSignal };
 
-      const response = await globalThis.fetch(fullURL, fetchInit);
+      let response: Response;
+      try {
+        response = await globalThis.fetch(fullURL, fetchInit);
+      } catch (fetchError) {
+        if (timeoutId !== null) clearTimeout(timeoutId);
+
+        const e = fetchError instanceof Error
+          ? fetchError
+          : new Error(String(fetchError));
+
+        if (e.name === "AbortError") {
+          if (timeout > 0) {
+            return err(new TimeoutError({ url: fullURL, timeout }));
+          }
+          return err(new AbortError({ url: fullURL }));
+        }
+
+        const networkErr = new NetworkError({
+          message: e.message,
+          url: fullURL,
+          cause: e,
+        });
+
+        if (attempt < retry) {
+          lastError = networkErr;
+          if (retryDelay > 0) {
+            await new Promise((resolve) => setTimeout(resolve, retryDelay));
+          }
+          continue;
+        }
+
+        return err(networkErr);
+      }
 
       if (timeoutId !== null) clearTimeout(timeoutId);
 
@@ -790,32 +795,46 @@ tidyfetch.raw = async <T = unknown>(
         requestInit,
       );
 
-      // Handle non-ok responses
       if (!response.ok) {
+        let body: unknown;
+        try {
+          body = await response.clone().json();
+        } catch {
+          try {
+            body = await response.clone().text();
+          } catch {
+            body = undefined;
+          }
+        }
+
+        const httpError = new HTTPError({
+          statusCode: response.status,
+          statusText: response.statusText,
+          url: fullURL,
+          body,
+          response,
+        });
+
         if (onResponseError) {
           await onResponseError({
             request: requestForInterceptor,
             response,
             options,
+            error: httpError,
           });
         }
 
         if (retryStatusCodes.includes(response.status) && attempt < retry) {
+          lastError = httpError;
           if (retryDelay > 0) {
             await new Promise((resolve) => setTimeout(resolve, retryDelay));
           }
           continue;
         }
 
-        throw new FetchError(
-          `HTTP ${response.status}: ${response.statusText}`,
-          response.status,
-          response.statusText,
-          response,
-        );
+        return err(httpError);
       }
 
-      // Call onResponse interceptor
       if (onResponse) {
         await onResponse({
           request: requestForInterceptor,
@@ -824,236 +843,120 @@ tidyfetch.raw = async <T = unknown>(
         });
       }
 
-      // Parse response
+      // Parse response (clone to preserve original body)
       let data: T;
-      if (parseResponse) {
-        const text = await response.clone().text();
-        data = parseResponse(text) as T;
-      } else {
-        switch (responseType) {
-          case "json":
-            data = (await response.clone().json()) as T;
-            break;
-          case "text":
-            data = (await response.clone().text()) as T;
-            break;
-          case "blob":
-            data = (await response.clone().blob()) as T;
-            break;
-          case "arrayBuffer":
-            data = (await response.clone().arrayBuffer()) as T;
-            break;
-          case "stream":
-            data = response.body as T;
-            break;
-          default:
-            data = (await response.clone().json()) as T;
+      try {
+        if (parseResponse) {
+          const text = await response.clone().text();
+          data = parseResponse(text) as T;
+        } else {
+          switch (responseType) {
+            case "json":
+              data = (await response.clone().json()) as T;
+              break;
+            case "text":
+              data = (await response.clone().text()) as T;
+              break;
+            case "blob":
+              data = (await response.clone().blob()) as T;
+              break;
+            case "arrayBuffer":
+              data = (await response.clone().arrayBuffer()) as T;
+              break;
+            case "stream":
+              data = response.body as T;
+              break;
+            default:
+              data = (await response.clone().json()) as T;
+          }
         }
+      } catch (e) {
+        const cause = e instanceof Error ? e : new Error(String(e));
+        return err(
+          new ParseError({
+            message: cause.message,
+            url: fullURL,
+            cause,
+          }),
+        );
       }
 
-      // Attach data to response
       const rawResponse = response as RawResponse<T>;
       rawResponse._data = data;
 
-      return rawResponse;
-    } catch (error) {
-      lastError = error as Error;
+      return ok(rawResponse);
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      const networkErr = new NetworkError({
+        message: error.message,
+        url: fullURL,
+        cause: error,
+      });
 
-      if (
-        error instanceof Error &&
-        (error.name === "AbortError" || attempt >= retry)
-      ) {
-        throw error;
+      if (attempt >= retry) {
+        return err(networkErr);
       }
 
-      if (attempt < retry && retryDelay > 0) {
+      lastError = networkErr;
+      if (retryDelay > 0) {
         await new Promise((resolve) => setTimeout(resolve, retryDelay));
       }
     }
   }
 
-  throw lastError || new Error("Request failed");
+  return err(
+    lastError || new NetworkError({
+      message: "Request failed",
+      url: fullURL,
+    }),
+  );
 };
+
+// ============================================================================
+// tidyfetch.native - Direct fetch access
+// ============================================================================
 
 /**
  * Direct access to the native fetch API.
- *
- * Bypasses all tidyfetch enhancements (auto JSON, retries, etc.) and
- * calls `globalThis.fetch` directly. Use when you need full control
- * over the Response object or want to avoid tidyfetch's processing.
- *
- * @param input - URL or Request object
- * @param init - Standard RequestInit options
- * @returns Standard Response promise
- *
- * @example Direct fetch access
- * ```ts
- * const response = await tidyfetch.native('/api/data');
- * const text = await response.text();
- * const headers = response.headers;
- * ```
- *
- * @example Stream handling
- * ```ts
- * const response = await tidyfetch.native('/api/stream');
- * const reader = response.body?.getReader();
- * // Process stream manually
- * ```
+ * Bypasses all tidyfetch enhancements.
  */
 tidyfetch.native = globalThis.fetch.bind(globalThis) as typeof fetch;
 
 // ============================================================================
-// HTTP Method Shortcuts
+// HTTP Method Shortcuts (Result-based)
 // ============================================================================
 
-/**
- * Perform a GET request.
- *
- * Shorthand for `tidyfetch(url, { method: 'GET', ...options })`.
- * GET requests are typically used to retrieve resources.
- *
- * @typeParam T - Type of the response data
- * @param url - The URL to fetch
- * @param options - Additional fetch options (method is set automatically)
- * @returns Promise resolving to the parsed response data
- *
- * @example Basic GET
- * ```ts
- * const users = await tidyfetch.get<User[]>('/api/users');
- * ```
- *
- * @example GET with query parameters
- * ```ts
- * const user = await tidyfetch.get<User>('/api/users/1', {
- *   query: { include: 'posts,comments' }
- * });
- * ```
- *
- * @example GET with caching
- * ```ts
- * const config = await tidyfetch.get('/api/config', { cacheTTL: 60000 });
- * ```
- */
+/** GET request returning Result */
 tidyfetch.get = <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> => tidyfetch<T>(url, { ...options, method: "GET" });
+): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>(url, { ...options, method: "GET" });
 
-/**
- * Perform a POST request.
- *
- * Shorthand for `tidyfetch(url, { method: 'POST', ...options })`.
- * POST requests are typically used to create new resources.
- *
- * @typeParam T - Type of the response data
- * @param url - The URL to post to
- * @param options - Fetch options including body data
- * @returns Promise resolving to the parsed response data
- *
- * @example Create a resource
- * ```ts
- * const newUser = await tidyfetch.post<User>('/api/users', {
- *   body: { name: 'Alice', email: 'alice@example.com' }
- * });
- * ```
- *
- * @example POST with form data
- * ```ts
- * const formData = new FormData();
- * formData.append('file', file);
- * const result = await tidyfetch.post('/api/upload', { body: formData });
- * ```
- */
+/** POST request returning Result */
 tidyfetch.post = <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> => tidyfetch<T>(url, { ...options, method: "POST" });
+): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>(url, { ...options, method: "POST" });
 
-/**
- * Perform a PUT request.
- *
- * Shorthand for `tidyfetch(url, { method: 'PUT', ...options })`.
- * PUT requests are typically used to replace entire resources.
- *
- * @typeParam T - Type of the response data
- * @param url - The URL of the resource to replace
- * @param options - Fetch options including the new resource data
- * @returns Promise resolving to the parsed response data
- *
- * @example Replace a resource
- * ```ts
- * const updated = await tidyfetch.put<User>('/api/users/1', {
- *   body: { name: 'Alice Smith', email: 'alice@example.com', role: 'admin' }
- * });
- * ```
- */
+/** PUT request returning Result */
 tidyfetch.put = <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> => tidyfetch<T>(url, { ...options, method: "PUT" });
+): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>(url, { ...options, method: "PUT" });
 
-/**
- * Perform a PATCH request.
- *
- * Shorthand for `tidyfetch(url, { method: 'PATCH', ...options })`.
- * PATCH requests are typically used for partial updates to resources.
- *
- * @typeParam T - Type of the response data
- * @param url - The URL of the resource to update
- * @param options - Fetch options including the partial update data
- * @returns Promise resolving to the parsed response data
- *
- * @example Partial update
- * ```ts
- * const patched = await tidyfetch.patch<User>('/api/users/1', {
- *   body: { email: 'newemail@example.com' }
- * });
- * ```
- *
- * @example Update specific fields
- * ```ts
- * await tidyfetch.patch('/api/posts/123', {
- *   body: { title: 'Updated Title', updatedAt: new Date().toISOString() }
- * });
- * ```
- */
+/** PATCH request returning Result */
 tidyfetch.patch = <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> => tidyfetch<T>(url, { ...options, method: "PATCH" });
+): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>(url, { ...options, method: "PATCH" });
 
-/**
- * Perform a DELETE request.
- *
- * Shorthand for `tidyfetch(url, { method: 'DELETE', ...options })`.
- * DELETE requests are used to remove resources.
- *
- * @typeParam T - Type of the response data (often void or confirmation object)
- * @param url - The URL of the resource to delete
- * @param options - Additional fetch options
- * @returns Promise resolving to the parsed response data
- *
- * @example Delete a resource
- * ```ts
- * await tidyfetch.delete('/api/users/1');
- * ```
- *
- * @example Delete with confirmation response
- * ```ts
- * const result = await tidyfetch.delete<{ success: boolean; deletedAt: string }>(
- *   '/api/users/1'
- * );
- * console.log('Deleted at:', result.deletedAt);
- * ```
- *
- * @example Soft delete with body
- * ```ts
- * await tidyfetch.delete('/api/posts/123', {
- *   body: { reason: 'Spam content' }
- * });
- * ```
- */
+/** DELETE request returning Result */
 tidyfetch.delete = <T = unknown>(
   url: string,
   options: FetchOptions = {},
-): Promise<T> => tidyfetch<T>(url, { ...options, method: "DELETE" });
+): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>(url, { ...options, method: "DELETE" });
