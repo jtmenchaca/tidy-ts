@@ -4,19 +4,22 @@ Cross-runtime compatibility shims for Deno, Bun, and Node.js.
 
 ## Overview
 
-This package provides runtime-agnostic APIs that work seamlessly across Deno, Bun, and Node.js. It includes:
+This package provides runtime-agnostic APIs that work seamlessly across Deno, Bun, and Node.js:
 
-- **Runtime Detection**: Detect which JavaScript runtime is executing
-- **File System APIs**: Read/write files, create directories, etc.
-- **Process APIs**: Environment variables, command-line arguments, process exit
-- **Testing Framework**: Cross-runtime test API compatible with Deno, Bun, and Node.js
+- **Runtime Detection** - Detect which JavaScript runtime is executing
+- **File System APIs** - Read/write files, create directories, copy, rename, etc.
+- **Path Utilities** - Resolve paths, convert URLs to paths
+- **Process APIs** - Environment variables, command-line arguments, process exit
+- **Testing Framework** - Cross-runtime test API
+- **Result Type System** - Type-safe error handling without exceptions
+- **Enhanced Fetch API** - `tidyfetch` with Result-based error handling, retries, timeouts, and more
 
 ## Installation
 
 ### Deno
 
 ```typescript
-import { readTextFile, test, Runtime } from "jsr:@tidy-ts/shims";
+import { readTextFile, tidyfetch, ok, err } from "jsr:@tidy-ts/shims";
 ```
 
 ### npm
@@ -26,15 +29,186 @@ npm install @tidy-ts/shims
 ```
 
 ```typescript
-import { readTextFile, test, Runtime } from "@tidy-ts/shims";
+import { readTextFile, tidyfetch, ok, err } from "@tidy-ts/shims";
 ```
+
+## Result Type System
+
+The Result type provides explicit error handling without exceptions. Functions return `Result<T, E>` instead of throwing.
+
+```typescript
+import { ok, err, type Result } from "@tidy-ts/shims";
+
+function divide(a: number, b: number): Result<number, string> {
+  if (b === 0) return err("Division by zero");
+  return ok(a / b);
+}
+
+const result = divide(10, 2);
+if (result.ok) {
+  console.log(result.value); // 5
+} else {
+  console.error(result.error);
+}
+```
+
+### Custom Error Types
+
+Use `defineError` to create typed error classes:
+
+```typescript
+import { defineError, type AppError } from "@tidy-ts/shims";
+
+const ValidationError = defineError(
+  "ValidationError",
+  ({ field, message }: { field: string; message: string }) =>
+    `Validation failed for ${field}: ${message}`
+);
+
+type ValidationError = AppError<"ValidationError", { field: string; message: string }>;
+
+const error = new ValidationError({ field: "email", message: "Invalid format" });
+console.log(error.name);  // "ValidationError"
+console.log(error.field); // "email"
+```
+
+## Enhanced Fetch API (tidyfetch)
+
+`tidyfetch` provides a Result-based fetch with automatic JSON parsing, retries, timeouts, and typed errors.
+
+### Basic Usage
+
+```typescript
+import { tidyfetch } from "@tidy-ts/shims";
+
+interface User {
+  id: number;
+  name: string;
+}
+
+const result = await tidyfetch<User>("/api/users/1");
+
+if (result.ok) {
+  console.log(result.value.name); // Type-safe access
+} else {
+  console.error(result.error.message);
+}
+```
+
+### POST with Auto JSON
+
+```typescript
+const result = await tidyfetch<User>("/api/users", {
+  method: "POST",
+  body: { name: "Alice", email: "alice@example.com" }, // Auto-stringified
+});
+```
+
+### Error Handling
+
+```typescript
+import { tidyfetch, HTTPError, TimeoutError, NetworkError } from "@tidy-ts/shims";
+
+const result = await tidyfetch("/api/data", { timeout: 5000 });
+
+if (!result.ok) {
+  if (result.error instanceof HTTPError) {
+    console.log(`HTTP ${result.error.statusCode}: ${result.error.statusText}`);
+    console.log("Body:", result.error.body);
+  } else if (result.error instanceof TimeoutError) {
+    console.log(`Timed out after ${result.error.timeout}ms`);
+  } else if (result.error instanceof NetworkError) {
+    console.log("Network error:", result.error.cause);
+  }
+}
+```
+
+### Retries
+
+```typescript
+const result = await tidyfetch("/api/data", {
+  retry: 3,
+  retryDelay: 1000,
+  retryStatusCodes: [500, 502, 503, 504],
+});
+```
+
+### Factory Pattern
+
+Create preconfigured instances for API clients:
+
+```typescript
+const api = tidyfetch.create({
+  baseURL: "https://api.example.com",
+  headers: { Authorization: `Bearer ${token}` },
+  timeout: 10000,
+});
+
+const result = await api<User[]>("/users");
+```
+
+### HTTP Method Shortcuts
+
+```typescript
+await tidyfetch.get<User[]>("/users");
+await tidyfetch.post<User>("/users", { body: { name: "Alice" } });
+await tidyfetch.put<User>("/users/1", { body: { name: "Bob" } });
+await tidyfetch.patch<User>("/users/1", { body: { name: "Charlie" } });
+await tidyfetch.delete("/users/1");
+```
+
+### Raw Response Access
+
+Access response headers and status alongside parsed data:
+
+```typescript
+const result = await tidyfetch.raw<User>("/api/users/1");
+
+if (result.ok) {
+  console.log(result.value.status);                      // 200
+  console.log(result.value.headers.get("x-rate-limit")); // "100"
+  console.log(result.value._data.name);                  // Parsed data
+}
+```
+
+### Query Parameters
+
+```typescript
+const result = await tidyfetch("/api/search", {
+  query: { q: "typescript", page: 1, limit: 20 },
+});
+// Fetches: /api/search?q=typescript&page=1&limit=20
+```
+
+### Interceptors
+
+```typescript
+const result = await tidyfetch("/api/data", {
+  onRequest({ options }) {
+    options.headers?.set("X-Request-ID", crypto.randomUUID());
+  },
+  onResponse({ response }) {
+    console.log(`Response: ${response.status}`);
+  },
+  onResponseError({ error }) {
+    console.error("Request failed:", error);
+  },
+});
+```
+
+### Error Types
+
+- `HTTPError` - Non-2xx status (has `statusCode`, `statusText`, `body`, `response`)
+- `TimeoutError` - Request timed out (has `timeout`)
+- `NetworkError` - Network failure (has `cause`)
+- `ParseError` - JSON parse failed (has `body`, `cause`)
+- `AbortError` - Request aborted
 
 ## Runtime Detection
 
 ```typescript
 import { Runtime, getCurrentRuntime, currentRuntime } from "@tidy-ts/shims";
 
-// Detect runtime
 const runtime = getCurrentRuntime();
 if (runtime === Runtime.Deno) {
   console.log("Running in Deno");
@@ -61,30 +235,64 @@ console.log(`Current runtime: ${currentRuntime}`);
 ### Reading Files
 
 ```typescript
-import { readTextFile } from "@tidy-ts/shims";
+import { readTextFile, readFile } from "@tidy-ts/shims";
 
+// Text file
 const content = await readTextFile("./file.txt");
-console.log(content);
+
+// Binary file
+const data = await readFile("./image.png");
 ```
 
 ### Writing Files
 
 ```typescript
-import { writeTextFile } from "@tidy-ts/shims";
+import { writeTextFile, writeFile } from "@tidy-ts/shims";
 
 await writeTextFile("./output.txt", "Hello, World!");
+await writeFile("./output.bin", new Uint8Array([1, 2, 3]));
 ```
 
 ### Directories
 
 ```typescript
-import { mkdir, remove } from "@tidy-ts/shims";
+import { mkdir, remove, listDir, exists } from "@tidy-ts/shims";
 
-// Create directory
 await mkdir("./my-dir", { recursive: true });
-
-// Remove file or directory
 await remove("./my-dir", { recursive: true });
+
+const entries = await listDir("./src");
+for (const entry of entries) {
+  console.log(entry.name, entry.isDirectory ? "dir" : "file");
+}
+
+if (await exists("./config.json")) {
+  // File exists
+}
+```
+
+### File Operations
+
+```typescript
+import { copyFile, rename, stat } from "@tidy-ts/shims";
+
+await copyFile("./source.txt", "./dest.txt");
+await rename("./old.txt", "./new.txt");
+
+const info = await stat("./file.txt");
+console.log(`Size: ${info.size}, Modified: ${info.mtime}`);
+```
+
+## Path Utilities
+
+```typescript
+import { resolve, dirname, fileURLToPath, pathToFileURL } from "@tidy-ts/shims";
+
+const absPath = resolve("./data", "file.txt");
+const dir = dirname("/path/to/file.txt"); // "/path/to"
+
+const filePath = fileURLToPath(import.meta.url);
+const url = pathToFileURL("/path/to/file.txt");
 ```
 
 ## Process APIs
@@ -94,60 +302,34 @@ await remove("./my-dir", { recursive: true });
 ```typescript
 import { env } from "@tidy-ts/shims";
 
-// Get a specific variable
 const apiKey = env.get("API_KEY");
-
-// Set a variable
 env.set("DEBUG", "true");
-
-// Delete a variable
 env.delete("TEMP_VAR");
-
-// Get all variables
 const allEnv = env.toObject();
 ```
 
 ### Loading .env Files
 
-The `env` object provides methods to load environment variables from `.env` files:
-
 ```typescript
 import { env } from "@tidy-ts/shims";
 
-// Load from a single .env file (exports to environment by default)
+// Load from .env file
 await env.loadFromFile(".env");
 
-// Load from multiple files (later files take precedence in returned object)
-const config = await env.loadFromFile([".env", ".env.local", ".env.production"]);
+// Load multiple files (later files take precedence)
+await env.loadFromFile([".env", ".env.local", ".env.production"]);
 
 // Load without exporting to process environment
 const config = await env.loadFromFile(".env", { export: false });
-
-// Synchronous loading
-const configSync = env.loadFromFileSync(".env");
-
-// Load from URL
-const config = await env.loadFromFile(new URL("file:///path/to/.env"));
 ```
-
-**Key behaviors:**
-- Files are loaded in order; later files override earlier ones in the returned object
-- When `export: true` (default), variables are set in the process environment
-- Existing environment variables are never overridden (environment takes precedence)
-- If a file doesn't exist, it's silently skipped
-- Supports variable expansion: `${VAR}` or `$VAR` with optional defaults `${VAR:-default}`
-- Handles quoted values, comments, and multiline strings
 
 ### Command Line Arguments
 
 ```typescript
 import { args, getArgs } from "@tidy-ts/shims";
 
-// Get arguments (frozen array)
-console.log(args);
-
-// Or get fresh copy
-const freshArgs = getArgs();
+console.log(args); // Frozen array
+const freshArgs = getArgs(); // Fresh copy
 ```
 
 ### Process Exit
@@ -155,7 +337,8 @@ const freshArgs = getArgs();
 ```typescript
 import { exit } from "@tidy-ts/shims";
 
-exit(0); // Exit with success code
+exit(0); // Success
+exit(1); // Error
 ```
 
 ### Import Meta Utilities
@@ -163,30 +346,21 @@ exit(0); // Exit with success code
 ```typescript
 import { importMeta } from "@tidy-ts/shims";
 
-// Check if this is the main module
 if (importMeta.main) {
   console.log("Running as main script");
 }
 
-// Get current module URL
-const moduleUrl = importMeta.url;
-
-// Get current file path
 const currentFile = importMeta.getFilename();
 const currentDir = importMeta.getDirname();
-
-// Convert URL to file path
-const path = importMeta.urlToPath("file:///path/to/file.ts");
 ```
 
 ## Testing Framework
 
-The testing framework provides a unified API across runtimes. The `test` function accepts either a simple async function or a test subject with context and done callback.
+Unified test API across runtimes:
 
 ```typescript
 import { test } from "@tidy-ts/shims";
 
-// Simple async test (recommended)
 test("my test", async () => {
   const result = await someAsyncOperation();
   if (result !== expected) {
@@ -194,60 +368,22 @@ test("my test", async () => {
   }
 });
 
-// Test with options
-test(
-  "timeout test",
-  async () => {
-    await longRunningOperation();
-  },
-  { timeout: 5000, skip: false }
-);
+test("with timeout", async () => {
+  await longRunningOperation();
+}, { timeout: 5000 });
 
-// Test with callback pattern (for callback-style async operations)
-test("callback test", (context, done) => {
-  someAsyncOperation((err, result) => {
-    if (err) {
-      done(err);
-      return;
-    }
-    done();
-  });
-}, { waitForCallback: true });
-
-// Test with runtime-specific context
-test("test with context", (context, done) => {
-  // context varies by runtime (Deno.TestContext, Node.js TestContext, etc.)
-  // Use done() to signal completion for callback-style tests
-  done();
-}, { waitForCallback: true });
+test("skip this", () => {
+  // Skipped
+}, { skip: true });
 ```
 
-### Test Options
-
-- `timeout?: number` - Test timeout in milliseconds
-- `skip?: boolean` - Skip this test
-- `waitForCallback?: boolean` - Wait for done callback (for callback-style tests)
-
-### Test Function Signatures
-
-The `test` function accepts two forms:
-
-1. **Simple async function**: `test(name: string, fn: () => void | Promise<void>, options?)`
-   - Use this for most tests - just throw an error to fail
-   
-2. **Test subject with context**: `test(name: string, fn: (context, done) => void | Promise<void>, options?)`
-   - Use this when you need runtime-specific test context or callback pattern
-   - Set `waitForCallback: true` in options to wait for `done()` callback
-
 ## Error Types
-
-The package exports error types for better error handling:
 
 ```typescript
 import { UnavailableAPIError, UnsupportedRuntimeError } from "@tidy-ts/shims";
 
 try {
-  // Some operation that might fail
+  // Some operation
 } catch (error) {
   if (error instanceof UnavailableAPIError) {
     console.error(`API not available: ${error.message}`);
@@ -257,17 +393,13 @@ try {
 }
 ```
 
-- `UnavailableAPIError` - Thrown when a required API is not available in the current runtime
-- `UnsupportedRuntimeError` - Thrown when the runtime is not supported
-
 ## Compression Stream Polyfill
 
-The package automatically initializes polyfills for `CompressionStream` and `DecompressionStream` when imported. This ensures these Web Streams Compression APIs are available in Node.js and Bun environments that don't natively support them.
+Automatically initializes `CompressionStream` and `DecompressionStream` polyfills when imported:
 
 ```typescript
-import "@tidy-ts/shims"; // Automatically initializes compression polyfills
+import "@tidy-ts/shims";
 
-// Now CompressionStream and DecompressionStream are available
 const stream = new CompressionStream("deflate");
 ```
 
@@ -280,6 +412,3 @@ MIT
 This package is inspired by and based on:
 - [@cross/test](https://github.com/cross-org/test) - Cross-runtime testing framework
 - [@cross/runtime](https://github.com/cross-org/runtime) - Runtime detection utilities
-
-Special thanks to the developers and contributors of these excellent cross-runtime tools.
-
