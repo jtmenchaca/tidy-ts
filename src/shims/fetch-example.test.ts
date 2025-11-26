@@ -17,9 +17,9 @@ Deno.test("Example: Basic GET with auto JSON parsing", async () => {
         new Response(JSON.stringify({ users: ["Alice", "Bob"] })),
       );
 
-    const result = await tidyfetch<{ users: string[] }>(
-      "https://api.example.com/users",
-    );
+    const result = await tidyfetch<{ users: string[] }>({
+      url: "https://api.example.com/users",
+    });
 
     if (!result.ok) {
       throw new Error("Request failed");
@@ -47,13 +47,11 @@ Deno.test("Example: POST with auto JSON stringification", async () => {
       );
     };
 
-    const result = await tidyfetch<{ id: number; name: string }>(
-      "https://api.example.com/users",
-      {
-        method: "POST",
-        body: { name: "Alice", email: "alice@example.com" },
-      },
-    );
+    const result = await tidyfetch<{ id: number; name: string }>({
+      url: "https://api.example.com/users",
+      method: "POST",
+      body: { name: "Alice", email: "alice@example.com" },
+    });
 
     expect(JSON.parse(capturedBody)).toEqual({
       name: "Alice",
@@ -81,13 +79,11 @@ Deno.test("Example: Retry on server errors", async () => {
       return Promise.resolve(new Response(JSON.stringify({ success: true })));
     };
 
-    const result = await tidyfetch<{ success: boolean }>(
-      "https://api.example.com/data",
-      {
-        retry: 3,
-        retryDelay: 10,
-      },
-    );
+    const result = await tidyfetch<{ success: boolean }>({
+      url: "https://api.example.com/data",
+      retry: 3,
+      retryDelay: 10,
+    });
 
     expect(attemptCount).toBe(3);
     expect(result.ok).toBe(true);
@@ -119,7 +115,7 @@ Deno.test("Example: Factory pattern with shared config", async () => {
       timeout: 5000,
     });
 
-    const result = await api("/users");
+    const result = await api({ url: "/users" });
 
     expect(result.ok).toBe(true);
     expect(capturedHeaders?.get("x-api-key")).toBe("secret-key");
@@ -141,7 +137,8 @@ Deno.test("Example: Request interceptor for auth", async () => {
       );
     };
 
-    await tidyfetch("https://api.example.com/protected", {
+    await tidyfetch({
+      url: "https://api.example.com/protected",
       onRequest({ options }) {
         // Add auth token dynamically
         if (!options.headers) {
@@ -169,7 +166,8 @@ Deno.test("Example: Query parameters", async () => {
       return Promise.resolve(new Response(JSON.stringify({ results: [] })));
     };
 
-    await tidyfetch("https://api.example.com/search", {
+    await tidyfetch({
+      url: "https://api.example.com/search",
       query: {
         q: "typescript",
         page: 1,
@@ -210,7 +208,9 @@ Deno.test("Example: TypeScript type safety with generics", async () => {
     }
 
     // Use generic type for full autocompletion and type checking
-    const result = await tidyfetch<User>("https://api.example.com/user/42");
+    const result = await tidyfetch<User>({
+      url: "https://api.example.com/user/42",
+    });
 
     // TypeScript knows all properties and their types
     expect(result.ok).toBe(true);
@@ -233,7 +233,7 @@ Deno.test("Example: Handling errors with Result pattern", async () => {
         new Response(JSON.stringify({ error: "Not Found" }), { status: 404 }),
       );
 
-    const result = await tidyfetch("https://api.example.com/missing");
+    const result = await tidyfetch({ url: "https://api.example.com/missing" });
 
     // Check if request failed
     expect(result.ok).toBe(false);

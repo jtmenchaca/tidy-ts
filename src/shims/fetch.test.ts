@@ -41,9 +41,9 @@ Deno.test("tidyfetch - returns ok Result on success", async () => {
     globalThis.fetch = async () =>
       createMockResponse({ message: "success", id: 123 });
 
-    const result = await tidyfetch<{ message: string; id: number }>(
-      "/api/data",
-    );
+    const result = await tidyfetch<{ message: string; id: number }>({
+      url: "/api/data",
+    });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -62,7 +62,7 @@ Deno.test("tidyfetch - returns err Result with HTTPError on non-2xx", async () =
     globalThis.fetch = async () =>
       createMockResponse({ error: "Not Found" }, 404, "Not Found");
 
-    const result = await tidyfetch("/api/missing");
+    const result = await tidyfetch({ url: "/api/missing" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -102,7 +102,8 @@ Deno.test("tidyfetch - returns TimeoutError on timeout", async () => {
       return createMockResponse({ data: "slow" });
     };
 
-    const result = await tidyfetch("http://localhost/api/slow", {
+    const result = await tidyfetch({
+      url: "http://localhost/api/slow",
       timeout: 50,
     });
 
@@ -140,7 +141,10 @@ Deno.test("tidyfetch - returns AbortError when cancelled", async () => {
     const controller = new AbortController();
     setTimeout(() => controller.abort(), 50);
 
-    const result = await tidyfetch("/api/slow", { signal: controller.signal });
+    const result = await tidyfetch({
+      url: "/api/slow",
+      signal: controller.signal,
+    });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -160,7 +164,7 @@ Deno.test("tidyfetch - returns ParseError on invalid JSON", async () => {
     globalThis.fetch = async () =>
       new Response("not valid json", { status: 200 });
 
-    const result = await tidyfetch("/api/data");
+    const result = await tidyfetch({ url: "/api/data" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -181,7 +185,7 @@ Deno.test("tidyfetch - returns NetworkError on network failure", async () => {
       throw new Error("Network failure");
     };
 
-    const result = await tidyfetch("/api/data");
+    const result = await tidyfetch({ url: "/api/data" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -208,7 +212,8 @@ Deno.test("tidyfetch - handles query parameters", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch("/api/users", {
+    await tidyfetch({
+      url: "/api/users",
       query: { page: 2, limit: 10, active: true },
     });
 
@@ -229,7 +234,8 @@ Deno.test("tidyfetch - handles baseURL", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch("/users", {
+    await tidyfetch({
+      url: "/users",
       baseURL: "https://api.example.com",
     });
 
@@ -250,7 +256,8 @@ Deno.test("tidyfetch - handles undefined query values", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch("/api/users", {
+    await tidyfetch({
+      url: "/api/users",
       query: { page: 1, filter: undefined },
     });
 
@@ -281,7 +288,8 @@ Deno.test("tidyfetch - auto-stringifies JSON body", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch("/api/users", {
+    await tidyfetch({
+      url: "/api/users",
       method: "POST",
       body: { name: "John", age: 30 },
     });
@@ -311,7 +319,8 @@ Deno.test("tidyfetch - preserves non-JSON body types", async () => {
     const formData = new FormData();
     formData.append("key", "value");
 
-    await tidyfetch("/api/upload", {
+    await tidyfetch({
+      url: "/api/upload",
       method: "POST",
       body: formData,
     });
@@ -340,7 +349,8 @@ Deno.test("tidyfetch - retries on specified status codes", async () => {
       return createMockResponse({ success: true });
     };
 
-    const result = await tidyfetch<{ success: boolean }>("/api/data", {
+    const result = await tidyfetch<{ success: boolean }>({
+      url: "/api/data",
       retry: 3,
       retryDelay: 10,
       retryStatusCodes: [500],
@@ -367,7 +377,8 @@ Deno.test("tidyfetch - returns error after all retries exhausted", async () => {
       return createMockResponse("Server Error", 500, "Internal Server Error");
     };
 
-    const result = await tidyfetch("/api/data", {
+    const result = await tidyfetch({
+      url: "/api/data",
       retry: 2,
       retryDelay: 10,
       retryStatusCodes: [500],
@@ -403,7 +414,8 @@ Deno.test("tidyfetch - calls onRequest interceptor", async () => {
       return createMockResponse({ success: true });
     };
 
-    await tidyfetch("/api/data", {
+    await tidyfetch({
+      url: "/api/data",
       // deno-lint-ignore require-await
       async onRequest({ options }) {
         interceptorCalled = true;
@@ -432,7 +444,8 @@ Deno.test("tidyfetch - calls onResponse interceptor", async () => {
     // deno-lint-ignore require-await
     globalThis.fetch = async () => createMockResponse({ data: "test" });
 
-    await tidyfetch("/api/data", {
+    await tidyfetch({
+      url: "/api/data",
       // deno-lint-ignore require-await
       async onResponse({ response }) {
         interceptorCalled = true;
@@ -457,7 +470,8 @@ Deno.test("tidyfetch - calls onResponseError interceptor with error", async () =
     globalThis.fetch = async () =>
       createMockResponse("Unauthorized", 401, "Unauthorized");
 
-    await tidyfetch("/api/data", {
+    await tidyfetch({
+      url: "/api/data",
       // deno-lint-ignore require-await
       async onResponseError({ error }) {
         errorInterceptorCalled = true;
@@ -484,7 +498,8 @@ Deno.test("tidyfetch - supports custom parseResponse", async () => {
     globalThis.fetch = async () =>
       createMockResponse('{"value": 42}', 200, "OK");
 
-    const result = await tidyfetch<{ custom: number }>("/api/data", {
+    const result = await tidyfetch<{ custom: number }>({
+      url: "/api/data",
       parseResponse: (text) => {
         const parsed = JSON.parse(text);
         return { custom: parsed.value * 2 };
@@ -508,7 +523,8 @@ Deno.test("tidyfetch - supports different response types", async () => {
     // deno-lint-ignore require-await
     globalThis.fetch = async () => new Response("plain text");
 
-    const textResult = await tidyfetch<string>("/api/text", {
+    const textResult = await tidyfetch<string>({
+      url: "/api/text",
       responseType: "text",
     });
     expect(textResult.ok).toBe(true);
@@ -520,7 +536,8 @@ Deno.test("tidyfetch - supports different response types", async () => {
     // deno-lint-ignore require-await
     globalThis.fetch = async () => new Response("blob data");
 
-    const blobResult = await tidyfetch<Blob>("/api/blob", {
+    const blobResult = await tidyfetch<Blob>({
+      url: "/api/blob",
       responseType: "blob",
     });
     expect(blobResult.ok).toBe(true);
@@ -553,7 +570,10 @@ Deno.test("tidyfetch - supports caching with TTL", async () => {
     }
 
     // First call should hit the network
-    const result1 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    const result1 = await tidyfetch<CacheData>({
+      url: "/api/data",
+      cacheTTL: 1000,
+    });
     expect(result1.ok).toBe(true);
     if (result1.ok) {
       expect(result1.value.count).toBe(1);
@@ -561,7 +581,10 @@ Deno.test("tidyfetch - supports caching with TTL", async () => {
     expect(fetchCount).toBe(1);
 
     // Second call within TTL should return cached data
-    const result2 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    const result2 = await tidyfetch<CacheData>({
+      url: "/api/data",
+      cacheTTL: 1000,
+    });
     expect(result2.ok).toBe(true);
     if (result2.ok) {
       expect(result2.value.count).toBe(1);
@@ -572,7 +595,10 @@ Deno.test("tidyfetch - supports caching with TTL", async () => {
     await new Promise((resolve) => setTimeout(resolve, 1100));
 
     // Third call after TTL should hit network again
-    const result3 = await tidyfetch<CacheData>("/api/data", { cacheTTL: 1000 });
+    const result3 = await tidyfetch<CacheData>({
+      url: "/api/data",
+      cacheTTL: 1000,
+    });
     expect(result3.ok).toBe(true);
     if (result3.ok) {
       expect(result3.value.count).toBe(2);
@@ -609,7 +635,7 @@ Deno.test("tidyfetch.create - creates instance with defaults", async () => {
       timeout: 5000,
     });
 
-    const result = await api("/users");
+    const result = await api({ url: "/users" });
 
     expect(capturedURL).toBe("https://api.example.com/users");
     expect(capturedHeaders?.get("x-api-key")).toBe("secret-key");
@@ -638,7 +664,8 @@ Deno.test("tidyfetch.create - merges options with defaults", async () => {
       headers: { "X-API-Key": "key" },
     });
 
-    await api("/users", {
+    await api({
+      url: "/users",
       headers: { Authorization: "Bearer token" },
     });
 
@@ -661,9 +688,9 @@ Deno.test("tidyfetch.raw - returns Result with RawResponse", async () => {
     globalThis.fetch = async () =>
       createMockResponse({ id: 123, name: "Test" }, 200, "OK");
 
-    const result = await tidyfetch.raw<{ id: number; name: string }>(
-      "/api/data",
-    );
+    const result = await tidyfetch.raw<{ id: number; name: string }>({
+      url: "/api/data",
+    });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -685,7 +712,7 @@ Deno.test("tidyfetch.raw - returns err Result on error", async () => {
     globalThis.fetch = async () =>
       createMockResponse("Not Found", 404, "Not Found");
 
-    const result = await tidyfetch.raw("/api/missing");
+    const result = await tidyfetch.raw({ url: "/api/missing" });
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -714,7 +741,7 @@ Deno.test("tidyfetch.get - performs GET request", async () => {
       return createMockResponse({ success: true });
     };
 
-    const result = await tidyfetch.get("/api/users");
+    const result = await tidyfetch.get({ url: "/api/users" });
 
     expect(capturedMethod).toBe("GET");
     expect(result.ok).toBe(true);
@@ -739,7 +766,8 @@ Deno.test("tidyfetch.post - performs POST request", async () => {
       return createMockResponse({ id: 456 });
     };
 
-    const result = await tidyfetch.post("/api/users", {
+    const result = await tidyfetch.post({
+      url: "/api/users",
       body: { name: "Bob" },
     });
 
@@ -765,7 +793,8 @@ Deno.test("tidyfetch.put - performs PUT request", async () => {
       return createMockResponse({ updated: true });
     };
 
-    const result = await tidyfetch.put("/api/users/1", {
+    const result = await tidyfetch.put({
+      url: "/api/users/1",
       body: { name: "Updated" },
     });
 
@@ -790,7 +819,8 @@ Deno.test("tidyfetch.patch - performs PATCH request", async () => {
       return createMockResponse({ patched: true });
     };
 
-    const result = await tidyfetch.patch("/api/users/1", {
+    const result = await tidyfetch.patch({
+      url: "/api/users/1",
       body: { email: "new@example.com" },
     });
 
@@ -815,7 +845,7 @@ Deno.test("tidyfetch.delete - performs DELETE request", async () => {
       return createMockResponse({ deleted: true });
     };
 
-    const result = await tidyfetch.delete("/api/users/1");
+    const result = await tidyfetch.delete({ url: "/api/users/1" });
 
     expect(capturedMethod).toBe("DELETE");
     expect(result.ok).toBe(true);
@@ -851,7 +881,7 @@ Deno.test("tidyfetch - supports TypeScript generic type argument", async () => {
       email: string;
     }
 
-    const result = await tidyfetch<User>("/api/users/1");
+    const result = await tidyfetch<User>({ url: "/api/users/1" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -880,7 +910,7 @@ Deno.test("tidyfetch - generic type with arrays", async () => {
       title: string;
     }
 
-    const result = await tidyfetch<Post[]>("/api/posts");
+    const result = await tidyfetch<Post[]>({ url: "/api/posts" });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
