@@ -20,7 +20,7 @@
  * ```ts
  * import { tidyfetch } from "@tidy-ts/shims";
  *
- * const result = await tidyfetch<User>("/api/users/1");
+ * const result = await tidyfetch<User>({ url: "/api/users/1" });
  *
  * if (!result.ok) {
  *   console.error("Failed:", result.error.message);
@@ -32,7 +32,7 @@
  *
  * @example Error handling with specific types
  * ```ts
- * const result = await tidyfetch<User>("/api/users/1");
+ * const result = await tidyfetch<User>({ url: "/api/users/1" });
  *
  * if (!result.ok) {
  *   if (result.error instanceof HTTPError) {
@@ -124,118 +124,8 @@ export type TidyFetchError =
   | AbortError;
 
 // ============================================================================
-// FetchOptions Interface
+// Response Types
 // ============================================================================
-
-/**
- * Named parameters for tidyfetch requests.
- *
- * @example
- * ```ts
- * const result = await tidyfetch<User>({
- *   url: "/api/users",
- *   method: "POST",
- *   headers: { "Content-Type": "application/json" },
- *   body: { name: "Alice" },
- *   timeout: 5000,
- * });
- * ```
- */
-export interface FetchOptions {
-  /** The URL to fetch (required) */
-  url: string;
-
-  // ---- Standard RequestInit properties (explicit) ----
-
-  /** HTTP method (GET, POST, PUT, PATCH, DELETE, etc.) */
-  method?: string;
-
-  /** Request headers */
-  headers?: HeadersInit;
-
-  /** Request body (plain objects auto-stringified to JSON) */
-  body?: BodyInit | Record<string, unknown>;
-
-  /** Request mode (cors, no-cors, same-origin, navigate) */
-  mode?: RequestMode;
-
-  /** Credentials mode (omit, same-origin, include) */
-  credentials?: RequestCredentials;
-
-  /** Cache mode (default, no-store, reload, no-cache, force-cache, only-if-cached) */
-  cache?: RequestCache;
-
-  /** Redirect mode (follow, error, manual) */
-  redirect?: RequestRedirect;
-
-  /** Referrer URL or empty string */
-  referrer?: string;
-
-  /** Referrer policy */
-  referrerPolicy?: ReferrerPolicy;
-
-  /** Subresource integrity hash */
-  integrity?: string;
-
-  /** Keep connection alive after page unloads */
-  keepalive?: boolean;
-
-  /** AbortSignal to cancel request */
-  signal?: AbortSignal | null;
-
-  /** Request priority hint */
-  priority?: RequestPriority;
-
-  // ---- tidyfetch-specific properties ----
-
-  /** Base URL to prepend to the request URL */
-  baseURL?: string;
-
-  /** Query parameters to append to the URL (undefined values filtered out) */
-  query?: Record<string, string | number | boolean | undefined>;
-
-  /** Request timeout in milliseconds (0 = no timeout) */
-  timeout?: number;
-
-  /** Number of retry attempts on failure */
-  retry?: number;
-
-  /** Delay between retry attempts in milliseconds */
-  retryDelay?: number;
-
-  /** HTTP status codes that should trigger a retry */
-  retryStatusCodes?: number[];
-
-  /** Interceptor called before request is sent */
-  onRequest?: (context: {
-    request: Request;
-    options: FetchOptions;
-  }) => void | Promise<void>;
-
-  /** Interceptor called after successful response */
-  onResponse?: (context: {
-    request: Request;
-    response: Response;
-    options: FetchOptions;
-  }) => void | Promise<void>;
-
-  /** Interceptor called on error responses (before Result is returned) */
-  onResponseError?: (context: {
-    request: Request;
-    response: Response;
-    options: FetchOptions;
-    error: TidyFetchError;
-  }) => void | Promise<void>;
-
-  /** Custom response parser */
-  parseResponse?: (text: string) => unknown;
-
-  /** Response type for parsing */
-  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
-
-  /** Response cache TTL in milliseconds (0 = no caching) */
-  cacheTTL?: number;
-}
 
 /**
  * Response object with parsed data attached.
@@ -249,6 +139,47 @@ export interface RawResponse<T = unknown> extends Response {
 // ============================================================================
 // Internal Helpers
 // ============================================================================
+
+/** Type for the function returned by tidyfetch.create */
+type TidyFetchInstance = <T = unknown>(options: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  method?: string;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}) => Promise<Result<T, TidyFetchError>>;
 
 /** @internal Cache entry for response caching */
 interface CacheEntry {
@@ -381,20 +312,6 @@ async function parseResponseBody<T>(
  *   body: { name: "Alice" },
  * });
  * ```
- *
- * @example Error type checking
- * ```ts
- * const result = await tidyfetch<User>({ url: "/api/users/1" });
- *
- * if (!result.ok) {
- *   if (result.error instanceof HTTPError) {
- *     console.log(`HTTP ${result.error.statusCode}`);
- *   } else if (result.error instanceof TimeoutError) {
- *     console.log(`Timed out after ${result.error.timeout}ms`);
- *   }
- *   return;
- * }
- * ```
  */
 export async function tidyfetch<T = unknown>({
   url,
@@ -411,31 +328,88 @@ export async function tidyfetch<T = unknown>({
   responseType = "json",
   cacheTTL = 0,
   signal: userSignal,
-  ...fetchOptions
-}: FetchOptions): Promise<Result<T, TidyFetchError>> {
-  const options: FetchOptions = {
-    url,
-    baseURL,
-    query,
-    timeout,
-    retry,
-    retryDelay,
-    retryStatusCodes,
-    onRequest,
-    onResponse,
-    onResponseError,
-    parseResponse,
-    responseType,
-    cacheTTL,
-    signal: userSignal,
-    ...fetchOptions,
-  };
-
+  method,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  /** The URL to fetch (required) */
+  url: string;
+  /** Base URL to prepend to the request URL */
+  baseURL?: string;
+  /** Query parameters to append to the URL (undefined values filtered out) */
+  query?: Record<string, string | number | boolean | undefined>;
+  /** Request timeout in milliseconds (0 = no timeout) */
+  timeout?: number;
+  /** Number of retry attempts on failure */
+  retry?: number;
+  /** Delay between retry attempts in milliseconds */
+  retryDelay?: number;
+  /** HTTP status codes that should trigger a retry */
+  retryStatusCodes?: number[];
+  /** Interceptor called before request is sent */
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  /** Interceptor called after successful response */
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  /** Interceptor called on error responses (before Result is returned) */
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  /** Custom response parser */
+  parseResponse?: (text: string) => unknown;
+  /** Response type for parsing */
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  /** Response cache TTL in milliseconds (0 = no caching) */
+  cacheTTL?: number;
+  /** AbortSignal to cancel request */
+  signal?: AbortSignal | null;
+  /** HTTP method (GET, POST, PUT, PATCH, DELETE, etc.) */
+  method?: string;
+  /** Request headers */
+  headers?: HeadersInit;
+  /** Request body (plain objects auto-stringified to JSON) */
+  body?: BodyInit | Record<string, unknown>;
+  /** Request mode (cors, no-cors, same-origin, navigate) */
+  mode?: RequestMode;
+  /** Credentials mode (omit, same-origin, include) */
+  credentials?: RequestCredentials;
+  /** Cache mode (default, no-store, reload, no-cache, force-cache, only-if-cached) */
+  cache?: RequestCache;
+  /** Redirect mode (follow, error, manual) */
+  redirect?: RequestRedirect;
+  /** Referrer URL or empty string */
+  referrer?: string;
+  /** Referrer policy */
+  referrerPolicy?: ReferrerPolicy;
+  /** Subresource integrity hash */
+  integrity?: string;
+  /** Keep connection alive after page unloads */
+  keepalive?: boolean;
+  /** Request priority hint */
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> {
   const fullURL = buildURL(url, baseURL, query);
 
   // Check cache
   if (cacheTTL > 0) {
-    const cacheKey = `${fetchOptions.method || "GET"}:${fullURL}`;
+    const cacheKey = `${method || "GET"}:${fullURL}`;
     const cached = responseCache.get(cacheKey);
     if (cached && Date.now() < cached.expires) {
       return ok(cached.data as T);
@@ -443,15 +417,22 @@ export async function tidyfetch<T = unknown>({
   }
 
   // Process body and headers
-  const processedHeaders = fetchOptions.headers
-    ? new Headers(fetchOptions.headers)
-    : new Headers();
-  const processedBody = processBody(fetchOptions.body, processedHeaders);
+  const processedHeaders = headers ? new Headers(headers) : new Headers();
+  const processedBody = processBody(body, processedHeaders);
 
-  let requestInit: RequestInit = {
-    ...fetchOptions,
+  const requestInit: RequestInit = {
+    method,
     body: processedBody,
     headers: processedHeaders,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
   };
 
   // Call onRequest interceptor
@@ -460,11 +441,7 @@ export async function tidyfetch<T = unknown>({
       ? `http://localhost${fullURL}`
       : fullURL;
     const tempRequest = new Request(requestURL, requestInit);
-    await onRequest({ request: tempRequest, options });
-
-    if (options.headers) {
-      requestInit = { ...requestInit, headers: options.headers };
-    }
+    await onRequest({ request: tempRequest, url: fullURL });
   }
 
   // Execute with retry logic
@@ -539,14 +516,14 @@ export async function tidyfetch<T = unknown>({
       // Handle non-ok responses
       if (!response.ok) {
         // Try to read body for error context
-        let body: unknown;
+        let responseBody: unknown;
         try {
-          body = await response.clone().json();
+          responseBody = await response.clone().json();
         } catch {
           try {
-            body = await response.clone().text();
+            responseBody = await response.clone().text();
           } catch {
-            body = undefined;
+            responseBody = undefined;
           }
         }
 
@@ -554,7 +531,7 @@ export async function tidyfetch<T = unknown>({
           statusCode: response.status,
           statusText: response.statusText,
           url: fullURL,
-          body,
+          body: responseBody,
           response,
         });
 
@@ -563,7 +540,7 @@ export async function tidyfetch<T = unknown>({
           await onResponseError({
             request: requestForInterceptor,
             response,
-            options,
+            url: fullURL,
             error: httpError,
           });
         }
@@ -585,7 +562,7 @@ export async function tidyfetch<T = unknown>({
         await onResponse({
           request: requestForInterceptor,
           response,
-          options,
+          url: fullURL,
         });
       }
 
@@ -603,7 +580,7 @@ export async function tidyfetch<T = unknown>({
 
       // Store in cache
       if (cacheTTL > 0) {
-        const cacheKey = `${fetchOptions.method || "GET"}:${fullURL}`;
+        const cacheKey = `${method || "GET"}:${fullURL}`;
         responseCache.set(cacheKey, {
           data: parseResult.value,
           expires: Date.now() + cacheTTL,
@@ -644,14 +621,6 @@ export async function tidyfetch<T = unknown>({
 // tidyfetch.create - Factory function
 // ============================================================================
 
-/** Default options for tidyfetch.create() - url is optional in defaults */
-export type FetchDefaults = Omit<FetchOptions, "url"> & { url?: string };
-
-/** Return type for tidyfetch.create() */
-export type TidyFetchInstance = {
-  <T = unknown>(options: FetchOptions): Promise<Result<T, TidyFetchError>>;
-};
-
 /**
  * Factory function to create a preconfigured tidyfetch instance.
  *
@@ -669,14 +638,137 @@ export type TidyFetchInstance = {
  * }
  * ```
  */
-tidyfetch.create = (defaults: FetchDefaults): TidyFetchInstance => {
-  const instance = <T = unknown>({
+tidyfetch.create = ({
+  baseURL: defaultBaseURL,
+  query: defaultQuery,
+  timeout: defaultTimeout,
+  retry: defaultRetry,
+  retryDelay: defaultRetryDelay,
+  retryStatusCodes: defaultRetryStatusCodes,
+  onRequest: defaultOnRequest,
+  onResponse: defaultOnResponse,
+  onResponseError: defaultOnResponseError,
+  parseResponse: defaultParseResponse,
+  responseType: defaultResponseType,
+  cacheTTL: defaultCacheTTL,
+  signal: defaultSignal,
+  method: defaultMethod,
+  headers: defaultHeaders,
+  body: defaultBody,
+  mode: defaultMode,
+  credentials: defaultCredentials,
+  cache: defaultCache,
+  redirect: defaultRedirect,
+  referrer: defaultReferrer,
+  referrerPolicy: defaultReferrerPolicy,
+  integrity: defaultIntegrity,
+  keepalive: defaultKeepalive,
+  priority: defaultPriority,
+}: {
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  method?: string;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+} = {}): TidyFetchInstance => {
+  return <T = unknown>({
     url,
-    headers,
+    baseURL,
     query,
-    ...rest
-  }: FetchOptions): Promise<Result<T, TidyFetchError>> => {
-    const mergedHeaders = new Headers(defaults.headers);
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method,
+    headers,
+    body,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  }: {
+    url: string;
+    baseURL?: string;
+    query?: Record<string, string | number | boolean | undefined>;
+    timeout?: number;
+    retry?: number;
+    retryDelay?: number;
+    retryStatusCodes?: number[];
+    onRequest?: (
+      context: { request: Request; url: string },
+    ) => void | Promise<void>;
+    onResponse?: (
+      context: { request: Request; response: Response; url: string },
+    ) => void | Promise<void>;
+    onResponseError?: (
+      context: {
+        request: Request;
+        response: Response;
+        url: string;
+        error: TidyFetchError;
+      },
+    ) => void | Promise<void>;
+    parseResponse?: (text: string) => unknown;
+    responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+    cacheTTL?: number;
+    signal?: AbortSignal | null;
+    method?: string;
+    headers?: HeadersInit;
+    body?: BodyInit | Record<string, unknown>;
+    mode?: RequestMode;
+    credentials?: RequestCredentials;
+    cache?: RequestCache;
+    redirect?: RequestRedirect;
+    referrer?: string;
+    referrerPolicy?: ReferrerPolicy;
+    integrity?: string;
+    keepalive?: boolean;
+    priority?: RequestPriority;
+  }): Promise<Result<T, TidyFetchError>> => {
+    const mergedHeaders = new Headers(defaultHeaders);
     if (headers) {
       const optionHeaders = new Headers(headers);
       optionHeaders.forEach((value, key) => {
@@ -684,18 +776,37 @@ tidyfetch.create = (defaults: FetchDefaults): TidyFetchInstance => {
       });
     }
 
-    const mergedQuery = { ...defaults.query, ...query };
+    const mergedQuery = { ...defaultQuery, ...query };
 
     return tidyfetch<T>({
-      ...defaults,
-      ...rest,
       url,
-      headers: mergedHeaders,
+      baseURL: baseURL ?? defaultBaseURL,
       query: Object.keys(mergedQuery).length > 0 ? mergedQuery : undefined,
+      timeout: timeout ?? defaultTimeout,
+      retry: retry ?? defaultRetry,
+      retryDelay: retryDelay ?? defaultRetryDelay,
+      retryStatusCodes: retryStatusCodes ?? defaultRetryStatusCodes,
+      onRequest: onRequest ?? defaultOnRequest,
+      onResponse: onResponse ?? defaultOnResponse,
+      onResponseError: onResponseError ?? defaultOnResponseError,
+      parseResponse: parseResponse ?? defaultParseResponse,
+      responseType: responseType ?? defaultResponseType,
+      cacheTTL: cacheTTL ?? defaultCacheTTL,
+      signal: signal ?? defaultSignal,
+      method: method ?? defaultMethod,
+      headers: mergedHeaders,
+      body: body ?? defaultBody,
+      mode: mode ?? defaultMode,
+      credentials: credentials ?? defaultCredentials,
+      cache: cache ?? defaultCache,
+      redirect: redirect ?? defaultRedirect,
+      referrer: referrer ?? defaultReferrer,
+      referrerPolicy: referrerPolicy ?? defaultReferrerPolicy,
+      integrity: integrity ?? defaultIntegrity,
+      keepalive: keepalive ?? defaultKeepalive,
+      priority: priority ?? defaultPriority,
     });
   };
-
-  return instance;
 };
 
 // ============================================================================
@@ -731,36 +842,74 @@ tidyfetch.raw = async <T = unknown>({
   parseResponse,
   responseType = "json",
   signal: userSignal,
-  ...fetchOptions
-}: FetchOptions): Promise<Result<RawResponse<T>, TidyFetchError>> => {
-  const options: FetchOptions = {
-    url,
-    baseURL,
-    query,
-    timeout,
-    retry,
-    retryDelay,
-    retryStatusCodes,
-    onRequest,
-    onResponse,
-    onResponseError,
-    parseResponse,
-    responseType,
-    signal: userSignal,
-    ...fetchOptions,
-  };
-
+  method,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  signal?: AbortSignal | null;
+  method?: string;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<RawResponse<T>, TidyFetchError>> => {
   const fullURL = buildURL(url, baseURL, query);
 
-  const processedHeaders = fetchOptions.headers
-    ? new Headers(fetchOptions.headers)
-    : new Headers();
-  const processedBody = processBody(fetchOptions.body, processedHeaders);
+  const processedHeaders = headers ? new Headers(headers) : new Headers();
+  const processedBody = processBody(body, processedHeaders);
 
-  let requestInit: RequestInit = {
-    ...fetchOptions,
+  const requestInit: RequestInit = {
+    method,
     body: processedBody,
     headers: processedHeaders,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
   };
 
   if (onRequest) {
@@ -768,11 +917,7 @@ tidyfetch.raw = async <T = unknown>({
       ? `http://localhost${fullURL}`
       : fullURL;
     const tempRequest = new Request(requestURL, requestInit);
-    await onRequest({ request: tempRequest, options });
-
-    if (options.headers) {
-      requestInit = { ...requestInit, headers: options.headers };
-    }
+    await onRequest({ request: tempRequest, url: fullURL });
   }
 
   let lastError: TidyFetchError | null = null;
@@ -840,14 +985,14 @@ tidyfetch.raw = async <T = unknown>({
       );
 
       if (!response.ok) {
-        let body: unknown;
+        let responseBody: unknown;
         try {
-          body = await response.clone().json();
+          responseBody = await response.clone().json();
         } catch {
           try {
-            body = await response.clone().text();
+            responseBody = await response.clone().text();
           } catch {
-            body = undefined;
+            responseBody = undefined;
           }
         }
 
@@ -855,7 +1000,7 @@ tidyfetch.raw = async <T = unknown>({
           statusCode: response.status,
           statusText: response.statusText,
           url: fullURL,
-          body,
+          body: responseBody,
           response,
         });
 
@@ -863,7 +1008,7 @@ tidyfetch.raw = async <T = unknown>({
           await onResponseError({
             request: requestForInterceptor,
             response,
-            options,
+            url: fullURL,
             error: httpError,
           });
         }
@@ -883,7 +1028,7 @@ tidyfetch.raw = async <T = unknown>({
         await onResponse({
           request: requestForInterceptor,
           response,
-          options,
+          url: fullURL,
         });
       }
 
@@ -973,34 +1118,466 @@ tidyfetch.native = globalThis.fetch.bind(globalThis) as typeof fetch;
 /** GET request returning Result */
 tidyfetch.get = <T = unknown>({
   url,
-  ...rest
-}: FetchOptions): Promise<Result<T, TidyFetchError>> =>
-  tidyfetch<T>({ url, ...rest, method: "GET" });
+  baseURL,
+  query,
+  timeout,
+  retry,
+  retryDelay,
+  retryStatusCodes,
+  onRequest,
+  onResponse,
+  onResponseError,
+  parseResponse,
+  responseType,
+  cacheTTL,
+  signal,
+  headers,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  headers?: HeadersInit;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>({
+    url,
+    baseURL,
+    query,
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method: "GET",
+    headers,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  });
 
 /** POST request returning Result */
 tidyfetch.post = <T = unknown>({
   url,
-  ...rest
-}: FetchOptions): Promise<Result<T, TidyFetchError>> =>
-  tidyfetch<T>({ url, ...rest, method: "POST" });
+  baseURL,
+  query,
+  timeout,
+  retry,
+  retryDelay,
+  retryStatusCodes,
+  onRequest,
+  onResponse,
+  onResponseError,
+  parseResponse,
+  responseType,
+  cacheTTL,
+  signal,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>({
+    url,
+    baseURL,
+    query,
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method: "POST",
+    headers,
+    body,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  });
 
 /** PUT request returning Result */
 tidyfetch.put = <T = unknown>({
   url,
-  ...rest
-}: FetchOptions): Promise<Result<T, TidyFetchError>> =>
-  tidyfetch<T>({ url, ...rest, method: "PUT" });
+  baseURL,
+  query,
+  timeout,
+  retry,
+  retryDelay,
+  retryStatusCodes,
+  onRequest,
+  onResponse,
+  onResponseError,
+  parseResponse,
+  responseType,
+  cacheTTL,
+  signal,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>({
+    url,
+    baseURL,
+    query,
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method: "PUT",
+    headers,
+    body,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  });
 
 /** PATCH request returning Result */
 tidyfetch.patch = <T = unknown>({
   url,
-  ...rest
-}: FetchOptions): Promise<Result<T, TidyFetchError>> =>
-  tidyfetch<T>({ url, ...rest, method: "PATCH" });
+  baseURL,
+  query,
+  timeout,
+  retry,
+  retryDelay,
+  retryStatusCodes,
+  onRequest,
+  onResponse,
+  onResponseError,
+  parseResponse,
+  responseType,
+  cacheTTL,
+  signal,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>({
+    url,
+    baseURL,
+    query,
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method: "PATCH",
+    headers,
+    body,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  });
 
 /** DELETE request returning Result */
 tidyfetch.delete = <T = unknown>({
   url,
-  ...rest
-}: FetchOptions): Promise<Result<T, TidyFetchError>> =>
-  tidyfetch<T>({ url, ...rest, method: "DELETE" });
+  baseURL,
+  query,
+  timeout,
+  retry,
+  retryDelay,
+  retryStatusCodes,
+  onRequest,
+  onResponse,
+  onResponseError,
+  parseResponse,
+  responseType,
+  cacheTTL,
+  signal,
+  headers,
+  body,
+  mode,
+  credentials,
+  cache,
+  redirect,
+  referrer,
+  referrerPolicy,
+  integrity,
+  keepalive,
+  priority,
+}: {
+  url: string;
+  baseURL?: string;
+  query?: Record<string, string | number | boolean | undefined>;
+  timeout?: number;
+  retry?: number;
+  retryDelay?: number;
+  retryStatusCodes?: number[];
+  onRequest?: (
+    context: { request: Request; url: string },
+  ) => void | Promise<void>;
+  onResponse?: (
+    context: { request: Request; response: Response; url: string },
+  ) => void | Promise<void>;
+  onResponseError?: (
+    context: {
+      request: Request;
+      response: Response;
+      url: string;
+      error: TidyFetchError;
+    },
+  ) => void | Promise<void>;
+  parseResponse?: (text: string) => unknown;
+  responseType?: "json" | "text" | "blob" | "arrayBuffer" | "stream";
+  cacheTTL?: number;
+  signal?: AbortSignal | null;
+  headers?: HeadersInit;
+  body?: BodyInit | Record<string, unknown>;
+  mode?: RequestMode;
+  credentials?: RequestCredentials;
+  cache?: RequestCache;
+  redirect?: RequestRedirect;
+  referrer?: string;
+  referrerPolicy?: ReferrerPolicy;
+  integrity?: string;
+  keepalive?: boolean;
+  priority?: RequestPriority;
+}): Promise<Result<T, TidyFetchError>> =>
+  tidyfetch<T>({
+    url,
+    baseURL,
+    query,
+    timeout,
+    retry,
+    retryDelay,
+    retryStatusCodes,
+    onRequest,
+    onResponse,
+    onResponseError,
+    parseResponse,
+    responseType,
+    cacheTTL,
+    signal,
+    method: "DELETE",
+    headers,
+    body,
+    mode,
+    credentials,
+    cache,
+    redirect,
+    referrer,
+    referrerPolicy,
+    integrity,
+    keepalive,
+    priority,
+  });

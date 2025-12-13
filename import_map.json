@@ -14,6 +14,8 @@
     "@deno/wasmbuild/": "jsr:/@deno/wasmbuild@^0.19.2/",
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@std/csv/": "jsr:/@std/csv@^1.0.6/",
+    "@std/encoding": "jsr:@std/encoding@^1.0.10",
+    "@std/encoding/": "jsr:/@std/encoding@^1.0.10/",
     "@std/expect": "jsr:@std/expect@^1.0.15",
     "@std/expect/": "jsr:/@std/expect@^1.0.15/",
     "@std/path": "jsr:@std/path@^1.0.8",

@@ -416,15 +416,9 @@ Deno.test("tidyfetch - calls onRequest interceptor", async () => {
 
     await tidyfetch({
       url: "/api/data",
-      // deno-lint-ignore require-await
-      async onRequest({ options }) {
+      headers: { "X-Custom": "interceptor-value" },
+      onRequest() {
         interceptorCalled = true;
-        if (!options.headers) {
-          options.headers = new Headers();
-        }
-        if (options.headers instanceof Headers) {
-          options.headers.set("X-Custom", "interceptor-value");
-        }
       },
     });
 

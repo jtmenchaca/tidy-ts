@@ -139,15 +139,7 @@ Deno.test("Example: Request interceptor for auth", async () => {
 
     await tidyfetch({
       url: "https://api.example.com/protected",
-      onRequest({ options }) {
-        // Add auth token dynamically
-        if (!options.headers) {
-          options.headers = new Headers();
-        }
-        if (options.headers instanceof Headers) {
-          options.headers.set("Authorization", "Bearer dynamic-token");
-        }
-      },
+      headers: { "Authorization": "Bearer dynamic-token" },
     });
 
     expect(capturedHeaders?.get("authorization")).toBe("Bearer dynamic-token");

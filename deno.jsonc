@@ -14,7 +14,7 @@
   },
   "tasks": {
     "mcp": "deno run --allow-read --allow-env src/mcp/cli.ts",
-    "mcp:install": "deno install --global --allow-read --allow-env --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
+    "mcp:install": "deno install --global -A --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
     "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check .",
     "ci": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
     "ci:no-stats": "deno fmt src/dataframe examples/dataframe tests/bugs tests/new_features && deno lint src/dataframe examples/dataframe tests/bugs tests/new_features && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 examples/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/bugs --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/new_features --quiet",
@@ -81,7 +81,8 @@
     "tests/tidy-stats/__pycache__",
     "tests/tidy-stats/.venv",
     "docs/src/routeTree.gen.ts",
-    "tmp/"
+    "tmp/",
+    "blank-mcp/"
   ],
   "workspace": [
     "src/dataframe",

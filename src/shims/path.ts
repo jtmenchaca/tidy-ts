@@ -3,8 +3,11 @@
  * Provides runtime-agnostic path operations that work with Deno, Bun, and Node.js
  */
 
-import { getPathModule, getPathToFileURL } from "./_runtime.ts";
-import { importMeta } from "./process.ts";
+import {
+  getFileURLToPath,
+  getPathModule,
+  getPathToFileURL,
+} from "./_runtime.ts";
 
 /**
  * Get the directory name of a path
@@ -55,7 +58,7 @@ export function resolve(...paths: string[]): string {
  * ```
  */
 export function fileURLToPath(url: string): string {
-  return importMeta.urlToPath(url);
+  return getFileURLToPath()(url);
 }
 
 /**

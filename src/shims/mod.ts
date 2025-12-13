@@ -37,7 +37,7 @@ export { dirname, fileURLToPath, pathToFileURL, resolve } from "./path.ts";
 export { env } from "./env.ts";
 
 // Process management
-export { args, exit, getArgs, importMeta } from "./process.ts";
+export { args, exit, getArgs } from "./process.ts";
 
 // Cross-runtime testing framework
 export { test, type TestSubject, type WrappedTestOptions } from "./test.ts";
@@ -49,20 +49,27 @@ export { type AppError, defineError, err, ok, type Result } from "./result.ts";
 export {
   // Error types
   AbortError,
-  // Fetch API
-  type FetchOptions,
   HTTPError,
   NetworkError,
   ParseError,
+  // Fetch API
   type RawResponse,
   tidyfetch,
   type TidyFetchError,
-  type TidyFetchInstance,
   TimeoutError,
 } from "./fetch.ts";
 
 // Error types
 export { UnavailableAPIError, UnsupportedRuntimeError } from "./errors.ts";
+
+// Encryption utilities (AES-256-GCM)
+export {
+  decrypt,
+  encrypt,
+  fromBase64URL,
+  toBase64URL,
+} from "./encryption/encryptAndDecrypt.ts";
+export { generateKey } from "./encryption/generateKey.ts";
 
 // Compression stream polyfill (automatically initializes)
 import "./compression.ts";

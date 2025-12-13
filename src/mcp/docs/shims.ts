@@ -508,7 +508,7 @@ export const shimsDocs: Record<string, DocEntry> = {
     examples: [
       '// Get directory from path\nimport { dirname } from "@tidy-ts/shims";\n\nconst dir = dirname("/path/to/file.txt");\nconsole.log(dir); // /path/to',
     ],
-    related: ["resolve", "importMeta"],
+    related: ["resolve", "fileURLToPath"],
     bestPractices: [
       "✓ GOOD: Use to extract directory from file paths",
     ],
@@ -530,7 +530,7 @@ export const shimsDocs: Record<string, DocEntry> = {
     examples: [
       '// Convert import.meta.url to path\nimport { fileURLToPath } from "@tidy-ts/shims";\n\nconst currentFile = fileURLToPath(import.meta.url);\nconsole.log(currentFile);',
     ],
-    related: ["pathToFileURL", "importMeta"],
+    related: ["pathToFileURL", "dirname"],
     bestPractices: [
       "✓ GOOD: Use with import.meta.url to get current file path",
     ],
@@ -589,7 +589,7 @@ export const shimsDocs: Record<string, DocEntry> = {
       '// Load from URL\nconst config = await env.loadFromFile(new URL("file:///path/to/.env"));',
       '// Test setup/teardown\nconst original = env.get("API_URL");\nenv.set("API_URL", "http://test.example.com");\n// ... run tests ...\nif (original) {\n  env.set("API_URL", original);\n} else {\n  env.delete("API_URL");\n}',
     ],
-    related: ["args", "importMeta"],
+    related: ["args", "exit"],
     bestPractices: [
       "✓ GOOD: Use get() for reading variables",
       "✓ GOOD: Use set() for temporarily modifying variables (e.g., in tests)",
@@ -667,32 +667,6 @@ export const shimsDocs: Record<string, DocEntry> = {
       "✓ GOOD: Use 0 for success",
       "✓ GOOD: Use non-zero (typically 1) for errors",
       "✓ GOOD: Log error messages before exiting",
-    ],
-  },
-
-  importMeta: {
-    name: "importMeta",
-    category: "shims",
-    signature:
-      "importMeta.main: boolean\nimportMeta.url: string\nimportMeta.urlToPath(url: string): string\nimportMeta.getFilename(): string\nimportMeta.getDirname(): string",
-    description:
-      "Import meta utilities for working with module metadata. Check if module is main, get current file path, get directory name, and convert URLs to paths.",
-    imports: [
-      'import { importMeta } from "@tidy-ts/shims";',
-    ],
-    parameters: [],
-    returns: "Object with main, url, urlToPath(), getFilename(), getDirname()",
-    examples: [
-      '// Check if running as main script\nimport { importMeta } from "@tidy-ts/shims";\n\nif (importMeta.main) {\n  console.log("Running as main script");\n  // Run CLI logic\n}',
-      "// Get current file path\nconst currentFile = importMeta.getFilename();\nconsole.log('Current file:', currentFile);",
-      "// Get current directory\nconst currentDir = importMeta.getDirname();\nconsole.log('Current directory:', currentDir);",
-      "// Get module URL\nconsole.log('Module URL:', importMeta.url);",
-    ],
-    related: ["fileURLToPath", "dirname"],
-    bestPractices: [
-      "✓ GOOD: Use importMeta.main to conditionally run CLI code",
-      "✓ GOOD: Use getFilename() to get current file path",
-      "✓ GOOD: Use getDirname() to get current directory",
     ],
   },
 
@@ -781,36 +755,48 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch",
     category: "shims",
     signature:
-      "tidyfetch<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Enhanced fetch API with Result-based error handling, automatic JSON parsing, retries, timeouts, caching, and interceptors. Returns Result<T, TidyFetchError> for type-safe error handling without exceptions. Works identically across Deno, Bun, and Node.js.",
+      "Enhanced fetch API with Result-based error handling, automatic JSON parsing, retries, timeouts, caching, and interceptors. Returns Result<T, TidyFetchError> for type-safe error handling without exceptions. Works identically across Deno, Bun, and Node.js. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
       'import { tidyfetch, type Result, type TidyFetchError } from "@tidy-ts/shims";',
       'import { tidyfetch, HTTPError, NetworkError, TimeoutError } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL to fetch (absolute, or relative if baseURL is provided)",
-      "options.baseURL: Base URL to prepend to all requests",
-      "options.query: Query parameters as an object (auto-appended to URL)",
-      "options.body: Request body (plain objects auto-stringified to JSON)",
-      "options.timeout: Request timeout in milliseconds (default: 0 = no timeout)",
-      "options.retry: Number of retry attempts (default: 0)",
-      "options.retryDelay: Delay between retries in ms (default: 0)",
-      "options.retryStatusCodes: Status codes that trigger retry (default: [408, 429, 500, 502, 503, 504])",
-      "options.cacheTTL: Response cache TTL in ms (default: 0 = no cache)",
-      "options.responseType: 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream' (default: 'json')",
-      "options.onRequest: Interceptor called before request is sent",
-      "options.onResponse: Interceptor called after successful response",
-      "options.onResponseError: Interceptor called on error (receives typed error object)",
-      "options.parseResponse: Custom function to parse response body",
+      "url: The URL to fetch (required, absolute or relative if baseURL is provided)",
+      "baseURL: Base URL to prepend to the request URL",
+      "query: Query parameters as an object (auto-appended to URL, undefined values filtered out)",
+      "body: Request body (plain objects auto-stringified to JSON)",
+      "method: HTTP method (GET, POST, PUT, PATCH, DELETE, etc.)",
+      "headers: Request headers (HeadersInit)",
+      "timeout: Request timeout in milliseconds (default: 0 = no timeout)",
+      "retry: Number of retry attempts on failure (default: 0)",
+      "retryDelay: Delay between retry attempts in milliseconds (default: 0)",
+      "retryStatusCodes: HTTP status codes that should trigger a retry (default: [408, 429, 500, 502, 503, 504])",
+      "cacheTTL: Response cache TTL in milliseconds (default: 0 = no caching)",
+      "responseType: Response type for parsing - 'json' | 'text' | 'blob' | 'arrayBuffer' | 'stream' (default: 'json')",
+      "onRequest: Interceptor called before request is sent (context: { request: Request; url: string })",
+      "onResponse: Interceptor called after successful response (context: { request: Request; response: Response; url: string })",
+      "onResponseError: Interceptor called on error responses (context: { request: Request; response: Response; url: string; error: TidyFetchError })",
+      "parseResponse: Custom function to parse response body (text: string) => unknown",
+      "signal: AbortSignal to cancel request",
+      "mode: Request mode (cors, no-cors, same-origin, navigate)",
+      "credentials: Credentials mode (omit, same-origin, include)",
+      "cache: Cache mode (default, no-store, reload, no-cache, force-cache, only-if-cached)",
+      "redirect: Redirect mode (follow, error, manual)",
+      "referrer: Referrer URL or empty string",
+      "referrerPolicy: Referrer policy",
+      "integrity: Subresource integrity hash",
+      "keepalive: Keep connection alive after page unloads",
+      "priority: Request priority hint",
     ],
     returns:
       "Promise<Result<T, TidyFetchError>> - Result type with ok/error discriminant",
     examples: [
-      '// Basic GET with Result handling\nimport { tidyfetch } from "@tidy-ts/shims";\n\ninterface User { id: number; name: string; }\n\nconst result = await tidyfetch<User>("/api/users/1");\nif (result.ok) {\n  console.log(result.value.name); // Type-safe access\n} else {\n  console.error(result.error.message);\n}',
-      '// POST with auto JSON body\nconst result = await tidyfetch<User>("/api/users", {\n  method: "POST",\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
-      '// Handle specific error types\nimport { tidyfetch, HTTPError, TimeoutError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch("/api/data");\nif (!result.ok) {\n  if (result.error instanceof HTTPError) {\n    console.log(`HTTP ${result.error.statusCode}: ${result.error.statusText}`);\n  } else if (result.error instanceof TimeoutError) {\n    console.log("Request timed out");\n  }\n}',
+      '// Basic GET with Result handling\nimport { tidyfetch } from "@tidy-ts/shims";\n\ninterface User { id: number; name: string; }\n\nconst result = await tidyfetch<User>({ url: "/api/users/1" });\nif (result.ok) {\n  console.log(result.value.name); // Type-safe access\n} else {\n  console.error(result.error.message);\n}',
+      '// POST with auto JSON body\nconst result = await tidyfetch<User>({\n  url: "/api/users",\n  method: "POST",\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
+      '// Handle specific error types\nimport { tidyfetch, HTTPError, TimeoutError } from "@tidy-ts/shims";\n\nconst result = await tidyfetch({ url: "/api/data" });\nif (!result.ok) {\n  if (result.error instanceof HTTPError) {\n    console.log(`HTTP ${result.error.statusCode}: ${result.error.statusText}`);\n  } else if (result.error instanceof TimeoutError) {\n    console.log("Request timed out");\n  }\n}',
     ],
     related: [
       "tidyfetch.create",
@@ -835,19 +821,20 @@ export const shimsDocs: Record<string, DocEntry> = {
   "tidyfetch.create": {
     name: "tidyfetch.create",
     category: "shims",
-    signature: "tidyfetch.create(defaults: FetchOptions): TidyFetchInstance",
+    signature: "tidyfetch.create({ ...defaults }): TidyFetchInstance",
     description:
-      "Factory function to create a preconfigured tidyfetch instance with default options. Returns a TidyFetchInstance that returns Result for type-safe error handling. Perfect for creating API clients with shared configuration.",
+      "Factory function to create a preconfigured tidyfetch instance with default options. Returns a TidyFetchInstance that returns Result for type-safe error handling. Perfect for creating API clients with shared configuration. The returned instance accepts the same object-based options as tidyfetch.",
     imports: [
       'import { tidyfetch, type TidyFetchInstance } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "defaults: Default FetchOptions applied to all requests from this instance",
+      "defaults: Default FetchOptions (as named properties) applied to all requests from this instance",
     ],
-    returns: "TidyFetchInstance - Function returning Result<T, TidyFetchError>",
+    returns:
+      "TidyFetchInstance - Function that accepts { url, ...options } and returns Result<T, TidyFetchError>",
     examples: [
-      '// Create an API client (returns Result)\nimport { tidyfetch } from "@tidy-ts/shims";\n\nconst api = tidyfetch.create({\n  baseURL: "https://api.example.com",\n  headers: { "Authorization": `Bearer ${token}` },\n  timeout: 10000\n});\n\n// Returns Result\nconst result = await api<User[]>("/users");\nif (result.ok) {\n  console.log(result.value);\n}',
-      '// Multiple API clients\nconst publicApi = tidyfetch.create({\n  baseURL: "https://api.example.com/public"\n});\n\nconst adminApi = tidyfetch.create({\n  baseURL: "https://api.example.com/admin",\n  headers: { "X-Admin-Token": adminToken }\n});',
+      '// Create an API client (returns Result)\nimport { tidyfetch } from "@tidy-ts/shims";\n\nconst api = tidyfetch.create({\n  baseURL: "https://api.example.com",\n  headers: { "Authorization": `Bearer ${token}` },\n  timeout: 10000\n});\n\n// Returns Result - note the object syntax\nconst result = await api<User[]>({ url: "/users" });\nif (result.ok) {\n  console.log(result.value);\n}',
+      '// Multiple API clients\nconst publicApi = tidyfetch.create({\n  baseURL: "https://api.example.com/public"\n});\n\nconst adminApi = tidyfetch.create({\n  baseURL: "https://api.example.com/admin",\n  headers: { "X-Admin-Token": adminToken }\n});\n\n// Use the instances\nconst publicResult = await publicApi({ url: "/data" });\nconst adminResult = await adminApi({ url: "/users" });',
     ],
     related: ["tidyfetch", "TidyFetchInstance"],
     bestPractices: [
@@ -860,20 +847,20 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.get",
     category: "shims",
     signature:
-      "tidyfetch.get<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch.get<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for GET requests. Returns Result for type-safe error handling. GET requests are typically used to retrieve resources.",
+      "Shorthand for GET requests. Returns Result for type-safe error handling. GET requests are typically used to retrieve resources. Method is automatically set to GET. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL to fetch",
-      "options: Additional FetchOptions (method is set automatically)",
+      "url: The URL to fetch (required)",
+      "All other FetchOptions as named properties (method is set automatically to GET)",
     ],
     returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Basic GET\nconst result = await tidyfetch.get<User[]>("/api/users");\nif (result.ok) {\n  console.log(result.value);\n}',
-      '// GET with query parameters\nconst result = await tidyfetch.get<User>("/api/users/1", {\n  query: { include: "posts,comments" }\n});',
+      '// Basic GET\nconst result = await tidyfetch.get<User[]>({ url: "/api/users" });\nif (result.ok) {\n  console.log(result.value);\n}',
+      '// GET with query parameters\nconst result = await tidyfetch.get<User>({\n  url: "/api/users/1",\n  query: { include: "posts,comments" }\n});',
     ],
     related: ["tidyfetch", "tidyfetch.post", "tidyfetch.put"],
     bestPractices: [
@@ -886,19 +873,20 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.post",
     category: "shims",
     signature:
-      "tidyfetch.post<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch.post<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for POST requests. Returns Result for type-safe error handling. POST requests are typically used to create new resources. Body objects are auto-stringified to JSON.",
+      "Shorthand for POST requests. Returns Result for type-safe error handling. POST requests are typically used to create new resources. Body objects are auto-stringified to JSON. Method is automatically set to POST. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL to post to",
-      "options: FetchOptions including body data",
+      "url: The URL to post to (required)",
+      "body: Request body data (plain objects auto-stringified to JSON)",
+      "All other FetchOptions as named properties (method is set automatically to POST)",
     ],
     returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Create a resource\nconst result = await tidyfetch.post<User>("/api/users", {\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
+      '// Create a resource\nconst result = await tidyfetch.post<User>({\n  url: "/api/users",\n  body: { name: "Alice", email: "alice@example.com" }\n});\nif (result.ok) {\n  console.log("Created:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.get", "tidyfetch.put", "tidyfetch.patch"],
     bestPractices: [
@@ -911,19 +899,20 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.put",
     category: "shims",
     signature:
-      "tidyfetch.put<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch.put<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for PUT requests. Returns Result for type-safe error handling. PUT requests are typically used to replace entire resources.",
+      "Shorthand for PUT requests. Returns Result for type-safe error handling. PUT requests are typically used to replace entire resources. Method is automatically set to PUT. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL of the resource to replace",
-      "options: FetchOptions including the new resource data",
+      "url: The URL of the resource to replace (required)",
+      "body: Request body with the new resource data",
+      "All other FetchOptions as named properties (method is set automatically to PUT)",
     ],
     returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Replace a resource\nconst result = await tidyfetch.put<User>("/api/users/1", {\n  body: { name: "Alice Smith", email: "alice@example.com", role: "admin" }\n});\nif (result.ok) {\n  console.log("Updated:", result.value);\n}',
+      '// Replace a resource\nconst result = await tidyfetch.put<User>({\n  url: "/api/users/1",\n  body: { name: "Alice Smith", email: "alice@example.com", role: "admin" }\n});\nif (result.ok) {\n  console.log("Updated:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.patch", "tidyfetch.post"],
     bestPractices: [
@@ -936,19 +925,20 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.patch",
     category: "shims",
     signature:
-      "tidyfetch.patch<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch.patch<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for PATCH requests. Returns Result for type-safe error handling. PATCH requests are typically used for partial updates to resources.",
+      "Shorthand for PATCH requests. Returns Result for type-safe error handling. PATCH requests are typically used for partial updates to resources. Method is automatically set to PATCH. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL of the resource to update",
-      "options: FetchOptions including the partial update data",
+      "url: The URL of the resource to update (required)",
+      "body: Request body with the partial update data",
+      "All other FetchOptions as named properties (method is set automatically to PATCH)",
     ],
     returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Partial update\nconst result = await tidyfetch.patch<User>("/api/users/1", {\n  body: { email: "newemail@example.com" }\n});\nif (result.ok) {\n  console.log("Patched:", result.value);\n}',
+      '// Partial update\nconst result = await tidyfetch.patch<User>({\n  url: "/api/users/1",\n  body: { email: "newemail@example.com" }\n});\nif (result.ok) {\n  console.log("Patched:", result.value);\n}',
     ],
     related: ["tidyfetch", "tidyfetch.put", "tidyfetch.post"],
     bestPractices: [
@@ -961,20 +951,20 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.delete",
     category: "shims",
     signature:
-      "tidyfetch.delete<T>(url: string, options?: FetchOptions): Promise<Result<T, TidyFetchError>>",
+      "tidyfetch.delete<T>({ url, ...options }): Promise<Result<T, TidyFetchError>>",
     description:
-      "Shorthand for DELETE requests. Returns Result for type-safe error handling. DELETE requests are used to remove resources.",
+      "Shorthand for DELETE requests. Returns Result for type-safe error handling. DELETE requests are used to remove resources. Method is automatically set to DELETE. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL of the resource to delete",
-      "options: Additional FetchOptions",
+      "url: The URL of the resource to delete (required)",
+      "All other FetchOptions as named properties (method is set automatically to DELETE)",
     ],
     returns: "Promise<Result<T, TidyFetchError>> - Result with value or error",
     examples: [
-      '// Delete a resource\nconst result = await tidyfetch.delete("/api/users/1");\nif (result.ok) {\n  console.log("Deleted successfully");\n}',
-      '// Delete with confirmation response\nconst result = await tidyfetch.delete<{ success: boolean }>("/api/users/1");\nif (result.ok && result.value.success) {\n  console.log("Confirmed deleted");\n}',
+      '// Delete a resource\nconst result = await tidyfetch.delete({ url: "/api/users/1" });\nif (result.ok) {\n  console.log("Deleted successfully");\n}',
+      '// Delete with confirmation response\nconst result = await tidyfetch.delete<{ success: boolean }>({ url: "/api/users/1" });\nif (result.ok && result.value.success) {\n  console.log("Confirmed deleted");\n}',
     ],
     related: ["tidyfetch", "tidyfetch.post"],
     bestPractices: [
@@ -987,21 +977,21 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "tidyfetch.raw",
     category: "shims",
     signature:
-      "tidyfetch.raw<T>(url: string, options?: FetchOptions): Promise<Result<RawResponse<T>, TidyFetchError>>",
+      "tidyfetch.raw<T>({ url, ...options }): Promise<Result<RawResponse<T>, TidyFetchError>>",
     description:
-      "Fetch with access to the full Response object plus parsed data. Returns Result containing the complete Response with a `_data` property containing parsed data. Use when you need access to response headers, status codes, or other Response properties.",
+      "Fetch with access to the full Response object plus parsed data. Returns Result containing the complete Response with a `_data` property containing parsed data. Use when you need access to response headers, status codes, or other Response properties. All options are passed as named properties in a single object.",
     imports: [
       'import { tidyfetch, type RawResponse } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "url: The URL to fetch",
-      "options: Enhanced FetchOptions",
+      "url: The URL to fetch (required)",
+      "All FetchOptions as named properties (same as tidyfetch)",
     ],
     returns:
       "Promise<Result<RawResponse<T>, TidyFetchError>> - Result with Response object containing _data property",
     examples: [
-      '// Access response headers and status\nconst result = await tidyfetch.raw<User>("/api/users/1");\nif (result.ok) {\n  console.log(result.value.status);                     // 200\n  console.log(result.value.headers.get("x-rate-limit")); // "100"\n  console.log(result.value._data.name);                 // "Alice"\n}',
-      '// Check for specific headers\nconst result = await tidyfetch.raw("/api/data");\nif (result.ok) {\n  const etag = result.value.headers.get("etag");\n  const cacheControl = result.value.headers.get("cache-control");\n}',
+      '// Access response headers and status\nconst result = await tidyfetch.raw<User>({ url: "/api/users/1" });\nif (result.ok) {\n  console.log(result.value.status);                     // 200\n  console.log(result.value.headers.get("x-rate-limit")); // "100"\n  console.log(result.value._data.name);                 // "Alice"\n}',
+      '// Check for specific headers\nconst result = await tidyfetch.raw({ url: "/api/data" });\nif (result.ok) {\n  const etag = result.value.headers.get("etag");\n  const cacheControl = result.value.headers.get("cache-control");\n}',
     ],
     related: ["tidyfetch", "RawResponse"],
     bestPractices: [
@@ -1330,6 +1320,179 @@ export const shimsDocs: Record<string, DocEntry> = {
     bestPractices: [
       "✓ GOOD: Use _data for type-safe parsed content",
       "✓ GOOD: Use clone() if you need raw body after parsing",
+    ],
+  },
+
+  // Encryption Utilities (AES-256-GCM)
+  encrypt: {
+    name: "encrypt",
+    category: "shims",
+    signature:
+      "encrypt({ data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<string>",
+    description:
+      "Encrypts data using AES-256-GCM authenticated encryption. Uses Web Crypto API with a fresh random 12-byte IV for each encryption (semantic security). The output format is: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes), all bundled in the specified encoding. AES-GCM provides both encryption and authentication (integrity checking). Requires SECRET_KEY environment variable to be set (64 hex characters = 32 bytes).",
+    imports: [
+      'import { encrypt } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "data: string - The data to encrypt (required)",
+      "inputEncoding: 'utf8' | 'base64' | 'hex' | 'binary' - Encoding of input data (default: 'utf8')",
+      "outputEncoding: 'base64' | 'hex' | 'binary' - Encoding for encrypted output (default: 'base64')",
+      "urlSafe: boolean - Whether to return Base64URL format (default: true, only applies when outputEncoding is 'base64')",
+    ],
+    returns:
+      "Promise<string> - Encrypted data in the specified encoding (Base64URL by default for base64 output)",
+    examples: [
+      '// Basic encryption (UTF-8 → Base64URL)\nimport { encrypt } from "@tidy-ts/shims";\n\n// SECRET_KEY must be set in environment\nconst encrypted = await encrypt({ data: "sensitive password" });\nconsole.log(encrypted); // Base64URL-encoded ciphertext',
+      '// Encrypt JSON data\nconst userData = JSON.stringify({ email: "user@example.com", apiKey: "secret123" });\nconst encrypted = await encrypt({ data: userData });\n// Store encrypted in database',
+      '// Encrypt with hex output encoding\nconst encryptedHex = await encrypt({\n  data: "API key",\n  outputEncoding: "hex"\n});\nconsole.log(encryptedHex); // Hexadecimal string',
+      '// Encrypt binary data\nconst binaryData = new TextDecoder().decode(new Uint8Array([0x01, 0x02, 0x03]));\nconst encrypted = await encrypt({\n  data: binaryData,\n  inputEncoding: "utf8",\n  outputEncoding: "base64"\n});',
+      '// Encrypt with standard Base64 (not URL-safe)\nconst encrypted = await encrypt({\n  data: "data",\n  outputEncoding: "base64",\n  urlSafe: false\n});',
+      '// Encrypt configuration for .env file\nconst config = {\n  databaseUrl: await encrypt({ data: "postgresql://user:pass@host/db" }),\n  apiKey: await encrypt({ data: "sk_live_abc123" })\n};\n// Store in .env file',
+    ],
+    related: ["decrypt", "generateKey", "env"],
+    bestPractices: [
+      "✓ GOOD: Set SECRET_KEY environment variable before using (use generateKey() to create)",
+      "✓ GOOD: Use default Base64URL encoding for safe storage in .env files and URLs",
+      "✓ GOOD: Each encryption generates a fresh random IV (semantic security)",
+      "✓ GOOD: AES-GCM automatically provides authentication (tamper detection)",
+      "✓ GOOD: Encrypt sensitive data before storing in databases or config files",
+      "✓ GOOD: Use consistent encoding options for encrypt/decrypt pairs",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using the same IV for multiple encryptions (this implementation handles this automatically)",
+      "❌ BAD: Storing SECRET_KEY in source code (use environment variables)",
+      "❌ BAD: Using different urlSafe settings for encrypt and decrypt",
+      "❌ BAD: Forgetting to set SECRET_KEY environment variable",
+    ],
+  },
+
+  decrypt: {
+    name: "decrypt",
+    category: "shims",
+    signature:
+      "decrypt({ data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<string>",
+    description:
+      "Decrypts data that was encrypted using AES-256-GCM. Expects input format: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes). Automatically verifies the authentication tag during decryption, rejecting tampered ciphertext. Requires SECRET_KEY environment variable to match the one used for encryption.",
+    imports: [
+      'import { decrypt } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "data: string - The encrypted data to decrypt (required)",
+      "inputEncoding: 'base64' | 'hex' | 'binary' - Encoding of encrypted input (default: 'base64')",
+      "outputEncoding: 'utf8' | 'base64' | 'hex' | 'binary' - Encoding for decrypted output (default: 'utf8')",
+      "urlSafe: boolean - Whether the input is in Base64URL format (default: true, only applies when inputEncoding is 'base64')",
+    ],
+    returns:
+      "Promise<string> - Decrypted data in the specified encoding, or throws error if authentication fails",
+    examples: [
+      '// Basic decryption (Base64URL → UTF-8)\nimport { decrypt } from "@tidy-ts/shims";\n\n// SECRET_KEY must be set in environment\nconst encrypted = "abc123..."; // From encrypt()\nconst decrypted = await decrypt({ data: encrypted });\nconsole.log(decrypted); // Original plaintext',
+      '// Decrypt JSON data\nconst encrypted = await encrypt({ data: JSON.stringify({ key: "value" }) });\nconst decrypted = await decrypt({ data: encrypted });\nconst obj = JSON.parse(decrypted);',
+      '// Decrypt from hex encoding\nconst encryptedHex = await encrypt({ data: "secret", outputEncoding: "hex" });\nconst decrypted = await decrypt({\n  data: encryptedHex,\n  inputEncoding: "hex"\n});',
+      '// Decrypt configuration from .env\nconst encryptedDbUrl = env.get("ENCRYPTED_DB_URL");\nif (encryptedDbUrl) {\n  const dbUrl = await decrypt({ data: encryptedDbUrl });\n  // Use dbUrl to connect\n}',
+      '// Decrypt with standard Base64 (not URL-safe)\nconst decrypted = await decrypt({\n  data: encrypted,\n  inputEncoding: "base64",\n  urlSafe: false\n});',
+      '// Decrypt binary data\nconst decrypted = await decrypt({\n  data: encryptedBinary,\n  outputEncoding: "utf8"\n});\nconst bytes = new TextEncoder().encode(decrypted);',
+    ],
+    related: ["encrypt", "generateKey", "env"],
+    bestPractices: [
+      "✓ GOOD: Use matching encoding options as encrypt() call",
+      "✓ GOOD: Handle errors - decryption throws if ciphertext is tampered or key is wrong",
+      "✓ GOOD: AES-GCM automatically verifies authentication tag (tamper detection)",
+      "✓ GOOD: Use try/catch when decrypting user-provided or untrusted ciphertext",
+      "✓ GOOD: Ensure SECRET_KEY matches the one used for encryption",
+    ],
+    antiPatterns: [
+      "❌ BAD: Using different encoding options than encrypt() used",
+      "❌ BAD: Ignoring decryption errors (they indicate tampering or wrong key)",
+      "❌ BAD: Using different urlSafe setting than encrypt() used",
+      "❌ BAD: Decrypting without checking if data exists first",
+    ],
+  },
+
+  generateKey: {
+    name: "generateKey",
+    category: "shims",
+    signature: "generateKey(length?): string",
+    description:
+      "Generates a cryptographically secure random key for AES-256-GCM encryption using Web Crypto API (crypto.getRandomValues). Returns a hexadecimal string suitable for use as SECRET_KEY environment variable. Default 32-byte (256-bit) key is designed for AES-256-GCM.",
+    imports: [
+      'import { generateKey } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "length: number - Number of bytes to generate (default: 32 for AES-256-GCM)",
+    ],
+    returns:
+      "string - Hexadecimal string representation of the key (2 hex chars per byte, e.g., 64 chars for 32 bytes)",
+    examples: [
+      '// Generate default 32-byte key for AES-256-GCM\nimport { generateKey } from "@tidy-ts/shims";\n\nconst key = generateKey();\nconsole.log(`SECRET_KEY=${key}`);\n// Output: SECRET_KEY=abc123def456... (64 hex characters)',
+      "// Generate 16-byte key for AES-128-GCM\nconst key128 = generateKey(16);\nconsole.log(`SECRET_KEY=${key128}`);\n// Output: SECRET_KEY=abc123... (32 hex characters)",
+      '// Generate and set in environment\nimport { generateKey } from "@tidy-ts/shims";\nimport { env } from "@tidy-ts/shims";\n\nconst key = generateKey();\nenv.set("SECRET_KEY", key);\n// Now encrypt/decrypt will work',
+      "// Generate key for production\n// Run: deno run -A generateKey.ts\n// Or: generate-key (if installed globally)\n// Copy output to .env file: SECRET_KEY=<generated-key>",
+    ],
+    related: ["encrypt", "decrypt", "env"],
+    bestPractices: [
+      "✓ GOOD: Generate a new key for each application/environment",
+      "✓ GOOD: Store generated key securely (environment variables, secret manager)",
+      "✓ GOOD: Use 32-byte (256-bit) keys for AES-256-GCM (default)",
+      "✓ GOOD: Never commit SECRET_KEY to version control",
+      "✓ GOOD: Use different keys for development, staging, and production",
+    ],
+    antiPatterns: [
+      "❌ BAD: Sharing the same SECRET_KEY across multiple applications",
+      "❌ BAD: Using predictable or weak keys",
+      "❌ BAD: Committing SECRET_KEY to git repositories",
+      "❌ BAD: Using keys shorter than 32 bytes for AES-256-GCM",
+    ],
+  },
+
+  toBase64URL: {
+    name: "toBase64URL",
+    category: "shims",
+    signature: "toBase64URL(base64: string): string",
+    description:
+      "Converts standard Base64 encoding to Base64URL format (RFC 4648 §5). Replaces '+' with '-', '/' with '_', and removes padding '=' characters. Base64URL is URL-safe and can be used in URLs, filenames, and environment variables without encoding. Used automatically by encrypt() when outputEncoding is 'base64' and urlSafe is true.",
+    imports: [
+      'import { toBase64URL } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "base64: string - Standard Base64-encoded string",
+    ],
+    returns: "string - Base64URL-encoded string (URL-safe)",
+    examples: [
+      '// Convert Base64 to Base64URL\nimport { toBase64URL } from "@tidy-ts/shims";\n\nconst base64 = "SGVsbG8gV29ybGQh==";\nconst urlSafe = toBase64URL(base64);\nconsole.log(urlSafe); // "SGVsbG8gV29ybGQh"',
+      "// Use in URL\nconst token = toBase64URL(encryptedData);\nconst url = `https://api.example.com/verify?token=${token}`;",
+      "// Use in environment variable\nconst safeValue = toBase64URL(base64Data);\n// Can be used directly in .env file without quotes",
+    ],
+    related: ["fromBase64URL", "encrypt", "decrypt"],
+    bestPractices: [
+      "✓ GOOD: Use for values that will be in URLs or environment variables",
+      "✓ GOOD: Reversible with fromBase64URL()",
+      "✓ GOOD: Automatically handled by encrypt() with default settings",
+    ],
+  },
+
+  fromBase64URL: {
+    name: "fromBase64URL",
+    category: "shims",
+    signature: "fromBase64URL(base64url: string): string",
+    description:
+      "Converts Base64URL format back to standard Base64 (RFC 4648 §4). Replaces '-' with '+', '_' with '/', and adds padding '=' characters as needed. Used automatically by decrypt() when inputEncoding is 'base64' and urlSafe is true.",
+    imports: [
+      'import { fromBase64URL } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "base64url: string - Base64URL-encoded string",
+    ],
+    returns: "string - Standard Base64-encoded string with padding",
+    examples: [
+      '// Convert Base64URL back to Base64\nimport { fromBase64URL } from "@tidy-ts/shims";\n\nconst urlSafe = "SGVsbG8gV29ybGQh";\nconst base64 = fromBase64URL(urlSafe);\nconsole.log(base64); // "SGVsbG8gV29ybGQh=="',
+      '// Round-trip conversion\nconst original = "SGVsbG8gV29ybGQh==";\nconst urlSafe = toBase64URL(original);\nconst restored = fromBase64URL(urlSafe);\nconsole.log(restored === original); // true',
+    ],
+    related: ["toBase64URL", "encrypt", "decrypt"],
+    bestPractices: [
+      "✓ GOOD: Use to convert Base64URL back to standard Base64",
+      "✓ GOOD: Automatically handled by decrypt() with default settings",
+      "✓ GOOD: Reversible with toBase64URL()",
     ],
   },
 };

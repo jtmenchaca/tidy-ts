@@ -2,5 +2,9 @@
   "name": "@tidy-ts/shims",
   "version": "0.0.12",
   "exports": "./mod.ts",
-  "license": "MIT"
+  "license": "MIT",
+  "tasks": {
+    "generateKey": "deno run encryption/generateKey.ts",
+    "generateKey:install": "deno install --global -A --import-map ../../import_map.json --name generate-key --force encryption/generateKey.ts"
+  }
 }

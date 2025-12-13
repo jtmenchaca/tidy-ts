@@ -690,7 +690,8 @@ console.log("PDF at mean:", fittedNormal.pdf(mean));`,
   },
   "shims-env-validation": {
     name: "Environment Variable Validation",
-    description: "Validate and transform environment variables with type safety",
+    description:
+      "Validate and transform environment variables with type safety",
     category: "shims",
     code: `import { env, exit } from "@tidy-ts/shims";
 import { z } from "zod";
@@ -757,7 +758,8 @@ export { config };`,
   },
   "shims-basic-usage": {
     name: "Cross-Runtime File Operations",
-    description: "File system operations that work across Deno, Bun, and Node.js",
+    description:
+      "File system operations that work across Deno, Bun, and Node.js",
     category: "shims",
     code: `import {
   readTextFile,
@@ -814,7 +816,8 @@ console.log("✅ Cleanup complete");`,
   },
   "shims-runtime-detection": {
     name: "Runtime Detection & Conditional Logic",
-    description: "Detect runtime environment and execute platform-specific code",
+    description:
+      "Detect runtime environment and execute platform-specific code",
     category: "shims",
     code: `import {
   getCurrentRuntime,
@@ -863,7 +866,6 @@ console.log("\\nConfiguration:", config);`,
   dirname,
   fileURLToPath,
   pathToFileURL,
-  importMeta
 } from "@tidy-ts/shims";
 
 // Path resolution
@@ -881,19 +883,9 @@ console.log("File path:", filePath);
 const fileUrl = pathToFileURL("/Users/me/project/data.json");
 console.log("File URL:", fileUrl.href);
 
-// Import meta utilities (works like import.meta)
-console.log("\\nImport meta utilities:");
-console.log("  Current file:", importMeta.getFilename());
-console.log("  Current dir:", importMeta.getDirname());
-console.log("  Module URL:", importMeta.url);
-console.log("  Is main module:", importMeta.main);
-
-// Convert import.meta.url to path
-const currentFilePath = importMeta.urlToPath();
-console.log("  As path:", currentFilePath);
-
 // Common use case: resolve file relative to current module
-const dataFile = resolve(importMeta.getDirname(), "data", "users.json");
+const currentDir = dirname(fileURLToPath(import.meta.url));
+const dataFile = resolve(currentDir, "data", "users.json");
 console.log("\\nData file path:", dataFile);`,
   },
   "shims-process-management": {

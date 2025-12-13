@@ -172,7 +172,6 @@ export const CATEGORIES = {
     "args",
     "getArgs",
     "exit",
-    "importMeta",
     // Testing Framework
     "test",
     // Enhanced Fetch API
@@ -186,11 +185,16 @@ export const CATEGORIES = {
     "tidyfetch.raw",
     "tidyfetch.native",
     "FetchError",
-    "FetchOptions",
     "RawResponse",
     // Error Types
     "UnavailableAPIError",
     "UnsupportedRuntimeError",
+    // Encryption Utilities (AES-256-GCM)
+    "encrypt",
+    "decrypt",
+    "generateKey",
+    "toBase64URL",
+    "fromBase64URL",
   ],
   all: Object.keys(DOCS),
 };
