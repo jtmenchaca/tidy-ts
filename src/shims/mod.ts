@@ -89,6 +89,8 @@ export {
   type EnvelopeDecryptionError,
   type EnvelopeEncryptionError,
   type EnvelopeError,
+  type InvalidKeyIdError,
+  type KeyNotFoundError,
   rotateMasterKey,
 } from "./encryption/envelope.ts";
 

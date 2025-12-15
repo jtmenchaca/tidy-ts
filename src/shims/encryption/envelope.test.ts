@@ -6,8 +6,21 @@ import {
   encryptFields,
   EnvelopeDecryptionError,
   EnvelopeEncryptionError,
+  InvalidKeyIdError,
+  KeyNotFoundError,
   rotateMasterKey,
 } from "./envelope.ts";
+
+// Helper to create a getMasterKey callback for tests
+function createKeyStore(
+  keys: Record<string, string>,
+): (keyId: string) => string {
+  return (keyId: string) => {
+    const key = keys[keyId];
+    if (!key) throw new Error(`Key not found: ${keyId}`);
+    return key;
+  };
+}
 
 test("encryptFields - encrypts multiple fields", async () => {
   const masterKey = generateKey();
@@ -18,6 +31,7 @@ test("encryptFields - encrypts multiple fields", async () => {
       description: "Annual checkup with Dr. Smith",
     },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(result.ok).toBe(true);
@@ -28,6 +42,8 @@ test("encryptFields - encrypts multiple fields", async () => {
     );
     expect(typeof result.value.dek).toBe("string");
     expect(result.value.dek.length).toBeGreaterThan(0);
+    // DEK should be prefixed with masterKeyId
+    expect(result.value.dek.startsWith("v1:")).toBe(true);
   }
 });
 
@@ -40,6 +56,7 @@ test("encryptFields - passes through null values", async () => {
       notes: null,
     },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(result.ok).toBe(true);
@@ -53,8 +70,8 @@ test("encryptFields - generates different DEK each time", async () => {
   const masterKey = generateKey();
   const fields = { title: "Same content" };
 
-  const result1 = await encryptFields({ fields, masterKey });
-  const result2 = await encryptFields({ fields, masterKey });
+  const result1 = await encryptFields({ fields, masterKey, masterKeyId: "v1" });
+  const result2 = await encryptFields({ fields, masterKey, masterKeyId: "v1" });
 
   expect(result1.ok).toBe(true);
   expect(result2.ok).toBe(true);
@@ -70,6 +87,7 @@ test("encryptFields - generates different DEK each time", async () => {
 
 test("decryptFields - decrypts encrypted fields", async () => {
   const masterKey = generateKey();
+  const keyStore = createKeyStore({ v1: masterKey });
 
   const encryptResult = await encryptFields({
     fields: {
@@ -77,6 +95,7 @@ test("decryptFields - decrypts encrypted fields", async () => {
       description: "Annual checkup with Dr. Smith",
     },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
@@ -85,7 +104,7 @@ test("decryptFields - decrypts encrypted fields", async () => {
   const decryptResult = await decryptFields({
     fields: encryptResult.value.encrypted,
     dek: encryptResult.value.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
 
   expect(decryptResult.ok).toBe(true);
@@ -99,6 +118,7 @@ test("decryptFields - decrypts encrypted fields", async () => {
 
 test("decryptFields - passes through null values", async () => {
   const masterKey = generateKey();
+  const keyStore = createKeyStore({ v1: masterKey });
 
   const encryptResult = await encryptFields({
     fields: {
@@ -106,6 +126,7 @@ test("decryptFields - passes through null values", async () => {
       notes: null,
     },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
@@ -114,7 +135,7 @@ test("decryptFields - passes through null values", async () => {
   const decryptResult = await decryptFields({
     fields: encryptResult.value.encrypted,
     dek: encryptResult.value.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
 
   expect(decryptResult.ok).toBe(true);
@@ -126,6 +147,7 @@ test("decryptFields - passes through null values", async () => {
 
 test("decryptFields - selective decryption", async () => {
   const masterKey = generateKey();
+  const keyStore = createKeyStore({ v1: masterKey });
 
   const encryptResult = await encryptFields({
     fields: {
@@ -134,6 +156,7 @@ test("decryptFields - selective decryption", async () => {
       notes: "Bring insurance card",
     },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
@@ -143,7 +166,7 @@ test("decryptFields - selective decryption", async () => {
   const decryptResult = await decryptFields({
     fields: { title: encryptResult.value.encrypted.title },
     dek: encryptResult.value.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
 
   expect(decryptResult.ok).toBe(true);
@@ -156,11 +179,13 @@ test("decryptFields - selective decryption", async () => {
 test("rotateMasterKey - re-encrypts DEK with new master key", async () => {
   const oldMasterKey = generateKey();
   const newMasterKey = generateKey();
+  const keyStore = createKeyStore({ v1: oldMasterKey, v2: newMasterKey });
 
   // Encrypt with old master key
   const encryptResult = await encryptFields({
     fields: { secret: "confidential data" },
     masterKey: oldMasterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
@@ -169,26 +194,22 @@ test("rotateMasterKey - re-encrypts DEK with new master key", async () => {
   // Rotate the master key
   const rotateResult = await rotateMasterKey({
     dek: encryptResult.value.dek,
-    oldMasterKey,
     newMasterKey,
+    newMasterKeyId: "v2",
+    getMasterKey: keyStore,
   });
 
   expect(rotateResult.ok).toBe(true);
   if (!rotateResult.ok) return;
 
-  // Verify old DEK no longer works with new master key
-  const oldDekDecrypt = await decryptFields({
-    fields: encryptResult.value.encrypted,
-    dek: encryptResult.value.dek,
-    masterKey: newMasterKey,
-  });
-  expect(oldDekDecrypt.ok).toBe(false);
+  // Verify rotated DEK has new key ID prefix
+  expect(rotateResult.value.startsWith("v2:")).toBe(true);
 
   // Verify new DEK works with new master key
   const newDekDecrypt = await decryptFields({
     fields: encryptResult.value.encrypted,
     dek: rotateResult.value,
-    masterKey: newMasterKey,
+    getMasterKey: keyStore,
   });
 
   expect(newDekDecrypt.ok).toBe(true);
@@ -201,6 +222,7 @@ test("encryptFields - returns error for invalid master key", async () => {
   const result = await encryptFields({
     fields: { title: "Test" },
     masterKey: "invalid",
+    masterKeyId: "v1",
   });
 
   expect(result.ok).toBe(false);
@@ -209,21 +231,24 @@ test("encryptFields - returns error for invalid master key", async () => {
   }
 });
 
-test("decryptFields - returns error for invalid master key", async () => {
+test("decryptFields - returns error for wrong master key", async () => {
   const masterKey = generateKey();
+  const wrongKey = generateKey();
 
   const encryptResult = await encryptFields({
     fields: { title: "Test" },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
   if (!encryptResult.ok) return;
 
+  // getMasterKey returns wrong key
   const decryptResult = await decryptFields({
     fields: encryptResult.value.encrypted,
     dek: encryptResult.value.dek,
-    masterKey: "wrong-key",
+    getMasterKey: () => wrongKey,
   });
 
   expect(decryptResult.ok).toBe(false);
@@ -234,10 +259,12 @@ test("decryptFields - returns error for invalid master key", async () => {
 
 test("decryptFields - returns error for tampered ciphertext", async () => {
   const masterKey = generateKey();
+  const keyStore = createKeyStore({ v1: masterKey });
 
   const encryptResult = await encryptFields({
     fields: { title: "Test" },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
@@ -249,13 +276,15 @@ test("decryptFields - returns error for tampered ciphertext", async () => {
   const decryptResult = await decryptFields({
     fields: { title: tampered },
     dek: encryptResult.value.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
 
   expect(decryptResult.ok).toBe(false);
   if (!decryptResult.ok) {
     expect(decryptResult.error).toBeInstanceOf(EnvelopeDecryptionError);
-    expect(decryptResult.error.field).toBe("title");
+    if (decryptResult.error instanceof EnvelopeDecryptionError) {
+      expect(decryptResult.error.field).toBe("title");
+    }
   }
 });
 
@@ -267,15 +296,18 @@ test("rotateMasterKey - returns error for wrong old master key", async () => {
   const encryptResult = await encryptFields({
     fields: { title: "Test" },
     masterKey,
+    masterKeyId: "v1",
   });
 
   expect(encryptResult.ok).toBe(true);
   if (!encryptResult.ok) return;
 
+  // getMasterKey returns wrong key for v1
   const rotateResult = await rotateMasterKey({
     dek: encryptResult.value.dek,
-    oldMasterKey: wrongKey,
     newMasterKey,
+    newMasterKeyId: "v2",
+    getMasterKey: () => wrongKey,
   });
 
   expect(rotateResult.ok).toBe(false);
@@ -286,6 +318,7 @@ test("rotateMasterKey - returns error for wrong old master key", async () => {
 
 test("full workflow - create, read, update record", async () => {
   const masterKey = generateKey();
+  const keyStore = createKeyStore({ v1: masterKey });
 
   // Create: encrypt initial data
   const createResult = await encryptFields({
@@ -294,6 +327,7 @@ test("full workflow - create, read, update record", async () => {
       description: "Team standup",
     },
     masterKey,
+    masterKeyId: "v1",
   });
   expect(createResult.ok).toBe(true);
   if (!createResult.ok) return;
@@ -310,7 +344,7 @@ test("full workflow - create, read, update record", async () => {
   const readResult = await decryptFields({
     fields: { title: record.title, description: record.description },
     dek: record.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
   expect(readResult.ok).toBe(true);
   if (!readResult.ok) return;
@@ -324,6 +358,7 @@ test("full workflow - create, read, update record", async () => {
       description: "Team standup - rescheduled",
     },
     masterKey,
+    masterKeyId: "v1",
   });
   expect(updateResult.ok).toBe(true);
   if (!updateResult.ok) return;
@@ -335,11 +370,107 @@ test("full workflow - create, read, update record", async () => {
   const verifyResult = await decryptFields({
     fields: updateResult.value.encrypted,
     dek: updateResult.value.dek,
-    masterKey,
+    getMasterKey: keyStore,
   });
   expect(verifyResult.ok).toBe(true);
   if (verifyResult.ok) {
     expect(verifyResult.value.title).toBe("Updated Meeting");
     expect(verifyResult.value.description).toBe("Team standup - rescheduled");
+  }
+});
+
+test("encryptFields - returns error for invalid masterKeyId with colon", async () => {
+  const masterKey = generateKey();
+
+  const result = await encryptFields({
+    fields: { title: "Test" },
+    masterKey,
+    masterKeyId: "v1:invalid",
+  });
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(InvalidKeyIdError);
+  }
+});
+
+test("encryptFields - returns error for empty masterKeyId", async () => {
+  const masterKey = generateKey();
+
+  const result = await encryptFields({
+    fields: { title: "Test" },
+    masterKey,
+    masterKeyId: "",
+  });
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(InvalidKeyIdError);
+  }
+});
+
+test("decryptFields - returns error for missing masterKeyId in DEK", async () => {
+  const masterKey = generateKey();
+
+  // Manually construct invalid DEK without prefix
+  const decryptResult = await decryptFields({
+    fields: { title: "encrypted-data" },
+    dek: "no-prefix-here",
+    getMasterKey: () => masterKey,
+  });
+
+  expect(decryptResult.ok).toBe(false);
+  if (!decryptResult.ok) {
+    expect(decryptResult.error).toBeInstanceOf(EnvelopeDecryptionError);
+  }
+});
+
+test("decryptFields - returns error when getMasterKey throws", async () => {
+  const masterKey = generateKey();
+
+  const encryptResult = await encryptFields({
+    fields: { title: "Test" },
+    masterKey,
+    masterKeyId: "v1",
+  });
+
+  expect(encryptResult.ok).toBe(true);
+  if (!encryptResult.ok) return;
+
+  const decryptResult = await decryptFields({
+    fields: encryptResult.value.encrypted,
+    dek: encryptResult.value.dek,
+    getMasterKey: () => {
+      throw new Error("Key not found in vault");
+    },
+  });
+
+  expect(decryptResult.ok).toBe(false);
+  if (!decryptResult.ok) {
+    expect(decryptResult.error).toBeInstanceOf(KeyNotFoundError);
+  }
+});
+
+test("decryptFields - returns error when getMasterKey returns empty", async () => {
+  const masterKey = generateKey();
+
+  const encryptResult = await encryptFields({
+    fields: { title: "Test" },
+    masterKey,
+    masterKeyId: "v1",
+  });
+
+  expect(encryptResult.ok).toBe(true);
+  if (!encryptResult.ok) return;
+
+  const decryptResult = await decryptFields({
+    fields: encryptResult.value.encrypted,
+    dek: encryptResult.value.dek,
+    getMasterKey: () => "",
+  });
+
+  expect(decryptResult.ok).toBe(false);
+  if (!decryptResult.ok) {
+    expect(decryptResult.error).toBeInstanceOf(KeyNotFoundError);
   }
 });
