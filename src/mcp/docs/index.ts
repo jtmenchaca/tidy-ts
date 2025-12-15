@@ -42,6 +42,15 @@ export const CATEGORIES = {
   all: Object.keys(DOCS),
 };
 
+// Human-readable category names (single source of truth)
+export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  dataframe: "DataFrame Operations",
+  stats: "Statistics Functions",
+  io: "I/O Operations",
+  llm: "LLM Utilities",
+  shims: "Cross-Runtime Compatibility (Shims)",
+};
+
 export function getOperationsByCategory(category: string): DocEntry[] {
   const keys = CATEGORIES[category as keyof typeof CATEGORIES] ||
     CATEGORIES.all;

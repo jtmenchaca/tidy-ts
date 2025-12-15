@@ -1,6 +1,9 @@
 import type { TidyMcp } from "../../index.ts";
 import * as v from "valibot";
-import { getOperationsByCategory } from "../../docs/index.ts";
+import {
+  CATEGORY_DISPLAY_NAMES,
+  getOperationsByCategory,
+} from "../../docs/index.ts";
 
 export function list_operations(server: TidyMcp) {
   const schema = v.object({
@@ -49,16 +52,8 @@ export function list_operations(server: TidyMcp) {
         category !== "all" ? ` (${category})` : ""
       }\n\n`;
 
-      const categoryNames: Record<string, string> = {
-        dataframe: "DataFrame Operations",
-        stats: "Statistics Functions",
-        io: "I/O Operations",
-        llm: "LLM Utilities",
-        shims: "Cross-Runtime Compatibility (Shims)",
-      };
-
       for (const [cat, ops] of Object.entries(grouped)) {
-        output += `## ${categoryNames[cat] || cat}\n\n`;
+        output += `## ${CATEGORY_DISPLAY_NAMES[cat] || cat}\n\n`;
         for (const op of ops) {
           output += `- **${op.name}**: ${op.description}\n`;
         }
