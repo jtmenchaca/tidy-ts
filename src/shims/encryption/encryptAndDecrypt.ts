@@ -4,16 +4,20 @@
  * Uses Web Crypto API with authenticated encryption (AES-GCM).
  * Each encryption generates a random 12-byte IV which is prepended to the ciphertext.
  *
- * Security improvements over previous implementation:
+ * Security properties:
  * - AES-GCM provides both encryption AND authentication (integrity checking)
  * - Fresh random IV for each encryption (semantic security)
- * - No static IV from environment - only key needed
+ * - 256-bit keys (32 bytes, provided as 64 hex characters)
  */
 
-import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
-import { decodeHex, encodeHex } from "@std/encoding/hex";
-import { env } from "../env.ts";
-import { args, exit } from "../process.ts";
+import { type AppError, defineError, err, ok, type Result } from "../result.ts";
+import {
+  decodeBase64,
+  decodeHex,
+  encodeFromBytes,
+  fromBase64URL,
+  toBase64URL,
+} from "./encodeAndDecode.ts";
 
 // AES-GCM uses 12-byte (96-bit) IV - recommended by NIST
 const IV_LENGTH = 12;
@@ -22,47 +26,84 @@ const IV_LENGTH = 12;
 type InputEncoding = "utf8" | "base64" | "hex" | "binary";
 type OutputEncoding = "base64" | "hex" | "binary";
 
+// ============================================================================
+// Encryption Error Types
+// ============================================================================
+
+/** Extra properties for InvalidKeyError */
+type InvalidKeyErrorExtra = { reason: string };
+/** Encryption key is invalid */
+export const InvalidKeyError: {
+  new (
+    extra: InvalidKeyErrorExtra,
+  ): AppError<"InvalidKeyError", InvalidKeyErrorExtra>;
+} = defineError(
+  "InvalidKeyError",
+  ({ reason }: InvalidKeyErrorExtra) => `Invalid key: ${reason}`,
+);
+export type InvalidKeyError = AppError<"InvalidKeyError", InvalidKeyErrorExtra>;
+
+/** Extra properties for EncryptionError */
+type EncryptionErrorExtra = { message: string; cause?: Error };
+/** Encryption operation failed */
+export const EncryptionError: {
+  new (
+    extra: EncryptionErrorExtra,
+  ): AppError<"EncryptionError", EncryptionErrorExtra>;
+} = defineError(
+  "EncryptionError",
+  ({ message }: EncryptionErrorExtra) => `Encryption failed: ${message}`,
+);
+export type EncryptionError = AppError<"EncryptionError", EncryptionErrorExtra>;
+
+/** Extra properties for DecryptionError */
+type DecryptionErrorExtra = { message: string; cause?: Error };
+/** Decryption operation failed */
+export const DecryptionError: {
+  new (
+    extra: DecryptionErrorExtra,
+  ): AppError<"DecryptionError", DecryptionErrorExtra>;
+} = defineError(
+  "DecryptionError",
+  ({ message }: DecryptionErrorExtra) => `Decryption failed: ${message}`,
+);
+export type DecryptionError = AppError<"DecryptionError", DecryptionErrorExtra>;
+
+/** Union of all encryption error types */
+export type CryptoError =
+  | InvalidKeyError
+  | EncryptionError
+  | DecryptionError;
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
 /**
- * Gets the encryption key from environment
- * @returns The raw key bytes
+ * Parses a hex-encoded key string into bytes
+ * @param key - Hex-encoded 32-byte key (64 hex characters)
+ * @returns Result with raw key bytes or error
  */
-function getKey(): Uint8Array {
-  const keyHex = env.get("SECRET_KEY");
-  if (!keyHex) {
-    throw new Error("SECRET_KEY is not set");
+function parseKey(key: string): Result<Uint8Array, InvalidKeyError> {
+  try {
+    const keyBytes = decodeHex(key);
+    if (keyBytes.length !== 32) {
+      return err(
+        new InvalidKeyError({
+          reason:
+            `Expected 32 bytes (64 hex chars), got ${keyBytes.length} bytes`,
+        }),
+      );
+    }
+    return ok(keyBytes);
+  } catch (e) {
+    return err(
+      new InvalidKeyError({
+        reason: e instanceof Error ? e.message : String(e),
+      }),
+    );
   }
-  return decodeHex(keyHex);
 }
-
-/**
- * Converts standard Base64 to Base64URL format (RFC 4648 §5)
- * @param base64 - Standard Base64 string
- * @returns Base64URL-encoded string
- */
-const toBase64URL = (base64: string): string => {
-  return base64
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-};
-
-/**
- * Converts Base64URL format back to standard Base64 (RFC 4648 §4)
- * @param base64url - Base64URL-encoded string
- * @returns Standard Base64 string with padding
- */
-const fromBase64URL = (base64url: string): string => {
-  let base64 = base64url
-    .replace(/-/g, "+")
-    .replace(/_/g, "/");
-
-  const pad = base64.length % 4;
-  if (pad) {
-    base64 += "=".repeat(4 - pad);
-  }
-
-  return base64;
-};
 
 /**
  * Helper function to convert data to Uint8Array based on encoding
@@ -92,22 +133,12 @@ function uint8ArrayToString(
   data: Uint8Array,
   encoding: OutputEncoding | "utf8",
 ): string {
-  switch (encoding) {
-    case "utf8":
-      return new TextDecoder().decode(data);
-    case "base64":
-      return encodeBase64(data);
-    case "hex":
-      return encodeHex(data);
-    case "binary": {
-      let result = "";
-      for (let i = 0; i < data.length; i++) {
-        result += String.fromCharCode(data[i]);
-      }
-      return result;
-    }
-  }
+  return encodeFromBytes({ data, encoding });
 }
+
+// ============================================================================
+// Main Encryption/Decryption Functions
+// ============================================================================
 
 /**
  * Encrypts data using AES-256-GCM algorithm
@@ -115,62 +146,76 @@ function uint8ArrayToString(
  * The output format is: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes)
  * This is all bundled together in the specified output encoding.
  *
+ * @param key - Hex-encoded 32-byte key (64 hex characters)
  * @param data - The data to encrypt
  * @param inputEncoding - The encoding of the input data (default: utf8)
  * @param outputEncoding - The encoding for the encrypted output (default: base64)
  * @param urlSafe - Whether to return Base64URL format (default: true)
- * @returns The encrypted data in the specified encoding
+ * @returns Result with encrypted data or error
  */
 const encrypt = async ({
+  key,
   data,
   inputEncoding = "utf8",
   outputEncoding = "base64",
   urlSafe = true,
 }: {
+  key: string;
   data: string;
   inputEncoding?: InputEncoding;
   outputEncoding?: OutputEncoding;
   urlSafe?: boolean;
-}): Promise<string> => {
-  const keyBytes = getKey();
+}): Promise<Result<string, CryptoError>> => {
+  const keyResult = parseKey(key);
+  if (!keyResult.ok) {
+    return keyResult;
+  }
+  const keyBytes = keyResult.value;
 
-  // Convert input data to Uint8Array
-  const dataBytes = dataToUint8Array(data, inputEncoding);
+  try {
+    // Convert input data to Uint8Array
+    const dataBytes = dataToUint8Array(data, inputEncoding);
 
-  // Generate fresh random IV for each encryption
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
+    // Generate fresh random IV for each encryption
+    const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
 
-  // Import the key for AES-GCM
-  // Copy to new ArrayBuffer to satisfy TypeScript's BufferSource type
-  const keyBuffer = new Uint8Array(keyBytes).buffer as ArrayBuffer;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyBuffer,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt"],
-  );
+    // Import the key for AES-GCM
+    // Copy to new ArrayBuffer to satisfy TypeScript's BufferSource type
+    const keyBuffer = new Uint8Array(keyBytes).buffer as ArrayBuffer;
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBuffer,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["encrypt"],
+    );
 
-  // Encrypt the data (includes 16-byte auth tag automatically)
-  const dataBuffer = new Uint8Array(dataBytes).buffer as ArrayBuffer;
-  const encryptedBuffer = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    dataBuffer,
-  );
+    // Encrypt the data (includes 16-byte auth tag automatically)
+    const dataBuffer = new Uint8Array(dataBytes).buffer as ArrayBuffer;
+    const encryptedBuffer = await crypto.subtle.encrypt(
+      { name: "AES-GCM", iv },
+      key,
+      dataBuffer,
+    );
 
-  // Combine IV + ciphertext (auth tag is included in encryptedBuffer)
-  const combined = new Uint8Array(IV_LENGTH + encryptedBuffer.byteLength);
-  combined.set(iv);
-  combined.set(new Uint8Array(encryptedBuffer), IV_LENGTH);
+    // Combine IV + ciphertext (auth tag is included in encryptedBuffer)
+    const combined = new Uint8Array(IV_LENGTH + encryptedBuffer.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(encryptedBuffer), IV_LENGTH);
 
-  // Convert to output encoding
-  const encryptedOutput = uint8ArrayToString(combined, outputEncoding);
+    // Convert to output encoding
+    const encryptedOutput = uint8ArrayToString(combined, outputEncoding);
 
-  // Only convert to Base64URL if output is base64 and urlSafe is true
-  return urlSafe && outputEncoding === "base64"
-    ? toBase64URL(encryptedOutput)
-    : encryptedOutput;
+    // Only convert to Base64URL if output is base64 and urlSafe is true
+    const result = urlSafe && outputEncoding === "base64"
+      ? toBase64URL(encryptedOutput)
+      : encryptedOutput;
+
+    return ok(result);
+  } catch (e) {
+    const cause = e instanceof Error ? e : new Error(String(e));
+    return err(new EncryptionError({ message: cause.message, cause }));
+  }
 };
 
 /**
@@ -178,188 +223,75 @@ const encrypt = async ({
  *
  * Expects input format: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes)
  *
+ * @param key - Hex-encoded 32-byte key (64 hex characters)
  * @param data - The encrypted data
  * @param inputEncoding - The encoding of the encrypted input (default: base64)
  * @param outputEncoding - The encoding for the decrypted output (default: utf8)
  * @param urlSafe - Whether the input is in Base64URL format (default: true)
- * @returns The decrypted data in the specified encoding
+ * @returns Result with decrypted data or error
  */
 const decrypt = async ({
+  key,
   data,
   inputEncoding = "base64",
   outputEncoding = "utf8",
   urlSafe = true,
 }: {
+  key: string;
   data: string;
   inputEncoding?: OutputEncoding;
   outputEncoding?: InputEncoding;
   urlSafe?: boolean;
-}): Promise<string> => {
-  const keyBytes = getKey();
-
-  // Convert from Base64URL to standard Base64 if necessary
-  const processedData = urlSafe && inputEncoding === "base64"
-    ? fromBase64URL(data)
-    : data;
-
-  // Convert input data to Uint8Array
-  const combined = dataToUint8Array(processedData, inputEncoding);
-
-  // Extract IV and ciphertext
-  const iv = combined.slice(0, IV_LENGTH);
-  const ciphertext = combined.slice(IV_LENGTH);
-
-  // Import the key for AES-GCM
-  // Copy to new ArrayBuffer to satisfy TypeScript's BufferSource type
-  const keyBuffer = new Uint8Array(keyBytes).buffer as ArrayBuffer;
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyBuffer,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["decrypt"],
-  );
-
-  // Decrypt the data (also verifies auth tag)
-  const ciphertextBuffer = new Uint8Array(ciphertext).buffer as ArrayBuffer;
-  const decryptedBuffer = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    ciphertextBuffer,
-  );
-
-  // Convert decrypted data to the specified output encoding
-  return uint8ArrayToString(
-    new Uint8Array(decryptedBuffer),
-    outputEncoding,
-  );
-};
-
-export { decodeBase64, decrypt, encrypt, fromBase64URL, toBase64URL };
-
-// deno-coverage-ignore-start
-if (import.meta.main) {
-  const [envFile, operation, data, inputEncoding, outputEncoding] = args;
-
-  if (!envFile || !operation || !data) {
-    console.error(`
-Usage: deno run encryptAndDecrypt.ts <env-file> <operation> <data> [inputEncoding] [outputEncoding]
-
-Operations:
-  encrypt         Encrypt data (default: utf8 → base64url)
-  decrypt         Decrypt data (default: base64url → utf8)
-  decode-base64   Decode Base64/Base64URL to UTF-8
-  encode-base64url Convert text to Base64URL
-
-Input Encodings:
-  utf8    UTF-8 text (default for encrypt)
-  base64  Base64/Base64URL (default for decrypt)
-  hex     Hexadecimal
-  binary  Binary data
-
-Output Encodings:
-  base64  Base64URL (default for encrypt)
-  hex     Hexadecimal
-  binary  Binary data
-  utf8    UTF-8 text (default for decrypt)
-
-Examples:
-  deno run encryptAndDecrypt.ts .env encrypt 'my password'                # UTF-8 → Base64URL
-  deno run encryptAndDecrypt.ts .env encrypt 'deadbeef' hex base64        # Hex → Base64URL
-  deno run encryptAndDecrypt.ts .env decrypt 'abc-123_' base64 utf8       # Base64URL → UTF-8
-  deno run encryptAndDecrypt.ts .env encrypt '{"key":"value"}' utf8 hex   # UTF-8 → Hex
-  deno run encryptAndDecrypt.ts .env encode-base64url 'Hello World!'      # Text → Base64URL
-
-Note:
-  - SECRET_KEY env var must be set (64 hex chars = 32 bytes)
-  - SECRET_IV is no longer needed - IV is generated per encryption
-`);
-    exit(1);
+}): Promise<Result<string, CryptoError>> => {
+  const keyResult = parseKey(key);
+  if (!keyResult.ok) {
+    return keyResult;
   }
-
-  // Load environment variables from the specified file
-  await env.loadFromFile(envFile);
-  console.log(`Loaded environment from: ${envFile}`);
-
-  const secretKey = env.get("SECRET_KEY");
-  console.log("SECRET_KEY present:", !!secretKey, "length:", secretKey?.length);
+  const keyBytes = keyResult.value;
 
   try {
-    if (operation.toLowerCase() === "encrypt") {
-      const inEncoding = (inputEncoding || "utf8") as InputEncoding;
-      const outEncoding = (outputEncoding || "base64") as OutputEncoding;
+    // Convert from Base64URL to standard Base64 if necessary
+    const processedData = urlSafe && inputEncoding === "base64"
+      ? fromBase64URL(data)
+      : data;
 
-      encrypt({
-        data,
-        inputEncoding: inEncoding,
-        outputEncoding: outEncoding,
-        urlSafe: true,
-      }).then((result) => {
-        console.log(
-          `\n✅ Encrypted result (${inEncoding} → ${outEncoding}, URL-safe):`,
-        );
-        console.log(result);
-        console.log("\nSafe to use in .env file");
-      }).catch((err) => {
-        console.error("❌ Error:", err.message || String(err));
-        exit(1);
-      });
-    } else if (operation.toLowerCase() === "decrypt") {
-      const inEncoding = (inputEncoding || "base64") as OutputEncoding;
-      const outEncoding = (outputEncoding || "utf8") as InputEncoding;
+    // Convert input data to Uint8Array
+    const combined = dataToUint8Array(processedData, inputEncoding);
 
-      decrypt({
-        data,
-        inputEncoding: inEncoding,
-        outputEncoding: outEncoding,
-      }).then((result) => {
-        console.log(
-          `\n✅ Decrypted result (${inEncoding} → ${outEncoding}):`,
-        );
-        console.log(result);
-      }).catch((err) => {
-        console.error("❌ Error:", err.message || String(err));
-        exit(1);
-      });
-    } else if (operation.toLowerCase() === "decode-base64") {
-      try {
-        const decodedBytes = decodeBase64(data);
-        const result = new TextDecoder().decode(decodedBytes);
-        console.log("\n✅ Decoded Base64 result:");
-        console.log(result);
-      } catch (error) {
-        console.error(
-          "❌ Error:",
-          error instanceof Error ? error.message : String(error),
-        );
-        exit(1);
-      }
-    } else if (operation.toLowerCase() === "encode-base64url") {
-      try {
-        const base64 = encodeBase64(new TextEncoder().encode(data));
-        const result = toBase64URL(base64);
-        console.log("\n✅ Base64URL encoded result:");
-        console.log(result);
-        console.log("\nSafe to use in .env file");
-      } catch (error) {
-        console.error(
-          "❌ Error:",
-          error instanceof Error ? error.message : String(error),
-        );
-        exit(1);
-      }
-    } else {
-      console.error(
-        "Invalid operation. Use 'encrypt', 'decrypt', 'decode-base64', or 'encode-base64url'",
-      );
-      exit(1);
-    }
-  } catch (error) {
-    console.error(
-      "❌ Error:",
-      error instanceof Error ? error.message : String(error),
+    // Extract IV and ciphertext
+    const iv = combined.slice(0, IV_LENGTH);
+    const ciphertext = combined.slice(IV_LENGTH);
+
+    // Import the key for AES-GCM
+    // Copy to new ArrayBuffer to satisfy TypeScript's BufferSource type
+    const keyBuffer = new Uint8Array(keyBytes).buffer as ArrayBuffer;
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBuffer,
+      { name: "AES-GCM", length: 256 },
+      false,
+      ["decrypt"],
     );
-    exit(1);
+
+    // Decrypt the data (also verifies auth tag)
+    const ciphertextBuffer = new Uint8Array(ciphertext).buffer as ArrayBuffer;
+    const decryptedBuffer = await crypto.subtle.decrypt(
+      { name: "AES-GCM", iv },
+      key,
+      ciphertextBuffer,
+    );
+
+    // Convert decrypted data to the specified output encoding
+    const result = uint8ArrayToString(
+      new Uint8Array(decryptedBuffer),
+      outputEncoding,
+    );
+
+    return ok(result);
+  } catch (e) {
+    const cause = e instanceof Error ? e : new Error(String(e));
+    return err(new DecryptionError({ message: cause.message, cause }));
   }
-}
-// deno-coverage-ignore-stop
+};
+
+export { decrypt, encrypt, fromBase64URL, toBase64URL };

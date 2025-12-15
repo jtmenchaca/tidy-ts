@@ -64,12 +64,26 @@ export { UnavailableAPIError, UnsupportedRuntimeError } from "./errors.ts";
 
 // Encryption utilities (AES-256-GCM)
 export {
+  type CryptoError,
   decrypt,
+  DecryptionError,
   encrypt,
+  EncryptionError,
   fromBase64URL,
+  InvalidKeyError,
   toBase64URL,
 } from "./encryption/encryptAndDecrypt.ts";
 export { generateKey } from "./encryption/generateKey.ts";
+
+// Envelope encryption (per-record DEK with master key)
+export {
+  decryptFields,
+  encryptFields,
+  type EnvelopeDecryptionError,
+  type EnvelopeEncryptionError,
+  type EnvelopeError,
+  rotateMasterKey,
+} from "./encryption/envelope.ts";
 
 // Compression stream polyfill (automatically initializes)
 import "./compression.ts";

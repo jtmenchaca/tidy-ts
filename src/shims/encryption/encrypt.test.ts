@@ -3,20 +3,33 @@ import { encodeHex } from "@std/encoding/hex";
 import { expect } from "@std/expect";
 import { generateKey } from "../encryption/generateKey.ts";
 import {
+  type CryptoError,
   decrypt,
   encrypt,
   fromBase64URL,
+  InvalidKeyError,
   toBase64URL,
 } from "../encryption/encryptAndDecrypt.ts";
-import { env } from "../env.ts";
 import { test } from "../test.ts";
 
-// Setup function to initialize environment - only need SECRET_KEY now
+// Generate a fresh key for each test setup
+let testKey: string;
+
 function setupTestEnvironment() {
-  env.set("SECRET_KEY", generateKey());
+  testKey = generateKey();
   console.log("=== Testing AES-256-GCM Encryption ===");
-  console.log(`SECRET_KEY=${env.get("SECRET_KEY")}`);
+  console.log(`Test key: ${testKey}`);
   console.log("=====================================\n");
+}
+
+// Helper to unwrap Result or throw
+function unwrap<T>(
+  result: { ok: true; value: T } | { ok: false; error: CryptoError },
+): T {
+  if (!result.ok) {
+    throw result.error;
+  }
+  return result.value;
 }
 
 test("Basic encryption and decryption", async () => {
@@ -24,10 +37,17 @@ test("Basic encryption and decryption", async () => {
 
   console.log("Test: Basic encryption and decryption");
   const secretMessage = "This is a secret message";
-  const encrypted = await encrypt({ data: secretMessage });
+  const encryptResult = await encrypt({ key: testKey, data: secretMessage });
+  expect(encryptResult.ok).toBe(true);
+  const encrypted = unwrap(encryptResult);
+
   console.log("Original:", secretMessage);
   console.log("Encrypted:", encrypted);
-  const decrypted = await decrypt({ data: encrypted });
+
+  const decryptResult = await decrypt({ key: testKey, data: encrypted });
+  expect(decryptResult.ok).toBe(true);
+  const decrypted = unwrap(decryptResult);
+
   console.log("Decrypted:", decrypted);
 
   expect(decrypted).toBe(secretMessage);
@@ -41,17 +61,23 @@ test("Using different encodings (hex)", async () => {
   console.log("Original JSON:", jsonData);
 
   // Encrypt to hex format
-  const encryptedHex = await encrypt({
-    data: jsonData,
-    outputEncoding: "hex",
-  });
+  const encryptedHex = unwrap(
+    await encrypt({
+      key: testKey,
+      data: jsonData,
+      outputEncoding: "hex",
+    }),
+  );
   console.log("Encrypted (hex):", encryptedHex);
 
   // Decrypt from hex format
-  const decryptedFromHex = await decrypt({
-    data: encryptedHex,
-    inputEncoding: "hex",
-  });
+  const decryptedFromHex = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encryptedHex,
+      inputEncoding: "hex",
+    }),
+  );
   console.log("Decrypted JSON:", decryptedFromHex);
   console.log("Parsed:", JSON.parse(decryptedFromHex));
 
@@ -67,18 +93,24 @@ test("Working with binary data", async () => {
   console.log("Original bytes:", Array.from(originalBytes));
 
   // Encrypt binary data
-  const encryptedBinary = await encrypt({
-    data: binaryData,
-    inputEncoding: "utf8",
-    outputEncoding: "base64",
-  });
+  const encryptedBinary = unwrap(
+    await encrypt({
+      key: testKey,
+      data: binaryData,
+      inputEncoding: "utf8",
+      outputEncoding: "base64",
+    }),
+  );
   console.log("Encrypted (base64):", encryptedBinary);
 
   // Decrypt back to binary
-  const decryptedBinary = await decrypt({
-    data: encryptedBinary,
-    outputEncoding: "utf8",
-  });
+  const decryptedBinary = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encryptedBinary,
+      outputEncoding: "utf8",
+    }),
+  );
 
   // Convert back to Uint8Array for verification
   const resultBytes = new TextEncoder().encode(decryptedBinary);
@@ -111,12 +143,16 @@ test("Encrypting large data", async () => {
   console.log(`Original data size: ${largeData.length} bytes`);
 
   console.time("Encryption time");
-  const encryptedLarge = await encrypt({ data: largeData });
+  const encryptedLarge = unwrap(
+    await encrypt({ key: testKey, data: largeData }),
+  );
   console.timeEnd("Encryption time");
   console.log(`Encrypted data size: ${encryptedLarge.length} bytes`);
 
   console.time("Decryption time");
-  const decryptedLarge = await decrypt({ data: encryptedLarge });
+  const decryptedLarge = unwrap(
+    await decrypt({ key: testKey, data: encryptedLarge }),
+  );
   console.timeEnd("Decryption time");
   console.log(`Decrypted data size: ${decryptedLarge.length} bytes`);
 
@@ -131,8 +167,12 @@ test("Multiple encryptions produce different ciphertexts but decrypt correctly",
 
   // Encrypt the same data twice - should produce DIFFERENT ciphertexts
   // because each encryption generates a fresh random IV
-  const firstEncryption = await encrypt({ data: sampleText });
-  const secondEncryption = await encrypt({ data: sampleText });
+  const firstEncryption = unwrap(
+    await encrypt({ key: testKey, data: sampleText }),
+  );
+  const secondEncryption = unwrap(
+    await encrypt({ key: testKey, data: sampleText }),
+  );
 
   console.log("Original:", sampleText);
   console.log("First encryption:", firstEncryption);
@@ -142,8 +182,12 @@ test("Multiple encryptions produce different ciphertexts but decrypt correctly",
   expect(firstEncryption).not.toBe(secondEncryption);
 
   // Both should decrypt to the same original text
-  const firstDecrypted = await decrypt({ data: firstEncryption });
-  const secondDecrypted = await decrypt({ data: secondEncryption });
+  const firstDecrypted = unwrap(
+    await decrypt({ key: testKey, data: firstEncryption }),
+  );
+  const secondDecrypted = unwrap(
+    await decrypt({ key: testKey, data: secondEncryption }),
+  );
 
   console.log("Decrypted first:", firstDecrypted);
   console.log("Decrypted second:", secondDecrypted);
@@ -176,12 +220,16 @@ test("Real-world usage examples", async () => {
   console.log("Original user data:", userData);
 
   // Encrypt sensitive data for database storage
-  const encryptedUserData = await encrypt({ data: userData });
+  const encryptedUserData = unwrap(
+    await encrypt({ key: testKey, data: userData }),
+  );
   console.log("\nEncrypted data to store in database:");
   console.log(encryptedUserData);
 
   // Later, when retrieving from database
-  const retrievedUserData = await decrypt({ data: encryptedUserData });
+  const retrievedUserData = unwrap(
+    await decrypt({ key: testKey, data: encryptedUserData }),
+  );
   console.log("\nDecrypted data after retrieval:");
   console.log(retrievedUserData);
   console.log("\nParsed user profile:", JSON.parse(retrievedUserData));
@@ -191,18 +239,24 @@ test("Real-world usage examples", async () => {
 
   // Encrypt API key as hex (might be useful for certain systems)
   const apiKey = "sk_live_abcdef123456789";
-  const encryptedHex = await encrypt({
-    data: apiKey,
-    outputEncoding: "hex",
-  });
+  const encryptedHex = unwrap(
+    await encrypt({
+      key: testKey,
+      data: apiKey,
+      outputEncoding: "hex",
+    }),
+  );
   console.log("API key encrypted as hex:");
   console.log(encryptedHex);
 
   // Decrypt from hex
-  const decryptedApiKey = await decrypt({
-    data: encryptedHex,
-    inputEncoding: "hex",
-  });
+  const decryptedApiKey = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encryptedHex,
+      inputEncoding: "hex",
+    }),
+  );
   console.log("Decrypted API key:", decryptedApiKey);
 
   // Example 3: Practical encryption of configuration data
@@ -221,20 +275,30 @@ test("Real-world usage examples", async () => {
 
   // In production, encrypt each sensitive field individually
   const encryptedConfig = {
-    databaseUrl: await encrypt({ data: appConfig.databaseUrl }),
+    databaseUrl: unwrap(
+      await encrypt({ key: testKey, data: appConfig.databaseUrl }),
+    ),
     apiKeys: {
-      stripe: await encrypt({ data: appConfig.apiKeys.stripe }),
-      sendgrid: await encrypt({ data: appConfig.apiKeys.sendgrid }),
-      aws: await encrypt({ data: appConfig.apiKeys.aws }),
+      stripe: unwrap(
+        await encrypt({ key: testKey, data: appConfig.apiKeys.stripe }),
+      ),
+      sendgrid: unwrap(
+        await encrypt({ key: testKey, data: appConfig.apiKeys.sendgrid }),
+      ),
+      aws: unwrap(await encrypt({ key: testKey, data: appConfig.apiKeys.aws })),
     },
-    jwtSecret: await encrypt({ data: appConfig.jwtSecret }),
+    jwtSecret: unwrap(
+      await encrypt({ key: testKey, data: appConfig.jwtSecret }),
+    ),
   };
 
   console.log("Encrypted config for .env or config file storage:");
   console.log(JSON.stringify(encryptedConfig, null, 2));
 
   // Later, when app needs to use the config
-  const decryptedDbUrl = await decrypt({ data: encryptedConfig.databaseUrl });
+  const decryptedDbUrl = unwrap(
+    await decrypt({ key: testKey, data: encryptedConfig.databaseUrl }),
+  );
   console.log("\nDecrypted database URL for use in application:");
   console.log(decryptedDbUrl);
 
@@ -254,20 +318,26 @@ test("Real-world usage examples", async () => {
   ]); // PNG header
   const binaryString = new TextDecoder().decode(binaryData);
 
-  const encryptedBinary = await encrypt({
-    data: binaryString,
-    inputEncoding: "utf8",
-    outputEncoding: "base64",
-  });
+  const encryptedBinary = unwrap(
+    await encrypt({
+      key: testKey,
+      data: binaryString,
+      inputEncoding: "utf8",
+      outputEncoding: "base64",
+    }),
+  );
 
   console.log("Encrypted binary data (base64):");
   console.log(encryptedBinary);
 
   // When retrieving and decrypting
-  const decryptedBinaryString = await decrypt({
-    data: encryptedBinary,
-    outputEncoding: "utf8",
-  });
+  const decryptedBinaryString = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encryptedBinary,
+      outputEncoding: "utf8",
+    }),
+  );
 
   const restoredBinary = new TextEncoder().encode(decryptedBinaryString);
   console.log("Decrypted binary data:", Array.from(restoredBinary));
@@ -346,11 +416,14 @@ test("toBase64URL and fromBase64URL - should be reversible", () => {
 test("encrypt with urlSafe false - should not convert to Base64URL", async () => {
   setupTestEnvironment();
   const data = "test data";
-  const encrypted = await encrypt({
-    data,
-    outputEncoding: "base64",
-    urlSafe: false,
-  });
+  const encrypted = unwrap(
+    await encrypt({
+      key: testKey,
+      data,
+      outputEncoding: "base64",
+      urlSafe: false,
+    }),
+  );
 
   // Standard base64 might contain + or / characters
   // The result should be valid base64 (can be decoded)
@@ -363,18 +436,24 @@ test("decrypt with urlSafe false - should not convert from Base64URL", async () 
   const data = "test data for non-urlsafe";
 
   // First encrypt without urlSafe
-  const encrypted = await encrypt({
-    data,
-    outputEncoding: "base64",
-    urlSafe: false,
-  });
+  const encrypted = unwrap(
+    await encrypt({
+      key: testKey,
+      data,
+      outputEncoding: "base64",
+      urlSafe: false,
+    }),
+  );
 
   // Then decrypt without urlSafe
-  const decrypted = await decrypt({
-    data: encrypted,
-    inputEncoding: "base64",
-    urlSafe: false,
-  });
+  const decrypted = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encrypted,
+      inputEncoding: "base64",
+      urlSafe: false,
+    }),
+  );
 
   expect(decrypted).toBe(data);
 });
@@ -384,18 +463,24 @@ test("encrypt and decrypt with binary encoding", async () => {
   const originalData = "binary test";
 
   // Encrypt to binary
-  const encryptedBinary = await encrypt({
-    data: originalData,
-    outputEncoding: "binary",
-  });
+  const encryptedBinary = unwrap(
+    await encrypt({
+      key: testKey,
+      data: originalData,
+      outputEncoding: "binary",
+    }),
+  );
 
   // Decrypt from binary
-  const decrypted = await decrypt({
-    data: encryptedBinary,
-    inputEncoding: "binary",
-    outputEncoding: "utf8",
-    urlSafe: false, // binary doesn't use base64
-  });
+  const decrypted = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encryptedBinary,
+      inputEncoding: "binary",
+      outputEncoding: "utf8",
+      urlSafe: false, // binary doesn't use base64
+    }),
+  );
 
   expect(decrypted).toBe(originalData);
 });
@@ -405,58 +490,79 @@ test("encrypt with base64 input encoding", async () => {
   // Encode "hello" as base64
   const base64Input = btoa("hello");
 
-  const encrypted = await encrypt({
-    data: base64Input,
-    inputEncoding: "base64",
-    outputEncoding: "base64",
-  });
+  const encrypted = unwrap(
+    await encrypt({
+      key: testKey,
+      data: base64Input,
+      inputEncoding: "base64",
+      outputEncoding: "base64",
+    }),
+  );
 
   // Decrypt should give back the original bytes
-  const decrypted = await decrypt({
-    data: encrypted,
-    outputEncoding: "base64",
-  });
+  const decrypted = unwrap(
+    await decrypt({
+      key: testKey,
+      data: encrypted,
+      outputEncoding: "base64",
+    }),
+  );
 
   // Decode to verify
   const decodedResult = atob(decrypted);
   expect(decodedResult).toBe("hello");
 });
 
-// Tests for error handling - missing environment variables
-test("encrypt - should throw when SECRET_KEY is not set", async () => {
-  // Clear environment
-  env.set("SECRET_KEY", "");
+// Tests for error handling - invalid key
+test("encrypt - should return error when key is invalid", async () => {
+  const result = await encrypt({ key: "invalid-key", data: "test" });
 
-  let errorThrown = false;
-  try {
-    await encrypt({ data: "test" });
-  } catch (error) {
-    errorThrown = true;
-    expect((error as Error).message).toBe("SECRET_KEY is not set");
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(InvalidKeyError);
   }
-  expect(errorThrown).toBe(true);
+});
 
-  // Restore environment for other tests
-  setupTestEnvironment();
+test("encrypt - should return error when key is too short", async () => {
+  const shortKey = "abcd1234"; // Only 4 bytes
+
+  const result = await encrypt({ key: shortKey, data: "test" });
+
+  expect(result.ok).toBe(false);
+  if (!result.ok) {
+    expect(result.error).toBeInstanceOf(InvalidKeyError);
+    if (result.error instanceof InvalidKeyError) {
+      expect(result.error.reason).toContain("Expected 32 bytes");
+    }
+  }
+});
+
+test("encrypt - should work with different keys", async () => {
+  const customKey = generateKey();
+
+  const result = await encrypt({
+    key: customKey,
+    data: "test with custom key",
+  });
+  expect(result.ok).toBe(true);
+
+  const decryptResult = await decrypt({ key: customKey, data: unwrap(result) });
+  expect(decryptResult.ok).toBe(true);
+  expect(unwrap(decryptResult)).toBe("test with custom key");
 });
 
 test("AES-GCM authentication - should reject tampered ciphertext", async () => {
   setupTestEnvironment();
 
   const originalData = "sensitive information";
-  const encrypted = await encrypt({ data: originalData });
+  const encrypted = unwrap(await encrypt({ key: testKey, data: originalData }));
 
   // Tamper with the ciphertext (flip a bit in the middle)
   const tamperedEncrypted = encrypted.slice(0, 20) + "X" +
     encrypted.slice(21);
 
-  let errorThrown = false;
-  try {
-    await decrypt({ data: tamperedEncrypted });
-  } catch (_error) {
-    errorThrown = true;
-    // AES-GCM will throw an error when authentication fails
-  }
+  const result = await decrypt({ key: testKey, data: tamperedEncrypted });
 
-  expect(errorThrown).toBe(true);
+  // AES-GCM will return an error when authentication fails
+  expect(result.ok).toBe(false);
 });

@@ -1328,42 +1328,47 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "encrypt",
     category: "shims",
     signature:
-      "encrypt({ data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<string>",
+      "encrypt({ key, data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<Result<string, CryptoError>>",
     description:
-      "Encrypts data using AES-256-GCM authenticated encryption. Uses Web Crypto API with a fresh random 12-byte IV for each encryption (semantic security). The output format is: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes), all bundled in the specified encoding. AES-GCM provides both encryption and authentication (integrity checking). Requires SECRET_KEY environment variable to be set (64 hex characters = 32 bytes).",
+      "Encrypts data using AES-256-GCM authenticated encryption. Uses Web Crypto API with a fresh random 12-byte IV for each encryption (semantic security). The output format is: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes), all bundled in the specified encoding. AES-GCM provides both encryption and authentication (integrity checking). Returns a Result type for type-safe error handling.",
     imports: [
       'import { encrypt } from "@tidy-ts/shims";',
+      'import { encrypt, type CryptoError, InvalidKeyError } from "@tidy-ts/shims";',
     ],
     parameters: [
+      "key: string - Hex-encoded 32-byte key (64 hex characters) (required)",
       "data: string - The data to encrypt (required)",
       "inputEncoding: 'utf8' | 'base64' | 'hex' | 'binary' - Encoding of input data (default: 'utf8')",
       "outputEncoding: 'base64' | 'hex' | 'binary' - Encoding for encrypted output (default: 'base64')",
       "urlSafe: boolean - Whether to return Base64URL format (default: true, only applies when outputEncoding is 'base64')",
     ],
     returns:
-      "Promise<string> - Encrypted data in the specified encoding (Base64URL by default for base64 output)",
+      "Promise<Result<string, CryptoError>> - Result with encrypted data or error",
     examples: [
-      '// Basic encryption (UTF-8 → Base64URL)\nimport { encrypt } from "@tidy-ts/shims";\n\n// SECRET_KEY must be set in environment\nconst encrypted = await encrypt({ data: "sensitive password" });\nconsole.log(encrypted); // Base64URL-encoded ciphertext',
-      '// Encrypt JSON data\nconst userData = JSON.stringify({ email: "user@example.com", apiKey: "secret123" });\nconst encrypted = await encrypt({ data: userData });\n// Store encrypted in database',
-      '// Encrypt with hex output encoding\nconst encryptedHex = await encrypt({\n  data: "API key",\n  outputEncoding: "hex"\n});\nconsole.log(encryptedHex); // Hexadecimal string',
-      '// Encrypt binary data\nconst binaryData = new TextDecoder().decode(new Uint8Array([0x01, 0x02, 0x03]));\nconst encrypted = await encrypt({\n  data: binaryData,\n  inputEncoding: "utf8",\n  outputEncoding: "base64"\n});',
-      '// Encrypt with standard Base64 (not URL-safe)\nconst encrypted = await encrypt({\n  data: "data",\n  outputEncoding: "base64",\n  urlSafe: false\n});',
-      '// Encrypt configuration for .env file\nconst config = {\n  databaseUrl: await encrypt({ data: "postgresql://user:pass@host/db" }),\n  apiKey: await encrypt({ data: "sk_live_abc123" })\n};\n// Store in .env file',
+      '// Basic encryption (UTF-8 → Base64URL)\nimport { encrypt, generateKey } from "@tidy-ts/shims";\n\nconst key = generateKey(); // Or load from secure storage\nconst result = await encrypt({ key, data: "sensitive password" });\nif (result.ok) {\n  console.log(result.value); // Base64URL-encoded ciphertext\n} else {\n  console.error(result.error.message);\n}',
+      '// Encrypt JSON data\nconst key = env.get("SECRET_KEY")!;\nconst userData = JSON.stringify({ email: "user@example.com", apiKey: "secret123" });\nconst result = await encrypt({ key, data: userData });\nif (result.ok) {\n  // Store result.value in database\n}',
+      '// Encrypt with hex output encoding\nconst result = await encrypt({\n  key,\n  data: "API key",\n  outputEncoding: "hex"\n});\nif (result.ok) {\n  console.log(result.value); // Hexadecimal string\n}',
+      '// Handle invalid key error\nimport { encrypt, InvalidKeyError } from "@tidy-ts/shims";\n\nconst result = await encrypt({ key: "invalid", data: "test" });\nif (!result.ok) {\n  if (result.error instanceof InvalidKeyError) {\n    console.error("Invalid key:", result.error.reason);\n  }\n}',
     ],
-    related: ["decrypt", "generateKey", "env"],
+    related: [
+      "decrypt",
+      "generateKey",
+      "encryptFields",
+      "CryptoError",
+      "InvalidKeyError",
+    ],
     bestPractices: [
-      "✓ GOOD: Set SECRET_KEY environment variable before using (use generateKey() to create)",
+      "✓ GOOD: Use generateKey() to create secure keys",
+      "✓ GOOD: Store keys securely (env vars, secret manager) - never in source code",
+      "✓ GOOD: Check result.ok before accessing result.value",
       "✓ GOOD: Use default Base64URL encoding for safe storage in .env files and URLs",
       "✓ GOOD: Each encryption generates a fresh random IV (semantic security)",
-      "✓ GOOD: AES-GCM automatically provides authentication (tamper detection)",
-      "✓ GOOD: Encrypt sensitive data before storing in databases or config files",
       "✓ GOOD: Use consistent encoding options for encrypt/decrypt pairs",
     ],
     antiPatterns: [
-      "❌ BAD: Using the same IV for multiple encryptions (this implementation handles this automatically)",
-      "❌ BAD: Storing SECRET_KEY in source code (use environment variables)",
+      "❌ BAD: Hardcoding keys in source code",
       "❌ BAD: Using different urlSafe settings for encrypt and decrypt",
-      "❌ BAD: Forgetting to set SECRET_KEY environment variable",
+      "❌ BAD: Accessing result.value without checking result.ok",
     ],
   },
 
@@ -1371,41 +1376,317 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "decrypt",
     category: "shims",
     signature:
-      "decrypt({ data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<string>",
+      "decrypt({ key, data, inputEncoding?, outputEncoding?, urlSafe? }): Promise<Result<string, CryptoError>>",
     description:
-      "Decrypts data that was encrypted using AES-256-GCM. Expects input format: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes). Automatically verifies the authentication tag during decryption, rejecting tampered ciphertext. Requires SECRET_KEY environment variable to match the one used for encryption.",
+      "Decrypts data that was encrypted using AES-256-GCM. Expects input format: IV (12 bytes) + Ciphertext + Auth Tag (16 bytes). Automatically verifies the authentication tag during decryption, rejecting tampered ciphertext. Returns a Result type for type-safe error handling.",
     imports: [
       'import { decrypt } from "@tidy-ts/shims";',
+      'import { decrypt, type CryptoError, DecryptionError } from "@tidy-ts/shims";',
     ],
     parameters: [
+      "key: string - Hex-encoded 32-byte key (64 hex characters) (required)",
       "data: string - The encrypted data to decrypt (required)",
       "inputEncoding: 'base64' | 'hex' | 'binary' - Encoding of encrypted input (default: 'base64')",
       "outputEncoding: 'utf8' | 'base64' | 'hex' | 'binary' - Encoding for decrypted output (default: 'utf8')",
       "urlSafe: boolean - Whether the input is in Base64URL format (default: true, only applies when inputEncoding is 'base64')",
     ],
     returns:
-      "Promise<string> - Decrypted data in the specified encoding, or throws error if authentication fails",
+      "Promise<Result<string, CryptoError>> - Result with decrypted data or error (fails if tampered or wrong key)",
     examples: [
-      '// Basic decryption (Base64URL → UTF-8)\nimport { decrypt } from "@tidy-ts/shims";\n\n// SECRET_KEY must be set in environment\nconst encrypted = "abc123..."; // From encrypt()\nconst decrypted = await decrypt({ data: encrypted });\nconsole.log(decrypted); // Original plaintext',
-      '// Decrypt JSON data\nconst encrypted = await encrypt({ data: JSON.stringify({ key: "value" }) });\nconst decrypted = await decrypt({ data: encrypted });\nconst obj = JSON.parse(decrypted);',
-      '// Decrypt from hex encoding\nconst encryptedHex = await encrypt({ data: "secret", outputEncoding: "hex" });\nconst decrypted = await decrypt({\n  data: encryptedHex,\n  inputEncoding: "hex"\n});',
-      '// Decrypt configuration from .env\nconst encryptedDbUrl = env.get("ENCRYPTED_DB_URL");\nif (encryptedDbUrl) {\n  const dbUrl = await decrypt({ data: encryptedDbUrl });\n  // Use dbUrl to connect\n}',
-      '// Decrypt with standard Base64 (not URL-safe)\nconst decrypted = await decrypt({\n  data: encrypted,\n  inputEncoding: "base64",\n  urlSafe: false\n});',
-      '// Decrypt binary data\nconst decrypted = await decrypt({\n  data: encryptedBinary,\n  outputEncoding: "utf8"\n});\nconst bytes = new TextEncoder().encode(decrypted);',
+      '// Basic decryption (Base64URL → UTF-8)\nimport { decrypt } from "@tidy-ts/shims";\n\nconst key = env.get("SECRET_KEY")!;\nconst result = await decrypt({ key, data: encrypted });\nif (result.ok) {\n  console.log(result.value); // Original plaintext\n} else {\n  console.error("Decryption failed:", result.error.message);\n}',
+      "// Decrypt JSON data\nconst result = await decrypt({ key, data: encryptedJson });\nif (result.ok) {\n  const obj = JSON.parse(result.value);\n}",
+      '// Decrypt from hex encoding\nconst result = await decrypt({\n  key,\n  data: encryptedHex,\n  inputEncoding: "hex"\n});',
+      '// Handle tampered ciphertext\nimport { decrypt, DecryptionError } from "@tidy-ts/shims";\n\nconst result = await decrypt({ key, data: possiblyTampered });\nif (!result.ok && result.error instanceof DecryptionError) {\n  console.error("Data may have been tampered with");\n}',
     ],
-    related: ["encrypt", "generateKey", "env"],
+    related: [
+      "encrypt",
+      "generateKey",
+      "decryptFields",
+      "CryptoError",
+      "DecryptionError",
+    ],
     bestPractices: [
       "✓ GOOD: Use matching encoding options as encrypt() call",
-      "✓ GOOD: Handle errors - decryption throws if ciphertext is tampered or key is wrong",
+      "✓ GOOD: Check result.ok - errors indicate tampering or wrong key",
       "✓ GOOD: AES-GCM automatically verifies authentication tag (tamper detection)",
-      "✓ GOOD: Use try/catch when decrypting user-provided or untrusted ciphertext",
-      "✓ GOOD: Ensure SECRET_KEY matches the one used for encryption",
+      "✓ GOOD: Ensure key matches the one used for encryption",
     ],
     antiPatterns: [
       "❌ BAD: Using different encoding options than encrypt() used",
-      "❌ BAD: Ignoring decryption errors (they indicate tampering or wrong key)",
+      "❌ BAD: Ignoring result.error (indicates tampering or wrong key)",
       "❌ BAD: Using different urlSafe setting than encrypt() used",
-      "❌ BAD: Decrypting without checking if data exists first",
+    ],
+  },
+
+  // Envelope Encryption (per-record DEK with master key)
+  encryptFields: {
+    name: "encryptFields",
+    category: "shims",
+    signature:
+      "encryptFields({ fields, masterKey }): Promise<Result<{ encrypted, dek }, EnvelopeEncryptionError>>",
+    description:
+      "Encrypts multiple fields using envelope encryption pattern. Generates a fresh Data Encryption Key (DEK) for each call, encrypts all non-null fields with the DEK, then encrypts the DEK with the master key. Null values pass through unchanged. Returns both the encrypted fields and the encrypted DEK for storage. Provides forward secrecy - each record has its own DEK.",
+    imports: [
+      'import { encryptFields } from "@tidy-ts/shims";',
+      'import { encryptFields, type EnvelopeEncryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "fields: Record<string, string | null> - Object with string or null values to encrypt",
+      "masterKey: string - Hex-encoded 32-byte master key (64 hex characters)",
+    ],
+    returns:
+      "Promise<Result<{ encrypted: Record<string, string | null>, dek: string }, EnvelopeEncryptionError>>",
+    examples: [
+      '// Encrypt sensitive fields for database storage\nimport { encryptFields } from "@tidy-ts/shims";\n\nconst masterKey = env.get("MASTER_KEY")!;\nconst result = await encryptFields({\n  fields: {\n    title: "Doctor appointment",\n    description: "Annual checkup with Dr. Smith",\n    notes: null, // null values pass through\n  },\n  masterKey,\n});\n\nif (result.ok) {\n  // Store in database\n  await db.events.create({\n    title: result.value.encrypted.title,\n    description: result.value.encrypted.description,\n    notes: result.value.encrypted.notes, // still null\n    dek: result.value.dek, // Store with record\n  });\n}',
+      '// Each call generates a fresh DEK (forward secrecy)\nconst result1 = await encryptFields({ fields: { secret: "data" }, masterKey });\nconst result2 = await encryptFields({ fields: { secret: "data" }, masterKey });\n// result1.value.dek !== result2.value.dek (different DEKs)',
+    ],
+    related: ["decryptFields", "rotateMasterKey", "encrypt", "generateKey"],
+    bestPractices: [
+      "✓ GOOD: Store the encrypted DEK alongside the encrypted fields",
+      "✓ GOOD: Use different master keys for different environments",
+      "✓ GOOD: Fresh DEK per record provides forward secrecy",
+      "✓ GOOD: Null values pass through unchanged",
+    ],
+    antiPatterns: [
+      "❌ BAD: Reusing the same DEK across multiple records",
+      "❌ BAD: Storing master key in database alongside encrypted data",
+    ],
+  },
+
+  decryptFields: {
+    name: "decryptFields",
+    category: "shims",
+    signature:
+      "decryptFields({ fields, dek, masterKey }): Promise<Result<Record<string, string | null>, EnvelopeDecryptionError>>",
+    description:
+      "Decrypts fields that were encrypted with encryptFields(). First decrypts the DEK using the master key, then decrypts each non-null field with the DEK. Null values pass through unchanged. Supports selective decryption - only decrypt the fields you need.",
+    imports: [
+      'import { decryptFields } from "@tidy-ts/shims";',
+      'import { decryptFields, type EnvelopeDecryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "fields: Record<string, string | null> - Object with encrypted string or null values",
+      "dek: string - Encrypted DEK (from encryptFields result)",
+      "masterKey: string - Hex-encoded 32-byte master key (64 hex characters)",
+    ],
+    returns:
+      "Promise<Result<Record<string, string | null>, EnvelopeDecryptionError>>",
+    examples: [
+      '// Decrypt fields from database\nimport { decryptFields } from "@tidy-ts/shims";\n\nconst event = await db.events.findUnique({ where: { id } });\nconst result = await decryptFields({\n  fields: {\n    title: event.title,\n    description: event.description,\n  },\n  dek: event.dek,\n  masterKey: env.get("MASTER_KEY")!,\n});\n\nif (result.ok) {\n  console.log(result.value.title); // "Doctor appointment"\n  console.log(result.value.description); // "Annual checkup..."\n}',
+      "// Selective decryption - only decrypt what you need\nconst result = await decryptFields({\n  fields: { title: event.title }, // Only decrypt title\n  dek: event.dek,\n  masterKey,\n});\n// result.value only has title",
+      '// Handle decryption errors\nimport { decryptFields, EnvelopeDecryptionError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, masterKey });\nif (!result.ok) {\n  if (result.error.field) {\n    console.error(`Failed to decrypt field: ${result.error.field}`);\n  } else {\n    console.error("Failed to decrypt DEK - wrong master key?");\n  }\n}',
+    ],
+    related: ["encryptFields", "rotateMasterKey", "decrypt"],
+    bestPractices: [
+      "✓ GOOD: Use selective decryption to minimize decrypted data exposure",
+      "✓ GOOD: Check result.error.field to identify which field failed",
+      "✓ GOOD: Null values in input pass through as null in output",
+    ],
+    antiPatterns: [
+      "❌ BAD: Decrypting more fields than needed",
+      "❌ BAD: Ignoring decryption errors",
+    ],
+  },
+
+  rotateMasterKey: {
+    name: "rotateMasterKey",
+    category: "shims",
+    signature:
+      "rotateMasterKey({ dek, oldMasterKey, newMasterKey }): Promise<Result<string, EnvelopeError>>",
+    description:
+      "Re-encrypts a DEK from an old master key to a new master key. The underlying encrypted data remains unchanged - only the DEK wrapper is updated. Use this for master key rotation without re-encrypting all data. Process: decrypt DEK with old key, re-encrypt with new key.",
+    imports: [
+      'import { rotateMasterKey } from "@tidy-ts/shims";',
+      'import { rotateMasterKey, type EnvelopeError } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "dek: string - Encrypted DEK (currently encrypted with old master key)",
+      "oldMasterKey: string - Hex-encoded 32-byte old master key",
+      "newMasterKey: string - Hex-encoded 32-byte new master key",
+    ],
+    returns:
+      "Promise<Result<string, EnvelopeError>> - New DEK encrypted with new master key",
+    examples: [
+      '// Rotate master key for all records\nimport { rotateMasterKey } from "@tidy-ts/shims";\n\nconst oldKey = env.get("MASTER_KEY_V1")!;\nconst newKey = env.get("MASTER_KEY_V2")!;\n\nconst events = await db.events.findMany({ select: { id: true, dek: true } });\n\nfor (const event of events) {\n  const result = await rotateMasterKey({\n    dek: event.dek,\n    oldMasterKey: oldKey,\n    newMasterKey: newKey,\n  });\n\n  if (result.ok) {\n    await db.events.update({\n      where: { id: event.id },\n      data: { dek: result.value }, // New DEK, same encrypted data\n    });\n  } else {\n    console.error(`Failed to rotate DEK for event ${event.id}`);\n  }\n}',
+      "// Key rotation is efficient - no data re-encryption needed\n// Old: [encrypted fields] + [DEK encrypted with old key]\n// New: [encrypted fields] + [DEK encrypted with new key]\n// The encrypted fields are unchanged!",
+    ],
+    related: ["encryptFields", "decryptFields", "generateKey"],
+    bestPractices: [
+      "✓ GOOD: Rotate master keys periodically for security",
+      "✓ GOOD: Test key rotation on a backup before production",
+      "✓ GOOD: Keep old master key available until all DEKs are rotated",
+      "✓ GOOD: Data remains unchanged - only DEK wrapper is updated",
+    ],
+    antiPatterns: [
+      "❌ BAD: Deleting old master key before all DEKs are rotated",
+      "❌ BAD: Rotating keys without a backup plan",
+    ],
+  },
+
+  // Encryption Error Types
+  CryptoError: {
+    name: "CryptoError",
+    category: "shims",
+    signature:
+      "type CryptoError = InvalidKeyError | EncryptionError | DecryptionError",
+    description:
+      "Union type of all encryption/decryption error types. Use with instanceof to narrow to specific error types for detailed error handling. Returned by encrypt() and decrypt() functions.",
+    imports: [
+      'import { type CryptoError } from "@tidy-ts/shims";',
+      'import { InvalidKeyError, EncryptionError, DecryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Type alias (not a value)",
+    examples: [
+      '// Handle different error types\nimport { encrypt, InvalidKeyError, EncryptionError } from "@tidy-ts/shims";\n\nconst result = await encrypt({ key, data: "secret" });\nif (!result.ok) {\n  if (result.error instanceof InvalidKeyError) {\n    console.error("Bad key:", result.error.reason);\n  } else if (result.error instanceof EncryptionError) {\n    console.error("Encryption failed:", result.error.message);\n  }\n}',
+    ],
+    related: [
+      "InvalidKeyError",
+      "EncryptionError",
+      "DecryptionError",
+      "encrypt",
+      "decrypt",
+    ],
+    bestPractices: [
+      "✓ GOOD: Use instanceof to narrow to specific error types",
+      "✓ GOOD: Handle each error type appropriately",
+    ],
+  },
+
+  InvalidKeyError: {
+    name: "InvalidKeyError",
+    category: "shims",
+    signature: "class InvalidKeyError extends Error { reason: string }",
+    description:
+      "Error returned when the encryption key is invalid. Contains a reason explaining why the key is invalid (wrong length, invalid hex, etc.). Keys must be 32 bytes (64 hex characters) for AES-256-GCM.",
+    imports: [
+      'import { InvalidKeyError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with reason property",
+    examples: [
+      '// Handle invalid key\nimport { encrypt, InvalidKeyError } from "@tidy-ts/shims";\n\nconst result = await encrypt({ key: "too-short", data: "test" });\nif (!result.ok && result.error instanceof InvalidKeyError) {\n  console.error("Invalid key:", result.error.reason);\n  // "Expected 32 bytes (64 hex chars), got 4 bytes"\n}',
+    ],
+    related: [
+      "CryptoError",
+      "EncryptionError",
+      "DecryptionError",
+      "generateKey",
+    ],
+    bestPractices: [
+      "✓ GOOD: Use generateKey() to create valid keys",
+      "✓ GOOD: Check key length before encryption (64 hex chars)",
+    ],
+  },
+
+  EncryptionError: {
+    name: "EncryptionError",
+    category: "shims",
+    signature:
+      "class EncryptionError extends Error { message: string; cause?: Error }",
+    description:
+      "Error returned when encryption fails due to a crypto operation error. Contains the error message and optionally the underlying cause.",
+    imports: [
+      'import { EncryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with message and optional cause properties",
+    examples: [
+      '// Handle encryption errors\nimport { encrypt, EncryptionError } from "@tidy-ts/shims";\n\nconst result = await encrypt({ key, data });\nif (!result.ok && result.error instanceof EncryptionError) {\n  console.error("Encryption failed:", result.error.message);\n  if (result.error.cause) {\n    console.error("Caused by:", result.error.cause);\n  }\n}',
+    ],
+    related: ["CryptoError", "InvalidKeyError", "DecryptionError"],
+    bestPractices: [
+      "✓ GOOD: Log the cause for debugging",
+    ],
+  },
+
+  DecryptionError: {
+    name: "DecryptionError",
+    category: "shims",
+    signature:
+      "class DecryptionError extends Error { message: string; cause?: Error }",
+    description:
+      "Error returned when decryption fails. This typically indicates either the wrong key was used, or the ciphertext was tampered with (AES-GCM authentication failed). Contains the error message and optionally the underlying cause.",
+    imports: [
+      'import { DecryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with message and optional cause properties",
+    examples: [
+      '// Handle decryption errors\nimport { decrypt, DecryptionError } from "@tidy-ts/shims";\n\nconst result = await decrypt({ key, data: ciphertext });\nif (!result.ok && result.error instanceof DecryptionError) {\n  console.error("Decryption failed:", result.error.message);\n  // Could be wrong key or tampered ciphertext\n}',
+    ],
+    related: ["CryptoError", "InvalidKeyError", "EncryptionError"],
+    bestPractices: [
+      "✓ GOOD: Treat decryption errors as potential tampering",
+      "✓ GOOD: Verify the correct key is being used",
+    ],
+  },
+
+  EnvelopeEncryptionError: {
+    name: "EnvelopeEncryptionError",
+    category: "shims",
+    signature:
+      "class EnvelopeEncryptionError extends Error { message: string; field?: string }",
+    description:
+      "Error returned when envelope encryption fails. If the field property is set, it indicates which specific field failed to encrypt. Otherwise, the DEK encryption failed.",
+    imports: [
+      'import { EnvelopeEncryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with message and optional field properties",
+    examples: [
+      '// Handle envelope encryption errors\nimport { encryptFields, EnvelopeEncryptionError } from "@tidy-ts/shims";\n\nconst result = await encryptFields({ fields, masterKey });\nif (!result.ok && result.error instanceof EnvelopeEncryptionError) {\n  if (result.error.field) {\n    console.error(`Failed to encrypt field: ${result.error.field}`);\n  } else {\n    console.error("Failed to encrypt DEK");\n  }\n}',
+    ],
+    related: ["encryptFields", "EnvelopeDecryptionError", "EnvelopeError"],
+    bestPractices: [
+      "✓ GOOD: Check field property to identify problematic field",
+    ],
+  },
+
+  EnvelopeDecryptionError: {
+    name: "EnvelopeDecryptionError",
+    category: "shims",
+    signature:
+      "class EnvelopeDecryptionError extends Error { message: string; field?: string }",
+    description:
+      "Error returned when envelope decryption fails. If the field property is set, it indicates which specific field failed to decrypt (possibly tampered). If not set, the DEK decryption failed (wrong master key).",
+    imports: [
+      'import { EnvelopeDecryptionError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with message and optional field properties",
+    examples: [
+      '// Handle envelope decryption errors\nimport { decryptFields, EnvelopeDecryptionError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, masterKey });\nif (!result.ok && result.error instanceof EnvelopeDecryptionError) {\n  if (result.error.field) {\n    console.error(`Field "${result.error.field}" may be corrupted or tampered`);\n  } else {\n    console.error("Wrong master key or corrupted DEK");\n  }\n}',
+    ],
+    related: ["decryptFields", "EnvelopeEncryptionError", "EnvelopeError"],
+    bestPractices: [
+      "✓ GOOD: Check field property to identify corrupted field",
+      "✓ GOOD: No field property usually means wrong master key",
+    ],
+  },
+
+  EnvelopeError: {
+    name: "EnvelopeError",
+    category: "shims",
+    signature:
+      "type EnvelopeError = EnvelopeEncryptionError | EnvelopeDecryptionError",
+    description:
+      "Union type of envelope encryption error types. Returned by rotateMasterKey() which can fail during either decryption (old key) or encryption (new key).",
+    imports: [
+      'import { type EnvelopeError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Type alias (not a value)",
+    examples: [
+      '// Handle rotation errors\nimport { rotateMasterKey, EnvelopeDecryptionError, EnvelopeEncryptionError } from "@tidy-ts/shims";\n\nconst result = await rotateMasterKey({ dek, oldMasterKey, newMasterKey });\nif (!result.ok) {\n  if (result.error instanceof EnvelopeDecryptionError) {\n    console.error("Wrong old master key");\n  } else if (result.error instanceof EnvelopeEncryptionError) {\n    console.error("Invalid new master key");\n  }\n}',
+    ],
+    related: [
+      "rotateMasterKey",
+      "EnvelopeEncryptionError",
+      "EnvelopeDecryptionError",
+    ],
+    bestPractices: [
+      "✓ GOOD: Use instanceof to determine which operation failed",
     ],
   },
 
