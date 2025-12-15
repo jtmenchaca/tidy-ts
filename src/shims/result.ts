@@ -156,3 +156,73 @@ export function defineError<
     new (extra: Extra): AppError<ErrorName, Extra>;
   };
 }
+
+// ============================================================================
+// Async Utilities
+// ============================================================================
+
+/**
+ * Wrap an async operation in a Result, catching any thrown errors.
+ *
+ * Requires an error mapper to transform caught exceptions into typed errors.
+ * This ensures explicit error handling consistent with tidy-ts patterns.
+ *
+ * @param fn - Async function to execute
+ * @param mapError - Function to transform caught errors into typed errors
+ * @returns Promise resolving to Result with the value or mapped error
+ *
+ * @example Database query
+ * ```ts
+ * import { tryAsync, defineError, type AppError } from "@tidy-ts/shims";
+ *
+ * const DatabaseError = defineError(
+ *   "DatabaseError",
+ *   ({ query, cause }: { query: string; cause: string }) =>
+ *     `Query failed: ${cause} [${query}]`
+ * );
+ * type DatabaseError = AppError<"DatabaseError", { query: string; cause: string }>;
+ *
+ * const query = "SELECT * FROM users";
+ * const result = await tryAsync({
+ *   fn: () => db.query(query),
+ *   mapError: (e) => new DatabaseError({
+ *     query,
+ *     cause: e instanceof Error ? e.message : String(e)
+ *   })
+ * });
+ *
+ * if (!result.ok) {
+ *   console.error(result.error.query); // typed access to query
+ * }
+ * ```
+ *
+ * @example File operations
+ * ```ts
+ * const FileError = defineError(
+ *   "FileError",
+ *   ({ path, operation }: { path: string; operation: string }) =>
+ *     `File ${operation} failed: ${path}`
+ * );
+ * type FileError = AppError<"FileError", { path: string; operation: string }>;
+ *
+ * const path = "config.json";
+ * const result = await tryAsync({
+ *   fn: () => Deno.readTextFile(path),
+ *   mapError: () => new FileError({ path, operation: "read" })
+ * });
+ * ```
+ */
+export async function tryAsync<T, E>({
+  fn,
+  mapError,
+}: {
+  fn: () => Promise<T>;
+  mapError: (error: unknown) => E;
+}): Promise<Result<T, E>> {
+  try {
+    const value = await fn();
+    return ok(value);
+  } catch (error) {
+    return err(mapError(error));
+  }
+}

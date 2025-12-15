@@ -1100,6 +1100,35 @@ export const shimsDocs: Record<string, DocEntry> = {
     ],
   },
 
+  tryAsync: {
+    name: "tryAsync",
+    category: "shims",
+    signature: "tryAsync<T, E>({ fn, mapError }): Promise<Result<T, E>>",
+    description:
+      "Wrap an async operation in a Result, catching any thrown errors. Requires an error mapper to transform caught exceptions into typed errors. Use this to wrap external library calls (database queries, file operations, third-party APIs) that throw exceptions rather than returning Results.",
+    imports: [
+      'import { tryAsync } from "@tidy-ts/shims";',
+      'import { tryAsync, defineError, type AppError } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "fn: () => Promise<T> - Async function to execute",
+      "mapError: (error: unknown) => E - Function to transform caught errors into typed errors",
+    ],
+    returns: "Promise<Result<T, E>> - Result with the value or mapped error",
+    examples: [
+      '// Wrap a database query\nimport { tryAsync, defineError, type AppError } from "@tidy-ts/shims";\n\nconst DatabaseError = defineError(\n  "DatabaseError",\n  ({ query, cause }: { query: string; cause: string }) =>\n    `Query failed: ${cause} [${query}]`\n);\ntype DatabaseError = AppError<"DatabaseError", { query: string; cause: string }>;\n\nconst query = "SELECT * FROM users";\nconst result = await tryAsync({\n  fn: () => db.query(query),\n  mapError: (e) => new DatabaseError({\n    query,\n    cause: e instanceof Error ? e.message : String(e)\n  })\n});\n\nif (!result.ok) {\n  console.error(result.error.query); // typed access to query\n}',
+      '// Wrap file operations\nconst FileError = defineError(\n  "FileError",\n  ({ path, operation }: { path: string; operation: string }) =>\n    `File ${operation} failed: ${path}`\n);\ntype FileError = AppError<"FileError", { path: string; operation: string }>;\n\nconst path = "config.json";\nconst result = await tryAsync({\n  fn: () => Deno.readTextFile(path),\n  mapError: () => new FileError({ path, operation: "read" })\n});',
+      '// Create a reusable wrapper\nconst makeQuery = (sql: string) =>\n  tryAsync({\n    fn: () => db.query(sql),\n    mapError: (e) =>\n      new DatabaseError({\n        query: sql,\n        cause: e instanceof Error ? e.message : String(e),\n      }),\n  });\n\nconst result = await makeQuery("SELECT * FROM users");',
+    ],
+    related: ["Result", "ok", "err", "defineError", "AppError"],
+    bestPractices: [
+      "✓ GOOD: Use to wrap external library calls that throw",
+      "✓ GOOD: Define typed errors with context (query, path, etc.)",
+      "✓ GOOD: Create reusable wrappers for common operations",
+      "✗ BAD: Using try/catch directly instead of tryAsync for Result-based code",
+    ],
+  },
+
   TidyFetchError: {
     name: "TidyFetchError",
     category: "shims",

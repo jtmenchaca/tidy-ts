@@ -43,7 +43,14 @@ export { args, exit, getArgs } from "./process.ts";
 export { test, type TestSubject, type WrappedTestOptions } from "./test.ts";
 
 // Result type system
-export { type AppError, defineError, err, ok, type Result } from "./result.ts";
+export {
+  type AppError,
+  defineError,
+  err,
+  ok,
+  type Result,
+  tryAsync,
+} from "./result.ts";
 
 // Enhanced fetch API with Result-based error handling
 export {
