@@ -1452,33 +1452,44 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "encryptFields",
     category: "shims",
     signature:
-      "encryptFields({ fields, masterKey }): Promise<Result<{ encrypted, dek }, EnvelopeEncryptionError>>",
+      "encryptFields({ fields, masterKey, masterKeyId }): Promise<Result<{ encrypted, dek }, EnvelopeEncryptionError | InvalidKeyIdError>>",
     description:
-      "Encrypts multiple fields using envelope encryption pattern. Generates a fresh Data Encryption Key (DEK) for each call, encrypts all non-null fields with the DEK, then encrypts the DEK with the master key. Null values pass through unchanged. Returns both the encrypted fields and the encrypted DEK for storage. Provides forward secrecy - each record has its own DEK.",
+      "Encrypts multiple fields using envelope encryption pattern. Generates a fresh Data Encryption Key (DEK) for each call, encrypts all non-null fields with the DEK, then encrypts the DEK with the master key. The DEK is prefixed with the masterKeyId (format: 'masterKeyId:encryptedDek') making decryption self-describing. Null values pass through unchanged. Returns both the encrypted fields and the self-describing encrypted DEK for storage. Provides forward secrecy - each record has its own DEK.",
     imports: [
       'import { encryptFields } from "@tidy-ts/shims";',
-      'import { encryptFields, type EnvelopeEncryptionError } from "@tidy-ts/shims";',
+      'import { encryptFields, type EnvelopeEncryptionError, type InvalidKeyIdError } from "@tidy-ts/shims";',
     ],
     parameters: [
       "fields: Record<string, string | null> - Object with string or null values to encrypt",
       "masterKey: string - Hex-encoded 32-byte master key (64 hex characters)",
+      "masterKeyId: string - Identifier for the master key (cannot contain colons). Used to make DEK self-describing.",
     ],
     returns:
-      "Promise<Result<{ encrypted: Record<string, string | null>, dek: string }, EnvelopeEncryptionError>>",
+      "Promise<Result<{ encrypted: Record<string, string | null>, dek: string }, EnvelopeEncryptionError | InvalidKeyIdError>>",
     examples: [
-      '// Encrypt sensitive fields for database storage\nimport { encryptFields } from "@tidy-ts/shims";\n\nconst masterKey = env.get("MASTER_KEY")!;\nconst result = await encryptFields({\n  fields: {\n    title: "Doctor appointment",\n    description: "Annual checkup with Dr. Smith",\n    notes: null, // null values pass through\n  },\n  masterKey,\n});\n\nif (result.ok) {\n  // Store in database\n  await db.events.create({\n    title: result.value.encrypted.title,\n    description: result.value.encrypted.description,\n    notes: result.value.encrypted.notes, // still null\n    dek: result.value.dek, // Store with record\n  });\n}',
-      '// Each call generates a fresh DEK (forward secrecy)\nconst result1 = await encryptFields({ fields: { secret: "data" }, masterKey });\nconst result2 = await encryptFields({ fields: { secret: "data" }, masterKey });\n// result1.value.dek !== result2.value.dek (different DEKs)',
+      '// Encrypt sensitive fields for database storage\nimport { encryptFields } from "@tidy-ts/shims";\n\nconst masterKey = env.get("MASTER_KEY_V1")!;\nconst result = await encryptFields({\n  fields: {\n    title: "Doctor appointment",\n    description: "Annual checkup with Dr. Smith",\n    notes: null, // null values pass through\n  },\n  masterKey,\n  masterKeyId: "v1", // Key version identifier\n});\n\nif (result.ok) {\n  // Store in database\n  await db.events.create({\n    title: result.value.encrypted.title,\n    description: result.value.encrypted.description,\n    notes: result.value.encrypted.notes, // still null\n    dek: result.value.dek, // Self-describing: "v1:encryptedDek..."\n  });\n}',
+      '// Each call generates a fresh DEK (forward secrecy)\nconst result1 = await encryptFields({ fields: { secret: "data" }, masterKey, masterKeyId: "v1" });\nconst result2 = await encryptFields({ fields: { secret: "data" }, masterKey, masterKeyId: "v1" });\n// result1.value.dek !== result2.value.dek (different DEKs)',
+      '// DEK format is self-describing\nconst result = await encryptFields({ fields, masterKey, masterKeyId: "prod-2024" });\n// result.value.dek = "prod-2024:<encrypted-dek>"\n// During decryption, getMasterKey("prod-2024") is called automatically',
     ],
-    related: ["decryptFields", "rotateMasterKey", "encrypt", "generateKey"],
+    related: [
+      "decryptFields",
+      "rotateMasterKey",
+      "encrypt",
+      "generateKey",
+      "InvalidKeyIdError",
+    ],
     bestPractices: [
       "✓ GOOD: Store the encrypted DEK alongside the encrypted fields",
       "✓ GOOD: Use different master keys for different environments",
       "✓ GOOD: Fresh DEK per record provides forward secrecy",
       "✓ GOOD: Null values pass through unchanged",
+      "✓ GOOD: Use meaningful masterKeyId (e.g., 'v1', 'prod-2024')",
+      "✓ GOOD: Self-describing DEK enables seamless key rotation",
     ],
     antiPatterns: [
       "❌ BAD: Reusing the same DEK across multiple records",
       "❌ BAD: Storing master key in database alongside encrypted data",
+      "❌ BAD: Using colons in masterKeyId (will fail validation)",
     ],
   },
 
@@ -1486,34 +1497,42 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "decryptFields",
     category: "shims",
     signature:
-      "decryptFields({ fields, dek, masterKey }): Promise<Result<Record<string, string | null>, EnvelopeDecryptionError>>",
+      "decryptFields({ fields, dek, getMasterKey }): Promise<Result<Record<string, string | null>, EnvelopeDecryptionError | KeyNotFoundError>>",
     description:
-      "Decrypts fields that were encrypted with encryptFields(). First decrypts the DEK using the master key, then decrypts each non-null field with the DEK. Null values pass through unchanged. Supports selective decryption - only decrypt the fields you need.",
+      "Decrypts fields that were encrypted with encryptFields(). The DEK is self-describing (format: 'masterKeyId:encryptedDek'), so getMasterKey is called with the extracted masterKeyId to retrieve the correct master key. First decrypts the DEK using the master key, then decrypts each non-null field with the DEK. Null values pass through unchanged. Supports selective decryption - only decrypt the fields you need.",
     imports: [
       'import { decryptFields } from "@tidy-ts/shims";',
-      'import { decryptFields, type EnvelopeDecryptionError } from "@tidy-ts/shims";',
+      'import { decryptFields, type EnvelopeDecryptionError, type KeyNotFoundError } from "@tidy-ts/shims";',
     ],
     parameters: [
       "fields: Record<string, string | null> - Object with encrypted string or null values",
-      "dek: string - Encrypted DEK (from encryptFields result)",
-      "masterKey: string - Hex-encoded 32-byte master key (64 hex characters)",
+      "dek: string - Self-describing encrypted DEK (format: 'masterKeyId:encryptedDek')",
+      "getMasterKey: (masterKeyId: string) => string - Callback to retrieve master key by its ID. Called synchronously with the masterKeyId extracted from the DEK.",
     ],
     returns:
-      "Promise<Result<Record<string, string | null>, EnvelopeDecryptionError>>",
+      "Promise<Result<Record<string, string | null>, EnvelopeDecryptionError | KeyNotFoundError>>",
     examples: [
-      '// Decrypt fields from database\nimport { decryptFields } from "@tidy-ts/shims";\n\nconst event = await db.events.findUnique({ where: { id } });\nconst result = await decryptFields({\n  fields: {\n    title: event.title,\n    description: event.description,\n  },\n  dek: event.dek,\n  masterKey: env.get("MASTER_KEY")!,\n});\n\nif (result.ok) {\n  console.log(result.value.title); // "Doctor appointment"\n  console.log(result.value.description); // "Annual checkup..."\n}',
-      "// Selective decryption - only decrypt what you need\nconst result = await decryptFields({\n  fields: { title: event.title }, // Only decrypt title\n  dek: event.dek,\n  masterKey,\n});\n// result.value only has title",
-      '// Handle decryption errors\nimport { decryptFields, EnvelopeDecryptionError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, masterKey });\nif (!result.ok) {\n  if (result.error.field) {\n    console.error(`Failed to decrypt field: ${result.error.field}`);\n  } else {\n    console.error("Failed to decrypt DEK - wrong master key?");\n  }\n}',
+      '// Decrypt fields from database with key store\nimport { decryptFields } from "@tidy-ts/shims";\n\n// Set up key store (load keys at startup)\nconst keys: Record<string, string> = {\n  v1: env.get("MASTER_KEY_V1")!,\n  v2: env.get("MASTER_KEY_V2")!,\n};\nconst getMasterKey = (keyId: string) => {\n  const key = keys[keyId];\n  if (!key) throw new Error(`Unknown key: ${keyId}`);\n  return key;\n};\n\nconst event = await db.events.findUnique({ where: { id } });\nconst result = await decryptFields({\n  fields: {\n    title: event.title,\n    description: event.description,\n  },\n  dek: event.dek, // Self-describing: "v1:encryptedDek..."\n  getMasterKey, // Called with "v1" automatically\n});\n\nif (result.ok) {\n  console.log(result.value.title); // "Doctor appointment"\n}',
+      "// Selective decryption - only decrypt what you need\nconst result = await decryptFields({\n  fields: { title: event.title }, // Only decrypt title\n  dek: event.dek,\n  getMasterKey,\n});\n// result.value only has title",
+      '// Handle decryption errors\nimport { decryptFields, EnvelopeDecryptionError, KeyNotFoundError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, getMasterKey });\nif (!result.ok) {\n  if (result.error instanceof KeyNotFoundError) {\n    console.error(`Unknown key ID: ${result.error.keyId}`);\n  } else if (result.error instanceof EnvelopeDecryptionError) {\n    if (result.error.field) {\n      console.error(`Failed to decrypt field: ${result.error.field}`);\n    } else {\n      console.error("Failed to decrypt DEK - wrong master key?");\n    }\n  }\n}',
     ],
-    related: ["encryptFields", "rotateMasterKey", "decrypt"],
+    related: [
+      "encryptFields",
+      "rotateMasterKey",
+      "decrypt",
+      "KeyNotFoundError",
+    ],
     bestPractices: [
       "✓ GOOD: Use selective decryption to minimize decrypted data exposure",
       "✓ GOOD: Check result.error.field to identify which field failed",
       "✓ GOOD: Null values in input pass through as null in output",
+      "✓ GOOD: Load all keys at startup for synchronous getMasterKey",
+      "✓ GOOD: Self-describing DEK means no external version tracking needed",
     ],
     antiPatterns: [
       "❌ BAD: Decrypting more fields than needed",
       "❌ BAD: Ignoring decryption errors",
+      "❌ BAD: Throwing from getMasterKey without try-catch (wrapped automatically)",
     ],
   },
 
@@ -1521,34 +1540,43 @@ export const shimsDocs: Record<string, DocEntry> = {
     name: "rotateMasterKey",
     category: "shims",
     signature:
-      "rotateMasterKey({ dek, oldMasterKey, newMasterKey }): Promise<Result<string, EnvelopeError>>",
+      "rotateMasterKey({ dek, newMasterKey, newMasterKeyId, getMasterKey }): Promise<Result<string, EnvelopeDecryptionError | EnvelopeEncryptionError | KeyNotFoundError | InvalidKeyIdError>>",
     description:
-      "Re-encrypts a DEK from an old master key to a new master key. The underlying encrypted data remains unchanged - only the DEK wrapper is updated. Use this for master key rotation without re-encrypting all data. Process: decrypt DEK with old key, re-encrypt with new key.",
+      "Re-encrypts a DEK from an old master key to a new master key. The DEK is self-describing (format: 'masterKeyId:encryptedDek'), so getMasterKey is called with the extracted masterKeyId to retrieve the old master key. The underlying encrypted data remains unchanged - only the DEK wrapper is updated. Returns a new self-describing DEK with the new masterKeyId. Use this for master key rotation without re-encrypting all data.",
     imports: [
       'import { rotateMasterKey } from "@tidy-ts/shims";',
-      'import { rotateMasterKey, type EnvelopeError } from "@tidy-ts/shims";',
+      'import { rotateMasterKey, type EnvelopeDecryptionError, type EnvelopeEncryptionError, type KeyNotFoundError, type InvalidKeyIdError } from "@tidy-ts/shims";',
     ],
     parameters: [
-      "dek: string - Encrypted DEK (currently encrypted with old master key)",
-      "oldMasterKey: string - Hex-encoded 32-byte old master key",
+      "dek: string - Self-describing encrypted DEK (format: 'masterKeyId:encryptedDek')",
       "newMasterKey: string - Hex-encoded 32-byte new master key",
+      "newMasterKeyId: string - Identifier for the new master key (cannot contain colons)",
+      "getMasterKey: (masterKeyId: string) => string - Callback to retrieve old master key by its ID",
     ],
     returns:
-      "Promise<Result<string, EnvelopeError>> - New DEK encrypted with new master key",
+      "Promise<Result<string, EnvelopeDecryptionError | EnvelopeEncryptionError | KeyNotFoundError | InvalidKeyIdError>> - New self-describing DEK (format: 'newMasterKeyId:encryptedDek')",
     examples: [
-      '// Rotate master key for all records\nimport { rotateMasterKey } from "@tidy-ts/shims";\n\nconst oldKey = env.get("MASTER_KEY_V1")!;\nconst newKey = env.get("MASTER_KEY_V2")!;\n\nconst events = await db.events.findMany({ select: { id: true, dek: true } });\n\nfor (const event of events) {\n  const result = await rotateMasterKey({\n    dek: event.dek,\n    oldMasterKey: oldKey,\n    newMasterKey: newKey,\n  });\n\n  if (result.ok) {\n    await db.events.update({\n      where: { id: event.id },\n      data: { dek: result.value }, // New DEK, same encrypted data\n    });\n  } else {\n    console.error(`Failed to rotate DEK for event ${event.id}`);\n  }\n}',
-      "// Key rotation is efficient - no data re-encryption needed\n// Old: [encrypted fields] + [DEK encrypted with old key]\n// New: [encrypted fields] + [DEK encrypted with new key]\n// The encrypted fields are unchanged!",
+      '// Rotate master key for all records\nimport { rotateMasterKey } from "@tidy-ts/shims";\n\n// Key store with both old and new keys\nconst keys: Record<string, string> = {\n  v1: env.get("MASTER_KEY_V1")!,\n  v2: env.get("MASTER_KEY_V2")!,\n};\nconst getMasterKey = (keyId: string) => {\n  const key = keys[keyId];\n  if (!key) throw new Error(`Unknown key: ${keyId}`);\n  return key;\n};\n\nconst events = await db.events.findMany({ select: { id: true, dek: true } });\n\nfor (const event of events) {\n  const result = await rotateMasterKey({\n    dek: event.dek, // "v1:oldEncryptedDek..."\n    newMasterKey: keys.v2,\n    newMasterKeyId: "v2",\n    getMasterKey, // Called with "v1" from dek prefix\n  });\n\n  if (result.ok) {\n    await db.events.update({\n      where: { id: event.id },\n      data: { dek: result.value }, // "v2:newEncryptedDek..."\n    });\n  } else {\n    console.error(`Failed to rotate DEK for event ${event.id}`);\n  }\n}',
+      "// Key rotation is efficient - no data re-encryption needed\n// Old: [encrypted fields] + [v1:DEK encrypted with old key]\n// New: [encrypted fields] + [v2:DEK encrypted with new key]\n// The encrypted fields are unchanged!",
     ],
-    related: ["encryptFields", "decryptFields", "generateKey"],
+    related: [
+      "encryptFields",
+      "decryptFields",
+      "generateKey",
+      "KeyNotFoundError",
+      "InvalidKeyIdError",
+    ],
     bestPractices: [
       "✓ GOOD: Rotate master keys periodically for security",
       "✓ GOOD: Test key rotation on a backup before production",
       "✓ GOOD: Keep old master key available until all DEKs are rotated",
       "✓ GOOD: Data remains unchanged - only DEK wrapper is updated",
+      "✓ GOOD: Self-describing DEKs make rotation seamless",
     ],
     antiPatterns: [
       "❌ BAD: Deleting old master key before all DEKs are rotated",
       "❌ BAD: Rotating keys without a backup plan",
+      "❌ BAD: Using colons in newMasterKeyId",
     ],
   },
 
@@ -1678,16 +1706,21 @@ export const shimsDocs: Record<string, DocEntry> = {
     signature:
       "class EnvelopeDecryptionError extends Error { message: string; field?: string }",
     description:
-      "Error returned when envelope decryption fails. If the field property is set, it indicates which specific field failed to decrypt (possibly tampered). If not set, the DEK decryption failed (wrong master key).",
+      "Error returned when envelope decryption fails. If the field property is set, it indicates which specific field failed to decrypt (possibly tampered). If not set, the DEK decryption failed (wrong master key or invalid DEK format).",
     imports: [
       'import { EnvelopeDecryptionError } from "@tidy-ts/shims";',
     ],
     parameters: [],
     returns: "Error with message and optional field properties",
     examples: [
-      '// Handle envelope decryption errors\nimport { decryptFields, EnvelopeDecryptionError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, masterKey });\nif (!result.ok && result.error instanceof EnvelopeDecryptionError) {\n  if (result.error.field) {\n    console.error(`Field "${result.error.field}" may be corrupted or tampered`);\n  } else {\n    console.error("Wrong master key or corrupted DEK");\n  }\n}',
+      '// Handle envelope decryption errors\nimport { decryptFields, EnvelopeDecryptionError } from "@tidy-ts/shims";\n\nconst result = await decryptFields({ fields, dek, getMasterKey });\nif (!result.ok && result.error instanceof EnvelopeDecryptionError) {\n  if (result.error.field) {\n    console.error(`Field "${result.error.field}" may be corrupted or tampered`);\n  } else {\n    console.error("Wrong master key or corrupted DEK");\n  }\n}',
     ],
-    related: ["decryptFields", "EnvelopeEncryptionError", "EnvelopeError"],
+    related: [
+      "decryptFields",
+      "EnvelopeEncryptionError",
+      "EnvelopeError",
+      "KeyNotFoundError",
+    ],
     bestPractices: [
       "✓ GOOD: Check field property to identify corrupted field",
       "✓ GOOD: No field property usually means wrong master key",
@@ -1700,22 +1733,69 @@ export const shimsDocs: Record<string, DocEntry> = {
     signature:
       "type EnvelopeError = EnvelopeEncryptionError | EnvelopeDecryptionError",
     description:
-      "Union type of envelope encryption error types. Returned by rotateMasterKey() which can fail during either decryption (old key) or encryption (new key).",
+      "Union type of envelope encryption error types. Note: rotateMasterKey() can also return KeyNotFoundError and InvalidKeyIdError in addition to these types.",
     imports: [
       'import { type EnvelopeError } from "@tidy-ts/shims";',
     ],
     parameters: [],
     returns: "Type alias (not a value)",
     examples: [
-      '// Handle rotation errors\nimport { rotateMasterKey, EnvelopeDecryptionError, EnvelopeEncryptionError } from "@tidy-ts/shims";\n\nconst result = await rotateMasterKey({ dek, oldMasterKey, newMasterKey });\nif (!result.ok) {\n  if (result.error instanceof EnvelopeDecryptionError) {\n    console.error("Wrong old master key");\n  } else if (result.error instanceof EnvelopeEncryptionError) {\n    console.error("Invalid new master key");\n  }\n}',
+      '// Handle rotation errors with all possible error types\nimport { rotateMasterKey, EnvelopeDecryptionError, EnvelopeEncryptionError, KeyNotFoundError, InvalidKeyIdError } from "@tidy-ts/shims";\n\nconst result = await rotateMasterKey({ dek, newMasterKey, newMasterKeyId, getMasterKey });\nif (!result.ok) {\n  if (result.error instanceof KeyNotFoundError) {\n    console.error(`Unknown key: ${result.error.keyId}`);\n  } else if (result.error instanceof InvalidKeyIdError) {\n    console.error(`Invalid key ID: ${result.error.reason}`);\n  } else if (result.error instanceof EnvelopeDecryptionError) {\n    console.error("Wrong old master key");\n  } else if (result.error instanceof EnvelopeEncryptionError) {\n    console.error("Invalid new master key");\n  }\n}',
     ],
     related: [
       "rotateMasterKey",
       "EnvelopeEncryptionError",
       "EnvelopeDecryptionError",
+      "KeyNotFoundError",
+      "InvalidKeyIdError",
     ],
     bestPractices: [
       "✓ GOOD: Use instanceof to determine which operation failed",
+    ],
+  },
+
+  InvalidKeyIdError: {
+    name: "InvalidKeyIdError",
+    category: "shims",
+    signature:
+      "class InvalidKeyIdError extends Error { keyId: string; reason: string }",
+    description:
+      "Error returned when a masterKeyId is invalid. The keyId cannot be empty and cannot contain colons (which are used as the delimiter in the self-describing DEK format).",
+    imports: [
+      'import { InvalidKeyIdError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with keyId and reason properties",
+    examples: [
+      '// Handle invalid key ID errors\nimport { encryptFields, InvalidKeyIdError } from "@tidy-ts/shims";\n\nconst result = await encryptFields({\n  fields: { secret: "data" },\n  masterKey,\n  masterKeyId: "v1:invalid", // Contains colon - invalid!\n});\n\nif (!result.ok && result.error instanceof InvalidKeyIdError) {\n  console.error(`Invalid key ID "${result.error.keyId}": ${result.error.reason}`);\n  // Output: Invalid key ID "v1:invalid": Key ID cannot contain \':\'\n}',
+    ],
+    related: ["encryptFields", "rotateMasterKey", "KeyNotFoundError"],
+    bestPractices: [
+      "✓ GOOD: Use simple key IDs like 'v1', 'prod-2024'",
+      "✓ GOOD: Avoid special characters in key IDs",
+    ],
+  },
+
+  KeyNotFoundError: {
+    name: "KeyNotFoundError",
+    category: "shims",
+    signature:
+      "class KeyNotFoundError extends Error { keyId: string; cause?: Error }",
+    description:
+      "Error returned when getMasterKey callback fails to return a key for the given masterKeyId. This can happen if the callback throws an error or returns an empty/null value. The cause property contains the original error if one was thrown.",
+    imports: [
+      'import { KeyNotFoundError } from "@tidy-ts/shims";',
+    ],
+    parameters: [],
+    returns: "Error with keyId and optional cause properties",
+    examples: [
+      '// Handle key not found errors\nimport { decryptFields, KeyNotFoundError } from "@tidy-ts/shims";\n\nconst getMasterKey = (keyId: string) => {\n  const keys: Record<string, string> = { v2: env.get("MASTER_KEY_V2")! };\n  const key = keys[keyId];\n  if (!key) throw new Error(`Key not found: ${keyId}`);\n  return key;\n};\n\n// Trying to decrypt data encrypted with v1 key (which we no longer have)\nconst result = await decryptFields({\n  fields: event.encrypted,\n  dek: event.dek, // "v1:encryptedDek..." - v1 not in our key store!\n  getMasterKey,\n});\n\nif (!result.ok && result.error instanceof KeyNotFoundError) {\n  console.error(`Key "${result.error.keyId}" not found in key store`);\n  if (result.error.cause) {\n    console.error("Original error:", result.error.cause.message);\n  }\n}',
+    ],
+    related: ["decryptFields", "rotateMasterKey", "InvalidKeyIdError"],
+    bestPractices: [
+      "✓ GOOD: Ensure all historical key IDs are in your key store",
+      "✓ GOOD: Check cause property for debugging",
+      "✓ GOOD: Keep old keys until all data is migrated",
     ],
   },
 
