@@ -22,180 +22,23 @@ export const DOCS: Record<string, DocEntry> = {
   ...shimsDocs,
 };
 
-// Category groupings for list-operations
+// Derive category lists from doc entries (single source of truth)
+function getKeysByCategory(
+  docs: Record<string, DocEntry>,
+  category: string,
+): string[] {
+  return Object.entries(docs)
+    .filter(([_, doc]) => doc.category === category)
+    .map(([key]) => key);
+}
+
+// Category groupings for list-operations (derived from doc entries)
 export const CATEGORIES = {
-  dataframe: [
-    "print",
-    "createDataFrame",
-    "select",
-    "drop",
-    "filter",
-    "slice",
-    "sliceHead",
-    "sliceTail",
-    "sliceMax",
-    "sliceMin",
-    "sliceSample",
-    "mutate",
-    "arrange",
-    "distinct",
-    "rename",
-    "extract",
-    "extractHead",
-    "extractTail",
-    "extractNth",
-    "extractSample",
-    "extractUnique",
-    "groupBy",
-    "summarize",
-    "count",
-    "ungroup",
-    "innerJoin",
-    "leftJoin",
-    "rightJoin",
-    "outerJoin",
-    "asofJoin",
-    "pivotLonger",
-    "pivotWider",
-    "transpose",
-    "unnest",
-    "bindRows",
-    "concatDataFrames",
-    "downsample",
-    "upsample",
-    "replaceNA",
-    "removeNA",
-    "removeNull",
-    "removeUndefined",
-    "fillForward",
-    "fillBackward",
-    "interpolate",
-    "profile",
-    "graph",
-  ],
-  io: [
-    "readCSV",
-    "readCSVMetadata",
-    "writeCSV",
-    "readXLSX",
-    "readXLSXMetadata",
-    "writeXLSX",
-    "readJSON",
-    "writeJSON",
-    "readParquet",
-    "writeParquet",
-    "readArrow",
-  ],
-  stats: [
-    // Descriptive statistics
-    "mean",
-    "median",
-    "mode",
-    "sum",
-    "max",
-    "min",
-    "stdev",
-    "variance",
-    "quantile",
-    "quartiles",
-    "iqr",
-    "range",
-    "product",
-    // Window/cumulative functions
-    "cumsum",
-    "cummean",
-    "cumprod",
-    "cummax",
-    "cummin",
-    "rolling",
-    "lag",
-    "lead",
-    "forwardFill",
-    "backwardFill",
-    "interpolate",
-    // Aggregation functions
-    "first",
-    "last",
-    // Ranking functions
-    "rank",
-    "denseRank",
-    "percentileRank",
-    // Utility functions
-    "chunk",
-    "batch",
-    // Transformation functions
-    "normalize",
-    "round",
-    "percent",
-    // Utility functions
-    "unique",
-    "covariance",
-    // Statistical tests
-    "tTest",
-    "compareAPI",
-    // Distributions
-    "normalDist",
-  ],
-  llm: [
-    "LLMEmbed",
-    "LLMRespond",
-    "LLMCompareEmbeddings",
-  ],
-  shims: [
-    // Runtime Detection
-    "getCurrentRuntime",
-    "currentRuntime",
-    // File System Operations
-    "readFile",
-    "readTextFile",
-    "writeFile",
-    "writeTextFile",
-    "mkdir",
-    "stat",
-    "remove",
-    "open",
-    "readFileSync",
-    "writeFileSync",
-    "writeTextFileSync",
-    "listDir",
-    "copyFile",
-    "rename",
-    "exists",
-    // Path Utilities
-    "resolve",
-    "dirname",
-    "fileURLToPath",
-    "pathToFileURL",
-    // Environment Variables
-    "env",
-    // Process Management
-    "args",
-    "getArgs",
-    "exit",
-    // Testing Framework
-    "test",
-    // Enhanced Fetch API
-    "tidyfetch",
-    "tidyfetch.create",
-    "tidyfetch.get",
-    "tidyfetch.post",
-    "tidyfetch.put",
-    "tidyfetch.patch",
-    "tidyfetch.delete",
-    "tidyfetch.raw",
-    "tidyfetch.native",
-    "FetchError",
-    "RawResponse",
-    // Error Types
-    "UnavailableAPIError",
-    "UnsupportedRuntimeError",
-    // Encryption Utilities (AES-256-GCM)
-    "encrypt",
-    "decrypt",
-    "generateKey",
-    "toBase64URL",
-    "fromBase64URL",
-  ],
+  dataframe: getKeysByCategory(DOCS, "dataframe"),
+  io: getKeysByCategory(DOCS, "io"),
+  stats: getKeysByCategory(DOCS, "stats"),
+  llm: getKeysByCategory(DOCS, "llm"),
+  shims: getKeysByCategory(DOCS, "shims"),
   all: Object.keys(DOCS),
 };
 
