@@ -94,5 +94,17 @@ export {
   rotateMasterKey,
 } from "./encryption/envelope.ts";
 
+// Async utilities (concurrency, retry, batching)
+export {
+  batch,
+  chunk,
+  type CustomBackoff,
+  type ExponentialBackoff,
+  type LinearBackoff,
+  parallel,
+  type RetryConfig,
+  type SettledResult,
+} from "./async.ts";
+
 // Compression stream polyfill (automatically initializes)
 import "./compression.ts";

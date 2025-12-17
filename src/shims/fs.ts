@@ -456,7 +456,7 @@ export async function listDir(dirPath: string): Promise<DirEntry[]> {
   const fs = await import("node:fs/promises");
   const entries = await fs.readdir(dirPath, { withFileTypes: true });
 
-  return entries.map((entry) => ({
+  return entries.map((entry: import("node:fs").Dirent) => ({
     name: entry.name,
     isFile: entry.isFile(),
     isDirectory: entry.isDirectory(),
