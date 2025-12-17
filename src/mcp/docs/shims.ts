@@ -1885,4 +1885,172 @@ export const shimsDocs: Record<string, DocEntry> = {
       "✓ GOOD: Reversible with toBase64URL()",
     ],
   },
+
+  // Async Utilities - Concurrency Control
+  parallel: {
+    name: "parallel",
+    category: "shims",
+    signature:
+      "parallel<T>(promises: T[], options: { concurrency: number; retry?: RetryConfig; signal?: AbortSignal; settled?: boolean }): Promise<Results>",
+    description:
+      "Process promises or promise-returning functions with concurrency control and optional retry logic. Like Promise.all but with a required concurrency limit. Supports retry with exponential/linear/custom backoff, AbortSignal for cancellation, and settled mode for collecting all results even on failures.",
+    imports: [
+      'import { parallel } from "@tidy-ts/shims";',
+      'import { parallel, type RetryConfig } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "promises: Array of promises or functions returning promises",
+      "options.concurrency: number (required) - Maximum concurrent operations",
+      "options.retry?: RetryConfig - Retry configuration with backoff strategy",
+      "options.signal?: AbortSignal - Signal for cancellation",
+      "options.settled?: boolean - If true, return all results like Promise.allSettled",
+    ],
+    returns:
+      "Promise<T[]> - Array of results in same order as input (or SettledResult[] if settled: true)",
+    examples: [
+      '// Basic concurrency control\nimport { parallel } from "@tidy-ts/shims";\n\nconst results = await parallel(\n  [fetchUser(1), fetchUser(2), fetchUser(3)],\n  { concurrency: 2 }\n);',
+      '// With retry (pass functions for retry support)\nconst results = await parallel(\n  [\n    () => fetchUser(1),\n    () => fetchUser(2),\n    () => fetchUser(3),\n  ],\n  {\n    concurrency: 5,\n    retry: {\n      backoff: "exponential",\n      maxRetries: 3,\n      baseDelay: 100,\n    }\n  }\n);',
+      "// With timeout\nconst results = await parallel(tasks, {\n  concurrency: 10,\n  signal: AbortSignal.timeout(5000)\n});",
+      "// Settled mode - collect all results even if some fail\nconst results = await parallel(tasks, { concurrency: 5, settled: true });\nconst successes = results.filter(r => r.status === 'fulfilled');",
+    ],
+    related: ["batch", "chunk", "RetryConfig"],
+    bestPractices: [
+      "✓ GOOD: Use when you have an array of promises to process with limits",
+      "✓ GOOD: Pass functions (not promises) when using retry - allows re-execution",
+      "✓ GOOD: Use settled: true when you need partial results on failure",
+      "✓ GOOD: Use AbortSignal.timeout() for request timeouts",
+      "❌ BAD: Passing already-created promises when using retry (can't re-execute)",
+    ],
+  },
+
+  batch: {
+    name: "batch",
+    category: "shims",
+    signature:
+      "batch<T, R>(items: T[], fn: (item: T, index: number) => Promise<R>, options: { concurrency: number; retry?: RetryConfig; signal?: AbortSignal; settled?: boolean }): Promise<R[]>",
+    description:
+      "Process an array of items with an async function and concurrency control. Each item is processed by the provided function with optional retry logic. More ergonomic than parallel() when you have items to transform rather than existing promises.",
+    imports: [
+      'import { batch } from "@tidy-ts/shims";',
+      'import { batch, type RetryConfig } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "items: T[] - Array of items to process",
+      "fn: (item: T, index: number) => Promise<R> - Async function to apply to each item",
+      "options.concurrency: number (required) - Maximum concurrent operations",
+      "options.retry?: RetryConfig - Retry configuration with backoff strategy",
+      "options.signal?: AbortSignal - Signal for cancellation",
+      "options.settled?: boolean - If true, return all results like Promise.allSettled",
+    ],
+    returns:
+      "Promise<R[]> - Array of results in same order as input (or SettledResult<R>[] if settled: true)",
+    examples: [
+      '// Process items with concurrency limit\nimport { batch } from "@tidy-ts/shims";\n\nconst users = await batch(\n  userIds,\n  async (id) => fetchUser(id),\n  { concurrency: 5 }\n);',
+      '// With retry on failures\nconst results = await batch(\n  apiCalls,\n  async (call) => makeRequest(call),\n  {\n    concurrency: 10,\n    retry: {\n      backoff: "exponential",\n      maxRetries: 3,\n    }\n  }\n);',
+      "// Sequential processing (concurrency: 1)\nconst results = await batch(\n  items,\n  async (item, index) => {\n    console.log(`Processing item ${index}`);\n    return processItem(item);\n  },\n  { concurrency: 1 }\n);",
+      "// Collect all results even on failure\nconst results = await batch(items, fn, { concurrency: 5, settled: true });\nconst failures = results.filter(r => r.status === 'rejected');",
+    ],
+    related: ["parallel", "chunk", "RetryConfig"],
+    bestPractices: [
+      "✓ GOOD: Use when transforming items with an async function",
+      "✓ GOOD: Combine with chunk() for rate-limited APIs",
+      "✓ GOOD: Use concurrency: 1 for sequential processing",
+      "✓ GOOD: Use settled: true to continue on errors and collect all results",
+      "❌ BAD: Using Infinity concurrency for rate-limited APIs",
+    ],
+  },
+
+  chunk: {
+    name: "chunk",
+    category: "shims",
+    signature: "chunk<T>(arr: T[], size: number): T[][]",
+    description:
+      "Split an array into chunks of a specified size. Synchronous utility function useful for batching operations, rate-limited APIs, or processing data in groups. The last chunk may have fewer elements than size.",
+    imports: [
+      'import { chunk } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "arr: T[] - Array to split into chunks",
+      "size: number - Size of each chunk (must be positive integer)",
+    ],
+    returns: "T[][] - Array of chunks",
+    examples: [
+      '// Basic chunking\nimport { chunk } from "@tidy-ts/shims";\n\nconst numbers = [1, 2, 3, 4, 5, 6, 7];\nconst chunks = chunk(numbers, 3);\n// Returns: [[1, 2, 3], [4, 5, 6], [7]]',
+      "// Batch processing with chunk + batch\nimport { chunk, batch } from \"@tidy-ts/shims\";\n\nconst encounterIds = [1, 2, 3, ..., 100000];\nconst chunks = chunk(encounterIds, 25000); // Oracle limit\n\nconst results = await batch(\n  chunks,\n  (ids) => queryDatabase({ encounterIds: ids }),\n  { concurrency: 1 }\n);\nconst allResults = results.flat();",
+      "// Rate-limited API with waves\nconst items = [1, 2, 3, 4, 5, 6, 7, 8, 9];\nconst waves = chunk(items, 3); // 3 per wave\n\nfor (const wave of waves) {\n  await Promise.all(wave.map(processItem));\n  await delay(1000); // Rate limit window\n}",
+    ],
+    related: ["parallel", "batch"],
+    bestPractices: [
+      "✓ GOOD: Use with batch() for processing large datasets",
+      "✓ GOOD: Use for rate-limited APIs that allow N requests per window",
+      "✓ GOOD: Use for database queries with bind variable limits",
+      "❌ BAD: Using chunk size of 0 or negative (throws error)",
+      "❌ BAD: Using non-integer chunk size (throws error)",
+    ],
+  },
+
+  RetryConfig: {
+    name: "RetryConfig",
+    category: "shims",
+    signature:
+      "type RetryConfig = ExponentialBackoff | LinearBackoff | CustomBackoff",
+    description:
+      "Configuration for retry behavior in parallel() and batch(). Supports three backoff strategies: exponential (delay doubles), linear (delay increases by fixed amount), or custom (user-defined function). All strategies support maxRetries, shouldRetry filter, and onRetry callback.",
+    imports: [
+      'import { type RetryConfig, type ExponentialBackoff, type LinearBackoff, type CustomBackoff } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "backoff: 'exponential' | 'linear' | 'custom' - Backoff strategy",
+      "maxRetries?: number - Maximum retry attempts (default: 3)",
+      "baseDelay?: number - Initial delay in ms (default: 100)",
+      "backoffMultiplier?: number - Multiplier for exponential backoff (default: 2)",
+      "maxDelay?: number - Maximum delay cap in ms (default: 5000)",
+      "backoffFn?: (error, attempt, taskIndex) => number - Custom delay function (required for 'custom')",
+      "shouldRetry?: (error, attempt) => boolean - Filter which errors to retry",
+      "onRetry?: (error, attempt, taskIndex) => void - Callback before each retry",
+    ],
+    returns: "Used as options.retry in parallel() and batch()",
+    examples: [
+      '// Exponential backoff: 100ms, 200ms, 400ms, 800ms...\nconst retry: RetryConfig = {\n  backoff: "exponential",\n  maxRetries: 3,\n  baseDelay: 100,\n  backoffMultiplier: 2,\n  maxDelay: 5000,\n};',
+      '// Linear backoff: 100ms, 200ms, 300ms, 400ms...\nconst retry: RetryConfig = {\n  backoff: "linear",\n  maxRetries: 5,\n  baseDelay: 100,\n  maxDelay: 1000,\n};',
+      '// Custom backoff with jitter\nconst retry: RetryConfig = {\n  backoff: "custom",\n  maxRetries: 3,\n  backoffFn: (error, attempt) => {\n    const base = 100 * Math.pow(2, attempt);\n    return base + Math.random() * base; // Add jitter\n  },\n};',
+      '// Retry only on network errors\nconst retry: RetryConfig = {\n  backoff: "exponential",\n  maxRetries: 3,\n  shouldRetry: (error) => {\n    return error instanceof Error && \n      (error.message.includes("network") || \n       error.message.includes("timeout"));\n  },\n};',
+    ],
+    related: ["parallel", "batch"],
+    bestPractices: [
+      "✓ GOOD: Use exponential backoff for rate-limited APIs",
+      "✓ GOOD: Use shouldRetry to filter retryable errors (e.g., 429, 503)",
+      "✓ GOOD: Add jitter with custom backoff to prevent thundering herd",
+      "✓ GOOD: Use onRetry for logging/monitoring retry behavior",
+      "❌ BAD: Retrying non-transient errors (e.g., 400, 404)",
+    ],
+  },
+
+  SettledResult: {
+    name: "SettledResult",
+    category: "shims",
+    signature:
+      "type SettledResult<T> = { status: 'fulfilled'; value: T } | { status: 'rejected'; reason: unknown }",
+    description:
+      "Result type returned by parallel() and batch() when settled: true is set. Mirrors the Promise.allSettled result format. Use to collect all results including failures without throwing on first error.",
+    imports: [
+      'import { type SettledResult } from "@tidy-ts/shims";',
+    ],
+    parameters: [
+      "status: 'fulfilled' | 'rejected' - Whether the task succeeded or failed",
+      "value: T - The result value (only when status is 'fulfilled')",
+      "reason: unknown - The error (only when status is 'rejected')",
+    ],
+    returns: "Used as return type when settled: true",
+    examples: [
+      "// Process results with settled mode\nconst results = await batch(items, fn, { concurrency: 5, settled: true });\n\n// Extract successes and failures\nconst successes = results\n  .filter((r): r is { status: 'fulfilled'; value: T } => r.status === 'fulfilled')\n  .map(r => r.value);\n\nconst failures = results\n  .filter((r): r is { status: 'rejected'; reason: unknown } => r.status === 'rejected')\n  .map(r => r.reason);",
+      "// Calculate success rate\nconst total = results.length;\nconst succeeded = results.filter(r => r.status === 'fulfilled').length;\nconsole.log(`Success rate: ${succeeded}/${total}`);",
+    ],
+    related: ["parallel", "batch"],
+    bestPractices: [
+      "✓ GOOD: Use with settled: true when partial success is acceptable",
+      "✓ GOOD: Use type guards to narrow the union type",
+      "✓ GOOD: Log or report failures even when continuing with successes",
+    ],
+  },
 };
