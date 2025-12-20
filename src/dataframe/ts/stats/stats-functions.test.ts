@@ -96,7 +96,6 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
 
   // Test with null/undefined values
   const withNulls = [1, null, 3, undefined, 5];
-  // @ts-expect-error - null values are not allowed
   const cumprodWithNulls = stats.cumprod(withNulls);
   console.log("Cumprod with nulls:", cumprodWithNulls);
   expect(cumprodWithNulls).toEqual([null, null, null, null, null]); // null propagates through cumulative product

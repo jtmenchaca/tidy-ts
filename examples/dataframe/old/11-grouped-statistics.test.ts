@@ -191,7 +191,7 @@ test("Grouped Statistics - Progressive Examples", () => {
       },
       total_units: (df) => stats.sum(df.quantity),
       avg_units_per_order: (df) =>
-        stats.round(stats.mean(df.quantity, true), 2),
+        stats.round(stats.mean(df.quantity, { removeNull: true }), 2),
       order_count: (df) => df.nrows(),
     })
     .arrange("total_revenue", "desc");

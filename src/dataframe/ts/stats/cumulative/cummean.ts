@@ -1,13 +1,17 @@
-// src/dataframe/ts/descriptive/cumulative-mean.ts
+import { isAllFiniteNumbers } from "../helpers.ts";
 
-import { isNA } from "../../utilities/mod.ts";
-import { hasMixedTypes } from "../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../helpers.ts";
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in cumulative functions */
+export interface CumulativeOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
 
 /**
  * Calculate cumulative mean of values.
@@ -15,101 +19,147 @@ import type {
  * Returns an array where each element is the mean of all values up to that point.
  *
  * @param values - Array of numbers
- * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param options - If true (legacy), removes all NA values. If object, specifies which to remove.
  * @returns Array of cumulative means
  *
  * @example
- * ```typescript
- * cummean([1, 2, 3, 4])  // [1, 1.5, 2, 2.5]
- * cummean([1, null, 3, 4, 5], true)  // [1, 1, 2, 2.5, 3]
+ * ```ts
+ * cummean([1, 2, 3, 4]) // [1, 1.5, 2, 2.5]
+ * cummean([1, null, 3, 4], true) // [1, 1, 2, 2.5] - legacy: removes nulls
+ * cummean([1, null, 3], { removeNull: true }) // [1, 1, 2]
+ * cummean([1, NaN, 3]) // [1, NaN, NaN] - NaN propagates
+ * cummean([1, NaN, 3], { removeNaN: true }) // [1, 1, 2]
  * ```
  */
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
 
-export function cummean(value: number): number;
-export function cummean(values: CleanNumberArray): number[];
+// Single value overloads
+export function cummean(
+  values: number,
+  options?: CumulativeOptions | boolean,
+): number;
+
+// Clean array overloads (no nulls/undefined)
+export function cummean(
+  values: CleanNumberArray,
+  options?: CumulativeOptions | boolean,
+): number[];
+export function cummean(
+  values: number[],
+  options?: CumulativeOptions | boolean,
+): number[];
+
+// Arrays with nullables - when removal flags are true, return number[]
 export function cummean(
   values: NumbersWithNullable,
-  removeNA: true,
+  options: { removeNull: true; removeUndefined: true } | true,
 ): number[];
-export function cummean(values: CleanNumberIterable): number[];
+
+// Arrays with only null - removeNull sufficient
 export function cummean(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true } | true,
 ): number[];
+
+// Arrays with only undefined - removeUndefined sufficient
+export function cummean(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true } | true,
+): number[];
+
+// Arrays with nullables - return nullable when not all flags are true
+export function cummean(
+  values: NumbersWithNullable,
+  options?: CumulativeOptions | boolean,
+): (number | null)[];
+
+// Implementation
 export function cummean(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: CumulativeOptions | boolean = {},
 ): number | number[] | (number | null)[] {
+  // Normalize options - support legacy boolean API
+  const opts: CumulativeOptions =
+    typeof options === "boolean"
+      ? { removeNull: options, removeUndefined: options, removeNaN: options }
+      : options;
+
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = opts;
+
   // Handle single number case
   if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return removeNaN ? 0 : NaN;
+    }
     return values;
   }
 
-  // Handle iterables by materializing to array
+  // Convert to array
   const processArray = Array.isArray(values) ? values : Array.from(values);
 
   if (processArray.length === 0) {
     return [];
   }
 
-  // Check for mixed types first - return null array unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
-    return new Array(processArray.length).fill(null);
-  }
-
-  if (removeNA) {
-    // Calculate cumulative mean while preserving array length, skipping NA values
+  // Fast path for clean numeric arrays
+  if (isAllFiniteNumbers(processArray)) {
     const result: number[] = [];
     let sum = 0;
-    let count = 0;
-
-    for (const val of processArray) {
-      if (isNA(val) || typeof val !== "number") {
-        // Skip NA values and non-numbers, maintain array length by repeating previous mean
-        result.push(count > 0 ? sum / count : 0);
-      } else {
-        sum += val;
-        count++;
-        result.push(sum / count);
-      }
+    for (let i = 0; i < processArray.length; i++) {
+      sum += processArray[i];
+      result.push(sum / (i + 1));
     }
-
-    return result;
-  } else {
-    // Check if any true NA values present (null/undefined only, not NaN)
-    const hasNA = processArray.some((val) => val === null || val === undefined);
-    if (hasNA) {
-      return new Array(processArray.length).fill(null);
-    }
-
-    // No true NA values, proceed with cummean (includes NaN and Infinity handling)
-    const result: (number | null)[] = [];
-    let sum = 0;
-    let count = 0;
-
-    for (const val of processArray) {
-      if (typeof val === "number") {
-        sum += val; // This handles NaN and Infinity correctly
-        count++;
-        result.push(sum / count);
-      } else {
-        // Non-numeric values
-        result.push(null);
-      }
-    }
-
     return result;
   }
+
+  // Process with filtering
+  const result: (number | null)[] = [];
+  let sum = 0;
+  let count = 0;
+  let sawNaN = false;
+
+  for (const v of processArray) {
+    if (v === null) {
+      if (!removeNull) {
+        return new Array(processArray.length).fill(null);
+      }
+      result.push(count > 0 ? sum / count : 0);
+      continue;
+    }
+    if (v === undefined) {
+      if (!removeUndefined) {
+        return new Array(processArray.length).fill(null);
+      }
+      result.push(count > 0 ? sum / count : 0);
+      continue;
+    }
+    if (typeof v === "number") {
+      if (Number.isNaN(v)) {
+        if (!removeNaN) {
+          sawNaN = true;
+        }
+        result.push(sawNaN ? NaN : (count > 0 ? sum / count : 0));
+        continue;
+      }
+      if (sawNaN) {
+        result.push(NaN);
+      } else {
+        sum += v;
+        count++;
+        result.push(sum / count);
+      }
+    } else {
+      result.push(count > 0 ? sum / count : 0);
+    }
+  }
+
+  return result;
 }

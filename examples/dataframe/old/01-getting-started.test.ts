@@ -1507,7 +1507,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   const smartCleaned = messyData.replaceNA({
     name: "Participant",
     age: stats.round(stats.mean(validAges), 0),
-    score: stats.round(stats.mean(validScores, true), 1), // Note we use remove_na=true
+    score: stats.round(stats.mean(validScores, { removeNull: true }), 1), // Note we use remove_na=true
     active: false,
     notes: "Imputed",
   });
@@ -1531,7 +1531,7 @@ Production async operations need concurrency control and retry mechanisms.`,
           return row.score;
         }
         // Use median for missing scores
-        return stats.median(validScores, true); // note,
+        return stats.median(validScores, { removeNull: true }); // note,
       },
       active_filled: (row) => row.active ?? true, // Default to true
       notes_filled: (row) => row.notes || "No additional notes",
@@ -1579,7 +1579,7 @@ Production async operations need concurrency control and retry mechanisms.`,
     .replaceNA({
       name: "Unknown",
       age: stats.round(stats.mean(validAges), 0),
-      score: stats.round(stats.mean(validScores, true), 1), // Note we use remove_na=true
+      score: stats.round(stats.mean(validScores, { removeNull: true }), 1), // Note we use remove_na=true
       active: false,
       notes: "Imputed",
     })

@@ -146,8 +146,8 @@ test("Grouping and Aggregation Operations - Progressive Examples", () => {
       min_score: (group) => stats.min(group.score),
       max_score: (group) => stats.max(group.score),
       score_range: (group) => {
-        const max = stats.max(group.score, true);
-        const min = stats.min(group.score, true);
+        const max = stats.max(group.score, { removeNull: true });
+        const min = stats.min(group.score, { removeNull: true });
         return max ? max - min : 0;
       },
     });

@@ -52,7 +52,7 @@ console.log("Ungrouped summarise type checking passed!");
 const singleGroupSummary = testData
   .groupBy("species")
   .summarise({
-    avg_mass: (df) => stats.mean(df.mass, true),
+    avg_mass: (df) => stats.mean(df.mass, { removeNull: true }),
     count: (df) => df.nrows(),
     male_count: (df) => stats.countValue(df.sex, "MALE"),
   });
@@ -71,7 +71,7 @@ console.log("Single group summarise type checking passed!");
 const multiGroupSummary = testData
   .groupBy("species", "homeworld")
   .summarise({
-    avg_mass: (df) => stats.mean(df.mass, true),
+    avg_mass: (df) => stats.mean(df.mass, { removeNull: true }),
     count: (df) => df.nrows(),
     male_count: (df) => stats.countValue(df.sex, "MALE"),
     female_count: (df) => stats.countValue(df.sex, "FEMALE"),

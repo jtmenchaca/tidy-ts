@@ -23,7 +23,7 @@ Deno.test("s.mean should handle groups with all null values", () => {
     .groupBy("unit")
     .summarize({
       count: (g) => g.nrows(),
-      mean_value: (g) => s.mean(g.value, true), // removeNA = true
+      mean_value: (g) => s.mean(g.value, { removeNull: true }), // removeNA = true
     });
 
   console.log("\nGrouped data:");
@@ -45,12 +45,13 @@ Deno.test("s.mean returns null when all values are null even with removeNA=true"
   const result = df
     .groupBy("unit")
     .summarize({
-      mean_value: (g) => s.mean(g.value, true),
+      mean_value: (g) => s.mean(g.value, { removeNull: true }),
     });
 
   console.log("\nResult:");
   result.print();
 
   expect(result.nrows()).toBe(1);
+  // When all values are null and removeNull=true, mean of empty set returns null
   expect(result.mean_value[0]).toBe(null);
 });

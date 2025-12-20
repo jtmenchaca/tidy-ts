@@ -1,27 +1,26 @@
-import { hasMixedTypes } from "../../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../../helpers.ts";
-import { extractNumbersWithOptions } from "../../helpers.ts";
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in mode function */
+export interface ModeOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
 
 /**
- * Helper function to calculate mode information
- *
- * @param values - Array of numbers
- * @returns Mode information object or null
+ * Helper function to calculate mode information from valid numbers
  */
-function calculateModeInfo(
-  values: unknown[] | Iterable<unknown>,
+function calculateModeFromNumbers(
+  values: number[],
 ): { value: number; count: number } | null {
-  // Extract numeric values (includes Infinity, excludes NaN and non-numbers)
-  const validValues = extractNumbersWithOptions(values, true, false);
-  if (validValues.length === 0) return null;
+  if (values.length === 0) return null;
 
   const frequency: { [key: number]: number } = {};
-  for (const val of validValues) {
+  for (const val of values) {
     frequency[val] = (frequency[val] || 0) + 1;
   }
 
@@ -42,65 +41,124 @@ function calculateModeInfo(
  * Calculate the mode (most frequent value) of an array
  *
  * @param values - Array of numbers or single number
- * @param removeNA - If true, guarantees a number return (throws if no valid values)
- * @returns The mode value, or null if no valid values and removeNA=false
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, filters out null values (default: false)
+ * @param options.removeUndefined - If true, filters out undefined values (default: false)
+ * @param options.removeNaN - If true, filters out NaN values (default: false)
+ * @returns The mode value, or null if no valid values
  *
  * @example
  * ```ts
  * mode(42) // Always returns the single value
- * mode([1, 1, 2, 3, 3, 3]) // 3 (always number for clean array)
- * mode([null, 2, 3], false) // 3 (or null if no valid values)
- * mode([null, 2, 3], true) // 3 (guaranteed number or throws)
+ * mode([1, 1, 2, 3, 3, 3]) // 3
+ * mode([null, 2, 3]) // null (null present)
+ * mode([null, 2, 3], { removeNull: true }) // 2 or 3 (most frequent)
+ * mode([1, NaN, 3]) // NaN (NaN propagates)
+ * mode([1, NaN, 3], { removeNaN: true }) // 1 or 3
  * ```
  */
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
 
-export function mode(value: number): number;
-export function mode(values: CleanNumberArray): number;
-export function mode(values: NumbersWithNullable, removeNA: true): number;
-export function mode(values: CleanNumberIterable): number;
+// Single value overloads
+export function mode(values: number, options?: ModeOptions): number;
+
+// Clean array overloads (no nulls/undefined)
+export function mode(values: CleanNumberArray, options?: ModeOptions): number;
+export function mode(values: number[], options?: ModeOptions): number;
+export function mode(values: Iterable<number>, options?: ModeOptions): number;
+
+// Arrays with nullables - when all removal flags are true, return non-nullable
 export function mode(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
 ): number;
+
+// Arrays with only null (no undefined) - removeNull sufficient
+export function mode(
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true },
+): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
+export function mode(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true },
+): number;
+
+// Arrays with nullables - return nullable when not all flags are true
+export function mode(
+  values: NumbersWithNullable,
+  options?: ModeOptions,
+): number | null;
+
+// Implementation
 export function mode(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: ModeOptions = {},
 ): number | null {
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = options;
+
   // Handle single number case
   if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return removeNaN ? null : NaN;
+    }
     return values;
   }
 
-  // Check for mixed types first - return null unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
+  // Convert to array
+  const processArray = Array.isArray(values) ? values : Array.from(values);
+
+  if (processArray.length === 0) {
     return null;
   }
 
-  const result = calculateModeInfo(values);
+  // Process with filtering - collect valid numbers
+  const validNumbers: number[] = [];
+  let foundNaN = false;
 
-  if (!result) {
-    return null;
+  for (const v of processArray) {
+    if (v === null) {
+      if (!removeNull) return null;
+      continue;
+    }
+    if (v === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    if (typeof v === "number") {
+      if (Number.isNaN(v)) {
+        if (!removeNaN) {
+          foundNaN = true;
+        }
+        continue;
+      }
+      validNumbers.push(v);
+    }
   }
 
-  return result.value;
+  // If we found NaN and didn't remove it, return NaN
+  if (foundNaN) {
+    return NaN;
+  }
+
+  const result = calculateModeFromNumbers(validNumbers);
+  return result?.value ?? null;
 }
 
 /**
  * Calculate the frequency count of the mode (most frequent value) of an array
  *
  * @param values - Array of numbers
+ * @param options - Optional object with removal flags
  * @returns The count of the mode value, or 0 if no valid values
  *
  * @example
@@ -109,19 +167,49 @@ export function mode(
  * modeCount([]) // 0
  * ```
  */
-export function modeCount(values: CleanNumberArray): number;
-export function modeCount(values: NumbersWithNullable): number;
-export function modeCount(values: CleanNumberIterable): number;
-export function modeCount(values: NumbersWithNullableIterable): number;
+export function modeCount(
+  values: CleanNumberArray,
+  options?: ModeOptions,
+): number;
+export function modeCount(
+  values: NumbersWithNullable,
+  options?: ModeOptions,
+): number;
+export function modeCount(
+  values: Iterable<number>,
+  options?: ModeOptions,
+): number;
 export function modeCount(
   values:
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: ModeOptions = {},
 ): number {
-  const result = calculateModeInfo(values);
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = options;
+
+  // Convert to array
+  const processArray = Array.isArray(values) ? values : Array.from(values);
+
+  // Collect valid numbers (always filter for modeCount)
+  const validNumbers: number[] = [];
+
+  for (const v of processArray) {
+    if (v === null && !removeNull) continue;
+    if (v === undefined && !removeUndefined) continue;
+    if (typeof v === "number") {
+      if (Number.isNaN(v) && !removeNaN) continue;
+      if (!Number.isNaN(v)) {
+        validNumbers.push(v);
+      }
+    }
+  }
+
+  const result = calculateModeFromNumbers(validNumbers);
   return result?.count ?? 0;
 }

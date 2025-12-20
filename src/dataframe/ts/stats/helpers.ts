@@ -236,6 +236,41 @@ export function chunk<T>(arr: T[], size: number): T[][] {
 }
 
 /**
+ * Options for removal of special values in stats functions
+ */
+export interface RemovalOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
+
+/**
+ * Determines if the fast path can be used for stats calculations.
+ *
+ * The fast path should ONLY be used when:
+ * 1. No removal options are specified (we're not filtering anything), AND
+ * 2. The array contains only finite numbers (verified by isAllFiniteNumbers)
+ *
+ * @param processArray - The array to check
+ * @param options - Removal options (removeNull, removeUndefined, removeNaN)
+ * @returns true if fast path can be used, false if slow path is required
+ */
+export function canUseFastPath(
+  processArray: unknown[],
+  options: RemovalOptions = {},
+): boolean {
+  const { removeNull = false, removeUndefined = false, removeNaN = false } =
+    options;
+
+  // If ANY removal option is set, we must use the slow path
+  if (removeNull || removeUndefined || removeNaN) {
+    return false;
+  }
+
+  return isAllFiniteNumbers(processArray);
+}
+
+/**
  * Standard error messages for descriptive statistics
  */
 export const ERROR_MESSAGES = {

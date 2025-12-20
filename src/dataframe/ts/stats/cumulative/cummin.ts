@@ -1,104 +1,163 @@
-import { isNA } from "../../utilities/mod.ts";
-import { hasMixedTypes } from "../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../helpers.ts";
+import { isAllFiniteNumbers } from "../helpers.ts";
+
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in cumulative functions */
+export interface CumulativeOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
 
 /**
  * Calculate cumulative minimum of numeric values
  *
  * @param values - Array of numbers
- * @param removeNA - If true, removes non-numeric values; if false, returns null for mixed types
+ * @param options - If true (legacy), removes all NA values. If object, specifies which to remove.
  * @returns Array of cumulative minimums
  *
  * @example
  * ```ts
- * cummin([1, 2, 3, 4, 5]) // [1, 1, 1, 1, 1]
- * cummin([1, null, 3, 4], true) // [1, 1, 1, 1] - removes nulls
+ * cummin([5, 3, 4, 1, 2]) // [5, 3, 3, 1, 1]
+ * cummin([3, null, 1, 4], true) // [3, 3, 1, 1] - legacy: removes nulls
+ * cummin([3, null, 1], { removeNull: true }) // [3, 3, 1]
+ * cummin([3, NaN, 1]) // [3, NaN, NaN] - NaN propagates
+ * cummin([3, NaN, 1], { removeNaN: true }) // [3, 3, 1]
  * ```
  */
 
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
+// Single value overloads
+export function cummin(
+  values: number,
+  options?: CumulativeOptions | boolean,
+): number;
 
-export function cummin(value: number): number;
-export function cummin(values: CleanNumberArray): number[];
+// Clean array overloads (no nulls/undefined)
+export function cummin(
+  values: CleanNumberArray,
+  options?: CumulativeOptions | boolean,
+): number[];
+export function cummin(
+  values: number[],
+  options?: CumulativeOptions | boolean,
+): number[];
+
+// Arrays with nullables - when removal flags are true, return number[]
 export function cummin(
   values: NumbersWithNullable,
-  removeNA: true,
+  options: { removeNull: true; removeUndefined: true } | true,
 ): number[];
-export function cummin(values: CleanNumberIterable): number[];
+
+// Arrays with only null - removeNull sufficient
 export function cummin(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true } | true,
 ): number[];
+
+// Arrays with only undefined - removeUndefined sufficient
+export function cummin(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true } | true,
+): number[];
+
+// Arrays with nullables - return nullable when not all flags are true
+export function cummin(
+  values: NumbersWithNullable,
+  options?: CumulativeOptions | boolean,
+): (number | null)[];
+
+// Implementation
 export function cummin(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: CumulativeOptions | boolean = {},
 ): number | number[] | (number | null)[] {
+  // Normalize options - support legacy boolean API
+  const opts: CumulativeOptions =
+    typeof options === "boolean"
+      ? { removeNull: options, removeUndefined: options, removeNaN: options }
+      : options;
+
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = opts;
+
   // Handle single number case
   if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return removeNaN ? Infinity : NaN;
+    }
     return values;
   }
 
-  // Handle iterables by materializing to array
+  // Convert to array
   const processArray = Array.isArray(values) ? values : Array.from(values);
 
-  // Check for mixed types first - return null array unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
-    return new Array(processArray.length).fill(null);
+  if (processArray.length === 0) {
+    return [];
   }
 
-  if (removeNA) {
-    // Calculate cumulative minimum while preserving array length, skipping NA values
+  // Fast path for clean numeric arrays
+  if (isAllFiniteNumbers(processArray)) {
     const result: number[] = [];
     let min = Infinity;
-
-    for (const val of processArray) {
-      if (isNA(val) || typeof val !== "number") {
-        // Skip NA values and non-numbers, maintain array length by repeating previous min
-        result.push(min === Infinity ? NaN : min);
-      } else {
-        min = Math.min(min, val);
-        result.push(min);
-      }
+    for (let i = 0; i < processArray.length; i++) {
+      min = Math.min(min, processArray[i]);
+      result.push(min);
     }
-
-    return result;
-  } else {
-    // Check if any true NA values present (null/undefined only, not NaN)
-    const hasNA = processArray.some((val) => val === null || val === undefined);
-    if (hasNA) {
-      return new Array(processArray.length).fill(null);
-    }
-
-    // No true NA values, proceed with cummin (includes NaN and Infinity handling)
-    const result: (number | null)[] = [];
-    let min = Infinity;
-
-    for (const val of processArray) {
-      if (typeof val === "number") {
-        min = Math.min(min, val); // This handles NaN and Infinity correctly
-        result.push(min);
-      } else {
-        // Non-numeric values
-        result.push(null);
-      }
-    }
-
     return result;
   }
+
+  // Process with filtering
+  const result: (number | null)[] = [];
+  let min = Infinity;
+  let sawNaN = false;
+  let sawFirstValue = false;
+
+  for (const v of processArray) {
+    if (v === null) {
+      if (!removeNull) {
+        return new Array(processArray.length).fill(null);
+      }
+      result.push(sawFirstValue ? min : NaN);
+      continue;
+    }
+    if (v === undefined) {
+      if (!removeUndefined) {
+        return new Array(processArray.length).fill(null);
+      }
+      result.push(sawFirstValue ? min : NaN);
+      continue;
+    }
+    if (typeof v === "number") {
+      if (Number.isNaN(v)) {
+        if (!removeNaN) {
+          sawNaN = true;
+        }
+        result.push(sawNaN ? NaN : (sawFirstValue ? min : NaN));
+        continue;
+      }
+      if (sawNaN) {
+        result.push(NaN);
+      } else {
+        min = Math.min(min, v);
+        sawFirstValue = true;
+        result.push(min);
+      }
+    } else {
+      result.push(sawFirstValue ? min : NaN);
+    }
+  }
+
+  return result;
 }

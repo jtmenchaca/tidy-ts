@@ -13,7 +13,6 @@ Deno.test("cumsum function", () => {
 
 Deno.test("cumsum with null values", () => {
   const values = [1, null, 3, 4, 5];
-  // @ts-expect-error - null values are not allowed
   const result = stats.cumsum(values);
   expect(result).toEqual([null, null, null, null, null]); // null propagates through cumulative sum
   const result2 = stats.cumsum(values, true);
@@ -22,7 +21,6 @@ Deno.test("cumsum with null values", () => {
 
 Deno.test("cumsum with undefined values", () => {
   const values = [1, undefined, 3, 4, 5];
-  // @ts-expect-error - undefined values are not allowed
   const result = stats.cumsum(values);
   expect(result).toEqual([null, null, null, null, null]); // undefined treated as 0
   const result2 = stats.cumsum(values, true);
@@ -57,7 +55,6 @@ Deno.test("cummax function", () => {
 
 Deno.test("cummax with null values", () => {
   const values = [3, null, 4, 1, 5];
-  // @ts-expect-error - null values are not allowed
   const result = stats.cummax(values);
   expect(result).toEqual([null, null, null, null, null]); // null propagates through cumulative max
   const result2 = stats.cummax(values, true);
@@ -66,7 +63,6 @@ Deno.test("cummax with null values", () => {
 
 Deno.test("cummax with undefined values", () => {
   const values = [3, undefined, 4, 1, 5];
-  // @ts-expect-error - undefined values are not allowed
   const result = stats.cummax(values);
   expect(result).toEqual([null, null, null, null, null]); // undefined treated as null
   const result2 = stats.cummax(values, true);
@@ -95,7 +91,6 @@ Deno.test("cummin function", () => {
 
 Deno.test("cummin with null values", () => {
   const values = [3, null, 4, 1, 5];
-  // @ts-expect-error - null values are not allowed
   const result = stats.cummin(values);
   expect(result).toEqual([null, null, null, null, null]); // null propagates through cumulative min
   const result2 = stats.cummin(values, true);
@@ -104,7 +99,6 @@ Deno.test("cummin with null values", () => {
 
 Deno.test("cummin with undefined values", () => {
   const values = [3, undefined, 4, 1, 5];
-  // @ts-expect-error - undefined values are not allowed
   const result = stats.cummin(values);
   expect(result).toEqual([null, null, null, null, null]); // undefined treated as null
   const result2 = stats.cummin(values, true);
@@ -133,7 +127,6 @@ Deno.test("cumprod function", () => {
 
 Deno.test("cumprod with null values", () => {
   const values = [1, null, 3, 4];
-  // @ts-expect-error - null values are not allowed
   const result = stats.cumprod(values);
   expect(result).toEqual([null, null, null, null]); // null propagates through cumulative product
   const result2 = stats.cumprod(values, true);
@@ -142,7 +135,6 @@ Deno.test("cumprod with null values", () => {
 
 Deno.test("cumprod with undefined values", () => {
   const values = [1, undefined, 3, 4];
-  // @ts-expect-error - undefined values are not allowed
   const result = stats.cumprod(values);
   expect(result).toEqual([null, null, null, null]); // undefined treated as null
   const result2 = stats.cumprod(values, true);
@@ -177,7 +169,6 @@ Deno.test("cumulative mean function", () => {
 
 Deno.test("cumulative mean with null values", () => {
   const values = [1, null, 3, 4, 5];
-  // @ts-expect-error - null values are not allowed
   const result = stats.cummean(values);
   expect(result).toEqual([null, null, null, null, null]); // null propagates through cumulative mean
   const result2 = stats.cummean(values, true);

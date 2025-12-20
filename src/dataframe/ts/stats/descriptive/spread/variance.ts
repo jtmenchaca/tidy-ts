@@ -1,98 +1,164 @@
-import { hasMixedTypes } from "../../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../../helpers.ts";
-import {
-  extractNumbersWithOptions,
-  isAllFiniteNumbers,
-} from "../../helpers.ts";
+import { isAllFiniteNumbers } from "../../helpers.ts";
+
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in variance function */
+export interface VarianceOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
 
 /**
  * Calculate the sample variance of an array of values (uses N-1 denominator)
  *
  * @param values - Array of numbers or single number
- * @param removeNA - If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, filters out null values (default: false)
+ * @param options.removeUndefined - If true, filters out undefined values (default: false)
+ * @param options.removeNaN - If true, filters out NaN values (default: false)
  * @returns Sample variance value or null if insufficient data
  *
  * @example
  * ```ts
  * variance(42) // Always returns 0 for single value
- * variance([1, 2, 3, 4, 5]) // sample variance (default)
- * variance([1, "2", 3], true) // 1 (variance of [1, 3] with removeNA=true)
- * variance([1, "2", 3], false) // null (mixed types, removeNA=false)
+ * variance([1, 2, 3, 4, 5]) // sample variance
+ * variance([1, null, 3]) // null (null present)
+ * variance([1, null, 3], { removeNull: true }) // variance of [1, 3]
+ * variance([1, NaN, 3]) // NaN (NaN propagates)
+ * variance([1, NaN, 3], { removeNaN: true }) // variance of [1, 3]
  * ```
  */
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
 
-export function variance(value: number): number;
-export function variance(values: CleanNumberArray): number;
-export function variance(values: NumbersWithNullable, removeNA: true): number;
-export function variance(values: CleanNumberIterable): number;
+// Single value overloads
+export function variance(values: number, options?: VarianceOptions): number;
+
+// Clean array overloads (no nulls/undefined)
 export function variance(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: CleanNumberArray,
+  options?: VarianceOptions,
 ): number;
+export function variance(values: number[], options?: VarianceOptions): number;
+export function variance(
+  values: Iterable<number>,
+  options?: VarianceOptions,
+): number;
+
+// Arrays with nullables - when all removal flags are true, return non-nullable
+export function variance(
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
+): number;
+
+// Arrays with only null (no undefined) - removeNull sufficient
+export function variance(
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true },
+): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
+export function variance(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true },
+): number;
+
+// Arrays with nullables - return nullable when not all flags are true
+export function variance(
+  values: NumbersWithNullable,
+  options?: VarianceOptions,
+): number | null;
+
+// Implementation
 export function variance(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: VarianceOptions = {},
 ): number | null {
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = options;
+
   // Handle single number case
   if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return removeNaN ? 0 : NaN;
+    }
     return 0; // Variance of a single value is 0
   }
 
-  // Check for mixed types first - return null unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
+  // Convert to array
+  const processArray = Array.isArray(values) ? values : Array.from(values);
+
+  if (processArray.length === 0) {
     return null;
   }
 
   // Fast path for clean numeric arrays
-  if (Array.isArray(values) && isAllFiniteNumbers(values)) {
-    if (values.length === 0) return null;
-    if (values.length === 1) return null; // Sample variance undefined for n=1
+  if (isAllFiniteNumbers(processArray)) {
+    if (processArray.length === 1) return null; // Sample variance undefined for n=1
 
-    const meanVal = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const sumSquaredDiffs = values.reduce((sum, val) => {
+    const meanVal =
+      processArray.reduce((sum, val) => sum + val, 0) / processArray.length;
+    const sumSquaredDiffs = processArray.reduce((sum, val) => {
       const diff = val - meanVal;
-      return sum + (diff * diff);
+      return sum + diff * diff;
     }, 0);
 
-    // Always use sample variance (N-1)
-    return sumSquaredDiffs / (values.length - 1);
+    return sumSquaredDiffs / (processArray.length - 1);
   }
 
-  // Extract numeric values (includes Infinity, excludes NaN and non-numbers)
-  const validValues = extractNumbersWithOptions(values, true, false);
+  // Process with filtering - collect valid numbers
+  const validNumbers: number[] = [];
+  let foundNaN = false;
 
-  if (validValues.length === 0) {
-    if (removeNA) {
-      throw new Error("No valid values found to calculate variance");
+  for (const v of processArray) {
+    if (v === null) {
+      if (!removeNull) return null;
+      continue;
     }
+    if (v === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    if (typeof v === "number") {
+      if (Number.isNaN(v)) {
+        if (!removeNaN) {
+          foundNaN = true;
+        }
+        continue;
+      }
+      validNumbers.push(v);
+    }
+  }
+
+  // If we found NaN and didn't remove it, return NaN
+  if (foundNaN) {
+    return NaN;
+  }
+
+  if (validNumbers.length === 0) {
     return null;
   }
-  if (validValues.length === 1) return null; // Sample variance undefined for n=1
+  if (validNumbers.length === 1) {
+    return null; // Sample variance undefined for n=1
+  }
 
-  const meanVal = validValues.reduce((sum, val) => sum + val, 0) /
-    validValues.length;
-  const sumSquaredDiffs = validValues.reduce((sum, val) => {
+  const meanVal =
+    validNumbers.reduce((sum, val) => sum + val, 0) / validNumbers.length;
+  const sumSquaredDiffs = validNumbers.reduce((sum, val) => {
     const diff = val - meanVal;
-    return sum + (diff * diff);
+    return sum + diff * diff;
   }, 0);
 
-  // Always use sample variance (N-1)
-  return sumSquaredDiffs / (validValues.length - 1);
+  return sumSquaredDiffs / (validNumbers.length - 1);
 }

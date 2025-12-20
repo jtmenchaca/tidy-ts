@@ -1,31 +1,27 @@
-import { hasMixedTypes } from "../../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../../helpers.ts";
-import {
-  extractNumbersWithOptions,
-  isAllFiniteNumbers,
-} from "../../helpers.ts";
-import type {
-  NullableArrayWithoutRemoveNa,
-  RestrictNullableArray,
-} from "../../../dataframe/types/error-types.ts";
+import { canUseFastPath } from "../../helpers.ts";
 
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in mean function */
+export interface MeanOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+  removeNaN?: boolean;
+}
 
 /**
  * Calculate the arithmetic mean (average) of numeric values.
  *
- * @param value - A single number or array of numbers
- * @param removeNA - Whether to exclude null/undefined values (when using mixed arrays)
- * @returns The arithmetic mean of all numeric values
+ * @param values - A single number or array of numbers
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, filters out null values (default: false)
+ * @param options.removeUndefined - If true, filters out undefined values (default: false)
+ * @param options.removeNaN - If true, filters out NaN values (default: false)
+ * @returns The arithmetic mean of all numeric values, or null if no valid values
  *
  * @example
  * ```typescript
@@ -37,105 +33,117 @@ import type {
  * // Array of numbers
  * stats.mean([1, 2, 3, 4]); // 2.5
  *
- * // Array with nulls (requires removeNA flag)
- * stats.mean([1, 2, null, 4], true); // 2.33
+ * // Array with nulls
+ * stats.mean([1, 2, null, 4], { removeNull: true }); // 2.33
  *
- * // Using with DataFrame columns
- * const df = createDataFrame([
- *   { score: 85 }, { score: 92 }, { score: 78 }
- * ]);
- * stats.mean(df.score); // 85
+ * // Array with NaN (propagates by default)
+ * stats.mean([1, NaN, 3]); // NaN
+ * stats.mean([1, NaN, 3], { removeNaN: true }); // 2
  * ```
  */
-export function mean(value: number): number;
-export function mean(values: CleanNumberArray): number;
-export function mean(values: CleanNumberIterable): number;
-export function mean(values: NumbersWithNullable, removeNA: true): number;
+
+// Single value overloads
+export function mean(values: number, options?: MeanOptions): number;
+
+// Clean array overloads (no nulls/undefined)
+export function mean(values: CleanNumberArray, options?: MeanOptions): number;
+export function mean(values: number[], options?: MeanOptions): number;
+export function mean(values: Iterable<number>, options?: MeanOptions): number;
+
+// Arrays with nullables - when all removal flags are true, return non-nullable
 export function mean(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
 ): number;
-// Error overload for nullable arrays without removeNA
+
+// Arrays with only null (no undefined) - removeNull sufficient
 export function mean(
-  values: RestrictNullableArray<
-    NumbersWithNullable,
-    NullableArrayWithoutRemoveNa
-  >,
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true },
 ): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
 export function mean(
-  values: RestrictNullableArray<
-    readonly (number | null | undefined)[],
-    NullableArrayWithoutRemoveNa
-  >,
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true },
 ): number;
+
+// Arrays with nullables - return nullable when not all flags are true
 export function mean(
-  values: RestrictNullableArray<
-    readonly (number | null)[],
-    NullableArrayWithoutRemoveNa
-  >,
-): number;
+  values: NumbersWithNullable,
+  options?: MeanOptions,
+): number | null;
+
+// Implementation
 export function mean(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
-  // deno-lint-ignore no-explicit-any
-): any {
-  if (typeof values === "number") return values;
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: MeanOptions = {},
+): number | null {
+  const {
+    removeNull = false,
+    removeUndefined = false,
+    removeNaN = false,
+  } = options;
 
-  // OPTIMIZATION: Check if array is pre-validated (from summarise.verb.ts group proxy)
-  // Skip expensive type checking if we know the data is clean
-  // BUT: only use fast path if NOT removing NAs (fast path doesn't handle nulls)
-  const VALIDATED_ARRAY = Symbol.for("tidy-ts:validated-array");
-  // deno-lint-ignore no-explicit-any
-  if (Array.isArray(values) && (values as any)[VALIDATED_ARRAY] && !removeNA) {
-    const arr = values as number[];
-    // Use Welford's algorithm for numerical stability (online mean calculation)
-    let m = 0;
-    let count = 0;
-    for (let i = 0; i < arr.length; i++) {
-      const val = arr[i];
-      // Skip nulls/NaN even in validated arrays
-      if (val == null || Number.isNaN(val)) continue;
-      count++;
-      m += (val - m) / count;
+  // Handle single number case
+  if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return removeNaN ? null : NaN;
     }
-    return count > 0 ? m : null;
+    return values;
   }
 
-  // Check for mixed types first - return null unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
+  // Convert to array
+  const processArray = Array.isArray(values) ? values : Array.from(values);
+
+  if (processArray.length === 0) {
     return null;
   }
 
-  // Fast path for clean number arrays (common case from materialized group columns)
-  if (Array.isArray(values) && isAllFiniteNumbers(values)) {
+  // Fast path for clean number arrays - only when no removal filtering is needed
+  // and array contains only finite numbers
+  if (canUseFastPath(processArray, options)) {
     let sum = 0;
-    const len = values.length;
-    for (let i = 0; i < len; i++) sum += values[i];
+    const len = processArray.length;
+    for (let i = 0; i < len; i++) sum += processArray[i];
     return sum / len;
   }
 
-  // Extract numeric values (includes Infinity, excludes NaN and non-numbers)
-  const validValues = extractNumbersWithOptions(values, true, false);
-
-  if (validValues.length === 0) {
-    return null;
-  }
-
+  // Process with filtering
+  let sum = 0;
   let count = 0;
-  let m = 0;
+  let foundNaN = false;
 
-  for (let i = 0; i < validValues.length; i++) {
-    const x = validValues[i];
-    count++;
-    m += (x - m) / count;
+  for (const v of processArray) {
+    if (v === null) {
+      if (!removeNull) return null;
+      continue;
+    }
+    if (v === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    if (typeof v === "number") {
+      if (Number.isNaN(v)) {
+        if (!removeNaN) {
+          foundNaN = true;
+        }
+        continue;
+      }
+      count++;
+      sum += v;
+    }
   }
 
-  return m;
+  // If we found NaN and didn't remove it, return NaN
+  if (foundNaN) {
+    return NaN;
+  }
+
+  return count > 0 ? sum / count : null;
 }

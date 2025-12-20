@@ -22,12 +22,10 @@ Deno.test("Min and Max with Date objects", () => {
   ];
   const minDate = s.min(dates); // should work
   const maxDate = s.max(dates); // should work
-  // @ts-expect-error should have compile issue due to missing values (undefined/null)
-  const minMixedDates = s.min(mixedDates); // should have compile issue due to missing values (undefined/null)
-  // @ts-expect-error should have compile issue due to missing values (undefined/null)
-  const maxMixedDates = s.max(mixedDates); // should have compile issue due to missing values (undefined/null)
-  const minMixedDatesRemoveNA = s.min(mixedDates, true); // should work
-  const maxMixedDatesRemoveNA = s.max(mixedDates, true); // should work
+  const minMixedDates = s.min(mixedDates); // returns null when encountering null/undefined
+  const maxMixedDates = s.max(mixedDates); // returns null when encountering null/undefined
+  const minMixedDatesRemoveNA = s.min(mixedDates, { removeNull: true, removeUndefined: true }); // should work
+  const maxMixedDatesRemoveNA = s.max(mixedDates, { removeNull: true, removeUndefined: true }); // should work
 
   console.log("Min date:", minDate);
   console.log("Max date:", maxDate);
@@ -39,8 +37,8 @@ Deno.test("Min and Max with Date objects", () => {
   // Test expectations
   expect(minDate).toEqual(new Date("2024-01-01T10:00:00Z"));
   expect(maxDate).toEqual(new Date("2024-01-05T16:20:00.000Z"));
-  expect(minMixedDates).toEqual(new Date("2024-01-01T10:00:00Z"));
-  expect(maxMixedDates).toEqual(new Date("2024-01-04T14:45:00Z"));
+  expect(minMixedDates).toEqual(null); // null/undefined in input returns null
+  expect(maxMixedDates).toEqual(null); // null/undefined in input returns null
   expect(minMixedDatesRemoveNA).toEqual(new Date("2024-01-01T10:00:00Z"));
   expect(maxMixedDatesRemoveNA).toEqual(new Date("2024-01-04T14:45:00Z"));
 });

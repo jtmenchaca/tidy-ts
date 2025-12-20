@@ -1,81 +1,96 @@
-// deno-lint-ignore-file no-explicit-any
-import { variance } from "./variance.ts";
-import { isNA } from "../../../utilities/mod.ts";
-import { hasMixedTypes } from "../../helpers.ts";
-import type {
-  CleanNumberArray,
-  CleanNumberIterable,
-  NumbersWithNullable,
-  NumbersWithNullableIterable,
-} from "../../helpers.ts";
+import { variance, type VarianceOptions } from "./variance.ts";
+
+// Type definitions for number arrays
+export type CleanNumberArray = readonly number[];
+export type NumbersWithNullable =
+  | (number | null | undefined)[]
+  | readonly (number | null | undefined)[];
+
+/** Options for filtering values in sd function */
+export type SdOptions = VarianceOptions;
 
 /**
  * Calculate the sample standard deviation of an array of values
  *
  * @param values - Array of numbers or single number
- * @param removeNA - If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, filters out null values (default: false)
+ * @param options.removeUndefined - If true, filters out undefined values (default: false)
+ * @param options.removeNaN - If true, filters out NaN values (default: false)
  * @returns Sample standard deviation value or null if insufficient data
  *
  * @example
  * ```ts
  * sd(42) // Always returns 0 for single value
- * sd([1, 2, 3, 4, 5]) // sample standard deviation (default)
- * sd([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)
- * sd([1, "2", 3], false) // null (mixed types, removeNA=false)
+ * sd([1, 2, 3, 4, 5]) // sample standard deviation
+ * sd([1, null, 3]) // null (null present)
+ * sd([1, null, 3], { removeNull: true }) // std dev of [1, 3]
+ * sd([1, NaN, 3]) // NaN (NaN propagates)
+ * sd([1, NaN, 3], { removeNaN: true }) // std dev of [1, 3]
  * ```
  */
-// Types that should be rejected at compile-time (examples):
-// type ArrayWithStrings = (number | string)[];
-// type ArrayWithBooleans = (number | boolean)[];
-// type ArrayWithMixedTypes = (number | string | boolean | null)[];
-// These types are intentionally NOT supported in overloads - use runtime filtering instead
 
-export function sd(value: number): number;
-export function sd(values: CleanNumberArray): number;
-export function sd(values: NumbersWithNullable, removeNA: true): number;
-export function sd(values: CleanNumberIterable): number;
+// Single value overloads
+export function sd(values: number, options?: SdOptions): number;
+
+// Clean array overloads (no nulls/undefined)
+export function sd(values: CleanNumberArray, options?: SdOptions): number;
+export function sd(values: number[], options?: SdOptions): number;
+export function sd(values: Iterable<number>, options?: SdOptions): number;
+
+// Arrays with nullables - when all removal flags are true, return non-nullable
 export function sd(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
 ): number;
+
+// Arrays with only null (no undefined) - removeNull sufficient
+export function sd(
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true },
+): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
+export function sd(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true },
+): number;
+
+// Arrays with nullables - return nullable when not all flags are true
+export function sd(
+  values: NumbersWithNullable,
+  options?: SdOptions,
+): number | null;
+
+// Implementation
 export function sd(
   values:
     | number
     | CleanNumberArray
     | NumbersWithNullable
-    | CleanNumberIterable
-    | NumbersWithNullableIterable
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | Iterable<number>
+    | Iterable<unknown>,
+  options: SdOptions = {},
 ): number | null {
   // Handle single number case
   if (typeof values === "number") {
+    if (Number.isNaN(values)) {
+      return options.removeNaN ? 0 : NaN;
+    }
     return 0; // Standard deviation of a single value is 0
   }
 
-  // Check for mixed types first - return null unless removeNA is true
-  if (hasMixedTypes(values) && !removeNA) {
+  // Delegate to variance with same options
+  // deno-lint-ignore no-explicit-any
+  const var_val = variance(values as any, options);
+
+  if (var_val === null) {
     return null;
   }
 
-  // Call variance with same parameters
-
-  const var_val = removeNA
-    ? variance(values as any, true)
-    : variance(values as any);
-
-  if (var_val === null) {
-    if (removeNA) {
-      // Handle iterables by materializing to array for checking
-      const processArray = Array.isArray(values)
-        ? values
-        : Array.from(values as Iterable<number | null>);
-      if (processArray.some((v) => !isNA(v))) {
-        throw new Error("Insufficient data to calculate standard deviation");
-      }
-    }
-    return null;
+  // Check for NaN (propagated from variance)
+  if (Number.isNaN(var_val)) {
+    return NaN;
   }
 
   return Math.sqrt(var_val);

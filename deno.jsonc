@@ -15,7 +15,7 @@
   "tasks": {
     "mcp": "deno run --allow-read --allow-env src/mcp/cli.ts",
     "mcp:install": "deno install --global -A --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
-    "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check .",
+    "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/dataframe && DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/shims && DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/mcp && DENO_V8_FLAGS=--max-old-space-size=8192 deno check examples/dataframe && DENO_V8_FLAGS=--max-old-space-size=8192 deno check tests/bugs && DENO_V8_FLAGS=--max-old-space-size=8192 deno check tests/statistical_tests",
     "ci": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
     "ci:shims": "deno fmt src/shims && deno lint src/shims && deno test -A src/shims",
     "ci:no-stats": "deno fmt src/dataframe examples/dataframe tests/bugs tests/new_features && deno lint src/dataframe examples/dataframe tests/bugs tests/new_features && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 examples/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/bugs --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/new_features --quiet",

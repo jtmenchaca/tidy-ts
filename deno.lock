@@ -63,6 +63,7 @@
     "npm:vega-embed@^7.0.2": "7.1.0_vega@6.2.0_vega-lite@6.4.1__vega@6.2.0",
     "npm:vega-lite@^6.4.1": "6.4.1_vega@6.2.0",
     "npm:vega@^6.2.0": "6.2.0",
+    "npm:zod@*": "4.1.8",
     "npm:zod@^4.1.8": "4.1.8"
   },
   "jsr": {

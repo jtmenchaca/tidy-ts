@@ -22,9 +22,9 @@ Deno.test("Missing Data - Remove NA Option", () => {
     { id: 4, value: undefined },
   ]);
 
-  const total = s.sum(data.value, true);
-  const average = s.mean(data.value, true);
-  const maximum = s.max(data.value, true);
+  const total = s.sum(data.value, { removeNull: true, removeUndefined: true });
+  const average = s.mean(data.value, { removeNull: true, removeUndefined: true });
+  const maximum = s.max(data.value, { removeNull: true, removeUndefined: true });
 
   expect(total).toBe(30);
   expect(average).toBe(15);

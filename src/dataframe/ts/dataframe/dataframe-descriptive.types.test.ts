@@ -227,26 +227,27 @@ Deno.test("descriptive functions with removeNA=true extract valid numbers", () =
   // Valid numbers: [1, 2, 4]
   const mixedTypes = [1, 2, "3", true, null, undefined, NaN, 4, "5", false];
 
-  // Calculate all results with removeNA=true
+  // Calculate all results with removeNull/removeUndefined/removeNaN options
+  const removeOpts = { removeNull: true, removeUndefined: true, removeNaN: true };
   const results = {
     // @ts-ignore -- this is a test
-    mean: stats.mean(mixedTypes, true),
+    mean: stats.mean(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    max: stats.max(mixedTypes, true),
+    max: stats.max(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    min: stats.min(mixedTypes, true),
+    min: stats.min(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    sum: stats.sum(mixedTypes, true),
+    sum: stats.sum(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    product: stats.product(mixedTypes, true),
+    product: stats.product(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    median: stats.median(mixedTypes, true),
+    median: stats.median(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    variance: stats.variance(mixedTypes, true),
+    variance: stats.variance(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    sd: stats.stdev(mixedTypes, true),
+    sd: stats.stdev(mixedTypes, removeOpts),
     // @ts-ignore -- this is a test
-    mode: stats.mode(mixedTypes, true),
+    mode: stats.mode(mixedTypes, removeOpts),
   };
 
   console.log("removeNA=true results:", results);
