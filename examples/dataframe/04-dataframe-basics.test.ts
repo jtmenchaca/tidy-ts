@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("DataFrame Basics - Properties", () => {
+test("DataFrame Basics - Properties", () => {
   const jediKnights = createDataFrame([
     { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "Yoda", species: "Unknown", mass: 17, height: 66 },
@@ -20,7 +21,7 @@ Deno.test("DataFrame Basics - Properties", () => {
   expect(jediKnights.isEmpty()).toBe(false);
 });
 
-Deno.test("DataFrame Basics - Column Access", () => {
+test("DataFrame Basics - Column Access", () => {
   const jediKnights = createDataFrame([
     { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "Yoda", species: "Unknown", mass: 17, height: 66 },
@@ -40,7 +41,7 @@ Deno.test("DataFrame Basics - Column Access", () => {
   expect(s.unique(species)).toEqual(["Human", "Unknown"]);
 });
 
-Deno.test("DataFrame Basics - Extract Methods", () => {
+test("DataFrame Basics - Extract Methods", () => {
   const jediKnights = createDataFrame([
     { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "Yoda", species: "Unknown", mass: 17, height: 66 },

@@ -11,7 +11,7 @@ test("writeParquet() basic functionality", async () => {
   ]);
 
   const tempFile = "./test-basic.parquet";
-  writeParquet(df, tempFile);
+  await writeParquet(df, tempFile);
 
   // Read back the file to verify
   const uint8Array = await readFile(tempFile);
@@ -37,7 +37,7 @@ test("writeParquet() no options needed", async () => {
   ]);
 
   const tempFile = "./test-simple.parquet";
-  writeParquet(df, tempFile);
+  await writeParquet(df, tempFile);
 
   // Read back and verify
   const uint8Array = await readFile(tempFile);
@@ -62,7 +62,7 @@ test("writeParquet() chaining works", async () => {
 
   const tempFile = "./test-chaining.parquet";
 
-  writeParquet(df, tempFile);
+  await writeParquet(df, tempFile);
 
   const result = df
     .mutate({ doubleAge: (row) => row.age * 2 })
@@ -90,7 +90,7 @@ test("writeParquet() empty DataFrame", async () => {
   const tempFile = "./test-empty.parquet";
 
   // Should not throw, but create empty/minimal file
-  writeParquet(emptyDf, tempFile);
+  await writeParquet(emptyDf, tempFile);
 
   // For empty DataFrame, hyparquet-writer will create a minimal parquet file or throw
   // We'll just verify it doesn't crash the operation
@@ -121,7 +121,7 @@ test("writeParquet() with different data types", async () => {
   ]);
 
   const tempFile = "./test-types.parquet";
-  writeParquet(df, tempFile);
+  await writeParquet(df, tempFile);
 
   // Read back and verify types are preserved
   const uint8Array = await readFile(tempFile);
@@ -151,7 +151,7 @@ test("writeParquet() with null values", async () => {
   ]);
 
   const tempFile = "./test-nulls.parquet";
-  writeParquet(df, tempFile);
+  await writeParquet(df, tempFile);
 
   // Read back and verify nulls are preserved
   const uint8Array = await readFile(tempFile);

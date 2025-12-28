@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Reshaping - Pivot Wider", () => {
+test("Reshaping - Pivot Wider", () => {
   const salesLong = createDataFrame([
     { year: 2023, quarter: "Q1", product: "Widget A", sales: 1000 },
     { year: 2023, quarter: "Q1", product: "Widget B", sales: 1500 },
@@ -22,7 +23,7 @@ Deno.test("Reshaping - Pivot Wider", () => {
   expect(salesWide.columns()).toContain("Widget B");
 });
 
-Deno.test("Reshaping - Pivot Longer", () => {
+test("Reshaping - Pivot Longer", () => {
   const gradesWide = createDataFrame([
     { id: 1, name: "Alice", math: 85, science: 92, english: 78 },
     { id: 2, name: "Bob", math: 90, science: 88, english: 85 },
@@ -42,7 +43,7 @@ Deno.test("Reshaping - Pivot Longer", () => {
   expect(gradesLong.columns()).toContain("score");
 });
 
-Deno.test("Reshaping - Regional Comparison", () => {
+test("Reshaping - Regional Comparison", () => {
   const regionalSales = createDataFrame([
     { year: 2023, region: "North", product: "Widget A", sales: 1000 },
     { year: 2023, region: "North", product: "Widget B", sales: 1500 },
@@ -64,7 +65,7 @@ Deno.test("Reshaping - Regional Comparison", () => {
   expect(regionComparison.columns()).toContain("South");
 });
 
-Deno.test("Reshaping - Complex Reshape", () => {
+test("Reshaping - Complex Reshape", () => {
   const studentData = createDataFrame([
     { id: 1, name: "Alice", math: 85, science: 92, english: 78 },
     { id: 2, name: "Bob", math: 90, science: 88, english: 85 },
@@ -89,7 +90,7 @@ Deno.test("Reshaping - Complex Reshape", () => {
   expect(backToWide.columns()).toContain("english");
 });
 
-Deno.test("Reshaping - Handling Missing Values", () => {
+test("Reshaping - Handling Missing Values", () => {
   const incompleteData = createDataFrame([
     { id: 1, category: "A", value: 10 },
     { id: 2, category: "B", value: 20 },

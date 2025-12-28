@@ -1,10 +1,17 @@
 // deno-lint-ignore-file no-explicit-any
-import {
-  type BasicType,
-  parquetWriteBuffer,
-  parquetWriteFile,
-} from "hyparquet-writer";
 import type { DataFrame } from "../dataframe/index.ts";
+
+// Type alias for hyparquet-writer's BasicType
+type BasicType =
+  | "BOOLEAN"
+  | "INT32"
+  | "INT64"
+  | "INT96"
+  | "FLOAT"
+  | "DOUBLE"
+  | "BYTE_ARRAY"
+  | "STRING"
+  | "TIMESTAMP";
 
 /**
  * Convert a DataFrame to Parquet column-oriented format for hyparquet-writer
@@ -80,10 +87,15 @@ function dataFrameToColumnData<T extends Record<string, unknown>>(
  * writeParquet(df, "data.parquet");
  * ```
  */
-function writeParquetImpl<Row extends Record<string, unknown>>(
+async function writeParquetImpl<Row extends Record<string, unknown>>(
   dataFrame: DataFrame<Row>,
   filePath: string,
-): DataFrame<Row> {
+): Promise<DataFrame<Row>> {
+  // Dynamic import to avoid browser bundling issues with esm.sh
+  const { parquetWriteFile, parquetWriteBuffer } = await import(
+    "hyparquet-writer"
+  );
+
   const columnData = dataFrameToColumnData(dataFrame);
 
   // Use hyparquet-writer for file writing
@@ -142,16 +154,15 @@ function writeParquetImpl<Row extends Record<string, unknown>>(
  * writeParquet(df, "data.parquet");
  * ```
  */
-// Dynamic export with runtime detection
-// Since writeParquet is synchronous and we're in the same file, we can call the implementation directly
-export const writeParquet: <Row extends Record<string, unknown>>(
+/**
+ * Write a DataFrame to a Parquet file
+ *
+ * Uses dynamic imports internally to avoid bundling issues in browser environments.
+ * The hyparquet-writer dependency is only loaded when this function is called.
+ */
+export const writeParquet = <Row extends Record<string, unknown>>(
   df: DataFrame<Row>,
   path: string,
-) => DataFrame<Row> = (() => {
-  return <Row extends Record<string, unknown>>(
-    df: DataFrame<Row>,
-    path: string,
-  ) => {
-    return writeParquetImpl(df, path);
-  };
-})();
+): Promise<DataFrame<Row>> => {
+  return writeParquetImpl(df, path);
+};

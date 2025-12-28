@@ -5,5 +5,13 @@
   "main": "mod.ts",
   "exports": {
     ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "openai": "*",
+    "@openai/agents": "*",
+    "dotenv": "*",
+    "zod": "*",
+    "@std/expect": "*"
   }
 }

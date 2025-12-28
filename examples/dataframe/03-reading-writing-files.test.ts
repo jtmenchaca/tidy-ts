@@ -6,9 +6,13 @@ import {
   writeXLSX,
 } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { remove, test } from "@tidy-ts/shims";
 import { z } from "zod";
 
-Deno.test("File I/O - Read CSV", async () => {
+// Get path relative to repo root (works for both Deno and Bun)
+const FIXTURES_PATH = new URL("../fixtures", import.meta.url).pathname;
+
+test("File I/O - Read CSV", async () => {
   const MtcarsSchema = z.object({
     model: z.string(),
     mpg: z.number(),
@@ -24,7 +28,7 @@ Deno.test("File I/O - Read CSV", async () => {
     carb: z.number(),
   });
 
-  const mtcars = await readCSV("examples/fixtures/mtcars.csv", MtcarsSchema);
+  const mtcars = await readCSV(`${FIXTURES_PATH}/mtcars.csv`, MtcarsSchema);
 
   mtcars.print("Motor Trend Car Road Tests (mtcars):");
 
@@ -33,7 +37,7 @@ Deno.test("File I/O - Read CSV", async () => {
   expect(mtcars.columns()).toContain("mpg");
 });
 
-Deno.test("File I/O - Read XLSX", async () => {
+test("File I/O - Read XLSX", async () => {
   const PenguinSchema = z.object({
     species: z.string(),
     island: z.string(),
@@ -46,7 +50,7 @@ Deno.test("File I/O - Read XLSX", async () => {
   });
 
   const penguins = await readXLSX(
-    "examples/fixtures/penguins.xlsx",
+    `${FIXTURES_PATH}/penguins.xlsx`,
     PenguinSchema,
   );
 
@@ -57,7 +61,7 @@ Deno.test("File I/O - Read XLSX", async () => {
   expect(penguins.columns()).toContain("island");
 });
 
-Deno.test("File I/O - Write CSV", async () => {
+test("File I/O - Write CSV", async () => {
   const data = createDataFrame([
     { id: 1, name: "Alice", score: 85 },
     { id: 2, name: "Bob", score: 92 },
@@ -82,14 +86,14 @@ Deno.test("File I/O - Write CSV", async () => {
     expect(readBack[0].name).toBe("Alice");
   } finally {
     try {
-      await Deno.remove(testFile);
+      await remove(testFile);
     } catch {
       // Ignore if file doesn't exist
     }
   }
 });
 
-Deno.test("File I/O - Write XLSX", async () => {
+test("File I/O - Write XLSX", async () => {
   const data = createDataFrame([
     { id: 1, name: "Alice", score: 85 },
     { id: 2, name: "Bob", score: 92 },
@@ -114,14 +118,14 @@ Deno.test("File I/O - Write XLSX", async () => {
     expect(readBack[0].name).toBe("Alice");
   } finally {
     try {
-      await Deno.remove(testFile);
+      await remove(testFile);
     } catch {
       // Ignore if file doesn't exist
     }
   }
 });
 
-Deno.test("File I/O - CSV with String Data", async () => {
+test("File I/O - CSV with String Data", async () => {
   const csvString = `name,age,city
 Alice,25,New York
 Bob,30,San Francisco

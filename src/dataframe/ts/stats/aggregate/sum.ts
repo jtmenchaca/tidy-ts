@@ -60,13 +60,13 @@ export function sum(
 // Arrays with only null (no undefined) - removeNull sufficient
 export function sum(
   values: (number | null)[] | readonly (number | null)[],
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): number;
 
 // Arrays with only undefined (no null) - removeUndefined sufficient
 export function sum(
   values: (number | undefined)[] | readonly (number | undefined)[],
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): number;
 
 // Arrays with nullables - return nullable when not all flags are true

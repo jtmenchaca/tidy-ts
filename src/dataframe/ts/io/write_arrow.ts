@@ -1,13 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import {
-  bool,
-  dateMillisecond,
-  float64,
-  int32,
-  tableFromArrays,
-  tableToIPC,
-  utf8,
-} from "@uwdata/flechette";
+// Dynamic import for @uwdata/flechette to avoid browser bundling issues
+// import { bool, dateMillisecond, float64, int32, tableFromArrays, tableToIPC, utf8 } from "@uwdata/flechette";
 import type { DataFrame } from "../dataframe/index.ts";
 import { writeFile } from "@tidy-ts/shims";
 
@@ -36,6 +29,17 @@ export async function writeArrow<Row extends Record<string, unknown>>(
   dataFrame: DataFrame<Row>,
   filePath: string,
 ): Promise<DataFrame<Row>> {
+  // Dynamic import to avoid browser bundling issues with esm.sh
+  const {
+    bool,
+    dateMillisecond,
+    float64,
+    int32,
+    tableFromArrays,
+    tableToIPC,
+    utf8,
+  } = await import("@uwdata/flechette");
+
   // Convert DataFrame to column arrays
   const data = dataFrame.toArray();
   const columns = dataFrame.columns();

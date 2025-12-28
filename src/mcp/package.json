@@ -1,0 +1,17 @@
+{
+  "name": "@tidy-ts/mcp",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "tmcp": "*",
+    "@tmcp/adapter-valibot": "*",
+    "@tmcp/transport-stdio": "*",
+    "valibot": "*",
+    "zod": "*"
+  }
+}

@@ -3,7 +3,7 @@ import {
   type DataFrame,
   readCSV,
   stats,
-  str
+  str,
 } from "@tidy-ts/dataframe";
 import { z } from "zod/v4";
 
@@ -853,7 +853,6 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("Lead (next value):", stats.lead(values, 1));
   console.log("Lag with default:", stats.lag(values, 1, 0));
 
-
   console.log("\n=== Utility Functions ===");
   console.log("Rounded mean (2 decimals):", stats.round(stats.mean(values), 2));
   console.log("Floor of mean:", stats.floor(stats.mean(values)));
@@ -1289,7 +1288,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("\nMethod 2: Combining multiple DataFrames with bindRows()");
 
   // Create another character DataFrame
-  const obiWanDataFrame = createDataFrame<Character>([{
+  const obiWan: Character = {
     id: 8,
     name: "Obi-Wan",
     species: "Human",
@@ -1297,7 +1296,8 @@ Production async operations need concurrency control and retry mechanisms.`,
     height: 175,
     lightsaber: true,
     lightsaber_color: "blue",
-  }]);
+  };
+  const obiWanDataFrame = createDataFrame([obiWan]);
 
   // Type check: DataFrame creation preserves exact types
   const _obiWanDataFrameTypeCheck: DataFrame<Character> = obiWanDataFrame;
@@ -1508,10 +1508,14 @@ Production async operations need concurrency control and retry mechanisms.`,
   const smartCleaned = messyData.replaceNA({
     name: "Participant",
     age: stats.round(stats.mean(validAges), 0),
-    score: stats.round(stats.mean(validScores, true), 1), // Note we use remove_na=true
+    score: stats.round(
+      stats.mean(validScores, { removeNull: true, removeNaN: true }),
+      1,
+    ),
     active: false,
     notes: "Imputed",
   });
+  1;
 
   console.log("After smart replaceNA with calculated values:");
   smartCleaned.print();
@@ -1532,7 +1536,7 @@ Production async operations need concurrency control and retry mechanisms.`,
           return row.score;
         }
         // Use median for missing scores
-        return stats.median(validScores, true); // note,
+        return stats.median(validScores, { removeNull: true, removeNaN: true });
       },
       activeFilled: (row) => row.active ?? true, // Default to true
       notesFilled: (row) => row.notes || "No additional notes",
@@ -1579,8 +1583,11 @@ Production async operations need concurrency control and retry mechanisms.`,
     })
     .replaceNA({
       name: "Unknown",
-      age: stats.round(stats.mean(validAges), 0),
-      score: stats.round(stats.mean(validScores, true), 1), // Note we use remove_na=true
+      age: stats.round(stats.mean(validAges) ?? 0, 0),
+      score: stats.round(
+        stats.mean(validScores, { removeNull: true, removeNaN: true }) ?? 0,
+        1,
+      ),
       active: false,
       notes: "Imputed",
     })
@@ -2324,10 +2331,9 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("lukeRow", lukeRow);
   const anakinRow = finalCombined.filter((row) => row.name === "Anakin");
 
-
   // Verify retries happened (2 failures per call * 3 calls = 6 retries)
   console.log(`Total retry attempts: ${retryLog.length}`);
-  
+
   console.log("\n🎉 Getting started examples completed successfully!");
 }
 

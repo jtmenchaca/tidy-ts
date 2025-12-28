@@ -24,8 +24,14 @@ Deno.test("Min and Max with Date objects", () => {
   const maxDate = s.max(dates); // should work
   const minMixedDates = s.min(mixedDates); // returns null when encountering null/undefined
   const maxMixedDates = s.max(mixedDates); // returns null when encountering null/undefined
-  const minMixedDatesRemoveNA = s.min(mixedDates, { removeNull: true, removeUndefined: true }); // should work
-  const maxMixedDatesRemoveNA = s.max(mixedDates, { removeNull: true, removeUndefined: true }); // should work
+  const minMixedDatesRemoveNA = s.min(mixedDates, {
+    removeNull: true,
+    removeUndefined: true,
+  }); // should work
+  const maxMixedDatesRemoveNA = s.max(mixedDates, {
+    removeNull: true,
+    removeUndefined: true,
+  }); // should work
 
   console.log("Min date:", minDate);
   console.log("Max date:", maxDate);

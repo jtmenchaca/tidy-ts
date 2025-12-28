@@ -1,0 +1,26 @@
+{
+  "name": "@tidy-ts/runtime-tests",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "exports": "./mod.ts",
+  "imports": {
+    "@tidy-ts/dataframe": "jsr:@tidy-ts/dataframe",
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims"
+  },
+  "lint": {
+    "exclude": [
+      "public/",
+      "server.js",
+      "playwright.config.js",
+      "browser-tests/"
+    ]
+  },
+  "fmt": {
+    "exclude": [
+      "public/",
+      "server.js",
+      "playwright.config.js",
+      "browser-tests/"
+    ]
+  }
+}

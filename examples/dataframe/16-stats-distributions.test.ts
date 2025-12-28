@@ -7,8 +7,9 @@
 
 import { expect } from "@std/expect";
 import { stats as s } from "@tidy-ts/dataframe";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Distributions - Normal Distribution", () => {
+test("Distributions - Normal Distribution", () => {
   // PDF: density at x=0 for standard normal
   const pdf = s.dist.normal.density({ at: 0, mean: 0, standardDeviation: 1 });
   expect(pdf).toBeCloseTo(0.3989, 3); // ≈ 1/√(2π)
@@ -35,7 +36,7 @@ Deno.test("Distributions - Normal Distribution", () => {
   console.log(`  Median: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Beta Distribution", () => {
+test("Distributions - Beta Distribution", () => {
   const alpha = 2, beta = 2;
 
   const pdf = s.dist.beta.density({ at: 0.5, alpha, beta });
@@ -53,7 +54,7 @@ Deno.test("Distributions - Beta Distribution", () => {
   console.log(`  Median: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Exponential Distribution", () => {
+test("Distributions - Exponential Distribution", () => {
   const rate = 1;
 
   const pdf = s.dist.exponential.density({ at: 1, rate });
@@ -71,7 +72,7 @@ Deno.test("Distributions - Exponential Distribution", () => {
   console.log(`  Median: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Gamma Distribution", () => {
+test("Distributions - Gamma Distribution", () => {
   const shape = 2, rate = 1;
 
   const pdf = s.dist.gamma.density({ at: 1, shape, rate });
@@ -89,7 +90,7 @@ Deno.test("Distributions - Gamma Distribution", () => {
   console.log(`  Median: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Chi-Squared Distribution", () => {
+test("Distributions - Chi-Squared Distribution", () => {
   const degreesOfFreedom = 2;
 
   const pdf = s.dist.chiSquare.density({ at: 1, degreesOfFreedom });
@@ -109,7 +110,7 @@ Deno.test("Distributions - Chi-Squared Distribution", () => {
   console.log(`  95th percentile: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - F Distribution", () => {
+test("Distributions - F Distribution", () => {
   const df1 = 5, df2 = 10;
 
   const pdf = s.dist.f.density({
@@ -140,7 +141,7 @@ Deno.test("Distributions - F Distribution", () => {
   console.log(`  95th percentile: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Poisson Distribution", () => {
+test("Distributions - Poisson Distribution", () => {
   const rateLambda = 2;
 
   const pmf = s.dist.poisson.density({ at: 2, rateLambda });
@@ -157,7 +158,7 @@ Deno.test("Distributions - Poisson Distribution", () => {
   console.log(`  Median: ${quantile}`);
 });
 
-Deno.test("Distributions - Binomial Distribution", () => {
+test("Distributions - Binomial Distribution", () => {
   const trials = 10, probabilityOfSuccess = 0.5;
 
   const pmf = s.dist.binomial.density({ at: 5, trials, probabilityOfSuccess });
@@ -182,7 +183,7 @@ Deno.test("Distributions - Binomial Distribution", () => {
   console.log(`  Median: ${quantile}`);
 });
 
-Deno.test("Distributions - t-Distribution", () => {
+test("Distributions - t-Distribution", () => {
   const degreesOfFreedom = 5;
 
   const pdf = s.dist.t.density({ at: 0, degreesOfFreedom });
@@ -202,7 +203,7 @@ Deno.test("Distributions - t-Distribution", () => {
   console.log(`  95th percentile: ${quantile.toFixed(4)}`);
 });
 
-Deno.test("Distributions - Quantile/CDF Consistency", () => {
+test("Distributions - Quantile/CDF Consistency", () => {
   // Verify that quantile is the inverse of CDF
   const p = 0.75;
   const q = s.dist.normal.quantile({

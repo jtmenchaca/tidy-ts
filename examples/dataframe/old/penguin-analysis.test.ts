@@ -1,14 +1,18 @@
 import { readXLSX } from "@tidy-ts/dataframe";
 import { z } from "zod";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Penguin analysis with count functionality", async () => {
+// Get path relative to repo root (works for both Deno and Bun)
+const FIXTURES_PATH = new URL("../../fixtures", import.meta.url).pathname;
+
+test("Penguin analysis with count functionality", async () => {
   const PenguinSchema = z.object({
     species: z.string(),
     island: z.string(),
   });
 
   const penguins = await readXLSX(
-    "./examples/fixtures/penguins.xlsx",
+    `${FIXTURES_PATH}/penguins.xlsx`,
     PenguinSchema,
   );
 

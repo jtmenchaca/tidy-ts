@@ -7,6 +7,7 @@
 
 import { expect } from "@std/expect";
 import { stats as s } from "../../src/dataframe/mod.ts";
+import { test } from "@tidy-ts/shims";
 
 // Simulate API calls with delays
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -21,7 +22,7 @@ async function processItem(item: number): Promise<number> {
   return item * 2;
 }
 
-Deno.test("Example 1: Basic batch processing with concurrency", async () => {
+test("Example 1: Basic batch processing with concurrency", async () => {
   console.log("\n=== Basic Batch Processing ===\n");
 
   const userIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -38,7 +39,7 @@ Deno.test("Example 1: Basic batch processing with concurrency", async () => {
   expect(users[0]).toEqual({ id: 1, name: "User 1" });
 });
 
-Deno.test("Example 2: Batch processing with delays", async () => {
+test("Example 2: Batch processing with delays", async () => {
   console.log("\n=== Batch Processing with Delays ===\n");
 
   const items = Array.from({ length: 20 }, (_, i) => i + 1);
@@ -57,7 +58,7 @@ Deno.test("Example 2: Batch processing with delays", async () => {
   expect(results).toHaveLength(20);
 });
 
-Deno.test("Example 3: Combining chunk and batch", async () => {
+test("Example 3: Combining chunk and batch", async () => {
   console.log("\n=== Chunk + Batch Pattern ===\n");
 
   // Simulate processing large dataset in chunks
@@ -83,7 +84,7 @@ Deno.test("Example 3: Combining chunk and batch", async () => {
   expect(flatResults).toHaveLength(100);
 });
 
-Deno.test("Example 4: Retry with exponential backoff", async () => {
+test("Example 4: Retry with exponential backoff", async () => {
   console.log("\n=== Retry with Exponential Backoff ===\n");
 
   let attemptCount = 0;
@@ -115,7 +116,7 @@ Deno.test("Example 4: Retry with exponential backoff", async () => {
   expect(results).toEqual([2, 4, 6]);
 });
 
-Deno.test("Example 5: Conditional retry logic", async () => {
+test("Example 5: Conditional retry logic", async () => {
   console.log("\n=== Conditional Retry Logic ===\n");
 
   const networkErrors = ["rate limit", "timeout", "network"];
@@ -160,7 +161,7 @@ Deno.test("Example 5: Conditional retry logic", async () => {
   ]);
 });
 
-Deno.test("Example 6: Index parameter usage", async () => {
+test("Example 6: Index parameter usage", async () => {
   console.log("\n=== Using Index Parameter ===\n");
 
   const items = ["a", "b", "c", "d", "e"];
@@ -181,7 +182,7 @@ Deno.test("Example 6: Index parameter usage", async () => {
   expect(results[4]).toBe("5. E");
 });
 
-Deno.test("Example 7: Real-world API pattern", async () => {
+test("Example 7: Real-world API pattern", async () => {
   console.log("\n=== Real-world API Pattern ===\n");
 
   // Simulate fetching data from paginated API
@@ -223,7 +224,7 @@ Deno.test("Example 7: Real-world API pattern", async () => {
   expect(allData).toHaveLength(50);
 });
 
-Deno.test("Example 8: Processing with progress tracking", async () => {
+test("Example 8: Processing with progress tracking", async () => {
   console.log("\n=== Progress Tracking ===\n");
 
   const items = Array.from({ length: 20 }, (_, i) => i + 1);

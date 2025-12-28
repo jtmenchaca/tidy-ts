@@ -30,9 +30,12 @@ Deno.test("Example Test", async () => {
 
   const testing = df
     .summarize({
-      avg_culmen_length: (row) => s.mean(row.culmenLengthMm, { removeNull: true }),
-      avg_culmen_depth: (row) => s.mean(row.culmenDepthMm, { removeNull: true }),
-      avg_flipper_length: (row) => s.mean(row.flipperLengthMm, { removeNull: true }),
+      avg_culmen_length: (row) =>
+        s.mean(row.culmenLengthMm, { removeNull: true }),
+      avg_culmen_depth: (row) =>
+        s.mean(row.culmenDepthMm, { removeNull: true }),
+      avg_flipper_length: (row) =>
+        s.mean(row.flipperLengthMm, { removeNull: true }),
       avg_body_mass: (row) => s.mean(row.bodyMassG, { removeNull: true }),
     });
 
@@ -64,9 +67,12 @@ Deno.test("Example Test", async () => {
   const speciesComparison = df
     .groupBy("species")
     .summarize({
-      mean_culmen_length: (row) => s.mean(row.culmenLengthMm, { removeNull: true }),
-      mean_culmen_depth: (row) => s.mean(row.culmenDepthMm, { removeNull: true }),
-      mean_flipper_length: (row) => s.mean(row.flipperLengthMm, { removeNull: true }),
+      mean_culmen_length: (row) =>
+        s.mean(row.culmenLengthMm, { removeNull: true }),
+      mean_culmen_depth: (row) =>
+        s.mean(row.culmenDepthMm, { removeNull: true }),
+      mean_flipper_length: (row) =>
+        s.mean(row.flipperLengthMm, { removeNull: true }),
       mean_body_mass: (row) => s.mean(row.bodyMassG, { removeNull: true }),
       count: (row) => row.nrows(),
     });

@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Combining - Basic BindRows", () => {
+test("Combining - Basic BindRows", () => {
   const df1 = createDataFrame([
     { id: 1, name: "Alice", age: 25 },
     { id: 2, name: "Bob", age: 30 },
@@ -19,7 +20,7 @@ Deno.test("Combining - Basic BindRows", () => {
   expect(combined[3].name).toBe("Diana");
 });
 
-Deno.test("Combining - Multiple DataFrames", () => {
+test("Combining - Multiple DataFrames", () => {
   const df1 = createDataFrame([{ id: 1, name: "Alice" }]);
   const df2 = createDataFrame([{ id: 2, name: "Bob" }]);
   const df3 = createDataFrame([{ id: 3, name: "Charlie" }]);
@@ -30,7 +31,7 @@ Deno.test("Combining - Multiple DataFrames", () => {
   expect(combined[2].name).toBe("Charlie");
 });
 
-Deno.test("Combining - Different Columns", () => {
+test("Combining - Different Columns", () => {
   const df1 = createDataFrame([{ id: 1, name: "Alice", age: 25 }]);
 
   const df2 = createDataFrame([
@@ -44,7 +45,7 @@ Deno.test("Combining - Different Columns", () => {
   expect(combined[0].salary).toBe(undefined);
 });
 
-Deno.test("Combining - Spread Operator", () => {
+test("Combining - Spread Operator", () => {
   const df1 = createDataFrame([{ id: 1, name: "Alice" }]);
   const df2 = createDataFrame([{ id: 2, name: "Bob" }]);
 

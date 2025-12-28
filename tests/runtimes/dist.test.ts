@@ -28,15 +28,14 @@ type NormalData = {
   probability: number;
 };
 
-
 const normalData = normalPDFData.leftJoin(normalCDFData, "x");
 
 // Create a multi-series line chart showing both PDF and CDF
 const normalDataForGraph = normalData
   .pivotLonger({
     cols: ["density", "probability"],
-    names_to: "distribution_type",
-    values_to: "value",
+    namesTo: "distribution_type",
+    valuesTo: "value",
   });
 
 const normalDistributionChart = normalDataForGraph
@@ -50,7 +49,8 @@ const normalDistributionChart = normalDataForGraph
     config: {
       layout: {
         title: "📊 Normal Distribution - PDF and CDF",
-        description: "Probability density function and cumulative distribution function",
+        description:
+          "Probability density function and cumulative distribution function",
         width: 700,
         height: 450,
       },
@@ -66,7 +66,7 @@ const normalDistributionChart = normalDataForGraph
         strokeWidth: 3,
       },
       color: {
-        scheme: "oklch_vibrant",
+        scheme: "vibrant",
       },
       legend: {
         show: true,
@@ -101,6 +101,8 @@ await normalDistributionChart.savePNG({
   scale: 1, // Try lower scale first
 });
 
-console.log("💾 Graph saved as 'normal-distribution.png' and 'normal-distribution.svg'");
+console.log(
+  "💾 Graph saved as 'normal-distribution.png' and 'normal-distribution.svg'",
+);
 
 normalData.print();

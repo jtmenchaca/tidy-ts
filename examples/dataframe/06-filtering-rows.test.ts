@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Filtering Rows - Basic Filtering by Numeric", () => {
+test("Filtering Rows - Basic Filtering by Numeric", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -16,7 +17,7 @@ Deno.test("Filtering Rows - Basic Filtering by Numeric", () => {
   expect(tallPeople.name).toEqual(["Darth Vader", "Chewbacca"]);
 });
 
-Deno.test("Filtering Rows - Basic Filtering by String", () => {
+test("Filtering Rows - Basic Filtering by String", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -31,7 +32,7 @@ Deno.test("Filtering Rows - Basic Filtering by String", () => {
   expect(humans.name).toEqual(["Luke", "Darth Vader"]);
 });
 
-Deno.test("Filtering Rows - Multiple Conditions", () => {
+test("Filtering Rows - Multiple Conditions", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -48,7 +49,7 @@ Deno.test("Filtering Rows - Multiple Conditions", () => {
   expect(tallHumans.name).toEqual(["Darth Vader"]);
 });
 
-Deno.test("Filtering Rows - With Parameters", () => {
+test("Filtering Rows - With Parameters", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -68,7 +69,7 @@ Deno.test("Filtering Rows - With Parameters", () => {
   expect(withParameters.nrows()).toBe(0);
 });
 
-Deno.test("Filtering Rows - With Calculations", () => {
+test("Filtering Rows - With Calculations", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -87,7 +88,7 @@ Deno.test("Filtering Rows - With Calculations", () => {
   expect(withCalculations.name).toEqual(["Darth Vader", "Chewbacca"]);
 });
 
-Deno.test("Filtering Rows - Chained Filtering", () => {
+test("Filtering Rows - Chained Filtering", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },

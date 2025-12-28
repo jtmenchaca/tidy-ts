@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Sorting - Basic Ascending", () => {
+test("Sorting - Basic Ascending", () => {
   const students = createDataFrame([
     { id: 1, name: "Charlie", age: 35, score: 78 },
     { id: 2, name: "Alice", age: 25, score: 85 },
@@ -14,7 +15,7 @@ Deno.test("Sorting - Basic Ascending", () => {
   expect(sortedByAge[2].name).toBe("Charlie");
 });
 
-Deno.test("Sorting - Basic Descending", () => {
+test("Sorting - Basic Descending", () => {
   const students = createDataFrame([
     { id: 1, name: "Charlie", age: 35, score: 78 },
     { id: 2, name: "Alice", age: 25, score: 85 },
@@ -27,7 +28,7 @@ Deno.test("Sorting - Basic Descending", () => {
   expect(sortedByScore[2].name).toBe("Charlie");
 });
 
-Deno.test("Sorting - Multi Column Sorting", () => {
+test("Sorting - Multi Column Sorting", () => {
   const employees = createDataFrame([
     { id: 1, name: "Alice", age: 25, score: 85, department: "Engineering" },
     { id: 2, name: "Bob", age: 30, score: 92, department: "Marketing" },
@@ -41,7 +42,7 @@ Deno.test("Sorting - Multi Column Sorting", () => {
   expect(sorted[0].name).toBe("Alice");
 });
 
-Deno.test("Sorting - With Calculated Values", () => {
+test("Sorting - With Calculated Values", () => {
   const grades = createDataFrame([
     { id: 1, name: "Alice", math: 85, science: 90, english: 80 },
     { id: 2, name: "Bob", math: 92, science: 88, english: 95 },
@@ -57,7 +58,7 @@ Deno.test("Sorting - With Calculated Values", () => {
   expect(withAverage[0].name).toBe("Bob");
 });
 
-Deno.test("Sorting - Finding Top Performers", () => {
+test("Sorting - Finding Top Performers", () => {
   const sales = createDataFrame([
     { id: 1, name: "Alice", region: "North", sales: 50000 },
     { id: 2, name: "Bob", region: "South", sales: 75000 },
@@ -72,7 +73,7 @@ Deno.test("Sorting - Finding Top Performers", () => {
   expect(topPerformers[1].name).toBe("Bob");
 });
 
-Deno.test("Sorting - String Sorting", () => {
+test("Sorting - String Sorting", () => {
   const products = createDataFrame([
     { id: 1, name: "Charlie", category: "Zebra", price: 15.99 },
     { id: 2, name: "Alice", category: "Apple", price: 2.5 },

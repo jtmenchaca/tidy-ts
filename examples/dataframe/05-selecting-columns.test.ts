@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Selecting Columns - Select Specific Columns", () => {
+test("Selecting Columns - Select Specific Columns", () => {
   const jedi = createDataFrame([
     {
       id: 1,
@@ -33,7 +34,7 @@ Deno.test("Selecting Columns - Select Specific Columns", () => {
   expect(selected.nrows()).toBe(3);
 });
 
-Deno.test("Selecting Columns - Drop Specific Columns", () => {
+test("Selecting Columns - Drop Specific Columns", () => {
   const jedi = createDataFrame([
     {
       id: 1,
@@ -64,7 +65,7 @@ Deno.test("Selecting Columns - Drop Specific Columns", () => {
   expect(dropped.columns()).toEqual(["name", "age", "midichlorianCount"]);
 });
 
-Deno.test("Selecting Columns - Access Individual Columns", () => {
+test("Selecting Columns - Access Individual Columns", () => {
   const jedi = createDataFrame([
     {
       id: 1,
@@ -89,7 +90,7 @@ Deno.test("Selecting Columns - Access Individual Columns", () => {
   expect(Array.from(ages)).toEqual([19, 57]);
 });
 
-Deno.test("Selecting Columns - Extract Specific Values", () => {
+test("Selecting Columns - Extract Specific Values", () => {
   const jedi = createDataFrame([
     {
       id: 1,

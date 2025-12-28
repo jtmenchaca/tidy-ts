@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Grouping - Basic GroupBy", () => {
+test("Grouping - Basic GroupBy", () => {
   const people = createDataFrame([
     {
       id: 1,
@@ -63,7 +64,7 @@ Deno.test("Grouping - Basic GroupBy", () => {
   expect(speciesAnalysis.columns()).toContain("count");
 });
 
-Deno.test("Grouping - Multiple Column Grouping", () => {
+test("Grouping - Multiple Column Grouping", () => {
   const people = createDataFrame([
     {
       id: 1,
@@ -120,7 +121,7 @@ Deno.test("Grouping - Multiple Column Grouping", () => {
   expect(multiGroupAnalysis.nrows()).toBe(4);
 });
 
-Deno.test("Grouping - Calculated Categories", () => {
+test("Grouping - Calculated Categories", () => {
   const people = createDataFrame([
     {
       id: 1,
@@ -188,7 +189,7 @@ Deno.test("Grouping - Calculated Categories", () => {
   expect(categoryAnalysis.nrows()).toBeGreaterThan(0);
 });
 
-Deno.test("Grouping - Conditional Aggregation", () => {
+test("Grouping - Conditional Aggregation", () => {
   const people = createDataFrame([
     {
       id: 1,
@@ -247,7 +248,7 @@ Deno.test("Grouping - Conditional Aggregation", () => {
   expect(basicAnalysis.nrows()).toBe(3);
 });
 
-Deno.test("Grouping - Count Shorthand", () => {
+test("Grouping - Count Shorthand", () => {
   const people = createDataFrame([
     {
       id: 1,

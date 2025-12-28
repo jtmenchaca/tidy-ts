@@ -10,6 +10,7 @@
     "tests/bugs",
     "tests/glm",
     "tests/gee",
+    "tests/runtimes",
     "tests/statistical_tests",
     "tests/new_features",
     "examples",
@@ -42,9 +43,7 @@
     "z-other/**",
     ".obsidian/",
     ".cargo/",
-    ".claude/",
-    "tests/runtimes/",
-    "tests/runtimes/**"
+    ".claude/"
   ],
   "editor.formatOnSave": false,
   "[typescript]": {

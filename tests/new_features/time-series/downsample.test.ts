@@ -20,8 +20,8 @@ Deno.test("downsample() - downsample hourly to daily", () => {
 
   const _typeCheck: DataFrame<{
     timestamp: Date;
-    price: number;
-    volume: number;
+    price: number | null;
+    volume: number | null;
   }> = result;
 
   expect(result.nrows()).toBe(2);

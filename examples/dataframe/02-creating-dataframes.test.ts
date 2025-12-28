@@ -1,7 +1,8 @@
 import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Creating DataFrames - Basic DataFrame", () => {
+test("Creating DataFrames - Basic DataFrame", () => {
   const jediKnights = createDataFrame([
     {
       id: 1,
@@ -43,7 +44,7 @@ Deno.test("Creating DataFrames - Basic DataFrame", () => {
   ]);
 });
 
-Deno.test("Creating DataFrames - TypeScript Type Safety", () => {
+test("Creating DataFrames - TypeScript Type Safety", () => {
   type Character = {
     id: number;
     name: string;

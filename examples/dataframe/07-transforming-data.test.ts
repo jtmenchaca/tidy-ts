@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Transforming Data - Basic Mutate", () => {
+test("Transforming Data - Basic Mutate", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -24,7 +25,7 @@ Deno.test("Transforming Data - Basic Mutate", () => {
   expect(withBmi[1].category).toBe("B");
 });
 
-Deno.test("Transforming Data - Mutate With Parameters", () => {
+test("Transforming Data - Mutate With Parameters", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -49,7 +50,7 @@ Deno.test("Transforming Data - Mutate With Parameters", () => {
   expect(withParameters.columns()).toContain("cumulative_mass");
 });
 
-Deno.test("Transforming Data - Chaining Mutate", () => {
+test("Transforming Data - Chaining Mutate", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -72,7 +73,7 @@ Deno.test("Transforming Data - Chaining Mutate", () => {
   expect(chainedExample[0].massRatio).toBe(4);
 });
 
-Deno.test("Transforming Data - Object Returns", () => {
+test("Transforming Data - Object Returns", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -103,7 +104,7 @@ Deno.test("Transforming Data - Object Returns", () => {
   expect(filtered.nrows()).toBe(2);
 });
 
-Deno.test("Transforming Data - Using Stats Functions", () => {
+test("Transforming Data - Using Stats Functions", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -128,7 +129,7 @@ Deno.test("Transforming Data - Using Stats Functions", () => {
   expect(withStats.columns()).toContain("cumulative_mass");
 });
 
-Deno.test("Transforming Data - Complex Calculations", () => {
+test("Transforming Data - Complex Calculations", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },

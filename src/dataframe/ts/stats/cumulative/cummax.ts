@@ -81,10 +81,9 @@ export function cummax(
   options: CumulativeOptions | boolean = {},
 ): number | number[] | (number | null)[] {
   // Normalize options - support legacy boolean API
-  const opts: CumulativeOptions =
-    typeof options === "boolean"
-      ? { removeNull: options, removeUndefined: options, removeNaN: options }
-      : options;
+  const opts: CumulativeOptions = typeof options === "boolean"
+    ? { removeNull: options, removeUndefined: options, removeNaN: options }
+    : options;
 
   const {
     removeNull = false,

@@ -1,6 +1,7 @@
 // Arrow reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodType } from "zod";
-import { tableFromIPC } from "@uwdata/flechette";
+// Dynamic import for @uwdata/flechette to avoid browser bundling issues
+// import { tableFromIPC } from "@uwdata/flechette";
 import { readFile } from "@tidy-ts/shims";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
@@ -328,6 +329,9 @@ async function readArrowImpl<S extends z.ZodObject<any>>(
     // It's an ArrayBuffer - use directly
     buffer = pathOrBuffer as ArrayBuffer;
   }
+
+  // Dynamic import to avoid browser bundling issues with esm.sh
+  const { tableFromIPC } = await import("@uwdata/flechette");
 
   // Parse the Arrow content using flechette
   const arrowOptions = {

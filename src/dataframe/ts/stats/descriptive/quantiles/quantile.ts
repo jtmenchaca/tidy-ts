@@ -87,24 +87,24 @@ export function quantile(
 export function quantile(
   data: (number | null)[] | readonly (number | null)[],
   probs: number,
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): number;
 export function quantile(
   data: (number | null)[] | readonly (number | null)[],
   probs: number[],
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): number[];
 
 // Arrays with only undefined (no null) - removeUndefined sufficient
 export function quantile(
   data: (number | undefined)[] | readonly (number | undefined)[],
   probs: number,
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): number;
 export function quantile(
   data: (number | undefined)[] | readonly (number | undefined)[],
   probs: number[],
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): number[];
 
 // Arrays with nullables - return nullable when not all flags are true
@@ -165,7 +165,10 @@ export function quantile(
   // Fast path for clean numeric arrays
   if (isAllFiniteNumbers(processArray)) {
     const result = Array.from(
-      quantile_wasm(new Float64Array(processArray), new Float64Array(probsArray)),
+      quantile_wasm(
+        new Float64Array(processArray),
+        new Float64Array(probsArray),
+      ),
     );
     return Array.isArray(probs) ? result : result[0];
   }

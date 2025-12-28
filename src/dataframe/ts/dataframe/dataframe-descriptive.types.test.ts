@@ -228,7 +228,11 @@ Deno.test("descriptive functions with removeNA=true extract valid numbers", () =
   const mixedTypes = [1, 2, "3", true, null, undefined, NaN, 4, "5", false];
 
   // Calculate all results with removeNull/removeUndefined/removeNaN options
-  const removeOpts = { removeNull: true, removeUndefined: true, removeNaN: true };
+  const removeOpts = {
+    removeNull: true,
+    removeUndefined: true,
+    removeNaN: true,
+  };
   const results = {
     // @ts-ignore -- this is a test
     mean: stats.mean(mixedTypes, removeOpts),

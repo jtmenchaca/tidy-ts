@@ -1,9 +1,21 @@
 {
   "name": "@tidy-ts/dataframe",
-  "version": "0.0.1",
+  "version": "1.0.46",
   "type": "module",
   "main": "mod.ts",
   "exports": {
     ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tidy-ts/shims": "workspace:*",
+    "zod": "*",
+    "@uwdata/flechette": "*",
+    "hyparquet": "*",
+    "hyparquet-compressors": "*",
+    "vega-embed": "*",
+    "@std/csv": "*",
+    "@std/expect": "*",
+    "@std/encoding": "*"
   }
 }

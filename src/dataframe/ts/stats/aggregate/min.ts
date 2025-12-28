@@ -68,21 +68,21 @@ export function min(
 // Arrays with only null (no undefined) - removeNull sufficient
 export function min(
   values: (number | null)[] | readonly (number | null)[],
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): number;
 export function min(
   values: (Date | null)[] | readonly (Date | null)[],
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): Date;
 
 // Arrays with only undefined (no null) - removeUndefined sufficient
 export function min(
   values: (number | undefined)[] | readonly (number | undefined)[],
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): number;
 export function min(
   values: (Date | undefined)[] | readonly (Date | undefined)[],
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): Date;
 
 // Arrays with nullables - return nullable when not all flags are true

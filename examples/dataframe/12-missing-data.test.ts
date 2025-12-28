@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Missing Data - Null and Undefined Support", () => {
+test("Missing Data - Null and Undefined Support", () => {
   const data = createDataFrame([
     { id: 1, name: "Alice", age: 25, score: 85 },
     { id: 2, name: null, age: 30, score: undefined },
@@ -14,7 +15,7 @@ Deno.test("Missing Data - Null and Undefined Support", () => {
   expect(data[2].age).toBe(null);
 });
 
-Deno.test("Missing Data - Remove NA Option", () => {
+test("Missing Data - Remove NA Option", () => {
   const data = createDataFrame([
     { id: 1, value: 10 },
     { id: 2, value: null },
@@ -23,15 +24,21 @@ Deno.test("Missing Data - Remove NA Option", () => {
   ]);
 
   const total = s.sum(data.value, { removeNull: true, removeUndefined: true });
-  const average = s.mean(data.value, { removeNull: true, removeUndefined: true });
-  const maximum = s.max(data.value, { removeNull: true, removeUndefined: true });
+  const average = s.mean(data.value, {
+    removeNull: true,
+    removeUndefined: true,
+  });
+  const maximum = s.max(data.value, {
+    removeNull: true,
+    removeUndefined: true,
+  });
 
   expect(total).toBe(30);
   expect(average).toBe(15);
   expect(maximum).toBe(20);
 });
 
-Deno.test("Missing Data - Replace NA With Defaults", () => {
+test("Missing Data - Replace NA With Defaults", () => {
   const messyData = createDataFrame([
     { id: 1, name: "Alice", age: 25, score: 85 },
     { id: 2, name: null, age: 30, score: null },

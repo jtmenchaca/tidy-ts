@@ -1,22 +1,23 @@
 /**
  * Test @tidy-ts/shims across different runtimes
  * This test verifies that the shims package works correctly in Deno, Bun, and Node.js
- * 
+ *
  * This is a standalone script that can be run directly without a test framework
  */
 
 import {
-  Runtime,
-  getCurrentRuntime,
-  currentRuntime,
-  readTextFile,
-  writeTextFile,
-  env,
-  getArgs,
   args,
-  importMeta,
-  remove,
+  currentRuntime,
+  dirname,
+  env,
   exit,
+  fileURLToPath,
+  getArgs,
+  getCurrentRuntime,
+  readTextFile,
+  remove,
+  Runtime,
+  writeTextFile,
 } from "@tidy-ts/shims";
 
 let testsPassed = 0;
@@ -70,13 +71,8 @@ async function runTests() {
     const testKey = "TEST_SHIMS_ENV_VAR";
     const testValue = "test_value_123";
 
-    // Set environment variable (if possible)
-    if (currentRuntime === Runtime.Deno) {
-      // @ts-ignore - Deno.env.set may not be typed
-      Deno.env.set(testKey, testValue);
-    } else if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
-      process.env[testKey] = testValue;
-    }
+    // Set environment variable using the cross-runtime env.set
+    env.set(testKey, testValue);
 
     const value = env.get(testKey);
     assert(value === testValue, `env.get() returns correct value`);
@@ -112,23 +108,23 @@ async function runTests() {
   // Test import meta utilities
   try {
     console.log("Test 4: Import meta utilities");
-    const url = importMeta.url;
+    const url = import.meta.url;
     assert(
       typeof url === "string" && url.length > 0,
-      `importMeta.url returns valid URL`,
+      `import.meta.url returns valid URL`,
     );
 
-    const filename = importMeta.getFilename();
+    const filename = fileURLToPath(import.meta.url);
     assert(
       typeof filename === "string" && filename.length > 0,
-      `importMeta.getFilename() works`,
+      `fileURLToPath() works`,
     );
 
     if (currentRuntime !== Runtime.Browser) {
-      const dirname = importMeta.getDirname();
+      const dir = dirname(fileURLToPath(import.meta.url));
       assert(
-        typeof dirname === "string" && dirname.length > 0,
-        `importMeta.getDirname() works`,
+        typeof dir === "string" && dir.length > 0,
+        `dirname() works`,
       );
     }
     console.log("");
@@ -193,4 +189,3 @@ runTests().catch((error) => {
   console.error("❌ Test execution failed:", error);
   exit(1);
 });
-

@@ -1,8 +1,8 @@
 // Parquet reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
-import { parquetReadObjects } from "hyparquet";
-import { compressors } from "hyparquet-compressors";
-// const data = await parquetReadObjects({ file, compressors });
+// Dynamic imports for hyparquet to avoid browser bundling issues
+// import { parquetReadObjects } from "hyparquet";
+// import { compressors } from "hyparquet-compressors";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
 import { currentRuntime, Runtime } from "@tidy-ts/shims";
@@ -303,6 +303,10 @@ async function readParquetImpl<S extends z.ZodObject<any>>(
   schema: S,
   opts: ParquetOptions & NAOpts = {},
 ): Promise<DataFrame<z.infer<S>>> {
+  // Dynamic imports to avoid browser bundling issues with esm.sh
+  const { parquetReadObjects } = await import("hyparquet");
+  const { compressors } = await import("hyparquet-compressors");
+
   // deno-lint-ignore no-explicit-any
   let file: any; // AsyncBuffer from hyparquet
 

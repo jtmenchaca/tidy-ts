@@ -10,8 +10,14 @@ Deno.test("Min and Max comprehensive test - numbers and dates", () => {
 
   const minNum = s.min(numbers);
   const maxNum = s.max(numbers);
-  const minMixedNum = s.min(mixedNumbers, { removeNull: true, removeUndefined: true });
-  const maxMixedNum = s.max(mixedNumbers, { removeNull: true, removeUndefined: true });
+  const minMixedNum = s.min(mixedNumbers, {
+    removeNull: true,
+    removeUndefined: true,
+  });
+  const maxMixedNum = s.max(mixedNumbers, {
+    removeNull: true,
+    removeUndefined: true,
+  });
 
   console.log("Number results:");
   console.log("Min numbers:", minNum);

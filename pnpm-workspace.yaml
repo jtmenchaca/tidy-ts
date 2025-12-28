@@ -1,0 +1,132 @@
+packages:
+  - "src/*"
+  - "docs"
+  - "tests/runtimes"
+  - "examples/dataframe"
+
+overrides:
+  # Core libraries
+  zod: $zod
+  valibot: $valibot
+
+  # Data format support
+  "@uwdata/flechette": $@uwdata/flechette
+  hyparquet: $hyparquet
+  hyparquet-writer: $hyparquet-writer
+  hyparquet-compressors: $hyparquet-compressors
+
+  # Visualization
+  vega: $vega
+  vega-lite: $vega-lite
+  vega-embed: $vega-embed
+  react-vega: $react-vega
+
+  # MCP framework
+  tmcp: $tmcp
+  "@tmcp/adapter-valibot": $@tmcp/adapter-valibot
+  "@tmcp/transport-stdio": $@tmcp/transport-stdio
+
+  # AI/LLM
+  openai: $openai
+  "@openai/agents": $@openai/agents
+  dotenv: $dotenv
+
+  # React ecosystem
+  react: $react
+  react-dom: $react-dom
+  "@types/react": $@types/react
+  "@types/react-dom": $@types/react-dom
+
+  # Build tools
+  vite: $vite
+  "@vitejs/plugin-react": $@vitejs/plugin-react
+  tailwindcss: $tailwindcss
+  "@tailwindcss/vite": $@tailwindcss/vite
+  esbuild: $esbuild
+
+  # TanStack
+  "@tanstack/react-router": $@tanstack/react-router
+  "@tanstack/router-plugin": $@tanstack/router-plugin
+  "@tanstack/react-router-devtools": $@tanstack/react-router-devtools
+  "@tanstack/react-query": $@tanstack/react-query
+  "@tanstack/react-table": $@tanstack/react-table
+  "@tanstack/router-cli": $@tanstack/router-cli
+
+  # Code highlighting
+  shiki: $shiki
+  "@shikijs/transformers": $@shikijs/transformers
+  "@shikijs/langs": $@shikijs/langs
+  "@shikijs/themes": $@shikijs/themes
+
+  # UI components
+  lucide-react: $lucide-react
+  "@hookform/resolvers": $@hookform/resolvers
+  "@radix-ui/react-accordion": $@radix-ui/react-accordion
+  "@radix-ui/react-alert-dialog": $@radix-ui/react-alert-dialog
+  "@radix-ui/react-aspect-ratio": $@radix-ui/react-aspect-ratio
+  "@radix-ui/react-avatar": $@radix-ui/react-avatar
+  "@radix-ui/react-checkbox": $@radix-ui/react-checkbox
+  "@radix-ui/react-collapsible": $@radix-ui/react-collapsible
+  "@radix-ui/react-context-menu": $@radix-ui/react-context-menu
+  "@radix-ui/react-dialog": $@radix-ui/react-dialog
+  "@radix-ui/react-dropdown-menu": $@radix-ui/react-dropdown-menu
+  "@radix-ui/react-hover-card": $@radix-ui/react-hover-card
+  "@radix-ui/react-label": $@radix-ui/react-label
+  "@radix-ui/react-menubar": $@radix-ui/react-menubar
+  "@radix-ui/react-navigation-menu": $@radix-ui/react-navigation-menu
+  "@radix-ui/react-popover": $@radix-ui/react-popover
+  "@radix-ui/react-progress": $@radix-ui/react-progress
+  "@radix-ui/react-radio-group": $@radix-ui/react-radio-group
+  "@radix-ui/react-scroll-area": $@radix-ui/react-scroll-area
+  "@radix-ui/react-select": $@radix-ui/react-select
+  "@radix-ui/react-separator": $@radix-ui/react-separator
+  "@radix-ui/react-slider": $@radix-ui/react-slider
+  "@radix-ui/react-slot": $@radix-ui/react-slot
+  "@radix-ui/react-switch": $@radix-ui/react-switch
+  "@radix-ui/react-tabs": $@radix-ui/react-tabs
+  "@radix-ui/react-toggle": $@radix-ui/react-toggle
+  "@radix-ui/react-toggle-group": $@radix-ui/react-toggle-group
+  "@radix-ui/react-tooltip": $@radix-ui/react-tooltip
+
+  # Utility libraries
+  class-variance-authority: $class-variance-authority
+  clsx: $clsx
+  date-fns: $date-fns
+  embla-carousel-react: $embla-carousel-react
+  next-themes: $next-themes
+  react-day-picker: $react-day-picker
+  react-hook-form: $react-hook-form
+  react-markdown: $react-markdown
+  react-resizable-panels: $react-resizable-panels
+  recharts: $recharts
+  rehype-raw: $rehype-raw
+  remark-gfm: $remark-gfm
+  sonner: $sonner
+  tailwind-merge: $tailwind-merge
+  tailwindcss-animate: $tailwindcss-animate
+  vaul: $vaul
+  arquero: $arquero
+
+  # Testing
+  playwright: $playwright
+  "@playwright/test": $@playwright/test
+
+  # JSR packages
+  "@std/csv": $@std/csv
+  "@std/encoding": $@std/encoding
+  "@std/expect": $@std/expect
+  "@std/path": $@std/path
+  "@std/random": $@std/random
+  "@cliffy/command": $@cliffy/command
+  "@deno/wasmbuild": $@deno/wasmbuild
+
+  # Dev dependencies
+  typescript: $typescript
+  "@eslint/js": $@eslint/js
+  eslint: $eslint
+  eslint-plugin-react-hooks: $eslint-plugin-react-hooks
+  eslint-plugin-react-refresh: $eslint-plugin-react-refresh
+  globals: $globals
+  typescript-eslint: $typescript-eslint
+  "@types/bun": $@types/bun
+  "@types/node": $@types/node

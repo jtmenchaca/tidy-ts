@@ -1,7 +1,8 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Joining - Inner Join", () => {
+test("Joining - Inner Join", () => {
   const employees = createDataFrame([
     { emp_id: 1, name: "Alice", dept_id: 10 },
     { emp_id: 2, name: "Bob", dept_id: 20 },
@@ -23,7 +24,7 @@ Deno.test("Joining - Inner Join", () => {
   expect(joined.columns()).toContain("dept_name");
 });
 
-Deno.test("Joining - Left Join", () => {
+test("Joining - Left Join", () => {
   const employees = createDataFrame([
     { emp_id: 1, name: "Alice", dept_id: 10 },
     { emp_id: 2, name: "Bob", dept_id: 20 },
@@ -41,7 +42,7 @@ Deno.test("Joining - Left Join", () => {
   expect(joined[2].dept_name).toBe(undefined);
 });
 
-Deno.test("Joining - Multi Key Join", () => {
+test("Joining - Multi Key Join", () => {
   const sales = createDataFrame([
     { year: 2023, quarter: "Q1", product: "Widget A", sales: 1000 },
     { year: 2023, quarter: "Q2", product: "Widget B", sales: 1500 },
@@ -59,7 +60,7 @@ Deno.test("Joining - Multi Key Join", () => {
   expect(joined.columns()).toContain("target");
 });
 
-Deno.test("Joining - Different Column Names", () => {
+test("Joining - Different Column Names", () => {
   const orders = createDataFrame([
     { order_id: 1, order_region: "North", order_product: "A", quantity: 10 },
     { order_id: 2, order_region: "South", order_product: "B", quantity: 20 },

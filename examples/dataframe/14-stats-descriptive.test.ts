@@ -6,8 +6,9 @@
 
 import { expect } from "@std/expect";
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Stats - Lag and Lead Functions", () => {
+test("Stats - Lag and Lead Functions", () => {
   const timeSeries = createDataFrame([
     { date: "2023-01", sales: 100 },
     { date: "2023-02", sales: 150 },
@@ -30,7 +31,7 @@ Deno.test("Stats - Lag and Lead Functions", () => {
   expect(lag1Default).toEqual([0, 100, 150, 200]);
 });
 
-Deno.test("Stats - Cumulative Functions", () => {
+test("Stats - Cumulative Functions", () => {
   const values = [2, 3, 4, 5];
 
   // Cumulative product
@@ -46,7 +47,7 @@ Deno.test("Stats - Cumulative Functions", () => {
   expect(cummax).toEqual([5, 5, 8, 8, 9, 9]);
 });
 
-Deno.test("Stats - Dense Rank Function", () => {
+test("Stats - Dense Rank Function", () => {
   const scores = [85, 92, 85, 78, 92, 88];
 
   // Dense ranking (no gaps)
@@ -58,7 +59,7 @@ Deno.test("Stats - Dense Rank Function", () => {
   expect(denseRanksDesc).toEqual([3, 1, 3, 4, 1, 2]); // 92=1, 88=2, 85=3, 78=4
 });
 
-Deno.test("Stats - Window Functions with mutate", () => {
+test("Stats - Window Functions with mutate", () => {
   const timeSeries = createDataFrame([
     { date: "2023-01", sales: 100 },
     { date: "2023-02", sales: 150 },

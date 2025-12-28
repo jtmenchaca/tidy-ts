@@ -5,8 +5,9 @@
  */
 
 import { stats as s } from "@tidy-ts/dataframe";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Compare - One Group Central Tendency", () => {
+test("Compare - One Group Central Tendency", () => {
   const data = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   // Parametric t-test
@@ -33,7 +34,7 @@ Deno.test("Compare - One Group Central Tendency", () => {
   console.log(`  P-value: ${wilcoxon.p_value}`);
 });
 
-Deno.test("Compare - One Group Proportion", () => {
+test("Compare - One Group Proportion", () => {
   const data = [true, false, true, true, false];
 
   const result = s.compare.oneGroup.proportions.toValue({
@@ -47,7 +48,7 @@ Deno.test("Compare - One Group Proportion", () => {
   console.log(`  P-value: ${result.p_value}`);
 });
 
-Deno.test("Compare - Normality Test", () => {
+test("Compare - Normality Test", () => {
   const normalData = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   const result = s.compare.oneGroup.distribution.toNormal({ data: normalData });
@@ -58,7 +59,7 @@ Deno.test("Compare - Normality Test", () => {
   console.log(`  P-value: ${result.p_value}`);
 });
 
-Deno.test("Compare - Two Groups Central Tendency", async () => {
+test("Compare - Two Groups Central Tendency", async () => {
   const x = [1, 2, 3, 4, 5];
   const y = [6, 7, 8, 9, 10];
 
@@ -86,7 +87,7 @@ Deno.test("Compare - Two Groups Central Tendency", async () => {
   console.log(`  P-value: ${mannWhitney.p_value}`);
 });
 
-Deno.test("Compare - Correlation Tests", async () => {
+test("Compare - Correlation Tests", async () => {
   const x = [1, 2, 3, 4, 5];
   const y = [2, 4, 6, 8, 10];
 
@@ -115,7 +116,7 @@ Deno.test("Compare - Correlation Tests", async () => {
   console.log(`  P-value: ${spearman.p_value}`);
 });
 
-Deno.test("Compare - Auto Test Selection", async () => {
+test("Compare - Auto Test Selection", async () => {
   const skewedData = [1, 1, 1, 2, 2, 3, 4, 5, 10, 20];
 
   // Auto mode will choose appropriate test based on data

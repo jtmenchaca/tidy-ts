@@ -1,7 +1,8 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { test } from "@tidy-ts/shims";
 
-Deno.test("Getting Started - Quick Tutorial", () => {
+test("Getting Started - Quick Tutorial", () => {
   const sales = createDataFrame([
     { region: "North", product: "Widget", quantity: 10, price: 100 },
     { region: "South", product: "Widget", quantity: 20, price: 100 },
@@ -40,7 +41,7 @@ Deno.test("Getting Started - Quick Tutorial", () => {
   ]);
 });
 
-Deno.test("Getting Started - Creating DataFrames from Rows", () => {
+test("Getting Started - Creating DataFrames from Rows", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -53,7 +54,7 @@ Deno.test("Getting Started - Creating DataFrames from Rows", () => {
   expect(people.ncols()).toBe(5);
 });
 
-Deno.test("Getting Started - Creating DataFrames from Columns", () => {
+test("Getting Started - Creating DataFrames from Columns", () => {
   const salesFromColumns = createDataFrame({
     columns: {
       region: ["North", "South", "East"],
@@ -67,7 +68,7 @@ Deno.test("Getting Started - Creating DataFrames from Columns", () => {
   expect(salesFromColumns.ncols()).toBe(4);
 });
 
-Deno.test("Getting Started - Adding Columns with Mutate", () => {
+test("Getting Started - Adding Columns with Mutate", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -88,7 +89,7 @@ Deno.test("Getting Started - Adding Columns with Mutate", () => {
   expect(example.columns()).toContain("is_heavy");
 });
 
-Deno.test("Getting Started - DataFrame Properties", () => {
+test("Getting Started - DataFrame Properties", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -99,7 +100,7 @@ Deno.test("Getting Started - DataFrame Properties", () => {
   expect(people[people.nrows() - 1].name).toBe("C-3PO");
 });
 
-Deno.test("Getting Started - Column Access", () => {
+test("Getting Started - Column Access", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
@@ -114,19 +115,19 @@ Deno.test("Getting Started - Column Access", () => {
   expect(s.unique(species)).toEqual(["Human", "Droid"]);
 });
 
-Deno.test("Getting Started - Empty DataFrame", () => {
+test("Getting Started - Empty DataFrame", () => {
   const emptyDf = createDataFrame([]);
   expect(emptyDf.isEmpty()).toBe(true);
   expect(emptyDf.nrows()).toBe(0);
 });
 
-Deno.test("Getting Started - Single Row DataFrame", () => {
+test("Getting Started - Single Row DataFrame", () => {
   const singleRow = createDataFrame([{ id: 1, name: "Test", value: 42 }]);
   expect(singleRow.nrows()).toBe(1);
   expect(singleRow[0].name).toBe("Test");
 });
 
-Deno.test("Getting Started - Chaining Operations", () => {
+test("Getting Started - Chaining Operations", () => {
   const data = createDataFrame([
     { id: 1, name: "A", value: 10 },
     { id: 2, name: "B", value: 20 },

@@ -57,13 +57,13 @@ export function variance(
 // Arrays with only null (no undefined) - removeNull sufficient
 export function variance(
   values: (number | null)[] | readonly (number | null)[],
-  options: { removeNull: true },
+  options: { removeNull: true; removeNaN?: boolean; removeUndefined?: boolean },
 ): number;
 
 // Arrays with only undefined (no null) - removeUndefined sufficient
 export function variance(
   values: (number | undefined)[] | readonly (number | undefined)[],
-  options: { removeUndefined: true },
+  options: { removeUndefined: true; removeNaN?: boolean; removeNull?: boolean },
 ): number;
 
 // Arrays with nullables - return nullable when not all flags are true
@@ -107,8 +107,8 @@ export function variance(
   if (isAllFiniteNumbers(processArray)) {
     if (processArray.length === 1) return null; // Sample variance undefined for n=1
 
-    const meanVal =
-      processArray.reduce((sum, val) => sum + val, 0) / processArray.length;
+    const meanVal = processArray.reduce((sum, val) => sum + val, 0) /
+      processArray.length;
     const sumSquaredDiffs = processArray.reduce((sum, val) => {
       const diff = val - meanVal;
       return sum + diff * diff;
@@ -153,8 +153,8 @@ export function variance(
     return null; // Sample variance undefined for n=1
   }
 
-  const meanVal =
-    validNumbers.reduce((sum, val) => sum + val, 0) / validNumbers.length;
+  const meanVal = validNumbers.reduce((sum, val) => sum + val, 0) /
+    validNumbers.length;
   const sumSquaredDiffs = validNumbers.reduce((sum, val) => {
     const diff = val - meanVal;
     return sum + diff * diff;

@@ -1976,7 +1976,7 @@ export const shimsDocs: Record<string, DocEntry> = {
     returns: "T[][] - Array of chunks",
     examples: [
       '// Basic chunking\nimport { chunk } from "@tidy-ts/shims";\n\nconst numbers = [1, 2, 3, 4, 5, 6, 7];\nconst chunks = chunk(numbers, 3);\n// Returns: [[1, 2, 3], [4, 5, 6], [7]]',
-      "// Batch processing with chunk + batch\nimport { chunk, batch } from \"@tidy-ts/shims\";\n\nconst encounterIds = [1, 2, 3, ..., 100000];\nconst chunks = chunk(encounterIds, 25000); // Oracle limit\n\nconst results = await batch(\n  chunks,\n  (ids) => queryDatabase({ encounterIds: ids }),\n  { concurrency: 1 }\n);\nconst allResults = results.flat();",
+      '// Batch processing with chunk + batch\nimport { chunk, batch } from "@tidy-ts/shims";\n\nconst encounterIds = [1, 2, 3, ..., 100000];\nconst chunks = chunk(encounterIds, 25000); // Oracle limit\n\nconst results = await batch(\n  chunks,\n  (ids) => queryDatabase({ encounterIds: ids }),\n  { concurrency: 1 }\n);\nconst allResults = results.flat();',
       "// Rate-limited API with waves\nconst items = [1, 2, 3, 4, 5, 6, 7, 8, 9];\nconst waves = chunk(items, 3); // 3 per wave\n\nfor (const wave of waves) {\n  await Promise.all(wave.map(processItem));\n  await delay(1000); // Rate limit window\n}",
     ],
     related: ["parallel", "batch"],

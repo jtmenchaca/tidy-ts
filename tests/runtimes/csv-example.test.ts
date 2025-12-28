@@ -1,6 +1,9 @@
 import { readCSV, writeCSV } from "@tidy-ts/dataframe";
-import { readTextFile, writeTextFile, currentRuntime, Runtime } from "@tidy-ts/shims";
+import { currentRuntime, readTextFile } from "@tidy-ts/shims";
 import { z } from "zod";
+
+// Get path relative to this file (works for both Deno and Bun)
+const TEST_DIR = new URL(".", import.meta.url).pathname;
 
 const componentIDSchema = z.object({
   NAME: z.string().nullable(),
@@ -23,14 +26,13 @@ const componentIDSchema = z.object({
 console.log(`Running CSV example test on ${currentRuntime}`);
 
 // Read CSV file using shims for cross-runtime compatibility
-const csvContent = await readTextFile("./component_names.csv");
+const csvContent = await readTextFile(`${TEST_DIR}component_names.csv`);
 const csv = await readCSV(csvContent, componentIDSchema);
 
 const baseNames = csv.distinct("BASE_NAME").select("BASE_NAME");
 
-// Write CSV using shims
-const csvOutput = await writeCSV(baseNames);
-await writeTextFile("./base_names.csv", csvOutput);
+// Write CSV directly to file
+await writeCSV(baseNames, `${TEST_DIR}base_names.csv`);
 
 console.log("✅ CSV operations completed successfully");
 console.log(`Found ${baseNames.nrows()} distinct base names`);

@@ -1,0 +1,11 @@
+{
+  "name": "@tidy-ts/examples-dataframe",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "@tidy-ts/dataframe": "workspace:*",
+    "@tidy-ts/shims": "workspace:*",
+    "@std/expect": "*"
+  }
+}

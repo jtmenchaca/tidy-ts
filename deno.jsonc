@@ -2,6 +2,9 @@
   "license": "Apache-2.0",
   "version": "0.0.1",
   "exports": "./src/mod.ts",
+  "imports": {
+    "@tests/shims": "./tests/shims/test.ts"
+  },
   "compilerOptions": {
     "lib": [
       "deno.ns",
@@ -12,45 +15,6 @@
     "jsxImportSource": "react",
     "jsxImportSourceTypes": "npm:@types/react@^19.1.1"
   },
-  "tasks": {
-    "mcp": "deno run --allow-read --allow-env src/mcp/cli.ts",
-    "mcp:install": "deno install --global -A --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts",
-    "8check": "DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/dataframe && DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/shims && DENO_V8_FLAGS=--max-old-space-size=8192 deno check src/mcp && DENO_V8_FLAGS=--max-old-space-size=8192 deno check examples/dataframe && DENO_V8_FLAGS=--max-old-space-size=8192 deno check tests/bugs && DENO_V8_FLAGS=--max-old-space-size=8192 deno check tests/statistical_tests",
-    "ci": "deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe examples/dataframe tests/bugs tests/statistical_tests --quiet",
-    "ci:shims": "deno fmt src/shims && deno lint src/shims && deno test -A src/shims",
-    "ci:no-stats": "deno fmt src/dataframe examples/dataframe tests/bugs tests/new_features && deno lint src/dataframe examples/dataframe tests/bugs tests/new_features && deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 examples/dataframe --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/bugs --quiet && deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/new_features --quiet",
-    "benchmark:runner": "cd tests/benchmarks && deno run -A runner.ts && cd ../..",
-    "benchmark:analyze": "cd tests/benchmarks && deno run -A analyze.ts && cd ../..",
-    "benchmark": "deno task benchmark:runner && deno task benchmark:analyze",
-    "benchmark-python": "cd tests/benchmarks && .venv/bin/python python.py && cd ../..",
-    "benchmark-r": "cd tests/benchmarks && Rscript r.R && cd ../..",
-    "benchmark-ts": "deno run -A tests/benchmarks/typescript.ts",
-    "benchmark-tidy": "deno run -A tests/benchmarks/tidy-ts-only.ts",
-    "benchmark-tidy-p": "deno run -A tests/benchmarks/tidy-ts-only-parallel.ts",
-    "benchmark-rust-distinct": "cargo run --release --bin test_ultra_optimized_distinct",
-    "test-src": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 src/dataframe",
-    "test-examples": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 examples/dataframe",
-    "test-examples-bun": "bun test examples/dataframe",
-    "test-examples-node": "sh -c 'npx tsx examples/dataframe/*.test.ts'",
-    "test-examples-all": "deno task test-examples-bun && deno task test-examples-node",
-    "test-stats-tests": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/statistical_tests/statistical-tests.test.ts",
-    "test-glm": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/glm/regression-tests.test.ts",
-    "test-gee": "deno test -A --parallel --v8-flags=--max-old-space-size=8192 tests/gee/",
-    "test-runtimes": "cd tests/runtimes && bash test-runner.sh",
-    "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out src/dataframe/lib",
-    "publish:dataframe": "cd src/dataframe && deno publish",
-    "publish:ai": "cd src/ai && deno publish",
-    "publish:shims": "cd src/shims && deno publish",
-    "publish:all": "deno task publish:dataframe && deno task publish:ai && deno task publish:shims",
-    "check-versions": "deno run --allow-net scripts/check-jsr-versions.ts",
-    "docs:prerender": "cd docs && bun run prerender && cd ..",
-    "joss:local-render": "devkit md2pdf joss/paper.md",
-    "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
-    "precommit": "deno task ci:update-badge && deno task docs:prerender"
-  },
-  "importMap": "import_map.json",
-  "nodeModulesDir": "auto",
-  "vendor": true,
   "fmt": {
     "exclude": [
       "node_modules/",
@@ -73,7 +37,6 @@
     "examples/docs-tests",
     "sources/**",
     ".cargo/",
-    "tests/runtimes/**",
     "target/",
     "docs/",
     "docs/**",
@@ -83,12 +46,14 @@
     "tests/tidy-stats/.venv",
     "docs/src/routeTree.gen.ts",
     "tmp/",
-    "blank-mcp/"
+    "blank-mcp/",
+    "tests/runtimes/"
   ],
   "workspace": [
     "src/dataframe",
     "src/ai",
     "src/shims",
-    "src/mcp"
+    "src/mcp",
+    "examples/dataframe"
   ]
 }
