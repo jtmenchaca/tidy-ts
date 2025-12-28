@@ -1,7 +1,15 @@
 {
   "name": "@tidy-ts/shims",
-  "version": "0.0.18",
-  "exports": "./mod.ts",
+  "version": "0.0.19",
+  "exports": {
+    ".": "./mod.ts",
+    "./detect": "./detect.ts",
+    "./result": "./result.ts",
+    "./errors": "./errors.ts",
+    "./async": "./async.ts",
+    "./fetch": "./fetch.ts",
+    "./encryption": "./encryption/mod.ts"
+  },
   "license": "MIT",
   "imports": {
     "@std/encoding": "jsr:@std/encoding@^1.0.10",
