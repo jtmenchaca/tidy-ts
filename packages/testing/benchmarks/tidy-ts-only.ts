@@ -4,9 +4,9 @@ import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
 import { randomBetween, randomIntegerBetween, randomSeeded } from "@std/random";
 
 // Configuration
-const SIZES = [500000];
-const ITERATIONS = 2;
-const WARMUP_RUNS = 2;
+const SIZES = [500_000];
+const ITERATIONS = 5;
+const WARMUP_RUNS = 3;
 
 // Create a seeded PRNG for consistent results across runs
 const prng = randomSeeded(42n); // Same seed as Python/R (42)
@@ -23,20 +23,20 @@ interface DataRow {
 // Boolean flags to enable/disable specific operations
 const OPTIONS = {
   creation: true,
-  filter: false,
-  select: false,
-  sort: false,
-  mutate: false,
-  distinct: false,
-  groupBy: false,
-  summarize: false,
-  innerJoin: false,
-  leftJoin: false,
-  outerJoin: false,
-  pivotLonger: false,
-  pivotWider: false,
-  bindRows: false,
-  stats: false,
+  filter: true,
+  select: true,
+  sort: true,
+  mutate: true,
+  distinct: true,
+  groupBy: true,
+  summarize: true,
+  innerJoin: true,
+  leftJoin: true,
+  outerJoin: true,
+  pivotLonger: true,
+  pivotWider: true,
+  bindRows: true,
+  stats: true,
 } as const;
 
 // Generate test data
@@ -163,61 +163,45 @@ export function runTypeScriptBenchmarks() {
     let df2Tidy: DataFrame<DataRow>;
     let data: DataRow[];
 
-    if (
-      Object.values(OPTIONS).filter(Boolean).length === 1 && OPTIONS.leftJoin
-    ) {
-      // Only create DataFrames needed for left join
-      leftTidyDf = createDataFrame(leftData, { trace: true });
-      rightTidyDf = createDataFrame(rightData, { trace: true });
-    } else {
-      data = generateData(size);
-      // Generate specialized data for other operations
-      const pivotData = generatePivotData(size);
-      const numericData = Array.from({ length: size }, (_, i) => ({
-        value: Math.random() * 1000,
-        date: new Date(
-          2020 + Math.floor(Math.random() * 4),
-          Math.floor(Math.random() * 12),
-          Math.floor(Math.random() * 28),
-        ),
-        score: i % 10 === 0 ? null : Math.random() * 100,
-      }));
+    data = generateData(size);
+    // Generate specialized data for other operations
+    const pivotData = generatePivotData(size);
+    const numericData = Array.from({ length: size }, (_, i) => ({
+      value: Math.random() * 1000,
+      date: new Date(
+        2020 + Math.floor(Math.random() * 4),
+        Math.floor(Math.random() * 12),
+        Math.floor(Math.random() * 28),
+      ),
+      score: i % 10 === 0 ? null : Math.random() * 100,
+    }));
 
-      const mixedData = Array.from({ length: size }, (_, i) => ({
-        name: `name_${i % 100}`,
-        category: `category_${i % 20}`,
-        value: Math.random() * 1000,
-        active: i % 3 === 0,
-      }));
+    const mixedData = Array.from({ length: size }, (_, i) => ({
+      name: `name_${i % 100}`,
+      category: `category_${i % 20}`,
+      value: Math.random() * 1000,
+      active: i % 3 === 0,
+    }));
 
-      const groupedData = Array.from({ length: size }, (_, i) => ({
-        group: `group_${i % 5}`,
-        value: Math.random() * 1000,
-        priority: Math.floor(Math.random() * 10),
-      }));
+    const groupedData = Array.from({ length: size }, (_, i) => ({
+      group: `group_${i % 5}`,
+      value: Math.random() * 1000,
+      priority: Math.floor(Math.random() * 10),
+    }));
 
-      // Prebuild all DataFrames for consistent performance
-      console.log("    - Prebuilding DataFrames...");
-      tidyDf = createDataFrame(data, { trace: true });
-      tidyNumericDf = createDataFrame(numericData, { trace: true });
-      tidyMixedDf = createDataFrame(mixedData, { trace: true });
-      tidyGroupedDf = createDataFrame(groupedData, { trace: true });
-      tidyPivotDf = createDataFrame(pivotData, { trace: true });
-      leftTidyDf = createDataFrame(leftData, { trace: true });
-      rightTidyDf = createDataFrame(rightData, { trace: true });
+    // Prebuild all DataFrames for consistent performance
+    console.log("    - Prebuilding DataFrames...");
+    tidyDf = createDataFrame(data);
+    tidyNumericDf = createDataFrame(numericData);
+    tidyMixedDf = createDataFrame(mixedData);
+    tidyGroupedDf = createDataFrame(groupedData);
+    tidyPivotDf = createDataFrame(pivotData);
+    leftTidyDf = createDataFrame(leftData);
+    rightTidyDf = createDataFrame(rightData);
 
-      // Prebuild split dataframes for bindRows operations
-      df1Tidy = createDataFrame(
-        data.slice(0, Math.floor(data.length / 2)),
-        { trace: true },
-      );
-      df2Tidy = createDataFrame(
-        data.slice(Math.floor(data.length / 2)),
-        {
-          trace: true,
-        },
-      );
-    }
+    // Prebuild split dataframes for bindRows operations
+    df1Tidy = createDataFrame(data.slice(0, Math.floor(data.length / 2)));
+    df2Tidy = createDataFrame(data.slice(Math.floor(data.length / 2)));
 
     console.log("    - DataFrames prebuilt");
 
@@ -225,7 +209,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.creation) {
       console.log("    - Starting creation benchmark...");
       const tidyTime = measure(
-        () => createDataFrame(data, { trace: true }),
+        () => createDataFrame(data),
         ITERATIONS,
         WARMUP_RUNS,
       );
@@ -243,7 +227,7 @@ export function runTypeScriptBenchmarks() {
       const tidyNumeric = measure(
         () => {
           const result = tidyDf.filter((row) => row.value > 500);
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -254,7 +238,7 @@ export function runTypeScriptBenchmarks() {
       const tidyString = measure(
         () => {
           const result = tidyDf.filter((row) => row.category === "category_5");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -267,7 +251,7 @@ export function runTypeScriptBenchmarks() {
           const result = tidyDf.filter((row) =>
             row.value > 300 && row.score > 50 && row.active
           );
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -287,7 +271,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = tidyDf.select("id", "value", "category");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -305,7 +289,7 @@ export function runTypeScriptBenchmarks() {
       const tidyNumeric = measure(
         () => {
           const result = tidyNumericDf.arrange("value", "asc");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -325,7 +309,7 @@ export function runTypeScriptBenchmarks() {
       const tidyString = measure(
         () => {
           const result = tidyMixedDf.arrange("name", "asc");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -339,7 +323,7 @@ export function runTypeScriptBenchmarks() {
             "asc",
             "desc",
           ]);
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -353,7 +337,7 @@ export function runTypeScriptBenchmarks() {
             "value",
             "desc",
           );
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -375,7 +359,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = tidyDf.mutate({ score_pct: (row) => row.score / 100 });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -392,7 +376,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = tidyDf.distinct("id", "value", "category");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -410,7 +394,7 @@ export function runTypeScriptBenchmarks() {
       const tidySingle = measure(
         () => {
           const result = tidyDf.groupBy("category");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -421,7 +405,7 @@ export function runTypeScriptBenchmarks() {
       const tidyMulti = measure(
         () => {
           const result = tidyDf.groupBy("category", "active");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -432,7 +416,7 @@ export function runTypeScriptBenchmarks() {
       const tidyHighCard = measure(
         () => {
           const result = tidyDf.groupBy("id");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -457,7 +441,7 @@ export function runTypeScriptBenchmarks() {
             avg_value: (df) => stats.mean(df.value),
             total_value: (df) => stats.sum(df.value),
           });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -472,7 +456,7 @@ export function runTypeScriptBenchmarks() {
             avg_value: (group) => stats.mean(group.value),
             total_value: (group) => stats.sum(group.value),
           });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -487,7 +471,7 @@ export function runTypeScriptBenchmarks() {
             avg_value: (group) => stats.mean(group.value),
             avg_score: (group) => stats.mean(group.score),
           });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -507,7 +491,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = leftTidyDf.innerJoin(rightTidyDf, "id");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -524,7 +508,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = leftTidyDf.leftJoin(rightTidyDf, "id");
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -560,7 +544,7 @@ export function runTypeScriptBenchmarks() {
             namesTo: "quarter",
             valuesTo: "sales",
           });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -585,7 +569,7 @@ export function runTypeScriptBenchmarks() {
         }),
       );
 
-      const tidyLongDf = createDataFrame(longData, { trace: true });
+      const tidyLongDf = createDataFrame(longData);
 
       const tidyTime = measure(
         () => {
@@ -594,7 +578,7 @@ export function runTypeScriptBenchmarks() {
             valuesFrom: "sales",
             expectedColumns: ["q1", "q2", "q3", "q4"],
           });
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,
@@ -611,7 +595,7 @@ export function runTypeScriptBenchmarks() {
       const tidyTime = measure(
         () => {
           const result = df1Tidy.bindRows(df2Tidy);
-          result.printTrace();
+          void result;
           return result;
         },
         ITERATIONS,

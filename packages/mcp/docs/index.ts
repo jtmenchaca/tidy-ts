@@ -1,6 +1,6 @@
-import { statsDocs } from "./stats.ts";
-import { dataframeDocs } from "./dataframe.ts";
-import { ioDocs } from "./io.ts";
+import { statsDocs } from "./stats/index.ts";
+import { dataframeDocs } from "./dataframe/index.ts";
+import { ioDocs } from "./io/index.ts";
 import { shimsDocs } from "./shims/index.ts";
 import { stringDocs } from "./string/index.ts";
 import { statsDistributionsDocs } from "./stats-distributions/index.ts";

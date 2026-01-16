@@ -82,6 +82,44 @@ const chart = df.graph({
     color: "category"
   }
 })
+// Complex accessor function with conditional logic
+const chart = df.graph({
+  type: "scatter",
+  mappings: {
+    x: "date",
+    y: (row) => row.value * (row.adjustment || 1),
+    color: (row) => row.status === "active" ? "Active" : "Inactive",
+    size: (row) => Math.sqrt(row.volume) * 10,
+  }
+})
+// Handling missing/null data - filter before visualization
+const cleanData = df.filter(row => 
+  row.x != null && row.y != null && !isNaN(row.y)
+);
+
+cleanData.graph({
+  type: "line",
+  mappings: { x: "date", y: "value" },
+  config: {
+    line: { connectNulls: false } // Don't connect across null values
+  }
+})
+// Error handling: Validate data before visualization
+try {
+  if (df.nrows() === 0) {
+    throw new Error("Cannot visualize empty DataFrame");
+  }
+  
+  const requiredCols = ["x", "y"];
+  const missing = requiredCols.filter(col => !df.columns().includes(col));
+  if (missing.length > 0) {
+    throw new Error(`Missing required columns: ${missing.join(", ")}`);
+  }
+  
+  df.graph({ type: "scatter", mappings: { x: "x", y: "y" } });
+} catch (error) {
+  console.error("Visualization error:", error.message);
+}
 // Line chart with custom styling and domain filtering
 df.graph({
   type: "line",
@@ -164,6 +202,10 @@ df.graph({
 - ✓ GOOD: Use scale: 2-4 for high-resolution PNG exports
 - ✓ GOOD: All row fields are automatically available in tooltips unless filtered
 - ✓ GOOD: Date columns are automatically detected and formatted as temporal axes
+- ✓ GOOD: Filter out null/NaN values before visualization to avoid rendering issues
+- ✓ GOOD: Validate DataFrame has required columns before calling graph()
+- ✓ GOOD: Use accessor functions for computed values or conditional logic
+- ✓ GOOD: Set connectNulls: false in line config to avoid connecting across missing data
 - Charts are interactive in Jupyter notebooks with hover tooltips
 - Backed by Vega-Lite for high-quality visualizations
 - When domain is specified, data is filtered and chart is clipped to that range
@@ -175,6 +217,9 @@ df.graph({
 - ❌ BAD: Not specifying mappings.x and mappings.y (required)
 - ❌ BAD: Using 'container' width in savePNG/saveSVG (use numeric width)
 - ❌ BAD: Using scale > 4 (will be clamped to 4)
+- ❌ BAD: Visualizing DataFrames with null/NaN values without filtering first
+- ❌ BAD: Not validating DataFrame has required columns before graph()
+- ❌ BAD: Using graph() on empty DataFrames without checking
 
 ### Related
 

@@ -115,11 +115,34 @@ DataFrame (sync) or PromisedDataFrame (async)
 df.filter(row => row.age > 25)
 df.filter(row => row.region === "North" && row.quantity > 10)
 await df.filter(async row => await isValid(row.id))
+// Filter and select chained together
+const sales = createDataFrame([
+  { region: "North", revenue: 1000, cost: 800, profit: 200 },
+  { region: "South", revenue: 1500, cost: 1200, profit: 300 },
+  { region: "North", revenue: 800, cost: 900, profit: -100 },
+]);
+
+// Filter to profitable rows, then select only region and profit
+const profitable = sales
+  .filter(row => row.profit > 0)
+  .select("region", "profit");
+// Result: Only profitable rows with region and profit columns
+// Filter numeric column condition, then select two columns
+const data = createDataFrame([
+  { id: 1, age: 25, score: 85, status: "active" },
+  { id: 2, age: 30, score: 92, status: "active" },
+  { id: 3, age: 20, score: 78, status: "inactive" },
+]);
+
+const highScorers = data
+  .filter(row => row.score >= 85)
+  .select("id", "score");
+// Result: Rows with score >= 85, only id and score columns
 ```
 
 ### Related
 
-`slice`, `distinct`
+`slice`, `distinct`, `select`
 
 ---
 

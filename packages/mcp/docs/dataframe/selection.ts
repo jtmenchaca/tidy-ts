@@ -49,8 +49,10 @@ export const selectionDocs: Record<string, DocEntry> = {
       "df.filter(row => row.age > 25)",
       'df.filter(row => row.region === "North" && row.quantity > 10)',
       "await df.filter(async row => await isValid(row.id))",
+      '// Filter and select chained together\nconst sales = createDataFrame([\n  { region: "North", revenue: 1000, cost: 800, profit: 200 },\n  { region: "South", revenue: 1500, cost: 1200, profit: 300 },\n  { region: "North", revenue: 800, cost: 900, profit: -100 },\n]);\n\n// Filter to profitable rows, then select only region and profit\nconst profitable = sales\n  .filter(row => row.profit > 0)\n  .select("region", "profit");\n// Result: Only profitable rows with region and profit columns',
+      '// Filter numeric column condition, then select two columns\nconst data = createDataFrame([\n  { id: 1, age: 25, score: 85, status: "active" },\n  { id: 2, age: 30, score: 92, status: "active" },\n  { id: 3, age: 20, score: 78, status: "inactive" },\n]);\n\nconst highScorers = data\n  .filter(row => row.score >= 85)\n  .select("id", "score");\n// Result: Rows with score >= 85, only id and score columns',
     ],
-    related: ["slice", "distinct"],
+    related: ["slice", "distinct", "select"],
   },
 
   slice: {

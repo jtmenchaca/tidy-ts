@@ -155,10 +155,11 @@ const timeSeries = createDataFrame([
 const filled = timeSeries.fillForward("price");
 const interpolated = timeSeries.interpolate("price", "timestamp", "linear");
 
-// Resampling
-const daily = hourlyData.resample("timestamp", "1D", {
-  price: s.last,
-  volume: s.sum
+// Downsampling (aggregate to lower frequency)
+const daily = hourlyData.downsample({
+  timeColumn: "timestamp",
+  frequency: "1D",
+  aggregations: { price: s.last, volume: s.sum }
 });
 
 // As-of joins

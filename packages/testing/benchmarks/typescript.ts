@@ -5,9 +5,9 @@ import * as aq from "arquero";
 import { randomBetween, randomIntegerBetween, randomSeeded } from "@std/random";
 
 // Configuration
-const SIZES = [500000];
-const ITERATIONS = 7;
-const WARMUP_RUNS = 5;
+const SIZES = [500_000];
+const ITERATIONS = 5;
+const WARMUP_RUNS = 3;
 
 // Create a seeded PRNG for consistent results across runs
 const prng = randomSeeded(42n); // Same seed as Python/R (42)

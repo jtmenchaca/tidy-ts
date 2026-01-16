@@ -1,13 +1,38 @@
 import type { DocEntry } from "../mcp-types.ts";
 
 export const timeSeriesDocs: Record<string, DocEntry> = {
+  timeSeriesOverview: {
+    name: "Time Series Overview",
+    category: "dataframe",
+    signature: "downsample() / upsample() / fillForward() / fillBackward()",
+    description:
+      "Tidy-TS provides two functions for time-series resampling: `downsample()` for aggregating to lower frequencies (e.g., hourly → daily) and `upsample()` for expanding to higher frequencies with fill methods. Use `fillForward()` or `fillBackward()` to handle missing values after resampling.",
+    imports: [
+      'import { createDataFrame, stats } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [],
+    returns: "DataFrame with resampled data",
+    examples: [
+      '// COMPLETE EXAMPLE: Daily data → Weekly aggregation\nconst dailyData = createDataFrame([\n  { date: new Date("2023-01-01"), sales: 100 },\n  { date: new Date("2023-01-02"), sales: 150 },\n  { date: new Date("2023-01-03"), sales: null },  // Missing\n  { date: new Date("2023-01-04"), sales: 120 },\n  { date: new Date("2023-01-05"), sales: 180 },\n  { date: new Date("2023-01-06"), sales: null },  // Missing\n  { date: new Date("2023-01-07"), sales: 200 },\n  { date: new Date("2023-01-08"), sales: 160 },\n]);\n\n// Step 1: Fill missing values first\nconst filled = dailyData.fillForward("sales");\n\n// Step 2: Downsample to weekly\nconst weekly = filled.downsample({\n  timeColumn: "date",\n  frequency: "1W",\n  aggregations: {\n    sales: stats.sum,  // Total weekly sales\n  }\n});',
+      '// COMPLETE EXAMPLE: Weekly → Daily with forward fill\nconst weeklyData = createDataFrame([\n  { date: new Date("2023-01-01"), price: 100 },\n  { date: new Date("2023-01-08"), price: 110 },\n]);\n\nconst daily = weeklyData.upsample({\n  timeColumn: "date",\n  frequency: "1D",\n  fillMethod: "forward",\n});\n// Result: Daily data from Jan 1-8 with prices forward-filled',
+    ],
+    related: ["downsample", "upsample", "fillForward", "fillBackward"],
+    bestPractices: [
+      "✓ API DESIGN: Tidy-TS uses separate downsample() and upsample() functions",
+      "✓ DOWNSAMPLE: Aggregate high-frequency → low-frequency (requires aggregation functions)",
+      "✓ UPSAMPLE: Expand low-frequency → high-frequency (requires fill method)",
+      "✓ FILL FIRST: Fill missing values before downsampling for accurate aggregations",
+      "✓ FILL AFTER: Use fillForward/fillBackward after upsample if needed",
+    ],
+  },
+
   downsample: {
     name: "downsample",
     category: "dataframe",
     signature:
       "downsample({ timeColumn, frequency, aggregations, startDate?, endDate? }): DataFrame<...>",
     description:
-      "Downsample time-series data by aggregating high-frequency data to lower frequency (e.g., hourly → daily). Groups rows by time buckets and applies aggregation functions. The time column must be of type Date (or Date | null).",
+      "Downsample time-series data by aggregating high-frequency data to lower frequency (e.g., hourly → daily, daily → weekly). Groups rows by time buckets and applies aggregation functions. The time column must be of type Date (or Date | null).",
     imports: [
       'import { createDataFrame, stats } from "@tidy-ts/dataframe";',
     ],
@@ -32,11 +57,11 @@ export const timeSeriesDocs: Record<string, DocEntry> = {
     returns: "DataFrame with downsampled data",
     examples: [
       '// Downsample hourly to daily\nconst hourly = createDataFrame([\n  { timestamp: new Date("2023-01-01T10:00:00"), price: 100, volume: 10 },\n  { timestamp: new Date("2023-01-01T11:00:00"), price: 110, volume: 20 },\n  { timestamp: new Date("2023-01-01T12:00:00"), price: 120, volume: 30 },\n  { timestamp: new Date("2023-01-02T10:00:00"), price: 130, volume: 40 },\n]);\nconst daily = hourly.downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: {\n    price: stats.mean,\n    volume: stats.sum\n  }\n})\n// Result: 2 rows (one per day)\n// Day 1: price = 110 (mean of 100, 110, 120), volume = 60 (sum of 10, 20, 30)\n// Day 2: price = 130, volume = 40',
+      '// WEEKLY RESAMPLING: Daily → Weekly\nconst dailySales = createDataFrame([\n  { date: new Date("2023-01-01"), revenue: 1000, orders: 10 },\n  { date: new Date("2023-01-02"), revenue: 1200, orders: 12 },\n  // ... more daily data\n  { date: new Date("2023-01-14"), revenue: 1500, orders: 15 },\n]);\nconst weekly = dailySales.downsample({\n  timeColumn: "date",\n  frequency: "1W",\n  aggregations: {\n    revenue: stats.sum,   // Total weekly revenue\n    orders: stats.sum,    // Total weekly orders\n  }\n});',
+      '// WEEKLY + FILL MISSING: Complete workflow\nconst data = createDataFrame([...]);\n// Step 1: Fill missing values\nconst filled = data.fillForward("price");\n// Step 2: Downsample to weekly\nconst weekly = filled.downsample({\n  timeColumn: "date",\n  frequency: "1W",\n  aggregations: { price: stats.mean }\n});',
       '// Downsample with OHLC pattern (Open, High, Low, Close)\nconst ohlc = df.downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: {\n    open: stats.first,  // First price in period\n    high: stats.max,    // Highest price\n    low: stats.min,     // Lowest price\n    close: stats.last   // Last price\n  }\n})',
       '// Works with grouped DataFrames\nconst result = df.groupBy("symbol").downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: {\n    price: stats.mean\n  }\n})',
       '// With date range\nconst result = df.downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: { price: stats.mean },\n  startDate: new Date("2023-01-01"),\n  endDate: new Date("2023-01-31")\n})',
-      '// Grouping behavior: without startDate, each group starts from its own first data point\nconst df = createDataFrame([\n  { symbol: "AAPL", timestamp: new Date("2023-01-05T10:00:00"), price: 100 },\n  { symbol: "GOOG", timestamp: new Date("2023-01-01T10:00:00"), price: 200 },\n]);\nconst result = df.groupBy("symbol").downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: { price: stats.mean }\n});\n// AAPL starts from 2023-01-05, GOOG starts from 2023-01-01',
-      '// Grouping behavior: with startDate, all groups align to same startDate\n// Groups that start after startDate will have null/NaN for empty buckets\nconst result = df.groupBy("symbol").downsample({\n  timeColumn: "timestamp",\n  frequency: "1D",\n  aggregations: { price: stats.mean },\n  startDate: new Date("2023-01-01"),\n  endDate: new Date("2023-01-10")\n});\n// Both AAPL and GOOG will have buckets starting from 2023-01-01\n// AAPL will have null/NaN for 2023-01-01 through 2023-01-04',
     ],
     related: [
       "upsample",
