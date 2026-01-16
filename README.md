@@ -155,8 +155,8 @@ const timeSeries = createDataFrame([
 const filled = timeSeries.fillForward("price");
 const interpolated = timeSeries.interpolate("price", "timestamp", "linear");
 
-// Resampling
-const daily = hourlyData.resample("timestamp", "1D", {
+// Downsampling (aggregate to lower frequency)
+const daily = hourlyData.downsample("timestamp", "1D", {
   price: s.last,
   volume: s.sum
 });
@@ -169,7 +169,7 @@ const joined = trades.asofJoin(quotes, "time", {
 });
 
 // Rolling windows
-const rollingMean = s.rolling({ values: prices, windowSize: 7, fn: (window) => s.mean(window) });
+const rollingMean = s.rolling({ values: prices, windowSize: 7, fn: s.mean });
 ```
 
 📖 **[Time-Series Guide →](https://jtmenchaca.github.io/tidy-ts/)**
