@@ -1,0 +1,18 @@
+{
+  "name": "@tidy-ts/dataframe",
+  "version": "1.0.46",
+  "type": "module",
+  "main": "mod.ts",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tidy-ts/shims": "workspace:*",
+    "zod": "^4.1.8",
+    "vega": "^6.2.0",
+    "vega-embed": "^7.0.2",
+    "vega-lite": "^6.4.1",
+    "@std/csv": "jsr:@std/csv@^1.0.6"
+  }
+}

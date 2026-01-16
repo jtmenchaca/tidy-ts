@@ -1,0 +1,8 @@
+{
+  "name": "@tidy-ts/examples",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "description": "Example code and test files for tidy-ts"
+}
+

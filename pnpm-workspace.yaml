@@ -1,8 +1,5 @@
 packages:
-  - "src/*"
-  - "docs"
-  - "tests/runtimes"
-  - "examples/dataframe"
+  - "packages/*"
 
 overrides:
   # Core libraries

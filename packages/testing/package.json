@@ -1,0 +1,18 @@
+{
+  "name": "@tidy-ts/testing",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test:bun": "bun runtimes/minimal.test.ts",
+    "playwright-setup": "bun runtimes/server.js",
+    "serve": "bun runtimes/server.js",
+    "test:browser": "playwright test",
+    "test:sh": "bash runtimes/test-runner.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "*",
+    "esbuild": "*",
+    "playwright": "*"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@tidy-ts/arrow",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "mod.ts",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tidy-ts/shims": "workspace:*",
+    "@tidy-ts/dataframe": "workspace:*",
+    "zod": "*",
+    "@uwdata/flechette": "*"
+  }
+}

@@ -1,0 +1,940 @@
+# Tidy-TS Best Practices Guide
+
+This document consolidates best practices from across the Tidy-TS ecosystem, covering DataFrame operations, I/O, statistics, LLM utilities, and cross-runtime shims.
+
+## Table of Contents
+1. DataFrame Operations
+2. I/O Operations
+3. Statistical Functions
+4. LLM Utilities
+5. Cross-Runtime Shims
+6. Common Patterns & Anti-Patterns
+
+---
+
+## 1. DataFrame Operations
+
+### Creating DataFrames
+
+**✓ GOOD:**
+- Always import stats: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe"`
+- Use `df.print()` to display DataFrames, not `console.log(df.toArray())`
+- Access columns with `df.columnName` property (e.g., `df.age`) instead of manual extraction
+- Use `no_types: true` when:
+  - Working with dynamic/unknown schema (user-provided data, API responses)
+  - Rapid prototyping (follow up with typed implementation)
+  - Building generic utilities for arbitrary DataFrame structures
+- Prefer typed DataFrames when possible - `no_types` loses compile-time safety
+
+**Example:**
+```typescript
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+// Create from array of objects
+const df = createDataFrame([
+  { name: "Alice", age: 30 },
+  { name: "Bob", age: 25 }
+]);
+
+// Create from columns
+const df2 = createDataFrame({
+  columns: {
+    name: ["Alice", "Bob"],
+    age: [30, 25]
+  }
+});
+
+// With Zod schema validation
+const schema = z.object({
+  name: z.string(),
+  age: z.number()
+});
+const df3 = createDataFrame([{ name: "Alice", age: 30 }], schema);
+
+// Use no_types for dynamic/unknown schema
+const dfAny = createDataFrame(userData, { no_types: true });
+```
+
+**❌ BAD:**
+- Using `no_types` when you have not exhausted all other options
+- Using `no_types` when schema is known at compile time
+- `console.log(df.toArray())` instead of `df.print()`
+
+### Display & Inspection
+
+**✓ GOOD:**
+- `df.print()` - formatted table output
+- `df.print('Title')` - with descriptive title
+- `df.toString()` when you need the string for logging or file output
+
+**Example:**
+```typescript
+// Good: Formatted table output
+df.print();
+df.print("Sales Analysis:");
+
+// Good: Get string representation
+const tableStr = df.toString();
+const tableStrWithTitle = df.toString("Sales Data");
+console.log(df.toString()); // Manual printing
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Unformatted output
+console.log(df.toArray());
+console.log(df);
+```
+
+### Column Access
+
+**✓ GOOD:**
+- Use `df.columnName` for direct property access in most cases
+- Use `extract()` when you need the values as a standalone array
+- Access columns directly in group operations: `group.revenue` not `group.extract('revenue')`
+
+### Filtering & Selection
+
+**✓ GOOD:**
+- Use `filter()` for row-based conditions
+- Use `select()` to keep specific columns
+- Use `drop()` to remove specific columns
+- Use `slice()` for position-based selection
+- Use `distinct()` to get unique combinations of columns (returns only specified columns)
+- Use `arrange()` to sort by column (ascending by default, use "desc" for descending)
+
+### Transformation with mutate()
+
+**✓ GOOD:**
+- Use functions: `df.mutate({ revenue: row => row.price * row.quantity })`
+- Use arrays for direct values: `df.mutate({ status: ["Active", "Pending", "Active"] })`
+- Use scalars with functions for type inference: `df.mutate({ tax_rate: () => 0.08 })`
+- Chain DataFrame operations immediately after reading
+- Use `concurrency` option for async operations: `df.mutate({ data: async row => await fetch(row.url) }, { concurrency: 3 })`
+
+**Example:**
+```typescript
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+
+const sales = createDataFrame([
+  { region: "North", product: "Widget", quantity: 10, price: 100 },
+  { region: "South", product: "Widget", quantity: 20, price: 100 },
+]);
+
+// Transform with mutate
+const analysis = sales
+  .mutate({
+    revenue: (r) => r.quantity * r.price,
+    totalTax: (r) => {
+      const taxRate = 0.08;
+      return taxRate * r.price * r.quantity;
+    },
+    row_number: (_row, index) => index,
+    moreQuantityThanAvg: (row, _index, df) =>
+      row.quantity > s.mean(df.quantity),
+  })
+  .groupBy("region")
+  .summarize({
+    total_revenue: (group) => s.sum(group.revenue),
+    avg_quantity: (group) => s.mean(group.quantity),
+  });
+
+// With arrays
+df.mutate({ status: ["Active", "Pending", "Active"] });
+
+// With scalars (wrap in function)
+df.mutate({ tax_rate: () => 0.08 });
+
+// Async operations with concurrency control
+await df.mutate(
+  { data: async (row) => await fetch(row.url) },
+  { concurrency: 3 }
+);
+```
+
+### Grouping & Aggregation
+
+**✓ GOOD:**
+- Use `s.mean(group.column)` instead of manual reduce for averages
+- Use `s.sum(group.column)` instead of reduce for sums
+- Use `s.median(group.column)` instead of manual sorting
+- Use `s.max()`, `s.min()`, `s.stdev()` for other aggregations
+- Access columns directly: `group.revenue` not `group.extract('revenue')`
+
+**Example:**
+```typescript
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+
+const people = createDataFrame([
+  { id: 1, name: "Luke", species: "Human", mass: 77, height: 172, year: 2023 },
+  { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167, year: 2023 },
+  { id: 3, name: "R2-D2", species: "Droid", mass: 32, height: 96, year: 2023 },
+]);
+
+// Good: Use built-in stats functions
+const speciesAnalysis = people
+  .groupBy("species")
+  .summarize({
+    count: (group) => group.nrows(),
+    avg_height: (group) => s.round(s.mean(group.height), 1),
+    avg_mass: (group) => s.round(s.mean(group.mass), 1),
+    max_height: (group) => s.max(group.height),
+    min_mass: (group) => s.min(group.mass),
+  })
+  .arrange("avg_mass", "desc");
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Manual reduce for average
+group.column.reduce((a, b) => a + b, 0) / group.nrows()
+
+// Bad: Manual reduce for sum
+group.column.reduce((a, b) => a + b, 0)
+
+// Bad: Manual sorting for median
+[...group.column].sort((a,b) => a - b)[Math.floor(group.nrows()/2)]
+```
+
+### Joins
+
+**✓ GOOD:**
+- Use `innerJoin()` for matching rows only
+- Use `leftJoin()` to keep all left rows
+- Use `asofJoin()` for time-series data where exact timestamp matches aren't required
+- Use backward direction (default) for asofJoin - matches to prior observations
+- Use `tolerance` to limit how far back/forward to look in asofJoin
+- Use `group_by` when joining multiple time series (e.g., multiple stocks)
+
+**Example:**
+```typescript
+import { createDataFrame } from "@tidy-ts/dataframe";
+
+const employees = createDataFrame([
+  { id: 1, name: "Alice", dept_id: 10 },
+  { id: 2, name: "Bob", dept_id: 20 },
+]);
+
+const departments = createDataFrame([
+  { dept_id: 10, dept_name: "Engineering" },
+  { dept_id: 20, dept_name: "Sales" },
+]);
+
+// Good: Inner join
+const inner = employees.innerJoin(departments, { on: "dept_id" });
+
+// Good: Left join
+const left = employees.leftJoin(departments, { on: "dept_id" });
+
+// Good: Join with different column names
+const employees2 = createDataFrame([
+  { emp_id: 1, name: "Alice", department: 10 },
+]);
+const joined = employees2.innerJoin(departments, {
+  on: { left: "department", right: "dept_id" }
+});
+
+// Good: As-of join for time-series
+const trades = createDataFrame([
+  { time: 1, symbol: "AAPL", quantity: 100 },
+  { time: 3, symbol: "AAPL", quantity: 200 },
+]);
+const quotes = createDataFrame([
+  { time: 0, symbol: "AAPL", price: 150.0 },
+  { time: 2, symbol: "AAPL", price: 151.0 },
+]);
+// Matches trade at time 1 to quote at time 0, trade at time 3 to quote at time 2
+trades.asofJoin(quotes, "time", { direction: "backward" });
+
+// Good: As-of join with tolerance and grouping
+trades.asofJoin(quotes, "time", {
+  direction: "nearest",
+  tolerance: 1000,
+  group_by: ["symbol"]
+});
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Using asofJoin on unsorted data
+const unsorted = createDataFrame([...]).arrange("otherColumn");
+unsorted.asofJoin(quotes, "time"); // Requires sorted by time column
+
+// Bad: Expecting exact matches
+trades.asofJoin(quotes, "time"); // This is for nearest matches, not exact
+```
+
+### Time-Series Operations
+
+**✓ GOOD:**
+- Use `downsample()` for converting from higher to lower frequency (e.g., hourly → daily)
+- The time column must be of type `Date` (or `Date | null)` - TypeScript enforces this
+- Use aggregation functions like `stats.mean`, `stats.sum`, `stats.max`, `stats.min`, `stats.first`, `stats.last`
+- Preserves grouping when called on grouped DataFrames
+- Can create new columns during downsampling (e.g., OHLC pattern)
+- Use `startDate/endDate` to define explicit time ranges
+- **GROUPING BEHAVIOR - without startDate:** Each group starts from its own first data point
+- **GROUPING BEHAVIOR - with startDate:** All groups align to the same startDate. Buckets before a group's first data point will have empty arrays [] which aggregate to null/NaN
+- **EMPTY BUCKETS:** Buckets with no data receive empty arrays [] passed to aggregation functions, which typically return null/NaN. This is NOT forward-filled automatically
+- **CUSTOM AGGREGATION:** Can use custom functions like `(values: unknown[]) => { return values.length > 0 ? stats.mean(values) : 0 }` to handle empty buckets
+
+**Example:**
+```typescript
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
+
+// Good: Downsample hourly to daily
+const hourly = createDataFrame([
+  { timestamp: new Date("2023-01-01T10:00:00"), price: 100, volume: 10 },
+  { timestamp: new Date("2023-01-01T11:00:00"), price: 110, volume: 20 },
+  { timestamp: new Date("2023-01-01T12:00:00"), price: 120, volume: 30 },
+  { timestamp: new Date("2023-01-02T10:00:00"), price: 130, volume: 40 },
+]);
+
+const daily = hourly.downsample({
+  timeColumn: "timestamp",
+  frequency: "1D",
+  aggregations: {
+    price: stats.mean,
+    volume: stats.sum
+  }
+});
+// Result: 2 rows (one per day)
+// Day 1: price = 110 (mean of 100, 110, 120), volume = 60 (sum of 10, 20, 30)
+
+// Good: OHLC pattern (Open, High, Low, Close)
+const ohlc = df.downsample({
+  timeColumn: "timestamp",
+  frequency: "1D",
+  aggregations: {
+    open: stats.first,  // First price in period
+    high: stats.max,    // Highest price
+    low: stats.min,     // Lowest price
+    close: stats.last   // Last price
+  }
+});
+
+// Good: With date range
+const result = df.downsample({
+  timeColumn: "timestamp",
+  frequency: "1D",
+  aggregations: { price: stats.mean },
+  startDate: new Date("2023-01-01"),
+  endDate: new Date("2023-01-31")
+});
+```
+
+**✓ GOOD:**
+- Use `upsample()` for converting from lower to higher frequency (e.g., daily → hourly)
+- Forward fill is most common - carries last known value forward
+- Backward fill uses next known value - useful for looking ahead
+- **GROUPING BEHAVIOR - without startDate:** Each group starts from its own first data point
+- **GROUPING BEHAVIOR - with startDate:** All groups align to the same startDate. Values before a group's first data point will be null (cannot fill from non-existent data)
+- **FILL LIMITATIONS:** Forward fill cannot fill values that come before the first data point. Backward fill cannot fill values after the last data point
+
+**Example:**
+```typescript
+// Good: Upsample daily to hourly with forward fill
+const daily = createDataFrame([
+  { timestamp: new Date("2023-01-01T10:00:00"), value: 100 },
+  { timestamp: new Date("2023-01-01T12:00:00"), value: 200 },
+]);
+
+const hourly = daily.upsample({
+  timeColumn: "timestamp",
+  frequency: "1H",
+  fillMethod: "forward"
+});
+// Result: 3 rows (10:00, 11:00, 12:00)
+// 10:00: value = 100
+// 11:00: value = 100 (forward filled)
+// 12:00: value = 200
+
+// Good: With backward fill
+const hourly = daily.upsample({
+  timeColumn: "timestamp",
+  frequency: "1H",
+  fillMethod: "backward"
+});
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Using non-Date column
+df.downsample({
+  timeColumn: "timestamp_string", // TypeScript error: must be Date
+  frequency: "1D",
+  aggregations: { price: stats.mean }
+});
+
+// Bad: Using downsample for upsampling
+df.downsample({ timeColumn: "date", frequency: "1H" }); // Wrong direction
+// Should use: df.upsample({ timeColumn: "date", frequency: "1H", fillMethod: "forward" })
+```
+
+### Reshaping Data
+
+**✓ GOOD:**
+- Use `pivotLonger()` to convert wide data to long format
+- Use `pivotWider()` to convert long data to wide format (requires `expected_columns` for type safety)
+- Use `transpose()` to swap rows and columns (requires `expectedRows` parameter)
+- Use `unnest()` to expand array columns into individual rows
+  - Only works on array columns - TypeScript enforces this at compile time
+  - Empty arrays preserve the row with null value (matches R's tidyr behavior)
+  - Chain `unnest()` calls to flatten nested arrays (e.g., `number[][]`)
+  - Other columns are automatically duplicated for each array element
+  - Use `mutate()` first if you need to extract nested arrays from objects
+
+**❌ BAD:**
+- Trying to unnest non-array columns - use `mutate()` to extract first
+- Unnesting object columns directly - objects aren't arrays
+
+### Combining DataFrames
+
+**✓ GOOD:**
+- Use `bindRows()` to stack DataFrames vertically
+- Use `concatDataFrames()` when you have an array of DataFrames to combine
+- Automatically handles missing columns - fills with undefined
+- Preserves all columns from all DataFrames
+- More convenient than `df1.bindRows(...rest)` when working with arrays
+
+### Data Profiling
+
+**✓ GOOD:**
+- Use `profile()` for quick exploratory data analysis
+- Filter the profile result to focus on numeric or categorical columns
+- Combine with `.print()` for immediate visual inspection
+
+### Missing Data Handling
+
+**✓ GOOD:**
+- Use `replaceNA()` to replace null/undefined with fixed values
+  - Only replaces null and undefined, not other falsy values like 0 or ''
+  - Can specify different replacements for different columns
+- Use `removeNA()` to remove rows with null/undefined (type-safe, narrows types)
+  - Type-safe - automatically narrows the type to exclude null/undefined
+  - Can check multiple fields at once
+- Use `fillForward()` for time-series data where you want to carry forward the last known value
+- Use `fillBackward()` when you want to fill missing values from future observations
+- Use `interpolate()` for time-series data where you want to estimate missing values based on surrounding data
+  - Linear interpolation is faster and works with fewer points
+  - Spline interpolation provides smoother curves but requires at least 4 points
+  - Only interpolates values that have both previous and next non-null values
+- Only fills null and undefined values - other values remain unchanged
+- Creates a new DataFrame without modifying the original
+
+**❌ BAD:**
+- Expecting values at the start to be filled with `fillForward()` - they remain null/undefined
+- Expecting values at the end to be filled with `fillBackward()` - they remain null/undefined
+- Expecting leading/trailing nulls to be interpolated - they remain null (no bounds)
+- Using spline with fewer than 4 points - falls back to linear
+
+### Visualization
+
+**✓ GOOD:**
+- Use scatter plots for correlation analysis and multi-dimensional data
+- Use line charts for trends and time series data
+- Use bar charts for categorical comparisons
+- Use area charts for cumulative data and part-to-whole relationships
+- Chain with `mutate()` to create derived columns for visualization
+- Use color schemes like 'professional' or 'vibrant' for better aesthetics
+- Export charts as PNG/SVG for reports and presentations
+- Use `series` mapping for multiple lines/bars/areas
+- Configure `tooltip.fields` to show only relevant columns
+- Use `domain` filtering to focus on specific data ranges
+- Use `scale: 2-4` for high-resolution PNG exports
+- All row fields are automatically available in tooltips unless filtered
+- Date columns are automatically detected and formatted as temporal axes
+
+**❌ BAD:**
+- Using scatter plots for time series (use line charts instead)
+- Using bar charts for continuous numeric data (use line charts)
+- Not specifying `mappings.x` and `mappings.y` (required)
+- Using 'container' width in `savePNG/saveSVG` (use numeric width)
+- Using `scale > 4` (will be clamped to 4)
+
+---
+
+## 2. I/O Operations
+
+### CSV Operations
+
+**✓ GOOD:**
+- Use `readCSVMetadata()` first to inspect headers and structure
+- Provide a Zod schema for type safety and automatic type conversion
+- Use `no_types: true` when schema is unknown or dynamic
+- Works with both file paths and raw CSV strings
+- Chain DataFrame operations immediately after reading
+
+**Example:**
+```typescript
+import { readCSV, writeCSV, readCSVMetadata } from "@tidy-ts/dataframe";
+import { z } from "zod";
+
+// Good: Inspect file structure first
+const meta = await readCSVMetadata("data.csv");
+console.log("Columns:", meta.headers);
+console.log("Preview:", meta.firstRows);
+
+// Good: Read with Zod schema
+const PersonSchema = z.object({
+  name: z.string(),
+  age: z.number(),
+  city: z.string(),
+});
+
+const csvString = `name,age,city
+Alice,25,New York
+Bob,30,San Francisco`;
+
+const data = await readCSV(csvString, PersonSchema);
+// Or from file: await readCSV("./data.csv", PersonSchema);
+
+// Good: Chain operations immediately
+const result = await readCSV("sales.csv", schema)
+  .filter(r => r.amount > 100)
+  .groupBy("region")
+  .summarize({ total: g => s.sum(g.amount) });
+
+// Good: Use no_types for dynamic schema
+const df = await readCSV("data.csv", { no_types: true });
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Using no_types when schema is known
+const df = await readCSV("data.csv", { no_types: true });
+// Should use: await readCSV("data.csv", PersonSchema)
+
+// Bad: Reading large files without schema
+const df = await readCSV("huge-file.csv"); // No schema, no streaming
+```
+
+### XLSX Operations
+
+**✓ GOOD:**
+- Use `readXLSXMetadata()` first to inspect sheets and preview structure
+- Use `skip` option if first row is a title/note rather than column headers
+- Provide a Zod schema for type safety and automatic type conversion
+- Use `no_types: true` when schema is unknown or dynamic
+- Chain DataFrame operations immediately after reading
+- Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
+
+**❌ BAD:**
+- Using `no_types` when you know the schema - you lose type safety
+
+### Parquet & Arrow
+
+**✓ GOOD:**
+- Use Parquet for large datasets - efficient columnar storage
+- Specify `columns` option to read only needed data
+- Use Arrow for efficient inter-process data exchange
+- Set `useDate: true` to convert timestamps to Date objects
+
+### JSON Operations
+
+**✓ GOOD:**
+- Use `z.array(z.object({...}))` to get a DataFrame
+- Zod schema provides automatic type validation and conversion
+
+---
+
+## 3. Statistical Functions
+
+### Descriptive Statistics
+
+**✓ GOOD:**
+- Use `s.mean(values)` - built-in, faster, handles edge cases
+- Use with `df.columnName` for direct access: `s.mean(df.age)`
+- Chain with `s.round()` directly: `s.round(s.mean(values), 2)` - no assertions needed
+- `s.round()` handles null at runtime, so no need for `s.round(s.mean(values)!, 2)`
+- For clean arrays, functions return `number` - no assertions needed
+- For arrays with nulls, functions return `number | null` - handle null appropriately
+- Use `removeNA: true` if you want guaranteed number return
+
+**Example:**
+```typescript
+import { stats as s } from "@tidy-ts/dataframe";
+
+const values = [1, 2, 3, 4, 5];
+
+// Good: Use built-in functions
+s.mean(values); // 2.5
+s.median(values); // 3
+s.sum(values); // 15
+s.stdev(values); // 1.58...
+s.max(values); // 5
+s.min(values); // 1
+
+// Good: Chain with s.round() - no assertions needed
+s.round(s.mean(values), 2); // 2.5
+s.round(s.stdev(values), 2); // 1.58
+
+// Good: Use with DataFrame columns
+s.mean(df.age);
+s.sum(df.revenue);
+
+// Good: Handle nulls appropriately
+s.mean([1, 2, null, 4], true); // 2.33 (with removeNA)
+const result = s.mean([1, 2, null, 4]); // number | null
+if (result !== null) {
+  s.round(result, 2);
+}
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Manual calculation
+values.reduce((a, b) => a + b, 0) / values.length
+
+// Bad: Unnecessary assertion
+s.round(s.mean(values)!, 2) // s.round() handles null
+
+// Bad: Manual sorting for median
+[...values].sort((a, b) => a - b)[Math.floor(values.length / 2)]
+
+// Bad: Unnecessary assertion
+s.median(values)! // Check if array has nulls first
+```
+
+### Window Functions
+
+**✓ GOOD:**
+- Use `s.rolling()` for moving averages, rolling sums, and other window-based calculations
+- Window size determines how many previous values to include
+- First few values use smaller windows (partial windows)
+- Works with any aggregation function (`s.mean`, `s.sum`, `s.max`, `s.min`, etc.)
+- Use `s.cumsum()`, `s.cummean()`, `s.cumprod()` for cumulative operations
+- Use `s.lag()` and `s.lead()` for shifting values
+
+**❌ BAD:**
+- Manually slicing arrays and applying functions - use `s.rolling()` instead
+
+### Async Operations
+
+**✓ GOOD:**
+- Use `s.batch()` for processing arrays of items with async functions
+- Use concurrency limits to prevent overwhelming APIs (`concurrency: 5-10`)
+- Use `batchSize + batchDelay` for rate-limited APIs
+- Add retry logic for unreliable network operations
+- Combine `s.chunk()` and `s.batch()` for nested batch processing
+- Use `shouldRetry` to filter which errors trigger retries
+- Use `s.parallel()` instead when working with already-created promises
+- Pass functions `(() => Promise)` for retry support, not already-created promises
+
+**Example:**
+```typescript
+import { stats as s } from "@tidy-ts/dataframe";
+
+// Good: Basic usage with concurrency limit
+const userIds = [1, 2, 3, 4, 5];
+const users = await s.batch(
+  userIds,
+  async (id) => await fetchUser(id),
+  { concurrency: 5 }
+);
+
+// Good: Batch processing with delays
+await s.batch(
+  apiCalls,
+  async (call) => makeRequest(call),
+  { batchSize: 100, batchDelay: 50 }
+);
+
+// Good: With exponential backoff retry
+await s.batch(tasks, async (task) => processTask(task), {
+  concurrency: 5,
+  retry: {
+    backoff: 'exponential',
+    maxRetries: 3,
+    baseDelay: 100,
+    shouldRetry: (error) => error.message.includes('rate limit')
+  }
+});
+
+// Good: Combine chunk and batch
+const batches = s.chunk(ids, 300);
+await s.batch(batches, async (batch) => processBatch(batch), {
+  concurrency: 2
+});
+
+// Good: Use parallel for already-created promises
+const results = await s.parallel([
+  fetchUser(1),
+  fetchUser(2),
+  fetchUser(3)
+], { concurrency: 5 });
+
+// Good: Parallel with retry (use functions)
+const results = await s.parallel(
+  [() => fetch(url1), () => fetch(url2)],
+  { retry: { backoff: 'exponential', maxRetries: 3 } }
+);
+```
+
+**❌ BAD:**
+```typescript
+// Bad: No concurrency control
+await Promise.all(userIds.map(id => fetchUser(id)));
+
+// Bad: No retry logic
+await s.batch(items, async (item) => process(item));
+
+// Bad: Passing already-created promises with retry
+await s.parallel(
+  [fetch(url1), fetch(url2)],
+  { retry: { maxRetries: 3 } } // Retry won't work!
+);
+```
+
+### Statistical Testing
+
+**✓ GOOD:**
+- Use `s.compare` API for intent-driven statistical testing
+- Choose appropriate scenario: `oneGroup`, `twoGroups`, `multiGroups`
+- Choose appropriate test: `centralTendency`, `proportions`, `distribution`, `association`
+- Use `parametric: "auto"` to let the system choose the best test
+
+---
+
+## 4. LLM Utilities
+
+### Embeddings
+
+**✓ GOOD:**
+- Use `text-embedding-3-large` for best quality (default)
+- Use `text-embedding-3-small` for faster/cheaper embeddings
+- Batch multiple texts in an array for efficiency
+- Store embeddings in vector databases for similarity search
+- Environment variable `OPENAI_API_KEY` must be set
+
+**Example:**
+```typescript
+import { LLM } from "@tidy-ts/ai";
+import { createDataFrame } from "@tidy-ts/dataframe";
+
+// Good: Single text embedding
+const embedding = await LLM.embed("Hello world");
+console.log(embedding.length); // 3072 (text-embedding-3-large)
+
+// Good: Batch multiple texts
+const embeddings = await LLM.embed(["doc1", "doc2", "doc3"]);
+console.log(embeddings.length); // 3
+console.log(embeddings[0].length); // 3072
+
+// Good: Use smaller/faster model
+const embedding = await LLM.embed("text", "text-embedding-3-small");
+console.log(embedding.length); // 1536
+
+// Good: Use with DataFrame
+const df = createDataFrame([
+  { text: "cat" },
+  { text: "dog" }
+]);
+const withEmbeddings = await df.mutate({
+  embedding: async (row) => await LLM.embed(row.text)
+});
+```
+
+### Structured Responses
+
+**✓ GOOD:**
+- Use Zod schemas for type-safe structured output
+- Use `z.date()` for date fields - auto-converted to Date objects
+- Provide clear system instructions for consistent behavior
+- Use `priorMessages` for conversation context
+
+### Similarity Search
+
+**✓ GOOD:**
+- Use `LLM.compareEmbeddings()` for semantic search and similarity matching
+- Limit results with `n` parameter for performance
+- Store embeddings once, compare many times
+- Use with vector databases for large-scale search
+- Distance metric: Euclidean distance (L2 norm)
+- Results sorted by distance: smaller distance = more similar
+
+---
+
+## 5. Cross-Runtime Shims
+
+### Runtime Detection
+
+**✓ GOOD:**
+- Use for conditional logic based on runtime capabilities
+- Check runtime before using platform-specific APIs
+- Prefer runtime-agnostic shims over direct runtime checks when possible
+- Use `currentRuntime` constant for performance (cached value)
+- Prefer over repeated `getCurrentRuntime()` calls
+
+### File Operations
+
+**✓ GOOD:**
+- Use `readTextFile()` for text files (UTF-8 encoding assumed)
+- Use `readFile()` for binary files or when you need raw bytes
+- Use `writeTextFile()` for text content
+- Use `writeFile()` for binary files or when you have Uint8Array data
+- Parent directories are automatically created
+- Use `exists()` to check file existence before reading
+- Use `copyFile()` for copying files (simpler than read + write)
+- Use `rename()` for atomic move/rename operations (faster than copy + delete)
+- Use `remove()` with `recursive: true` for directories with contents
+- Safe to call `remove()` on non-existent paths
+
+**Example:**
+```typescript
+import {
+  readTextFile,
+  writeTextFile,
+  readFile,
+  writeFile,
+  copyFile,
+  rename,
+  remove,
+  exists,
+  listDir
+} from "@tidy-ts/shims";
+
+// Good: Read text file
+const content = await readTextFile("./config.json");
+const config = JSON.parse(content);
+
+// Good: Write text file (parent dirs auto-created)
+await writeTextFile("./data/config.json", JSON.stringify({
+  version: "1.0.0",
+  name: "My App"
+}, null, 2));
+
+// Good: Read binary file
+const data = await readFile("./file.bin");
+console.log(`Read ${data.length} bytes`);
+
+// Good: Check existence
+if (await exists("./config.json")) {
+  console.log("Config file found");
+}
+
+// Good: Copy file
+await copyFile("./source.txt", "./destination.txt");
+
+// Good: Rename/move file (atomic)
+await rename("./old-name.txt", "./new-name.txt");
+await rename("./file.txt", "./archive/file.txt");
+
+// Good: Remove with recursive
+await remove("./my-dir", { recursive: true });
+
+// Good: List directory
+const entries = await listDir("./data");
+for (const entry of entries) {
+  const icon = entry.isDirectory ? "📁" : "📄";
+  console.log(`${icon} ${entry.name}`);
+}
+```
+
+**❌ BAD:**
+```typescript
+// Bad: Using readFile + writeFile when copyFile is simpler
+const data = await readFile("./source.txt");
+await writeFile("./dest.txt", data);
+// Should use: await copyFile("./source.txt", "./dest.txt")
+
+// Bad: Using copyFile + remove when rename is faster
+await copyFile("./old.txt", "./new.txt");
+await remove("./old.txt");
+// Should use: await rename("./old.txt", "./new.txt")
+
+// Bad: Forgetting recursive
+await remove("./my-dir"); // Fails if directory not empty
+// Should use: await remove("./my-dir", { recursive: true })
+```
+
+### Async vs Sync
+
+**✓ GOOD:**
+- Prefer async I/O (`readFile`, `writeFile`) for better performance
+- Only use sync I/O (`readFileSync`, `writeFileSync`) when async is not possible
+
+**❌ BAD:**
+- Using sync I/O in async contexts (blocks event loop)
+
+### Path Operations
+
+**✓ GOOD:**
+- Use `resolve()` to convert relative paths to absolute paths
+- Works consistently across all platforms
+- Use `dirname()` to get directory from file path
+- Use `fileURLToPath()` and `pathToFileURL()` for URL conversions
+
+### Environment Variables
+
+**✓ GOOD:**
+- Use `env.get()` to access environment variables
+- Use `env.toObject()` to get all environment variables
+- Use `env.loadFromFile(".env")` to load from .env file
+- Validate environment variables with Zod schemas
+- Use `exit()` for conditional exit based on validation
+
+---
+
+## 6. Common Patterns & Anti-Patterns
+
+### General Patterns
+
+**✓ GOOD:**
+- Chain operations: `df.filter().mutate().groupBy().summarize()`
+- Use descriptive titles in `print()` calls
+- Import stats as `s` for brevity: `import { stats as s }`
+- Use TypeScript types for compile-time safety
+- Handle null/undefined appropriately based on function return types
+
+**❌ BAD:**
+- Not chaining operations when possible
+- Using manual array operations instead of built-in functions
+- Ignoring TypeScript type safety
+- Not handling null/undefined return values
+
+### Performance
+
+**✓ GOOD:**
+- Use Parquet for large datasets
+- Use column selection in Parquet/Arrow reads
+- Use concurrency limits for async operations
+- Batch API calls when possible
+- Store embeddings once, compare many times
+
+**❌ BAD:**
+- Reading entire large files when only some columns are needed
+- Making unbounded concurrent API calls
+- Re-computing embeddings unnecessarily
+
+### Type Safety
+
+**✓ GOOD:**
+- Use Zod schemas for data validation
+- Prefer typed DataFrames over `DataFrame<any>`
+- Use `removeNA()` for type narrowing
+- Chain nullable stats functions with `s.round()` without assertions
+
+**❌ BAD:**
+- Using `no_types: true` when schema is known
+- Unnecessary non-null assertions (`!`) when functions handle null
+- Not using type narrowing when available
+
+---
+
+## Summary
+
+This guide consolidates best practices across the Tidy-TS ecosystem. Key principles:
+
+1. **Use built-in functions** instead of manual implementations
+2. **Chain operations** for readability and performance
+3. **Prefer type safety** - use typed DataFrames and Zod schemas
+4. **Handle async operations** with concurrency limits and retry logic
+5. **Use appropriate I/O formats** - Parquet for large data, CSV for simple cases
+6. **Leverage runtime-agnostic shims** for cross-platform compatibility
+7. **Follow function return types** - handle `number | null` appropriately
+8. **Use descriptive output** - `df.print()` with titles
+
+For specific function signatures and examples, refer to the individual documentation files in the `docs/` directory.
+

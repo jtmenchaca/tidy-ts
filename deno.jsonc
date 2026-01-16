@@ -1,10 +1,6 @@
 {
   "license": "Apache-2.0",
   "version": "0.0.1",
-  "exports": "./src/mod.ts",
-  "imports": {
-    "@tests/shims": "./tests/shims/test.ts"
-  },
   "compilerOptions": {
     "lib": [
       "deno.ns",
@@ -24,36 +20,25 @@
       "**/*.ipynb",
       ".claude/",
       ".cargo/",
-      "target/",
-      "vendor/",
-      "z-other/"
+      "target/"
     ]
   },
   "exclude": [
-    "node_modules",
-    "vendor",
-    "z-other",
-    "sources",
-    "examples/docs-tests",
-    "sources/**",
-    ".cargo/",
-    "target/",
-    "docs/",
-    "docs/**",
-    "tidy-stats/",
-    "src/tidy-stats/rust",
-    "tests/tidy-stats/__pycache__",
-    "tests/tidy-stats/.venv",
-    "docs/src/routeTree.gen.ts",
-    "tmp/",
-    "blank-mcp/",
-    "tests/runtimes/"
+    "**/node_modules/**",
+    "dist/**",
+    "node_modules/**",
+    ".tanstack/**",
+    ".vite/deps/**",
+    ".vite/**",
+    "**/routeTree.gen.ts",
+    "**/.venv/**",
+    "**/target/**",
+    "**/__pycache__/**",
+    "**/.DS_Store",
+    "coverage/**",
+    "**/*.wasm"
   ],
   "workspace": [
-    "src/dataframe",
-    "src/ai",
-    "src/shims",
-    "src/mcp",
-    "examples/dataframe"
+    "packages/*"
   ]
 }

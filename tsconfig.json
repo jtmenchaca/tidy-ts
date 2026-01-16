@@ -1,8 +1,0 @@
-{
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@tests/shims": ["./tests/shims/test.ts"]
-    }
-  }
-}

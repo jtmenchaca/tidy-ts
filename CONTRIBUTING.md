@@ -1,6 +1,6 @@
 # Contributing to Tidy-TS
 
-Thank you for your interest in contributing to Tidy-TS! We welcome contributions from the community.
+Thank you for your interest in contributing to Tidy-TS! 
 
 ## How to Contribute
 

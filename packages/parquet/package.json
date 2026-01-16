@@ -1,0 +1,18 @@
+{
+  "name": "@tidy-ts/parquet",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "mod.ts",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tidy-ts/shims": "workspace:*",
+    "@tidy-ts/dataframe": "workspace:*",
+    "zod": "*",
+    "hyparquet": "*",
+    "hyparquet-compressors": "*",
+    "hyparquet-writer": "*"
+  }
+}
