@@ -8,6 +8,10 @@
 
 Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety, known to prevent 15-38% of production bugs.
 
+## I recommend using Context7 MCP to get the latest docs
+
+I strongly recommend getting up-to-date tidy-ts documentation when using any coding agent.  This is easy to do with [Context7 MCP](https://github.com/upstash/context7). Please see their documentation about adding the MCP to your dev environment. When performing a data analysis, prompt a coding tool to "Look for tidy-ts documentation on context7". It will have access to numerous examples that help it create better, more clear code.
+
 ## Key Features
 
 - **Type-Safe DataFrames**: Full TypeScript support with automatic column typing and compile-time safety
