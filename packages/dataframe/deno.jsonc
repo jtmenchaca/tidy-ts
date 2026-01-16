@@ -2,5 +2,18 @@
   "name": "@tidy-ts/dataframe",
   "version": "1.1.0",
   "exports": "./mod.ts",
-  "license": "MIT"
+  "license": "MIT",
+  "imports": {
+    "@std/csv": "jsr:@std/csv@^1.0.6",
+    "@std/csv/stringify": "jsr:@std/csv@^1.0.6/stringify",
+    "@std/encoding": "jsr:@std/encoding@^1.0.10",
+    "@std/expect": "jsr:@std/expect@^1.0.15",
+    "@std/path": "jsr:@std/path@^1.0.8",
+    "@std/random": "jsr:@std/random@^0.1.2",
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims@^0.0.19",
+    "zod": "npm:zod@^4.1.8",
+    "vega": "npm:vega@^6.2.0",
+    "vega-embed": "npm:vega-embed@^7.0.2",
+    "vega-lite": "npm:vega-lite@^6.4.1"
+  }
 }
