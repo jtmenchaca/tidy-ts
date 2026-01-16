@@ -1,4 +1,5 @@
-export const starWarsExample = `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+export const starWarsExample =
+  `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // 1. Load character data
 const characters = createDataFrame([

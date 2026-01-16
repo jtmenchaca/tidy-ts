@@ -16,7 +16,7 @@ export default defineConfig({
       generatedRouteTree: "./src/routeTree.gen.ts",
       routesDirectory: "./src/routes",
       quoteStyle: "double",
-      routeFileIgnorePattern: ".(test.ts|examples.ts|md|example.ts)"
+      routeFileIgnorePattern: ".(test.ts|examples.ts|md|example.ts)",
     }),
     react(),
     tailwindcss(),
@@ -30,7 +30,7 @@ export default defineConfig({
     port: 5173,
     fs: {
       // Allow serving files from the public directory
-      allow: ['..']
+      allow: [".."],
     },
     proxy: {
       "/api": {
@@ -59,41 +59,41 @@ export default defineConfig({
       output: {
         manualChunks: {
           // Separate Shiki into its own chunk
-          'shiki': ['shiki'],
-          'shiki-themes': ['@shikijs/transformers'],
+          "shiki": ["shiki"],
+          "shiki-themes": ["@shikijs/transformers"],
           // Separate large UI libraries
-          'recharts': ['recharts'],
+          "recharts": ["recharts"],
           // Separate Radix UI components
-          'radix': [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip'
-          ]
-        }
-      }
-    }
+          "radix": [
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-aspect-ratio",
+            "@radix-ui/react-avatar",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-collapsible",
+            "@radix-ui/react-context-menu",
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-hover-card",
+            "@radix-ui/react-label",
+            "@radix-ui/react-menubar",
+            "@radix-ui/react-navigation-menu",
+            "@radix-ui/react-popover",
+            "@radix-ui/react-progress",
+            "@radix-ui/react-radio-group",
+            "@radix-ui/react-scroll-area",
+            "@radix-ui/react-select",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-slider",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-switch",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-toggle",
+            "@radix-ui/react-toggle-group",
+            "@radix-ui/react-tooltip",
+          ],
+        },
+      },
+    },
   },
 });

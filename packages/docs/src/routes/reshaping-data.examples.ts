@@ -19,7 +19,8 @@ const salesWide = salesLong.pivotWider({
 
 salesWide.print("Sales data pivoted to wide format:");`,
 
-  pivotLonger: `// Create student grade data in wide format (one column per subject)
+  pivotLonger:
+    `// Create student grade data in wide format (one column per subject)
 const gradesWide = createDataFrame([
   { id: 1, name: "Alice", math: 85, science: 92, english: 78 },
   { id: 2, name: "Bob", math: 90, science: 88, english: 85 },

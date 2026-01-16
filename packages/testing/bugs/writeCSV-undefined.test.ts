@@ -1,5 +1,5 @@
-    import { expect } from "@std/expect";
-    import { createDataFrame, writeCSV } from "@tidy-ts/dataframe";
+import { expect } from "@std/expect";
+import { createDataFrame, writeCSV } from "@tidy-ts/dataframe";
 
 Deno.test("writeCSV - handles undefined values in columns", () => {
   const df = createDataFrame([

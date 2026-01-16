@@ -1,6 +1,7 @@
 // Multiple smaller code examples for the homepage
 
-export const dataCreationExample = `import { createDataFrame } from "@tidy-ts/dataframe";
+export const dataCreationExample =
+  `import { createDataFrame } from "@tidy-ts/dataframe";
 
 // 🚀 Load character data from the galaxy
 const characters = createDataFrame([
@@ -22,7 +23,8 @@ characters.print();
 // │ R2-D2 │ Droid  │ 32      │ 96        │
 // └───────┴────────┴─────────┴───────────┘`;
 
-export const dataTransformationExample = `// 🔧 Transform data with calculated columns
+export const dataTransformationExample =
+  `// 🔧 Transform data with calculated columns
 const analysis = characters
   .mutate({
     mass_lbs: (row) => row.mass_kg * 2.20462,  // Convert to pounds
@@ -67,7 +69,8 @@ summary.print("Species Comparison Report");
 // │ Droid  │ 117.95        │ 51.78         │ 2     │
 // └────────┴───────────────┴───────────────┴───────┘`;
 
-export const statisticalTestExample = `// Test 1: Are droid proportions (suspiciously?) similar to human proportions?
+export const statisticalTestExample =
+  `// Test 1: Are droid proportions (suspiciously?) similar to human proportions?
 const humans = analysis.filter((r) => r.species === "Human");
 const droids = analysis.filter((r) => r.species === "Droid");
 

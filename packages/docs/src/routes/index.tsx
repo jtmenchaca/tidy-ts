@@ -15,11 +15,11 @@ import {
   GithubIcon,
   ShieldIcon,
 } from "lucide-react";
-import { 
-  dataCreationExample, 
-  dataTransformationExample, 
-  groupingExample, 
-  statisticalTestExample 
+import {
+  dataCreationExample,
+  dataTransformationExample,
+  groupingExample,
+  statisticalTestExample,
 } from "./index.examples.ts";
 import TidyTsLogo from "../assets/tidy-ts-logo-v2.svg";
 // deno-lint-ignore no-explicit-any
@@ -34,13 +34,13 @@ function HomeComponent() {
         <div className="relative text-center py-12 sm:py-20">
           {/* Large background logo */}
           <div className="absolute -left-25 -top-30 opacity-4 dark:opacity-10 pointer-events-none">
-            <img 
-              src={TidyTsLogo} 
-              alt="" 
+            <img
+              src={TidyTsLogo}
+              alt=""
               className="w-96 h-96 sm:w-[600px] sm:h-[600px] md:w-[600px] md:h-[600px] lg:w-[600px] lg:h-[600px] xl:w-[600px] xl:h-[600px]"
             />
           </div>
-          
+
           <div className="relative z-10">
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-orange-600 mb-6">
               Tidy-TS
@@ -95,8 +95,8 @@ function HomeComponent() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Create, transform, filter, select, and sort data with
-                chaining and automatic column typing for compile-time safety.
+                Create, transform, filter, select, and sort data with chaining
+                and automatic column typing for compile-time safety.
               </p>
               <Button
                 asChild
@@ -123,8 +123,9 @@ function HomeComponent() {
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                80+ functions across descriptive statistics, hypothesis testing, and probability distributions. 
-                All tests are rigorously validated against results from R.
+                80+ functions across descriptive statistics, hypothesis testing,
+                and probability distributions. All tests are rigorously
+                validated against results from R.
               </p>
               <Button
                 asChild
@@ -139,7 +140,7 @@ function HomeComponent() {
               </Button>
             </CardContent>
           </Card>
-          </div>
+        </div>
         {/* Code Preview Header */}
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 rounded-xl p-6 md:p-8 border border-emerald-100 dark:border-emerald-900/30">
           <div className="text-center">
@@ -150,153 +151,161 @@ function HomeComponent() {
               A complete data analysis workflow, broken into focused examples
             </p>
           </div>
-            </div>
+        </div>
 
         {/* Code Examples */}
         <div className="space-y-4 -mx-4 md:mx-0">
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
-              <CardHeader className="pb-3 px-4 pt-4">
-                <div className="flex items-center justify-between w-full">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Create DataFrames
-                  </CardTitle>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+          <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+            <CardHeader className="pb-3 px-4 pt-4">
+              <div className="flex items-center justify-between w-full">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Create DataFrames
+                </CardTitle>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                >
+                  {/* @ts-ignore TS thinks you need search prop */}
+                  <Link
+                    to="/creating-dataframes"
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })}
                   >
-                    {/* @ts-ignore TS thinks you need search prop */}
-                    <Link 
-                      to="/creating-dataframes"
-                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    >
-                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Create DataFrames from arrays of objects with automatic type inference
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0">
-                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
-                  <CodeBlock
-                    title=""
-                    description=""
-                    code={dataCreationExample}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
+              <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Create DataFrames from arrays of objects with automatic type
+                inference
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={dataCreationExample}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
-              <CardHeader className="pb-3 px-4 pt-4">
-                <div className="flex items-center justify-between w-full">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Transform Data
-                  </CardTitle>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+          <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+            <CardHeader className="pb-3 px-4 pt-4">
+              <div className="flex items-center justify-between w-full">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Transform Data
+                </CardTitle>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                >
+                  {/* @ts-ignore TS thinks you need search prop */}
+                  <Link
+                    to="/transforming-data"
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })}
                   >
-                    {/* @ts-ignore TS thinks you need search prop */}
-                    <Link 
-                      to="/transforming-data"
-                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    >
-                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Add calculated columns using `mutate()` with access to row values, index, and full DataFrame context
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0">
-                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
-                  <CodeBlock
-                    title=""
-                    description=""
-                    code={dataTransformationExample}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
+              <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Add calculated columns using `mutate()` with access to row
+                values, index, and full DataFrame context
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={dataTransformationExample}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
-              <CardHeader className="pb-3 px-4 pt-4">
-                <div className="flex items-center justify-between w-full">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Group and Summarize
-                  </CardTitle>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+          <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+            <CardHeader className="pb-3 px-4 pt-4">
+              <div className="flex items-center justify-between w-full">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Group and Summarize
+                </CardTitle>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                >
+                  {/* @ts-ignore TS thinks you need search prop */}
+                  <Link
+                    to="/grouping-aggregation"
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })}
                   >
-                    {/* @ts-ignore TS thinks you need search prop */}
-                    <Link 
-                      to="/grouping-aggregation"
-                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    >
-                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Group data by categories and calculate summary statistics with groupBy() and summarize()
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0">
-                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
-                  <CodeBlock
-                    title=""
-                    description=""
-                    code={groupingExample}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
+              <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Group data by categories and calculate summary statistics with
+                groupBy() and summarize()
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={groupingExample}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
-              <CardHeader className="pb-3 px-4 pt-4">
-                <div className="flex items-center justify-between w-full">
-                  <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                    Statistical Tests
-                  </CardTitle>
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+          <Card className="border-0 shadow-sm gap-2 sm:gap-2 rounded-none md:rounded-xl">
+            <CardHeader className="pb-3 px-4 pt-4">
+              <div className="flex items-center justify-between w-full">
+                <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  Statistical Tests
+                </CardTitle>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="text-emerald-600 hover:text-emerald-700 border-emerald-200 hover:border-emerald-300"
+                >
+                  {/* @ts-ignore TS thinks you need search prop */}
+                  <Link
+                    to="/stats-module"
+                    onClick={() =>
+                      window.scrollTo({ top: 0, behavior: "smooth" })}
                   >
-                    {/* @ts-ignore TS thinks you need search prop */}
-                    <Link 
-                      to="/stats-module"
-                      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    >
-                      Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
-                    </Link>
-                  </Button>
-                </div>
-                <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                  Perform hypothesis testing and correlation analysis using the `stats` module
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-0">
-                <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
-                  <CodeBlock
-                    title=""
-                    description=""
-                    code={statisticalTestExample}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                    Learn More <ArrowRightIcon className="ml-2 h-3 w-3" />
+                  </Link>
+                </Button>
+              </div>
+              <CardDescription className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Perform hypothesis testing and correlation analysis using the
+                `stats` module
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-0">
+              <div className="[&_pre]:!rounded-none md:[&_pre]:!rounded-md">
+                <CodeBlock
+                  title=""
+                  description=""
+                  code={statisticalTestExample}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Research Evidence Section */}
@@ -309,7 +318,8 @@ function HomeComponent() {
               Proven Bug Prevention
             </h3>
             <p className="text-gray-600 dark:text-gray-300">
-              Empirical research shows that static typing significantly reduces production bugs
+              Empirical research shows that static typing significantly reduces
+              production bugs
             </p>
           </div>
 
@@ -409,7 +419,7 @@ function HomeComponent() {
               className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 text-lg font-semibold rounded-lg"
             >
               {/* @ts-ignore TS thinks you need search prop */}
-              <Link 
+              <Link
                 to="/getting-started"
                 onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               >

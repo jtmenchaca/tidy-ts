@@ -12,8 +12,7 @@ export function StatsModuleReference() {
       <CardHeader>
         <CardTitle>Stats Module Reference</CardTitle>
         <CardDescription>
-          Statistical functions available in mutate
-          operations
+          Statistical functions available in mutate operations
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -61,12 +60,10 @@ export function StatsModuleReference() {
                 • <code>s.iqr()</code> - Interquartile range
               </li>
               <li>
-                • <code>s.quantile()</code>{" "}
-                - Quantiles and percentiles
+                • <code>s.quantile()</code> - Quantiles and percentiles
               </li>
               <li>
-                • <code>s.quartiles()</code>{" "}
-                - First, second, third quartiles
+                • <code>s.quartiles()</code> - First, second, third quartiles
               </li>
               <li>
                 • <code>s.percentileRank()</code> - Percentile rank
@@ -138,8 +135,7 @@ export function StatsModuleReference() {
                 • <code>s.unique()</code> - Unique values
               </li>
               <li>
-                • <code>s.uniqueCount()</code>{" "}
-                - Count of unique values
+                • <code>s.uniqueCount()</code> - Count of unique values
               </li>
               <li>
                 • <code>s.countValue()</code> - Count specific value

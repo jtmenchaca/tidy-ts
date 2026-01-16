@@ -21,7 +21,7 @@ function FilteringRowsComponent() {
       description="Filtering lets you subset your data based on specific conditions. It supports both synchronous and asynchronous filtering patterns."
       currentPath="/filtering-rows"
     >
-       <div className="my-8">
+      <div className="my-8">
         <video
           src={FilterVideo}
           autoPlay
@@ -29,7 +29,7 @@ function FilteringRowsComponent() {
           muted
           playsInline
           className="w-full max-w-xl mx-auto h-auto"
-          style={{ 
+          style={{
             // mixBlendMode: 'multiply', // Commented out for Safari compatibility
           }}
           onLoadedData={(e) => {
@@ -38,7 +38,7 @@ function FilteringRowsComponent() {
         >
           Your browser does not support the video tag.
         </video>
-      </div> 
+      </div>
 
       <CodeBlock
         title="Basic Filtering"
@@ -46,8 +46,6 @@ function FilteringRowsComponent() {
         explanation="The filter() function creates a new DataFrame containing only rows that match your condition. You can use any combination of column values and logical operators."
         code={filteringExamples.basicFiltering}
       />
-
-     
 
       <CodeBlock
         title="Using (row, index, df) Parameters in Filter"
@@ -117,7 +115,6 @@ function FilteringRowsComponent() {
           </div>
         </CardContent>
       </Card>
-
     </DocPageLayout>
   );
 }

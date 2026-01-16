@@ -29,7 +29,8 @@ const navigationFlow: NavigationItem[] = [
   {
     title: "DataFrame Basics",
     path: "/dataframe-basics",
-    description: "DataFrame properties, column access, and TypeScript integration",
+    description:
+      "DataFrame properties, column access, and TypeScript integration",
   },
   {
     title: "Transforming Data",
@@ -129,7 +130,11 @@ export function DocNavigation(
         {previousItem && (
           <Card className="flex-1 min-w-0">
             <CardContent className="p-3 md:p-4">
-              <Link to={previousItem.path as any} onClick={handleNavigation} className="cursor-pointer">
+              <Link
+                to={previousItem.path as any}
+                onClick={handleNavigation}
+                className="cursor-pointer"
+              >
                 <Button
                   variant="outline"
                   className="w-full justify-start h-auto p-2 md:p-3 min-w-0"
@@ -160,7 +165,11 @@ export function DocNavigation(
         {nextItem && (
           <Card className="flex-1 min-w-0">
             <CardContent className="p-3 md:p-4">
-              <Link to={nextItem.path as any} onClick={handleNavigation} className="cursor-pointer">
+              <Link
+                to={nextItem.path as any}
+                onClick={handleNavigation}
+                className="cursor-pointer"
+              >
                 <Button
                   variant="outline"
                   className="w-full justify-end h-auto p-2 md:p-3 min-w-0"

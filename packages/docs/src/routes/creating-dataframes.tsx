@@ -11,7 +11,7 @@ function CreatingDataFramesComponent() {
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
@@ -24,50 +24,50 @@ function CreatingDataFramesComponent() {
       <div className="mb-8 p-4 bg-gray-50 rounded-lg border">
         <h2 className="text-lg font-semibold mb-3 text-gray-800">Contents</h2>
         <nav className="space-y-1">
-          <button 
-            onClick={() => scrollToSection('basic-dataframe')} 
+          <button
+            onClick={() => scrollToSection("basic-dataframe")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             1. Directly from arrays
           </button>
-          <button 
-            onClick={() => scrollToSection('raw-sqlite')} 
+          <button
+            onClick={() => scrollToSection("raw-sqlite")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             2. From a SQL query with Zod
           </button>
-          <button 
-            onClick={() => scrollToSection('drizzle-orm')} 
+          <button
+            onClick={() => scrollToSection("drizzle-orm")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             3. From a Drizzle ORM query
           </button>
-          <button 
-            onClick={() => scrollToSection('csv-validation')} 
+          <button
+            onClick={() => scrollToSection("csv-validation")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             4. CSV file with Zod
           </button>
-          <button 
-            onClick={() => scrollToSection('xlsx-reading')} 
+          <button
+            onClick={() => scrollToSection("xlsx-reading")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             5. XLSX file with Zod
           </button>
-          <button 
-            onClick={() => scrollToSection('parquet-reading')} 
+          <button
+            onClick={() => scrollToSection("parquet-reading")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             6. Parquet with Zod
           </button>
-          <button 
-            onClick={() => scrollToSection('arrow-reading')} 
+          <button
+            onClick={() => scrollToSection("arrow-reading")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             7. Arrow with Zod
           </button>
-          <button 
-            onClick={() => scrollToSection('writing-data')} 
+          <button
+            onClick={() => scrollToSection("writing-data")}
             className="block text-left text-blue-600 hover:text-blue-800 hover:underline w-full cursor-pointer"
           >
             8. Writing CSV, XLSX, and Parquet files

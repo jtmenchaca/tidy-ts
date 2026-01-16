@@ -1,6 +1,7 @@
 // Code examples for getting started
 export const gettingStartedExamples = {
-  quickTutorial: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  
+  quickTutorial:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  
 // import { createDataFrame, s } from "@tidy-ts/dataframe" works as well
 
 // Create DataFrame from rows
@@ -117,7 +118,8 @@ const heights2: readonly number[] = typedDf.height;`,
   emptyDataFrame: `const emptyDf = createDataFrame([]);
 emptyDf.print("Empty DataFrame:");`,
 
-  singleRowDataFrame: `const singleRow = createDataFrame([{ id: 1, name: "Test", value: 42 }]);
+  singleRowDataFrame:
+    `const singleRow = createDataFrame([{ id: 1, name: "Test", value: 42 }]);
 singleRow.print("Single row DataFrame:");`,
 
   chainingOperations: `const data = createDataFrame([
@@ -151,5 +153,6 @@ result.print("Chained operations result:");`,
     pnpmLegacy: `pnpm dlx jsr add @tidy-ts/dataframe`,
   },
 
-  importStatement: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";`,
+  importStatement:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";`,
 };

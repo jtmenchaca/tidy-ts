@@ -23,9 +23,11 @@ function StatsModuleComponent() {
     >
       <section className="space-y-6">
         <div className="mb-2">
-          <h2 className="text-xl font-semibold text-muted-foreground mb-4">Descriptive Statistics</h2>
+          <h2 className="text-xl font-semibold text-muted-foreground mb-4">
+            Descriptive Statistics
+          </h2>
         </div>
-        
+
         <CodeBlock
           title="Basic Descriptive Statistics"
           description="Essential statistical measures for understanding your data"
@@ -57,11 +59,22 @@ function StatsModuleComponent() {
 
       <section className="space-y-6 mt-12">
         <div>
-          <h2 className="text-xl font-semibold text-muted-foreground mb-3">Probability Distributions</h2>
+          <h2 className="text-xl font-semibold text-muted-foreground mb-3">
+            Probability Distributions
+          </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            16 probability distributions with functions for random values, density, probability, quantile, and data generation.<br />
-            <span className="inline-block mt-1"><strong>Continuous:</strong> normal, beta, gamma, exponential, chi-square, t, F, uniform, Weibull, log-normal, Wilcoxon</span><br />
-            <span className="inline-block mt-1"><strong>Discrete:</strong> binomial, Poisson, geometric, negative binomial, hypergeometric</span>
+            16 probability distributions with functions for random values,
+            density, probability, quantile, and data generation.<br />
+            <span className="inline-block mt-1">
+              <strong>Continuous:</strong>{" "}
+              normal, beta, gamma, exponential, chi-square, t, F, uniform,
+              Weibull, log-normal, Wilcoxon
+            </span>
+            <br />
+            <span className="inline-block mt-1">
+              <strong>Discrete:</strong>{" "}
+              binomial, Poisson, geometric, negative binomial, hypergeometric
+            </span>
           </p>
         </div>
 
@@ -75,10 +88,14 @@ function StatsModuleComponent() {
 
       <section className="space-y-6 mt-12">
         <div>
-          <h2 className="text-xl font-semibold text-muted-foreground mb-3">Hypothesis Testing</h2>
+          <h2 className="text-xl font-semibold text-muted-foreground mb-3">
+            Hypothesis Testing
+          </h2>
           <p className="text-sm text-muted-foreground mb-6">
-            Comprehensive statistical tests with two approaches: a custom-designed Compare API that guides you to the right test,
-            and direct access to specific tests. All tests are rigorously validated against R.
+            Comprehensive statistical tests with two approaches: a
+            custom-designed Compare API that guides you to the right test, and
+            direct access to specific tests. All tests are rigorously validated
+            against R.
           </p>
         </div>
 
@@ -260,10 +277,12 @@ function StatsModuleComponent() {
                   • <code>s.dist.gamma.density()</code> - Gamma density
                 </li>
                 <li>
-                  • <code>s.dist.binomial.random()</code> - Binomial random samples
+                  • <code>s.dist.binomial.random()</code>{" "}
+                  - Binomial random samples
                 </li>
                 <li>
-                  • <em>...16 distributions × 4 functions each = 64 functions</em>
+                  •{" "}
+                  <em>...16 distributions × 4 functions each = 64 functions</em>
                 </li>
               </ul>
             </div>
@@ -280,19 +299,23 @@ function StatsModuleComponent() {
                   • <code>s.test.anova.oneWay()</code> - One-way ANOVA
                 </li>
                 <li>
-                  • <code>s.test.correlation.pearson()</code> - Pearson correlation test
+                  • <code>s.test.correlation.pearson()</code>{" "}
+                  - Pearson correlation test
                 </li>
                 <li>
-                  • <code>s.test.nonparametric.mannWhitney()</code> - Mann-Whitney U test
+                  • <code>s.test.nonparametric.mannWhitney()</code>{" "}
+                  - Mann-Whitney U test
                 </li>
                 <li>
-                  • <code>s.test.categorical.chiSquare()</code> - Chi-square test
+                  • <code>s.test.categorical.chiSquare()</code>{" "}
+                  - Chi-square test
                 </li>
                 <li>
                   • <code>s.test.normality.shapiroWilk()</code> - Normality test
                 </li>
                 <li>
-                  • <code>s.test.nonparametric.kruskalWallis()</code> - Kruskal-Wallis test
+                  • <code>s.test.nonparametric.kruskalWallis()</code>{" "}
+                  - Kruskal-Wallis test
                 </li>
                 <li>
                   • <em>...8 categories with 20+ statistical tests</em>

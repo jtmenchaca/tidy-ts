@@ -41,7 +41,7 @@ function TidyDataGettingStartedComponent() {
                 code: gettingStartedExamples.installationLegacy.npm,
               },
               {
-                label: "yarn", 
+                label: "yarn",
                 code: gettingStartedExamples.installationJSR.yarn,
               },
               {

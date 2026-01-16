@@ -1,6 +1,7 @@
 // Code examples for creating DataFrames
 export const creatingExamples = {
-  basicDataFrame: `import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
+  basicDataFrame:
+    `import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 
 // DataFrames are created from arrays of objects
 // Each object represents a row, keys become column names
@@ -91,7 +92,8 @@ deptSummary.print("Department Summary");
 
 client.close();`,
 
-  csvWithValidation: `import { readCSV, type DataFrame } from "@tidy-ts/dataframe";
+  csvWithValidation:
+    `import { readCSV, type DataFrame } from "@tidy-ts/dataframe";
 import { z } from "zod";
 
 // CSV data of Jedi Academy enrollment records (you can pass either a string or a file path to readCSV)
@@ -188,7 +190,8 @@ const JediSchema = z.object({
 const jediData = await readArrow("./data/jedi.arrow", JediSchema);
 jediData.print("DataFrame from Arrow:");`,
 
-  csvWriting: `import { createDataFrame, writeCSV, writeXLSX } from "@tidy-ts/dataframe";
+  csvWriting:
+    `import { createDataFrame, writeCSV, writeXLSX } from "@tidy-ts/dataframe";
 import { writeParquet } from "@tidy-ts/parquet";
 import { writeArrow } from "@tidy-ts/arrow";
 

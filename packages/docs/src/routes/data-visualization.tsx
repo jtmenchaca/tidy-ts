@@ -47,8 +47,10 @@ function DataVisualizationComponent() {
             <div>
               <p className="text-sm text-muted-foreground mb-4">
                 <strong>Chart Types:</strong> scatter, line, bar, area<br />
-                <strong>Aesthetics:</strong> color, size, series, tooltips, legends<br />
-                <strong>Styling:</strong> 9 color schemes, custom themes, interactive features
+                <strong>Aesthetics:</strong>{" "}
+                color, size, series, tooltips, legends<br />
+                <strong>Styling:</strong>{" "}
+                9 color schemes, custom themes, interactive features
               </p>
             </div>
             <CodeBlock
@@ -69,12 +71,14 @@ function DataVisualizationComponent() {
         <CardHeader>
           <CardTitle>Interactive Charts in Jupyter</CardTitle>
           <CardDescription>
-            When using Deno and Jupyter notebooks, charts become interactive with hover tooltips
+            When using Deno and Jupyter notebooks, charts become interactive
+            with hover tooltips
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="mb-4">
-            Charts display interactively in Jupyter cells with features like hover tooltips for enhanced data exploration.
+            Charts display interactively in Jupyter cells with features like
+            hover tooltips for enhanced data exploration.
           </p>
           <CodeBlock
             title="Jupyter Integration"

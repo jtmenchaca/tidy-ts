@@ -1,6 +1,7 @@
 // Code examples for DataFrame basics
 export const dataframeBasicsExamples = {
-  dataframeProperties: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  dataframeProperties:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const jediKnights = createDataFrame([
   { id: 1, name: "Luke Skywalker", species: "Human", mass: 77, height: 172 },
@@ -26,7 +27,8 @@ jediKnights.print("Jedi Knights DataFrame:");
     })
     .print("Jedi Knights DataFrame after mutation:");`,
 
-  basicColumnAccess: `// Get all values from a column - TypeScript knows the exact types
+  basicColumnAccess:
+    `// Get all values from a column - TypeScript knows the exact types
 const names = jediKnights.name; // readonly string[] - all names
 const masses = jediKnights.mass; // readonly number[] - all masses
 const species = jediKnights.species; // readonly string[] - all species

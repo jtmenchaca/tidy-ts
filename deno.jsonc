@@ -20,7 +20,10 @@
       "**/*.ipynb",
       ".claude/",
       ".cargo/",
-      "target/"
+      "target/",
+      "**/coverage/**",
+      "**/dist/**",
+      "packages/docs/public/**"
     ]
   },
   "exclude": [

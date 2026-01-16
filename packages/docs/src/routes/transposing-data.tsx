@@ -35,15 +35,12 @@ function TransposingDataComponent() {
         code={transposingExamples.doubleTranspose}
       />
 
-
       <CodeBlock
         title="Mixed Data Types"
         description="Transpose works with any data types including arrays and objects"
         explanation="Transpose operations work with any data types including strings, numbers, booleans, and even complex types like arrays and objects. All types are preserved perfectly."
         code={transposingExamples.mixedDataTypes}
       />
-
-
     </DocPageLayout>
   );
 }

@@ -160,9 +160,13 @@ Deno.test("readXLSX - error on invalid sheet name", async () => {
   });
 
   try {
-    await readXLSX("packages/dataframe/ts/io/fixtures/multiple-tabs.xlsx", schema, {
-      sheet: "nonexistent-sheet",
-    });
+    await readXLSX(
+      "packages/dataframe/ts/io/fixtures/multiple-tabs.xlsx",
+      schema,
+      {
+        sheet: "nonexistent-sheet",
+      },
+    );
     throw new Error("Should have thrown error for invalid sheet name");
   } catch (error) {
     expect((error as Error).message).toContain(
@@ -178,9 +182,13 @@ Deno.test("readXLSX - error on invalid sheet index", async () => {
   });
 
   try {
-    await readXLSX("packages/dataframe/ts/io/fixtures/multiple-tabs.xlsx", schema, {
-      sheet: 10,
-    });
+    await readXLSX(
+      "packages/dataframe/ts/io/fixtures/multiple-tabs.xlsx",
+      schema,
+      {
+        sheet: 10,
+      },
+    );
     throw new Error("Should have thrown error for invalid sheet index");
   } catch (error) {
     expect((error as Error).message).toContain("Sheet index 10 out of range");

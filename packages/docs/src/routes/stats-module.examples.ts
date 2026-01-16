@@ -1,6 +1,7 @@
 // Code examples for stats module
 export const statsModuleExamples = {
-  basicDescriptiveStats: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  basicDescriptiveStats:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const sampleData = createDataFrame([
   { id: 1, value: 10, category: "A", score: 85 },
@@ -137,7 +138,8 @@ console.log(groupComparison);
 //   alpha: 0.05
 // }`,
 
-  specificTests: `// If you'd prefer to have the specific test instead, we provide that via the test API as well. 
+  specificTests:
+    `// If you'd prefer to have the specific test instead, we provide that via the test API as well. 
 const data = [170, 165, 180, 175, 172, 168];
 const before = [23, 25, 28, 30, 32, 29, 27];
 const after = [25, 27, 30, 32, 34, 31, 29];
@@ -154,7 +156,8 @@ const kruskalWallis = s.test.nonparametric.kruskalWallis([group1, group2], 0.05)
 const pearsonTest = s.test.correlation.pearson(group1, group2, "two-sided", 0.05);
 const shapiroWilk = s.test.normality.shapiroWilk(data, 0.05);`,
 
-  compareAPIReference: `// Here are the various functions that the compare API exposes for use.  
+  compareAPIReference:
+    `// Here are the various functions that the compare API exposes for use.  
 // Each has various options to help both new and experienced users feel confident in what they're getting.
 s.compare.oneGroup.centralTendency.toValue(...)
 s.compare.oneGroup.proportions.toValue(...)

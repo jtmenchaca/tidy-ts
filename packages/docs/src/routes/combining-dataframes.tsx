@@ -41,7 +41,6 @@ function CombiningDataFramesComponent() {
         explanation="You can also use the traditional spread operator to combine DataFrames, though bindRows is generally preferred for its clarity and type safety."
         code={combiningExamples.spreadOperator}
       />
-
     </DocPageLayout>
   );
 }

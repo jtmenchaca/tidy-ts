@@ -3,7 +3,7 @@
  *
  * Demonstrates s.batch() and s.chunk() for efficient async operations
  * with concurrency control, batching, and retry logic.
- */ 
+ */
 
 import { expect } from "@std/expect";
 import { stats as s } from "@tidy-ts/dataframe";

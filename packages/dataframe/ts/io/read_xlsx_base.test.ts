@@ -110,7 +110,9 @@ Deno.test("parseXLSXRaw - special characters", async () => {
 });
 
 Deno.test("parseXLSXRaw - mtcars dataset", async () => {
-  const data = await parseXLSXRaw("packages/dataframe/ts/io/fixtures/mtcars.xlsx");
+  const data = await parseXLSXRaw(
+    "packages/dataframe/ts/io/fixtures/mtcars.xlsx",
+  );
 
   expect(data.length).toBeGreaterThan(1);
   // mtcars has 12 columns (rowname + 11 variables)
@@ -118,7 +120,9 @@ Deno.test("parseXLSXRaw - mtcars dataset", async () => {
 });
 
 Deno.test("parseXLSXRaw - penguins dataset", async () => {
-  const data = await parseXLSXRaw("packages/dataframe/ts/io/fixtures/penguins.xlsx");
+  const data = await parseXLSXRaw(
+    "packages/dataframe/ts/io/fixtures/penguins.xlsx",
+  );
 
   expect(data.length).toBeGreaterThan(1);
   expect(data[0][0]).toBe("species");

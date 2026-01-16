@@ -45,9 +45,9 @@ export function SidebarProvider(
                 className="hover:opacity-75 transition-opacity flex items-center gap-2 lg:gap-3 flex-shrink-0"
               >
                 <div className="flex items-center gap-1">
-                  <img 
-                    src={TidyTsLogo} 
-                    alt="Tidy-TS Logo" 
+                  <img
+                    src={TidyTsLogo}
+                    alt="Tidy-TS Logo"
                     className="h-10 w-10"
                   />
                 </div>

@@ -33,7 +33,8 @@ const withAsyncData = await people
 
 withAsyncData.print("DataFrame with async operations:");`,
 
-  concurrencyControl: `// Async data transformations with built-in concurrency control
+  concurrencyControl:
+    `// Async data transformations with built-in concurrency control
 const enrichedData = await sales
   .mutate({
     // Mix sync and async operations
@@ -67,7 +68,8 @@ const heavyValidatedCharacters = await people
 
 heavyValidatedCharacters.print("Heavy validated characters:");`,
 
-  asyncAggregation: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  asyncAggregation:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Async function to fetch species metadata
 async function fetchSpeciesMetadata(species: string): Promise<number> {
@@ -113,7 +115,8 @@ const result = await data
     },
   });`,
 
-  errorHandling: `// Pattern 1: Try/catch for unexpected errors that should stop execution
+  errorHandling:
+    `// Pattern 1: Try/catch for unexpected errors that should stop execution
 async function fetchUserRating(mass: number): Promise<string> {
   await new Promise((resolve) => setTimeout(resolve, 1));
   if (mass < 30) {

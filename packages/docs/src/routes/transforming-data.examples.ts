@@ -1,6 +1,7 @@
 // Code examples for transforming data
 export const transformingExamples = {
-  basicMutate: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  basicMutate:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },
@@ -33,7 +34,8 @@ const withParameters = people
 
 withParameters.print("Using all three parameters:");`,
 
-  chainingMutate: `// When intermediate values are needed, you can always chain multiple mutate calls
+  chainingMutate:
+    `// When intermediate values are needed, you can always chain multiple mutate calls
 const chainedExample = people
   .mutate({
     doubleMass: (row) => row.mass * 2,

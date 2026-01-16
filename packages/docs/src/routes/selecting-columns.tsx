@@ -41,7 +41,6 @@ function SelectingColumnsComponent() {
         explanation="Extract methods provide flexible ways to get specific values from columns, such as the first value, last value, or random samples."
         code={selectingExamples.extractSpecificValues}
       />
-
     </DocPageLayout>
   );
 }

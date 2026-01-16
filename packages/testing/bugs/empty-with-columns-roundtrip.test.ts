@@ -2,7 +2,7 @@
  * Test that empty DataFrames with columns can do a proper roundtrip
  */
 
-import { createDataFrame, writeXLSX, readXLSX } from "@tidy-ts/dataframe";
+import { createDataFrame, readXLSX, writeXLSX } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { z } from "zod";
 

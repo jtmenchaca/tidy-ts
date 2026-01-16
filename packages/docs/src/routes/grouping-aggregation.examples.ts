@@ -1,6 +1,7 @@
 // Code examples for grouping and aggregation
 export const groupingExamples = {
-  basicGroupBy: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  basicGroupBy:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const people = createDataFrame([
   { id: 1, name: "Luke", species: "Human", mass: 77, height: 172, year: 2023 },
@@ -76,7 +77,8 @@ const basicAnalysis = people
 
 basicAnalysis.print("Basic species analysis:");`,
 
-  countShorthand: `// Count shorthand - equivalent to groupBy(...columns).summarise({ count: g => g.nrows() })
+  countShorthand:
+    `// Count shorthand - equivalent to groupBy(...columns).summarise({ count: g => g.nrows() })
 const countBySpecies = people.count("species");
 const countBySpeciesAndYear = people.count("species", "year");
 

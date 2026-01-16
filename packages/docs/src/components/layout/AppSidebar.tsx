@@ -142,9 +142,9 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
           className="flex items-center gap-2 hover:opacity-75 transition-opacity"
           onClick={handleNavigation}
         >
-          <img 
-            src={TidyTsLogo} 
-            alt="Tidy-TS Logo" 
+          <img
+            src={TidyTsLogo}
+            alt="Tidy-TS Logo"
             className="h-10 w-10"
           />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -159,7 +159,11 @@ export function AppSidebar({ variant = "sidebar", ...props }: AppSidebarProps) {
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 {/* @ts-ignore TS thinks you need search prop */}
-                <Link to="/" className="flex items-center gap-2" onClick={handleNavigation}>
+                <Link
+                  to="/"
+                  className="flex items-center gap-2"
+                  onClick={handleNavigation}
+                >
                   <HomeIcon className="h-4 w-4" />
                   Home
                 </Link>

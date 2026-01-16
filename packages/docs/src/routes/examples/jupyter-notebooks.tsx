@@ -39,40 +39,47 @@ function JupyterNotebooksComponent() {
         </h3>
         <div className="grid md:grid-cols-2 gap-6">
           <div>
-            <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">Deno Extension</p>
-            <img 
-              src={denoVscodeExt} 
-              alt="Deno extension in VSCode" 
+            <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+              Deno Extension
+            </p>
+            <img
+              src={denoVscodeExt}
+              alt="Deno extension in VSCode"
               className="w-full max-w-2xl rounded border shadow-sm mb-2"
             />
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Install the <code>denoland.vscode-deno</code> extension for TypeScript support and Deno integration.
+              Install the <code>denoland.vscode-deno</code>{" "}
+              extension for TypeScript support and Deno integration.
             </p>
           </div>
           <div>
-            <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">Jupyter Extension</p>
-            <img 
-              src={jupyterVscodeExt} 
-              alt="Jupyter extension in VSCode" 
+            <p className="font-medium text-blue-900 dark:text-blue-100 mb-2">
+              Jupyter Extension
+            </p>
+            <img
+              src={jupyterVscodeExt}
+              alt="Jupyter extension in VSCode"
               className="w-full max-w-2xl rounded border shadow-sm mb-2"
             />
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              Install the <code>ms-toolsai.jupyter</code> extension for notebook support and interactive cells.
+              Install the <code>ms-toolsai.jupyter</code>{" "}
+              extension for notebook support and interactive cells.
             </p>
           </div>
         </div>
         <div className="mt-4">
-          <img 
-            src={ipynbDenoNotebook} 
-            alt="Deno notebook in VSCode" 
+          <img
+            src={ipynbDenoNotebook}
+            alt="Deno notebook in VSCode"
             className="w-full max-w-3xl rounded border shadow-sm"
           />
           <p className="text-sm text-blue-700 dark:text-blue-300 mt-2">
-            Once both extensions are installed, create a <code>.ipynb</code> file and select the Deno kernel.
+            Once both extensions are installed, create a <code>.ipynb</code>
+            {" "}
+            file and select the Deno kernel.
           </p>
         </div>
       </div>
-
 
       <CodeBlock
         title="Data Visualization"
@@ -150,8 +157,6 @@ const interactiveChart = salesData
 
 interactiveChart // Chart displays interactively in Jupyter cell`}
       />
-
-
     </DocPageLayout>
   );
 }

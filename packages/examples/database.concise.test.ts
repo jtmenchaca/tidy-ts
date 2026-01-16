@@ -2,7 +2,7 @@
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path"; 
+import { dirname, join } from "node:path";
 import { z } from "zod";
 // deno-lint-ignore no-unversioned-import
 import { drizzle } from "npm:drizzle-orm/libsql";
