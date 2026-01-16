@@ -10,6 +10,7 @@
     "lint": "deno lint packages examples",
     "check": "deno check --unstable-tsgo packages/dataframe && deno check --unstable-tsgo packages/shims && deno check --unstable-tsgo packages/mcp && deno check --unstable-tsgo packages/examples/dataframe && deno check --unstable-tsgo packages/testing/bugs && deno check --unstable-tsgo packages/testing/statistical_tests",
     "check:dataframe": "deno check --unstable-tsgo packages/dataframe",
+    "check:mcp": "deno check --unstable-tsgo packages/mcp",
     "ci": "pnpm fmt && pnpm lint && pnpm check && deno test -A --parallel --v8-flags=--max-old-space-size=8192 packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/statistical_tests --quiet",
     "ci:shims": "deno fmt packages/shims && deno lint packages/shims && deno test -A packages/shims",
     "ci:no-stats": "pnpm fmt && pnpm lint && deno check --unstable-tsgo packages/dataframe && deno check --unstable-tsgo packages/examples/dataframe && deno check --unstable-tsgo packages/testing/bugs && deno check --unstable-tsgo packages/testing/new_features && deno test -A --parallel packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/new_features --quiet",
