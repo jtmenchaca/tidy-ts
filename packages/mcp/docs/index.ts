@@ -1,8 +1,11 @@
 import { statsDocs } from "./stats.ts";
 import { dataframeDocs } from "./dataframe.ts";
 import { ioDocs } from "./io.ts";
-import { llmDocs } from "./llm.ts";
-import { shimsDocs } from "./shims.ts";
+import { shimsDocs } from "./shims/index.ts";
+import { stringDocs } from "./string/index.ts";
+import { statsDistributionsDocs } from "./stats-distributions/index.ts";
+import { statsTestsDocs } from "./stats-tests/index.ts";
+import { statsCompareDocs } from "./stats-compare/index.ts";
 import type { DocEntry } from "./mcp-types.ts";
 
 export const DOCS: Record<string, DocEntry> = {
@@ -15,11 +18,20 @@ export const DOCS: Record<string, DocEntry> = {
   // Statistics functions
   ...statsDocs,
 
-  // LLM utilities
-  ...llmDocs,
+  // Probability distributions
+  ...statsDistributionsDocs,
+
+  // Statistical tests
+  ...statsTestsDocs,
+
+  // Group comparison API
+  ...statsCompareDocs,
 
   // Cross-runtime shims
   ...shimsDocs,
+
+  // String utilities
+  ...stringDocs,
 };
 
 // Derive category lists from doc entries (single source of truth)
@@ -37,8 +49,11 @@ export const CATEGORIES = {
   dataframe: getKeysByCategory(DOCS, "dataframe"),
   io: getKeysByCategory(DOCS, "io"),
   stats: getKeysByCategory(DOCS, "stats"),
-  llm: getKeysByCategory(DOCS, "llm"),
+  "stats-distributions": getKeysByCategory(DOCS, "stats-distributions"),
+  "stats-tests": getKeysByCategory(DOCS, "stats-tests"),
+  "stats-compare": getKeysByCategory(DOCS, "stats-compare"),
   shims: getKeysByCategory(DOCS, "shims"),
+  string: getKeysByCategory(DOCS, "string"),
   all: Object.keys(DOCS),
 };
 
@@ -46,9 +61,12 @@ export const CATEGORIES = {
 export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   dataframe: "DataFrame Operations",
   stats: "Statistics Functions",
+  "stats-distributions": "Probability Distributions",
+  "stats-tests": "Statistical Tests",
+  "stats-compare": "Group Comparison API",
   io: "I/O Operations",
-  llm: "LLM Utilities",
   shims: "Cross-Runtime Compatibility (Shims)",
+  string: "String Utilities",
 };
 
 export function getOperationsByCategory(category: string): DocEntry[] {

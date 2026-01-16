@@ -1,8 +1,14 @@
 /**
  * Generate markdown documentation from MCP DocEntry objects
+ *
+ * Generates nested markdown structure mirroring packages/mcp/docs/:
+ *   packages/mcp/docs/stats-tests/t-tests.ts → docs/api/stats-tests/t-tests.md
+ *
  * Run with: deno run -A scripts/generate-markdown-docs.ts
  */
 
+import { walk } from "jsr:@std/fs/walk";
+import { basename, dirname, join, relative } from "jsr:@std/path";
 import {
   CATEGORIES,
   CATEGORY_DISPLAY_NAMES,
@@ -11,6 +17,7 @@ import {
 import type { DocEntry } from "../packages/mcp/docs/mcp-types.ts";
 
 const OUTPUT_DIR = "./docs/api";
+const MCP_DOCS_DIR = "./packages/mcp/docs";
 
 function docEntryToMarkdown(entry: DocEntry): string {
   const lines: string[] = [];
@@ -100,8 +107,52 @@ function docEntryToMarkdown(entry: DocEntry): string {
   return lines.join("\n");
 }
 
+/**
+ * Generate markdown for a single topic file containing multiple DocEntries
+ */
+function generateTopicMarkdown(
+  topicName: string,
+  entries: DocEntry[],
+): string {
+  const lines: string[] = [];
+
+  // Title from topic name (e.g., "t-tests" → "T-Tests")
+  const title = topicName
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+  lines.push(`# ${title}`);
+  lines.push("");
+  lines.push(`> Auto-generated from tidy-ts MCP documentation`);
+  lines.push("");
+
+  // Table of contents (only if multiple entries)
+  if (entries.length > 1) {
+    lines.push("## Table of Contents");
+    lines.push("");
+    entries.forEach((doc) => {
+      lines.push(
+        `- [${doc.name}](#${doc.name.toLowerCase().replace(/\./g, "")})`,
+      );
+    });
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+  }
+
+  // Each entry
+  entries.forEach((doc) => {
+    lines.push(docEntryToMarkdown(doc));
+  });
+
+  return lines.join("\n");
+}
+
+/**
+ * Generate markdown for a category (used for flat structure fallback)
+ */
 function generateCategoryMarkdown(
-  category: string,
   displayName: string,
   keys: string[],
 ): string {
@@ -138,32 +189,189 @@ function generateCategoryMarkdown(
   return lines.join("\n");
 }
 
-async function main() {
-  // Ensure output directory exists
-  await Deno.mkdir(OUTPUT_DIR, { recursive: true });
+/**
+ * Discover topic files from MCP docs directory structure
+ * Returns map of relative paths to their exported doc names
+ */
+async function discoverTopicFiles(): Promise<
+  Map<string, { category: string; topic: string }>
+> {
+  const topicFiles = new Map<string, { category: string; topic: string }>();
 
-  // Generate markdown for each category
-  const categoryMapping: Record<string, string> = {
-    dataframe: "dataframe",
-    stats: "stats",
-    io: "io",
-    llm: "llm",
-    shims: "shims",
-  };
+  for await (
+    const entry of walk(MCP_DOCS_DIR, {
+      exts: [".ts"],
+      skip: [/index\.ts$/, /mcp-types\.ts$/],
+    })
+  ) {
+    const relPath = relative(MCP_DOCS_DIR, entry.path);
+    const parts = relPath.split("/");
 
-  for (const [category, filename] of Object.entries(categoryMapping)) {
-    const keys = CATEGORIES[category as keyof typeof CATEGORIES];
-    const displayName = CATEGORY_DISPLAY_NAMES[category] || category;
-
-    if (keys && keys.length > 0) {
-      const markdown = generateCategoryMarkdown(category, displayName, keys);
-      const filepath = `${OUTPUT_DIR}/${filename}.md`;
-      await Deno.writeTextFile(filepath, markdown);
-      console.log(`Generated: ${filepath} (${keys.length} entries)`);
+    // Only process files in subdirectories (category/topic.ts)
+    if (parts.length === 2) {
+      const category = parts[0];
+      const topic = basename(parts[1], ".ts");
+      topicFiles.set(relPath, { category, topic });
     }
   }
 
-  // Generate index/README
+  return topicFiles;
+}
+
+/**
+ * Load doc entries from a specific topic file
+ */
+async function loadTopicDocs(
+  topicPath: string,
+): Promise<DocEntry[]> {
+  try {
+    const fullPath = join(MCP_DOCS_DIR, topicPath);
+    const module = await import(Deno.realPathSync(fullPath));
+
+    // Find the exported docs object (e.g., tTestDocs, csvDocs)
+    const entries: DocEntry[] = [];
+    for (const [key, value] of Object.entries(module)) {
+      if (
+        key.endsWith("Docs") && typeof value === "object" && value !== null
+      ) {
+        // This is a docs object like { "s.test.t.oneSample": DocEntry, ... }
+        for (
+          const docEntry of Object.values(value as Record<string, unknown>)
+        ) {
+          if (isDocEntry(docEntry)) {
+            entries.push(docEntry);
+          }
+        }
+      }
+    }
+
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
+function isDocEntry(obj: unknown): obj is DocEntry {
+  return (
+    typeof obj === "object" &&
+    obj !== null &&
+    "name" in obj &&
+    "description" in obj &&
+    "signature" in obj
+  );
+}
+
+/**
+ * Group DOCS entries by their category for flat structure fallback
+ */
+function groupDocsByCategory(): Map<string, DocEntry[]> {
+  const grouped = new Map<string, DocEntry[]>();
+
+  for (const doc of Object.values(DOCS)) {
+    const category = doc.category || "other";
+    if (!grouped.has(category)) {
+      grouped.set(category, []);
+    }
+    grouped.get(category)!.push(doc);
+  }
+
+  return grouped;
+}
+
+async function main() {
+  console.log("Generating markdown documentation...\n");
+
+  // Ensure output directory exists
+  await Deno.mkdir(OUTPUT_DIR, { recursive: true });
+
+  // Try to discover nested topic files
+  const topicFiles = await discoverTopicFiles();
+  const generatedCategories = new Set<string>();
+
+  if (topicFiles.size > 0) {
+    console.log(`Found ${topicFiles.size} topic files in nested structure\n`);
+
+    // Generate nested markdown files
+    for (const [relPath, { category, topic }] of topicFiles) {
+      const entries = await loadTopicDocs(relPath);
+
+      if (entries.length > 0) {
+        // Create category directory
+        const categoryDir = join(OUTPUT_DIR, category);
+        await Deno.mkdir(categoryDir, { recursive: true });
+
+        // Generate markdown
+        const markdown = generateTopicMarkdown(topic, entries);
+        const outputPath = join(categoryDir, `${topic}.md`);
+        await Deno.writeTextFile(outputPath, markdown);
+        console.log(`Generated: ${outputPath} (${entries.length} entries)`);
+
+        generatedCategories.add(category);
+      }
+    }
+  }
+
+  // Fallback: Generate flat category files for categories without nested structure
+  const docsByCategory = groupDocsByCategory();
+
+  for (const [category, entries] of docsByCategory) {
+    // Skip if we already generated nested files for this category
+    if (generatedCategories.has(category)) {
+      continue;
+    }
+
+    const displayName = CATEGORY_DISPLAY_NAMES[category] || category;
+    const keys = entries.map((e) => e.name);
+
+    if (keys.length > 0) {
+      const markdown = generateCategoryMarkdown(displayName, keys);
+      const filepath = `${OUTPUT_DIR}/${category}.md`;
+      await Deno.writeTextFile(filepath, markdown);
+      console.log(`Generated: ${filepath} (${keys.length} entries) [flat]`);
+    }
+  }
+
+  // Generate category index files for nested categories
+  for (const category of generatedCategories) {
+    const categoryDir = join(OUTPUT_DIR, category);
+    const displayName = CATEGORY_DISPLAY_NAMES[category] || category;
+
+    // List all .md files in the category
+    const mdFiles: string[] = [];
+    for await (const entry of Deno.readDir(categoryDir)) {
+      if (
+        entry.isFile && entry.name.endsWith(".md") && entry.name !== "index.md"
+      ) {
+        mdFiles.push(entry.name);
+      }
+    }
+
+    if (mdFiles.length > 0) {
+      const indexLines: string[] = [];
+      indexLines.push(`# ${displayName}`);
+      indexLines.push("");
+      indexLines.push("> Auto-generated index");
+      indexLines.push("");
+
+      mdFiles.sort().forEach((file) => {
+        const name = basename(file, ".md");
+        const title = name
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+        indexLines.push(`- [${title}](./${file})`);
+      });
+      indexLines.push("");
+
+      await Deno.writeTextFile(
+        join(categoryDir, "index.md"),
+        indexLines.join("\n"),
+      );
+      console.log(`Generated: ${join(categoryDir, "index.md")} (index)`);
+    }
+  }
+
+  // Generate main README
   const indexLines: string[] = [];
   indexLines.push("# Tidy-TS API Documentation");
   indexLines.push("");
@@ -178,9 +386,6 @@ async function main() {
     "- **[@tidy-ts/shims](https://jsr.io/@tidy-ts/shims)** - Cross-runtime compatibility",
   );
   indexLines.push(
-    "- **[@tidy-ts/ai](https://jsr.io/@tidy-ts/ai)** - AI/LLM utilities",
-  );
-  indexLines.push(
     "- **[@tidy-ts/parquet](https://jsr.io/@tidy-ts/parquet)** - Parquet file I/O",
   );
   indexLines.push(
@@ -190,9 +395,18 @@ async function main() {
   indexLines.push("## API Reference");
   indexLines.push("");
 
+  // List nested categories first
+  for (const category of Array.from(generatedCategories).sort()) {
+    const displayName = CATEGORY_DISPLAY_NAMES[category] || category;
+    indexLines.push(`- [${displayName}](./api/${category}/index.md)`);
+  }
+
+  // Then flat categories
   for (
     const [category, displayName] of Object.entries(CATEGORY_DISPLAY_NAMES)
   ) {
+    if (generatedCategories.has(category)) continue;
+
     const keys = CATEGORIES[category as keyof typeof CATEGORIES];
     if (keys && keys.length > 0) {
       indexLines.push(
@@ -206,7 +420,7 @@ async function main() {
   indexLines.push("");
   indexLines.push("```typescript");
   indexLines.push(
-    'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    'import { createDataFrame, s } from "@tidy-ts/dataframe";',
   );
   indexLines.push("");
   indexLines.push("const df = createDataFrame([");
@@ -218,7 +432,7 @@ async function main() {
   indexLines.push("// Analyze data");
   indexLines.push("const result = df");
   indexLines.push("  .filter((r) => r.age > 25)");
-  indexLines.push("  .mutate({ grade: (r) => r.score >= 90 ? 'A' : 'B' })");
+  indexLines.push('  .mutate({ grade: (r) => r.score >= 90 ? "A" : "B" })');
   indexLines.push('  .arrange("score", "desc");');
   indexLines.push("");
   indexLines.push('result.print("Analysis Results");');
