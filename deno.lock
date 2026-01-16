@@ -150,6 +150,18 @@
         }
       },
       "packages/dataframe": {
+        "dependencies": [
+          "jsr:@std/csv@^1.0.6",
+          "jsr:@std/encoding@^1.0.10",
+          "jsr:@std/expect@^1.0.15",
+          "jsr:@std/path@^1.0.8",
+          "jsr:@std/random@~0.1.2",
+          "jsr:@tidy-ts/shims@^0.0.19",
+          "npm:vega-embed@^7.0.2",
+          "npm:vega-lite@^6.4.1",
+          "npm:vega@^6.2.0",
+          "npm:zod@^4.1.8"
+        ],
         "packageJson": {
           "dependencies": [
             "npm:vega-embed@^7.0.2",
