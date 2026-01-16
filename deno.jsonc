@@ -35,8 +35,7 @@
     "**/target/**",
     "**/__pycache__/**",
     "**/.DS_Store",
-    "coverage/**",
-    "**/*.wasm"
+    "**/coverage/**"
   ],
   "workspace": [
     "packages/*"
