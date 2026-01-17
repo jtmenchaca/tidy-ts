@@ -126,3 +126,4 @@ export const negativeBinomialDocs: Record<string, DocEntry> = {
     ],
   },
 };
+

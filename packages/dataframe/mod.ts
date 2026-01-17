@@ -15,6 +15,9 @@ export type {
 } from "./ts/promised-dataframe/concurrency-utils.ts";
 // I/O functions with conditional loading
 export {
+  peek,
+  peekCSV,
+  peekXLSX,
   readCSV,
   readCSVMetadata,
   readJSON,

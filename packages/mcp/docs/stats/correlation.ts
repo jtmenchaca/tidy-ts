@@ -5,21 +5,24 @@ export const correlationDocs: Record<string, DocEntry> = {
     name: "s.covariance",
     category: "stats",
     signature:
-      "s.covariance(x: number[], y: number[], removeNA?: boolean): number | null",
+      "s.covariance(x: number[], y: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
     description:
-      "Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs.",
+      "Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "x: First array of numbers",
       "y: Second array of numbers (same length as x)",
-      "removeNA: If true, guarantees a number return (throws if no valid pairs)",
+      "options.removeNull: If true, skips pairs where either value is null",
+      "options.removeUndefined: If true, skips pairs where either value is undefined",
+      "options.removeNaN: If true, skips pairs where either value is NaN",
     ],
     returns: "number | null",
     examples: [
       "s.covariance([1, 2, 3], [1, 2, 3]) // 1",
       "s.covariance([1, 2, 3], [3, 2, 1]) // -1",
-      "s.covariance([1, null, 3], [1, 2, 3], false) // null (due to null)",
-      "s.covariance([1, null, 3], [1, 2, 3], true) // 2 (ignoring null pair)",
+      "s.covariance([1, null, 3], [1, 2, 3]) // null (null present)",
+      "s.covariance([1, null, 3], [1, 2, 3], { removeNull: true }) // covariance of pairs (1,1) and (3,3)",
+      "s.covariance([1, NaN, 3], [1, 2, 3], { removeNaN: true }) // covariance of pairs (1,1) and (3,3)",
       '// From DataFrame columns\nconst df = createDataFrame([\n  { height: 170, weight: 70 },\n  { height: 180, weight: 85 },\n  { height: 165, weight: 60 },\n]);\nconst cov = s.covariance(\n  df.extract("height"),\n  df.extract("weight")\n);',
     ],
     related: ["s.test.correlation.pearson", "variance", "extract"],
@@ -28,8 +31,7 @@ export const correlationDocs: Record<string, DocEntry> = {
   pearson: {
     name: "s.pearson",
     category: "stats",
-    signature:
-      "s.pearson(x: number[], y: number[]): number | null",
+    signature: "s.pearson(x: number[], y: number[]): number | null",
     description:
       "Calculate the Pearson correlation coefficient between two numeric arrays. Returns a value between -1 (perfect negative correlation) and 1 (perfect positive correlation). Returns null if calculation is not possible.",
     imports: [
@@ -69,8 +71,7 @@ export const correlationDocs: Record<string, DocEntry> = {
   spearman: {
     name: "s.spearman",
     category: "stats",
-    signature:
-      "s.spearman(x: number[], y: number[]): number | null",
+    signature: "s.spearman(x: number[], y: number[]): number | null",
     description:
       "Calculate Spearman's rank correlation coefficient. Measures monotonic (not necessarily linear) relationships. More robust to outliers than Pearson.",
     imports: [

@@ -26,6 +26,30 @@
       "packages/docs/public/**"
     ]
   },
+  "lint": {
+    "exclude": [
+      "**/node_modules/**",
+      "dist/**",
+      "node_modules/**",
+      ".tanstack/**",
+      ".vite/deps/**",
+      ".vite/**",
+      "**/.vite/deps/**",
+      "**/.vite/**",
+      "**/.cursor/**",
+      "**/.obsidian/**",
+      "**/.cargo/**",
+      "**/.claude/**",
+      "**/.env/**",
+      "**/.env.local/**",
+      "**/.env.development.local/**",
+      "**/.env.test.local/**",
+      "**/.env.production.local/**",
+      "**/coverage/**",
+      "**/dist/**",
+      "packages/docs/public/**"
+    ]
+  },
   "exclude": [
     "**/node_modules/**",
     "dist/**",

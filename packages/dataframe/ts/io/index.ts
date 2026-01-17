@@ -15,6 +15,9 @@ export * from "./csv-parser.ts";
 // Write functions
 export * from "./write_csv.ts";
 
+// Peek functions for inspecting file structure
+export { peek, peekCSV, peekXLSX } from "./peek.ts";
+
 // Note: Parquet and Arrow I/O have been moved to separate packages:
 // - @tidy-ts/parquet for Parquet file support
 // - @tidy-ts/arrow for Arrow IPC file support

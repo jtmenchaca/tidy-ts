@@ -12,60 +12,108 @@ export type DatesWithNullable =
   | (Date | null | undefined)[]
   | readonly (Date | null | undefined)[];
 
+/** Options for filtering values in first function */
+export interface FirstOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+}
+
 /**
  * Get the first value in an array of numbers, dates, or other types
  *
  * @param values - Array of values, or single value
- * @param removeNA - If true, skips null/undefined values and returns first valid value
- * @returns The first value, or null if no valid values and removeNA=false
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, skips null values (default: false)
+ * @param options.removeUndefined - If true, skips undefined values (default: false)
+ * @returns The first value, or null if no valid values
  *
  * @example
  * ```ts
  * first(42) // Always returns 42 for single value
  * first([1, 2, 3, 4, 5]) // 1
- * first([null, 2, 3], false) // null (first value is null)
- * first([null, 2, 3], true) // 2 (skips null, returns first valid)
+ * first([null, 2, 3]) // null (first value is null)
+ * first([null, 2, 3], { removeNull: true }) // 2 (skips null)
  * first([new Date('2024-01-01'), new Date('2024-01-02')]) // new Date('2024-01-01')
  * ```
  */
+
 // Single value overloads
 export function first<T>(value: T): T;
 
 // Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
-export function first<T>(values: readonly T[]): T;
-export function first<T>(values: T[]): T;
-export function first(values: readonly Date[]): Date;
-export function first(values: Date[]): Date;
-export function first(values: readonly number[]): number;
-export function first(values: number[]): number;
-export function first(values: Iterable<number>): number;
+export function first<T>(values: readonly T[], options?: FirstOptions): T;
+export function first<T>(values: T[], options?: FirstOptions): T;
+export function first(values: readonly Date[], options?: FirstOptions): Date;
+export function first(values: Date[], options?: FirstOptions): Date;
+export function first(values: readonly number[], options?: FirstOptions): number;
+export function first(values: number[], options?: FirstOptions): number;
+export function first(values: Iterable<number>, options?: FirstOptions): number;
 
-// Arrays with nullables that require removeNA=true
-export function first<T>(values: (T | null | undefined)[], removeNA: true): T;
-export function first(values: DatesWithNullable, removeNA: true): Date;
-export function first(values: NumbersWithNullable, removeNA: true): number;
-export function first(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
-): number;
-
-// Arrays with nullables that return nullable (removeNA=false explicitly)
+// Arrays with nullables - when all removal flags are true, return non-nullable
 export function first<T>(
   values: (T | null | undefined)[],
-  removeNA: false,
+  options: { removeNull: true; removeUndefined: true },
+): T;
+export function first(
+  values: DatesWithNullable,
+  options: { removeNull: true; removeUndefined: true },
+): Date;
+export function first(
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
+): number;
+export function first(
+  values: NumbersWithNullableIterable,
+  options: { removeNull: true; removeUndefined: true },
+): number;
+
+// Arrays with only null (no undefined) - removeNull sufficient
+export function first<T>(
+  values: (T | null)[] | readonly (T | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): T;
+export function first(
+  values: (Date | null)[] | readonly (Date | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): Date;
+export function first(
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
+export function first<T>(
+  values: (T | undefined)[] | readonly (T | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): T;
+export function first(
+  values: (Date | undefined)[] | readonly (Date | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): Date;
+export function first(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): number;
+
+// Arrays with nullables - return nullable when not all flags are true
+export function first<T>(
+  values: (T | null | undefined)[],
+  options?: FirstOptions,
 ): T | null;
 export function first(
   values: DatesWithNullable,
-  removeNA: false,
+  options?: FirstOptions,
 ): Date | null;
 export function first(
   values: NumbersWithNullable,
-  removeNA: false,
+  options?: FirstOptions,
 ): number | null;
 export function first(
   values: NumbersWithNullableIterable,
-  removeNA: false,
+  options?: FirstOptions,
 ): number | null;
+
+// Implementation
 export function first(
   values:
     | unknown
@@ -75,11 +123,13 @@ export function first(
     | DatesWithNullable
     | CleanNumberIterable
     | NumbersWithNullableIterable
-    | readonly unknown[] // Runtime filtering fallback
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | readonly unknown[]
+    | unknown[]
+    | Iterable<unknown>,
+  options: FirstOptions = {},
 ): unknown {
+  const { removeNull = false, removeUndefined = false } = options;
+
   // Handle single number case
   if (typeof values === "number") {
     return values;
@@ -92,7 +142,8 @@ export function first(
 
   // Handle single non-array, non-iterable value
   if (
-    !Array.isArray(values) && typeof values !== "object" &&
+    !Array.isArray(values) &&
+    typeof values !== "object" &&
     typeof values !== "function"
   ) {
     return values;
@@ -103,7 +154,9 @@ export function first(
   if (Array.isArray(values)) {
     processArray = values;
   } else if (
-    values && typeof values === "object" && Symbol.iterator in values
+    values &&
+    typeof values === "object" &&
+    Symbol.iterator in values
   ) {
     processArray = Array.from(values as Iterable<unknown>);
   } else {
@@ -115,17 +168,19 @@ export function first(
     return null;
   }
 
-  // If removeNA is true, skip null/undefined values
-  if (removeNA) {
-    for (let i = 0; i < processArray.length; i++) {
-      const val = processArray[i];
-      if (!isNA(val)) {
-        return val;
-      }
+  // Process with filtering
+  for (let i = 0; i < processArray.length; i++) {
+    const val = processArray[i];
+    if (val === null) {
+      if (!removeNull) return null;
+      continue;
     }
-    return null;
+    if (val === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    return val;
   }
 
-  // Return first value (even if null/undefined)
-  return processArray[0] ?? null;
+  return null;
 }

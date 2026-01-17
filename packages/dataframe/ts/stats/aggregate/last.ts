@@ -4,7 +4,6 @@ import type {
   NumbersWithNullable,
   NumbersWithNullableIterable,
 } from "../helpers.ts";
-import { isNA } from "../helpers.ts";
 
 // Type definitions for Date arrays
 export type CleanDateArray = readonly Date[];
@@ -12,60 +11,108 @@ export type DatesWithNullable =
   | (Date | null | undefined)[]
   | readonly (Date | null | undefined)[];
 
+/** Options for filtering values in last function */
+export interface LastOptions {
+  removeNull?: boolean;
+  removeUndefined?: boolean;
+}
+
 /**
  * Get the last value in an array of numbers, dates, or other types
  *
  * @param values - Array of values, or single value
- * @param removeNA - If true, skips null/undefined values and returns last valid value
- * @returns The last value, or null if no valid values and removeNA=false
+ * @param options - Optional object with removal flags
+ * @param options.removeNull - If true, skips null values (default: false)
+ * @param options.removeUndefined - If true, skips undefined values (default: false)
+ * @returns The last value, or null if no valid values
  *
  * @example
  * ```ts
  * last(42) // Always returns 42 for single value
  * last([1, 2, 3, 4, 5]) // 5
- * last([1, 2, null], false) // null (last value is null)
- * last([1, 2, null], true) // 2 (skips null, returns last valid)
+ * last([1, 2, null]) // null (last value is null)
+ * last([1, 2, null], { removeNull: true }) // 2 (skips null)
  * last([new Date('2024-01-01'), new Date('2024-01-02')]) // new Date('2024-01-02')
  * ```
  */
+
 // Single value overloads
 export function last<T>(value: T): T;
 
 // Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
-export function last<T>(values: readonly T[]): T;
-export function last<T>(values: T[]): T;
-export function last(values: readonly Date[]): Date;
-export function last(values: Date[]): Date;
-export function last(values: readonly number[]): number;
-export function last(values: number[]): number;
-export function last(values: Iterable<number>): number;
+export function last<T>(values: readonly T[], options?: LastOptions): T;
+export function last<T>(values: T[], options?: LastOptions): T;
+export function last(values: readonly Date[], options?: LastOptions): Date;
+export function last(values: Date[], options?: LastOptions): Date;
+export function last(values: readonly number[], options?: LastOptions): number;
+export function last(values: number[], options?: LastOptions): number;
+export function last(values: Iterable<number>, options?: LastOptions): number;
 
-// Arrays with nullables that require removeNA=true
-export function last<T>(values: (T | null | undefined)[], removeNA: true): T;
-export function last(values: DatesWithNullable, removeNA: true): Date;
-export function last(values: NumbersWithNullable, removeNA: true): number;
-export function last(
-  values: NumbersWithNullableIterable,
-  removeNA: true,
-): number;
-
-// Arrays with nullables that return nullable (removeNA=false explicitly)
+// Arrays with nullables - when all removal flags are true, return non-nullable
 export function last<T>(
   values: (T | null | undefined)[],
-  removeNA: false,
+  options: { removeNull: true; removeUndefined: true },
+): T;
+export function last(
+  values: DatesWithNullable,
+  options: { removeNull: true; removeUndefined: true },
+): Date;
+export function last(
+  values: NumbersWithNullable,
+  options: { removeNull: true; removeUndefined: true },
+): number;
+export function last(
+  values: NumbersWithNullableIterable,
+  options: { removeNull: true; removeUndefined: true },
+): number;
+
+// Arrays with only null (no undefined) - removeNull sufficient
+export function last<T>(
+  values: (T | null)[] | readonly (T | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): T;
+export function last(
+  values: (Date | null)[] | readonly (Date | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): Date;
+export function last(
+  values: (number | null)[] | readonly (number | null)[],
+  options: { removeNull: true; removeUndefined?: boolean },
+): number;
+
+// Arrays with only undefined (no null) - removeUndefined sufficient
+export function last<T>(
+  values: (T | undefined)[] | readonly (T | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): T;
+export function last(
+  values: (Date | undefined)[] | readonly (Date | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): Date;
+export function last(
+  values: (number | undefined)[] | readonly (number | undefined)[],
+  options: { removeUndefined: true; removeNull?: boolean },
+): number;
+
+// Arrays with nullables - return nullable when not all flags are true
+export function last<T>(
+  values: (T | null | undefined)[],
+  options?: LastOptions,
 ): T | null;
 export function last(
   values: DatesWithNullable,
-  removeNA: false,
+  options?: LastOptions,
 ): Date | null;
 export function last(
   values: NumbersWithNullable,
-  removeNA: false,
+  options?: LastOptions,
 ): number | null;
 export function last(
   values: NumbersWithNullableIterable,
-  removeNA: false,
+  options?: LastOptions,
 ): number | null;
+
+// Implementation
 export function last(
   values:
     | unknown
@@ -75,11 +122,13 @@ export function last(
     | DatesWithNullable
     | CleanNumberIterable
     | NumbersWithNullableIterable
-    | readonly unknown[] // Runtime filtering fallback
-    | unknown[] // Runtime filtering fallback
-    | Iterable<unknown>, // Runtime filtering fallback
-  removeNA: boolean = false,
+    | readonly unknown[]
+    | unknown[]
+    | Iterable<unknown>,
+  options: LastOptions = {},
 ): unknown {
+  const { removeNull = false, removeUndefined = false } = options;
+
   // Handle single number case
   if (typeof values === "number") {
     return values;
@@ -92,7 +141,8 @@ export function last(
 
   // Handle single non-array, non-iterable value
   if (
-    !Array.isArray(values) && typeof values !== "object" &&
+    !Array.isArray(values) &&
+    typeof values !== "object" &&
     typeof values !== "function"
   ) {
     return values;
@@ -103,7 +153,9 @@ export function last(
   if (Array.isArray(values)) {
     processArray = values;
   } else if (
-    values && typeof values === "object" && Symbol.iterator in values
+    values &&
+    typeof values === "object" &&
+    Symbol.iterator in values
   ) {
     processArray = Array.from(values as Iterable<unknown>);
   } else {
@@ -115,17 +167,19 @@ export function last(
     return null;
   }
 
-  // If removeNA is true, skip null/undefined values and return last valid
-  if (removeNA) {
-    for (let i = processArray.length - 1; i >= 0; i--) {
-      const val = processArray[i];
-      if (!isNA(val)) {
-        return val;
-      }
+  // Process with filtering (iterate backwards)
+  for (let i = processArray.length - 1; i >= 0; i--) {
+    const val = processArray[i];
+    if (val === null) {
+      if (!removeNull) return null;
+      continue;
     }
-    return null;
+    if (val === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    return val;
   }
 
-  // Return last value (even if null/undefined)
-  return processArray[processArray.length - 1] ?? null;
+  return null;
 }

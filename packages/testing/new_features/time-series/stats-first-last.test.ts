@@ -6,14 +6,14 @@ Deno.test("stats.first() - basic usage", () => {
   expect(stats.first([10, 20, 30])).toBe(10);
 });
 
-Deno.test("stats.first() - with nulls (removeNA=false)", () => {
-  expect(stats.first([null, 2, 3], false)).toBe(null);
-  expect(stats.first([1, null, 3], false)).toBe(1);
+Deno.test("stats.first() - with nulls (no removal)", () => {
+  expect(stats.first([null, 2, 3])).toBe(null);
+  expect(stats.first([1, null, 3])).toBe(1);
 });
 
-Deno.test("stats.first() - with nulls (removeNA=true)", () => {
-  expect(stats.first([null, 2, 3], true)).toBe(2);
-  expect(stats.first([null, null, 3], true)).toBe(3);
+Deno.test("stats.first() - with nulls (removeNull: true)", () => {
+  expect(stats.first([null, 2, 3], { removeNull: true })).toBe(2);
+  expect(stats.first([null, null, 3], { removeNull: true })).toBe(3);
 });
 
 Deno.test("stats.first() - single value", () => {
@@ -39,14 +39,14 @@ Deno.test("stats.last() - basic usage", () => {
   expect(stats.last([10, 20, 30])).toBe(30);
 });
 
-Deno.test("stats.last() - with nulls (removeNA=false)", () => {
-  expect(stats.last([1, 2, null], false)).toBe(null);
-  expect(stats.last([1, null, 3], false)).toBe(3);
+Deno.test("stats.last() - with nulls (no removal)", () => {
+  expect(stats.last([1, 2, null])).toBe(null);
+  expect(stats.last([1, null, 3])).toBe(3);
 });
 
-Deno.test("stats.last() - with nulls (removeNA=true)", () => {
-  expect(stats.last([1, 2, null], true)).toBe(2);
-  expect(stats.last([null, 2, null], true)).toBe(2);
+Deno.test("stats.last() - with nulls (removeNull: true)", () => {
+  expect(stats.last([1, 2, null], { removeNull: true })).toBe(2);
+  expect(stats.last([null, 2, null], { removeNull: true })).toBe(2);
 });
 
 Deno.test("stats.last() - single value", () => {

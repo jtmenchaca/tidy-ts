@@ -5,42 +5,68 @@ export const xlsxDocs: Record<string, DocEntry> = {
     name: "readXLSX",
     category: "io",
     signature:
-      "readXLSX<T>(pathOrBuffer: string | ArrayBuffer | File | Blob, schema?: ZodSchema<T>, opts?: ReadXLSXOpts): Promise<DataFrame<T>>\nreadXLSX(pathOrBuffer: string | ArrayBuffer | File | Blob, opts: { no_types: true }): Promise<DataFrame<any>>\nreadXLSX<T>(pathOrBuffer: string | ArrayBuffer | File | Blob, schema: ZodSchema<T>, opts: { no_types: true }): Promise<DataFrame<any>>",
+      "readXLSX<T>(pathOrBuffer: string | ArrayBuffer | File | Blob, schema: ZodSchema<T>, opts?: ReadXLSXOpts): Promise<DataFrame<T>>",
     description:
-      "Read XLSX file with optional schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). Use readXLSXMetadata() first to inspect sheet names and preview data structure. When `no_types: true`, returns DataFrame<any> without strict type checking and preserves original types from XLSX (numbers, booleans). Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers).",
+      "Read XLSX file with Zod schema validation and sheet selection. Returns a DataFrame that you can use with all DataFrame operations (filter, mutate, groupBy, etc.). If you don't know the schema, use peekXLSX() first to inspect sheet names, preview data structure, and generate an appropriate schema. Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers).",
     imports: [
-      'import { readCSV, writeCSV, readXLSX, writeXLSX, readXLSXMetadata } from "@tidy-ts/dataframe";',
+      'import { readXLSX, peekXLSX } from "@tidy-ts/dataframe";',
       'import { z } from "zod";',
     ],
     parameters: [
       "pathOrBuffer: File path (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)",
-      "schema: Optional Zod schema for type validation and conversion (required unless no_types is true)",
+      "schema: Zod schema for type validation and conversion",
       "opts.sheet: Sheet name or index (default: first sheet)",
       "opts.skip: Number of rows to skip (useful if first row is a title, not headers)",
-      "opts.no_types: When true, returns DataFrame<any> instead of typed DataFrame. Schema is optional when true. Preserves original XLSX types (numbers, booleans).",
     ],
-    returns:
-      "Promise<DataFrame<T>> or Promise<DataFrame<any>> - A DataFrame object with all standard operations",
+    returns: "Promise<DataFrame<T>> - A typed DataFrame object with all standard operations",
     examples: [
+      '// RECOMMENDED: Use peekXLSX first to understand file structure\nconst info = await peekXLSX("data.xlsx");\nconsole.log(info); // Shows sheets, headers, preview, and example schema',
       '// With Zod schema validation (file path)\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email(),\n  createdAt: z.date(), // Excel dates auto-converted\n});\n\nconst df = await readXLSX("data.xlsx", schema)',
-      '// Without schema - returns DataFrame<any>\nconst df = await readXLSX("data.xlsx", { no_types: true })\n// Types are inferred from XLSX (numbers, booleans preserved)',
-      '// With schema but no_types - validation occurs but returns DataFrame<any>\nconst df = await readXLSX("data.xlsx", schema, { no_types: true })',
-      "// Browser-compatible: Read from File object\nconst fileInput = document.querySelector('input[type=\"file\"]');\nconst file = fileInput.files[0];\nconst df = await readXLSX(file, schema, { no_types: true })",
-      "// Browser-compatible: Read from ArrayBuffer\nconst arrayBuffer = await file.arrayBuffer();\nconst df = await readXLSX(arrayBuffer, { no_types: true })",
+      '// Browser-compatible: Read from File object\nconst fileInput = document.querySelector(\'input[type="file"]\');\nconst file = fileInput.files[0];\nconst df = await readXLSX(file, schema)',
       '// With nullable fields and specific sheet\nimport { z } from "zod";\n\nconst schema = z.object({\n  species: z.string(),\n  bill_length_mm: z.number().nullable(),\n  bill_depth_mm: z.number().nullable(),\n  body_mass_g: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
       '// Skip header rows (e.g., if row 0 is a title)\nimport { z } from "zod";\n\nconst schema = z.object({\n  name: z.string(),\n  value: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
       '// Chain with DataFrame operations\nimport { z } from "zod";\nimport { stats as s } from "@tidy-ts/dataframe";\n\nconst schema = z.object({\n  region: z.string(),\n  amount: z.number(),\n});\n\nconst result = await readXLSX("sales.xlsx", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
     ],
-    related: ["writeXLSX", "readCSV", "readXLSXMetadata"],
+    related: ["peekXLSX", "writeXLSX", "readCSV", "readXLSXMetadata"],
     bestPractices: [
-      "✓ GOOD: Use readXLSXMetadata() first to inspect sheets and preview structure",
+      "✓ GOOD: Use peekXLSX() first to inspect sheets, headers, and generate a schema",
+      "✓ GOOD: Always provide a Zod schema for type safety and automatic type conversion",
       "✓ GOOD: Use skip option if first row is a title/note rather than column headers",
-      "✓ GOOD: Provide a Zod schema for type safety and automatic type conversion",
-      "✓ GOOD: Use no_types: true when schema is unknown or dynamic",
       "✓ GOOD: Chain DataFrame operations immediately after reading",
+      "✓ GOOD: Use .nullable() for columns that may have missing values",
     ],
     antiPatterns: [
-      "❌ BAD: Using no_types when you know the schema - you lose type safety",
+      "❌ BAD: Using no_types: true - you lose all type safety and autocomplete. Use peekXLSX() to understand the schema first.",
+      "❌ BAD: Guessing column types - use peekXLSX() to see actual data before defining schema",
+    ],
+  },
+
+  peekXLSX: {
+    name: "peekXLSX",
+    category: "io",
+    signature:
+      "peekXLSX(path: string, options?: { previewRows?: number, sheet?: string | number }): Promise<string>",
+    description:
+      "Inspect an XLSX file and return a markdown-formatted description of its structure. Shows available sheets, column headers, data preview, and a suggested Zod schema. This is the recommended way to understand an XLSX file before reading it with readXLSX().",
+    imports: ['import { peekXLSX, readXLSX } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "path: File path to XLSX file",
+      "options.previewRows: Number of rows to preview (default: 5)",
+      "options.sheet: Which sheet to preview - name or index (default: first sheet)",
+    ],
+    returns: "Promise<string> - Markdown-formatted description of file structure",
+    examples: [
+      '// Inspect file structure (returns markdown)\nconst info = await peekXLSX("data.xlsx");\nconsole.log(info);\n// Output includes:\n// - Available sheets\n// - Column headers\n// - Data preview\n// - Example Zod schema',
+      '// Preview a specific sheet\nconst info = await peekXLSX("data.xlsx", { sheet: "Summary" })',
+      '// Preview by sheet index (0-based)\nconst info = await peekXLSX("data.xlsx", { sheet: 1 })',
+      '// Get more preview rows\nconst info = await peekXLSX("data.xlsx", { previewRows: 10 })',
+    ],
+    related: ["readXLSX", "readXLSXMetadata", "peekCSV", "peek"],
+    bestPractices: [
+      "✓ GOOD: Use peekXLSX() first to understand file structure before reading",
+      "✓ GOOD: Copy the suggested schema from the output and customize types",
+      "✓ GOOD: Use the preview to identify nullable columns and data patterns",
+      "✓ GOOD: Check if first row looks like a title (needs skip: 1)",
     ],
   },
 
@@ -50,7 +76,7 @@ export const xlsxDocs: Record<string, DocEntry> = {
     signature:
       "readXLSXMetadata(pathOrBuffer: string | ArrayBuffer | File | Blob, { previewRows?: number, sheet?: string | number }): Promise<XLSXMetadata>",
     description:
-      "Read metadata about an XLSX file without full parsing. Shows available sheets, default sheet, and a preview of the first few rows. Use this before readXLSX() to understand the file structure and determine which sheet to read and whether to skip rows. Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers).",
+      "Read metadata about an XLSX file without full parsing. Returns a structured object with sheets, headers, and preview rows. For a more user-friendly output, consider using peekXLSX() which returns formatted markdown with a suggested schema.",
     imports: [
       'import { readXLSXMetadata, readXLSX } from "@tidy-ts/dataframe";',
     ],
@@ -64,14 +90,11 @@ export const xlsxDocs: Record<string, DocEntry> = {
     examples: [
       '// Inspect file structure (file path)\nconst meta = await readXLSXMetadata("data.xlsx")\nconsole.log("Sheets:", meta.sheets)\nconsole.log("Headers:", meta.headers)\nconsole.log("Preview:", meta.firstRows)',
       '// Browser-compatible: Inspect from File object\nconst fileInput = document.querySelector(\'input[type="file"]\');\nconst file = fileInput.files[0];\nconst meta = await readXLSXMetadata(file)\nconsole.log("Sheets:", meta.sheets)',
-      '// Check if first row needs to be skipped\nconst meta = await readXLSXMetadata("data.xlsx")\nif (meta.firstRows[0][0] === "Report Title") {\n  df = await readXLSX("data.xlsx", schema, { skip: 1 })\n}',
-      '// Preview a specific sheet\nconst meta = await readXLSXMetadata("data.xlsx", { sheet: "Summary", previewRows: 10 })',
     ],
-    related: ["readXLSX"],
+    related: ["peekXLSX", "readXLSX"],
     bestPractices: [
-      "✓ GOOD: Use before readXLSX to understand file structure",
-      "✓ GOOD: Check preview to determine if skip option is needed",
-      "✓ GOOD: Verify sheet names before reading specific sheets",
+      "✓ GOOD: Use peekXLSX() for human/AI-readable output with suggested schema",
+      "✓ GOOD: Use readXLSXMetadata() when you need programmatic access to metadata",
     ],
   },
 
@@ -97,3 +120,4 @@ export const xlsxDocs: Record<string, DocEntry> = {
     related: ["readXLSX", "writeCSV"],
   },
 };
+
