@@ -2,13 +2,6 @@
 <html>
   <head>
     <title>Distribution Functions Test</title>
-    <script type="importmap">
-      {
-        "imports": {
-          "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe"
-        }
-      }
-    </script>
   </head>
   <body>
     <div id="result">Loading...</div>
@@ -34,9 +27,9 @@
         let allPassed = true;
 
         try {
-          // Test 1: Basic import
+          // Test 1: Basic import from local bundle
           const { createDataFrame, stats, setupTidyTS } = await import(
-            "@tidy-ts/dataframe"
+            "./tidy-ts-bundle.js"
           );
           addTestResult(
             "Basic Import",
@@ -72,7 +65,7 @@
           try {
             console.log("Starting distribution test...");
             console.log("import.meta.url:", import.meta.url);
-            const { s } = await import("@tidy-ts/dataframe");
+            const { s } = await import("./tidy-ts-bundle.js");
             console.log("Imported s:", typeof s);
             console.log("s.dist:", typeof s.dist);
             console.log("s.dist.normal:", typeof s.dist.normal);

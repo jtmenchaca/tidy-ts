@@ -87,22 +87,23 @@ const normalDistributionChart = normalDataForGraph
 console.log("📈 Normal Distribution Visualization:");
 normalDistributionChart;
 
-// Save the graph as SVG and PNG with consistent styling
+// Save the graph as SVG and PNG in the same directory as this test file
+const scriptDir = new URL(".", import.meta.url).pathname;
 await normalDistributionChart.saveSVG({
-  filename: "normal-distribution.svg",
+  filename: `${scriptDir}normal-distribution.svg`,
   width: 700,
   height: 450,
 });
 
 await normalDistributionChart.savePNG({
-  filename: "normal-distribution.png",
+  filename: `${scriptDir}normal-distribution.png`,
   width: 700,
   height: 450,
   scale: 1, // Try lower scale first
 });
 
 console.log(
-  "💾 Graph saved as 'normal-distribution.png' and 'normal-distribution.svg'",
+  `💾 Graph saved to ${scriptDir}normal-distribution.png and .svg`,
 );
 
 normalData.print();

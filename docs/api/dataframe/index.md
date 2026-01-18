@@ -11,6 +11,7 @@
 - [Profiling](./profiling.md)
 - [Reshaping](./reshaping.md)
 - [Selection](./selection.md)
+- [Setup](./setup.md)
 - [Time Series](./time-series.md)
 - [Transformation](./transformation.md)
 - [Visualization](./visualization.md)

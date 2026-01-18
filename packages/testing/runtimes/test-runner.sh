@@ -42,11 +42,11 @@ fi
 # Test Deno shims
 if command -v deno &> /dev/null; then
     echo -e "${YELLOW}  Testing shims with Deno...${NC}"
-    if (cd "$ROOT_DIR" && deno run --allow-read --allow-write --allow-env --allow-net --import-map import_map.json tests/runtimes/shims-test.test.ts 2>&1 | grep -q "All shims tests passed"); then
+    if (cd "$SCRIPT_DIR" && deno run --allow-read --allow-write --allow-env --allow-net shims-test.test.ts 2>&1 | grep -q "All shims tests passed"); then
         echo -e "${GREEN}  ✅ Deno shims test passed${NC}"
     else
         echo -e "${RED}  ❌ Deno shims test failed${NC}"
-        (cd "$ROOT_DIR" && deno run --allow-read --allow-write --allow-env --allow-net --import-map import_map.json tests/runtimes/shims-test.test.ts 2>&1 | tail -5)
+        (cd "$SCRIPT_DIR" && deno run --allow-read --allow-write --allow-env --allow-net shims-test.test.ts 2>&1 | tail -5)
     fi
 fi
 

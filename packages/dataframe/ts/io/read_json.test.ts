@@ -149,3 +149,49 @@ test("readJSON: handles empty array", async () => {
     await remove(tempFile).catch(() => {});
   }
 });
+
+test("readJSON: parses JSON string directly", async () => {
+  const UserSchema = z.array(z.object({
+    name: z.string(),
+    age: z.number(),
+  }));
+
+  const jsonString = '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]';
+  const df = await readJSON(jsonString, UserSchema);
+
+  expect(df.nrows()).toBe(2);
+  expect(df[0].name).toBe("Alice");
+  expect(df[0].age).toBe(30);
+  expect(df[1].name).toBe("Bob");
+  expect(df[1].age).toBe(25);
+});
+
+test("readJSON: parses JSON object string directly", async () => {
+  const ConfigSchema = z.object({
+    host: z.string(),
+    port: z.number(),
+  });
+
+  const jsonString = '{"host": "localhost", "port": 5432}';
+  const config = await readJSON(jsonString, ConfigSchema);
+
+  expect(config.host).toBe("localhost");
+  expect(config.port).toBe(5432);
+});
+
+test("readJSON: parses multiline JSON string", async () => {
+  const UserSchema = z.array(z.object({
+    id: z.number(),
+    name: z.string(),
+  }));
+
+  const jsonString = `[
+    {"id": 1, "name": "Alice"},
+    {"id": 2, "name": "Bob"}
+  ]`;
+  const df = await readJSON(jsonString, UserSchema);
+
+  expect(df.nrows()).toBe(2);
+  expect(df[0].id).toBe(1);
+  expect(df[1].id).toBe(2);
+});

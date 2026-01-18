@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Distributions Test with Manual WASM - @tidy-ts/dataframe</title>
+    <title>Statistical Distributions (Local Bundle) - @tidy-ts/dataframe</title>
     <style>
       body {
         font-family:
@@ -55,14 +55,14 @@
   </head>
   <body>
     <div class="container">
-      <h1>📊 Distributions Test with Manual WASM - @tidy-ts/dataframe</h1>
+      <h1>Statistical Distributions (Local Bundle)</h1>
       <p>
-        This test uses the published library with manual WASM loading to test
-        statistical distributions functionality.
+        This example uses the locally bundled <code>tidy-ts-bundle.js</code>
+        with inlined WASM instead of esm.sh.
       </p>
 
-      <div id="status" class="status">Running internal test...</div>
-      <div id="output" class="output">Loading internal library...</div>
+      <div id="status" class="status">Running distribution example...</div>
+      <div id="output" class="output">Loading local bundle...</div>
     </div>
 
     <script type="module">
@@ -80,18 +80,18 @@
       }
 
       try {
-        log("📊 Internal Distributions Test");
+        log("Statistical Distributions Example (Local Bundle)");
         log("=".repeat(50));
 
         // Import from local bundle
         const { createDataFrame, s, setupTidyTS } = await import(
           "./tidy-ts-bundle.js"
         );
-        log("✅ Library imported successfully");
+        log("Library imported from local bundle");
 
-        // Initialize WASM (should now work automatically with the fixed URL construction)
+        // Initialize WASM (uses inlined base64)
         await setupTidyTS();
-        log("✅ WASM initialized");
+        log("WASM initialized");
 
         // Check if statistical distributions are available
         if (!s || !s.dist || !s.dist.normal) {
@@ -99,19 +99,19 @@
             "Statistical distributions API not available",
           );
         }
-        log("✅ Statistical distributions API available");
+        log("Statistical distributions API available");
 
-        // Generate PDF data using the new .data() method
-        log("\n🔹 Generating Normal Distribution PDF data...");
+        // Generate PDF data using the .data() method
+        log("\nGenerating Normal Distribution PDF data...");
         const normalPDFData = s.dist.normal.data({
           mean: 0,
           standardDeviation: 2,
           type: "pdf",
           range: [-4, 4],
-          points: 20, // Reduced for browser display
+          points: 20,
         });
 
-        log("✅ PDF data generated");
+        log("PDF data generated");
         log("First 5 rows of PDF data:");
         const pdfArray = normalPDFData.toArray();
         pdfArray.slice(0, 5).forEach((row, i) => {
@@ -122,17 +122,17 @@
           );
         });
 
-        // Generate CDF data using the new .data() method
-        log("\n🔹 Generating Normal Distribution CDF data...");
+        // Generate CDF data
+        log("\nGenerating Normal Distribution CDF data...");
         const normalCDFData = s.dist.normal.data({
           mean: 0,
           standardDeviation: 1,
           type: "cdf",
           range: [-4, 4],
-          points: 20, // Reduced for browser display
+          points: 20,
         });
 
-        log("✅ CDF data generated");
+        log("CDF data generated");
         log("First 5 rows of CDF data:");
         const cdfArray = normalCDFData.toArray();
         cdfArray.slice(0, 5).forEach((row, i) => {
@@ -144,34 +144,12 @@
         });
 
         // Join PDF and CDF data
-        log("\n🔹 Joining PDF and CDF data...");
+        log("\nJoining PDF and CDF data...");
         const normalData = normalPDFData.leftJoin(normalCDFData, "x");
-        log("✅ Data joined successfully");
-
-        // Create a multi-series line chart data (pivot for visualization)
-        log("\n🔹 Preparing data for visualization...");
-        const normalDataForGraph = normalData
-          .pivotLonger({
-            cols: ["density", "probability"],
-            namesTo: "distribution_type",
-            valuesTo: "value",
-          });
-
-        log("✅ Data prepared for visualization");
-        log("Sample of pivoted data:");
-        const graphArray = normalDataForGraph.toArray();
-        graphArray.slice(0, 6).forEach((row, i) => {
-          log(
-            `  ${i + 1}. x: ${
-              row.x.toFixed(2)
-            }, type: ${row.distribution_type}, value: ${
-              row.value.toFixed(4)
-            }`,
-          );
-        });
+        log("Data joined successfully");
 
         // Show summary statistics
-        log("\n📈 Summary Statistics:");
+        log("\nSummary Statistics:");
         log("PDF Statistics:");
         const pdfStats = normalPDFData.summarize({
           min_density: (df) => Math.min(...df.density),
@@ -191,25 +169,19 @@
         cdfStats.print();
 
         // Show final combined data
-        log("\n📊 Final Combined Data (first 10 rows):");
+        log("\nFinal Combined Data (first 10 rows):");
         normalData.print();
 
-        log("\n✅ Distributions test completed successfully!");
-        log(
-          "📝 This demonstrates that the statistical distributions API works",
-        );
-        log(
-          "   when using the published library with correct WASM loading.",
-        );
+        log("\nDistribution example completed successfully!");
 
         setStatus(
-          "✅ Distributions test completed successfully!",
+          "Distribution example completed successfully!",
           "success",
         );
       } catch (error) {
-        log(`❌ Error: ${error.message}`);
+        log(`Error: ${error.message}`);
         log(`Stack: ${error.stack}`);
-        setStatus("❌ Internal test failed!", "error");
+        setStatus("Example failed!", "error");
       }
     </script>
   </body>

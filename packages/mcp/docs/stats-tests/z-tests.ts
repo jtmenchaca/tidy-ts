@@ -7,8 +7,8 @@ export const zTestDocs: Record<string, DocEntry> = {
     description:
       "One-sample z-test for comparing sample mean to a known population mean when population standard deviation is known.",
     signature:
-      "s.test.z.oneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+      "zTestOneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZTestResult",
+    imports: ['import { zTestOneSample } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values",
       "`popMean: number` - Known population mean",
@@ -17,12 +17,12 @@ export const zTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneSampleZTestResult with `statistic`, `pValue`, `confidenceInterval`, `reject`",
+      "OneSampleZTestResult with `test_statistic`, `p_value`, `confidence_interval`, `reject_null`",
     examples: [
       "const data = [102, 98, 105, 99, 101];",
-      "const result = s.test.z.oneSample({ data, popMean: 100, popStd: 5 });",
-      "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);  // true if reject H0",
+      "const result = zTestOneSample({ data, popMean: 100, popStd: 5 });",
+      "console.log(result.p_value);  // p-value",
+      "console.log(result.reject_null);  // true if reject H0",
     ],
     bestPractices: [
       "Use when population standard deviation is known (unlike t-test)",
@@ -42,8 +42,8 @@ export const zTestDocs: Record<string, DocEntry> = {
     description:
       "Two-sample z-test for comparing means of two independent groups when population standard deviations are known.",
     signature:
-      "s.test.z.twoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): TwoSampleZTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+      "zTestTwoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): TwoSampleZTestResult",
+    imports: ['import { zTestTwoSample } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data1: number[]` - First group of values",
       "`data2: number[]` - Second group of values",
@@ -53,12 +53,12 @@ export const zTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleZTestResult with `statistic`, `pValue`, `confidenceInterval`, `reject`",
+      "TwoSampleZTestResult with `test_statistic`, `p_value`, `confidence_interval`, `reject_null`",
     examples: [
       "const group1 = [10.2, 9.8, 10.5, 9.9, 10.1];",
       "const group2 = [11.1, 10.9, 11.3, 11.0, 11.2];",
-      "const result = s.test.z.twoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });",
-      "console.log(result.pValue);  // compare means",
+      "const result = zTestTwoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });",
+      "console.log(result.p_value);  // compare means",
     ],
     bestPractices: [
       "Use when population standard deviations are known for both groups",

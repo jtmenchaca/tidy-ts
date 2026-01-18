@@ -5,14 +5,30 @@ import { readTextFile } from "@tidy-ts/shims";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 
 /**
- * Read a JSON file with Zod schema validation and type inference.
+ * Detects if input is a file path or raw JSON content
+ */
+function isFilePath(input: string): boolean {
+  // Check if it starts with JSON-like content
+  const trimmed = input.trim();
+  if (
+    trimmed.startsWith("{") || trimmed.startsWith("[") ||
+    trimmed.startsWith('"')
+  ) {
+    return false;
+  }
+
+  // Check for file-like patterns (has extension, doesn't contain JSON content, etc.)
+  return !input.includes("\n") && (input.includes(".") || input.length < 100);
+}
+
+/**
+ * Read JSON from a file or parse a JSON string with Zod schema validation.
  *
- * Loads JSON data from a file and validates it against a Zod schema. For array schemas
- * containing objects, automatically returns a DataFrame. For other schemas, returns the
- * validated data with inferred types. Throws an error if validation fails or if the
- * file cannot be read.
+ * Accepts either a file path or raw JSON content string. Validates the data against
+ * a Zod schema. For array schemas containing objects, automatically returns a DataFrame.
+ * For other schemas, returns the validated data with inferred types.
  *
- * @param filePath - Path to the JSON file to read (Node.js/Deno only)
+ * @param pathOrContent - File path to JSON file (Node.js/Deno) or raw JSON content string
  * @param schema - Zod schema for validation and type inference. Can be any Zod type:
  *   - `z.object({...})`: Returns a validated object
  *   - `z.array(z.object({...}))`: Returns a DataFrame with typed rows
@@ -22,7 +38,7 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  *   validated data with schema-inferred type.
  *
  * @example
- * // Read a simple configuration object
+ * // Read from file
  * import { z } from "zod";
  *
  * const ConfigSchema = z.object({
@@ -34,7 +50,24 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  * const config = await readJSON("./config.json", ConfigSchema);
  *
  * @example
- * // Read an array of objects as a DataFrame
+ * // Parse JSON string directly
+ * const jsonString = '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]';
+ * const UserSchema = z.array(z.object({
+ *   name: z.string(),
+ *   age: z.number(),
+ * }));
+ *
+ * const df = await readJSON(jsonString, UserSchema);
+ * // Returns DataFrame<{name: string, age: number}>
+ *
+ * @example
+ * // Parse API response
+ * const response = await fetch("https://api.example.com/users");
+ * const jsonString = await response.text();
+ * const df = await readJSON(jsonString, UserSchema);
+ *
+ * @example
+ * // Read an array of objects as a DataFrame from file
  * const UserSchema = z.array(z.object({
  *   id: z.number(),
  *   name: z.string(),
@@ -44,25 +77,24 @@ import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
  *
  * const users = await readJSON("./users.json", UserSchema);
  * // Returns DataFrame<{id: number, name: string, email: string, age?: number}>
- *
- * @example
- * // With complex nested schema
- * const schema = z.array(z.object({
- *   user: z.object({ id: z.number(), name: z.string() }),
- *   posts: z.array(z.object({ title: z.string(), views: z.number() }))
- * }));
- * const data = await readJSON("./data.json", schema);
  */
 export async function readJSON<T extends ZodTypeAny>(
-  filePath: string,
+  pathOrContent: string,
   schema: T,
 ): Promise<
   z.infer<T> extends Array<infer U>
     ? (U extends Record<string, unknown> ? DataFrame<U> : never)
     : z.infer<T>
 > {
-  // Read the JSON file
-  const rawContent = await readTextFile(filePath);
+  let rawContent: string;
+
+  if (isFilePath(pathOrContent)) {
+    // It's a file path - read from file
+    rawContent = await readTextFile(pathOrContent);
+  } else {
+    // It's raw JSON content
+    rawContent = pathOrContent;
+  }
 
   // Parse JSON
   const data = JSON.parse(rawContent);

@@ -7,28 +7,28 @@ export const anovaDocs: Record<string, DocEntry> = {
     description:
       "One-way Analysis of Variance (ANOVA) to compare means across multiple groups.",
     signature:
-      "s.test.anova.oneWay(groups: number[][], alpha?: number): OneWayAnovaTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+      "anovaOneWay(groups: number[][], alpha?: number): OneWayAnovaTestResult",
+    imports: ['import { anovaOneWay } from "@tidy-ts/dataframe";'],
     parameters: [
       "`groups: number[][]` - Array of groups, where each group is an array of numbers",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneWayAnovaTestResult with `statistic`, `pValue`, `degreesOfFreedom`, `reject`",
+      "OneWayAnovaTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `reject_null`",
     examples: [
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
       "const group3 = [20, 21, 19, 22, 20];",
-      "const result = s.test.anova.oneWay([group1, group2, group3]);",
-      "console.log(result.pValue);  // p-value",
-      "if (result.reject) {",
+      "const result = anovaOneWay([group1, group2, group3]);",
+      "console.log(result.p_value);  // p-value",
+      "if (result.reject_null) {",
       "  // If significant, use post-hoc tests",
-      "  const postHoc = s.compare.postHoc.tukey([group1, group2, group3]);",
+      "  const postHoc = tukeyHSD([group1, group2, group3]);",
       "}",
     ],
     bestPractices: [
       "Check normality of each group before using",
-      "Check equal variances assumption (consider Welch ANOVA if violated)",
+      "Check equal variances with leveneTest (consider Welch ANOVA if violated)",
       "Requires at least 2 groups, each with at least 2 observations",
       "If significant, follow up with post-hoc tests (Tukey, Games-Howell, etc.)",
     ],
@@ -38,10 +38,45 @@ export const anovaDocs: Record<string, DocEntry> = {
       "Not performing post-hoc tests after significant result",
     ],
     related: [
+      "s.test.anova.welch",
       "s.test.anova.twoWay",
+      "s.test.variance.levene",
       "s.test.nonparametric.kruskalWallis",
-      "s.compare.postHoc.tukey",
-      "s.compare.postHoc.gamesHowell",
+    ],
+  },
+
+  "s.test.anova.welch": {
+    name: "s.test.anova.welch",
+    category: "stats-tests",
+    description:
+      "Welch's one-way ANOVA for comparing means across multiple groups when equal variances cannot be assumed.",
+    signature:
+      "welchAnovaOneWay(groups: number[][], alpha?: number): WelchAnovaTestResult",
+    imports: ['import { welchAnovaOneWay } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "`groups: number[][]` - Array of groups, where each group is an array of numbers",
+      "`alpha?: number` - Significance level (default: 0.05)",
+    ],
+    returns:
+      "WelchAnovaTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `reject_null`",
+    examples: [
+      "const group1 = [10, 12, 11, 13, 12];",
+      "const group2 = [15, 16, 14, 17, 15];",
+      "const group3 = [20, 21, 19, 22, 20];",
+      "const result = welchAnovaOneWay([group1, group2, group3]);",
+      "console.log(result.p_value);  // p-value",
+    ],
+    bestPractices: [
+      "Use when groups have unequal variances (check with leveneTest)",
+      "More robust than regular ANOVA when equal variance assumption is violated",
+      "Requires at least 2 groups, each with at least 2 observations",
+    ],
+    antiPatterns: [
+      "Using when variances are clearly equal (regular ANOVA is more powerful)",
+    ],
+    related: [
+      "s.test.anova.oneWay",
+      "s.test.variance.levene",
     ],
   },
 
@@ -50,8 +85,8 @@ export const anovaDocs: Record<string, DocEntry> = {
     category: "stats-tests",
     description:
       "Two-way Analysis of Variance (ANOVA) to test main effects and interaction in a factorial design.",
-    signature: "s.test.anova.twoWay({ data, alpha? }): TwoWayAnovaTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+    signature: "twoWayAnova({ data, alpha? }): TwoWayAnovaTestResult",
+    imports: ['import { twoWayAnova } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[][][]` - 3D array where data[i][j] contains observations for level i of factor A and level j of factor B",
       "`alpha?: number` - Significance level (default: 0.05)",
@@ -66,7 +101,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "  [[10, 11, 12], [15, 16, 17], [20, 21, 22]],  // Treatment group",
       "  [[8, 9, 10], [12, 13, 14], [18, 19, 20]]     // Control group",
       "];",
-      "const result = s.test.anova.twoWay({ data });",
+      "const result = twoWayAnova({ data });",
       "console.log(result.factorA.pValue);  // Main effect of factor A",
       "console.log(result.factorB.pValue);  // Main effect of factor B",
       "console.log(result.interaction.pValue);  // Interaction effect",
@@ -83,6 +118,49 @@ export const anovaDocs: Record<string, DocEntry> = {
       "Ignoring interaction effects when they are significant",
       "Using unbalanced designs without appropriate adjustments",
     ],
-    related: ["s.test.anova.oneWay"],
+    related: ["s.test.anova.oneWay", "s.test.anova.welch"],
+  },
+
+  "s.test.variance.levene": {
+    name: "s.test.variance.levene",
+    category: "stats-tests",
+    description:
+      "Levene's test for equality of variances across groups. Uses Brown-Forsythe modification (deviations from medians) which is more robust to non-normality.",
+    signature:
+      "leveneTest(groups: number[][], alpha?: number): OneWayAnovaTestResult",
+    imports: ['import { leveneTest } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "`groups: number[][]` - Array of groups to test for equal variances",
+      "`alpha?: number` - Significance level (default: 0.05)",
+    ],
+    returns:
+      "OneWayAnovaTestResult with F-statistic, `p_value`, `reject_null`",
+    examples: [
+      "const group1 = [1, 2, 3, 4, 5];",
+      "const group2 = [6, 7, 8, 9, 10];  // similar variance",
+      "const group3 = [1, 5, 10, 15, 20]; // different variance",
+      "",
+      "const result = leveneTest([group1, group2, group3]);",
+      "console.log(`p-value: ${result.p_value}`);",
+      "",
+      "if (result.reject_null) {",
+      "  console.log('Use Welch ANOVA (unequal variances)');",
+      "} else {",
+      "  console.log('Use regular ANOVA (equal variances)');",
+      "}",
+    ],
+    bestPractices: [
+      "Use before ANOVA to check equal variances assumption",
+      "Requires at least 2 groups, each with at least 2 observations",
+      "More robust than Bartlett's test for non-normal data",
+      "p < alpha means variances are significantly different",
+    ],
+    antiPatterns: [
+      "Ignoring Levene test results when choosing between ANOVA and Welch ANOVA",
+    ],
+    related: [
+      "s.test.anova.oneWay",
+      "s.test.anova.welch",
+    ],
   },
 };

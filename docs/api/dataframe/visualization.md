@@ -104,22 +104,21 @@ cleanData.graph({
     line: { connectNulls: false } // Don't connect across null values
   }
 })
-// Error handling: Validate data before visualization
-try {
-  if (df.nrows() === 0) {
-    throw new Error("Cannot visualize empty DataFrame");
-  }
-  
-  const requiredCols = ["x", "y"];
-  const missing = requiredCols.filter(col => !df.columns().includes(col));
-  if (missing.length > 0) {
-    throw new Error(`Missing required columns: ${missing.join(", ")}`);
-  }
-  
-  df.graph({ type: "scatter", mappings: { x: "x", y: "y" } });
-} catch (error) {
-  console.error("Visualization error:", error.message);
+// Best practice: Validate data before visualization
+// Note: graph() will create an empty chart for empty DataFrames or missing columns,
+// but validating upfront provides better error messages
+if (df.nrows() === 0) {
+  console.warn("DataFrame is empty - chart will have no data points");
 }
+
+const requiredCols = ["x", "y"];
+const missing = requiredCols.filter(col => !df.columns().includes(col));
+if (missing.length > 0) {
+  console.error(`Missing required columns: ${missing.join(", ")}`);
+  // graph() will return empty chart if columns are missing
+}
+
+df.graph({ type: "scatter", mappings: { x: "x", y: "y" } });
 // Line chart with custom styling and domain filtering
 df.graph({
   type: "line",

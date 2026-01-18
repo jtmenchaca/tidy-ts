@@ -122,7 +122,7 @@ export async function callRobustRust(
     // Correlation Tests
     case "cor.test.pearson": {
       const { pearsonTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/correlation/pearson.js"
+        "../../dataframe/ts/stats/statistical-tests/correlation/pearson.ts"
       );
       const result = pearsonTest({
         x: params.data!.x!,
@@ -141,7 +141,7 @@ export async function callRobustRust(
 
     case "cor.test.spearman": {
       const { spearmanTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/correlation/spearman.js"
+        "../../dataframe/ts/stats/statistical-tests/correlation/spearman.ts"
       );
       const result = spearmanTest({
         x: params.data!.x!,
@@ -160,7 +160,7 @@ export async function callRobustRust(
 
     case "cor.test.kendall": {
       const { kendallTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/correlation/kendall.js"
+        "../../dataframe/ts/stats/statistical-tests/correlation/kendall.ts"
       );
       const result = kendallTest({
         x: params.data!.x!,
@@ -181,7 +181,7 @@ export async function callRobustRust(
     // T-Tests
     case "t.test.one": {
       const { tTestOneSample } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/t-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/t-tests.ts"
       );
       const result = tTestOneSample({
         data: params.data!.x!,
@@ -200,7 +200,7 @@ export async function callRobustRust(
 
     case "t.test.two": {
       const { tTestIndependent } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/t-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/t-tests.ts"
       );
       const result = tTestIndependent({
         x: params.data!.x!,
@@ -220,7 +220,7 @@ export async function callRobustRust(
 
     case "t.test.paired": {
       const { tTestPaired } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/t-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/t-tests.ts"
       );
       const result = tTestPaired({
         x: params.data!.x!,
@@ -240,7 +240,7 @@ export async function callRobustRust(
     // Z-Tests
     case "z.test.one": {
       const { zTestOneSample } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/z-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/z-tests.ts"
       );
       const result = zTestOneSample({
         data: params.data!.x!,
@@ -260,7 +260,7 @@ export async function callRobustRust(
 
     case "z.test.two": {
       const { zTestTwoSample } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/z-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/z-tests.ts"
       );
       const result = zTestTwoSample({
         data1: params.data!.x!,
@@ -282,7 +282,7 @@ export async function callRobustRust(
     // Proportion Tests
     case "prop.test.one": {
       const { proportionTestOneSample } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/proportion-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/proportion-tests.ts"
       );
       // Convert count data to boolean array for proportion test
       const successCount = params.data!.proportions!.x!;
@@ -308,7 +308,7 @@ export async function callRobustRust(
 
     case "prop.test.two": {
       const { proportionTestTwoSample } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/proportion-tests.js"
+        "../../dataframe/ts/stats/statistical-tests/proportion-tests.ts"
       );
       // Convert count data to boolean arrays for proportion test
       const x1Count = params.data!.proportions!.x1!;
@@ -335,7 +335,7 @@ export async function callRobustRust(
     // ANOVA Tests
     case "aov.one": {
       const { anovaOneWay } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/anova.js"
+        "../../dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const result = anovaOneWay(params.data!.groups!, alpha);
       return {
@@ -349,7 +349,7 @@ export async function callRobustRust(
 
     case "aov.welch": {
       const { welchAnovaOneWay } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/anova.js"
+        "../../dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const result = welchAnovaOneWay(params.data!.groups!, alpha);
       return {
@@ -364,7 +364,7 @@ export async function callRobustRust(
     // Non-parametric Tests
     case "wilcox.test.mannwhitney": {
       const { mannWhitneyTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/mann-whitney.js"
+        "../../dataframe/ts/stats/statistical-tests/mann-whitney.ts"
       );
       const result = mannWhitneyTest({
         x: params.data!.x!,
@@ -383,7 +383,7 @@ export async function callRobustRust(
 
     case "wilcox.test.signedrank": {
       const { wilcoxonSignedRankTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/wilcoxon.js"
+        "../../dataframe/ts/stats/statistical-tests/wilcoxon.ts"
       );
       const result = wilcoxonSignedRankTest({
         x: params.data!.x!,
@@ -402,7 +402,7 @@ export async function callRobustRust(
 
     case "kruskal.test": {
       const { kruskalWallisTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/kruskal-wallis.js"
+        "../../dataframe/ts/stats/statistical-tests/kruskal-wallis.ts"
       );
       const result = kruskalWallisTest(params.data!.groups!, alpha);
       return {
@@ -417,7 +417,7 @@ export async function callRobustRust(
     // Distribution Tests
     case "ks.test.uniform": {
       const { ksTestUniform } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/kolmogorov-smirnov.js"
+        "../../dataframe/ts/stats/statistical-tests/kolmogorov-smirnov.ts"
       );
       const result = ksTestUniform({
         x: params.data!.x!,
@@ -437,7 +437,7 @@ export async function callRobustRust(
 
     case "ks.test.two.sample": {
       const { kolmogorovSmirnovTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/kolmogorov-smirnov.js"
+        "../../dataframe/ts/stats/statistical-tests/kolmogorov-smirnov.ts"
       );
       const result = kolmogorovSmirnovTest({
         x: params.data!.x!,
@@ -456,7 +456,7 @@ export async function callRobustRust(
 
     case "shapiro.test": {
       const { shapiroWilkTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/shapiro-wilk.js"
+        "../../dataframe/ts/stats/statistical-tests/shapiro-wilk.ts"
       );
       const result = shapiroWilkTest({
         data: params.data!.x!,
@@ -473,7 +473,7 @@ export async function callRobustRust(
 
     case "ad.test": {
       const { andersonDarlingTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/anderson-darling.js"
+        "../../dataframe/ts/stats/statistical-tests/anderson-darling.ts"
       );
       const result = andersonDarlingTest({
         data: params.data!.x!,
@@ -490,7 +490,7 @@ export async function callRobustRust(
 
     case "dagostino.test": {
       const { dagostinoPearsonTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/dagostino-pearson.js"
+        "../../dataframe/ts/stats/statistical-tests/dagostino-pearson.ts"
       );
       const result = dagostinoPearsonTest({
         data: params.data!.x!,
@@ -508,7 +508,7 @@ export async function callRobustRust(
     // Chi-Square Tests
     case "chisq.test": {
       const { chiSquareTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/chi-square.js"
+        "../../dataframe/ts/stats/statistical-tests/chi-square.ts"
       );
       const result = chiSquareTest({
         contingencyTable: params.data!.contingencyTable!,
@@ -525,7 +525,7 @@ export async function callRobustRust(
 
     case "fisher.test": {
       const { fishersExactTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/fishers-exact.js"
+        "../../dataframe/ts/stats/statistical-tests/fishers-exact.ts"
       );
       const result = fishersExactTest({
         contingencyTable: params.data!.contingencyTable!,
@@ -544,7 +544,7 @@ export async function callRobustRust(
     // Two-way ANOVA Test
     case "aov.two": {
       const { twoWayAnova } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/anova.js"
+        "../../dataframe/ts/stats/statistical-tests/anova.ts"
       );
       const twoWayData = params.data!.twoWayData!;
       // Convert flat data to 3D array structure for two-way ANOVA
@@ -574,7 +574,7 @@ export async function callRobustRust(
     // Levene's Test
     case "levene.test": {
       const { leveneTest } = await import(
-        "@tidy-ts/dataframe/ts/stats/statistical-tests/levene.js"
+        "../../dataframe/ts/stats/statistical-tests/levene.ts"
       );
       const result = leveneTest(params.data!.groups!, alpha);
       return {

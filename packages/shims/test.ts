@@ -37,26 +37,44 @@ export interface WrappedTestOptions {
   waitForCallback?: boolean; // Whether to wait for the done-callback to be called (for async tests)
 }
 
-// Variable to hold the runtime-specific test implementation
-let wrappedTestToUse: WrappedTest;
-
 import { UnsupportedRuntimeError } from "./errors.ts";
 
-// Dynamically import the appropriate test implementation based on detected runtime
-if (currentRuntime === Runtime.Deno) {
-  const { wrappedTest } = await import("./test/deno.ts");
-  wrappedTestToUse = wrappedTest;
-} else if (currentRuntime === Runtime.Node) {
-  const { wrappedTest } = await import("./test/node.ts");
-  wrappedTestToUse = wrappedTest;
-} else if (currentRuntime === Runtime.Bun) {
-  const { wrappedTest } = await import("./test/bun.ts");
-  wrappedTestToUse = wrappedTest;
-} else {
-  throw new UnsupportedRuntimeError(
-    currentRuntime,
-    [Runtime.Deno, Runtime.Node, Runtime.Bun],
-  );
+// Variable to hold the runtime-specific test implementation (lazy-loaded)
+let wrappedTestToUse: WrappedTest | null = null;
+let initPromise: Promise<void> | null = null;
+
+/**
+ * Lazily initialize the runtime-specific test implementation.
+ * This defers the import until the test function is actually called,
+ * preventing module load errors in unsupported runtimes like browsers.
+ */
+async function ensureInitialized(): Promise<void> {
+  if (wrappedTestToUse) return;
+
+  if (initPromise) {
+    await initPromise;
+    return;
+  }
+
+  initPromise = (async () => {
+    if (currentRuntime === Runtime.Deno) {
+      const { wrappedTest } = await import("./test/deno.ts");
+      wrappedTestToUse = wrappedTest;
+    } else if (currentRuntime === Runtime.Node) {
+      const { wrappedTest } = await import("./test/node.ts");
+      wrappedTestToUse = wrappedTest;
+    } else if (currentRuntime === Runtime.Bun) {
+      const { wrappedTest } = await import("./test/bun.ts");
+      wrappedTestToUse = wrappedTest;
+    } else {
+      throw new UnsupportedRuntimeError(
+        currentRuntime,
+        [Runtime.Deno, Runtime.Node, Runtime.Bun],
+      );
+    }
+  })();
+
+  await initPromise;
 }
 
 /**
@@ -72,15 +90,18 @@ export async function test(
   testFn: (() => void | Promise<void>) | TestSubject,
   options: WrappedTestOptions = {},
 ) {
+  // Lazy initialization - only load runtime-specific test implementation when test is called
+  await ensureInitialized();
+
   // If testFn is a simple async function (no parameters), wrap it
   if (testFn.length === 0) {
     const simpleTestFn = testFn as () => void | Promise<void>;
-    await wrappedTestToUse(name, async (_, done) => {
+    await wrappedTestToUse!(name, async (_, done) => {
       await simpleTestFn();
       done();
     }, options);
   } else {
     // It's already a TestSubject with context/done parameters
-    await wrappedTestToUse(name, testFn as TestSubject, options);
+    await wrappedTestToUse!(name, testFn as TestSubject, options);
   }
 }

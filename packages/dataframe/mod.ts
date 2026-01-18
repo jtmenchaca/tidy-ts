@@ -24,6 +24,7 @@ export {
   readXLSX,
   readXLSXMetadata,
   writeCSV,
+  writeJSON,
   writeXLSX,
 } from "./ts/io/index.ts";
 

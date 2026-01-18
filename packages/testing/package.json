@@ -4,10 +4,11 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build:browser-bundle": "deno run -A runtimes/build-bundle.ts",
     "test:bun": "bun runtimes/minimal.test.ts",
     "playwright-setup": "bun runtimes/server.js",
     "serve": "bun runtimes/server.js",
-    "test:browser": "playwright test",
+    "test:browser": "playwright test --config=runtimes/playwright.config.js",
     "test:sh": "bash runtimes/test-runner.sh"
   },
   "devDependencies": {

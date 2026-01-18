@@ -12,12 +12,12 @@
 
 ## s.covariance
 
-Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs.
+Calculate the sample covariance between two arrays of values. Arrays must have the same length. Returns null if no valid pairs. Type inference narrows return type based on removal options.
 
 ### Signature
 
 ```typescript
-s.covariance(x: number[], y: number[], removeNA?: boolean): number | null
+s.covariance(x: number[], y: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null
 ```
 
 ### Import
@@ -30,7 +30,9 @@ import { stats as s } from "@tidy-ts/dataframe";
 
 - x: First array of numbers
 - y: Second array of numbers (same length as x)
-- removeNA: If true, guarantees a number return (throws if no valid pairs)
+- options.removeNull: If true, skips pairs where either value is null
+- options.removeUndefined: If true, skips pairs where either value is undefined
+- options.removeNaN: If true, skips pairs where either value is NaN
 
 ### Returns
 
@@ -41,8 +43,9 @@ number | null
 ```typescript
 s.covariance([1, 2, 3], [1, 2, 3]) // 1
 s.covariance([1, 2, 3], [3, 2, 1]) // -1
-s.covariance([1, null, 3], [1, 2, 3], false) // null (due to null)
-s.covariance([1, null, 3], [1, 2, 3], true) // 2 (ignoring null pair)
+s.covariance([1, null, 3], [1, 2, 3]) // null (null present)
+s.covariance([1, null, 3], [1, 2, 3], { removeNull: true }) // covariance of pairs (1,1) and (3,3)
+s.covariance([1, NaN, 3], [1, 2, 3], { removeNaN: true }) // covariance of pairs (1,1) and (3,3)
 // From DataFrame columns
 const df = createDataFrame([
   { height: 170, weight: 70 },

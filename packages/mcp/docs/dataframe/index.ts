@@ -11,6 +11,7 @@ export { timeSeriesDocs } from "./time-series.ts";
 export { missingDataDocs } from "./missing-data.ts";
 export { profilingDocs } from "./profiling.ts";
 export { visualizationDocs } from "./visualization.ts";
+export { setupDocs } from "./setup.ts";
 
 // Aggregate all for easy import
 import { creationDocs } from "./creation.ts";
@@ -25,6 +26,7 @@ import { timeSeriesDocs } from "./time-series.ts";
 import { missingDataDocs } from "./missing-data.ts";
 import { profilingDocs } from "./profiling.ts";
 import { visualizationDocs } from "./visualization.ts";
+import { setupDocs } from "./setup.ts";
 
 export const dataframeDocs = {
   ...creationDocs,
@@ -39,4 +41,5 @@ export const dataframeDocs = {
   ...missingDataDocs,
   ...profilingDocs,
   ...visualizationDocs,
+  ...setupDocs,
 };

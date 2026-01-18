@@ -4,13 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Statistical Distributions Example - @tidy-ts/dataframe</title>
-    <script type="importmap">
-      {
-        "imports": {
-          "@tidy-ts/dataframe": "https://esm.sh/@jsr/tidy-ts__dataframe"
-        }
-      }
-    </script>
     <style>
       body {
         font-family:
@@ -96,9 +89,9 @@
         log("📊 Statistical Distributions Example");
         log("=".repeat(50));
 
-        // Import the library
+        // Import from local bundle
         const { createDataFrame, s, setupTidyTS } = await import(
-          "@tidy-ts/dataframe"
+          "./tidy-ts-bundle.js"
         );
         log("✅ Library imported successfully");
 

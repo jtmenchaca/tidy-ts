@@ -49,6 +49,13 @@ vendor/
 sources/
 z-proposal/
 
+# Browser bundle (generated, ~5MB with inlined WASM)
+packages/testing/runtimes/public/tidy-ts-bundle.js
+packages/testing/runtimes/public/tidy-ts-bundle.js.map
+
+# Playwright test results
+packages/testing/test-results/
+
 Claude.md/
 .claude/
 

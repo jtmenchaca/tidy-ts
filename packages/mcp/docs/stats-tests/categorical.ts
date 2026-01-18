@@ -7,14 +7,14 @@ export const categoricalDocs: Record<string, DocEntry> = {
     description:
       "Chi-square test of independence for testing association between categorical variables in a contingency table.",
     signature:
-      "s.test.categorical.chiSquare({ contingencyTable, alpha? }): ChiSquareIndependenceTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+      "chiSquareTest({ contingencyTable, alpha? }): ChiSquareIndependenceTestResult",
+    imports: ['import { chiSquareTest } from "@tidy-ts/dataframe";'],
     parameters: [
       "`contingencyTable: number[][]` - 2D array representing contingency table (rows × columns)",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "ChiSquareIndependenceTestResult with `statistic`, `pValue`, `degreesOfFreedom`, `reject`",
+      "ChiSquareIndependenceTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `phi_coefficient`, `residuals`",
     examples: [
       "// Example: 2x2 contingency table",
       "// Rows: Treatment vs Control",
@@ -23,9 +23,9 @@ export const categoricalDocs: Record<string, DocEntry> = {
       "  [20, 10],  // Treatment: 20 success, 10 failure",
       "  [15, 15]   // Control: 15 success, 15 failure",
       "];",
-      "const result = s.test.categorical.chiSquare({ contingencyTable: table });",
-      "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);  // true if variables are associated",
+      "const result = chiSquareTest({ contingencyTable: table });",
+      "console.log(result.p_value);  // p-value",
+      "console.log(result.phi_coefficient);  // effect size measure",
     ],
     bestPractices: [
       "Use for testing independence between categorical variables",
@@ -46,8 +46,8 @@ export const categoricalDocs: Record<string, DocEntry> = {
     description:
       "Fisher's exact test for testing independence in a 2×2 contingency table (exact p-value, no large-sample assumption).",
     signature:
-      "s.test.categorical.fishersExact({ contingencyTable, alternative?, oddsRatio?, alpha? }): FishersExactTestResult",
-    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
+      "fishersExactTest({ contingencyTable, alternative?, oddsRatio?, alpha? }): FishersExactTestResult",
+    imports: ['import { fishersExactTest } from "@tidy-ts/dataframe";'],
     parameters: [
       "`contingencyTable: number[][]` - 2×2 contingency table (must be exactly 2 rows × 2 columns)",
       "`alternative?: 'two-sided' | 'less' | 'greater'` - Alternative hypothesis (default: 'two-sided')",
@@ -55,16 +55,16 @@ export const categoricalDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "FishersExactTestResult with `pValue`, `exactPValue`, `oddsRatio`, `reject`",
+      "FishersExactTestResult with `p_value`, `test_statistic`, `confidence_interval`, `mid_p_value`",
     examples: [
       "// Example: 2x2 contingency table",
       "const table = [",
       "  [8, 2],   // Group 1: 8 success, 2 failure",
       "  [3, 7]    // Group 2: 3 success, 7 failure",
       "];",
-      "const result = s.test.categorical.fishersExact({ contingencyTable: table });",
-      "console.log(result.pValue);  // exact p-value",
-      "console.log(result.oddsRatio);  // odds ratio",
+      "const result = fishersExactTest({ contingencyTable: table });",
+      "console.log(result.p_value);  // exact p-value",
+      "console.log(result.test_statistic);  // odds ratio",
     ],
     bestPractices: [
       "Use for 2×2 tables with small sample sizes",

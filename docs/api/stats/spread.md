@@ -4,21 +4,21 @@
 
 ## Table of Contents
 
-- [s.stdev](#sstdev)
+- [s.sd](#ssd)
 - [s.variance](#svariance)
 - [s.range](#srange)
 - [s.iqr](#siqr)
 
 ---
 
-## s.stdev
+## s.sd
 
-Calculate the sample standard deviation of an array of values. Returns null if insufficient data or removeNA=false with mixed types. Can be chained with s.round() without assertions.
+Calculate the sample standard deviation of an array of values. Returns null if insufficient data. Type inference narrows return type based on removal options.
 
 ### Signature
 
 ```typescript
-s.stdev(values: number[], removeNA?: boolean): number | null
+s.sd(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null
 ```
 
 ### Import
@@ -30,7 +30,9 @@ import { stats as s } from "@tidy-ts/dataframe";
 ### Parameters
 
 - values: Array of numbers or single number
-- removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
+- options.removeNull: If true, skips null values
+- options.removeUndefined: If true, skips undefined values
+- options.removeNaN: If true, skips NaN values
 
 ### Returns
 
@@ -39,22 +41,12 @@ number | null
 ### Examples
 
 ```typescript
-s.stdev(42) // Always returns 0 for single value
-s.stdev([1, 2, 3, 4, 5]) // sample standard deviation (default)
-s.stdev([1, "2", 3], true) // 1.41... (std dev of [1, 3] with removeNA=true)
-s.stdev([1, "2", 3], false) // null (mixed types, removeNA=false)
-// Chain with s.round() - no assertions needed!
-df.groupBy("region").summarize({ std: group => s.round(s.stdev(group.sales), 2) })
+s.sd(42) // 0 (single value)
+s.sd([1, 2, 3, 4, 5]) // sample standard deviation
+s.sd([1, null, 3], { removeNull: true }) // std dev of [1, 3]
+s.sd([1, NaN, 3], { removeNaN: true }) // std dev of [1, 3]
+df.groupBy("region").summarize({ std: group => s.sd(group.sales) })
 ```
-
-### Best Practices
-
-- ✓ GOOD: Chain with s.round() directly: s.round(s.stdev(values), 2) - no assertions needed
-- ✓ GOOD: s.round() handles null at runtime, so no need for s.round(s.stdev(values)!, 2)
-
-### Anti-patterns
-
-- ❌ BAD: s.round(s.stdev(values)!, 2) // Unnecessary - s.round() handles null at runtime
 
 ### Related
 
@@ -64,12 +56,12 @@ df.groupBy("region").summarize({ std: group => s.round(s.stdev(group.sales), 2) 
 
 ## s.variance
 
-Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data.
+Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data. Type inference narrows return type based on removal options.
 
 ### Signature
 
 ```typescript
-s.variance(values: number[], removeNA?: boolean): number | null
+s.variance(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null
 ```
 
 ### Import
@@ -81,7 +73,9 @@ import { stats as s } from "@tidy-ts/dataframe";
 ### Parameters
 
 - values: Array of numbers or single number
-- removeNA: If true, processes valid numbers from mixed arrays; if false, returns null for mixed arrays
+- options.removeNull: If true, skips null values
+- options.removeUndefined: If true, skips undefined values
+- options.removeNaN: If true, skips NaN values
 
 ### Returns
 
@@ -90,10 +84,10 @@ number | null
 ### Examples
 
 ```typescript
-s.variance(42) // Always returns 0 for single value
-s.variance([1, 2, 3, 4, 5]) // sample variance (default)
-s.variance([1, "2", 3], true) // 1 (variance of [1, 3] with removeNA=true)
-s.variance([1, "2", 3], false) // null (mixed types, removeNA=false)
+s.variance(42) // 0 (single value)
+s.variance([1, 2, 3, 4, 5]) // sample variance
+s.variance([1, null, 3], { removeNull: true }) // variance of [1, 3]
+s.variance([1, NaN, 3], { removeNaN: true }) // variance of [1, 3]
 ```
 
 ### Related
@@ -104,12 +98,12 @@ s.variance([1, "2", 3], false) // null (mixed types, removeNA=false)
 
 ## s.range
 
-Calculate the range of values (max - min). Returns null if no valid values.
+Calculate the range of values (max - min). Returns null if no valid values. Type inference narrows return type based on removal options.
 
 ### Signature
 
 ```typescript
-s.range(values: number[], removeNA?: boolean): number | null
+s.range(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null
 ```
 
 ### Import
@@ -121,7 +115,9 @@ import { stats as s } from "@tidy-ts/dataframe";
 ### Parameters
 
 - values: Array of numbers, or single number
-- removeNA: If true, removes non-numeric values; if false, returns null for mixed types
+- options.removeNull: If true, skips null values
+- options.removeUndefined: If true, skips undefined values
+- options.removeNaN: If true, skips NaN values
 
 ### Returns
 
@@ -130,8 +126,9 @@ number | null
 ### Examples
 
 ```typescript
-s.range(42) // Always returns 0 for single value
-const r = s.range([1, 5, 3, 9, 2]) // 8 (9 - 1)
+s.range(42) // 0 (single value)
+s.range([1, 5, 3, 9, 2]) // 8 (9 - 1)
+s.range([1, null, 9], { removeNull: true }) // 8
 ```
 
 ### Related
@@ -142,12 +139,12 @@ const r = s.range([1, 5, 3, 9, 2]) // 8 (9 - 1)
 
 ## s.iqr
 
-Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values.
+Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values. Type inference narrows return type based on removal options.
 
 ### Signature
 
 ```typescript
-s.iqr(values: number[], removeNA?: boolean): number | null
+s.iqr(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null
 ```
 
 ### Import
@@ -159,7 +156,9 @@ import { stats as s } from "@tidy-ts/dataframe";
 ### Parameters
 
 - values: Array of numbers or single number
-- removeNA: If true, removes non-numeric values; if false, returns null for mixed types
+- options.removeNull: If true, skips null values
+- options.removeUndefined: If true, skips undefined values
+- options.removeNaN: If true, skips NaN values
 
 ### Returns
 
@@ -168,8 +167,10 @@ number | null
 ### Examples
 
 ```typescript
-s.iqr(42) // Always returns 0 for single value
-const iqr_val = s.iqr([1, 2, 3, 4, 5]) // 2 (4 - 2)
+s.iqr(42) // 0 (single value)
+s.iqr([1, 2, 3, 4, 5]) // 2 (Q75 - Q25 = 4 - 2)
+s.iqr([1, null, 5], { removeNull: true }) // IQR of [1, 5]
+s.iqr([1, NaN, 5], { removeNaN: true }) // IQR of [1, 5]
 ```
 
 ### Related

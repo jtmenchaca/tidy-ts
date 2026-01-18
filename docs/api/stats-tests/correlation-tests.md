@@ -17,13 +17,13 @@ Pearson correlation test to assess linear relationship between two continuous va
 ### Signature
 
 ```typescript
-s.test.correlation.pearson({ x, y, alternative?, alpha? }): PearsonCorrelationTestResult
+pearsonTest({ x, y, alternative?, alpha? }): PearsonCorrelationTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
+import { pearsonTest, createDataFrame } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -35,7 +35,7 @@ import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-PearsonCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject`
+PearsonCorrelationTestResult with `correlation`, `test_statistic`, `p_value`, `reject_null`
 
 ### Examples
 
@@ -43,10 +43,10 @@ PearsonCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject`
 // Basic usage with arrays
 const x = [1, 2, 3, 4, 5];
 const y = [2, 4, 6, 8, 10];
-const result = s.test.correlation.pearson({ x, y });
+const result = pearsonTest({ x, y });
 console.log(result.correlation);  // 1.0 (perfect positive)
-console.log(result.pValue);       // p-value for H0: r = 0
-console.log(result.reject);       // true if significant
+console.log(result.p_value);       // p-value for H0: r = 0
+console.log(result.reject_null);       // true if significant
 // FROM DATAFRAME COLUMNS - Common pattern
 const df = createDataFrame([
   { height: 170, weight: 70 },
@@ -57,16 +57,16 @@ const df = createDataFrame([
 ]);
 
 // Extract columns using df.extract()
-const result = s.test.correlation.pearson({
+const result = pearsonTest({
   x: df.extract("height"),
   y: df.extract("weight"),
 });
 
 console.log(`Correlation: ${result.correlation.toFixed(3)}`);
-console.log(`p-value: ${result.pValue.toFixed(4)}`);
-console.log(`Significant: ${result.reject}`);
+console.log(`p-value: ${result.p_value.toFixed(4)}`);
+console.log(`Significant: ${result.reject_null}`);
 // One-tailed test (testing if correlation > 0)
-const result = s.test.correlation.pearson({
+const result = pearsonTest({
   x: df.extract("study_hours"),
   y: df.extract("test_score"),
   alternative: "greater",
@@ -101,13 +101,13 @@ Spearman rank correlation test to assess monotonic relationship between two vari
 ### Signature
 
 ```typescript
-s.test.correlation.spearman({ x, y, alternative?, alpha? }): SpearmanCorrelationTestResult
+spearmanTest({ x, y, alternative?, alpha? }): SpearmanCorrelationTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
+import { spearmanTest, createDataFrame } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -119,7 +119,7 @@ import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-SpearmanCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject`
+SpearmanCorrelationTestResult with `correlation`, `test_statistic`, `p_value`, `reject_null`
 
 ### Examples
 
@@ -127,7 +127,7 @@ SpearmanCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject
 // Basic usage
 const x = [1, 2, 3, 4, 5];
 const y = [10, 20, 30, 40, 50];
-const result = s.test.correlation.spearman({ x, y });
+const result = spearmanTest({ x, y });
 console.log(result.correlation);  // Spearman's rho
 // FROM DATAFRAME COLUMNS
 const df = createDataFrame([
@@ -137,7 +137,7 @@ const df = createDataFrame([
   { satisfaction: 3, loyalty: 5 },
 ]);
 
-const result = s.test.correlation.spearman({
+const result = spearmanTest({
   x: df.extract("satisfaction"),
   y: df.extract("loyalty"),
 });
@@ -169,13 +169,13 @@ Kendall's tau correlation test to assess ordinal association between two variabl
 ### Signature
 
 ```typescript
-s.test.correlation.kendall({ x, y, alternative?, alpha?, exact? }): KendallCorrelationTestResult
+kendallTest({ x, y, alternative?, alpha?, exact? }): KendallCorrelationTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
+import { kendallTest, createDataFrame } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -188,7 +188,7 @@ import { stats as s, createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-KendallCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject`
+KendallCorrelationTestResult with `correlation`, `test_statistic`, `p_value`, `reject_null`
 
 ### Examples
 
@@ -196,7 +196,7 @@ KendallCorrelationTestResult with `correlation`, `statistic`, `pValue`, `reject`
 // Basic usage
 const x = [1, 2, 3, 4, 5];
 const y = [5, 4, 3, 2, 1];
-const result = s.test.correlation.kendall({ x, y });
+const result = kendallTest({ x, y });
 console.log(result.correlation);  // Kendall's tau (negative)
 // FROM DATAFRAME COLUMNS
 const df = createDataFrame([
@@ -206,7 +206,7 @@ const df = createDataFrame([
   { rank_A: 4, rank_B: 5 },
 ]);
 
-const result = s.test.correlation.kendall({
+const result = kendallTest({
   x: df.extract("rank_A"),
   y: df.extract("rank_B"),
 });

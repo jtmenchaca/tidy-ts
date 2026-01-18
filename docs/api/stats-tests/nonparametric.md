@@ -17,13 +17,13 @@ Mann-Whitney U test (Wilcoxon rank-sum test) for comparing two independent group
 ### Signature
 
 ```typescript
-s.test.nonparametric.mannWhitney({ x, y, exact?, continuityCorrection?, alternative?, alpha? }): MannWhitneyTestResult
+mannWhitneyTest({ x, y, exact?, continuityCorrection?, alternative?, alpha? }): MannWhitneyTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s } from "@tidy-ts/dataframe";
+import { mannWhitneyTest } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -37,16 +37,16 @@ import { stats as s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-MannWhitneyTestResult with `statistic`, `pValue`, `reject`
+MannWhitneyTestResult with `test_statistic`, `p_value`, `reject_null`
 
 ### Examples
 
 ```typescript
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
-const result = s.test.nonparametric.mannWhitney({ x: group1, y: group2 });
-console.log(result.pValue);  // p-value
-console.log(result.reject);  // true if reject H0
+const result = mannWhitneyTest({ x: group1, y: group2 });
+console.log(result.p_value);  // p-value
+console.log(result.reject_null);  // true if reject H0
 ```
 
 ### Best Practices
@@ -74,13 +74,13 @@ Wilcoxon signed-rank test for comparing two related/paired samples without assum
 ### Signature
 
 ```typescript
-s.test.nonparametric.wilcoxon({ x, y, alternative?, alpha? }): WilcoxonSignedRankTestResult
+wilcoxonSignedRankTest({ x, y, alternative?, alpha? }): WilcoxonSignedRankTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s } from "@tidy-ts/dataframe";
+import { wilcoxonSignedRankTest } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -92,16 +92,16 @@ import { stats as s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-WilcoxonSignedRankTestResult with `statistic`, `pValue`, `reject`
+WilcoxonSignedRankTestResult with `test_statistic`, `p_value`, `reject_null`
 
 ### Examples
 
 ```typescript
 const before = [120, 125, 118, 130, 122];
 const after = [115, 118, 112, 125, 117];
-const result = s.test.nonparametric.wilcoxon({ x: before, y: after });
-console.log(result.pValue);  // p-value
-console.log(result.reject);  // true if significant change
+const result = wilcoxonSignedRankTest({ x: before, y: after });
+console.log(result.p_value);  // p-value
+console.log(result.reject_null);  // true if significant change
 ```
 
 ### Best Practices
@@ -129,13 +129,13 @@ Kruskal-Wallis test for comparing multiple independent groups without assuming n
 ### Signature
 
 ```typescript
-s.test.nonparametric.kruskalWallis(groups: number[][], alpha?: number): KruskalWallisTestResult
+kruskalWallisTest(groups: number[][], alpha?: number): KruskalWallisTestResult
 ```
 
 ### Import
 
 ```typescript
-import { stats as s } from "@tidy-ts/dataframe";
+import { kruskalWallisTest } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -145,7 +145,7 @@ import { stats as s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-KruskalWallisTestResult with `statistic`, `pValue`, `degreesOfFreedom`, `reject`
+KruskalWallisTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `reject_null`
 
 ### Examples
 
@@ -153,11 +153,11 @@ KruskalWallisTestResult with `statistic`, `pValue`, `degreesOfFreedom`, `reject`
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
 const group3 = [20, 21, 19, 22, 20];
-const result = s.test.nonparametric.kruskalWallis([group1, group2, group3]);
-console.log(result.pValue);  // p-value
-if (result.reject) {
+const result = kruskalWallisTest([group1, group2, group3]);
+console.log(result.p_value);  // p-value
+if (result.reject_null) {
   // If significant, use post-hoc tests
-  const postHoc = s.compare.postHoc.dunn([group1, group2, group3]);
+  const postHoc = dunnTest([group1, group2, group3]);
 }
 ```
 
