@@ -43,8 +43,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- cor.test(x, y, method = "pearson", alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       correlation = as.numeric(test_result$estimate),
       method = "pearson",
       alternative = alternative,
@@ -57,8 +57,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- cor.test(x, y, method = "spearman", alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       correlation = as.numeric(test_result$estimate),
       method = "spearman",
       alternative = alternative,
@@ -72,8 +72,8 @@ result <- switch(test_type,
     exact <- if (is.null(options$exact)) TRUE else options$exact
     test_result <- cor.test(x, y, method = "kendall", alternative = alternative, exact = exact)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       correlation = as.numeric(test_result$estimate),
       method = "kendall",
       alternative = alternative,
@@ -87,8 +87,8 @@ result <- switch(test_type,
     mu <- if (is.null(options$mu)) 0 else options$mu
     test_result <- t.test(x, mu = mu, alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "t.test.one",
       alternative = alternative,
       alpha = alpha
@@ -101,8 +101,8 @@ result <- switch(test_type,
     var_equal <- if (is.null(options$assumeEqualVariances)) TRUE else options$assumeEqualVariances
     test_result <- t.test(x, y, alternative = alternative, var.equal = var_equal)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "t.test.two",
       alternative = alternative,
       alpha = alpha
@@ -114,8 +114,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- t.test(x, y, alternative = alternative, paired = TRUE)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "t.test.paired",
       alternative = alternative,
       alpha = alpha
@@ -129,16 +129,16 @@ result <- switch(test_type,
     sigma <- if (is.null(options$sigma)) 1 else options$sigma
     n <- length(x)
     z_stat <- (mean(x) - mu) / (sigma / sqrt(n))
-    
+
     p_val <- switch(alternative,
       "two.sided" = 2 * (1 - pnorm(abs(z_stat))),
       "less" = pnorm(z_stat),
       "greater" = 1 - pnorm(z_stat)
     )
-    
+
     list(
-      test_statistic = z_stat,
-      p_value = p_val,
+      testStatistic = z_stat,
+      pValue = p_val,
       method = "z.test.one",
       alternative = alternative,
       alpha = alpha
@@ -149,22 +149,22 @@ result <- switch(test_type,
     x <- as.numeric(data$x)
     y <- as.numeric(data$y)
     sigma <- if (is.null(options$sigma)) 1 else options$sigma
-    
+
     # Two-sample z-test assuming known variance
     n1 <- length(x)
     n2 <- length(y)
     se <- sigma * sqrt(1/n1 + 1/n2)
     z_stat <- (mean(x) - mean(y)) / se
-    
+
     p_val <- switch(alternative,
       "two.sided" = 2 * (1 - pnorm(abs(z_stat))),
       "less" = pnorm(z_stat),
       "greater" = 1 - pnorm(z_stat)
     )
-    
+
     list(
-      test_statistic = z_stat,
-      p_value = p_val,
+      testStatistic = z_stat,
+      pValue = p_val,
       method = "z.test.two",
       alternative = alternative,
       alpha = alpha
@@ -178,8 +178,8 @@ result <- switch(test_type,
     p0 <- if (is.null(data$proportions$p0)) 0.5 else data$proportions$p0
     test_result <- prop.test(x, n, p = p0, alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "prop.test.one",
       alternative = alternative,
       alpha = alpha
@@ -193,8 +193,8 @@ result <- switch(test_type,
     n2 <- data$proportions$n2
     test_result <- prop.test(c(x1, x2), c(n1, n2), alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "prop.test.two",
       alternative = alternative,
       alpha = alpha
@@ -232,10 +232,10 @@ result <- switch(test_type,
     test_result <- anova(model)
     f_stat <- test_result$`F value`[1]
     p_val <- test_result$`Pr(>F)`[1]
-    
+
     list(
-      test_statistic = f_stat,
-      p_value = p_val,
+      testStatistic = f_stat,
+      pValue = p_val,
       method = "aov.one",
       alternative = "two.sided",
       alpha = alpha
@@ -268,8 +268,8 @@ result <- switch(test_type,
     
     test_result <- oneway.test(value ~ group, data = df, var.equal = FALSE)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "aov.welch",
       alternative = "two.sided",
       alpha = alpha
@@ -302,8 +302,8 @@ result <- switch(test_type,
     
     test_result <- kruskal.test(value ~ group, data = df)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "kruskal.test",
       alternative = "two.sided",
       alpha = alpha
@@ -315,8 +315,8 @@ result <- switch(test_type,
     table_data <- data$contingencyTable
     test_result <- chisq.test(table_data)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "chisq.test",
       alternative = "two.sided",
       alpha = alpha
@@ -327,8 +327,8 @@ result <- switch(test_type,
     table_data <- data$contingencyTable
     test_result <- fisher.test(table_data, alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$estimate),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$estimate),
+      pValue = test_result$p.value,
       method = "fisher.test",
       alternative = alternative,
       alpha = alpha
@@ -342,8 +342,8 @@ result <- switch(test_type,
     max_val <- if (is.null(options$max)) 1 else options$max
     test_result <- ks.test(x, "punif", min = min_val, max = max_val, alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "ks.uniform",
       alternative = alternative,
       alpha = alpha
@@ -355,8 +355,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- ks.test(x, y, alternative = alternative)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "ks.two.sample",
       alternative = alternative,
       alpha = alpha
@@ -367,8 +367,8 @@ result <- switch(test_type,
     x <- as.numeric(data$x)
     test_result <- shapiro.test(x)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "shapiro.test",
       alternative = "two.sided",
       alpha = alpha
@@ -379,8 +379,8 @@ result <- switch(test_type,
     x <- as.numeric(data$x)
     test_result <- nortest::ad.test(x)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "ad.test",
       alternative = "two.sided",
       alpha = alpha
@@ -393,8 +393,8 @@ result <- switch(test_type,
     test_result <- fBasics::dagoTest(x)
     # Extract the omnibus (first) statistic and p-value
     list(
-      test_statistic = as.numeric(test_result@test$statistic[1]),
-      p_value = test_result@test$p.value[1],
+      testStatistic = as.numeric(test_result@test$statistic[1]),
+      pValue = test_result@test$p.value[1],
       method = "dagostino.test",
       alternative = "two.sided",
       alpha = alpha
@@ -407,8 +407,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- wilcox.test(x, y, alternative = alternative, paired = TRUE)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "wilcox.signedrank",
       alternative = alternative,
       alpha = alpha
@@ -420,8 +420,8 @@ result <- switch(test_type,
     y <- as.numeric(data$y)
     test_result <- wilcox.test(x, y, alternative = alternative, paired = FALSE)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "wilcox.mannwhitney",
       alternative = alternative,
       alpha = alpha
@@ -469,14 +469,14 @@ result <- switch(test_type,
     # Two-way ANOVA
     model <- aov(value ~ factor(factor_a) * factor(factor_b), data = df_data)
     summary_result <- summary(model)
-    
+
     # Extract factor A results (primary result)
     f_stat <- summary_result[[1]][1, "F value"]
     p_val <- summary_result[[1]][1, "Pr(>F)"]
-    
+
     list(
-      test_statistic = f_stat,
-      p_value = p_val,
+      testStatistic = f_stat,
+      pValue = p_val,
       method = "aov.two",
       alternative = "two.sided",
       alpha = alpha
@@ -506,11 +506,11 @@ result <- switch(test_type,
     group_lengths <- sapply(abs_deviations, length)
     group_labels <- rep(seq_along(abs_deviations), group_lengths)
     all_deviations <- unlist(abs_deviations)
-    
+
     test_result <- oneway.test(all_deviations ~ factor(group_labels), var.equal = FALSE)
     list(
-      test_statistic = as.numeric(test_result$statistic),
-      p_value = test_result$p.value,
+      testStatistic = as.numeric(test_result$statistic),
+      pValue = test_result$p.value,
       method = "levene.test",
       alternative = "two.sided",
       alpha = alpha
