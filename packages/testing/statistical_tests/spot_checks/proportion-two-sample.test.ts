@@ -20,11 +20,11 @@ Deno.test("Two-Sample Proportion Test Spot Check", () => {
   console.log("Group 1 successes:", successes1, "/", group1.length);
   console.log("Group 2:", group2);
   console.log("Group 2 successes:", successes2, "/", group2.length);
-  console.log("Test statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("Test statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
   console.log("CI:", [
-    result.confidence_interval.lower,
-    result.confidence_interval.upper,
+    result.confidenceInterval.lower,
+    result.confidenceInterval.upper,
   ]);
 });
 

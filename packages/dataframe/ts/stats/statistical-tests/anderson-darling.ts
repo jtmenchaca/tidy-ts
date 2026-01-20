@@ -22,7 +22,7 @@ import type { AndersonDarlingTestResult } from "../../../lib/tidy_ts_dataframe.j
  * const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2, 9.1];
  * const result = andersonDarlingTest({ data });
  *
- * if (result.p_value < 0.05) {
+ * if (result.pValue < 0.05) {
  *   console.log("Data is not normally distributed (p < 0.05)");
  * }
  * ```

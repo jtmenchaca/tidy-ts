@@ -13,10 +13,10 @@ Deno.test("One-Way ANOVA Spot Check", () => {
   const result = stats.test.anova.oneWay(groups);
 
   console.log("Groups:", groups);
-  console.log("F-statistic:", result.test_statistic.value);
-  console.log("df between:", result.df_between);
-  console.log("df within:", result.df_within);
-  console.log("p-value:", result.p_value);
+  console.log("F-statistic:", result.testStatistic.value);
+  console.log("df between:", result.dfBetween);
+  console.log("df within:", result.dfWithin);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

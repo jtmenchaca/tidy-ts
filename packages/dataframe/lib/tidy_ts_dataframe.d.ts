@@ -1333,13 +1333,13 @@ export enum WilcoxonMethod {
 export class AndersonDarlingTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  test_statistic: TestStatistic;
-  sample_size: number;
+  testName: string;
+  pValue: number;
+  testStatistic: TestStatistic;
+  sampleSize: number;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Complete ANOVA table component (includes Total row)
@@ -1352,16 +1352,16 @@ export class AnovaTableComponent {
   df: number;
   get ms(): number | undefined;
   set ms(value: number | null | undefined);
-  get f_statistic(): number | undefined;
-  set f_statistic(value: number | null | undefined);
-  get p_value(): number | undefined;
-  set p_value(value: number | null | undefined);
-  get eta_squared(): number | undefined;
-  set eta_squared(value: number | null | undefined);
-  get partial_eta_squared(): number | undefined;
-  set partial_eta_squared(value: number | null | undefined);
-  get omega_squared(): number | undefined;
-  set omega_squared(value: number | null | undefined);
+  get fStatistic(): number | undefined;
+  set fStatistic(value: number | null | undefined);
+  get pValue(): number | undefined;
+  set pValue(value: number | null | undefined);
+  get etaSquared(): number | undefined;
+  set etaSquared(value: number | null | undefined);
+  get partialEtaSquared(): number | undefined;
+  set partialEtaSquared(value: number | null | undefined);
+  get omegaSquared(): number | undefined;
+  set omegaSquared(value: number | null | undefined);
 }
 /**
  * Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
@@ -1369,12 +1369,12 @@ export class AnovaTableComponent {
 export class AnovaTestComponent {
   private constructor();
   free(): void;
-  test_statistic: TestStatistic;
-  p_value: number;
-  degrees_of_freedom: number;
-  effect_size: EffectSize;
-  mean_square: number;
-  sum_of_squares: number;
+  testStatistic: TestStatistic;
+  pValue: number;
+  degreesOfFreedom: number;
+  effectSize: EffectSize;
+  meanSquare: number;
+  sumOfSquares: number;
 }
 /**
  * Chi-square goodness of fit test result
@@ -1382,16 +1382,16 @@ export class AnovaTestComponent {
 export class ChiSquareGoodnessOfFitTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  degrees_of_freedom: number;
-  sample_size: number;
-  chi_square_expected: Float64Array;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  degreesOfFreedom: number;
+  sampleSize: number;
+  chiSquareExpected: Float64Array;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Chi-square test of independence result
@@ -1399,18 +1399,18 @@ export class ChiSquareGoodnessOfFitTestResult {
 export class ChiSquareIndependenceTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  degrees_of_freedom: number;
-  sample_size: number;
-  phi_coefficient: number;
-  chi_square_expected: Float64Array;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  degreesOfFreedom: number;
+  sampleSize: number;
+  phiCoefficient: number;
+  chiSquareExpected: Float64Array;
   residuals: Float64Array;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Chi-square test for variance result
@@ -1418,16 +1418,16 @@ export class ChiSquareIndependenceTestResult {
 export class ChiSquareVarianceTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  degrees_of_freedom: number;
-  sample_size: number;
-  confidence_interval: ConfidenceInterval;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  degreesOfFreedom: number;
+  sampleSize: number;
+  confidenceInterval: ConfidenceInterval;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Confidence interval structure
@@ -1437,7 +1437,7 @@ export class ConfidenceInterval {
   free(): void;
   lower: number;
   upper: number;
-  confidence_level: number;
+  confidenceLevel: number;
 }
 /**
  * D'Agostino-Pearson K² test result
@@ -1445,15 +1445,15 @@ export class ConfidenceInterval {
 export class DAgostinoPearsonTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  test_statistic: TestStatistic;
-  sample_size: number;
+  testName: string;
+  pValue: number;
+  testStatistic: TestStatistic;
+  sampleSize: number;
   skewness: number;
   kurtosis: number;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Result structure for Dunn's test
@@ -1464,15 +1464,15 @@ export class DunnTestResult {
   /**
    * Test statistic for the overall test (if applicable)
    */
-  test_statistic: TestStatistic;
+  testStatistic: TestStatistic;
   /**
    * P-value for the overall test (if applicable)
    */
-  p_value: number;
+  pValue: number;
   /**
    * Name of the test performed
    */
-  test_name: string;
+  testName: string;
   /**
    * Significance level used
    */
@@ -1480,11 +1480,11 @@ export class DunnTestResult {
   /**
    * Error message if test failed
    */
-  get error_message(): string | undefined;
+  get errorMessage(): string | undefined;
   /**
    * Error message if test failed
    */
-  set error_message(value: string | null | undefined);
+  set errorMessage(value: string | null | undefined);
   /**
    * Explanatory note about the header values
    */
@@ -1496,15 +1496,15 @@ export class DunnTestResult {
   /**
    * Multiple comparison correction method used
    */
-  correction_method: string;
+  correctionMethod: string;
   /**
    * Number of groups compared
    */
-  n_groups: number;
+  nGroups: number;
   /**
    * Total sample size
    */
-  n_total: number;
+  nTotal: number;
   /**
    * Individual pairwise comparisons
    */
@@ -1525,19 +1525,19 @@ export class EffectSize {
 export class FishersExactTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
   method: string;
-  method_type: string;
-  get mid_p_value(): number | undefined;
-  set mid_p_value(value: number | null | undefined);
+  methodType: string;
+  get midPValue(): number | undefined;
+  set midPValue(value: number | null | undefined);
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Result structure for Games-Howell test
@@ -1548,15 +1548,15 @@ export class GamesHowellTestResult {
   /**
    * Test statistic for the overall test (if applicable)
    */
-  test_statistic: TestStatistic;
+  testStatistic: TestStatistic;
   /**
    * P-value for the overall test (if applicable)
    */
-  p_value: number;
+  pValue: number;
   /**
    * Name of the test performed
    */
-  test_name: string;
+  testName: string;
   /**
    * Significance level used
    */
@@ -1564,11 +1564,11 @@ export class GamesHowellTestResult {
   /**
    * Error message if test failed
    */
-  get error_message(): string | undefined;
+  get errorMessage(): string | undefined;
   /**
    * Error message if test failed
    */
-  set error_message(value: string | null | undefined);
+  set errorMessage(value: string | null | undefined);
   /**
    * Explanatory note about the header values
    */
@@ -1580,15 +1580,15 @@ export class GamesHowellTestResult {
   /**
    * Multiple comparison correction method used
    */
-  correction_method: string;
+  correctionMethod: string;
   /**
    * Number of groups compared
    */
-  n_groups: number;
+  nGroups: number;
   /**
    * Total sample size
    */
-  n_total: number;
+  nTotal: number;
   /**
    * Individual pairwise comparisons
    */
@@ -1626,29 +1626,29 @@ export class JoinIdxU32 {
 export class KendallCorrelationTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 export class KolmogorovSmirnovTestResult {
   private constructor();
   free(): void;
-  p_value: number;
-  sample1_size: number;
-  sample2_size: number;
-  critical_value: number;
-  d_statistic: number;
-  d_plus: number;
-  d_minus: number;
+  pValue: number;
+  sample1Size: number;
+  sample2Size: number;
+  criticalValue: number;
+  dStatistic: number;
+  dPlus: number;
+  dMinus: number;
   alpha: number;
-  readonly test_statistic: TestStatistic;
-  readonly test_name: string;
+  readonly testStatistic: TestStatistic;
+  readonly testName: string;
   readonly alternative: string;
 }
 /**
@@ -1657,15 +1657,15 @@ export class KolmogorovSmirnovTestResult {
 export class KruskalWallisTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  degrees_of_freedom: number;
-  sample_size: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  degreesOfFreedom: number;
+  sampleSize: number;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Mann-Whitney test result with method information
@@ -1673,15 +1673,15 @@ export class KruskalWallisTestResult {
 export class MannWhitneyTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
   method: string;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * One-sample proportion test result
@@ -1689,15 +1689,15 @@ export class MannWhitneyTestResult {
 export class OneSampleProportionTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  sample_proportion: number;
+  testName: string;
+  pValue: number;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  sampleProportion: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * One-sample t-test result
@@ -1705,16 +1705,16 @@ export class OneSampleProportionTestResult {
 export class OneSampleTTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  degrees_of_freedom: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  degreesOfFreedom: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * One-sample Z-test result
@@ -1722,15 +1722,15 @@ export class OneSampleTTestResult {
 export class OneSampleZTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * One-way ANOVA test result with guaranteed properties
@@ -1738,21 +1738,21 @@ export class OneSampleZTestResult {
 export class OneWayAnovaTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  df_between: number;
-  df_within: number;
-  r_squared: number;
-  adjusted_r_squared: number;
-  sample_size: number;
-  sample_means: Float64Array;
-  sample_std_devs: Float64Array;
-  sum_of_squares: Float64Array;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  dfBetween: number;
+  dfWithin: number;
+  rSquared: number;
+  adjustedRSquared: number;
+  sampleSize: number;
+  sampleMeans: Float64Array;
+  sampleStdDevs: Float64Array;
+  sumOfSquares: Float64Array;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Paired t-test result
@@ -1760,18 +1760,18 @@ export class OneWayAnovaTestResult {
 export class PairedTTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  degrees_of_freedom: number;
-  mean_difference: number;
-  standard_error: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  degreesOfFreedom: number;
+  meanDifference: number;
+  standardError: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Result for a single pairwise comparison
@@ -1790,23 +1790,23 @@ export class PairwiseComparison {
   /**
    * Mean difference between groups
    */
-  mean_difference: number;
+  meanDifference: number;
   /**
    * Standard error of the difference
    */
-  standard_error: number;
+  standardError: number;
   /**
    * Test statistic with name (q for Tukey, t for Games-Howell, z for Dunn)
    */
-  test_statistic: TestStatistic;
+  testStatistic: TestStatistic;
   /**
    * P-value for the comparison
    */
-  p_value: number;
+  pValue: number;
   /**
    * Confidence interval for the difference
    */
-  confidence_interval: ConfidenceInterval;
+  confidenceInterval: ConfidenceInterval;
   /**
    * Whether the difference is significant at the given alpha level
    */
@@ -1814,7 +1814,7 @@ export class PairwiseComparison {
   /**
    * Adjusted p-value (if applicable)
    */
-  adjusted_p_value: number;
+  adjustedPValue: number;
 }
 /**
  * Pearson correlation test result
@@ -1822,16 +1822,16 @@ export class PairwiseComparison {
 export class PearsonCorrelationTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  degrees_of_freedom: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  degreesOfFreedom: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Combined pivot result with values and seen flags
@@ -1874,13 +1874,13 @@ export class PivotLongerStringResult {
 export class ShapiroWilkTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  test_statistic: TestStatistic;
-  sample_size: number;
+  testName: string;
+  pValue: number;
+  testStatistic: TestStatistic;
+  sampleSize: number;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Spearman correlation test result
@@ -1888,16 +1888,16 @@ export class ShapiroWilkTestResult {
 export class SpearmanCorrelationTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  degrees_of_freedom: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  degreesOfFreedom: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Test statistic with name
@@ -1917,23 +1917,23 @@ export class TukeyHsdTestResult {
   /**
    * Name of the test performed
    */
-  test_name: string;
+  testName: string;
   /**
    * P-value for the overall test (if applicable)
    */
-  p_value: number;
+  pValue: number;
   /**
    * Test statistic for the overall test (if applicable)
    */
-  test_statistic: TestStatistic;
+  testStatistic: TestStatistic;
   /**
    * Number of groups compared
    */
-  n_groups: number;
+  nGroups: number;
   /**
    * Total sample size
    */
-  n_total: number;
+  nTotal: number;
   /**
    * Individual pairwise comparisons
    */
@@ -1941,7 +1941,7 @@ export class TukeyHsdTestResult {
   /**
    * Multiple comparison correction method used
    */
-  correction_method: string;
+  correctionMethod: string;
   /**
    * Explanatory note about the header values
    */
@@ -1957,11 +1957,11 @@ export class TukeyHsdTestResult {
   /**
    * Error message if test failed
    */
-  get error_message(): string | undefined;
+  get errorMessage(): string | undefined;
   /**
    * Error message if test failed
    */
-  set error_message(value: string | null | undefined);
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Two-sample proportion test result
@@ -1969,15 +1969,15 @@ export class TukeyHsdTestResult {
 export class TwoSampleProportionTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  proportion_difference: number;
+  testName: string;
+  pValue: number;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  proportionDifference: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Two-sample independent t-test result
@@ -1985,18 +1985,18 @@ export class TwoSampleProportionTestResult {
 export class TwoSampleTTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  degrees_of_freedom: number;
-  mean_difference: number;
-  standard_error: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  degreesOfFreedom: number;
+  meanDifference: number;
+  standardError: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Two-sample Z-test result
@@ -2004,17 +2004,17 @@ export class TwoSampleTTestResult {
 export class TwoSampleZTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
-  confidence_interval: ConfidenceInterval;
-  mean_difference: number;
-  standard_error: number;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
+  confidenceInterval: ConfidenceInterval;
+  meanDifference: number;
+  standardError: number;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Two-way ANOVA test result with guaranteed properties for all three tests
@@ -2022,23 +2022,23 @@ export class TwoSampleZTestResult {
 export class TwoWayAnovaTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  factor_a: AnovaTestComponent;
-  factor_b: AnovaTestComponent;
+  testName: string;
+  factorA: AnovaTestComponent;
+  factorB: AnovaTestComponent;
   interaction: AnovaTestComponent;
-  r_squared: number;
-  sample_size: number;
-  sample_means: Float64Array;
-  sample_std_devs: Float64Array;
-  sum_of_squares: Float64Array;
-  grand_mean: number;
-  anova_table: AnovaTableComponent[];
-  df_error: number;
-  ms_error: number;
-  df_total: number;
+  rSquared: number;
+  sampleSize: number;
+  sampleMeans: Float64Array;
+  sampleStdDevs: Float64Array;
+  sumOfSquares: Float64Array;
+  grandMean: number;
+  anovaTable: AnovaTableComponent[];
+  dfError: number;
+  msError: number;
+  dfTotal: number;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Welch's ANOVA test result with proper two degrees of freedom
@@ -2046,20 +2046,20 @@ export class TwoWayAnovaTestResult {
 export class WelchAnovaTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
   df1: number;
   df2: number;
-  r_squared: number;
-  adjusted_r_squared: number;
-  sample_size: number;
-  sample_means: Float64Array;
-  sample_std_devs: Float64Array;
+  rSquared: number;
+  adjustedRSquared: number;
+  sampleSize: number;
+  sampleMeans: Float64Array;
+  sampleStdDevs: Float64Array;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }
 /**
  * Wilcoxon signed-rank test result with method information
@@ -2067,13 +2067,13 @@ export class WelchAnovaTestResult {
 export class WilcoxonSignedRankTestResult {
   private constructor();
   free(): void;
-  test_name: string;
-  p_value: number;
-  effect_size: EffectSize;
-  test_statistic: TestStatistic;
+  testName: string;
+  pValue: number;
+  effectSize: EffectSize;
+  testStatistic: TestStatistic;
   method: string;
   alternative: string;
   alpha: number;
-  get error_message(): string | undefined;
-  set error_message(value: string | null | undefined);
+  get errorMessage(): string | undefined;
+  set errorMessage(value: string | null | undefined);
 }

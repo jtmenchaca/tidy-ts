@@ -18,7 +18,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `p_value`, `degrees_of_freedom` (t-test only), `confidence_interval`, `reject`, and effect size measures",
+      "TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `reject`, and effect size measures",
     examples: [
       "const group1 = [1.2, 1.4, 1.1, 1.3, 1.5, 1.2, 1.4, 1.3];",
       "const group2 = [2.1, 2.3, 2.0, 2.2, 2.4, 2.1, 2.3, 2.2];",
@@ -29,7 +29,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "  comparator: 'not equal to',",
       "  alpha: 0.05",
       "});",
-      "console.log(result.p_value);  // p-value",
+      "console.log(result.pValue);  // p-value",
       "console.log(result.reject);    // true if groups differ",
       "",
       "// Force equal variances assumption",
@@ -82,7 +82,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `p_value`, `reject`, and effect size measures",
+      "TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `pValue`, `reject`, and effect size measures",
     examples: [
       "const data1 = [true, false, true, true, false];",
       "const data2 = [true, true, true, false, true];",
@@ -93,7 +93,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "  comparator: 'not equal to',",
       "  alpha: 0.05",
       "});",
-      "console.log(result.p_value);  // p-value",
+      "console.log(result.pValue);  // p-value",
       "",
       "// Force Fisher's exact test (good for small samples)",
       "const fisher = s.compare.twoGroups.proportions.toEachOther({",
@@ -145,7 +145,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `p_value`, `confidence_interval`, `reject`",
+      "PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `pValue`, `confidenceInterval`, `reject`",
     examples: [
       "const x = [1, 2, 3, 4, 5, 6, 7, 8];",
       "const y = [2, 4, 6, 8, 10, 12, 14, 16];",
@@ -156,7 +156,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "  comparator: 'not equal to'",
       "});",
       "console.log(result.correlation);  // correlation coefficient",
-      "console.log(result.p_value);       // p-value",
+      "console.log(result.pValue);       // p-value",
       "",
       "// Force Pearson correlation (for linear relationships)",
       "const pearson = s.compare.twoGroups.association.toEachOther({",
@@ -209,7 +209,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `p_value`, `reject`",
+      "KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `pValue`, `reject`",
     examples: [
       "const group1 = [1.2, 1.4, 1.1, 1.3, 1.5];",
       "const group2 = [2.1, 2.3, 2.0, 2.2, 2.4];",
@@ -218,7 +218,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "  y: group2,",
       "  method: 'auto'",
       "});",
-      "console.log(result.p_value);  // p-value",
+      "console.log(result.pValue);  // p-value",
       "",
       "// Kolmogorov-Smirnov test (tests if distributions are equal)",
       "const ks = s.compare.twoGroups.distributions.toEachOther({",
@@ -252,4 +252,3 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

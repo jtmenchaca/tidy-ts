@@ -14,9 +14,9 @@ Deno.test("Chi-Square Test Spot Check", () => {
   });
 
   console.log("Contingency Table:", contingencyTable);
-  console.log("Chi-squared statistic:", result.test_statistic.value);
-  console.log("df:", result.degrees_of_freedom);
-  console.log("p-value:", result.p_value);
+  console.log("Chi-squared statistic:", result.testStatistic.value);
+  console.log("df:", result.degreesOfFreedom);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

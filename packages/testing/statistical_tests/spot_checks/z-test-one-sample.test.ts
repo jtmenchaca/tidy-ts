@@ -18,11 +18,11 @@ Deno.test("One-Sample Z-Test Spot Check", () => {
   console.log("Data:", data);
   console.log("mu (null hypothesis):", mu);
   console.log("sigma (population SD):", sigma);
-  console.log("Z-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("Z-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
   console.log("CI:", [
-    result.confidence_interval.lower,
-    result.confidence_interval.upper,
+    result.confidenceInterval.lower,
+    result.confidenceInterval.upper,
   ]);
 });
 

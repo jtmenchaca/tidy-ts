@@ -15,8 +15,8 @@ Deno.test("Mann-Whitney U Test Spot Check", () => {
 
   console.log("Group 1:", group1);
   console.log("Group 2:", group2);
-  console.log("U-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("U-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

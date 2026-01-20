@@ -15,9 +15,9 @@ Deno.test("Wilcoxon Signed-Rank Test Spot Check", () => {
 
   console.log("Before:", before);
   console.log("After:", after);
-  console.log("V-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
-  console.log("Effect size:", result.effect_size.value);
+  console.log("V-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
+  console.log("Effect size:", result.effectSize.value);
 });
 
 console.log("\n" + "=".repeat(80));

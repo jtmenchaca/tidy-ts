@@ -3385,11 +3385,11 @@ export class AndersonDarlingTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_andersondarlingtestresult_test_name(
+      const ret = wasm.__wbg_get_andersondarlingtestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -3402,14 +3402,14 @@ export class AndersonDarlingTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_test_name(
+    wasm.__wbg_set_andersondarlingtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -3418,23 +3418,21 @@ export class AndersonDarlingTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -3442,10 +3440,10 @@ export class AndersonDarlingTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -3453,8 +3451,8 @@ export class AndersonDarlingTestResult {
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -3462,8 +3460,8 @@ export class AndersonDarlingTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
@@ -3481,8 +3479,8 @@ export class AndersonDarlingTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -3495,7 +3493,7 @@ export class AndersonDarlingTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -3504,7 +3502,7 @@ export class AndersonDarlingTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_error_message(
+    wasm.__wbg_set_andersondarlingtestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -3621,15 +3619,15 @@ export class AnovaTableComponent {
   /**
    * @returns {number | undefined}
    */
-  get f_statistic() {
-    const ret = wasm.__wbg_get_anovatablecomponent_f_statistic(this.__wbg_ptr);
+  get fStatistic() {
+    const ret = wasm.__wbg_get_anovatablecomponent_fStatistic(this.__wbg_ptr);
     return ret[0] === 0 ? undefined : ret[1];
   }
   /**
    * @param {number | null} [arg0]
    */
-  set f_statistic(arg0) {
-    wasm.__wbg_set_anovatablecomponent_f_statistic(
+  set fStatistic(arg0) {
+    wasm.__wbg_set_anovatablecomponent_fStatistic(
       this.__wbg_ptr,
       !isLikeNone(arg0),
       isLikeNone(arg0) ? 0 : arg0,
@@ -3638,15 +3636,15 @@ export class AnovaTableComponent {
   /**
    * @returns {number | undefined}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatablecomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatablecomponent_pValue(this.__wbg_ptr);
     return ret[0] === 0 ? undefined : ret[1];
   }
   /**
    * @param {number | null} [arg0]
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatablecomponent_p_value(
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatablecomponent_pValue(
       this.__wbg_ptr,
       !isLikeNone(arg0),
       isLikeNone(arg0) ? 0 : arg0,
@@ -3655,15 +3653,15 @@ export class AnovaTableComponent {
   /**
    * @returns {number | undefined}
    */
-  get eta_squared() {
-    const ret = wasm.__wbg_get_anovatablecomponent_eta_squared(this.__wbg_ptr);
+  get etaSquared() {
+    const ret = wasm.__wbg_get_anovatablecomponent_etaSquared(this.__wbg_ptr);
     return ret[0] === 0 ? undefined : ret[1];
   }
   /**
    * @param {number | null} [arg0]
    */
-  set eta_squared(arg0) {
-    wasm.__wbg_set_anovatablecomponent_eta_squared(
+  set etaSquared(arg0) {
+    wasm.__wbg_set_anovatablecomponent_etaSquared(
       this.__wbg_ptr,
       !isLikeNone(arg0),
       isLikeNone(arg0) ? 0 : arg0,
@@ -3672,8 +3670,8 @@ export class AnovaTableComponent {
   /**
    * @returns {number | undefined}
    */
-  get partial_eta_squared() {
-    const ret = wasm.__wbg_get_anovatablecomponent_partial_eta_squared(
+  get partialEtaSquared() {
+    const ret = wasm.__wbg_get_anovatablecomponent_partialEtaSquared(
       this.__wbg_ptr,
     );
     return ret[0] === 0 ? undefined : ret[1];
@@ -3681,8 +3679,8 @@ export class AnovaTableComponent {
   /**
    * @param {number | null} [arg0]
    */
-  set partial_eta_squared(arg0) {
-    wasm.__wbg_set_anovatablecomponent_partial_eta_squared(
+  set partialEtaSquared(arg0) {
+    wasm.__wbg_set_anovatablecomponent_partialEtaSquared(
       this.__wbg_ptr,
       !isLikeNone(arg0),
       isLikeNone(arg0) ? 0 : arg0,
@@ -3691,17 +3689,15 @@ export class AnovaTableComponent {
   /**
    * @returns {number | undefined}
    */
-  get omega_squared() {
-    const ret = wasm.__wbg_get_anovatablecomponent_omega_squared(
-      this.__wbg_ptr,
-    );
+  get omegaSquared() {
+    const ret = wasm.__wbg_get_anovatablecomponent_omegaSquared(this.__wbg_ptr);
     return ret[0] === 0 ? undefined : ret[1];
   }
   /**
    * @param {number | null} [arg0]
    */
-  set omega_squared(arg0) {
-    wasm.__wbg_set_anovatablecomponent_omega_squared(
+  set omegaSquared(arg0) {
+    wasm.__wbg_set_anovatablecomponent_omegaSquared(
       this.__wbg_ptr,
       !isLikeNone(arg0),
       isLikeNone(arg0) ? 0 : arg0,
@@ -3741,8 +3737,8 @@ export class AnovaTestComponent {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -3750,10 +3746,10 @@ export class AnovaTestComponent {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -3761,21 +3757,21 @@ export class AnovaTestComponent {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get degreesOfFreedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -3783,51 +3779,49 @@ export class AnovaTestComponent {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set degreesOfFreedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get effectSize() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return EffectSize.__wrap(ret);
   }
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get mean_square() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+  get meanSquare() {
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set mean_square(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  set meanSquare(arg0) {
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sum_of_squares() {
-    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
-      this.__wbg_ptr,
-    );
+  get sumOfSquares() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sumOfSquares(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set sum_of_squares(arg0) {
-    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  set sumOfSquares(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sumOfSquares(this.__wbg_ptr, arg0);
   }
 }
 
@@ -3867,11 +3861,11 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_test_name(
+      const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -3884,14 +3878,14 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -3900,21 +3894,21 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -3922,10 +3916,10 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -3933,23 +3927,23 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get degreesOfFreedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -3957,14 +3951,14 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set degreesOfFreedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -3972,8 +3966,8 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_sample_size(
+  set sampleSize(arg0) {
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_sampleSize(
       this.__wbg_ptr,
       arg0,
     );
@@ -3981,9 +3975,9 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @returns {Float64Array}
    */
-  get chi_square_expected() {
+  get chiSquareExpected() {
     const ret = wasm
-      .__wbg_get_chisquaregoodnessoffittestresult_chi_square_expected(
+      .__wbg_get_chisquaregoodnessoffittestresult_chiSquareExpected(
         this.__wbg_ptr,
       );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -3993,10 +3987,10 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set chi_square_expected(arg0) {
+  set chiSquareExpected(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_chi_square_expected(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_chiSquareExpected(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4006,20 +4000,20 @@ export class ChiSquareGoodnessOfFitTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_chisquaregoodnessoffittestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -4032,7 +4026,7 @@ export class ChiSquareGoodnessOfFitTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -4041,7 +4035,7 @@ export class ChiSquareGoodnessOfFitTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4085,11 +4079,11 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_chisquareindependencetestresult_test_name(
+      const ret = wasm.__wbg_get_chisquareindependencetestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -4102,14 +4096,14 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquareindependencetestresult_test_name(
+    wasm.__wbg_set_chisquareindependencetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4118,21 +4112,21 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -4140,10 +4134,10 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4151,23 +4145,23 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get degreesOfFreedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -4175,14 +4169,14 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set degreesOfFreedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_chisquareindependencetestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_chisquareindependencetestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -4190,8 +4184,8 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_chisquareindependencetestresult_sample_size(
+  set sampleSize(arg0) {
+    wasm.__wbg_set_chisquareindependencetestresult_sampleSize(
       this.__wbg_ptr,
       arg0,
     );
@@ -4199,22 +4193,22 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @returns {number}
    */
-  get phi_coefficient() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+  get phiCoefficient() {
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set phi_coefficient(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  set phiCoefficient(arg0) {
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {Float64Array}
    */
-  get chi_square_expected() {
+  get chiSquareExpected() {
     const ret = wasm
-      .__wbg_get_chisquareindependencetestresult_chi_square_expected(
+      .__wbg_get_chisquareindependencetestresult_chiSquareExpected(
         this.__wbg_ptr,
       );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -4224,10 +4218,10 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set chi_square_expected(arg0) {
+  set chiSquareExpected(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquareindependencetestresult_chi_square_expected(
+    wasm.__wbg_set_chisquareindependencetestresult_chiSquareExpected(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4260,22 +4254,20 @@ export class ChiSquareIndependenceTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
-      this.__wbg_ptr,
-    );
+    const ret = wasm.__wbg_get_anovatestcomponent_sumOfSquares(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_sumOfSquares(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_chisquareindependencetestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_chisquareindependencetestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -4288,7 +4280,7 @@ export class ChiSquareIndependenceTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -4297,7 +4289,7 @@ export class ChiSquareIndependenceTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquareindependencetestresult_error_message(
+    wasm.__wbg_set_chisquareindependencetestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4337,11 +4329,11 @@ export class ChiSquareVarianceTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_chisquarevariancetestresult_test_name(
+      const ret = wasm.__wbg_get_chisquarevariancetestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -4354,14 +4346,14 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4370,21 +4362,21 @@ export class ChiSquareVarianceTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -4392,10 +4384,10 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4403,23 +4395,23 @@ export class ChiSquareVarianceTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get degreesOfFreedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -4427,14 +4419,14 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set degreesOfFreedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_chisquarevariancetestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -4442,17 +4434,14 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_chisquarevariancetestresult_sample_size(
-      this.__wbg_ptr,
-      arg0,
-    );
+  set sampleSize(arg0) {
+    wasm.__wbg_set_chisquarevariancetestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_chisquarevariancetestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -4460,10 +4449,10 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_chisquarevariancetestresult_confidence_interval(
+    wasm.__wbg_set_chisquarevariancetestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4486,8 +4475,8 @@ export class ChiSquareVarianceTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_chisquarevariancetestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_chisquarevariancetestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -4500,7 +4489,7 @@ export class ChiSquareVarianceTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -4509,7 +4498,7 @@ export class ChiSquareVarianceTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_error_message(
+    wasm.__wbg_set_chisquarevariancetestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4575,8 +4564,8 @@ export class ConfidenceInterval {
   /**
    * @returns {number}
    */
-  get confidence_level() {
-    const ret = wasm.__wbg_get_confidenceinterval_confidence_level(
+  get confidenceLevel() {
+    const ret = wasm.__wbg_get_confidenceinterval_confidenceLevel(
       this.__wbg_ptr,
     );
     return ret;
@@ -4584,8 +4573,8 @@ export class ConfidenceInterval {
   /**
    * @param {number} arg0
    */
-  set confidence_level(arg0) {
-    wasm.__wbg_set_confidenceinterval_confidence_level(this.__wbg_ptr, arg0);
+  set confidenceLevel(arg0) {
+    wasm.__wbg_set_confidenceinterval_confidenceLevel(this.__wbg_ptr, arg0);
   }
 }
 
@@ -4621,11 +4610,11 @@ export class DAgostinoPearsonTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_dagostinopearsontestresult_test_name(
+      const ret = wasm.__wbg_get_dagostinopearsontestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -4638,14 +4627,14 @@ export class DAgostinoPearsonTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dagostinopearsontestresult_test_name(
+    wasm.__wbg_set_dagostinopearsontestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4654,23 +4643,21 @@ export class DAgostinoPearsonTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -4678,10 +4665,10 @@ export class DAgostinoPearsonTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4689,8 +4676,8 @@ export class DAgostinoPearsonTestResult {
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_dagostinopearsontestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_dagostinopearsontestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -4698,8 +4685,8 @@ export class DAgostinoPearsonTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_dagostinopearsontestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_dagostinopearsontestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
@@ -4733,20 +4720,20 @@ export class DAgostinoPearsonTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_dagostinopearsontestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_dagostinopearsontestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -4759,7 +4746,7 @@ export class DAgostinoPearsonTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -4768,7 +4755,7 @@ export class DAgostinoPearsonTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dagostinopearsontestresult_error_message(
+    wasm.__wbg_set_dagostinopearsontestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4808,8 +4795,8 @@ export class DunnTestResult {
    * Test statistic for the overall test (if applicable)
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -4818,10 +4805,10 @@ export class DunnTestResult {
    * Test statistic for the overall test (if applicable)
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -4830,28 +4817,26 @@ export class DunnTestResult {
    * P-value for the overall test (if applicable)
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * P-value for the overall test (if applicable)
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * Name of the test performed
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_dunntestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_dunntestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -4863,14 +4848,14 @@ export class DunnTestResult {
    * Name of the test performed
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_test_name(
+    wasm.__wbg_set_andersondarlingtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -4895,8 +4880,8 @@ export class DunnTestResult {
    * Error message if test failed
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_dunntestresult_error_message(this.__wbg_ptr);
+  get errorMessage() {
+    const ret = wasm.__wbg_get_dunntestresult_errorMessage(this.__wbg_ptr);
     let v1;
     if (ret[0] !== 0) {
       v1 = getStringFromWasm0(ret[0], ret[1]).slice();
@@ -4908,7 +4893,7 @@ export class DunnTestResult {
    * Error message if test failed
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -4917,7 +4902,7 @@ export class DunnTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dunntestresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_dunntestresult_errorMessage(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Explanatory note about the header values
@@ -4951,11 +4936,11 @@ export class DunnTestResult {
    * Multiple comparison correction method used
    * @returns {string}
    */
-  get correction_method() {
+  get correctionMethod() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_dunntestresult_correction_method(
+      const ret = wasm.__wbg_get_dunntestresult_correctionMethod(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -4969,44 +4954,44 @@ export class DunnTestResult {
    * Multiple comparison correction method used
    * @param {string} arg0
    */
-  set correction_method(arg0) {
+  set correctionMethod(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dunntestresult_correction_method(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_dunntestresult_correctionMethod(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Number of groups compared
    * @returns {number}
    */
-  get n_groups() {
-    const ret = wasm.__wbg_get_dunntestresult_n_groups(this.__wbg_ptr);
+  get nGroups() {
+    const ret = wasm.__wbg_get_dunntestresult_nGroups(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Number of groups compared
    * @param {number} arg0
    */
-  set n_groups(arg0) {
-    wasm.__wbg_set_dunntestresult_n_groups(this.__wbg_ptr, arg0);
+  set nGroups(arg0) {
+    wasm.__wbg_set_dunntestresult_nGroups(this.__wbg_ptr, arg0);
   }
   /**
    * Total sample size
    * @returns {number}
    */
-  get n_total() {
-    const ret = wasm.__wbg_get_dunntestresult_n_total(this.__wbg_ptr);
+  get nTotal() {
+    const ret = wasm.__wbg_get_dunntestresult_nTotal(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Total sample size
    * @param {number} arg0
    */
-  set n_total(arg0) {
-    wasm.__wbg_set_dunntestresult_n_total(this.__wbg_ptr, arg0);
+  set nTotal(arg0) {
+    wasm.__wbg_set_dunntestresult_nTotal(this.__wbg_ptr, arg0);
   }
   /**
    * Individual pairwise comparisons
@@ -5129,11 +5114,11 @@ export class FishersExactTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_fishersexacttestresult_test_name(
+      const ret = wasm.__wbg_get_fishersexacttestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -5146,33 +5131,33 @@ export class FishersExactTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_fishersexacttestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_effect_size(
+  get effectSize() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_effectSize(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -5180,16 +5165,16 @@ export class FishersExactTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_fishersexacttestresult_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_fishersexacttestresult_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -5197,16 +5182,16 @@ export class FishersExactTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_fishersexacttestresult_test_statistic(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_fishersexacttestresult_testStatistic(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5214,10 +5199,10 @@ export class FishersExactTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_fishersexacttestresult_confidence_interval(
+    wasm.__wbg_set_fishersexacttestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5252,11 +5237,11 @@ export class FishersExactTestResult {
   /**
    * @returns {string}
    */
-  get method_type() {
+  get methodType() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_fishersexacttestresult_method_type(
+      const ret = wasm.__wbg_get_fishersexacttestresult_methodType(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -5269,14 +5254,14 @@ export class FishersExactTestResult {
   /**
    * @param {string} arg0
    */
-  set method_type(arg0) {
+  set methodType(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_fishersexacttestresult_method_type(
+    wasm.__wbg_set_fishersexacttestresult_methodType(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -5285,16 +5270,14 @@ export class FishersExactTestResult {
   /**
    * @returns {number | undefined}
    */
-  get mid_p_value() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_mid_p_value(
-      this.__wbg_ptr,
-    );
+  get midPValue() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_midPValue(this.__wbg_ptr);
     return ret[0] === 0 ? undefined : ret[1];
   }
   /**
    * @param {number | null} [arg0]
    */
-  set mid_p_value(arg0) {
+  set midPValue(arg0) {
     wasm.__wbg_set_anovatablecomponent_ms(
       this.__wbg_ptr,
       !isLikeNone(arg0),
@@ -5350,8 +5333,8 @@ export class FishersExactTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_fishersexacttestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_fishersexacttestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -5364,7 +5347,7 @@ export class FishersExactTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -5373,7 +5356,7 @@ export class FishersExactTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_fishersexacttestresult_error_message(
+    wasm.__wbg_set_fishersexacttestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -5414,8 +5397,8 @@ export class GamesHowellTestResult {
    * Test statistic for the overall test (if applicable)
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -5424,10 +5407,10 @@ export class GamesHowellTestResult {
    * Test statistic for the overall test (if applicable)
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5436,30 +5419,26 @@ export class GamesHowellTestResult {
    * P-value for the overall test (if applicable)
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * P-value for the overall test (if applicable)
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * Name of the test performed
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_gameshowelltestresult_test_name(
-        this.__wbg_ptr,
-      );
+      const ret = wasm.__wbg_get_gameshowelltestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -5471,14 +5450,14 @@ export class GamesHowellTestResult {
    * Name of the test performed
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_test_name(
+    wasm.__wbg_set_andersondarlingtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -5503,8 +5482,8 @@ export class GamesHowellTestResult {
    * Error message if test failed
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_gameshowelltestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_gameshowelltestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -5518,7 +5497,7 @@ export class GamesHowellTestResult {
    * Error message if test failed
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -5527,7 +5506,7 @@ export class GamesHowellTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dunntestresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_dunntestresult_errorMessage(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Explanatory note about the header values
@@ -5561,11 +5540,11 @@ export class GamesHowellTestResult {
    * Multiple comparison correction method used
    * @returns {string}
    */
-  get correction_method() {
+  get correctionMethod() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_gameshowelltestresult_correction_method(
+      const ret = wasm.__wbg_get_gameshowelltestresult_correctionMethod(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -5579,44 +5558,44 @@ export class GamesHowellTestResult {
    * Multiple comparison correction method used
    * @param {string} arg0
    */
-  set correction_method(arg0) {
+  set correctionMethod(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dunntestresult_correction_method(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_dunntestresult_correctionMethod(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Number of groups compared
    * @returns {number}
    */
-  get n_groups() {
-    const ret = wasm.__wbg_get_dunntestresult_n_groups(this.__wbg_ptr);
+  get nGroups() {
+    const ret = wasm.__wbg_get_dunntestresult_nGroups(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Number of groups compared
    * @param {number} arg0
    */
-  set n_groups(arg0) {
-    wasm.__wbg_set_dunntestresult_n_groups(this.__wbg_ptr, arg0);
+  set nGroups(arg0) {
+    wasm.__wbg_set_dunntestresult_nGroups(this.__wbg_ptr, arg0);
   }
   /**
    * Total sample size
    * @returns {number}
    */
-  get n_total() {
-    const ret = wasm.__wbg_get_dunntestresult_n_total(this.__wbg_ptr);
+  get nTotal() {
+    const ret = wasm.__wbg_get_dunntestresult_nTotal(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Total sample size
    * @param {number} arg0
    */
-  set n_total(arg0) {
-    wasm.__wbg_set_dunntestresult_n_total(this.__wbg_ptr, arg0);
+  set nTotal(arg0) {
+    wasm.__wbg_set_dunntestresult_nTotal(this.__wbg_ptr, arg0);
   }
   /**
    * Individual pairwise comparisons
@@ -5793,11 +5772,11 @@ export class KendallCorrelationTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_kendallcorrelationtestresult_test_name(
+      const ret = wasm.__wbg_get_kendallcorrelationtestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -5810,14 +5789,14 @@ export class KendallCorrelationTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+    wasm.__wbg_set_kendallcorrelationtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -5826,21 +5805,21 @@ export class KendallCorrelationTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -5848,10 +5827,10 @@ export class KendallCorrelationTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5859,23 +5838,23 @@ export class KendallCorrelationTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -5883,10 +5862,10 @@ export class KendallCorrelationTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -5942,8 +5921,8 @@ export class KendallCorrelationTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -5956,7 +5935,7 @@ export class KendallCorrelationTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -5965,7 +5944,7 @@ export class KendallCorrelationTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_error_message(
+    wasm.__wbg_set_kendallcorrelationtestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6003,23 +5982,21 @@ export class KolmogorovSmirnovTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample1_size() {
-    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1_size(
+  get sample1Size() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1Size(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -6027,8 +6004,8 @@ export class KolmogorovSmirnovTestResult {
   /**
    * @param {number} arg0
    */
-  set sample1_size(arg0) {
-    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1_size(
+  set sample1Size(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1Size(
       this.__wbg_ptr,
       arg0,
     );
@@ -6036,33 +6013,33 @@ export class KolmogorovSmirnovTestResult {
   /**
    * @returns {number}
    */
-  get sample2_size() {
-    const ret = wasm.__wbg_get_dunntestresult_n_groups(this.__wbg_ptr);
+  get sample2Size() {
+    const ret = wasm.__wbg_get_dunntestresult_nGroups(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * @param {number} arg0
    */
-  set sample2_size(arg0) {
-    wasm.__wbg_set_dunntestresult_n_groups(this.__wbg_ptr, arg0);
+  set sample2Size(arg0) {
+    wasm.__wbg_set_dunntestresult_nGroups(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get critical_value() {
+  get criticalValue() {
     const ret = wasm.__wbg_get_andersondarlingtestresult_alpha(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set critical_value(arg0) {
+  set criticalValue(arg0) {
     wasm.__wbg_set_andersondarlingtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get d_statistic() {
+  get dStatistic() {
     const ret = wasm.__wbg_get_dagostinopearsontestresult_kurtosis(
       this.__wbg_ptr,
     );
@@ -6071,27 +6048,27 @@ export class KolmogorovSmirnovTestResult {
   /**
    * @param {number} arg0
    */
-  set d_statistic(arg0) {
+  set dStatistic(arg0) {
     wasm.__wbg_set_dagostinopearsontestresult_kurtosis(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get d_plus() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get dPlus() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set d_plus(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set dPlus(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get d_minus() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get dMinus() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -6099,37 +6076,37 @@ export class KolmogorovSmirnovTestResult {
   /**
    * @param {number} arg0
    */
-  set d_minus(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set dMinus(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.kolmogorovsmirnovtestresult_test_statistic(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.kolmogorovsmirnovtestresult_testStatistic(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.kolmogorovsmirnovtestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.kolmogorovsmirnovtestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -6186,11 +6163,11 @@ export class KruskalWallisTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_kruskalwallistestresult_test_name(
+      const ret = wasm.__wbg_get_kruskalwallistestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -6203,14 +6180,14 @@ export class KruskalWallisTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6219,21 +6196,21 @@ export class KruskalWallisTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -6241,10 +6218,10 @@ export class KruskalWallisTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6252,23 +6229,23 @@ export class KruskalWallisTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get degreesOfFreedom() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -6276,14 +6253,14 @@ export class KruskalWallisTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set degreesOfFreedom(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_kolmogorovsmirnovtestresult_sample1Size(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -6291,8 +6268,8 @@ export class KruskalWallisTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1_size(
+  set sampleSize(arg0) {
+    wasm.__wbg_set_kolmogorovsmirnovtestresult_sample1Size(
       this.__wbg_ptr,
       arg0,
     );
@@ -6301,20 +6278,20 @@ export class KruskalWallisTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_kruskalwallistestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_kruskalwallistestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -6327,7 +6304,7 @@ export class KruskalWallisTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -6336,7 +6313,7 @@ export class KruskalWallisTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kruskalwallistestresult_error_message(
+    wasm.__wbg_set_kruskalwallistestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6376,13 +6353,11 @@ export class MannWhitneyTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_mannwhitneytestresult_test_name(
-        this.__wbg_ptr,
-      );
+      const ret = wasm.__wbg_get_mannwhitneytestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -6393,33 +6368,33 @@ export class MannWhitneyTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_mannwhitneytestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_mannwhitneytestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -6427,10 +6402,10 @@ export class MannWhitneyTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6438,17 +6413,17 @@ export class MannWhitneyTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {string}
@@ -6504,7 +6479,7 @@ export class MannWhitneyTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+    wasm.__wbg_set_kendallcorrelationtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6514,7 +6489,7 @@ export class MannWhitneyTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -6523,13 +6498,13 @@ export class MannWhitneyTestResult {
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_mannwhitneytestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_mannwhitneytestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -6542,7 +6517,7 @@ export class MannWhitneyTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -6551,7 +6526,7 @@ export class MannWhitneyTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_mannwhitneytestresult_error_message(
+    wasm.__wbg_set_mannwhitneytestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6591,11 +6566,11 @@ export class OneSampleProportionTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_onesampleproportiontestresult_test_name(
+      const ret = wasm.__wbg_get_onesampleproportiontestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -6608,14 +6583,14 @@ export class OneSampleProportionTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6624,23 +6599,21 @@ export class OneSampleProportionTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -6648,10 +6621,10 @@ export class OneSampleProportionTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6659,20 +6632,19 @@ export class OneSampleProportionTestResult {
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm
-      .__wbg_get_onesampleproportiontestresult_confidence_interval(
-        this.__wbg_ptr,
-      );
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_onesampleproportiontestresult_confidenceInterval(
+      this.__wbg_ptr,
+    );
     return ConfidenceInterval.__wrap(ret);
   }
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_onesampleproportiontestresult_confidence_interval(
+    wasm.__wbg_set_onesampleproportiontestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6680,8 +6652,8 @@ export class OneSampleProportionTestResult {
   /**
    * @returns {number}
    */
-  get sample_proportion() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get sampleProportion() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -6689,8 +6661,8 @@ export class OneSampleProportionTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_proportion(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set sampleProportion(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -6729,20 +6701,20 @@ export class OneSampleProportionTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_onesampleproportiontestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_onesampleproportiontestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -6755,7 +6727,7 @@ export class OneSampleProportionTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -6764,7 +6736,7 @@ export class OneSampleProportionTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6804,11 +6776,11 @@ export class OneSampleTTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_onesamplettestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_onesamplettestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -6819,14 +6791,14 @@ export class OneSampleTTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -6835,21 +6807,21 @@ export class OneSampleTTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -6857,10 +6829,10 @@ export class OneSampleTTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6868,23 +6840,23 @@ export class OneSampleTTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -6892,10 +6864,10 @@ export class OneSampleTTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -6903,7 +6875,7 @@ export class OneSampleTTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get degreesOfFreedom() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -6912,7 +6884,7 @@ export class OneSampleTTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set degreesOfFreedom(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
@@ -6962,8 +6934,8 @@ export class OneSampleTTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_onesamplettestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_onesamplettestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -6976,7 +6948,7 @@ export class OneSampleTTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -6985,7 +6957,7 @@ export class OneSampleTTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onesamplettestresult_error_message(
+    wasm.__wbg_set_onesamplettestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7025,11 +6997,11 @@ export class OneSampleZTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_onesampleztestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_onesampleztestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -7040,14 +7012,14 @@ export class OneSampleZTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+    wasm.__wbg_set_kendallcorrelationtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7056,21 +7028,21 @@ export class OneSampleZTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -7078,10 +7050,10 @@ export class OneSampleZTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7089,23 +7061,23 @@ export class OneSampleZTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -7113,10 +7085,10 @@ export class OneSampleZTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7172,8 +7144,8 @@ export class OneSampleZTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_onesampleztestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_onesampleztestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -7186,7 +7158,7 @@ export class OneSampleZTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -7195,7 +7167,7 @@ export class OneSampleZTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_error_message(
+    wasm.__wbg_set_kendallcorrelationtestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7235,13 +7207,11 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_onewayanovatestresult_test_name(
-        this.__wbg_ptr,
-      );
+      const ret = wasm.__wbg_get_onewayanovatestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -7252,14 +7222,14 @@ export class OneWayAnovaTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7268,21 +7238,21 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -7290,10 +7260,10 @@ export class OneWayAnovaTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7301,23 +7271,23 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
-  get df_between() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get dfBetween() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -7325,41 +7295,39 @@ export class OneWayAnovaTestResult {
   /**
    * @param {number} arg0
    */
-  set df_between(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set dfBetween(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get df_within() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+  get dfWithin() {
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set df_within(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+  set dfWithin(arg0) {
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get r_squared() {
-    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
-      this.__wbg_ptr,
-    );
+  get rSquared() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sumOfSquares(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set r_squared(arg0) {
-    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  set rSquared(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sumOfSquares(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get adjusted_r_squared() {
+  get adjustedRSquared() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -7368,29 +7336,27 @@ export class OneWayAnovaTestResult {
   /**
    * @param {number} arg0
    */
-  set adjusted_r_squared(arg0) {
+  set adjustedRSquared(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_onewayanovatestresult_sample_size(
-      this.__wbg_ptr,
-    );
+  get sampleSize() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sampleSize(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_onewayanovatestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_onewayanovatestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {Float64Array}
    */
-  get sample_means() {
-    const ret = wasm.__wbg_get_onewayanovatestresult_sample_means(
+  get sampleMeans() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sampleMeans(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -7400,10 +7366,10 @@ export class OneWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_means(arg0) {
+  set sampleMeans(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_sample_means(
+    wasm.__wbg_set_onewayanovatestresult_sampleMeans(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7412,8 +7378,8 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {Float64Array}
    */
-  get sample_std_devs() {
-    const ret = wasm.__wbg_get_onewayanovatestresult_sample_std_devs(
+  get sampleStdDevs() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -7423,10 +7389,10 @@ export class OneWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_std_devs(arg0) {
+  set sampleStdDevs(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_sample_std_devs(
+    wasm.__wbg_set_onewayanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7435,8 +7401,8 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {Float64Array}
    */
-  get sum_of_squares() {
-    const ret = wasm.__wbg_get_onewayanovatestresult_sum_of_squares(
+  get sumOfSquares() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_sumOfSquares(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -7446,10 +7412,10 @@ export class OneWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sum_of_squares(arg0) {
+  set sumOfSquares(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_sum_of_squares(
+    wasm.__wbg_set_onewayanovatestresult_sumOfSquares(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7473,8 +7439,8 @@ export class OneWayAnovaTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_onewayanovatestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_onewayanovatestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -7487,7 +7453,7 @@ export class OneWayAnovaTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -7496,7 +7462,7 @@ export class OneWayAnovaTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_error_message(
+    wasm.__wbg_set_onewayanovatestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7536,11 +7502,11 @@ export class PairedTTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_pairedttestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_pairedttestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -7551,7 +7517,7 @@ export class PairedTTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
@@ -7563,21 +7529,21 @@ export class PairedTTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -7585,10 +7551,10 @@ export class PairedTTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7596,23 +7562,23 @@ export class PairedTTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -7620,10 +7586,10 @@ export class PairedTTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7631,7 +7597,7 @@ export class PairedTTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get degreesOfFreedom() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -7640,13 +7606,13 @@ export class PairedTTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set degreesOfFreedom(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get mean_difference() {
+  get meanDifference() {
     const ret = wasm.__wbg_get_chisquarevariancetestresult_alpha(
       this.__wbg_ptr,
     );
@@ -7655,20 +7621,20 @@ export class PairedTTestResult {
   /**
    * @param {number} arg0
    */
-  set mean_difference(arg0) {
+  set meanDifference(arg0) {
     wasm.__wbg_set_chisquarevariancetestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get standard_error() {
+  get standardError() {
     const ret = wasm.__wbg_get_anovatablecomponent_ss(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set standard_error(arg0) {
+  set standardError(arg0) {
     wasm.__wbg_set_anovatablecomponent_ss(this.__wbg_ptr, arg0);
   }
   /**
@@ -7714,8 +7680,8 @@ export class PairedTTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_pairedttestresult_error_message(this.__wbg_ptr);
+  get errorMessage() {
+    const ret = wasm.__wbg_get_pairedttestresult_errorMessage(this.__wbg_ptr);
     let v1;
     if (ret[0] !== 0) {
       v1 = getStringFromWasm0(ret[0], ret[1]).slice();
@@ -7726,7 +7692,7 @@ export class PairedTTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -7735,7 +7701,7 @@ export class PairedTTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_pairedttestresult_errorMessage(this.__wbg_ptr, ptr0, len0);
   }
 }
 
@@ -7802,7 +7768,7 @@ export class PairwiseComparison {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquareindependencetestresult_test_name(
+    wasm.__wbg_set_chisquareindependencetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -7841,24 +7807,22 @@ export class PairwiseComparison {
    * Mean difference between groups
    * @returns {number}
    */
-  get mean_difference() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get meanDifference() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * Mean difference between groups
    * @param {number} arg0
    */
-  set mean_difference(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set meanDifference(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * Standard error of the difference
    * @returns {number}
    */
-  get standard_error() {
+  get standardError() {
     const ret = wasm.__wbg_get_andersondarlingtestresult_alpha(this.__wbg_ptr);
     return ret;
   }
@@ -7866,15 +7830,15 @@ export class PairwiseComparison {
    * Standard error of the difference
    * @param {number} arg0
    */
-  set standard_error(arg0) {
+  set standardError(arg0) {
     wasm.__wbg_set_andersondarlingtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * Test statistic with name (q for Tukey, t for Games-Howell, z for Dunn)
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -7883,10 +7847,10 @@ export class PairwiseComparison {
    * Test statistic with name (q for Tukey, t for Games-Howell, z for Dunn)
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -7895,7 +7859,7 @@ export class PairwiseComparison {
    * P-value for the comparison
    * @returns {number}
    */
-  get p_value() {
+  get pValue() {
     const ret = wasm.__wbg_get_dagostinopearsontestresult_kurtosis(
       this.__wbg_ptr,
     );
@@ -7905,15 +7869,15 @@ export class PairwiseComparison {
    * P-value for the comparison
    * @param {number} arg0
    */
-  set p_value(arg0) {
+  set pValue(arg0) {
     wasm.__wbg_set_dagostinopearsontestresult_kurtosis(this.__wbg_ptr, arg0);
   }
   /**
    * Confidence interval for the difference
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_pairwisecomparison_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_pairwisecomparison_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -7922,10 +7886,10 @@ export class PairwiseComparison {
    * Confidence interval for the difference
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_pairwisecomparison_confidence_interval(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_pairwisecomparison_confidenceInterval(this.__wbg_ptr, ptr0);
   }
   /**
    * Whether the difference is significant at the given alpha level
@@ -7946,18 +7910,16 @@ export class PairwiseComparison {
    * Adjusted p-value (if applicable)
    * @returns {number}
    */
-  get adjusted_p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
-      this.__wbg_ptr,
-    );
+  get adjustedPValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sumOfSquares(this.__wbg_ptr);
     return ret;
   }
   /**
    * Adjusted p-value (if applicable)
    * @param {number} arg0
    */
-  set adjusted_p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  set adjustedPValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sumOfSquares(this.__wbg_ptr, arg0);
   }
 }
 
@@ -7993,11 +7955,11 @@ export class PearsonCorrelationTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_pearsoncorrelationtestresult_test_name(
+      const ret = wasm.__wbg_get_pearsoncorrelationtestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -8010,14 +7972,14 @@ export class PearsonCorrelationTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8026,21 +7988,21 @@ export class PearsonCorrelationTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -8048,10 +8010,10 @@ export class PearsonCorrelationTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8059,23 +8021,23 @@ export class PearsonCorrelationTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -8083,10 +8045,10 @@ export class PearsonCorrelationTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8094,7 +8056,7 @@ export class PearsonCorrelationTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get degreesOfFreedom() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -8103,7 +8065,7 @@ export class PearsonCorrelationTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set degreesOfFreedom(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
@@ -8153,8 +8115,8 @@ export class PearsonCorrelationTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_pearsoncorrelationtestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_pearsoncorrelationtestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -8167,7 +8129,7 @@ export class PearsonCorrelationTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -8176,7 +8138,7 @@ export class PearsonCorrelationTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onesamplettestresult_error_message(
+    wasm.__wbg_set_onesamplettestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8458,13 +8420,11 @@ export class ShapiroWilkTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_shapirowilktestresult_test_name(
-        this.__wbg_ptr,
-      );
+      const ret = wasm.__wbg_get_shapirowilktestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -8475,14 +8435,14 @@ export class ShapiroWilkTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_test_name(
+    wasm.__wbg_set_andersondarlingtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8491,23 +8451,21 @@ export class ShapiroWilkTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -8515,10 +8473,10 @@ export class ShapiroWilkTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8526,8 +8484,8 @@ export class ShapiroWilkTestResult {
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_sample_size(
+  get sampleSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_sampleSize(
       this.__wbg_ptr,
     );
     return ret >>> 0;
@@ -8535,8 +8493,8 @@ export class ShapiroWilkTestResult {
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
@@ -8554,8 +8512,8 @@ export class ShapiroWilkTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_shapirowilktestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_shapirowilktestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -8568,7 +8526,7 @@ export class ShapiroWilkTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -8577,7 +8535,7 @@ export class ShapiroWilkTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_error_message(
+    wasm.__wbg_set_andersondarlingtestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8617,11 +8575,11 @@ export class SpearmanCorrelationTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_spearmancorrelationtestresult_test_name(
+      const ret = wasm.__wbg_get_spearmancorrelationtestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -8634,14 +8592,14 @@ export class SpearmanCorrelationTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8650,21 +8608,21 @@ export class SpearmanCorrelationTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -8672,10 +8630,10 @@ export class SpearmanCorrelationTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8683,23 +8641,23 @@ export class SpearmanCorrelationTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -8707,10 +8665,10 @@ export class SpearmanCorrelationTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8718,7 +8676,7 @@ export class SpearmanCorrelationTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get degreesOfFreedom() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -8727,7 +8685,7 @@ export class SpearmanCorrelationTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set degreesOfFreedom(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
@@ -8777,8 +8735,8 @@ export class SpearmanCorrelationTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_spearmancorrelationtestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_spearmancorrelationtestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -8791,7 +8749,7 @@ export class SpearmanCorrelationTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -8800,7 +8758,7 @@ export class SpearmanCorrelationTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onesamplettestresult_error_message(
+    wasm.__wbg_set_onesamplettestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8911,11 +8869,11 @@ export class TukeyHsdTestResult {
    * Name of the test performed
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_tukeyhsdtestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_tukeyhsdtestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -8927,14 +8885,14 @@ export class TukeyHsdTestResult {
    * Name of the test performed
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_andersondarlingtestresult_test_name(
+    wasm.__wbg_set_andersondarlingtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -8944,25 +8902,23 @@ export class TukeyHsdTestResult {
    * P-value for the overall test (if applicable)
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * P-value for the overall test (if applicable)
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * Test statistic for the overall test (if applicable)
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -8971,10 +8927,10 @@ export class TukeyHsdTestResult {
    * Test statistic for the overall test (if applicable)
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -8983,31 +8939,31 @@ export class TukeyHsdTestResult {
    * Number of groups compared
    * @returns {number}
    */
-  get n_groups() {
-    const ret = wasm.__wbg_get_dunntestresult_n_groups(this.__wbg_ptr);
+  get nGroups() {
+    const ret = wasm.__wbg_get_dunntestresult_nGroups(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Number of groups compared
    * @param {number} arg0
    */
-  set n_groups(arg0) {
-    wasm.__wbg_set_dunntestresult_n_groups(this.__wbg_ptr, arg0);
+  set nGroups(arg0) {
+    wasm.__wbg_set_dunntestresult_nGroups(this.__wbg_ptr, arg0);
   }
   /**
    * Total sample size
    * @returns {number}
    */
-  get n_total() {
-    const ret = wasm.__wbg_get_dunntestresult_n_total(this.__wbg_ptr);
+  get nTotal() {
+    const ret = wasm.__wbg_get_dunntestresult_nTotal(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * Total sample size
    * @param {number} arg0
    */
-  set n_total(arg0) {
-    wasm.__wbg_set_dunntestresult_n_total(this.__wbg_ptr, arg0);
+  set nTotal(arg0) {
+    wasm.__wbg_set_dunntestresult_nTotal(this.__wbg_ptr, arg0);
   }
   /**
    * Individual pairwise comparisons
@@ -9032,11 +8988,11 @@ export class TukeyHsdTestResult {
    * Multiple comparison correction method used
    * @returns {string}
    */
-  get correction_method() {
+  get correctionMethod() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_tukeyhsdtestresult_correction_method(
+      const ret = wasm.__wbg_get_tukeyhsdtestresult_correctionMethod(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -9050,14 +9006,14 @@ export class TukeyHsdTestResult {
    * Multiple comparison correction method used
    * @param {string} arg0
    */
-  set correction_method(arg0) {
+  set correctionMethod(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_mannwhitneytestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_mannwhitneytestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Explanatory note about the header values
@@ -9085,7 +9041,7 @@ export class TukeyHsdTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_dunntestresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_dunntestresult_errorMessage(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * Significance level used
@@ -9106,8 +9062,8 @@ export class TukeyHsdTestResult {
    * Error message if test failed
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_tukeyhsdtestresult_error_message(this.__wbg_ptr);
+  get errorMessage() {
+    const ret = wasm.__wbg_get_tukeyhsdtestresult_errorMessage(this.__wbg_ptr);
     let v1;
     if (ret[0] !== 0) {
       v1 = getStringFromWasm0(ret[0], ret[1]).slice();
@@ -9119,7 +9075,7 @@ export class TukeyHsdTestResult {
    * Error message if test failed
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -9164,11 +9120,11 @@ export class TwoSampleProportionTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_twosampleproportiontestresult_test_name(
+      const ret = wasm.__wbg_get_twosampleproportiontestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -9181,14 +9137,14 @@ export class TwoSampleProportionTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_test_name(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -9197,23 +9153,21 @@ export class TwoSampleProportionTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_p_value(
-      this.__wbg_ptr,
-    );
+  get pValue() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_andersondarlingtestresult_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_andersondarlingtestresult_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get testStatistic() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return TestStatistic.__wrap(ret);
@@ -9221,10 +9175,10 @@ export class TwoSampleProportionTestResult {
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9232,20 +9186,19 @@ export class TwoSampleProportionTestResult {
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm
-      .__wbg_get_onesampleproportiontestresult_confidence_interval(
-        this.__wbg_ptr,
-      );
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_onesampleproportiontestresult_confidenceInterval(
+      this.__wbg_ptr,
+    );
     return ConfidenceInterval.__wrap(ret);
   }
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_onesampleproportiontestresult_confidence_interval(
+    wasm.__wbg_set_onesampleproportiontestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9253,8 +9206,8 @@ export class TwoSampleProportionTestResult {
   /**
    * @returns {number}
    */
-  get proportion_difference() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+  get proportionDifference() {
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -9262,8 +9215,8 @@ export class TwoSampleProportionTestResult {
   /**
    * @param {number} arg0
    */
-  set proportion_difference(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+  set proportionDifference(arg0) {
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string}
@@ -9302,20 +9255,20 @@ export class TwoSampleProportionTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_twosampleproportiontestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_twosampleproportiontestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -9328,7 +9281,7 @@ export class TwoSampleProportionTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -9337,7 +9290,7 @@ export class TwoSampleProportionTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquaregoodnessoffittestresult_error_message(
+    wasm.__wbg_set_chisquaregoodnessoffittestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -9377,11 +9330,11 @@ export class TwoSampleTTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_twosamplettestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_twosamplettestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -9392,7 +9345,7 @@ export class TwoSampleTTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
@@ -9404,21 +9357,21 @@ export class TwoSampleTTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -9426,10 +9379,10 @@ export class TwoSampleTTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9437,23 +9390,23 @@ export class TwoSampleTTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -9461,10 +9414,10 @@ export class TwoSampleTTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9472,7 +9425,7 @@ export class TwoSampleTTestResult {
   /**
    * @returns {number}
    */
-  get degrees_of_freedom() {
+  get degreesOfFreedom() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -9481,13 +9434,13 @@ export class TwoSampleTTestResult {
   /**
    * @param {number} arg0
    */
-  set degrees_of_freedom(arg0) {
+  set degreesOfFreedom(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get mean_difference() {
+  get meanDifference() {
     const ret = wasm.__wbg_get_chisquarevariancetestresult_alpha(
       this.__wbg_ptr,
     );
@@ -9496,20 +9449,20 @@ export class TwoSampleTTestResult {
   /**
    * @param {number} arg0
    */
-  set mean_difference(arg0) {
+  set meanDifference(arg0) {
     wasm.__wbg_set_chisquarevariancetestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get standard_error() {
+  get standardError() {
     const ret = wasm.__wbg_get_anovatablecomponent_ss(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set standard_error(arg0) {
+  set standardError(arg0) {
     wasm.__wbg_set_anovatablecomponent_ss(this.__wbg_ptr, arg0);
   }
   /**
@@ -9557,8 +9510,8 @@ export class TwoSampleTTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_twosamplettestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_twosamplettestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -9571,7 +9524,7 @@ export class TwoSampleTTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -9580,7 +9533,7 @@ export class TwoSampleTTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_pairedttestresult_error_message(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_pairedttestresult_errorMessage(this.__wbg_ptr, ptr0, len0);
   }
 }
 
@@ -9616,11 +9569,11 @@ export class TwoSampleZTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_twosampleztestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_twosampleztestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -9631,33 +9584,33 @@ export class TwoSampleZTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_fishersexacttestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_fishersexacttestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -9665,10 +9618,10 @@ export class TwoSampleZTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9676,23 +9629,23 @@ export class TwoSampleZTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {ConfidenceInterval}
    */
-  get confidence_interval() {
-    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidence_interval(
+  get confidenceInterval() {
+    const ret = wasm.__wbg_get_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
     );
     return ConfidenceInterval.__wrap(ret);
@@ -9700,10 +9653,10 @@ export class TwoSampleZTestResult {
   /**
    * @param {ConfidenceInterval} arg0
    */
-  set confidence_interval(arg0) {
+  set confidenceInterval(arg0) {
     _assertClass(arg0, ConfidenceInterval);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_kendallcorrelationtestresult_confidence_interval(
+    wasm.__wbg_set_kendallcorrelationtestresult_confidenceInterval(
       this.__wbg_ptr,
       ptr0,
     );
@@ -9711,7 +9664,7 @@ export class TwoSampleZTestResult {
   /**
    * @returns {number}
    */
-  get mean_difference() {
+  get meanDifference() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -9720,13 +9673,13 @@ export class TwoSampleZTestResult {
   /**
    * @param {number} arg0
    */
-  set mean_difference(arg0) {
+  set meanDifference(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get standard_error() {
+  get standardError() {
     const ret = wasm.__wbg_get_chisquarevariancetestresult_alpha(
       this.__wbg_ptr,
     );
@@ -9735,7 +9688,7 @@ export class TwoSampleZTestResult {
   /**
    * @param {number} arg0
    */
-  set standard_error(arg0) {
+  set standardError(arg0) {
     wasm.__wbg_set_chisquarevariancetestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
@@ -9783,8 +9736,8 @@ export class TwoSampleZTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_twosampleztestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_twosampleztestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -9797,7 +9750,7 @@ export class TwoSampleZTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -9806,7 +9759,7 @@ export class TwoSampleZTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twosampleztestresult_error_message(
+    wasm.__wbg_set_twosampleztestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -9846,13 +9799,11 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_twowayanovatestresult_test_name(
-        this.__wbg_ptr,
-      );
+      const ret = wasm.__wbg_get_twowayanovatestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -9863,44 +9814,44 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_twowayanovatestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {AnovaTestComponent}
    */
-  get factor_a() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_factor_a(this.__wbg_ptr);
+  get factorA() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_factorA(this.__wbg_ptr);
     return AnovaTestComponent.__wrap(ret);
   }
   /**
    * @param {AnovaTestComponent} arg0
    */
-  set factor_a(arg0) {
+  set factorA(arg0) {
     _assertClass(arg0, AnovaTestComponent);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_twowayanovatestresult_factor_a(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_twowayanovatestresult_factorA(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {AnovaTestComponent}
    */
-  get factor_b() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_factor_b(this.__wbg_ptr);
+  get factorB() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_factorB(this.__wbg_ptr);
     return AnovaTestComponent.__wrap(ret);
   }
   /**
    * @param {AnovaTestComponent} arg0
    */
-  set factor_b(arg0) {
+  set factorB(arg0) {
     _assertClass(arg0, AnovaTestComponent);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_twowayanovatestresult_factor_b(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_twowayanovatestresult_factorB(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {AnovaTestComponent}
@@ -9922,36 +9873,34 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {number}
    */
-  get r_squared() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_r_squared(this.__wbg_ptr);
+  get rSquared() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_rSquared(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set r_squared(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_r_squared(this.__wbg_ptr, arg0);
+  set rSquared(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_rSquared(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_sample_size(
-      this.__wbg_ptr,
-    );
+  get sampleSize() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sampleSize(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {Float64Array}
    */
-  get sample_means() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_sample_means(
+  get sampleMeans() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sampleMeans(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -9961,10 +9910,10 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_means(arg0) {
+  set sampleMeans(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_sample_means(
+    wasm.__wbg_set_twowayanovatestresult_sampleMeans(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -9973,8 +9922,8 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {Float64Array}
    */
-  get sample_std_devs() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_sample_std_devs(
+  get sampleStdDevs() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -9984,10 +9933,10 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_std_devs(arg0) {
+  set sampleStdDevs(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_sample_std_devs(
+    wasm.__wbg_set_twowayanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -9996,8 +9945,8 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {Float64Array}
    */
-  get sum_of_squares() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_sum_of_squares(
+  get sumOfSquares() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_sumOfSquares(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -10007,10 +9956,10 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sum_of_squares(arg0) {
+  set sumOfSquares(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_sum_of_squares(
+    wasm.__wbg_set_twowayanovatestresult_sumOfSquares(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10019,23 +9968,21 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {number}
    */
-  get grand_mean() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_grand_mean(this.__wbg_ptr);
+  get grandMean() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_grandMean(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set grand_mean(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_grand_mean(this.__wbg_ptr, arg0);
+  set grandMean(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_grandMean(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {AnovaTableComponent[]}
    */
-  get anova_table() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_anova_table(
-      this.__wbg_ptr,
-    );
+  get anovaTable() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_anovaTable(this.__wbg_ptr);
     var v1 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
     return v1;
@@ -10043,53 +9990,49 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {AnovaTableComponent[]} arg0
    */
-  set anova_table(arg0) {
+  set anovaTable(arg0) {
     const ptr0 = passArrayJsValueToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_anova_table(
-      this.__wbg_ptr,
-      ptr0,
-      len0,
-    );
+    wasm.__wbg_set_twowayanovatestresult_anovaTable(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
-  get df_error() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_df_error(this.__wbg_ptr);
+  get dfError() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_dfError(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set df_error(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_df_error(this.__wbg_ptr, arg0);
+  set dfError(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_dfError(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get ms_error() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_ms_error(this.__wbg_ptr);
+  get msError() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_msError(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set ms_error(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_ms_error(this.__wbg_ptr, arg0);
+  set msError(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_msError(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get df_total() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_df_total(this.__wbg_ptr);
+  get dfTotal() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_dfTotal(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set df_total(arg0) {
-    wasm.__wbg_set_twowayanovatestresult_df_total(this.__wbg_ptr, arg0);
+  set dfTotal(arg0) {
+    wasm.__wbg_set_twowayanovatestresult_dfTotal(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
@@ -10107,8 +10050,8 @@ export class TwoWayAnovaTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_twowayanovatestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_twowayanovatestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -10121,7 +10064,7 @@ export class TwoWayAnovaTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -10130,7 +10073,7 @@ export class TwoWayAnovaTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_twowayanovatestresult_error_message(
+    wasm.__wbg_set_twowayanovatestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10170,11 +10113,11 @@ export class WelchAnovaTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_welchanovatestresult_test_name(this.__wbg_ptr);
+      const ret = wasm.__wbg_get_welchanovatestresult_testName(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -10185,14 +10128,14 @@ export class WelchAnovaTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_chisquarevariancetestresult_test_name(
+    wasm.__wbg_set_chisquarevariancetestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10201,21 +10144,21 @@ export class WelchAnovaTestResult {
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -10223,10 +10166,10 @@ export class WelchAnovaTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -10234,23 +10177,23 @@ export class WelchAnovaTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {number}
    */
   get df1() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -10259,40 +10202,38 @@ export class WelchAnovaTestResult {
    * @param {number} arg0
    */
   set df1(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
   get df2() {
-    const ret = wasm.__wbg_get_anovatestcomponent_mean_square(this.__wbg_ptr);
+    const ret = wasm.__wbg_get_anovatestcomponent_meanSquare(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
   set df2(arg0) {
-    wasm.__wbg_set_anovatestcomponent_mean_square(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get r_squared() {
-    const ret = wasm.__wbg_get_anovatestcomponent_sum_of_squares(
-      this.__wbg_ptr,
-    );
+  get rSquared() {
+    const ret = wasm.__wbg_get_anovatestcomponent_sumOfSquares(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set r_squared(arg0) {
-    wasm.__wbg_set_anovatestcomponent_sum_of_squares(this.__wbg_ptr, arg0);
+  set rSquared(arg0) {
+    wasm.__wbg_set_anovatestcomponent_sumOfSquares(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get adjusted_r_squared() {
+  get adjustedRSquared() {
     const ret = wasm.__wbg_get_kendallcorrelationtestresult_alpha(
       this.__wbg_ptr,
     );
@@ -10301,29 +10242,27 @@ export class WelchAnovaTestResult {
   /**
    * @param {number} arg0
    */
-  set adjusted_r_squared(arg0) {
+  set adjustedRSquared(arg0) {
     wasm.__wbg_set_kendallcorrelationtestresult_alpha(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {number}
    */
-  get sample_size() {
-    const ret = wasm.__wbg_get_welchanovatestresult_sample_size(this.__wbg_ptr);
+  get sampleSize() {
+    const ret = wasm.__wbg_get_welchanovatestresult_sampleSize(this.__wbg_ptr);
     return ret >>> 0;
   }
   /**
    * @param {number} arg0
    */
-  set sample_size(arg0) {
-    wasm.__wbg_set_welchanovatestresult_sample_size(this.__wbg_ptr, arg0);
+  set sampleSize(arg0) {
+    wasm.__wbg_set_welchanovatestresult_sampleSize(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {Float64Array}
    */
-  get sample_means() {
-    const ret = wasm.__wbg_get_welchanovatestresult_sample_means(
-      this.__wbg_ptr,
-    );
+  get sampleMeans() {
+    const ret = wasm.__wbg_get_welchanovatestresult_sampleMeans(this.__wbg_ptr);
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
     return v1;
@@ -10331,10 +10270,10 @@ export class WelchAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_means(arg0) {
+  set sampleMeans(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_sample_means(
+    wasm.__wbg_set_onewayanovatestresult_sampleMeans(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10343,8 +10282,8 @@ export class WelchAnovaTestResult {
   /**
    * @returns {Float64Array}
    */
-  get sample_std_devs() {
-    const ret = wasm.__wbg_get_welchanovatestresult_sample_std_devs(
+  get sampleStdDevs() {
+    const ret = wasm.__wbg_get_welchanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
     );
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
@@ -10354,10 +10293,10 @@ export class WelchAnovaTestResult {
   /**
    * @param {Float64Array} arg0
    */
-  set sample_std_devs(arg0) {
+  set sampleStdDevs(arg0) {
     const ptr0 = passArrayF64ToWasm0(arg0, wasm.__wbindgen_malloc);
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_onewayanovatestresult_sample_std_devs(
+    wasm.__wbg_set_onewayanovatestresult_sampleStdDevs(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10381,8 +10320,8 @@ export class WelchAnovaTestResult {
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_welchanovatestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_welchanovatestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -10395,7 +10334,7 @@ export class WelchAnovaTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -10404,7 +10343,7 @@ export class WelchAnovaTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_welchanovatestresult_error_message(
+    wasm.__wbg_set_welchanovatestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10444,11 +10383,11 @@ export class WilcoxonSignedRankTestResult {
   /**
    * @returns {string}
    */
-  get test_name() {
+  get testName() {
     let deferred1_0;
     let deferred1_1;
     try {
-      const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_test_name(
+      const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_testName(
         this.__wbg_ptr,
       );
       deferred1_0 = ret[0];
@@ -10461,33 +10400,33 @@ export class WilcoxonSignedRankTestResult {
   /**
    * @param {string} arg0
    */
-  set test_name(arg0) {
+  set testName(arg0) {
     const ptr0 = passStringToWasm0(
       arg0,
       wasm.__wbindgen_malloc,
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_mannwhitneytestresult_test_name(this.__wbg_ptr, ptr0, len0);
+    wasm.__wbg_set_mannwhitneytestresult_testName(this.__wbg_ptr, ptr0, len0);
   }
   /**
    * @returns {number}
    */
-  get p_value() {
-    const ret = wasm.__wbg_get_anovatestcomponent_p_value(this.__wbg_ptr);
+  get pValue() {
+    const ret = wasm.__wbg_get_anovatestcomponent_pValue(this.__wbg_ptr);
     return ret;
   }
   /**
    * @param {number} arg0
    */
-  set p_value(arg0) {
-    wasm.__wbg_set_anovatestcomponent_p_value(this.__wbg_ptr, arg0);
+  set pValue(arg0) {
+    wasm.__wbg_set_anovatestcomponent_pValue(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {EffectSize}
    */
-  get effect_size() {
-    const ret = wasm.__wbg_get_andersondarlingtestresult_test_statistic(
+  get effectSize() {
+    const ret = wasm.__wbg_get_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
     );
     return EffectSize.__wrap(ret);
@@ -10495,10 +10434,10 @@ export class WilcoxonSignedRankTestResult {
   /**
    * @param {EffectSize} arg0
    */
-  set effect_size(arg0) {
+  set effectSize(arg0) {
     _assertClass(arg0, EffectSize);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_andersondarlingtestresult_test_statistic(
+    wasm.__wbg_set_andersondarlingtestresult_testStatistic(
       this.__wbg_ptr,
       ptr0,
     );
@@ -10506,17 +10445,17 @@ export class WilcoxonSignedRankTestResult {
   /**
    * @returns {TestStatistic}
    */
-  get test_statistic() {
-    const ret = wasm.__wbg_get_anovatestcomponent_effect_size(this.__wbg_ptr);
+  get testStatistic() {
+    const ret = wasm.__wbg_get_anovatestcomponent_effectSize(this.__wbg_ptr);
     return TestStatistic.__wrap(ret);
   }
   /**
    * @param {TestStatistic} arg0
    */
-  set test_statistic(arg0) {
+  set testStatistic(arg0) {
     _assertClass(arg0, TestStatistic);
     var ptr0 = arg0.__destroy_into_raw();
-    wasm.__wbg_set_anovatestcomponent_effect_size(this.__wbg_ptr, ptr0);
+    wasm.__wbg_set_anovatestcomponent_effectSize(this.__wbg_ptr, ptr0);
   }
   /**
    * @returns {string}
@@ -10574,7 +10513,7 @@ export class WilcoxonSignedRankTestResult {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_kendallcorrelationtestresult_test_name(
+    wasm.__wbg_set_kendallcorrelationtestresult_testName(
       this.__wbg_ptr,
       ptr0,
       len0,
@@ -10584,7 +10523,7 @@ export class WilcoxonSignedRankTestResult {
    * @returns {number}
    */
   get alpha() {
-    const ret = wasm.__wbg_get_anovatestcomponent_degrees_of_freedom(
+    const ret = wasm.__wbg_get_anovatestcomponent_degreesOfFreedom(
       this.__wbg_ptr,
     );
     return ret;
@@ -10593,13 +10532,13 @@ export class WilcoxonSignedRankTestResult {
    * @param {number} arg0
    */
   set alpha(arg0) {
-    wasm.__wbg_set_anovatestcomponent_degrees_of_freedom(this.__wbg_ptr, arg0);
+    wasm.__wbg_set_anovatestcomponent_degreesOfFreedom(this.__wbg_ptr, arg0);
   }
   /**
    * @returns {string | undefined}
    */
-  get error_message() {
-    const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_error_message(
+  get errorMessage() {
+    const ret = wasm.__wbg_get_wilcoxonsignedranktestresult_errorMessage(
       this.__wbg_ptr,
     );
     let v1;
@@ -10612,7 +10551,7 @@ export class WilcoxonSignedRankTestResult {
   /**
    * @param {string | null} [arg0]
    */
-  set error_message(arg0) {
+  set errorMessage(arg0) {
     var ptr0 = isLikeNone(arg0)
       ? 0
       : passStringToWasm0(
@@ -10621,7 +10560,7 @@ export class WilcoxonSignedRankTestResult {
         wasm.__wbindgen_realloc,
       );
     var len0 = WASM_VECTOR_LEN;
-    wasm.__wbg_set_mannwhitneytestresult_error_message(
+    wasm.__wbg_set_mannwhitneytestresult_errorMessage(
       this.__wbg_ptr,
       ptr0,
       len0,

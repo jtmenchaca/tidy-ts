@@ -138,7 +138,7 @@ export function isNonNormal(data: number[], alpha = 0.05): boolean {
   if (n <= 50) {
     if (canShapiro(n)) {
       const result = shapiroWilkTest({ data, alpha });
-      return (result.p_value ?? 1) < alpha;
+      return (result.pValue ?? 1) < alpha;
     }
     // Fallback for edge cases
     return false;
@@ -148,13 +148,13 @@ export function isNonNormal(data: number[], alpha = 0.05): boolean {
   if (n <= 300) {
     // D'Agostino-Pearson requires n ≥ 20, but we're already > 50
     const result = dagostinoPearsonTest({ data, alpha });
-    return (result.p_value ?? 1) < alpha;
+    return (result.pValue ?? 1) < alpha;
   }
 
   // Large samples (>300): Anderson-Darling for tail sensitivity
   // Note: For very large samples, consider defaulting to robust methods
   const result = andersonDarlingTest({ data, alpha });
-  return (result.p_value ?? 1) < alpha;
+  return (result.pValue ?? 1) < alpha;
 }
 
 /**
@@ -167,7 +167,7 @@ export function hasEqualVariances(groups: number[][], alpha = 0.05): boolean {
   try {
     // Use Brown-Forsythe test (already implemented in leveneTest)
     const result = leveneTest(groups, alpha);
-    return result.p_value >= alpha;
+    return result.pValue >= alpha;
   } catch {
     // If test fails, assume unequal variances (conservative approach)
     return false;
@@ -229,13 +229,13 @@ export function normalityOK(vec: number[], alpha = ALPHA): boolean {
     // Small samples: Use Shapiro-Wilk (best power for small samples)
     if (canShapiro(n)) {
       const result = shapiroWilkTest({ data: vec, alpha });
-      return (result.p_value ?? 1) >= alpha;
+      return (result.pValue ?? 1) >= alpha;
     }
     return true; // Assume normal if we can't test
   } else if (n <= N_MODERATE_MAX) {
     // Moderate samples: Use D'Agostino-Pearson K² (omnibus test)
     const result = dagostinoPearsonTest({ data: vec, alpha });
-    return (result.p_value ?? 1) >= alpha;
+    return (result.pValue ?? 1) >= alpha;
   } else {
     // Large samples: Always return true (use robust methods regardless)
     return true;

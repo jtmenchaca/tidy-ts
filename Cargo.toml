@@ -11,7 +11,7 @@ categories   = ["data-structures", "science", "web-programming"]
 
 [lib]
 name = "tidy_ts_dataframe"
-path = "src/lib.rs"
+path = "packages/lib.rs"
 crate-type = ["cdylib", "rlib"]
 
 # Test binaries removed - files were deleted

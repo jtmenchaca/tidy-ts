@@ -15,12 +15,12 @@ Deno.test("Pearson Correlation Test Spot Check", () => {
 
   console.log("x:", x);
   console.log("y:", y);
-  console.log("Correlation (r):", result.effect_size.value);
-  console.log("t-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("Correlation (r):", result.effectSize.value);
+  console.log("t-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
   console.log("CI:", [
-    result.confidence_interval.lower,
-    result.confidence_interval.upper,
+    result.confidenceInterval.lower,
+    result.confidenceInterval.upper,
   ]);
 });
 

@@ -36,7 +36,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneSampleTTestResult (if parametric) or WilcoxonSignedRankTestResult (if non-parametric) with `statistic`, `p_value`, `degrees_of_freedom` (t-test only), `confidence_interval`, `reject`
+OneSampleTTestResult (if parametric) or WilcoxonSignedRankTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `reject`
 
 ### Examples
 
@@ -48,7 +48,7 @@ const result = s.compare.oneGroup.centralTendency.toValue({
   comparator: 'not equal to',
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 console.log(result.reject);    // true if reject H0
 
 // Force parametric test
@@ -110,7 +110,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneSampleProportionTestResult with `statistic` (z-statistic), `p_value`, `confidence_interval`, `reject`
+OneSampleProportionTestResult with `statistic` (z-statistic), `pValue`, `confidenceInterval`, `reject`
 
 ### Examples
 
@@ -122,7 +122,7 @@ const result = s.compare.oneGroup.proportions.toValue({
   comparator: 'not equal to',
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 console.log(result.reject);    // true if proportion differs from 0.5
 
 // Test if proportion is greater than 0.3
@@ -173,7 +173,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-ShapiroWilkTestResult with `statistic` (W statistic), `p_value`, `reject` (true if p < alpha, meaning data is non-normal)
+ShapiroWilkTestResult with `statistic` (W statistic), `pValue`, `reject` (true if p < alpha, meaning data is non-normal)
 
 ### Examples
 
@@ -183,7 +183,7 @@ const result = s.compare.oneGroup.distribution.toNormal({
   data,
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 console.log(result.reject);    // true if data is non-normal (p < 0.05)
 
 // Check before using parametric tests

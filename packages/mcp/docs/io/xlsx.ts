@@ -18,11 +18,12 @@ export const xlsxDocs: Record<string, DocEntry> = {
       "opts.sheet: Sheet name or index (default: first sheet)",
       "opts.skip: Number of rows to skip (useful if first row is a title, not headers)",
     ],
-    returns: "Promise<DataFrame<T>> - A typed DataFrame object with all standard operations",
+    returns:
+      "Promise<DataFrame<T>> - A typed DataFrame object with all standard operations",
     examples: [
       '// RECOMMENDED: Use peekXLSX first to understand file structure\nconst info = await peekXLSX("data.xlsx");\nconsole.log(info); // Shows sheets, headers, preview, and example schema',
       '// With Zod schema validation (file path)\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email(),\n  createdAt: z.date(), // Excel dates auto-converted\n});\n\nconst df = await readXLSX("data.xlsx", schema)',
-      '// Browser-compatible: Read from File object\nconst fileInput = document.querySelector(\'input[type="file"]\');\nconst file = fileInput.files[0];\nconst df = await readXLSX(file, schema)',
+      "// Browser-compatible: Read from File object\nconst fileInput = document.querySelector('input[type=\"file\"]');\nconst file = fileInput.files[0];\nconst df = await readXLSX(file, schema)",
       '// With nullable fields and specific sheet\nimport { z } from "zod";\n\nconst schema = z.object({\n  species: z.string(),\n  bill_length_mm: z.number().nullable(),\n  bill_depth_mm: z.number().nullable(),\n  body_mass_g: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { sheet: "Summary" })',
       '// Skip header rows (e.g., if row 0 is a title)\nimport { z } from "zod";\n\nconst schema = z.object({\n  name: z.string(),\n  value: z.number(),\n});\n\nconst df = await readXLSX("data.xlsx", schema, { skip: 1 })',
       '// Chain with DataFrame operations\nimport { z } from "zod";\nimport { stats as s } from "@tidy-ts/dataframe";\n\nconst schema = z.object({\n  region: z.string(),\n  amount: z.number(),\n});\n\nconst result = await readXLSX("sales.xlsx", schema)\n  .filter(r => r.amount > 100)\n  .groupBy("region")\n  .summarize({ total: g => s.sum(g.amount) })',
@@ -54,7 +55,8 @@ export const xlsxDocs: Record<string, DocEntry> = {
       "options.previewRows: Number of rows to preview (default: 5)",
       "options.sheet: Which sheet to preview - name or index (default: first sheet)",
     ],
-    returns: "Promise<string> - Markdown-formatted description of file structure",
+    returns:
+      "Promise<string> - Markdown-formatted description of file structure",
     examples: [
       '// Inspect file structure (returns markdown)\nconst info = await peekXLSX("data.xlsx");\nconsole.log(info);\n// Output includes:\n// - Available sheets\n// - Column headers\n// - Data preview\n// - Example Zod schema',
       '// Preview a specific sheet\nconst info = await peekXLSX("data.xlsx", { sheet: "Summary" })',
@@ -120,4 +122,3 @@ export const xlsxDocs: Record<string, DocEntry> = {
     related: ["readXLSX", "writeCSV"],
   },
 };
-

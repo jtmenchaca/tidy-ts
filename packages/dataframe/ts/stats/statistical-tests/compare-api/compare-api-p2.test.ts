@@ -195,23 +195,23 @@ Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA complete resu
   console.log("Two-way ANOVA complete result:", result);
 
   // Verify the result contains all three effects
-  expect(result.test_name).toBe("Two-way ANOVA");
-  expect(result.factor_a).toBeDefined();
-  expect(result.factor_b).toBeDefined();
+  expect(result.testName).toBe("Two-way ANOVA");
+  expect(result.factorA).toBeDefined();
+  expect(result.factorB).toBeDefined();
   expect(result.interaction).toBeDefined();
 
   // Verify factor A results (should be highly significant)
-  expect(result.factor_a.p_value).toBeLessThan(0.001);
-  expect(result.factor_a.degrees_of_freedom).toBe(2); // 3 levels - 1
+  expect(result.factorA.pValue).toBeLessThan(0.001);
+  expect(result.factorA.degreesOfFreedom).toBe(2); // 3 levels - 1
 
   // Verify factor B results (should be significant)
-  expect(result.factor_b.p_value).toBeLessThan(0.01);
-  expect(result.factor_b.degrees_of_freedom).toBe(1); // 2 levels - 1
+  expect(result.factorB.pValue).toBeLessThan(0.01);
+  expect(result.factorB.degreesOfFreedom).toBe(1); // 2 levels - 1
 
   // Verify interaction results (should be non-significant for this simple additive data)
-  expect(result.interaction.degrees_of_freedom).toBe(2); // (3-1) * (2-1)
+  expect(result.interaction.degreesOfFreedom).toBe(2); // (3-1) * (2-1)
 
   // Verify anova table
-  expect(result.anova_table).toBeDefined();
-  expect(result.anova_table.length).toBe(5); // A, B, AxB, Error, Total
+  expect(result.anovaTable).toBeDefined();
+  expect(result.anovaTable.length).toBe(5); // A, B, AxB, Error, Total
 });

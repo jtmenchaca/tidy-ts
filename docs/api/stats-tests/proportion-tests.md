@@ -16,13 +16,13 @@ One-sample proportion test to compare observed proportion to a hypothesized popu
 ### Signature
 
 ```typescript
-proportionTestOneSample({ data, hypothesizedProportion, alternative?, alpha? }): OneSampleProportionTestResult
+s.test.proportion.oneSample({ data, hypothesizedProportion, alternative?, alpha? }): OneSampleProportionTestResult
 ```
 
 ### Import
 
 ```typescript
-import { proportionTestOneSample } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -34,15 +34,16 @@ import { proportionTestOneSample } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneSampleProportionTestResult with `test_statistic`, `p_value`, `confidence_interval`, `sample_proportion`
+OneSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `sampleProportion`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = [true, false, true, true, false, true];
-const result = proportionTestOneSample({ data, hypothesizedProportion: 0.5 });
-console.log(result.p_value);  // p-value
-console.log(result.sample_proportion);  // observed proportion
+const result = s.test.proportion.oneSample({ data, hypothesizedProportion: 0.5 });
+console.log(result.pValue);  // p-value
+console.log(result.sampleProportion);  // observed proportion
 ```
 
 ### Best Practices
@@ -70,13 +71,13 @@ Two-sample proportion test to compare proportions between two independent groups
 ### Signature
 
 ```typescript
-proportionTestTwoSample({ data1, data2, pooled?, alternative?, alpha? }): TwoSampleProportionTestResult
+s.test.proportion.twoSample({ data1, data2, pooled?, alternative?, alpha? }): TwoSampleProportionTestResult
 ```
 
 ### Import
 
 ```typescript
-import { proportionTestTwoSample } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -89,15 +90,16 @@ import { proportionTestTwoSample } from "@tidy-ts/dataframe";
 
 ### Returns
 
-TwoSampleProportionTestResult with `test_statistic`, `p_value`, `confidence_interval`, `proportion_difference`
+TwoSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `proportionDifference`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const group1 = [true, false, true, true, false];
 const group2 = [true, true, true, false, true];
-const result = proportionTestTwoSample({ data1: group1, data2: group2 });
-console.log(result.p_value);  // compare proportions
+const result = s.test.proportion.twoSample({ data1: group1, data2: group2 });
+console.log(result.pValue);  // compare proportions
 ```
 
 ### Best Practices

@@ -13,9 +13,9 @@ Deno.test("Kruskal-Wallis Test Spot Check", () => {
   const result = stats.test.nonparametric.kruskalWallis(groups);
 
   console.log("Groups:", groups);
-  console.log("H-statistic:", result.test_statistic.value);
-  console.log("df:", result.degrees_of_freedom);
-  console.log("p-value:", result.p_value);
+  console.log("H-statistic:", result.testStatistic.value);
+  console.log("df:", result.degreesOfFreedom);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

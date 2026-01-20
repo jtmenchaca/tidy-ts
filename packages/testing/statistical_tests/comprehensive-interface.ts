@@ -54,27 +54,27 @@ interface RTestParameters extends Omit<TestParameters, "options"> {
 }
 
 export interface TestResult {
-  test_statistic: number;
-  p_value: number;
+  testStatistic: number;
+  pValue: number;
   method?: string;
   alternative?: string;
   alpha?: number;
   correlation?: number;
-  odds_ratio?: number;
-  reject_null?: boolean;
+  oddsRatio?: number;
+  rejectNull?: boolean;
 }
 
 // Helper function to extract test statistic value
 function extractStatistic(
-  result: { test_statistic: { value?: number } | number },
+  result: { testStatistic: { value?: number } | number },
 ): number {
   if (
-    typeof result.test_statistic === "object" &&
-    result.test_statistic.value !== undefined
+    typeof result.testStatistic === "object" &&
+    result.testStatistic.value !== undefined
   ) {
-    return result.test_statistic.value;
+    return result.testStatistic.value;
   }
-  return result.test_statistic as number;
+  return result.testStatistic as number;
 }
 
 // Robust R caller
@@ -131,8 +131,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "pearson",
         alternative,
         alpha,
@@ -150,8 +150,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "spearman",
         alternative,
         alpha,
@@ -170,8 +170,8 @@ export async function callRobustRust(
         exact: params.options?.exact,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "kendall",
         alternative,
         alpha,
@@ -190,8 +190,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "t.test.one",
         alternative,
         alpha,
@@ -210,8 +210,8 @@ export async function callRobustRust(
         equalVar: params.options?.assumeEqualVariances ?? true,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "t.test.two",
         alternative,
         alpha,
@@ -229,8 +229,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "t.test.paired",
         alternative,
         alpha,
@@ -250,8 +250,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "z.test.one",
         alternative,
         alpha,
@@ -271,8 +271,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "z.test.two",
         alternative,
         alpha,
@@ -298,8 +298,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "prop.test.one",
         alternative,
         alpha,
@@ -324,8 +324,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "prop.test.two",
         alternative,
         alpha,
@@ -339,8 +339,8 @@ export async function callRobustRust(
       );
       const result = anovaOneWay(params.data!.groups!, alpha);
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "aov.one",
         alternative: "two-sided",
         alpha,
@@ -353,8 +353,8 @@ export async function callRobustRust(
       );
       const result = welchAnovaOneWay(params.data!.groups!, alpha);
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "aov.welch",
         alternative: "two-sided",
         alpha,
@@ -373,8 +373,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "wilcox.mannwhitney",
         alternative,
         alpha,
@@ -392,8 +392,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "wilcox.signedrank",
         alternative,
         alpha,
@@ -406,8 +406,8 @@ export async function callRobustRust(
       );
       const result = kruskalWallisTest(params.data!.groups!, alpha);
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "kruskal.test",
         alternative: "two-sided",
         alpha,
@@ -427,8 +427,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: result.d_statistic,
-        p_value: result.p_value,
+        testStatistic: result.dStatistic,
+        pValue: result.pValue,
         method: "ks.uniform",
         alternative,
         alpha,
@@ -446,8 +446,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: result.d_statistic,
-        p_value: result.p_value,
+        testStatistic: result.dStatistic,
+        pValue: result.pValue,
         method: "ks.two.sample",
         alternative,
         alpha,
@@ -463,8 +463,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "shapiro.test",
         alternative: "two-sided",
         alpha,
@@ -480,8 +480,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "ad.test",
         alternative: "two-sided",
         alpha,
@@ -497,8 +497,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "dagostino.test",
         alternative: "two-sided",
         alpha,
@@ -515,8 +515,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "chisq.test",
         alternative: "two-sided",
         alpha,
@@ -533,8 +533,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: result.effect_size?.value || extractStatistic(result), // Use effect_size.value for odds ratio
-        p_value: result.p_value,
+        testStatistic: result.effectSize?.value || extractStatistic(result), // Use effectSize.value for odds ratio
+        pValue: result.pValue,
         method: "fisher.test",
         alternative,
         alpha,
@@ -563,8 +563,8 @@ export async function callRobustRust(
         alpha,
       });
       return {
-        test_statistic: extractStatistic(result.factor_a), // Return factor A test statistic as primary
-        p_value: result.factor_a.p_value, // Return factor A p-value as primary
+        testStatistic: extractStatistic(result.factorA), // Return factor A test statistic as primary
+        pValue: result.factorA.pValue, // Return factor A p-value as primary
         method: "aov.two",
         alternative: "two-sided",
         alpha,
@@ -578,8 +578,8 @@ export async function callRobustRust(
       );
       const result = leveneTest(params.data!.groups!, alpha);
       return {
-        test_statistic: extractStatistic(result),
-        p_value: result.p_value,
+        testStatistic: extractStatistic(result),
+        pValue: result.pValue,
         method: "levene.test",
         alternative: "two-sided",
         alpha,

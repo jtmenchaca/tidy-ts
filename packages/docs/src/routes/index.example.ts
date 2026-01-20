@@ -42,7 +42,7 @@ const weightTest = s.compare.twoGroups.centralTendency.toEachOther({
   parametric: "parametric",
 });
 
-console.log(\`Desert weight effect? p-value: \${weightTest.p_value.toFixed(3)}\`);
+console.log(\`Desert weight effect? p-value: \${weightTest.pValue.toFixed(3)}\`);
 
 // 4. Hypothesis: Are droid proportions statistically similar to human body types?
 const humans = analysis.filter((r) => r.species === "Human");
@@ -54,7 +54,7 @@ const bmiTest = s.compare.twoGroups.centralTendency.toEachOther({
   parametric: "nonparametric",
 });
 
-console.log(\`Droid conspiracy? p-value: \${bmiTest.p_value.toFixed(3)}\`);
+console.log(\`Droid conspiracy? p-value: \${bmiTest.pValue.toFixed(3)}\`);
 
 // 🏅 Galactic Awards
 const tallest = characters.arrange("height_cm", "desc").slice(0, 1).extract("name")[0];

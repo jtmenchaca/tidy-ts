@@ -30,4 +30,3 @@ export const arrowDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

@@ -16,13 +16,13 @@ Chi-square test of independence for testing association between categorical vari
 ### Signature
 
 ```typescript
-chiSquareTest({ contingencyTable, alpha? }): ChiSquareIndependenceTestResult
+s.test.categorical.chiSquare({ contingencyTable, alpha? }): ChiSquareIndependenceTestResult
 ```
 
 ### Import
 
 ```typescript
-import { chiSquareTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -32,7 +32,7 @@ import { chiSquareTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-ChiSquareIndependenceTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `phi_coefficient`, `residuals`
+ChiSquareIndependenceTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `phiCoefficient`, `residuals`
 
 ### Examples
 
@@ -40,13 +40,14 @@ ChiSquareIndependenceTestResult with `test_statistic`, `p_value`, `degrees_of_fr
 // Example: 2x2 contingency table
 // Rows: Treatment vs Control
 // Columns: Success vs Failure
+import { s } from "@tidy-ts/dataframe";
 const table = [
   [20, 10],  // Treatment: 20 success, 10 failure
   [15, 15]   // Control: 15 success, 15 failure
 ];
-const result = chiSquareTest({ contingencyTable: table });
-console.log(result.p_value);  // p-value
-console.log(result.phi_coefficient);  // effect size measure
+const result = s.test.categorical.chiSquare({ contingencyTable: table });
+console.log(result.pValue);  // p-value
+console.log(result.phiCoefficient);  // effect size measure
 ```
 
 ### Best Practices
@@ -74,13 +75,13 @@ Fisher's exact test for testing independence in a 2×2 contingency table (exact 
 ### Signature
 
 ```typescript
-fishersExactTest({ contingencyTable, alternative?, oddsRatio?, alpha? }): FishersExactTestResult
+s.test.categorical.fishersExact({ contingencyTable, alternative?, oddsRatio?, alpha? }): FishersExactTestResult
 ```
 
 ### Import
 
 ```typescript
-import { fishersExactTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -92,19 +93,20 @@ import { fishersExactTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-FishersExactTestResult with `p_value`, `test_statistic`, `confidence_interval`, `mid_p_value`
+FishersExactTestResult with `pValue`, `testStatistic`, `confidenceInterval`, `midPValue`
 
 ### Examples
 
 ```typescript
 // Example: 2x2 contingency table
+import { s } from "@tidy-ts/dataframe";
 const table = [
   [8, 2],   // Group 1: 8 success, 2 failure
   [3, 7]    // Group 2: 3 success, 7 failure
 ];
-const result = fishersExactTest({ contingencyTable: table });
-console.log(result.p_value);  // exact p-value
-console.log(result.test_statistic);  // odds ratio
+const result = s.test.categorical.fishersExact({ contingencyTable: table });
+console.log(result.pValue);  // exact p-value
+console.log(result.testStatistic);  // odds ratio
 ```
 
 ### Best Practices

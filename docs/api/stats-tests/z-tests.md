@@ -16,13 +16,13 @@ One-sample z-test for comparing sample mean to a known population mean when popu
 ### Signature
 
 ```typescript
-zTestOneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZTestResult
+s.test.z.oneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZTestResult
 ```
 
 ### Import
 
 ```typescript
-import { zTestOneSample } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -35,15 +35,16 @@ import { zTestOneSample } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneSampleZTestResult with `test_statistic`, `p_value`, `confidence_interval`, `reject_null`
+OneSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = [102, 98, 105, 99, 101];
-const result = zTestOneSample({ data, popMean: 100, popStd: 5 });
-console.log(result.p_value);  // p-value
-console.log(result.reject_null);  // true if reject H0
+const result = s.test.z.oneSample({ data, popMean: 100, popStd: 5 });
+console.log(result.pValue);  // p-value
+console.log(result.rejectNull);  // true if reject H0
 ```
 
 ### Best Practices
@@ -70,13 +71,13 @@ Two-sample z-test for comparing means of two independent groups when population 
 ### Signature
 
 ```typescript
-zTestTwoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): TwoSampleZTestResult
+s.test.z.twoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): TwoSampleZTestResult
 ```
 
 ### Import
 
 ```typescript
-import { zTestTwoSample } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -90,15 +91,16 @@ import { zTestTwoSample } from "@tidy-ts/dataframe";
 
 ### Returns
 
-TwoSampleZTestResult with `test_statistic`, `p_value`, `confidence_interval`, `reject_null`
+TwoSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const group1 = [10.2, 9.8, 10.5, 9.9, 10.1];
 const group2 = [11.1, 10.9, 11.3, 11.0, 11.2];
-const result = zTestTwoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });
-console.log(result.p_value);  // compare means
+const result = s.test.z.twoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });
+console.log(result.pValue);  // compare means
 ```
 
 ### Best Practices

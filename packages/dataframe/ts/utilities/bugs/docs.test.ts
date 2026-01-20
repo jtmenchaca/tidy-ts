@@ -100,18 +100,18 @@ Deno.test("Jedi Intelligence Unit: Homeworld Analysis", async () => {
 
   console.log(`
 📊 Tatooine vs Other Worlds – Mass Comparison
-Test: ${desertTest.test_name}
-p-value: ${desertTest.p_value.toFixed(4)}
-Effect size (${desertTest.effect_size.name}): ${
-    desertTest.effect_size.value.toFixed(3)
+Test: ${desertTest.testName}
+p-value: ${desertTest.pValue.toFixed(4)}
+Effect size (${desertTest.effectSize.name}): ${
+    desertTest.effectSize.value.toFixed(3)
   }
-Test statistic (${desertTest.test_statistic.name}): ${
-    desertTest.test_statistic.value.toFixed(3)
+Test statistic (${desertTest.testStatistic.name}): ${
+    desertTest.testStatistic.value.toFixed(3)
   }
-${Math.round(desertTest.confidence_interval.confidence_level * 100)}% CI: [${
-    desertTest.confidence_interval.lower.toFixed(2)
-  }, ${desertTest.confidence_interval.upper.toFixed(2)}]
-Degrees of freedom: ${desertTest.degrees_of_freedom}
+${Math.round(desertTest.confidenceInterval.confidenceLevel * 100)}% CI: [${
+    desertTest.confidenceInterval.lower.toFixed(2)
+  }, ${desertTest.confidenceInterval.upper.toFixed(2)}]
+Degrees of freedom: ${desertTest.degreesOfFreedom}
 `);
 
   // 5. Hypothesis: Are droid proportions statistically similar to human body types?
@@ -126,13 +126,11 @@ Degrees of freedom: ${desertTest.degrees_of_freedom}
 
   console.log(`
 📊 Human vs Droid BMI Comparison
-Test: ${bmiTest.test_name}
-p-value: ${bmiTest.p_value.toFixed(4)}
-Effect size (${bmiTest.effect_size.name}): ${
-    bmiTest.effect_size.value.toFixed(2)
-  }
-Test statistic (${bmiTest.test_statistic.name}): ${
-    bmiTest.test_statistic.value.toFixed(2)
+Test: ${bmiTest.testName}
+p-value: ${bmiTest.pValue.toFixed(4)}
+Effect size (${bmiTest.effectSize.name}): ${bmiTest.effectSize.value.toFixed(2)}
+Test statistic (${bmiTest.testStatistic.name}): ${
+    bmiTest.testStatistic.value.toFixed(2)
   }
 `);
 

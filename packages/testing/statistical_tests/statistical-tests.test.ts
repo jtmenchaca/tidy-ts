@@ -69,10 +69,10 @@ async function runRobustComparison(
       callRobustRust(params),
     ]);
 
-    const rStat = rResult.test_statistic;
-    const rustStat = rustResult.test_statistic;
-    const rPval = rResult.p_value;
-    const rustPval = rustResult.p_value;
+    const rStat = rResult.testStatistic;
+    const rustStat = rustResult.testStatistic;
+    const rPval = rResult.pValue;
+    const rustPval = rustResult.pValue;
 
     // Calculate differences
     const statDiff = Math.abs(rStat - rustStat);

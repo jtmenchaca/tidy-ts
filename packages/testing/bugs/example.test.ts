@@ -101,25 +101,25 @@ Deno.test("Example Test", async () => {
     });
 
   console.log("\nCulmen Length Comparison (Adelie vs Chinstrap):");
-  console.log(`Test: ${culmenLengthComparison.test_name}`);
+  console.log(`Test: ${culmenLengthComparison.testName}`);
   console.log(
     `Test Statistic: ${
-      culmenLengthComparison.test_statistic?.value?.toFixed(4)
+      culmenLengthComparison.testStatistic?.value?.toFixed(4)
     }`,
   );
-  console.log(`P-value: ${culmenLengthComparison.p_value?.toFixed(4)}`);
+  console.log(`P-value: ${culmenLengthComparison.pValue?.toFixed(4)}`);
   console.log(
     `Effect Size (Cohen's d): ${
-      culmenLengthComparison.effect_size?.value?.toFixed(4)
+      culmenLengthComparison.effectSize?.value?.toFixed(4)
     }`,
   );
   console.log(
-    `Mean Difference: ${culmenLengthComparison.mean_difference?.toFixed(4)}`,
+    `Mean Difference: ${culmenLengthComparison.meanDifference?.toFixed(4)}`,
   );
   console.log(
     `95% CI: [${
-      culmenLengthComparison.confidence_interval?.lower?.toFixed(4)
-    }, ${culmenLengthComparison.confidence_interval?.upper?.toFixed(4)}]`,
+      culmenLengthComparison.confidenceInterval?.lower?.toFixed(4)
+    }, ${culmenLengthComparison.confidenceInterval?.upper?.toFixed(4)}]`,
   );
 
   // 3. Compare body mass between male and female penguins (non-parametric)
@@ -141,13 +141,13 @@ Deno.test("Example Test", async () => {
     });
 
   console.log("\nBody Mass Comparison (Male vs Female):");
-  console.log(`Test: ${bodyMassComparison.test_name}`);
+  console.log(`Test: ${bodyMassComparison.testName}`);
   console.log(
-    `Test Statistic: ${bodyMassComparison.test_statistic?.value?.toFixed(4)}`,
+    `Test Statistic: ${bodyMassComparison.testStatistic?.value?.toFixed(4)}`,
   );
-  console.log(`P-value: ${bodyMassComparison.p_value?.toFixed(4)}`);
+  console.log(`P-value: ${bodyMassComparison.pValue?.toFixed(4)}`);
   console.log(
-    `Effect Size: ${bodyMassComparison.effect_size?.value?.toFixed(4)}`,
+    `Effect Size: ${bodyMassComparison.effectSize?.value?.toFixed(4)}`,
   );
 
   // 4. Test correlation between culmen length and flipper length
@@ -160,20 +160,20 @@ Deno.test("Example Test", async () => {
   });
 
   console.log("\nCulmen Length vs Flipper Length Correlation:");
-  console.log(`Test: ${culmenFlipperCorrelation.test_name}`);
+  console.log(`Test: ${culmenFlipperCorrelation.testName}`);
   console.log(
-    `Correlation: ${culmenFlipperCorrelation.effect_size?.value?.toFixed(4)}`,
+    `Correlation: ${culmenFlipperCorrelation.effectSize?.value?.toFixed(4)}`,
   );
   console.log(
     `Test Statistic: ${
-      culmenFlipperCorrelation.test_statistic?.value?.toFixed(4)
+      culmenFlipperCorrelation.testStatistic?.value?.toFixed(4)
     }`,
   );
-  console.log(`P-value: ${culmenFlipperCorrelation.p_value?.toFixed(4)}`);
+  console.log(`P-value: ${culmenFlipperCorrelation.pValue?.toFixed(4)}`);
   console.log(
     `95% CI: [${
-      culmenFlipperCorrelation.confidence_interval?.lower?.toFixed(4)
-    }, ${culmenFlipperCorrelation.confidence_interval?.upper?.toFixed(4)}]`,
+      culmenFlipperCorrelation.confidenceInterval?.lower?.toFixed(4)
+    }, ${culmenFlipperCorrelation.confidenceInterval?.upper?.toFixed(4)}]`,
   );
 
   // 5. Compare proportions (e.g., clutch completion rates between species)
@@ -195,16 +195,16 @@ Deno.test("Example Test", async () => {
     });
 
   console.log("\nClutch Completion Rate Comparison (Adelie vs Gentoo):");
-  console.log(`Test: ${clutchCompletionComparison.test_name}`);
+  console.log(`Test: ${clutchCompletionComparison.testName}`);
   console.log(
     `Test Statistic: ${
-      clutchCompletionComparison.test_statistic.value.toFixed(4)
+      clutchCompletionComparison.testStatistic.value.toFixed(4)
     }`,
   );
-  console.log(`P-value: ${clutchCompletionComparison.p_value.toFixed(4)}`);
+  console.log(`P-value: ${clutchCompletionComparison.pValue.toFixed(4)}`);
   console.log(
     `Proportion Difference: ${
-      clutchCompletionComparison.proportion_difference?.toFixed(4)
+      clutchCompletionComparison.proportionDifference?.toFixed(4)
     }`,
   );
 
@@ -226,13 +226,13 @@ Deno.test("Example Test", async () => {
   });
 
   console.log("\nCulmen Depth Distribution Comparison (Torgersen vs Biscoe):");
-  console.log(`Test: ${distributionComparison.test_name}`);
+  console.log(`Test: ${distributionComparison.testName}`);
   console.log(
-    `Test Statistic: ${distributionComparison.test_statistic.value.toFixed(4)}`,
+    `Test Statistic: ${distributionComparison.testStatistic.value.toFixed(4)}`,
   );
-  console.log(`P-value: ${distributionComparison.p_value.toFixed(4)}`);
+  console.log(`P-value: ${distributionComparison.pValue.toFixed(4)}`);
   console.log(
-    `D Statistic: ${distributionComparison.test_statistic.value.toFixed(4)}`,
+    `D Statistic: ${distributionComparison.testStatistic.value.toFixed(4)}`,
   );
 
   // 7. Multiple group comparison using groupBy and summarize

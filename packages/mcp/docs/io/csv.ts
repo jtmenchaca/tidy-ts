@@ -18,7 +18,8 @@ export const csvDocs: Record<string, DocEntry> = {
       "opts.comma: Field delimiter/comma character (default: ',')",
       "opts.skipEmptyLines: Skip empty lines (default: true)",
     ],
-    returns: "Promise<DataFrame<T>> - A typed DataFrame object with all standard operations",
+    returns:
+      "Promise<DataFrame<T>> - A typed DataFrame object with all standard operations",
     examples: [
       '// RECOMMENDED: Use peekCSV first to understand file structure\nconst info = await peekCSV("data.csv");\nconsole.log(info); // Shows headers, preview, and example schema',
       '// Read from file with Zod schema\nimport { z } from "zod";\n\nconst schema = z.object({\n  id: z.number(),\n  name: z.string(),\n  age: z.number(),\n  email: z.string().email(),\n});\n\nconst df = await readCSV("data.csv", schema)',
@@ -53,7 +54,8 @@ export const csvDocs: Record<string, DocEntry> = {
       "options.previewRows: Number of rows to preview (default: 5)",
       'options.comma: Field delimiter/comma character (default: ",")',
     ],
-    returns: "Promise<string> - Markdown-formatted description of file structure",
+    returns:
+      "Promise<string> - Markdown-formatted description of file structure",
     examples: [
       '// Inspect file structure (returns markdown)\nconst info = await peekCSV("data.csv");\nconsole.log(info);\n// Output includes:\n// - Column headers\n// - Data preview\n// - Example Zod schema',
       '// Preview TSV file\nconst info = await peekCSV("data.tsv", { comma: "\\t" })',
@@ -114,4 +116,3 @@ export const csvDocs: Record<string, DocEntry> = {
     related: ["readCSV", "writeXLSX", "writeParquet"],
   },
 };
-

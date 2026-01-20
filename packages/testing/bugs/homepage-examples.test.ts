@@ -57,8 +57,8 @@ Deno.test("Homepage Examples Output", async () => {
   });
 
   console.log(
-    `Droid conspiracy? Test: ${bmiTest.test_name}, p-value: ${
-      s.round(bmiTest.p_value, 3)
+    `Droid conspiracy? Test: ${bmiTest.testName}, p-value: ${
+      s.round(bmiTest.pValue, 3)
     }`,
   );
 
@@ -71,12 +71,12 @@ Deno.test("Homepage Examples Output", async () => {
 
   console.log(heightMassTest);
 
-  console.log(`Height-mass correlation? 
-Test: ${heightMassTest.test_name}
-${heightMassTest.effect_size.name}: ${
-    s.round(heightMassTest.effect_size.value, 3)
+  console.log(`Height-mass correlation?
+Test: ${heightMassTest.testName}
+${heightMassTest.effectSize.name}: ${
+    s.round(heightMassTest.effectSize.value, 3)
   }
-p-value: ${s.round(heightMassTest.p_value, 3)}`);
+p-value: ${s.round(heightMassTest.pValue, 3)}`);
   console.log("");
 
   console.log("\n📋 Homepage examples demonstration complete");

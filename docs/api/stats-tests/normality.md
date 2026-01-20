@@ -19,13 +19,13 @@ Shapiro-Wilk test for assessing whether data follows a normal distribution.
 ### Signature
 
 ```typescript
-shapiroWilkTest({ data, alpha? }): ShapiroWilkTestResult
+s.test.normality.shapiroWilk({ data, alpha? }): ShapiroWilkTestResult
 ```
 
 ### Import
 
 ```typescript
-import { shapiroWilkTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -35,15 +35,16 @@ import { shapiroWilkTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-ShapiroWilkTestResult with `test_statistic`, `p_value`, `reject_null`
+ShapiroWilkTestResult with `testStatistic`, `pValue`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2];
-const result = shapiroWilkTest({ data });
-console.log(result.p_value);  // p-value
-if (result.reject_null) {
+const result = s.test.normality.shapiroWilk({ data });
+console.log(result.pValue);  // p-value
+if (result.rejectNull) {
   console.log('Data is not normally distributed');
   // Consider non-parametric tests
 } else {
@@ -78,13 +79,13 @@ Anderson-Darling test for normality. More sensitive to deviations in the tails o
 ### Signature
 
 ```typescript
-andersonDarlingTest({ data, alpha? }): AndersonDarlingTestResult
+s.test.normality.andersonDarling({ data, alpha? }): AndersonDarlingTestResult
 ```
 
 ### Import
 
 ```typescript
-import { andersonDarlingTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -94,15 +95,16 @@ import { andersonDarlingTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-AndersonDarlingTestResult with `test_statistic` (A²), `p_value`, `reject_null`
+AndersonDarlingTestResult with `testStatistic` (A²), `pValue`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2, 9.1];
-const result = andersonDarlingTest({ data });
-console.log(result.p_value);
-if (result.reject_null) {
+const result = s.test.normality.andersonDarling({ data });
+console.log(result.pValue);
+if (result.rejectNull) {
   console.log('Data is not normally distributed (p < 0.05)');
 }
 ```
@@ -131,13 +133,13 @@ D'Agostino-Pearson K² omnibus test for normality. Combines skewness and kurtosi
 ### Signature
 
 ```typescript
-dagostinoPearsonTest({ data, alpha? }): DAgostinoPearsonTestResult
+s.test.normality.dagostinoPearson({ data, alpha? }): DAgostinoPearsonTestResult
 ```
 
 ### Import
 
 ```typescript
-import { dagostinoPearsonTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -147,17 +149,18 @@ import { dagostinoPearsonTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-DAgostinoPearsonTestResult with `test_statistic` (K²), `p_value`, `reject_null`, `skewness`, `kurtosis`
+DAgostinoPearsonTestResult with `testStatistic` (K²), `pValue`, `rejectNull`, `skewness`, `kurtosis`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = Array.from({length: 50}, () => Math.random() * 10);
-const result = dagostinoPearsonTest({ data });
+const result = s.test.normality.dagostinoPearson({ data });
 console.log(`Skewness: ${result.skewness.toFixed(3)}`);
 console.log(`Kurtosis: ${result.kurtosis.toFixed(3)}`);
-console.log(`K² statistic: ${result.test_statistic.value.toFixed(3)}`);
-console.log(`p-value: ${result.p_value.toFixed(3)}`);
+console.log(`K² statistic: ${result.testStatistic.value.toFixed(3)}`);
+console.log(`p-value: ${result.pValue.toFixed(3)}`);
 ```
 
 ### Best Practices
@@ -185,13 +188,13 @@ One-sample Kolmogorov-Smirnov test against a uniform distribution. Tests whether
 ### Signature
 
 ```typescript
-ksTestUniform({ x, min?, max?, alternative?, alpha? }): KolmogorovSmirnovTestResult
+s.test.normality.kolmogorovSmirnovUniform({ x, min?, max?, alternative?, alpha? }): KolmogorovSmirnovTestResult
 ```
 
 ### Import
 
 ```typescript
-import { ksTestUniform } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -204,18 +207,19 @@ import { ksTestUniform } from "@tidy-ts/dataframe";
 
 ### Returns
 
-KolmogorovSmirnovTestResult with `test_statistic` (D), `p_value`, `reject_null`, `critical_value`
+KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 // Test if data follows uniform distribution on [0, 1]
 const data = [0.1, 0.3, 0.5, 0.7, 0.9];
-const result = ksTestUniform({ x: data });
-console.log(result.p_value);
+const result = s.test.normality.kolmogorovSmirnovUniform({ x: data });
+console.log(result.pValue);
 
 // Test against uniform on [10, 20]
-const result2 = ksTestUniform({ x: [12, 15, 18], min: 10, max: 20 });
+const result2 = s.test.normality.kolmogorovSmirnovUniform({ x: [12, 15, 18], min: 10, max: 20 });
 ```
 
 ### Best Practices
@@ -241,13 +245,13 @@ Two-sample Kolmogorov-Smirnov test. Tests whether two samples come from the same
 ### Signature
 
 ```typescript
-kolmogorovSmirnovTest({ x, y, alternative?, alpha? }): KolmogorovSmirnovTestResult
+s.test.normality.kolmogorovSmirnovTwoSample({ x, y, alternative?, alpha? }): KolmogorovSmirnovTestResult
 ```
 
 ### Import
 
 ```typescript
-import { kolmogorovSmirnovTest } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -259,16 +263,17 @@ import { kolmogorovSmirnovTest } from "@tidy-ts/dataframe";
 
 ### Returns
 
-KolmogorovSmirnovTestResult with `test_statistic` (D), `p_value`, `reject_null`, `critical_value`
+KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const sample1 = [1.2, 2.3, 3.4, 4.5, 5.6];
 const sample2 = [1.5, 2.5, 3.5, 4.5, 5.5];
-const result = kolmogorovSmirnovTest({ x: sample1, y: sample2 });
-console.log(result.p_value);
-if (result.reject_null) {
+const result = s.test.normality.kolmogorovSmirnovTwoSample({ x: sample1, y: sample2 });
+console.log(result.pValue);
+if (result.rejectNull) {
   console.log('Samples come from different distributions');
 }
 ```

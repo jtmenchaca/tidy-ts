@@ -156,7 +156,8 @@ test("readJSON: parses JSON string directly", async () => {
     age: z.number(),
   }));
 
-  const jsonString = '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]';
+  const jsonString =
+    '[{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]';
   const df = await readJSON(jsonString, UserSchema);
 
   expect(df.nrows()).toBe(2);

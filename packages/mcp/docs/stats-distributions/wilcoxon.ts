@@ -127,4 +127,3 @@ export const wilcoxonDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

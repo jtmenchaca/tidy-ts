@@ -9,8 +9,8 @@ Deno.test("Shapiro-Wilk Normality Test Spot Check", () => {
   const result = stats.test.normality.shapiroWilk({ data });
 
   console.log("Data:", data);
-  console.log("W-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("W-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

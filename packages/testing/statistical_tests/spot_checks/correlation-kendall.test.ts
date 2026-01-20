@@ -15,9 +15,9 @@ Deno.test("Kendall Correlation Test Spot Check", () => {
 
   console.log("x:", x);
   console.log("y:", y);
-  console.log("Kendall tau:", result.effect_size.value);
-  console.log("z-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("Kendall tau:", result.effectSize.value);
+  console.log("z-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

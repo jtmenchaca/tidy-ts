@@ -57,7 +57,8 @@ export const joinsDocs: Record<string, DocEntry> = {
       "    suffixes?: { left?: string; right?: string } - Optional suffix configuration",
       "  }",
     ],
-    returns: "DataFrame<T & Partial<U>> - All left rows with matched right columns (null if no match)",
+    returns:
+      "DataFrame<T & Partial<U>> - All left rows with matched right columns (null if no match)",
     examples: [
       '// Overload 1: Simple API - single column\nconst users = createDataFrame([\n  { user_id: 1, name: "Alice" },\n  { user_id: 2, name: "Bob" },\n]);\nconst orders = createDataFrame([\n  { user_id: 1, product: "Widget", amount: 100 },\n]);\n\nconst result = users.leftJoin(orders, "user_id");\n// All users kept, Bob has null for product/amount',
       '// Overload 1: Simple API - multiple columns\nconst sales = createDataFrame([\n  { region: "North", date: "2023-01", revenue: 1000 },\n]);\nconst targets = createDataFrame([\n  { region: "North", date: "2023-01", target: 1200 },\n]);\n\nsales.leftJoin(targets, ["region", "date"])',
@@ -93,7 +94,8 @@ export const joinsDocs: Record<string, DocEntry> = {
       "    suffixes?: { left?: string; right?: string }",
       "  }",
     ],
-    returns: "DataFrame<Partial<T> & U> - All right rows with matched left columns (null if no match)",
+    returns:
+      "DataFrame<Partial<T> & U> - All right rows with matched left columns (null if no match)",
     examples: [
       'df.rightJoin(other, "id")',
       'df.rightJoin(other, ["region", "year"])',
@@ -121,7 +123,8 @@ export const joinsDocs: Record<string, DocEntry> = {
       "    suffixes?: { left?: string; right?: string }",
       "  }",
     ],
-    returns: "DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames",
+    returns:
+      "DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames",
     examples: [
       'df.outerJoin(other, "id")',
       'df.outerJoin(other, ["region", "year"])',

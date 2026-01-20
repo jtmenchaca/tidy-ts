@@ -153,4 +153,3 @@ export const poissonDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

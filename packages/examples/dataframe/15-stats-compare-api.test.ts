@@ -18,9 +18,9 @@ test("Compare - One Group Central Tendency", () => {
   });
 
   console.log("One-sample t-test:");
-  console.log(`  Test: ${tTest.test_name}`);
-  console.log(`  Test statistic: ${tTest.test_statistic.value}`);
-  console.log(`  P-value: ${tTest.p_value}`);
+  console.log(`  Test: ${tTest.testName}`);
+  console.log(`  Test statistic: ${tTest.testStatistic.value}`);
+  console.log(`  P-value: ${tTest.pValue}`);
 
   // Nonparametric Wilcoxon test
   const wilcoxon = s.compare.oneGroup.centralTendency.toValue({
@@ -30,8 +30,8 @@ test("Compare - One Group Central Tendency", () => {
   });
 
   console.log("\nWilcoxon signed-rank test:");
-  console.log(`  Test: ${wilcoxon.test_name}`);
-  console.log(`  P-value: ${wilcoxon.p_value}`);
+  console.log(`  Test: ${wilcoxon.testName}`);
+  console.log(`  P-value: ${wilcoxon.pValue}`);
 });
 
 test("Compare - One Group Proportion", () => {
@@ -44,8 +44,8 @@ test("Compare - One Group Proportion", () => {
   });
 
   console.log("\nOne-sample proportion test:");
-  console.log(`  Test: ${result.test_name}`);
-  console.log(`  P-value: ${result.p_value}`);
+  console.log(`  Test: ${result.testName}`);
+  console.log(`  P-value: ${result.pValue}`);
 });
 
 test("Compare - Normality Test", () => {
@@ -54,9 +54,9 @@ test("Compare - Normality Test", () => {
   const result = s.compare.oneGroup.distribution.toNormal({ data: normalData });
 
   console.log("\nShapiro-Wilk normality test:");
-  console.log(`  Test: ${result.test_name}`);
-  console.log(`  Test statistic: ${result.test_statistic.value}`);
-  console.log(`  P-value: ${result.p_value}`);
+  console.log(`  Test: ${result.testName}`);
+  console.log(`  Test statistic: ${result.testStatistic.value}`);
+  console.log(`  P-value: ${result.pValue}`);
 });
 
 test("Compare - Two Groups Central Tendency", async () => {
@@ -71,9 +71,9 @@ test("Compare - Two Groups Central Tendency", async () => {
   });
 
   console.log("\nTwo-sample t-test:");
-  console.log(`  Test: ${tTest.test_name}`);
-  console.log(`  Test statistic: ${tTest.test_statistic.value}`);
-  console.log(`  P-value: ${tTest.p_value}`);
+  console.log(`  Test: ${tTest.testName}`);
+  console.log(`  Test statistic: ${tTest.testStatistic.value}`);
+  console.log(`  P-value: ${tTest.pValue}`);
 
   // Nonparametric Mann-Whitney U test
   const mannWhitney = await s.compare.twoGroups.centralTendency.toEachOther({
@@ -83,8 +83,8 @@ test("Compare - Two Groups Central Tendency", async () => {
   });
 
   console.log("\nMann-Whitney U test:");
-  console.log(`  Test: ${mannWhitney.test_name}`);
-  console.log(`  P-value: ${mannWhitney.p_value}`);
+  console.log(`  Test: ${mannWhitney.testName}`);
+  console.log(`  P-value: ${mannWhitney.pValue}`);
 });
 
 test("Compare - Correlation Tests", async () => {
@@ -99,9 +99,9 @@ test("Compare - Correlation Tests", async () => {
   });
 
   console.log("\nPearson correlation:");
-  console.log(`  Test: ${pearson.test_name}`);
-  console.log(`  Correlation: ${pearson.test_statistic.value}`);
-  console.log(`  P-value: ${pearson.p_value}`);
+  console.log(`  Test: ${pearson.testName}`);
+  console.log(`  Correlation: ${pearson.testStatistic.value}`);
+  console.log(`  P-value: ${pearson.pValue}`);
 
   // Spearman correlation
   const spearman = await s.compare.twoGroups.association.toEachOther({
@@ -111,9 +111,9 @@ test("Compare - Correlation Tests", async () => {
   });
 
   console.log("\nSpearman correlation:");
-  console.log(`  Test: ${spearman.test_name}`);
-  console.log(`  Correlation: ${spearman.test_statistic.value}`);
-  console.log(`  P-value: ${spearman.p_value}`);
+  console.log(`  Test: ${spearman.testName}`);
+  console.log(`  Correlation: ${spearman.testStatistic.value}`);
+  console.log(`  P-value: ${spearman.pValue}`);
 });
 
 test("Compare - Auto Test Selection", async () => {
@@ -127,6 +127,6 @@ test("Compare - Auto Test Selection", async () => {
   });
 
   console.log("\nAuto test selection on skewed data:");
-  console.log(`  Selected test: ${result.test_name}`);
-  console.log(`  P-value: ${result.p_value}`);
+  console.log(`  Selected test: ${result.testName}`);
+  console.log(`  P-value: ${result.pValue}`);
 });

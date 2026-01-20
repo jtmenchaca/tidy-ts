@@ -43,7 +43,7 @@ function runPostHocTest(
   alpha: number,
 ): TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult | undefined {
   // Only run post-hoc if main test is significant and we have 3+ groups
-  if (groups.length < 3 || (mainResult.p_value || 1) >= alpha) {
+  if (groups.length < 3 || (mainResult.pValue || 1) >= alpha) {
     return undefined;
   }
 

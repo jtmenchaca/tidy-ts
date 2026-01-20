@@ -80,7 +80,7 @@ const bmiTest = s.compare.twoGroups.centralTendency.toEachOther({
   parametric: "auto", // Auto-detects appropriate test
 });
 
-console.log(\`Droid conspiracy? Test: \${bmiTest.test_name}, p-value: \${s.round(bmiTest.p_value, 3)}\`);
+console.log(\`Droid conspiracy? Test: \${bmiTest.testName}, p-value: \${s.round(bmiTest.pValue, 3)}\`);
 
 // Output:
 // Droid conspiracy? Test: Independent T-Test, p-value: 0.261
@@ -92,10 +92,10 @@ const heightMassTest = s.compare.twoGroups.association.toEachOther({
   method: "auto", // Selects best choice between Pearson, Spearman, or Kendall
 });
 
-console.log(\`Height and mass correlation? 
-Test: \${heightMassTest.test_name}
-\${heightMassTest.effect_size.name}: \${s.round(heightMassTest.effect_size.value, 3)}
-p-value: \${s.round(heightMassTest.p_value, 3)}\`);
+console.log(\`Height and mass correlation?
+Test: \${heightMassTest.testName}
+\${heightMassTest.effectSize.name}: \${s.round(heightMassTest.effectSize.value, 3)}
+p-value: \${s.round(heightMassTest.pValue, 3)}\`);
 
 
 // Output:

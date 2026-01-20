@@ -20,18 +20,18 @@ Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA with interact
   console.log("Two-way ANOVA with interaction result:", result);
 
   // Verify all three effects are present
-  expect(result.factor_a).toBeDefined();
-  expect(result.factor_b).toBeDefined();
+  expect(result.factorA).toBeDefined();
+  expect(result.factorB).toBeDefined();
   expect(result.interaction).toBeDefined();
 
   // With this data, interaction should be significant
-  expect(result.interaction.p_value).toBeLessThan(0.05);
+  expect(result.interaction.pValue).toBeLessThan(0.05);
 
   // Factor A (intensity) should also be significant
-  expect(result.factor_a.p_value).toBeLessThan(0.05);
+  expect(result.factorA.pValue).toBeLessThan(0.05);
 
   // Factor B (time of day) should be significant
-  expect(result.factor_b.p_value).toBeLessThan(0.05);
+  expect(result.factorB.pValue).toBeLessThan(0.05);
 });
 
 Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA no interaction", () => {
@@ -51,16 +51,16 @@ Deno.test("multiGroups.centralTendency.toEachOther - two-way ANOVA no interactio
   console.log("Two-way ANOVA no interaction result:", result);
 
   // Verify all three effects are present
-  expect(result.factor_a).toBeDefined();
-  expect(result.factor_b).toBeDefined();
+  expect(result.factorA).toBeDefined();
+  expect(result.factorB).toBeDefined();
   expect(result.interaction).toBeDefined();
 
   // Both main effects should be significant
-  expect(result.factor_a.p_value).toBeLessThan(0.001);
-  expect(result.factor_b.p_value).toBeLessThan(0.001);
+  expect(result.factorA.pValue).toBeLessThan(0.001);
+  expect(result.factorB.pValue).toBeLessThan(0.001);
 
   // Interaction should NOT be significant (p > 0.05)
-  expect(result.interaction.p_value).toBeGreaterThan(0.05);
+  expect(result.interaction.pValue).toBeGreaterThan(0.05);
 });
 
 Deno.test("multiGroups.proportions.toEachOther - larger contingency table", () => {
@@ -190,7 +190,7 @@ Deno.test("Edge case - all identical values", () => {
     parametric: "parametric",
   });
   console.log("Identical values result:", result);
-  expect(result.error_message).toBe(
+  expect(result.errorMessage).toBe(
     "Cannot perform t-test with zero variance (all values identical and equal to hypothesized mean)",
   );
 });

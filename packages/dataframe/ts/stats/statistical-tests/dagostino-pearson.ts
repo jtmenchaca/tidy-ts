@@ -29,10 +29,10 @@ import type { DAgostinoPearsonTestResult } from "../../../lib/tidy_ts_dataframe.
  *
  * console.log(`Skewness: ${result.skewness.toFixed(3)}`);
  * console.log(`Kurtosis: ${result.kurtosis.toFixed(3)}`);
- * console.log(`K² statistic: ${result.test_statistic.value.toFixed(3)}`);
- * console.log(`p-value: ${result.p_value.toFixed(3)}`);
+ * console.log(`K² statistic: ${result.testStatistic.value.toFixed(3)}`);
+ * console.log(`p-value: ${result.pValue.toFixed(3)}`);
  *
- * if (result.p_value < 0.05) {
+ * if (result.pValue < 0.05) {
  *   console.log("Data is not normally distributed");
  *   if (Math.abs(result.skewness) > 1) {
  *     console.log("Significant skewness detected");

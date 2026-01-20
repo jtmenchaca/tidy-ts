@@ -38,7 +38,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `p_value`, `degrees_of_freedom` (t-test only), `confidence_interval`, `reject`, and effect size measures
+TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `reject`, and effect size measures
 
 ### Examples
 
@@ -52,7 +52,7 @@ const result = s.compare.twoGroups.centralTendency.toEachOther({
   comparator: 'not equal to',
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 console.log(result.reject);    // true if groups differ
 
 // Force equal variances assumption
@@ -116,7 +116,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `p_value`, `reject`, and effect size measures
+TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `pValue`, `reject`, and effect size measures
 
 ### Examples
 
@@ -130,7 +130,7 @@ const result = s.compare.twoGroups.proportions.toEachOther({
   comparator: 'not equal to',
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 
 // Force Fisher's exact test (good for small samples)
 const fisher = s.compare.twoGroups.proportions.toEachOther({
@@ -192,7 +192,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `p_value`, `confidence_interval`, `reject`
+PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `pValue`, `confidenceInterval`, `reject`
 
 ### Examples
 
@@ -206,7 +206,7 @@ const result = s.compare.twoGroups.association.toEachOther({
   comparator: 'not equal to'
 });
 console.log(result.correlation);  // correlation coefficient
-console.log(result.p_value);       // p-value
+console.log(result.pValue);       // p-value
 
 // Force Pearson correlation (for linear relationships)
 const pearson = s.compare.twoGroups.association.toEachOther({
@@ -270,7 +270,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `p_value`, `reject`
+KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `pValue`, `reject`
 
 ### Examples
 
@@ -282,7 +282,7 @@ const result = s.compare.twoGroups.distributions.toEachOther({
   y: group2,
   method: 'auto'
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 
 // Kolmogorov-Smirnov test (tests if distributions are equal)
 const ks = s.compare.twoGroups.distributions.toEachOther({

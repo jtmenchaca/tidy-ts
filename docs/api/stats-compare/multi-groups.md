@@ -36,7 +36,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneWayAnovaWithPostHocResult, WelchAnovaWithPostHocResult, KruskalWallisWithPostHocResult, or TwoWayAnovaTestResult (for two-way) with `statistic` (F or H), `p_value`, `degrees_of_freedom`, effect size, and `post_hoc` (if significant and 3+ groups)
+OneWayAnovaWithPostHocResult, WelchAnovaWithPostHocResult, KruskalWallisWithPostHocResult, or TwoWayAnovaTestResult (for two-way) with `statistic` (F or H), `pValue`, `degreesOfFreedom`, effect size, and `postHoc` (if significant and 3+ groups)
 
 ### Examples
 
@@ -50,8 +50,8 @@ const result = s.compare.multiGroups.centralTendency.toEachOther({
   parametric: 'auto',
   alpha: 0.05
 });
-console.log(result.p_value);     // p-value from main test
-console.log(result.post_hoc);    // Post-hoc comparisons (if significant)
+console.log(result.pValue);     // p-value from main test
+console.log(result.postHoc);    // Post-hoc comparisons (if significant)
 
 // Two-way ANOVA
 const twoWayData = [
@@ -117,7 +117,7 @@ import { s } from "@tidy-ts/dataframe";
 
 ### Returns
 
-ChiSquareIndependenceTestResult with `statistic` (chi-squared), `p_value`, `degrees_of_freedom`, `reject`, and effect sizes (Cramér's V, phi)
+ChiSquareIndependenceTestResult with `statistic` (chi-squared), `pValue`, `degreesOfFreedom`, `reject`, and effect sizes (Cramér's V, phi)
 
 ### Examples
 
@@ -131,7 +131,7 @@ const result = s.compare.multiGroups.proportions.toEachOther({
   contingencyTable: table,
   alpha: 0.05
 });
-console.log(result.p_value);  // p-value
+console.log(result.pValue);  // p-value
 console.log(result.reject);    // true if variables are dependent
 
 // Larger contingency table

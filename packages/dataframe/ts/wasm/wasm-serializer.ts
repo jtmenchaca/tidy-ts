@@ -11,38 +11,38 @@ export function serializeTestResult(result: any): any {
     const serialized: any = {};
 
     // Common properties for all test results - ordered for user-friendly output
-    if (result.test_name !== undefined) {
-      serialized.test_name = result.test_name;
+    if (result.testName !== undefined) {
+      serialized.testName = result.testName;
     }
 
-    if (result.p_value !== undefined) {
-      serialized.p_value = result.p_value;
+    if (result.pValue !== undefined) {
+      serialized.pValue = result.pValue;
     }
 
-    if (result.effect_size) {
-      serialized.effect_size = {
-        value: result.effect_size.value,
-        name: result.effect_size.name,
+    if (result.effectSize) {
+      serialized.effectSize = {
+        value: result.effectSize.value,
+        name: result.effectSize.name,
       };
     }
 
-    if (result.test_statistic) {
-      serialized.test_statistic = {
-        value: result.test_statistic.value,
-        name: result.test_statistic.name,
+    if (result.testStatistic) {
+      serialized.testStatistic = {
+        value: result.testStatistic.value,
+        name: result.testStatistic.name,
       };
     }
 
-    if (result.confidence_interval) {
-      serialized.confidence_interval = {
-        lower: result.confidence_interval.lower,
-        upper: result.confidence_interval.upper,
-        confidence_level: result.confidence_interval.confidence_level,
+    if (result.confidenceInterval) {
+      serialized.confidenceInterval = {
+        lower: result.confidenceInterval.lower,
+        upper: result.confidenceInterval.upper,
+        confidenceLevel: result.confidenceInterval.confidenceLevel,
       };
     }
 
-    if (result.degrees_of_freedom !== undefined) {
-      serialized.degrees_of_freedom = result.degrees_of_freedom;
+    if (result.degreesOfFreedom !== undefined) {
+      serialized.degreesOfFreedom = result.degreesOfFreedom;
     }
 
     // Welch ANOVA specific degrees of freedom
@@ -58,25 +58,25 @@ export function serializeTestResult(result: any): any {
       serialized.alpha = result.alpha;
     }
 
-    if (result.error_message !== undefined) {
-      serialized.error_message = result.error_message;
+    if (result.errorMessage !== undefined) {
+      serialized.errorMessage = result.errorMessage;
     }
 
     // Additional properties for specific test types
-    if (result.sample_size !== undefined) {
-      serialized.sample_size = result.sample_size;
+    if (result.sampleSize !== undefined) {
+      serialized.sampleSize = result.sampleSize;
     }
 
-    if (result.sample_mean !== undefined) {
-      serialized.sample_mean = result.sample_mean;
+    if (result.sampleMean !== undefined) {
+      serialized.sampleMean = result.sampleMean;
     }
 
-    if (result.sample_std !== undefined) {
-      serialized.sample_std = result.sample_std;
+    if (result.sampleStd !== undefined) {
+      serialized.sampleStd = result.sampleStd;
     }
 
-    if (result.hypothesized_mean !== undefined) {
-      serialized.hypothesized_mean = result.hypothesized_mean;
+    if (result.hypothesizedMean !== undefined) {
+      serialized.hypothesizedMean = result.hypothesizedMean;
     }
 
     // Normality test properties
@@ -89,58 +89,58 @@ export function serializeTestResult(result: any): any {
     }
 
     // Two-sample test properties
-    if (result.sample1_mean !== undefined) {
-      serialized.sample1_mean = result.sample1_mean;
+    if (result.sample1Mean !== undefined) {
+      serialized.sample1Mean = result.sample1Mean;
     }
 
-    if (result.sample2_mean !== undefined) {
-      serialized.sample2_mean = result.sample2_mean;
+    if (result.sample2Mean !== undefined) {
+      serialized.sample2Mean = result.sample2Mean;
     }
 
-    if (result.sample1_size !== undefined) {
-      serialized.sample1_size = result.sample1_size;
+    if (result.sample1Size !== undefined) {
+      serialized.sample1Size = result.sample1Size;
     }
 
-    if (result.sample2_size !== undefined) {
-      serialized.sample2_size = result.sample2_size;
+    if (result.sample2Size !== undefined) {
+      serialized.sample2Size = result.sample2Size;
     }
 
-    if (result.sample1_std !== undefined) {
-      serialized.sample1_std = result.sample1_std;
+    if (result.sample1Std !== undefined) {
+      serialized.sample1Std = result.sample1Std;
     }
 
-    if (result.sample2_std !== undefined) {
-      serialized.sample2_std = result.sample2_std;
+    if (result.sample2Std !== undefined) {
+      serialized.sample2Std = result.sample2Std;
     }
 
     // ANOVA properties
-    if (result.f_statistic !== undefined) {
-      serialized.f_statistic = result.f_statistic;
+    if (result.fStatistic !== undefined) {
+      serialized.fStatistic = result.fStatistic;
     }
 
-    if (result.between_group_variance !== undefined) {
-      serialized.between_group_variance = result.between_group_variance;
+    if (result.betweenGroupVariance !== undefined) {
+      serialized.betweenGroupVariance = result.betweenGroupVariance;
     }
 
-    if (result.within_group_variance !== undefined) {
-      serialized.within_group_variance = result.within_group_variance;
+    if (result.withinGroupVariance !== undefined) {
+      serialized.withinGroupVariance = result.withinGroupVariance;
     }
 
-    if (result.df_between !== undefined) {
-      serialized.df_between = result.df_between;
+    if (result.dfBetween !== undefined) {
+      serialized.dfBetween = result.dfBetween;
     }
 
-    if (result.df_within !== undefined) {
-      serialized.df_within = result.df_within;
+    if (result.dfWithin !== undefined) {
+      serialized.dfWithin = result.dfWithin;
     }
 
     // Proportion test properties
-    if (result.observed_proportion !== undefined) {
-      serialized.observed_proportion = result.observed_proportion;
+    if (result.observedProportion !== undefined) {
+      serialized.observedProportion = result.observedProportion;
     }
 
-    if (result.hypothesized_proportion !== undefined) {
-      serialized.hypothesized_proportion = result.hypothesized_proportion;
+    if (result.hypothesizedProportion !== undefined) {
+      serialized.hypothesizedProportion = result.hypothesizedProportion;
     }
 
     if (result.successes !== undefined) {
@@ -152,16 +152,16 @@ export function serializeTestResult(result: any): any {
     }
 
     // Chi-square properties
-    if (result.chi_square !== undefined) {
-      serialized.chi_square = result.chi_square;
+    if (result.chiSquare !== undefined) {
+      serialized.chiSquare = result.chiSquare;
     }
 
-    if (result.expected_frequencies !== undefined) {
-      serialized.expected_frequencies = result.expected_frequencies;
+    if (result.expectedFrequencies !== undefined) {
+      serialized.expectedFrequencies = result.expectedFrequencies;
     }
 
-    if (result.observed_frequencies !== undefined) {
-      serialized.observed_frequencies = result.observed_frequencies;
+    if (result.observedFrequencies !== undefined) {
+      serialized.observedFrequencies = result.observedFrequencies;
     }
 
     // Correlation properties
@@ -169,29 +169,29 @@ export function serializeTestResult(result: any): any {
       serialized.correlation = result.correlation;
     }
 
-    if (result.r_squared !== undefined) {
-      serialized.r_squared = result.r_squared;
+    if (result.rSquared !== undefined) {
+      serialized.rSquared = result.rSquared;
     }
 
     // Non-parametric test properties
-    if (result.u_statistic !== undefined) {
-      serialized.u_statistic = result.u_statistic;
+    if (result.uStatistic !== undefined) {
+      serialized.uStatistic = result.uStatistic;
     }
 
-    if (result.w_statistic !== undefined) {
-      serialized.w_statistic = result.w_statistic;
+    if (result.wStatistic !== undefined) {
+      serialized.wStatistic = result.wStatistic;
     }
 
-    if (result.h_statistic !== undefined) {
-      serialized.h_statistic = result.h_statistic;
+    if (result.hStatistic !== undefined) {
+      serialized.hStatistic = result.hStatistic;
     }
 
-    if (result.rank_sum !== undefined) {
-      serialized.rank_sum = result.rank_sum;
+    if (result.rankSum !== undefined) {
+      serialized.rankSum = result.rankSum;
     }
 
-    if (result.z_score !== undefined) {
-      serialized.z_score = result.z_score;
+    if (result.zScore !== undefined) {
+      serialized.zScore = result.zScore;
     }
 
     // Shapiro-Wilk properties
@@ -199,148 +199,148 @@ export function serializeTestResult(result: any): any {
       serialized.statistic = result.statistic;
     }
 
-    if (result.normality_assumption_met !== undefined) {
-      serialized.normality_assumption_met = result.normality_assumption_met;
+    if (result.normalityAssumptionMet !== undefined) {
+      serialized.normalityAssumptionMet = result.normalityAssumptionMet;
     }
 
     // Two-way ANOVA properties - handle the complex structure
-    if (result.factor_a) {
-      serialized.factor_a = {
-        test_statistic: result.factor_a.test_statistic
+    if (result.factorA) {
+      serialized.factorA = {
+        testStatistic: result.factorA.testStatistic
           ? {
-            value: result.factor_a.test_statistic.value,
-            name: result.factor_a.test_statistic.name,
+            value: result.factorA.testStatistic.value,
+            name: result.factorA.testStatistic.name,
           }
           : undefined,
-        p_value: result.factor_a.p_value,
-        degrees_of_freedom: result.factor_a.degrees_of_freedom,
-        effect_size: result.factor_a.effect_size
+        pValue: result.factorA.pValue,
+        degreesOfFreedom: result.factorA.degreesOfFreedom,
+        effectSize: result.factorA.effectSize
           ? {
-            value: result.factor_a.effect_size.value,
-            name: result.factor_a.effect_size.name,
+            value: result.factorA.effectSize.value,
+            name: result.factorA.effectSize.name,
           }
           : undefined,
-        mean_square: result.factor_a.mean_square,
-        sum_of_squares: result.factor_a.sum_of_squares,
+        meanSquare: result.factorA.meanSquare,
+        sumOfSquares: result.factorA.sumOfSquares,
       };
     }
 
-    if (result.factor_b) {
-      serialized.factor_b = {
-        test_statistic: result.factor_b.test_statistic
+    if (result.factorB) {
+      serialized.factorB = {
+        testStatistic: result.factorB.testStatistic
           ? {
-            value: result.factor_b.test_statistic.value,
-            name: result.factor_b.test_statistic.name,
+            value: result.factorB.testStatistic.value,
+            name: result.factorB.testStatistic.name,
           }
           : undefined,
-        p_value: result.factor_b.p_value,
-        degrees_of_freedom: result.factor_b.degrees_of_freedom,
-        effect_size: result.factor_b.effect_size
+        pValue: result.factorB.pValue,
+        degreesOfFreedom: result.factorB.degreesOfFreedom,
+        effectSize: result.factorB.effectSize
           ? {
-            value: result.factor_b.effect_size.value,
-            name: result.factor_b.effect_size.name,
+            value: result.factorB.effectSize.value,
+            name: result.factorB.effectSize.name,
           }
           : undefined,
-        mean_square: result.factor_b.mean_square,
-        sum_of_squares: result.factor_b.sum_of_squares,
+        meanSquare: result.factorB.meanSquare,
+        sumOfSquares: result.factorB.sumOfSquares,
       };
     }
 
     if (result.interaction) {
       serialized.interaction = {
-        test_statistic: result.interaction.test_statistic
+        testStatistic: result.interaction.testStatistic
           ? {
-            value: result.interaction.test_statistic.value,
-            name: result.interaction.test_statistic.name,
+            value: result.interaction.testStatistic.value,
+            name: result.interaction.testStatistic.name,
           }
           : undefined,
-        p_value: result.interaction.p_value,
-        degrees_of_freedom: result.interaction.degrees_of_freedom,
-        effect_size: result.interaction.effect_size
+        pValue: result.interaction.pValue,
+        degreesOfFreedom: result.interaction.degreesOfFreedom,
+        effectSize: result.interaction.effectSize
           ? {
-            value: result.interaction.effect_size.value,
-            name: result.interaction.effect_size.name,
+            value: result.interaction.effectSize.value,
+            name: result.interaction.effectSize.name,
           }
           : undefined,
-        mean_square: result.interaction.mean_square,
-        sum_of_squares: result.interaction.sum_of_squares,
+        meanSquare: result.interaction.meanSquare,
+        sumOfSquares: result.interaction.sumOfSquares,
       };
     }
 
     // Additional two-way ANOVA specific properties
-    if (result.sample_means !== undefined) {
-      serialized.sample_means = result.sample_means;
+    if (result.sampleMeans !== undefined) {
+      serialized.sampleMeans = result.sampleMeans;
     }
 
-    if (result.sample_std_devs !== undefined) {
-      serialized.sample_std_devs = result.sample_std_devs;
+    if (result.sampleStdDevs !== undefined) {
+      serialized.sampleStdDevs = result.sampleStdDevs;
     }
 
-    if (result.sum_of_squares !== undefined) {
-      serialized.sum_of_squares = result.sum_of_squares;
+    if (result.sumOfSquares !== undefined) {
+      serialized.sumOfSquares = result.sumOfSquares;
     }
 
-    if (result.grand_mean !== undefined) {
-      serialized.grand_mean = result.grand_mean;
+    if (result.grandMean !== undefined) {
+      serialized.grandMean = result.grandMean;
     }
 
-    if (result.r_squared !== undefined) {
-      serialized.r_squared = result.r_squared;
+    if (result.rSquared !== undefined) {
+      serialized.rSquared = result.rSquared;
     }
 
     // Two-way ANOVA complete table information
-    if (result.df_error !== undefined) {
-      serialized.df_error = result.df_error;
+    if (result.dfError !== undefined) {
+      serialized.dfError = result.dfError;
     }
 
-    if (result.ms_error !== undefined) {
-      serialized.ms_error = result.ms_error;
+    if (result.msError !== undefined) {
+      serialized.msError = result.msError;
     }
 
-    if (result.df_total !== undefined) {
-      serialized.df_total = result.df_total;
+    if (result.dfTotal !== undefined) {
+      serialized.dfTotal = result.dfTotal;
     }
 
     // ANOVA table serialization
-    if (result.anova_table) {
-      serialized.anova_table = Array.from(result.anova_table).map((
+    if (result.anovaTable) {
+      serialized.anovaTable = Array.from(result.anovaTable).map((
         component: any,
       ) => ({
         component: component.component,
         ss: component.ss,
         df: component.df,
         ms: component.ms,
-        f_statistic: component.f_statistic,
-        p_value: component.p_value,
-        eta_squared: component.eta_squared,
-        partial_eta_squared: component.partial_eta_squared,
-        omega_squared: component.omega_squared,
+        fStatistic: component.fStatistic,
+        pValue: component.pValue,
+        etaSquared: component.etaSquared,
+        partialEtaSquared: component.partialEtaSquared,
+        omegaSquared: component.omegaSquared,
       }));
     }
 
     // Kolmogorov-Smirnov test properties
-    if (result.d_statistic !== undefined) {
-      serialized.d_statistic = result.d_statistic;
+    if (result.dStatistic !== undefined) {
+      serialized.dStatistic = result.dStatistic;
     }
 
-    if (result.d_plus !== undefined) {
-      serialized.d_plus = result.d_plus;
+    if (result.dPlus !== undefined) {
+      serialized.dPlus = result.dPlus;
     }
 
-    if (result.d_minus !== undefined) {
-      serialized.d_minus = result.d_minus;
+    if (result.dMinus !== undefined) {
+      serialized.dMinus = result.dMinus;
     }
 
-    if (result.critical_value !== undefined) {
-      serialized.critical_value = result.critical_value;
+    if (result.criticalValue !== undefined) {
+      serialized.criticalValue = result.criticalValue;
     }
 
-    if (result.sample1_size !== undefined) {
-      serialized.sample1_size = result.sample1_size;
+    if (result.sample1Size !== undefined) {
+      serialized.sample1Size = result.sample1Size;
     }
 
-    if (result.sample2_size !== undefined) {
-      serialized.sample2_size = result.sample2_size;
+    if (result.sample2Size !== undefined) {
+      serialized.sample2Size = result.sample2Size;
     }
 
     if (result.alternative !== undefined) {
@@ -355,21 +355,21 @@ export function serializeTestResult(result: any): any {
           return {
             group1: comp.group1,
             group2: comp.group2,
-            mean_difference: comp.mean_difference,
-            standard_error: comp.standard_error,
-            test_statistic: comp.test_statistic
+            meanDifference: comp.meanDifference,
+            standardError: comp.standardError,
+            testStatistic: comp.testStatistic
               ? {
-                value: comp.test_statistic.value,
-                name: comp.test_statistic.name,
+                value: comp.testStatistic.value,
+                name: comp.testStatistic.name,
               }
               : undefined,
-            p_value: comp.p_value,
-            adjusted_p_value: comp.adjusted_p_value,
-            confidence_interval: comp.confidence_interval
+            pValue: comp.pValue,
+            adjustedPValue: comp.adjustedPValue,
+            confidenceInterval: comp.confidenceInterval
               ? {
-                lower: comp.confidence_interval.lower,
-                upper: comp.confidence_interval.upper,
-                confidence_level: comp.confidence_interval.confidence_level,
+                lower: comp.confidenceInterval.lower,
+                upper: comp.confidenceInterval.upper,
+                confidenceLevel: comp.confidenceInterval.confidenceLevel,
               }
               : undefined,
             significant: comp.significant,
@@ -379,16 +379,16 @@ export function serializeTestResult(result: any): any {
       });
     }
 
-    if (result.correction_method !== undefined) {
-      serialized.correction_method = result.correction_method;
+    if (result.correctionMethod !== undefined) {
+      serialized.correctionMethod = result.correctionMethod;
     }
 
-    if (result.n_groups !== undefined) {
-      serialized.n_groups = result.n_groups;
+    if (result.nGroups !== undefined) {
+      serialized.nGroups = result.nGroups;
     }
 
-    if (result.n_total !== undefined) {
-      serialized.n_total = result.n_total;
+    if (result.nTotal !== undefined) {
+      serialized.nTotal = result.nTotal;
     }
 
     return serialized;

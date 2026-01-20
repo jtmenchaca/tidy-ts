@@ -1,9 +1,7 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Local Bundle Distribution Tests", () => {
-  test("loads and runs distribution example with local bundle", async ({
-    page,
-  }) => {
+  test("loads and runs distribution example with local bundle", async ({ page }) => {
     // Listen for console messages for debugging
     page.on("console", (msg) => {
       console.log(`Browser console [${msg.type()}]: ${msg.text()}`);

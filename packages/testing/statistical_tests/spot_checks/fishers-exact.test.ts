@@ -14,11 +14,11 @@ Deno.test("Fisher's Exact Test Spot Check", () => {
   });
 
   console.log("Contingency Table:", contingencyTable);
-  console.log("Odds ratio (MLE):", result.effect_size.value);
-  console.log("p-value:", result.p_value);
+  console.log("Odds ratio (MLE):", result.effectSize.value);
+  console.log("p-value:", result.pValue);
   console.log("CI:", [
-    result.confidence_interval.lower,
-    result.confidence_interval.upper,
+    result.confidenceInterval.lower,
+    result.confidenceInterval.upper,
   ]);
 });
 

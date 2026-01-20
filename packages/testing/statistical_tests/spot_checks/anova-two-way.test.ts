@@ -36,121 +36,119 @@ Deno.test("Two-Way ANOVA Spot Check", () => {
   // Basic ANOVA table
   console.log("ANOVA Table:");
   console.log(
-    `Factor A (Treatment): F(${result.factor_a.degrees_of_freedom},${result.df_error}) = ${
-      result.factor_a.test_statistic.value.toFixed(4)
-    }, p = ${result.factor_a.p_value.toFixed(5)}`,
+    `Factor A (Treatment): F(${result.factorA.degreesOfFreedom},${result.dfError}) = ${
+      result.factorA.testStatistic.value.toFixed(4)
+    }, p = ${result.factorA.pValue.toFixed(5)}`,
   );
   console.log(
-    `Factor B (Time): F(${result.factor_b.degrees_of_freedom},${result.df_error}) = ${
-      result.factor_b.test_statistic.value.toFixed(4)
-    }, p = ${result.factor_b.p_value.toFixed(5)}`,
+    `Factor B (Time): F(${result.factorB.degreesOfFreedom},${result.dfError}) = ${
+      result.factorB.testStatistic.value.toFixed(4)
+    }, p = ${result.factorB.pValue.toFixed(5)}`,
   );
   console.log(
-    `Interaction (A×B): F(${result.interaction.degrees_of_freedom},${result.df_error}) = ${
-      result.interaction.test_statistic.value.toFixed(4)
-    }, p = ${result.interaction.p_value.toFixed(5)}`,
+    `Interaction (A×B): F(${result.interaction.degreesOfFreedom},${result.dfError}) = ${
+      result.interaction.testStatistic.value.toFixed(4)
+    }, p = ${result.interaction.pValue.toFixed(5)}`,
   );
 
   // Sum of squares
   console.log(
     `Sum of Squares - Factor A: ${
-      result.factor_a.sum_of_squares.toFixed(4)
-    }, Factor B: ${result.factor_b.sum_of_squares.toFixed(4)}, Interaction: ${
-      result.interaction.sum_of_squares.toFixed(4)
+      result.factorA.sumOfSquares.toFixed(4)
+    }, Factor B: ${result.factorB.sumOfSquares.toFixed(4)}, Interaction: ${
+      result.interaction.sumOfSquares.toFixed(4)
     }`,
   );
   console.log(
-    `Residual SS: ${result.anova_table[3].ss.toFixed(4)}, Total SS: ${
-      result.anova_table[4].ss.toFixed(4)
+    `Residual SS: ${result.anovaTable[3].ss.toFixed(4)}, Total SS: ${
+      result.anovaTable[4].ss.toFixed(4)
     }`,
   );
 
   // Mean squares
   console.log(
     `Mean Squares - Factor A: ${
-      result.factor_a.mean_square.toFixed(4)
-    }, Factor B: ${result.factor_b.mean_square.toFixed(4)}, Interaction: ${
-      result.interaction.mean_square.toFixed(4)
+      result.factorA.meanSquare.toFixed(4)
+    }, Factor B: ${result.factorB.meanSquare.toFixed(4)}, Interaction: ${
+      result.interaction.meanSquare.toFixed(4)
     }`,
   );
-  console.log(`Residual MS: ${result.ms_error.toFixed(4)}`);
+  console.log(`Residual MS: ${result.msError.toFixed(4)}`);
 
   // Effect sizes (from ANOVA table components)
   console.log(
     `Eta-squared - Factor A: ${
-      result.anova_table[0].eta_squared?.toFixed(4) || "N/A"
+      result.anovaTable[0].etaSquared?.toFixed(4) || "N/A"
     }, Factor B: ${
-      result.anova_table[1].eta_squared?.toFixed(4) || "N/A"
-    }, Interaction: ${result.anova_table[2].eta_squared?.toFixed(4) || "N/A"}`,
+      result.anovaTable[1].etaSquared?.toFixed(4) || "N/A"
+    }, Interaction: ${result.anovaTable[2].etaSquared?.toFixed(4) || "N/A"}`,
   );
   console.log(
     `Partial Eta-squared - Factor A: ${
-      result.anova_table[0].partial_eta_squared?.toFixed(4) || "N/A"
+      result.anovaTable[0].partialEtaSquared?.toFixed(4) || "N/A"
     }, Factor B: ${
-      result.anova_table[1].partial_eta_squared?.toFixed(4) || "N/A"
+      result.anovaTable[1].partialEtaSquared?.toFixed(4) || "N/A"
     }, Interaction: ${
-      result.anova_table[2].partial_eta_squared?.toFixed(4) || "N/A"
+      result.anovaTable[2].partialEtaSquared?.toFixed(4) || "N/A"
     }`,
   );
   console.log(
     `Omega-squared - Factor A: ${
-      result.anova_table[0].omega_squared?.toFixed(4) || "N/A"
+      result.anovaTable[0].omegaSquared?.toFixed(4) || "N/A"
     }, Factor B: ${
-      result.anova_table[1].omega_squared?.toFixed(4) || "N/A"
-    }, Interaction: ${
-      result.anova_table[2].omega_squared?.toFixed(4) || "N/A"
-    }`,
+      result.anovaTable[1].omegaSquared?.toFixed(4) || "N/A"
+    }, Interaction: ${result.anovaTable[2].omegaSquared?.toFixed(4) || "N/A"}`,
   );
 
   // Model fit
-  console.log(`R-squared: ${result.r_squared.toFixed(4)}`);
+  console.log(`R-squared: ${result.rSquared.toFixed(4)}`);
   console.log(
-    `Sample size: ${result.sample_size} | Total df: ${result.df_total} | Error df: ${result.df_error}`,
+    `Sample size: ${result.sampleSize} | Total df: ${result.dfTotal} | Error df: ${result.dfError}`,
   );
-  console.log(`Grand mean: ${result.grand_mean.toFixed(4)}`);
+  console.log(`Grand mean: ${result.grandMean.toFixed(4)}`);
 
   // Cell means and standard deviations
   console.log("Cell means:");
   console.log(
-    `  Control-Before: ${result.sample_means[0].toFixed(4)} (SD: ${
-      result.sample_std_devs[0].toFixed(4)
+    `  Control-Before: ${result.sampleMeans[0].toFixed(4)} (SD: ${
+      result.sampleStdDevs[0].toFixed(4)
     })`,
   );
   console.log(
-    `  Control-After: ${result.sample_means[1].toFixed(4)} (SD: ${
-      result.sample_std_devs[1].toFixed(4)
+    `  Control-After: ${result.sampleMeans[1].toFixed(4)} (SD: ${
+      result.sampleStdDevs[1].toFixed(4)
     })`,
   );
   console.log(
-    `  Treatment-Before: ${result.sample_means[2].toFixed(4)} (SD: ${
-      result.sample_std_devs[2].toFixed(4)
+    `  Treatment-Before: ${result.sampleMeans[2].toFixed(4)} (SD: ${
+      result.sampleStdDevs[2].toFixed(4)
     })`,
   );
   console.log(
-    `  Treatment-After: ${result.sample_means[3].toFixed(4)} (SD: ${
-      result.sample_std_devs[3].toFixed(4)
+    `  Treatment-After: ${result.sampleMeans[3].toFixed(4)} (SD: ${
+      result.sampleStdDevs[3].toFixed(4)
     })`,
   );
 
   // Degrees of freedom breakdown
   console.log(
-    `Degrees of freedom - Factor A: ${result.factor_a.degrees_of_freedom}, Factor B: ${result.factor_b.degrees_of_freedom}, Interaction: ${result.interaction.degrees_of_freedom}, Error: ${result.df_error}, Total: ${result.df_total}`,
+    `Degrees of freedom - Factor A: ${result.factorA.degreesOfFreedom}, Factor B: ${result.factorB.degreesOfFreedom}, Interaction: ${result.interaction.degreesOfFreedom}, Error: ${result.dfError}, Total: ${result.dfTotal}`,
   );
 
   // ANOVA table components
   console.log("ANOVA Table Components:");
-  result.anova_table.forEach((component) => {
+  result.anovaTable.forEach((component) => {
     console.log(
       `  ${component.component}: SS=${
         component.ss.toFixed(4)
       }, df=${component.df}, MS=${component.ms?.toFixed(4) || "N/A"}, F=${
-        component.f_statistic?.toFixed(4) || "N/A"
-      }, p=${component.p_value?.toFixed(5) || "N/A"}`,
+        component.fStatistic?.toFixed(4) || "N/A"
+      }, p=${component.pValue?.toFixed(5) || "N/A"}`,
     );
   });
 
   // Test name and alpha
-  console.log(`Test name: ${result.test_name}`);
+  console.log(`Test name: ${result.testName}`);
   console.log(`Alpha level: ${result.alpha}`);
 
   console.log("=== END TYPESCRIPT TWO-WAY ANOVA ===");

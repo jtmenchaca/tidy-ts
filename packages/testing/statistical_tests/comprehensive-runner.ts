@@ -27,10 +27,10 @@ export async function runRobustComparison(
       callRobustRust(params),
     ]);
 
-    const rStat = rResult.test_statistic;
-    const rustStat = rustResult.test_statistic;
-    const rPval = rResult.p_value;
-    const rustPval = rustResult.p_value;
+    const rStat = rResult.testStatistic;
+    const rustStat = rustResult.testStatistic;
+    const rPval = rResult.pValue;
+    const rustPval = rustResult.pValue;
 
     // Calculate differences
     const statDiff = Math.abs(rStat - rustStat);
@@ -82,10 +82,10 @@ function printComparisonResults(results: ComparisonResult[]): void {
     const testName = result.testName.length > 48
       ? result.testName.substring(0, 45) + "..."
       : result.testName;
-    const rStat = result.rResult?.test_statistic?.toFixed(5) || "N/A";
-    const rustStat = result.rustResult?.test_statistic?.toFixed(5) || "N/A";
-    const rPval = result.rResult?.p_value?.toFixed(5) || "N/A";
-    const rustPval = result.rustResult?.p_value?.toFixed(5) || "N/A";
+    const rStat = result.rResult?.testStatistic?.toFixed(5) || "N/A";
+    const rustStat = result.rustResult?.testStatistic?.toFixed(5) || "N/A";
+    const rPval = result.rResult?.pValue?.toFixed(5) || "N/A";
+    const rustPval = result.rustResult?.pValue?.toFixed(5) || "N/A";
     const diff = result.difference.toExponential(2);
 
     const statusColor = result.status === "PASS"

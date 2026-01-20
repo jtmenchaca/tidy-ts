@@ -18,7 +18,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneWayAnovaWithPostHocResult, WelchAnovaWithPostHocResult, KruskalWallisWithPostHocResult, or TwoWayAnovaTestResult (for two-way) with `statistic` (F or H), `p_value`, `degrees_of_freedom`, effect size, and `post_hoc` (if significant and 3+ groups)",
+      "OneWayAnovaWithPostHocResult, WelchAnovaWithPostHocResult, KruskalWallisWithPostHocResult, or TwoWayAnovaTestResult (for two-way) with `statistic` (F or H), `pValue`, `degreesOfFreedom`, effect size, and `postHoc` (if significant and 3+ groups)",
     examples: [
       "// One-way ANOVA with automatic post-hoc",
       "const group1 = [1.2, 1.4, 1.1, 1.3, 1.5];",
@@ -29,8 +29,8 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "  parametric: 'auto',",
       "  alpha: 0.05",
       "});",
-      "console.log(result.p_value);     // p-value from main test",
-      "console.log(result.post_hoc);    // Post-hoc comparisons (if significant)",
+      "console.log(result.pValue);     // p-value from main test",
+      "console.log(result.postHoc);    // Post-hoc comparisons (if significant)",
       "",
       "// Two-way ANOVA",
       "const twoWayData = [",
@@ -88,7 +88,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "ChiSquareIndependenceTestResult with `statistic` (chi-squared), `p_value`, `degrees_of_freedom`, `reject`, and effect sizes (Cramér's V, phi)",
+      "ChiSquareIndependenceTestResult with `statistic` (chi-squared), `pValue`, `degreesOfFreedom`, `reject`, and effect sizes (Cramér's V, phi)",
     examples: [
       "// Test independence in a 2×3 contingency table",
       "const table = [",
@@ -99,7 +99,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "  contingencyTable: table,",
       "  alpha: 0.05",
       "});",
-      "console.log(result.p_value);  // p-value",
+      "console.log(result.pValue);  // p-value",
       "console.log(result.reject);    // true if variables are dependent",
       "",
       "// Larger contingency table",
@@ -132,4 +132,3 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

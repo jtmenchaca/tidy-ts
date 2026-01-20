@@ -153,4 +153,3 @@ export const tDistributionDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

@@ -15,14 +15,14 @@ Deno.test("Paired T-Test Spot Check", () => {
 
   console.log("Before:", before);
   console.log("After:", after);
-  console.log("t-statistic:", result.test_statistic.value);
-  console.log("df:", result.degrees_of_freedom);
-  console.log("p-value:", result.p_value);
+  console.log("t-statistic:", result.testStatistic.value);
+  console.log("df:", result.degreesOfFreedom);
+  console.log("p-value:", result.pValue);
   console.log("CI:", [
-    result.confidence_interval.lower,
-    result.confidence_interval.upper,
+    result.confidenceInterval.lower,
+    result.confidenceInterval.upper,
   ]);
-  console.log("Cohen's d:", result.effect_size.value);
+  console.log("Cohen's d:", result.effectSize.value);
 });
 
 console.log("\n" + "=".repeat(80));

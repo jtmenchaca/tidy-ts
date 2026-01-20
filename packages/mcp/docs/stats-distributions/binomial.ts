@@ -160,4 +160,3 @@ export const binomialDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

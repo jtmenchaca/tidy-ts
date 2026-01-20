@@ -90,8 +90,8 @@ Deno.test("README examples validation", () => {
   });
 
   console.log(
-    `One-sample t-test: P-value = ${oneSampleT.p_value}, Significant = ${
-      oneSampleT.p_value < 0.05
+    `One-sample t-test: P-value = ${oneSampleT.pValue}, Significant = ${
+      oneSampleT.pValue < 0.05
     }`,
   );
 });

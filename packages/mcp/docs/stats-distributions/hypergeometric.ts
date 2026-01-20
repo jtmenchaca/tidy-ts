@@ -130,4 +130,3 @@ export const hypergeometricDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

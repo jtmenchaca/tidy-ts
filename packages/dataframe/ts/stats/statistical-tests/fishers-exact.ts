@@ -7,7 +7,7 @@ import type { FishersExactTestResult } from "../../../lib/tidy_ts_dataframe.js";
 /**
  * Fisher's exact test for 2x2 contingency tables.
  *
- * Note: Both p_value and exact_p_value are provided by WASM and contain identical values
+ * Note: Both pValue and exactPValue are provided by WASM and contain identical values
  * since Fisher's exact test always computes exact p-values (no asymptotic approximation).
  */
 export function fishersExactTest({

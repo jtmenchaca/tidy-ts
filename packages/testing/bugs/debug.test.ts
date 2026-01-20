@@ -298,11 +298,11 @@ Deno.test("Statistical Testing with New Compare API", () => {
     comparator: "not equal to",
     alpha: 0.05,
   });
-  console.log(`Test: ${distributionTest.test_name}`);
+  console.log(`Test: ${distributionTest.testName}`);
   console.log(
-    `Statistic: ${distributionTest.test_statistic?.value?.toFixed(4)}`,
+    `Statistic: ${distributionTest.testStatistic?.value?.toFixed(4)}`,
   );
-  console.log(`P-value: ${distributionTest.p_value?.toFixed(4)}`);
+  console.log(`P-value: ${distributionTest.pValue?.toFixed(4)}`);
 
   console.log("\n--- Multiple Groups Tests ---");
 
@@ -345,18 +345,18 @@ Deno.test("Statistical Testing with New Compare API", () => {
 
   console.log(
     `Control group normal: ${
-      (controlNormality.p_value || 0) > 0.05 ? "Yes" : "No"
+      (controlNormality.pValue || 0) > 0.05 ? "Yes" : "No"
     }`,
   );
   console.log(
     `Treatment group normal: ${
-      (treatmentNormality.p_value || 0) > 0.05 ? "Yes" : "No"
+      (treatmentNormality.pValue || 0) > 0.05 ? "Yes" : "No"
     }`,
   );
 
   // Step 2: Choose appropriate test based on normality
-  const useParametric = (controlNormality.p_value || 0) > 0.05 &&
-    (treatmentNormality.p_value || 0) > 0.05;
+  const useParametric = (controlNormality.pValue || 0) > 0.05 &&
+    (treatmentNormality.pValue || 0) > 0.05;
 
   // Step 3: Perform the comparison
   const finalComparison = stats.compare.twoGroups.centralTendency.toEachOther({

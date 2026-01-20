@@ -154,4 +154,3 @@ export const exponentialDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

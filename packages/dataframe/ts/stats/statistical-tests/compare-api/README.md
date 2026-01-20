@@ -5,7 +5,7 @@
 ```
 centralTendency.toValue(data, value, parametric):
   IF parametric = "auto":
-    IF shapiroWilk(data, α=0.05).p_value < 0.05:
+    IF shapiroWilk(data, α=0.05).pValue < 0.05:
       RETURN wilcoxonSignedRank(data, value)
     ELSE:
       RETURN tTest(data, value)
@@ -26,21 +26,21 @@ distribution.toNormal(data):
 ```
 centralTendency.toEachOther(x, y, parametric, assumeEqualVariances?):
   IF parametric = "auto":
-    nonNormalX = shapiroWilk(x, α=0.05).p_value < 0.05
-    nonNormalY = shapiroWilk(y, α=0.05).p_value < 0.05
+    nonNormalX = shapiroWilk(x, α=0.05).pValue < 0.05
+    nonNormalY = shapiroWilk(y, α=0.05).pValue < 0.05
     IF nonNormalX AND nonNormalY:
       RETURN mannWhitney(x, y)
     ELSE:
       IF assumeEqualVariances provided:
         RETURN tTest(x, y, assumeEqualVariances)
       ELSE:
-        equalVar = brownForsytheTest([x, y]).p_value >= 0.05
+        equalVar = brownForsytheTest([x, y]).pValue >= 0.05
         RETURN tTest(x, y, equalVar)
   ELSE IF parametric = "parametric":
     IF assumeEqualVariances provided:
       RETURN tTest(x, y, assumeEqualVariances)
     ELSE:
-      equalVar = brownForsytheTest([x, y]).p_value >= 0.05
+      equalVar = brownForsytheTest([x, y]).pValue >= 0.05
       RETURN tTest(x, y, equalVar)
   ELSE:
     RETURN mannWhitney(x, y)
@@ -94,7 +94,7 @@ distributions.toEachOther(x, y, method):
 centralTendency.toEachOther(groups, parametric, assumeEqualVariances?):
   // Auto-detect variance equality if not provided
   IF assumeEqualVariances not provided AND parametric != "nonparametric":
-    assumeEqualVariances = brownForsytheTest(groups).p_value >= 0.05
+    assumeEqualVariances = brownForsytheTest(groups).pValue >= 0.05
 
   IF parametric = "parametric":
     IF assumeEqualVariances:
@@ -111,7 +111,7 @@ centralTendency.toEachOther(groups, parametric, assumeEqualVariances?):
     RETURN {result, postHoc}
   
   ELSE IF parametric = "auto":
-    anyNonNormal = groups.some(g => shapiroWilk(g, α=0.05).p_value < 0.05)
+    anyNonNormal = groups.some(g => shapiroWilk(g, α=0.05).pValue < 0.05)
     IF anyNonNormal:
       result = kruskalWallis(groups)
       postHoc = dunnTest(groups) IF significant
@@ -120,7 +120,7 @@ centralTendency.toEachOther(groups, parametric, assumeEqualVariances?):
         result = assumeEqualVariances ? anovaOneWay(groups) : welchAnova(groups)
         postHoc = assumeEqualVariances ? tukeyHSD(groups) : gamesHowell(groups) IF significant
       ELSE:
-        equalVar = brownForsytheTest(groups).p_value >= 0.05
+        equalVar = brownForsytheTest(groups).pValue >= 0.05
         result = equalVar ? anovaOneWay(groups) : welchAnova(groups)
         postHoc = equalVar ? tukeyHSD(groups) : gamesHowell(groups) IF significant
     RETURN {result, postHoc}
@@ -146,8 +146,8 @@ centralTendency.toEachOther(data, design="two-way", testType):
 ## Helpers
 
 ```
-significant(result) = result.p_value < α
-shapiroNonNormal(data) = shapiroWilk(data, α=0.05).p_value < 0.05
+significant(result) = result.pValue < α
+shapiroNonNormal(data) = shapiroWilk(data, α=0.05).pValue < 0.05
 hasManyTies(x, y) = uniqueValues(x ∪ y) < length(x) + length(y)
 
 // Post-hoc test selection
@@ -156,9 +156,9 @@ runPostHocTest(testType, groups, mainResult, α):
     RETURN undefined
   ELSE IF testType = "anova":
     RETURN tukeyHSD(groups, α)
-  ELSE IF testType = "welch_anova":
+  ELSE IF testType = "welchAnova":
     RETURN gamesHowell(groups, α)
-  ELSE IF testType = "kruskal_wallis":
+  ELSE IF testType = "kruskalWallis":
     RETURN dunnTest(groups, α)
 ```
 

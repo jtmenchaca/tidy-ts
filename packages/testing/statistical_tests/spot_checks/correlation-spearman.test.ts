@@ -15,9 +15,9 @@ Deno.test("Spearman Correlation Test Spot Check", () => {
 
   console.log("x:", x);
   console.log("y:", y);
-  console.log("Spearman rho:", result.effect_size.value);
-  console.log("S-statistic:", result.test_statistic.value);
-  console.log("p-value:", result.p_value);
+  console.log("Spearman rho:", result.effectSize.value);
+  console.log("S-statistic:", result.testStatistic.value);
+  console.log("p-value:", result.pValue);
 });
 
 console.log("\n" + "=".repeat(80));

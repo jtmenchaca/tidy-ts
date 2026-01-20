@@ -140,9 +140,9 @@ Deno.test("GLM Methods - Test 1: Binomial GLM - summary", () => {
   expect(summary.coefficients.statistic[2]).toBeCloseTo(0.492087, 3);
 
   // Check p-values
-  expect(summary.coefficients.p_value[0]).toBeCloseTo(0.1385113, 3);
-  expect(summary.coefficients.p_value[1]).toBeCloseTo(0.0441789, 3);
-  expect(summary.coefficients.p_value[2]).toBeCloseTo(0.6226579, 3);
+  expect(summary.coefficients.pValue[0]).toBeCloseTo(0.1385113, 3);
+  expect(summary.coefficients.pValue[1]).toBeCloseTo(0.0441789, 3);
+  expect(summary.coefficients.pValue[2]).toBeCloseTo(0.6226579, 3);
 
   // Check other summary stats
   expect(summary.dispersion).toBe(1.0);

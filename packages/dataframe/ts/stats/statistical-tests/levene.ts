@@ -28,9 +28,9 @@ import type { OneWayAnovaTestResult } from "../../../lib/tidy_ts_dataframe.js";
  * const group3 = [1, 5, 10, 15, 20]; // different variance
  *
  * const result = leveneTest([group1, group2, group3]);
- * console.log(`p-value: ${result.p_value}`);
+ * console.log(`p-value: ${result.pValue}`);
  *
- * if (result.p_value < 0.05) {
+ * if (result.pValue < 0.05) {
  *   console.log("Use Welch ANOVA (unequal variances)");
  * } else {
  *   console.log("Use regular ANOVA (equal variances)");
@@ -81,7 +81,7 @@ export function hasEqualVariances(
 ): boolean {
   try {
     const result = leveneTest(groups, alpha);
-    return result.p_value >= alpha;
+    return result.pValue >= alpha;
   } catch {
     // If test fails, assume unequal variances (conservative approach)
     return false;

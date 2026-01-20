@@ -45,7 +45,10 @@ export function first<T>(values: readonly T[], options?: FirstOptions): T;
 export function first<T>(values: T[], options?: FirstOptions): T;
 export function first(values: readonly Date[], options?: FirstOptions): Date;
 export function first(values: Date[], options?: FirstOptions): Date;
-export function first(values: readonly number[], options?: FirstOptions): number;
+export function first(
+  values: readonly number[],
+  options?: FirstOptions,
+): number;
 export function first(values: number[], options?: FirstOptions): number;
 export function first(values: Iterable<number>, options?: FirstOptions): number;
 

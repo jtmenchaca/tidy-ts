@@ -7,8 +7,8 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     description:
       "Mann-Whitney U test (Wilcoxon rank-sum test) for comparing two independent groups without assuming normality.",
     signature:
-      "mannWhitneyTest({ x, y, exact?, continuityCorrection?, alternative?, alpha? }): MannWhitneyTestResult",
-    imports: ['import { mannWhitneyTest } from "@tidy-ts/dataframe";'],
+      "s.test.nonparametric.mannWhitney({ x, y, exact?, continuityCorrection?, alternative?, alpha? }): MannWhitneyTestResult",
+    imports: ['import { s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First group of values",
       "`y: number[]` - Second group of values",
@@ -17,13 +17,15 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "`alternative?: 'two-sided' | 'less' | 'greater'` - Alternative hypothesis (default: 'two-sided')",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
-    returns: "MannWhitneyTestResult with `test_statistic`, `p_value`, `reject_null`",
+    returns:
+      "MannWhitneyTestResult with `testStatistic`, `pValue`, `rejectNull`",
     examples: [
+      'import { s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
-      "const result = mannWhitneyTest({ x: group1, y: group2 });",
-      "console.log(result.p_value);  // p-value",
-      "console.log(result.reject_null);  // true if reject H0",
+      "const result = s.test.nonparametric.mannWhitney({ x: group1, y: group2 });",
+      "console.log(result.pValue);  // p-value",
+      "console.log(result.rejectNull);  // true if reject H0",
     ],
     bestPractices: [
       "Use when data is not normally distributed",
@@ -48,8 +50,8 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     description:
       "Wilcoxon signed-rank test for comparing two related/paired samples without assuming normality.",
     signature:
-      "wilcoxonSignedRankTest({ x, y, alternative?, alpha? }): WilcoxonSignedRankTestResult",
-    imports: ['import { wilcoxonSignedRankTest } from "@tidy-ts/dataframe";'],
+      "s.test.nonparametric.wilcoxon({ x, y, alternative?, alpha? }): WilcoxonSignedRankTestResult",
+    imports: ['import { s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First paired measurement",
       "`y: number[]` - Second paired measurement (must have same length as x)",
@@ -57,13 +59,14 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "WilcoxonSignedRankTestResult with `test_statistic`, `p_value`, `reject_null`",
+      "WilcoxonSignedRankTestResult with `testStatistic`, `pValue`, `rejectNull`",
     examples: [
+      'import { s } from "@tidy-ts/dataframe";',
       "const before = [120, 125, 118, 130, 122];",
       "const after = [115, 118, 112, 125, 117];",
-      "const result = wilcoxonSignedRankTest({ x: before, y: after });",
-      "console.log(result.p_value);  // p-value",
-      "console.log(result.reject_null);  // true if significant change",
+      "const result = s.test.nonparametric.wilcoxon({ x: before, y: after });",
+      "console.log(result.pValue);  // p-value",
+      "console.log(result.rejectNull);  // true if significant change",
     ],
     bestPractices: [
       "Use for paired/repeated measures when data is not normally distributed",
@@ -84,23 +87,24 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     description:
       "Kruskal-Wallis test for comparing multiple independent groups without assuming normality (non-parametric alternative to one-way ANOVA).",
     signature:
-      "kruskalWallisTest(groups: number[][], alpha?: number): KruskalWallisTestResult",
-    imports: ['import { kruskalWallisTest } from "@tidy-ts/dataframe";'],
+      "s.test.nonparametric.kruskalWallis(groups: number[][], alpha?: number): KruskalWallisTestResult",
+    imports: ['import { s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`groups: number[][]` - Array of groups, where each group is an array of numbers",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KruskalWallisTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `reject_null`",
+      "KruskalWallisTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejectNull`",
     examples: [
+      'import { s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
       "const group3 = [20, 21, 19, 22, 20];",
-      "const result = kruskalWallisTest([group1, group2, group3]);",
-      "console.log(result.p_value);  // p-value",
-      "if (result.reject_null) {",
+      "const result = s.test.nonparametric.kruskalWallis([group1, group2, group3]);",
+      "console.log(result.pValue);  // p-value",
+      "if (result.rejectNull) {",
       "  // If significant, use post-hoc tests",
-      "  const postHoc = dunnTest([group1, group2, group3]);",
+      "  const postHoc = s.compare.postHoc.dunn([group1, group2, group3]);",
       "}",
     ],
     bestPractices: [

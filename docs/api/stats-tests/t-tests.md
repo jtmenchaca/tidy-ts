@@ -17,13 +17,13 @@ One-sample t-test to compare a sample mean to a known value.
 ### Signature
 
 ```typescript
-tTestOneSample({ data, mu?, alternative?, alpha? }): OneSampleTTestResult
+s.test.t.oneSample({ data, mu?, alternative?, alpha? }): OneSampleTTestResult
 ```
 
 ### Import
 
 ```typescript
-import { tTestOneSample } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -35,20 +35,21 @@ import { tTestOneSample } from "@tidy-ts/dataframe";
 
 ### Returns
 
-OneSampleTTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `confidence_interval`, `reject_null`
+OneSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const data = [2.3, 2.5, 2.1, 2.4, 2.2];
-const result = tTestOneSample({ data, mu: 2.0 });
-console.log(result.p_value);  // p-value
-console.log(result.reject_null);  // true if reject H0
+const result = s.test.t.oneSample({ data, mu: 2.0 });
+console.log(result.pValue);  // p-value
+console.log(result.rejectNull);  // true if reject H0
 ```
 
 ### Best Practices
 
-- Check normality with shapiroWilkTest before using
+- Check normality with s.test.normality.shapiroWilk before using
 - Use `alternative: 'less'` or `'greater'` for one-tailed tests
 - Requires at least 2 observations
 
@@ -70,13 +71,13 @@ Independent two-sample t-test to compare means of two unrelated groups.
 ### Signature
 
 ```typescript
-tTestIndependent({ x, y, equalVar?, alternative?, alpha? }): TwoSampleTTestResult
+s.test.t.independent({ x, y, equalVar?, alternative?, alpha? }): TwoSampleTTestResult
 ```
 
 ### Import
 
 ```typescript
-import { tTestIndependent } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -89,22 +90,23 @@ import { tTestIndependent } from "@tidy-ts/dataframe";
 
 ### Returns
 
-TwoSampleTTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `confidence_interval`, `reject_null`
+TwoSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const control = [5.2, 4.8, 5.1, 4.9, 5.0];
 const treatment = [6.1, 5.9, 6.3, 6.0, 6.2];
-const result = tTestIndependent({ x: control, y: treatment });
-console.log(result.p_value);  // compare means
+const result = s.test.t.independent({ x: control, y: treatment });
+console.log(result.pValue);  // compare means
 // Use Welch's t-test for unequal variances
-const result2 = tTestIndependent({ x: control, y: treatment, equalVar: false });
+const result2 = s.test.t.independent({ x: control, y: treatment, equalVar: false });
 ```
 
 ### Best Practices
 
-- Use Welch's t-test (equalVar: false) unless you've verified equal variances with leveneTest
+- Use Welch's t-test (equalVar: false) unless you've verified equal variances with s.test.variance.levene
 - Check normality of both groups before using
 - Each group must have at least 2 observations
 
@@ -126,13 +128,13 @@ Paired t-test to compare means of two related samples (before/after, matched pai
 ### Signature
 
 ```typescript
-tTestPaired({ x, y, alternative?, alpha? }): PairedTTestResult
+s.test.t.paired({ x, y, alternative?, alpha? }): PairedTTestResult
 ```
 
 ### Import
 
 ```typescript
-import { tTestPaired } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -144,15 +146,16 @@ import { tTestPaired } from "@tidy-ts/dataframe";
 
 ### Returns
 
-PairedTTestResult with `test_statistic`, `p_value`, `degrees_of_freedom`, `confidence_interval`, `reject_null`
+PairedTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`
 
 ### Examples
 
 ```typescript
+import { s } from "@tidy-ts/dataframe";
 const before = [120, 125, 118, 130, 122];
 const after = [115, 118, 112, 125, 117];
-const result = tTestPaired({ x: before, y: after });
-console.log(result.reject_null);  // true if significant change
+const result = s.test.t.paired({ x: before, y: after });
+console.log(result.rejectNull);  // true if significant change
 ```
 
 ### Best Practices

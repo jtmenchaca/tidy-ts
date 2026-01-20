@@ -160,4 +160,3 @@ export const weibullDocs: Record<string, DocEntry> = {
     ],
   },
 };
-

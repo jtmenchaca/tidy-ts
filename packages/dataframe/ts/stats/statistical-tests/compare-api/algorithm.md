@@ -197,7 +197,7 @@ helpers = {
   ALPHA = 0.05 ✅
 
   significant(result, α=0.05): ✅
-    RETURN result.p_value < α ✅
+    RETURN result.pValue < α ✅
 
   // Evidence-based normality testing on residuals ✅
   normalityOK(vec, α=ALPHA): ✅
@@ -205,11 +205,11 @@ helpers = {
     IF n <= N_SMALL_MAX (50): ✅
       // Small samples: Use Shapiro-Wilk (best power for small samples) ✅
       IF canShapiro(n): ✅
-        RETURN shapiroWilk(vec, α).p_value >= α ✅
+        RETURN shapiroWilk(vec, α).pValue >= α ✅
       RETURN true // Assume normal if we can't test ✅
     ELSE IF n <= N_MODERATE_MAX (300): ✅
       // Moderate samples: Use D'Agostino-Pearson K² (omnibus test) ✅
-      RETURN dagostinoPearson(vec, α).p_value >= α ✅
+      RETURN dagostinoPearson(vec, α).pValue >= α ✅
     ELSE: ✅
       // Large samples: Always return true (use robust methods regardless) ✅
       RETURN true ✅
@@ -246,7 +246,7 @@ helpers = {
   hasEqualVariances(data, α=0.05): ✅
     // Use Brown-Forsythe modification of Levene's test (deviations from medians) ✅
     // which is more robust to non-normality than the original Levene's test ✅
-    RETURN leveneTest(data, α).p_value >= α ✅
+    RETURN leveneTest(data, α).pValue >= α ✅
 
   hasSmallExpectedCounts(data1, data2): ✅
     // implement expected count check for 2×2 formed by data1,data2 ✅

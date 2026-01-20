@@ -25,6 +25,11 @@ pnpm fmt && pnpm lint
 ## Notes for Development
 
 - **Type check before success**: Always run `pnpm check` on affected files before reporting success
+- **Efficient type checking**: `pnpm check` takes 1-2 minutes. Run it ONCE and capture output to a file:
+  ```bash
+  pnpm check 2>&1 | tee /tmp/check-output.txt
+  ```
+  Then analyze `/tmp/check-output.txt` with grep/Read. NEVER run `pnpm check` multiple times in succession.
 - **Test permissions**: Use `-A` flag for Deno tests: `deno test -A [test-name]`
 - **Bug debugging**: Create test files in `packages/testing/bugs/` using existing test patterns
 - **Avoid bash heredocs**: They require custom approval every time
