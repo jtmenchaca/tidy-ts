@@ -21,6 +21,9 @@ cov_profile/
 cov.lcov
 docs/public/coverage/
 
+# Docs dist (built in CI)
+packages/docs/dist/
+
 
 # Temporary files
 /tmp/*
