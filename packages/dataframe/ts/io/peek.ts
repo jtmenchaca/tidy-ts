@@ -225,13 +225,13 @@ export function peek(
   } else if (extension === "csv" || extension === "tsv") {
     return peekCSV(path, options);
   } else {
-    return `## Unsupported File Type
+    return Promise.resolve(`## Unsupported File Type
 
 File extension ".${extension}" is not supported.
 
 Supported formats:
 - CSV (.csv)
 - TSV (.tsv)
-- Excel (.xlsx, .xls)`;
+- Excel (.xlsx, .xls)`);
   }
 }
