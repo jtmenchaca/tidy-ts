@@ -34,4 +34,9 @@ jobs:
         run: pnpm install
 
       - name: Run CI tests
-        run: deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 --ignore=**/ai/** packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/statistical_tests --quiet
+        run: |
+          deno fmt && deno lint && \
+          deno test -A --parallel --v8-flags=--max-old-space-size=8192 packages/dataframe --quiet && \
+          deno test -A --parallel --v8-flags=--max-old-space-size=8192 packages/examples/dataframe --quiet && \
+          deno test -A --parallel --v8-flags=--max-old-space-size=8192 packages/testing/bugs --quiet && \
+          deno test -A --parallel --v8-flags=--max-old-space-size=8192 packages/testing/statistical_tests --quiet
