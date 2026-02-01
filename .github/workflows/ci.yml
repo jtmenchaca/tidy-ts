@@ -30,5 +30,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-deno-
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Run CI tests
         run: deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 --ignore=**/ai/** packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/statistical_tests --quiet
