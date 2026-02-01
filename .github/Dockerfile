@@ -3,11 +3,19 @@ FROM rocker/r-ver:latest
 # Install R packages
 RUN Rscript -e "install.packages(c('jsonlite', 'geepack', 'dplyr', 'tidyr', 'nortest', 'moments', 'fBasics', 'effsize'), repos='https://cloud.r-project.org/', Ncpus=2)"
 
-# Install system dependencies for Deno
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 22
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install pnpm
+RUN npm install -g pnpm@10
 
 # Install Deno
 RUN curl -fsSL https://deno.land/install.sh | sh -s v2.5.3
