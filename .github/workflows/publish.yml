@@ -12,8 +12,6 @@ on:
           - arrow
           - parquet
           - shims
-          - ai
-          - all
 
 permissions:
   contents: read
@@ -34,26 +32,21 @@ jobs:
         working-directory: packages/dataframe
 
       - name: Publish dataframe
-        if: inputs.package == 'dataframe' || inputs.package == 'all'
+        if: inputs.package == 'dataframe'
         run: deno publish
         working-directory: packages/dataframe
 
       - name: Publish shims
-        if: inputs.package == 'shims' || inputs.package == 'all'
+        if: inputs.package == 'shims'
         run: deno publish
         working-directory: packages/shims
 
       - name: Publish arrow
-        if: inputs.package == 'arrow' || inputs.package == 'all'
+        if: inputs.package == 'arrow'
         run: deno publish
         working-directory: packages/arrow
 
       - name: Publish parquet
-        if: inputs.package == 'parquet' || inputs.package == 'all'
+        if: inputs.package == 'parquet'
         run: deno publish
         working-directory: packages/parquet
-
-      - name: Publish ai
-        if: inputs.package == 'ai' || inputs.package == 'all'
-        run: deno publish
-        working-directory: packages/ai
