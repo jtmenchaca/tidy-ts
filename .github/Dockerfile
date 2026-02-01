@@ -21,4 +21,4 @@ WORKDIR /workspace
 # which adds complexity to the build context
 
 # Create output directories for tests
-RUN mkdir -p examples/dataframe/output tests/bugs/output
+RUN mkdir -p packages/examples/dataframe/output packages/testing/bugs/output

@@ -26,9 +26,9 @@ jobs:
           path: |
             ~/.deno
             ~/.cache/deno
-          key: ${{ runner.os }}-deno-${{ hashFiles('deno.jsonc', 'import_map.json') }}
+          key: ${{ runner.os }}-deno-${{ hashFiles('deno.jsonc') }}
           restore-keys: |
             ${{ runner.os }}-deno-
 
       - name: Run CI tests
-        run: deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 --ignore=**/LLM/llm.test.ts --ignore=**/t214-analysis.test.ts --ignore=**/csv-file-size-limit.test.ts --ignore=**/intrepret.test.ts --ignore=**/mimicel-csv-import.test.ts packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/statistical_tests --quiet
+        run: deno fmt && deno lint && deno test -A --parallel --v8-flags=--max-old-space-size=8192 --ignore=**/ai/** packages/dataframe packages/examples/dataframe packages/testing/bugs packages/testing/statistical_tests --quiet
