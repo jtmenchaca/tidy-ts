@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-read
 
-import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { randomBetween, randomIntegerBetween, randomSeeded } from "@std/random";
 
 // Configuration
@@ -122,48 +122,8 @@ export function runTypeScriptBenchmarks() {
 
     results[size] = {};
 
-    // Prebuild DataFrames based on what operations are enabled
-    let tidyDf: DataFrame<DataRow>;
-    let leftTidyDf: DataFrame<{
-      id: number;
-      value_a: number;
-      category: string;
-    }>;
-    let rightTidyDf: DataFrame<{
-      id: number;
-      value_b: number;
-      status: string;
-    }>;
-    let tidyNumericDf: DataFrame<{
-      value: number;
-      date: Date;
-      score: number | null;
-    }>;
-    let tidyMixedDf: DataFrame<{
-      name: string;
-      category: string;
-      value: number;
-      active: boolean;
-    }>;
-    let tidyGroupedDf: DataFrame<{
-      group: string;
-      value: number;
-      priority: number;
-    }>;
-    let tidyPivotDf: DataFrame<{
-      id: number;
-      region: string;
-      product: string;
-      q1: number;
-      q2: number;
-      q3: number;
-      q4: number;
-    }>;
-    let df1Tidy: DataFrame<DataRow>;
-    let df2Tidy: DataFrame<DataRow>;
-    let data: DataRow[];
-
-    data = generateData(size);
+    // Generate data for benchmarks
+    const data: DataRow[] = generateData(size);
     // Generate specialized data for other operations
     const pivotData = generatePivotData(size);
     const numericData = Array.from({ length: size }, (_, i) => ({
@@ -191,17 +151,17 @@ export function runTypeScriptBenchmarks() {
 
     // Prebuild all DataFrames for consistent performance
     console.log("    - Prebuilding DataFrames...");
-    tidyDf = createDataFrame(data);
-    tidyNumericDf = createDataFrame(numericData);
-    tidyMixedDf = createDataFrame(mixedData);
-    tidyGroupedDf = createDataFrame(groupedData);
-    tidyPivotDf = createDataFrame(pivotData);
-    leftTidyDf = createDataFrame(leftData);
-    rightTidyDf = createDataFrame(rightData);
+    const tidyDf = createDataFrame(data);
+    const tidyNumericDf = createDataFrame(numericData);
+    const tidyMixedDf = createDataFrame(mixedData);
+    const tidyGroupedDf = createDataFrame(groupedData);
+    const tidyPivotDf = createDataFrame(pivotData);
+    const leftTidyDf = createDataFrame(leftData);
+    const rightTidyDf = createDataFrame(rightData);
 
     // Prebuild split dataframes for bindRows operations
-    df1Tidy = createDataFrame(data.slice(0, Math.floor(data.length / 2)));
-    df2Tidy = createDataFrame(data.slice(Math.floor(data.length / 2)));
+    const df1Tidy = createDataFrame(data.slice(0, Math.floor(data.length / 2)));
+    const df2Tidy = createDataFrame(data.slice(Math.floor(data.length / 2)));
 
     console.log("    - DataFrames prebuilt");
 

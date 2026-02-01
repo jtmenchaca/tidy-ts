@@ -161,7 +161,8 @@ function ChartTooltipContent({
     if (labelFormatter) {
       return (
         <div className={cn(labelClassName)}>
-          {labelFormatter(value, payload)}
+          {/* deno-lint-ignore no-explicit-any */}
+          {labelFormatter(value, payload as any)}
         </div>
       );
     }
@@ -209,9 +210,17 @@ function ChartTooltipContent({
                 indicator === "dot" && "items-center",
               )}
             >
+              {/* deno-lint-ignore no-explicit-any */}
               {formatter && item?.value !== undefined && item.name
                 ? (
-                  formatter(item.value, item.name, item, index, item.payload)
+                  // deno-lint-ignore no-explicit-any
+                  formatter(
+                    item.value,
+                    item.name,
+                    item as any,
+                    index,
+                    item.payload,
+                  )
                 )
                 : (
                   <>

@@ -66,7 +66,8 @@ const cleaned = messyData
 
 cleaned.print("After replaceNull/replaceUndefined:");`,
 
-  dropRowsTypeSafe: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+  dropRowsTypeSafe:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Rows with null/undefined in "score" — use removeNull/removeUndefined for type inference
 const data = createDataFrame([

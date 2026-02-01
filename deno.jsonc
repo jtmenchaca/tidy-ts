@@ -47,7 +47,11 @@
       "**/.env.production.local/**",
       "**/coverage/**",
       "**/dist/**",
-      "packages/docs/public/**"
+      "packages/docs/**",
+      "packages/testing/runtimes/public/**",
+      "packages/testing/runtimes/playwright.config.js",
+      "packages/testing/runtimes/server.js",
+      "packages/testing/runtimes/build-bundle.ts"
     ]
   },
   "exclude": [

@@ -3,7 +3,6 @@ import {
   type DataFrame,
   readCSV,
   stats,
-  str,
 } from "@tidy-ts/dataframe";
 import { z } from "zod/v4";
 
@@ -809,7 +808,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   sampleData.print();
 
   const values = sampleData.value;
-  const scores = sampleData.score;
+  const _scores = sampleData.score;
 
   console.log("\n=== Basic Descriptive Statistics ===");
   console.log("Values:", values);
@@ -1383,7 +1382,7 @@ Production async operations need concurrency control and retry mechanisms.`,
   );
 
   // Type check: bindRows preserves types
-  const FinalCombinedTypeCheck: DataFrame<{
+  const _FinalCombinedTypeCheck: DataFrame<{
     id: number;
     name: string;
     species: string;
@@ -2326,10 +2325,10 @@ Production async operations need concurrency control and retry mechanisms.`,
   // Test the new combining functionality
 
   // Test that optional properties work correctly with bindRows
-  const leiaRow = finalCombined.filter((row) => row.name === "Leia");
+  const _leiaRow = finalCombined.filter((row) => row.name === "Leia");
   const lukeRow = finalCombined.filter((row) => row.name === "Luke");
   console.log("lukeRow", lukeRow);
-  const anakinRow = finalCombined.filter((row) => row.name === "Anakin");
+  const _anakinRow = finalCombined.filter((row) => row.name === "Anakin");
 
   // Verify retries happened (2 failures per call * 3 calls = 6 retries)
   console.log(`Total retry attempts: ${retryLog.length}`);

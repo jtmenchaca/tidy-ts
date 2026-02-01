@@ -3,15 +3,12 @@
   "version": "0.1.0",
   "type": "module",
   "main": "mod.ts",
-  "exports": {
-    ".": "./mod.ts"
-  },
+  "exports": "./mod.ts",
   "license": "MIT",
   "dependencies": {
     "openai": "*",
     "@openai/agents": "*",
     "dotenv": "*",
-    "zod": "*",
-    "@std/expect": "*"
+    "zod": "*"
   }
 }

@@ -7,8 +7,8 @@
  * Run with: deno run -A scripts/generate-markdown-docs.ts
  */
 
-import { walk } from "jsr:@std/fs/walk";
-import { basename, dirname, join, relative } from "jsr:@std/path";
+import { walk } from "@std/fs/walk";
+import { basename, join, relative } from "@std/path";
 import {
   CATEGORIES,
   CATEGORY_DISPLAY_NAMES,

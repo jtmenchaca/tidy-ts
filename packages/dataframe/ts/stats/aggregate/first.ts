@@ -4,7 +4,6 @@ import type {
   NumbersWithNullable,
   NumbersWithNullableIterable,
 } from "../helpers.ts";
-import { isNA } from "../helpers.ts";
 
 // Type definitions for Date arrays
 export type CleanDateArray = readonly Date[];

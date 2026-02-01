@@ -2,7 +2,7 @@
 import { expect } from "@std/expect";
 import { test } from "@tidy-ts/shims";
 import { z } from "zod";
-import { type DataFrame } from "@tidy-ts/dataframe";
+import type { DataFrame } from "@tidy-ts/dataframe";
 import { readParquet } from "@tidy-ts/parquet";
 
 /*───────────────────────────────────────────────────────────────────────────┐

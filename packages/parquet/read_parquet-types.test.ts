@@ -1,6 +1,6 @@
 // tests/readParquet-types.test.ts
 import { z } from "zod";
-import { type DataFrame } from "@tidy-ts/dataframe";
+import type { DataFrame } from "@tidy-ts/dataframe";
 import { readParquet } from "@tidy-ts/parquet";
 import { expect } from "@std/expect";
 

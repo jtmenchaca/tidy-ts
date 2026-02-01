@@ -140,9 +140,9 @@ export const zarrow = {
   enum:
     // @ts-expect-error – runtime merging trick
     (<Vals extends [string, ...string[]]>(e: z.ZodEnum<Vals>) =>
-      // deno-lint-ignore no-explicit-any
       make<typeof e, (val: unknown) => string>((val) => toString(val))(
         e,
+        // deno-lint-ignore no-explicit-any
       )) as any,
 };
 

@@ -214,7 +214,7 @@ const df = await readCSV("${path}", schema);
  * console.log(info);
  * ```
  */
-export async function peek(
+export function peek(
   path: string,
   options: PeekXLSXOptions & PeekCSVOptions = {},
 ): Promise<string> {

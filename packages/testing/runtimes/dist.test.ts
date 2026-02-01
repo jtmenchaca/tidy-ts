@@ -1,5 +1,5 @@
 // Normal Distribution - PDF and CDF using new .data() method
-import { createDataFrame, s } from "@tidy-ts/dataframe";
+import { s } from "@tidy-ts/dataframe";
 
 // Generate PDF data using the new .data() method
 const normalPDFData = s.dist.normal.data({

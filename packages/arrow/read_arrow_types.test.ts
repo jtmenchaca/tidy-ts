@@ -1,6 +1,6 @@
 // tests/read-arrow-types.test.ts
 import { z } from "zod";
-import { type DataFrame } from "@tidy-ts/dataframe";
+import type { DataFrame } from "@tidy-ts/dataframe";
 import { readArrow } from "@tidy-ts/arrow";
 import { expect } from "@std/expect";
 import {
