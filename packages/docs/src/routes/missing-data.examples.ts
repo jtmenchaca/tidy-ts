@@ -65,4 +65,19 @@ const cleaned = messyData
   .replaceUndefined({ name: "Unknown", age: 0, score: -1 });
 
 cleaned.print("After replaceNull/replaceUndefined:");`,
+
+  dropRowsTypeSafe: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+
+// Rows with null/undefined in "score" — use removeNull/removeUndefined for type inference
+const data = createDataFrame([
+  { id: 1, name: "Alice", score: 85 },
+  { id: 2, name: "Bob", score: null },
+  { id: 3, name: "Carol", score: undefined },
+  { id: 4, name: "Dave", score: 92 },
+]);
+
+// removeNull/removeUndefined narrow types so TypeScript knows score is number
+const complete = data.removeNull("score").removeUndefined("score");
+const total = s.sum(complete.score); // type: number (not number | null)
+console.log("Sum of complete scores:", total);`,
 };

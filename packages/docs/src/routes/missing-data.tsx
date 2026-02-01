@@ -11,7 +11,7 @@ function MissingDataComponent() {
   return (
     <DocPageLayout
       title="Missing Data Handling"
-      description="How tidy-ts handles null and undefined values, including stats functions with removeNull/removeUndefined options and data replacement strategies."
+      description="Handle null and undefined with replaceNull/replaceUndefined (replace with defaults) or removeNull/removeUndefined (drop rows with type inference). Stats options and examples included."
       currentPath="/missing-data"
     >
       <CodeBlock
@@ -40,6 +40,13 @@ function MissingDataComponent() {
         description="Replace null and undefined with defaults using replaceNull and replaceUndefined"
         explanation="Chain replaceNull and replaceUndefined to replace missing values with specific defaults. Use replaceNull for null and replaceUndefined for undefined; chaining both covers all NA values."
         code={missingDataExamples.replaceWithDefaults}
+      />
+
+      <CodeBlock
+        title="Drop Rows with Missing Values (Type-Safe)"
+        description="Use removeNull and removeUndefined to drop rows and narrow types"
+        explanation="removeNull and removeUndefined drop rows where the given fields are null or undefined and automatically narrow the TypeScript type. filter() alone cannot narrow types, so downstream code (e.g. stats) gets correct inference (e.g. number instead of number | null)."
+        code={missingDataExamples.dropRowsTypeSafe}
       />
     </DocPageLayout>
   );

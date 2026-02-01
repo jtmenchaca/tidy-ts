@@ -98,7 +98,7 @@ analysis.print("Sales Analysis");
 
 ### Missing Data
 - `replaceNull()`, `replaceUndefined()` - Replace null/undefined with defaults (`replaceNA()` deprecated)
-- `removeNull()`, `removeUndefined()` - Drop rows with null/undefined
+- `removeNull()`, `removeUndefined()` - Drop rows with null/undefined; narrow types for inference (filter alone cannot)
 - `fillForward()`, `fillBackward()` - Forward/backward fill
 - `interpolate()` - Linear or spline interpolation
 

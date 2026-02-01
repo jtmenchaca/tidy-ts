@@ -7,7 +7,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     signature:
       "replaceNull(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
     description:
-      "Replace null values with fixed values in specified columns. Does not replace undefined.",
+      "Replace null values with fixed values in specified columns. Does not replace undefined. Pair with replaceUndefined to replace both; use removeNull/removeUndefined to drop rows instead (and get type narrowing).",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: ["mapping: Object mapping column names to replacement values"],
     returns: "DataFrame with nulls replaced",
@@ -19,6 +19,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     bestPractices: [
       "✓ GOOD: Only replaces null, not undefined or other falsy values",
       "✓ GOOD: Chain with replaceUndefined to replace both null and undefined",
+      "✓ GOOD: To drop rows with null/undefined instead of replacing, use removeNull/removeUndefined for type inference",
     ],
   },
 
@@ -28,7 +29,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     signature:
       "replaceUndefined(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
     description:
-      "Replace undefined values with fixed values in specified columns. Does not replace null.",
+      "Replace undefined values with fixed values in specified columns. Does not replace null. Pair with replaceNull to replace both; use removeNull/removeUndefined to drop rows instead (and get type narrowing).",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: ["mapping: Object mapping column names to replacement values"],
     returns: "DataFrame with undefined replaced",
@@ -40,6 +41,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     bestPractices: [
       "✓ GOOD: Only replaces undefined, not null or other falsy values",
       "✓ GOOD: Chain with replaceNull to replace both null and undefined",
+      "✓ GOOD: To drop rows with null/undefined instead of replacing, use removeNull/removeUndefined for type inference",
     ],
   },
 
@@ -75,7 +77,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     signature:
       "removeNull(field: keyof T, ...fields: (keyof T)[]): DataFrame<...>",
     description:
-      "Remove rows where specified field(s) are null. Automatically narrows types to exclude null.",
+      "Remove rows where specified field(s) are null. Automatically narrows the TypeScript type to exclude null from those fields. Prefer over filter() when dropping nulls: filter() cannot narrow types, so removeNull/removeUndefined give correct type inference downstream.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "field: First field to check",
@@ -84,8 +86,13 @@ export const missingDataDocs: Record<string, DocEntry> = {
     returns: "DataFrame with type narrowed to exclude null",
     examples: [
       'df.removeNull("score") // Remove rows with null score',
+      'df.removeNull("age", "name") // Remove rows with null in either field',
     ],
     related: ["removeUndefined", "replaceNull", "replaceUndefined"],
+    bestPractices: [
+      "✓ GOOD: Use removeNull/removeUndefined when dropping NA rows — types narrow so TypeScript knows fields are non-null/non-undefined",
+      "✓ GOOD: Prefer over filter(row => row.x != null) when you need type inference; filter alone does not narrow row types",
+    ],
   },
 
   removeUndefined: {
@@ -94,7 +101,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     signature:
       "removeUndefined(field: keyof T, ...fields: (keyof T)[]): DataFrame<...>",
     description:
-      "Remove rows where specified field(s) are undefined. Automatically narrows types to exclude undefined.",
+      "Remove rows where specified field(s) are undefined. Automatically narrows the TypeScript type to exclude undefined from those fields. Prefer over filter() when dropping undefined: filter() cannot narrow types, so removeNull/removeUndefined give correct type inference downstream.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "field: First field to check",
@@ -103,8 +110,13 @@ export const missingDataDocs: Record<string, DocEntry> = {
     returns: "DataFrame with type narrowed to exclude undefined",
     examples: [
       'df.removeUndefined("email") // Remove rows with undefined email',
+      'df.removeUndefined("age", "name") // Remove rows with undefined in either field',
     ],
-    related: ["removeNull", "replaceNA"],
+    related: ["removeNull", "replaceNull", "replaceUndefined"],
+    bestPractices: [
+      "✓ GOOD: Use removeNull/removeUndefined when dropping NA rows — types narrow so TypeScript knows fields are non-null/non-undefined",
+      "✓ GOOD: Prefer over filter(row => row.x !== undefined) when you need type inference; filter alone does not narrow row types",
+    ],
   },
 
   fillForward: {
