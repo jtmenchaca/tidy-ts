@@ -3,10 +3,26 @@ FROM rocker/r-ver:latest
 # Install R packages
 RUN Rscript -e "install.packages(c('jsonlite', 'geepack', 'dplyr', 'tidyr', 'nortest', 'moments', 'fBasics', 'effsize'), repos='https://cloud.r-project.org/', Ncpus=2)"
 
-# Install system dependencies
+# Install system dependencies and Playwright browser dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     unzip \
+    # Playwright Chromium dependencies
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js 22
