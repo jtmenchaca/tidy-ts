@@ -57,7 +57,11 @@ import type {
 } from "../../verbs/selection/extract.types.ts";
 import type { ExtractNthWhereSortedMethod } from "../../verbs/selection/extract-nth-where-sorted.types.ts";
 import type { BindRowsMethod } from "../../verbs/reshape/bind-rows.types.ts";
-import type { ReplaceNaMethod } from "../../verbs/missing-data/replace-na.types.ts";
+import type {
+  ReplaceNaMethod,
+  ReplaceNullMethod,
+  ReplaceUndefinedMethod,
+} from "../../verbs/missing-data/replace-na.types.ts";
 import type { FillForwardMethod } from "../../verbs/missing-data/fill-forward.types.ts";
 import type { FillBackwardMethod } from "../../verbs/missing-data/fill-backward.types.ts";
 import type { InterpolateMethod } from "../../verbs/missing-data/interpolate.types.ts";
@@ -214,6 +218,10 @@ export type DataFrame<Row extends object = object> =
     upsample: UpsampleMethod<Row>;
 
     // ---------- Missing Data ----------
+    replaceNull: ReplaceNullMethod<Row>;
+    replaceUndefined: ReplaceUndefinedMethod<Row>;
+
+    /** @deprecated Use replaceNull and replaceUndefined instead. */
     replaceNA: ReplaceNaMethod<Row>;
 
     fillForward: FillForwardMethod<Row>;
@@ -222,6 +230,7 @@ export type DataFrame<Row extends object = object> =
 
     interpolate: InterpolateMethod<Row>;
 
+    /** @deprecated Use removeNull and removeUndefined, or filter, instead. */
     removeNA: {
       <Field extends keyof Row>(
         field: Field,

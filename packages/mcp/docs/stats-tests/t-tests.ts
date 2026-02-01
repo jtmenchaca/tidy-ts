@@ -7,7 +7,7 @@ export const tTestDocs: Record<string, DocEntry> = {
     description: "One-sample t-test to compare a sample mean to a known value.",
     signature:
       "s.test.t.oneSample({ data, mu?, alternative?, alpha? }): OneSampleTTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values",
       "`mu?: number` - Hypothesized population mean (default: 0)",
@@ -17,7 +17,7 @@ export const tTestDocs: Record<string, DocEntry> = {
     returns:
       "OneSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [2.3, 2.5, 2.1, 2.4, 2.2];",
       "const result = s.test.t.oneSample({ data, mu: 2.0 });",
       "console.log(result.pValue);  // p-value",
@@ -47,7 +47,7 @@ export const tTestDocs: Record<string, DocEntry> = {
       "Independent two-sample t-test to compare means of two unrelated groups.",
     signature:
       "s.test.t.independent({ x, y, equalVar?, alternative?, alpha? }): TwoSampleTTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First group of values",
       "`y: number[]` - Second group of values",
@@ -58,7 +58,7 @@ export const tTestDocs: Record<string, DocEntry> = {
     returns:
       "TwoSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const control = [5.2, 4.8, 5.1, 4.9, 5.0];",
       "const treatment = [6.1, 5.9, 6.3, 6.0, 6.2];",
       "const result = s.test.t.independent({ x: control, y: treatment });",
@@ -90,7 +90,7 @@ export const tTestDocs: Record<string, DocEntry> = {
       "Paired t-test to compare means of two related samples (before/after, matched pairs).",
     signature:
       "s.test.t.paired({ x, y, alternative?, alpha? }): PairedTTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First measurement (e.g., before treatment)",
       "`y: number[]` - Second measurement (e.g., after treatment)",
@@ -100,7 +100,7 @@ export const tTestDocs: Record<string, DocEntry> = {
     returns:
       "PairedTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const before = [120, 125, 118, 130, 122];",
       "const after = [115, 118, 112, 125, 117];",
       "const result = s.test.t.paired({ x: before, y: after });",

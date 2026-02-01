@@ -1,13 +1,55 @@
 import type { DocEntry } from "../mcp-types.ts";
 
 export const missingDataDocs: Record<string, DocEntry> = {
+  replaceNull: {
+    name: "replaceNull",
+    category: "dataframe",
+    signature:
+      "replaceNull(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
+    description:
+      "Replace null values with fixed values in specified columns. Does not replace undefined.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: ["mapping: Object mapping column names to replacement values"],
+    returns: "DataFrame with nulls replaced",
+    examples: [
+      'df.replaceNull({ name: "Unknown", age: 0 })',
+      "df.replaceNull({ score: -1 }) // Only replace null in score",
+    ],
+    related: ["replaceUndefined", "removeNull", "removeUndefined"],
+    bestPractices: [
+      "✓ GOOD: Only replaces null, not undefined or other falsy values",
+      "✓ GOOD: Chain with replaceUndefined to replace both null and undefined",
+    ],
+  },
+
+  replaceUndefined: {
+    name: "replaceUndefined",
+    category: "dataframe",
+    signature:
+      "replaceUndefined(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
+    description:
+      "Replace undefined values with fixed values in specified columns. Does not replace null.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: ["mapping: Object mapping column names to replacement values"],
+    returns: "DataFrame with undefined replaced",
+    examples: [
+      'df.replaceUndefined({ name: "Unknown", age: 0 })',
+      "df.replaceUndefined({ email: '' }) // Only replace undefined in email",
+    ],
+    related: ["replaceNull", "removeNull", "removeUndefined"],
+    bestPractices: [
+      "✓ GOOD: Only replaces undefined, not null or other falsy values",
+      "✓ GOOD: Chain with replaceNull to replace both null and undefined",
+    ],
+  },
+
   replaceNA: {
     name: "replaceNA",
     category: "dataframe",
     signature:
       "replaceNA(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
     description:
-      "Replace null/undefined values with fixed values in specified columns.",
+      "Replace null/undefined values with fixed values in specified columns. Deprecated: use replaceNull and replaceUndefined instead.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: ["mapping: Object mapping column names to replacement values"],
     returns: "DataFrame with replaced values",
@@ -15,34 +57,15 @@ export const missingDataDocs: Record<string, DocEntry> = {
       'df.replaceNA({ name: "Unknown", age: 0, score: -1 })',
       "df.replaceNA({ salary: 0 }) // Only replace salary nulls",
     ],
-    related: ["removeNA", "removeNull", "removeUndefined"],
+    related: [
+      "replaceNull",
+      "replaceUndefined",
+      "removeNull",
+      "removeUndefined",
+    ],
     bestPractices: [
+      "✓ GOOD: Prefer replaceNull and replaceUndefined for explicit control",
       "✓ GOOD: Only replaces null and undefined, not other falsy values like 0 or ''",
-      "✓ GOOD: Can specify different replacements for different columns",
-    ],
-  },
-
-  removeNA: {
-    name: "removeNA",
-    category: "dataframe",
-    signature:
-      "removeNA(field: keyof T, ...fields: (keyof T)[]): DataFrame<...>",
-    description:
-      "Remove rows where specified field(s) are null or undefined. Automatically narrows types.",
-    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
-    parameters: [
-      "field: First field to check",
-      "...fields: Additional fields to check (all must be non-null)",
-    ],
-    returns: "DataFrame with narrowed types excluding null/undefined",
-    examples: [
-      'df.removeNA("age") // Remove rows with null/undefined age',
-      'df.removeNA("age", "name") // Remove rows with null/undefined in either field',
-    ],
-    related: ["removeNull", "removeUndefined", "replaceNA", "filter"],
-    bestPractices: [
-      "✓ GOOD: Type-safe - automatically narrows the type to exclude null/undefined",
-      "✓ GOOD: Can check multiple fields at once",
     ],
   },
 
@@ -62,7 +85,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     examples: [
       'df.removeNull("score") // Remove rows with null score',
     ],
-    related: ["removeNA", "removeUndefined", "replaceNA"],
+    related: ["removeUndefined", "replaceNull", "replaceUndefined"],
   },
 
   removeUndefined: {
@@ -81,7 +104,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     examples: [
       'df.removeUndefined("email") // Remove rows with undefined email',
     ],
-    related: ["removeNA", "removeNull", "replaceNA"],
+    related: ["removeNull", "replaceNA"],
   },
 
   fillForward: {
@@ -101,7 +124,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
       '// Forward fill multiple columns\ndf.fillForward("price", "volume")',
       '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: 100 },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: null },\n  { timestamp: new Date("2023-01-04"), price: 110 },\n]);\ntimeSeries.fillForward("price")',
     ],
-    related: ["fillBackward", "replaceNA", "removeNA"],
+    related: ["fillBackward", "replaceNull", "replaceUndefined"],
     bestPractices: [
       "✓ GOOD: Use for time-series data where you want to carry forward the last known value",
       "✓ GOOD: Only fills null and undefined values - other values remain unchanged",
@@ -130,7 +153,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
       '// Backward fill multiple columns\ndf.fillBackward("price", "volume")',
       '// Common use case: time series with missing values\nconst timeSeries = createDataFrame([\n  { timestamp: new Date("2023-01-01"), price: null },\n  { timestamp: new Date("2023-01-02"), price: null },\n  { timestamp: new Date("2023-01-03"), price: 100 },\n  { timestamp: new Date("2023-01-04"), price: null },\n]);\ntimeSeries.fillBackward("price")',
     ],
-    related: ["fillForward", "replaceNA", "removeNA"],
+    related: ["fillForward", "replaceNull", "replaceUndefined"],
     bestPractices: [
       "✓ GOOD: Use when you want to fill missing values from future observations",
       "✓ GOOD: Only fills null and undefined values - other values remain unchanged",

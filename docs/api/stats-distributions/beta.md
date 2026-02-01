@@ -25,7 +25,7 @@ s.dist.beta.density({ at, alpha, beta, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -72,7 +72,7 @@ s.dist.beta.probability({ at, alpha, beta, direction?, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -118,7 +118,7 @@ s.dist.beta.quantile({ probability, alpha, beta, direction?, probabilityIsLog? }
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -165,7 +165,7 @@ s.dist.beta.random({ alpha, beta, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -210,7 +210,7 @@ s.dist.beta.data({ alpha, beta, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

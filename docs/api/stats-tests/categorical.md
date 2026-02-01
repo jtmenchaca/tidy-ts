@@ -22,7 +22,7 @@ s.test.categorical.chiSquare({ contingencyTable, alpha? }): ChiSquareIndependenc
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -40,7 +40,7 @@ ChiSquareIndependenceTestResult with `testStatistic`, `pValue`, `degreesOfFreedo
 // Example: 2x2 contingency table
 // Rows: Treatment vs Control
 // Columns: Success vs Failure
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const table = [
   [20, 10],  // Treatment: 20 success, 10 failure
   [15, 15]   // Control: 15 success, 15 failure
@@ -81,7 +81,7 @@ s.test.categorical.fishersExact({ contingencyTable, alternative?, oddsRatio?, al
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -99,7 +99,7 @@ FishersExactTestResult with `pValue`, `testStatistic`, `confidenceInterval`, `mi
 
 ```typescript
 // Example: 2x2 contingency table
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const table = [
   [8, 2],   // Group 1: 8 success, 2 failure
   [3, 7]    // Group 2: 3 success, 7 failure

@@ -25,7 +25,7 @@ s.test.normality.shapiroWilk({ data, alpha? }): ShapiroWilkTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -40,7 +40,7 @@ ShapiroWilkTestResult with `testStatistic`, `pValue`, `rejectNull`
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2];
 const result = s.test.normality.shapiroWilk({ data });
 console.log(result.pValue);  // p-value
@@ -85,7 +85,7 @@ s.test.normality.andersonDarling({ data, alpha? }): AndersonDarlingTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -100,7 +100,7 @@ AndersonDarlingTestResult with `testStatistic` (A²), `pValue`, `rejectNull`
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2, 9.1];
 const result = s.test.normality.andersonDarling({ data });
 console.log(result.pValue);
@@ -139,7 +139,7 @@ s.test.normality.dagostinoPearson({ data, alpha? }): DAgostinoPearsonTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -154,7 +154,7 @@ DAgostinoPearsonTestResult with `testStatistic` (K²), `pValue`, `rejectNull`, `
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = Array.from({length: 50}, () => Math.random() * 10);
 const result = s.test.normality.dagostinoPearson({ data });
 console.log(`Skewness: ${result.skewness.toFixed(3)}`);
@@ -194,7 +194,7 @@ s.test.normality.kolmogorovSmirnovUniform({ x, min?, max?, alternative?, alpha? 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -212,7 +212,7 @@ KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `c
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 // Test if data follows uniform distribution on [0, 1]
 const data = [0.1, 0.3, 0.5, 0.7, 0.9];
 const result = s.test.normality.kolmogorovSmirnovUniform({ x: data });
@@ -251,7 +251,7 @@ s.test.normality.kolmogorovSmirnovTwoSample({ x, y, alternative?, alpha? }): Kol
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -268,7 +268,7 @@ KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `c
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const sample1 = [1.2, 2.3, 3.4, 4.5, 5.6];
 const sample2 = [1.5, 2.5, 3.5, 4.5, 5.5];
 const result = s.test.normality.kolmogorovSmirnovTwoSample({ x: sample1, y: sample2 });

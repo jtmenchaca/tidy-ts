@@ -8,7 +8,7 @@ export const negativeBinomialDocs: Record<string, DocEntry> = {
       "Negative binomial distribution probability mass function (PMF). Models the number of failures before achieving r successes in independent Bernoulli trials.",
     signature:
       "s.dist.negativeBinomial.density({ at, numberOfSuccesses, probabilityOfSuccess, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (number of failures, must be non-negative integer)",
       "`numberOfSuccesses: number` - Number of successes required (r > 0)",
@@ -41,7 +41,7 @@ export const negativeBinomialDocs: Record<string, DocEntry> = {
       "Negative binomial distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.negativeBinomial.probability({ at, numberOfSuccesses, probabilityOfSuccess, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (number of failures)",
       "`numberOfSuccesses: number` - Number of successes required",
@@ -72,7 +72,7 @@ export const negativeBinomialDocs: Record<string, DocEntry> = {
       "Negative binomial distribution quantile function (inverse CDF). Returns the smallest integer k such that P(X ≤ k) ≥ probability.",
     signature:
       "s.dist.negativeBinomial.quantile({ probability, numberOfSuccesses, probabilityOfSuccess, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`numberOfSuccesses: number` - Number of successes required",
@@ -103,7 +103,7 @@ export const negativeBinomialDocs: Record<string, DocEntry> = {
       "Generate random samples from negative binomial distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.negativeBinomial.random({ numberOfSuccesses, probabilityOfSuccess, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`numberOfSuccesses: number` - Number of successes required",
       "`probabilityOfSuccess: number` - Probability of success on each trial",

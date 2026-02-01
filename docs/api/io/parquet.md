@@ -22,7 +22,7 @@ readParquet<T>(pathOrBuffer: string | ArrayBuffer, schema: ZodSchema<T>, opts?: 
 ### Import
 
 ```typescript
-import { readParquet } from "@tidy-ts/dataframe";
+import { readParquet } from "@tidy-ts/parquet";
 ```
 
 ### Parameters
@@ -78,7 +78,7 @@ writeParquet<T>(df: DataFrame<T>, path: string): DataFrame<T>
 ### Import
 
 ```typescript
-import { writeParquet } from "@tidy-ts/dataframe/ts/io";
+import { writeParquet } from "@tidy-ts/parquet";
 ```
 
 ### Parameters
@@ -94,7 +94,7 @@ DataFrame<T> - Original DataFrame for chaining
 
 ```typescript
 // Write to Parquet file
-import { writeParquet } from "@tidy-ts/dataframe/ts/io";
+import { writeParquet } from "@tidy-ts/parquet";
 
 const df = createDataFrame([
   { id: 1, name: "Alice", age: 30 },

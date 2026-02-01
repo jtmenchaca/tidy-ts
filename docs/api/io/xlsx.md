@@ -1,4 +1,4 @@
-# Xlsx
+# XLSX
 
 > Auto-generated from tidy-ts MCP documentation
 

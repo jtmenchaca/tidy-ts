@@ -7,7 +7,7 @@ export const gammaDocs: Record<string, DocEntry> = {
     description:
       "Gamma distribution density function (PDF). Used for modeling waiting times and positive continuous data.",
     signature: "s.dist.gamma.density({ at, shape, rate?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be > 0)",
       "`shape: number` - Shape parameter (α > 0)",
@@ -40,7 +40,7 @@ export const gammaDocs: Record<string, DocEntry> = {
       "Gamma distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.gamma.probability({ at, shape, rate?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`shape: number` - Shape parameter (α > 0)",
@@ -71,7 +71,7 @@ export const gammaDocs: Record<string, DocEntry> = {
       "Gamma distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.gamma.quantile({ probability, shape, rate?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`shape: number` - Shape parameter (α > 0)",
@@ -102,7 +102,7 @@ export const gammaDocs: Record<string, DocEntry> = {
       "Generate random samples from gamma distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.gamma.random({ shape, rate?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`shape: number` - Shape parameter (α > 0)",
       "`rate?: number` - Rate parameter (β > 0, default: 1)",
@@ -131,7 +131,7 @@ export const gammaDocs: Record<string, DocEntry> = {
       "Generate data for gamma distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.gamma.data({ shape, rate, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`shape: number` - Shape parameter",
       "`rate: number` - Rate parameter",

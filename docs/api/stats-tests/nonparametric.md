@@ -23,7 +23,7 @@ s.test.nonparametric.mannWhitney({ x, y, exact?, continuityCorrection?, alternat
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -42,7 +42,7 @@ MannWhitneyTestResult with `testStatistic`, `pValue`, `rejectNull`
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
 const result = s.test.nonparametric.mannWhitney({ x: group1, y: group2 });
@@ -81,7 +81,7 @@ s.test.nonparametric.wilcoxon({ x, y, alternative?, alpha? }): WilcoxonSignedRan
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -98,7 +98,7 @@ WilcoxonSignedRankTestResult with `testStatistic`, `pValue`, `rejectNull`
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const before = [120, 125, 118, 130, 122];
 const after = [115, 118, 112, 125, 117];
 const result = s.test.nonparametric.wilcoxon({ x: before, y: after });
@@ -137,7 +137,7 @@ s.test.nonparametric.kruskalWallis(groups: number[][], alpha?: number): KruskalW
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -152,7 +152,7 @@ KruskalWallisTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rej
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
 const group3 = [20, 21, 19, 22, 20];

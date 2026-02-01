@@ -8,7 +8,7 @@ export const normalDocs: Record<string, DocEntry> = {
       "Normal distribution density function (PDF). Returns the probability density at a given point.",
     signature:
       "s.dist.normal.density({ at, mean?, standardDeviation?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated",
       "`mean?: number` - Mean of the distribution (default: 0)",
@@ -39,7 +39,7 @@ export const normalDocs: Record<string, DocEntry> = {
       "Normal distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.normal.probability({ at, mean?, standardDeviation?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`mean?: number` - Mean of the distribution (default: 0)",
@@ -72,7 +72,7 @@ export const normalDocs: Record<string, DocEntry> = {
       "Normal distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.normal.quantile({ probability, mean?, standardDeviation?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`mean?: number` - Mean of the distribution (default: 0)",
@@ -107,7 +107,7 @@ export const normalDocs: Record<string, DocEntry> = {
       "Generate random samples from a normal distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.normal.random({ mean?, standardDeviation?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`mean?: number` - Mean of the distribution (default: 0)",
       "`standardDeviation?: number` - Standard deviation (default: 1)",
@@ -139,7 +139,7 @@ export const normalDocs: Record<string, DocEntry> = {
       "Generate data for normal distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.normal.data({ mean, standardDeviation, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`mean: number` - Mean of the distribution",
       "`standardDeviation: number` - Standard deviation",

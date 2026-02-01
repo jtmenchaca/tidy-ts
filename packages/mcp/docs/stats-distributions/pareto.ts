@@ -8,7 +8,7 @@ export const paretoDocs: Record<string, DocEntry> = {
       "Pareto distribution density function (PDF). Used for modeling heavy-tailed distributions (e.g., income, city sizes).",
     signature:
       "s.dist.pareto.density({ at, scale, shape, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be ≥ scale)",
       "`scale: number` - Scale parameter (xm > 0), minimum possible value",
@@ -40,7 +40,7 @@ export const paretoDocs: Record<string, DocEntry> = {
       "Pareto distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.pareto.probability({ at, scale, shape, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`scale: number` - Scale parameter (xm > 0)",
@@ -72,7 +72,7 @@ export const paretoDocs: Record<string, DocEntry> = {
       "Pareto distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.pareto.quantile({ probability, scale, shape, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`scale: number` - Scale parameter (xm > 0)",
@@ -103,7 +103,7 @@ export const paretoDocs: Record<string, DocEntry> = {
       "Generate random samples from Pareto distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.pareto.random({ scale, shape, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`scale: number` - Scale parameter (xm > 0)",
       "`shape: number` - Shape parameter (α > 0)",
@@ -132,7 +132,7 @@ export const paretoDocs: Record<string, DocEntry> = {
       "Generate data for Pareto distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.pareto.data({ scale, shape, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`scale: number` - Scale parameter",
       "`shape: number` - Shape parameter",

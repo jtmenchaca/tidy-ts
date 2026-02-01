@@ -8,7 +8,7 @@ export const uniformDocs: Record<string, DocEntry> = {
       "Uniform distribution density function (PDF). Constant probability over an interval.",
     signature:
       "s.dist.uniform.density({ at, minimum?, maximum?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated",
       "`minimum?: number` - Lower bound (default: 0)",
@@ -42,7 +42,7 @@ export const uniformDocs: Record<string, DocEntry> = {
       "Uniform distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.uniform.probability({ at, minimum?, maximum?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`minimum?: number` - Lower bound (default: 0)",
@@ -73,7 +73,7 @@ export const uniformDocs: Record<string, DocEntry> = {
       "Uniform distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.uniform.quantile({ probability, minimum?, maximum?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`minimum?: number` - Lower bound (default: 0)",
@@ -106,7 +106,7 @@ export const uniformDocs: Record<string, DocEntry> = {
       "Generate random samples from uniform distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.uniform.random({ minimum?, maximum?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`minimum?: number` - Lower bound (default: 0)",
       "`maximum?: number` - Upper bound (default: 1)",
@@ -137,7 +137,7 @@ export const uniformDocs: Record<string, DocEntry> = {
       "Generate data for uniform distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.uniform.data({ minimum, maximum, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`minimum: number` - Lower bound",
       "`maximum: number` - Upper bound",

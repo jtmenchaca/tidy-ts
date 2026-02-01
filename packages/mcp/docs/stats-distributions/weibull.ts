@@ -8,7 +8,7 @@ export const weibullDocs: Record<string, DocEntry> = {
       "Weibull distribution density function (PDF). Used for modeling failure times and reliability analysis.",
     signature:
       "s.dist.weibull.density({ at, shape, scale?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be ≥ 0)",
       "`shape: number` - Shape parameter (k > 0). Controls the distribution shape",
@@ -42,7 +42,7 @@ export const weibullDocs: Record<string, DocEntry> = {
       "Weibull distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.weibull.probability({ at, shape, scale?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`shape: number` - Shape parameter (k > 0)",
@@ -75,7 +75,7 @@ export const weibullDocs: Record<string, DocEntry> = {
       "Weibull distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.weibull.quantile({ probability, shape, scale?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`shape: number` - Shape parameter (k > 0)",
@@ -106,7 +106,7 @@ export const weibullDocs: Record<string, DocEntry> = {
       "Generate random samples from Weibull distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.weibull.random({ shape, scale?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`shape: number` - Shape parameter (k > 0)",
       "`scale?: number` - Scale parameter (λ > 0, default: 1)",
@@ -135,7 +135,7 @@ export const weibullDocs: Record<string, DocEntry> = {
       "Generate data for Weibull distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.weibull.data({ shape, scale, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`shape: number` - Shape parameter",
       "`scale: number` - Scale parameter",

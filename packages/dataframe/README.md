@@ -97,7 +97,8 @@ analysis.print("Sales Analysis");
 - `bindRows()` - Concatenate DataFrames
 
 ### Missing Data
-- `replaceNA()`, `removeNA()` - Handle missing values
+- `replaceNull()`, `replaceUndefined()` - Replace null/undefined with defaults (`replaceNA()` deprecated)
+- `removeNull()`, `removeUndefined()` - Drop rows with null/undefined
 - `fillForward()`, `fillBackward()` - Forward/backward fill
 - `interpolate()` - Linear or spline interpolation
 

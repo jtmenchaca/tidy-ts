@@ -23,7 +23,7 @@ s.test.t.oneSample({ data, mu?, alternative?, alpha? }): OneSampleTTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -40,7 +40,7 @@ OneSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confid
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [2.3, 2.5, 2.1, 2.4, 2.2];
 const result = s.test.t.oneSample({ data, mu: 2.0 });
 console.log(result.pValue);  // p-value
@@ -77,7 +77,7 @@ s.test.t.independent({ x, y, equalVar?, alternative?, alpha? }): TwoSampleTTestR
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -95,7 +95,7 @@ TwoSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confid
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const control = [5.2, 4.8, 5.1, 4.9, 5.0];
 const treatment = [6.1, 5.9, 6.3, 6.0, 6.2];
 const result = s.test.t.independent({ x: control, y: treatment });
@@ -134,7 +134,7 @@ s.test.t.paired({ x, y, alternative?, alpha? }): PairedTTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -151,7 +151,7 @@ PairedTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenc
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const before = [120, 125, 118, 130, 122];
 const after = [115, 118, 112, 125, 117];
 const result = s.test.t.paired({ x: before, y: after });

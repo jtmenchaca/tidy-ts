@@ -25,7 +25,7 @@ s.dist.weibull.density({ at, shape, scale?, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -73,7 +73,7 @@ s.dist.weibull.probability({ at, shape, scale?, direction?, returnLog? }): numbe
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -121,7 +121,7 @@ s.dist.weibull.quantile({ probability, shape, scale?, direction?, probabilityIsL
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -167,7 +167,7 @@ s.dist.weibull.random({ shape, scale?, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -211,7 +211,7 @@ s.dist.weibull.data({ shape, scale, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

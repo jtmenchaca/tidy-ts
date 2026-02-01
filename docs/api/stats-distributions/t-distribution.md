@@ -25,7 +25,7 @@ s.dist.t.density({ at, degreesOfFreedom, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -69,7 +69,7 @@ s.dist.t.probability({ at, degreesOfFreedom, direction?, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -114,7 +114,7 @@ s.dist.t.quantile({ probability, degreesOfFreedom, direction?, probabilityIsLog?
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -161,7 +161,7 @@ s.dist.t.random({ degreesOfFreedom, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -204,7 +204,7 @@ s.dist.t.data({ degreesOfFreedom, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

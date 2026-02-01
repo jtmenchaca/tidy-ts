@@ -116,11 +116,17 @@ function generateTopicMarkdown(
 ): string {
   const lines: string[] = [];
 
-  // Title from topic name (e.g., "t-tests" → "T-Tests")
-  const title = topicName
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  // Title from topic name (e.g., "t-tests" → "T-Tests", "csv" → "CSV")
+  const titleOverrides: Record<string, string> = {
+    csv: "CSV",
+    json: "JSON",
+    xlsx: "XLSX",
+  };
+  const title = titleOverrides[topicName] ??
+    topicName
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
 
   lines.push(`# ${title}`);
   lines.push("");
@@ -132,9 +138,11 @@ function generateTopicMarkdown(
     lines.push("## Table of Contents");
     lines.push("");
     entries.forEach((doc) => {
-      lines.push(
-        `- [${doc.name}](#${doc.name.toLowerCase().replace(/\./g, "")})`,
+      const anchor = doc.name.toLowerCase().replace(/\./g, "").replace(
+        /\s+/g,
+        "-",
       );
+      lines.push(`- [${doc.name}](#${anchor})`);
     });
     lines.push("");
     lines.push("---");
@@ -169,9 +177,11 @@ function generateCategoryMarkdown(
   keys.forEach((key) => {
     const doc = DOCS[key];
     if (doc) {
-      lines.push(
-        `- [${doc.name}](#${doc.name.toLowerCase().replace(/\./g, "")})`,
+      const anchor = doc.name.toLowerCase().replace(/\./g, "").replace(
+        /\s+/g,
+        "-",
       );
+      lines.push(`- [${doc.name}](#${anchor})`);
     }
   });
   lines.push("");
@@ -353,12 +363,19 @@ async function main() {
       indexLines.push("> Auto-generated index");
       indexLines.push("");
 
+      // Display name overrides for acronyms (e.g. csv → CSV)
+      const displayOverrides: Record<string, string> = {
+        csv: "CSV",
+        json: "JSON",
+        xlsx: "XLSX",
+      };
       mdFiles.sort().forEach((file) => {
         const name = basename(file, ".md");
-        const title = name
-          .split("-")
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(" ");
+        const title = displayOverrides[name] ??
+          name
+            .split("-")
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(" ");
         indexLines.push(`- [${title}](./${file})`);
       });
       indexLines.push("");
@@ -416,11 +433,15 @@ async function main() {
   }
 
   indexLines.push("");
+  indexLines.push("## Additional");
+  indexLines.push("");
+  indexLines.push("- [Benchmark results](./api/benchmark-results.md)");
+  indexLines.push("");
   indexLines.push("## Quick Start");
   indexLines.push("");
   indexLines.push("```typescript");
   indexLines.push(
-    'import { createDataFrame, s } from "@tidy-ts/dataframe";',
+    'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
   );
   indexLines.push("");
   indexLines.push("const df = createDataFrame([");

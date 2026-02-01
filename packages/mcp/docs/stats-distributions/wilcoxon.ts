@@ -8,7 +8,7 @@ export const wilcoxonDocs: Record<string, DocEntry> = {
       "Wilcoxon rank-sum distribution density function (PMF). Used for the distribution of the Wilcoxon rank-sum test statistic.",
     signature:
       "s.dist.wilcoxon.density({ at, sizeFirstSample, sizeSecondSample, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (Wilcoxon rank-sum statistic, must be integer)",
       "`sizeFirstSample: number` - Size of first sample (m)",
@@ -41,7 +41,7 @@ export const wilcoxonDocs: Record<string, DocEntry> = {
       "Wilcoxon rank-sum distribution cumulative distribution function (CDF). Returns P(W ≤ at) or P(W > at).",
     signature:
       "s.dist.wilcoxon.probability({ at, sizeFirstSample, sizeSecondSample, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (Wilcoxon rank-sum statistic)",
       "`sizeFirstSample: number` - Size of first sample",
@@ -73,7 +73,7 @@ export const wilcoxonDocs: Record<string, DocEntry> = {
       "Wilcoxon rank-sum distribution quantile function (inverse CDF). Returns the smallest integer k such that P(W ≤ k) ≥ probability.",
     signature:
       "s.dist.wilcoxon.quantile({ probability, sizeFirstSample, sizeSecondSample, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`sizeFirstSample: number` - Size of first sample",
@@ -104,7 +104,7 @@ export const wilcoxonDocs: Record<string, DocEntry> = {
       "Generate random samples from Wilcoxon rank-sum distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.wilcoxon.random({ sizeFirstSample, sizeSecondSample, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`sizeFirstSample: number` - Size of first sample",
       "`sizeSecondSample: number` - Size of second sample",

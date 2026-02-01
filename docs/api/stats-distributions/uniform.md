@@ -25,7 +25,7 @@ s.dist.uniform.density({ at, minimum?, maximum?, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -73,7 +73,7 @@ s.dist.uniform.probability({ at, minimum?, maximum?, direction?, returnLog? }): 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -119,7 +119,7 @@ s.dist.uniform.quantile({ probability, minimum?, maximum?, direction?, probabili
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -167,7 +167,7 @@ s.dist.uniform.random({ minimum?, maximum?, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -213,7 +213,7 @@ s.dist.uniform.data({ minimum, maximum, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

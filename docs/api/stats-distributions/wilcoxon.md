@@ -24,7 +24,7 @@ s.dist.wilcoxon.density({ at, sizeFirstSample, sizeSecondSample, returnLog? }): 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -71,7 +71,7 @@ s.dist.wilcoxon.probability({ at, sizeFirstSample, sizeSecondSample, direction?,
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -117,7 +117,7 @@ s.dist.wilcoxon.quantile({ probability, sizeFirstSample, sizeSecondSample, direc
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -163,7 +163,7 @@ s.dist.wilcoxon.random({ sizeFirstSample, sizeSecondSample, sampleSize? }): numb
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

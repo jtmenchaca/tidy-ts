@@ -24,7 +24,7 @@ s.dist.geometric.density({ at, probabilityOfSuccess, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -70,7 +70,7 @@ s.dist.geometric.probability({ at, probabilityOfSuccess, direction?, returnLog? 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -116,7 +116,7 @@ s.dist.geometric.quantile({ probability, probabilityOfSuccess, direction?, proba
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -161,7 +161,7 @@ s.dist.geometric.random({ probabilityOfSuccess, sampleSize? }): number | number[
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

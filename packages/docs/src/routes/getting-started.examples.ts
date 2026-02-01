@@ -1,8 +1,7 @@
 // Code examples for getting started
 export const gettingStartedExamples = {
   quickTutorial:
-    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";  
-// import { createDataFrame, s } from "@tidy-ts/dataframe" works as well
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Create DataFrame from rows
 const sales = createDataFrame([

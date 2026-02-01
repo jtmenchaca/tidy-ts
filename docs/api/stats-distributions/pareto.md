@@ -25,7 +25,7 @@ s.dist.pareto.density({ at, scale, shape, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -72,7 +72,7 @@ s.dist.pareto.probability({ at, scale, shape, direction?, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -119,7 +119,7 @@ s.dist.pareto.quantile({ probability, scale, shape, direction?, probabilityIsLog
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -165,7 +165,7 @@ s.dist.pareto.random({ scale, shape, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -209,7 +209,7 @@ s.dist.pareto.data({ scale, shape, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

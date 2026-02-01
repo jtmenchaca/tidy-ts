@@ -23,7 +23,7 @@ s.compare.oneGroup.centralTendency.toValue({ data, hypothesizedValue, comparator
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -98,7 +98,7 @@ s.compare.oneGroup.proportions.toValue({ data, hypothesizedProportion, comparato
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -163,7 +163,7 @@ s.compare.oneGroup.distribution.toNormal({ data, alpha? }): ShapiroWilkTestResul
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

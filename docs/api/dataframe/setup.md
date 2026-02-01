@@ -5,7 +5,7 @@
 ## Table of Contents
 
 - [setupTidyTS](#setuptidyts)
-- [DataFrame Architecture](#dataframe architecture)
+- [DataFrame Architecture](#dataframe-architecture)
 
 ---
 
@@ -22,7 +22,7 @@ setupTidyTS(url?: string | URL): Promise<void>
 ### Import
 
 ```typescript
-import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";
+import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -37,7 +37,7 @@ Promise<void> - Resolves when the WASM module is compiled and ready
 
 ```typescript
 // BROWSER SETUP - Call once before using stats functions
-import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";
+import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Initialize WASM (required in browsers, no-op elsewhere)
 await setupTidyTS();
@@ -55,7 +55,7 @@ const meanValue = s.mean(df.x);
 </head>
 <body>
   <script type="module">
-    import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";
+    import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
     async function main() {
       // Required: Initialize WASM before using stats
@@ -76,7 +76,7 @@ const meanValue = s.mean(df.x);
 </html>
 // REACT/VITE EXAMPLE - Setup in app initialization
 import { useEffect, useState } from "react";
-import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";
+import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 function App() {
   const [ready, setReady] = useState(false);
@@ -137,7 +137,7 @@ Columnar Storage + BitSet Masks + Copy-on-Write + WASM
 ### Import
 
 ```typescript
-import { createDataFrame, s } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Returns

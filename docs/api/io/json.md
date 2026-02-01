@@ -1,4 +1,4 @@
-# Json
+# JSON
 
 > Auto-generated from tidy-ts MCP documentation
 

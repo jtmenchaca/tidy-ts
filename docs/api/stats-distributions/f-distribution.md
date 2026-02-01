@@ -24,7 +24,7 @@ s.dist.f.density({ at, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, r
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -69,7 +69,7 @@ s.dist.f.probability({ at, numeratorDegreesOfFreedom, denominatorDegreesOfFreedo
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -115,7 +115,7 @@ s.dist.f.quantile({ probability, numeratorDegreesOfFreedom, denominatorDegreesOf
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -162,7 +162,7 @@ s.dist.f.random({ numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, sample
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

@@ -67,7 +67,7 @@ const cummax = s.cummax(values);
 console.log("Cumulative sum:", cumsum);
 console.log("Cumulative max:", cummax);`,
 
-  distributionFunctions: `import { s } from "@tidy-ts/dataframe";
+  distributionFunctions: `import { stats as s } from "@tidy-ts/dataframe";
 
 // Individual distribution functions
 const randomValue = s.dist.normal.random({ mean: 0, standardDeviation: 1, sampleSize: 10 });        // Random sample

@@ -8,7 +8,7 @@ export const zTestDocs: Record<string, DocEntry> = {
       "One-sample z-test for comparing sample mean to a known population mean when population standard deviation is known.",
     signature:
       "s.test.z.oneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values",
       "`popMean: number` - Known population mean",
@@ -19,7 +19,7 @@ export const zTestDocs: Record<string, DocEntry> = {
     returns:
       "OneSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [102, 98, 105, 99, 101];",
       "const result = s.test.z.oneSample({ data, popMean: 100, popStd: 5 });",
       "console.log(result.pValue);  // p-value",
@@ -44,7 +44,7 @@ export const zTestDocs: Record<string, DocEntry> = {
       "Two-sample z-test for comparing means of two independent groups when population standard deviations are known.",
     signature:
       "s.test.z.twoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): TwoSampleZTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data1: number[]` - First group of values",
       "`data2: number[]` - Second group of values",
@@ -56,7 +56,7 @@ export const zTestDocs: Record<string, DocEntry> = {
     returns:
       "TwoSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10.2, 9.8, 10.5, 9.9, 10.1];",
       "const group2 = [11.1, 10.9, 11.3, 11.0, 11.2];",
       "const result = s.test.z.twoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });",

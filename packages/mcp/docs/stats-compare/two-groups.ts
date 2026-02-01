@@ -8,7 +8,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "Compare the central tendencies (means/medians) of two independent groups. Automatically selects parametric (t-test) or non-parametric (Mann-Whitney U) test based on data distribution. Automatically detects equal/unequal variances using Brown-Forsythe test unless specified.",
     signature:
       "s.compare.twoGroups.centralTendency.toEachOther({ x, y, parametric?, assumeEqualVariances?, comparator?, alpha? }): TwoSampleTTestResult | MannWhitneyTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First group's values",
       "`y: number[]` - Second group's values",
@@ -73,7 +73,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "Compare proportions between two independent groups. Automatically selects z-test, chi-squared test, or Fisher's exact test based on sample size and expected frequencies. Tests whether the proportion of successes differs between two groups.",
     signature:
       "s.compare.twoGroups.proportions.toEachOther({ data1, data2, comparator?, useChiSquare?, alpha? }): TwoSampleProportionTestResult | ChiSquareIndependenceTestResult | FishersExactTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data1: boolean[]` - First group's binary data (true/false or 0/1)",
       "`data2: boolean[]` - Second group's binary data (true/false or 0/1)",
@@ -136,7 +136,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "Test association between two continuous variables. Measures correlation strength using Pearson (linear), Spearman (monotonic), or Kendall's tau. Automatically selects method based on data characteristics (normality, ties, sample size).",
     signature:
       "s.compare.twoGroups.association.toEachOther({ x, y, method?, comparator?, alpha? }): PearsonCorrelationTestResult | SpearmanCorrelationTestResult | KendallCorrelationTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[] | boolean[]` - First variable's values (numeric or boolean for point-biserial)",
       "`y: number[] | boolean[]` - Second variable's values (numeric or boolean for point-biserial)",
@@ -200,7 +200,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "Compare the distributions of two independent groups. Can test distribution equality (Kolmogorov-Smirnov) or stochastic dominance (Mann-Whitney U). Automatically selects method based on data characteristics.",
     signature:
       "s.compare.twoGroups.distributions.toEachOther({ x, y, method?, comparator?, alpha? }): KolmogorovSmirnovTestResult | MannWhitneyTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First group's values",
       "`y: number[]` - Second group's values",

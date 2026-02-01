@@ -20,7 +20,11 @@ import { rename } from "../../verbs/transformation/rename.verb.ts";
 import { drop } from "../../verbs/selection/drop.verb.ts";
 import { reorder } from "../../verbs/transformation/reorder.verb.ts";
 import { ungroup } from "../../verbs/grouping/ungroup.verb.ts";
-import { replaceNA } from "../../verbs/missing-data/replace-na.verb.ts";
+import {
+  replaceNA,
+  replaceNull,
+  replaceUndefined,
+} from "../../verbs/missing-data/replace-na.verb.ts";
 import { fillForward } from "../../verbs/missing-data/fill-forward.verb.ts";
 import { fillBackward } from "../../verbs/missing-data/fill-backward.verb.ts";
 import { interpolate } from "../../verbs/missing-data/interpolate.verb.ts";
@@ -523,6 +527,20 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       const result = ungroup(df as any);
       // ungroup returns a regular DataFrame, not a thenable
       return result;
+    };
+  }
+
+  if (prop === "replaceNull") {
+    return (mapping: unknown) => {
+      const result = (replaceNull as any)(mapping)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+
+  if (prop === "replaceUndefined") {
+    return (mapping: unknown) => {
+      const result = (replaceUndefined as any)(mapping)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
 

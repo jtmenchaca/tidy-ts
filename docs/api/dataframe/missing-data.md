@@ -4,8 +4,9 @@
 
 ## Table of Contents
 
-- [replaceNA](#replacena)
-- [removeNA](#removena)
+- [replaceNull](#replacenull)
+- [replaceUndefined](#replaceundefined)
+- [replaceNA](#replacena) (deprecated)
 - [removeNull](#removenull)
 - [removeUndefined](#removeundefined)
 - [fillForward](#fillforward)
@@ -14,9 +15,93 @@
 
 ---
 
-## replaceNA
+## replaceNull
 
-Replace null/undefined values with fixed values in specified columns.
+Replace null values with fixed values in specified columns. Does not replace undefined.
+
+### Signature
+
+```typescript
+replaceNull(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>
+```
+
+### Import
+
+```typescript
+import { createDataFrame } from "@tidy-ts/dataframe";
+```
+
+### Parameters
+
+- mapping: Object mapping column names to replacement values
+
+### Returns
+
+DataFrame with nulls replaced
+
+### Examples
+
+```typescript
+df.replaceNull({ name: "Unknown", age: 0 })
+df.replaceNull({ score: -1 }) // Only replace null in score
+```
+
+### Best Practices
+
+- ✓ GOOD: Only replaces null, not undefined or other falsy values
+- ✓ GOOD: Chain with replaceUndefined to replace both null and undefined
+
+### Related
+
+`replaceUndefined`, `removeNull`, `removeUndefined`
+
+---
+
+## replaceUndefined
+
+Replace undefined values with fixed values in specified columns. Does not replace null.
+
+### Signature
+
+```typescript
+replaceUndefined(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>
+```
+
+### Import
+
+```typescript
+import { createDataFrame } from "@tidy-ts/dataframe";
+```
+
+### Parameters
+
+- mapping: Object mapping column names to replacement values
+
+### Returns
+
+DataFrame with undefined replaced
+
+### Examples
+
+```typescript
+df.replaceUndefined({ name: "Unknown", age: 0 })
+df.replaceUndefined({ email: '' }) // Only replace undefined in email
+```
+
+### Best Practices
+
+- ✓ GOOD: Only replaces undefined, not null or other falsy values
+- ✓ GOOD: Chain with replaceNull to replace both null and undefined
+
+### Related
+
+`replaceNull`, `removeNull`, `removeUndefined`
+
+---
+
+## replaceNA (deprecated)
+
+Replace null/undefined values with fixed values in specified columns. **Deprecated:** use replaceNull and replaceUndefined instead.
 
 ### Signature
 
@@ -47,55 +132,12 @@ df.replaceNA({ salary: 0 }) // Only replace salary nulls
 
 ### Best Practices
 
+- ✓ GOOD: Prefer replaceNull and replaceUndefined for explicit control
 - ✓ GOOD: Only replaces null and undefined, not other falsy values like 0 or ''
-- ✓ GOOD: Can specify different replacements for different columns
 
 ### Related
 
-`removeNA`, `removeNull`, `removeUndefined`
-
----
-
-## removeNA
-
-Remove rows where specified field(s) are null or undefined. Automatically narrows types.
-
-### Signature
-
-```typescript
-removeNA(field: keyof T, ...fields: (keyof T)[]): DataFrame<...>
-```
-
-### Import
-
-```typescript
-import { createDataFrame } from "@tidy-ts/dataframe";
-```
-
-### Parameters
-
-- field: First field to check
-- ...fields: Additional fields to check (all must be non-null)
-
-### Returns
-
-DataFrame with narrowed types excluding null/undefined
-
-### Examples
-
-```typescript
-df.removeNA("age") // Remove rows with null/undefined age
-df.removeNA("age", "name") // Remove rows with null/undefined in either field
-```
-
-### Best Practices
-
-- ✓ GOOD: Type-safe - automatically narrows the type to exclude null/undefined
-- ✓ GOOD: Can check multiple fields at once
-
-### Related
-
-`removeNull`, `removeUndefined`, `replaceNA`, `filter`
+`replaceNull`, `replaceUndefined`, `removeNull`, `removeUndefined`
 
 ---
 
@@ -132,7 +174,7 @@ df.removeNull("score") // Remove rows with null score
 
 ### Related
 
-`removeNA`, `removeUndefined`, `replaceNA`
+`removeUndefined`, `replaceNA`
 
 ---
 
@@ -169,7 +211,7 @@ df.removeUndefined("email") // Remove rows with undefined email
 
 ### Related
 
-`removeNA`, `removeNull`, `replaceNA`
+`removeNull`, `replaceNull`, `replaceUndefined`
 
 ---
 
@@ -240,7 +282,7 @@ timeSeries.fillForward("price")
 
 ### Related
 
-`fillBackward`, `replaceNA`, `removeNA`
+`fillBackward`, `replaceNA`
 
 ---
 
@@ -311,7 +353,7 @@ timeSeries.fillBackward("price")
 
 ### Related
 
-`fillForward`, `replaceNA`, `removeNA`
+`fillForward`, `replaceNull`, `replaceUndefined`
 
 ---
 

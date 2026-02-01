@@ -24,7 +24,7 @@ s.dist.hypergeometric.density({ at, populationSuccesses, populationFailures, dra
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -72,7 +72,7 @@ s.dist.hypergeometric.probability({ at, populationSuccesses, populationFailures,
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -119,7 +119,7 @@ s.dist.hypergeometric.quantile({ probability, populationSuccesses, populationFai
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -166,7 +166,7 @@ s.dist.hypergeometric.random({ populationSuccesses, populationFailures, drawSize
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

@@ -22,7 +22,7 @@ s.test.z.oneSample({ data, popMean, popStd, alternative?, alpha? }): OneSampleZT
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -40,7 +40,7 @@ OneSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `reje
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [102, 98, 105, 99, 101];
 const result = s.test.z.oneSample({ data, popMean: 100, popStd: 5 });
 console.log(result.pValue);  // p-value
@@ -77,7 +77,7 @@ s.test.z.twoSample({ data1, data2, popStd1, popStd2, alternative?, alpha? }): Tw
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -96,7 +96,7 @@ TwoSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `reje
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [10.2, 9.8, 10.5, 9.9, 10.1];
 const group2 = [11.1, 10.9, 11.3, 11.0, 11.2];
 const result = s.test.z.twoSample({ data1: group1, data2: group2, popStd1: 0.5, popStd2: 0.6 });

@@ -25,7 +25,7 @@ s.dist.binomial.density({ at, trials, probabilityOfSuccess, returnLog? }): numbe
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -72,7 +72,7 @@ s.dist.binomial.probability({ at, trials, probabilityOfSuccess, direction?, retu
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -119,7 +119,7 @@ s.dist.binomial.quantile({ probability, trials, probabilityOfSuccess, direction?
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -165,7 +165,7 @@ s.dist.binomial.random({ trials, probabilityOfSuccess, sampleSize? }): number | 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -209,7 +209,7 @@ s.dist.binomial.data({ trials, probabilityOfSuccess, type, range?, points? }): D
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

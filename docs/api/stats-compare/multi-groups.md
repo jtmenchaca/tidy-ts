@@ -22,7 +22,7 @@ s.compare.multiGroups.centralTendency.toEachOther({ groups, parametric?, assumeE
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -107,7 +107,7 @@ s.compare.multiGroups.proportions.toEachOther({ contingencyTable, alpha? }): Chi
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

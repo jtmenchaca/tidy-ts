@@ -7,7 +7,7 @@ export const exponentialDocs: Record<string, DocEntry> = {
     description:
       "Exponential distribution density function (PDF). Used for modeling waiting times between events (memoryless property).",
     signature: "s.dist.exponential.density({ at, rate?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be ≥ 0)",
       "`rate?: number` - Rate parameter (λ > 0, default: 1). Mean = 1/rate",
@@ -39,7 +39,7 @@ export const exponentialDocs: Record<string, DocEntry> = {
       "Exponential distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.exponential.probability({ at, rate?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`rate?: number` - Rate parameter (λ > 0, default: 1)",
@@ -71,7 +71,7 @@ export const exponentialDocs: Record<string, DocEntry> = {
       "Exponential distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.exponential.quantile({ probability, rate?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`rate?: number` - Rate parameter (λ > 0, default: 1)",
@@ -102,7 +102,7 @@ export const exponentialDocs: Record<string, DocEntry> = {
       "Generate random samples from exponential distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.exponential.random({ rate?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`rate?: number` - Rate parameter (λ > 0, default: 1)",
       "`sampleSize?: number` - Number of random draws (default: 1). If 1, returns number; if > 1, returns number[]",
@@ -130,7 +130,7 @@ export const exponentialDocs: Record<string, DocEntry> = {
       "Generate data for exponential distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.exponential.data({ rate, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`rate: number` - Rate parameter",
       "`type: 'pdf' | 'cdf' | 'inverse_cdf'` - Type of data to generate",

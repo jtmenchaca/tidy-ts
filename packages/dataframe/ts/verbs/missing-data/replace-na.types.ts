@@ -7,7 +7,7 @@ type ReplaceNullType<T, R> = T extends null | undefined ? R
   : T;
 
 /**
- * Transform Row type after replaceNA operation
+ * Transform Row type after replaceNA operation (replaces both null and undefined).
  */
 type ReplaceNaResult<
   Row extends object,
@@ -19,10 +19,49 @@ type ReplaceNaResult<
 };
 
 /**
+ * Transform Row type after replaceNull: only null is replaced; undefined remains.
+ */
+type ReplaceNullResult<
+  Row extends object,
+  Mapping extends Partial<{ [K in keyof Row]: unknown }>,
+> = {
+  [K in keyof Row]: K extends keyof Mapping
+    ? Exclude<Row[K], null> | NonNullable<Mapping[K]>
+    : Row[K];
+};
+
+/**
+ * Transform Row type after replaceUndefined: only undefined is replaced; null remains.
+ */
+type ReplaceUndefinedResult<
+  Row extends object,
+  Mapping extends Partial<{ [K in keyof Row]: unknown }>,
+> = {
+  [K in keyof Row]: K extends keyof Mapping
+    ? Exclude<Row[K], undefined> | NonNullable<Mapping[K]>
+    : Row[K];
+};
+
+/**
  * replaceNA method type for DataFrames
+ * @deprecated Use replaceNull and replaceUndefined instead.
  */
 export type ReplaceNaMethod<Row extends object> = <
   M extends Partial<{ [K in keyof Row]: unknown }>,
 >(
   mapping: M,
 ) => DataFrame<Prettify<ReplaceNaResult<Row, M>>>;
+
+/** replaceNull method type for DataFrames */
+export type ReplaceNullMethod<Row extends object> = <
+  M extends Partial<{ [K in keyof Row]: unknown }>,
+>(
+  mapping: M,
+) => DataFrame<Prettify<ReplaceNullResult<Row, M>>>;
+
+/** replaceUndefined method type for DataFrames */
+export type ReplaceUndefinedMethod<Row extends object> = <
+  M extends Partial<{ [K in keyof Row]: unknown }>,
+>(
+  mapping: M,
+) => DataFrame<Prettify<ReplaceUndefinedResult<Row, M>>>;

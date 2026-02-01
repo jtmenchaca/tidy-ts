@@ -8,7 +8,7 @@ export const geometricDocs: Record<string, DocEntry> = {
       "Geometric distribution probability mass function (PMF). Models the number of failures before the first success in independent Bernoulli trials.",
     signature:
       "s.dist.geometric.density({ at, probabilityOfSuccess, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (number of failures, must be non-negative integer)",
       "`probabilityOfSuccess: number` - Probability of success on each trial (0 < p ≤ 1)",
@@ -40,7 +40,7 @@ export const geometricDocs: Record<string, DocEntry> = {
       "Geometric distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.geometric.probability({ at, probabilityOfSuccess, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (number of failures)",
       "`probabilityOfSuccess: number` - Probability of success on each trial",
@@ -71,7 +71,7 @@ export const geometricDocs: Record<string, DocEntry> = {
       "Geometric distribution quantile function (inverse CDF). Returns the smallest integer k such that P(X ≤ k) ≥ probability.",
     signature:
       "s.dist.geometric.quantile({ probability, probabilityOfSuccess, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`probabilityOfSuccess: number` - Probability of success on each trial",
@@ -101,7 +101,7 @@ export const geometricDocs: Record<string, DocEntry> = {
       "Generate random samples from geometric distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.geometric.random({ probabilityOfSuccess, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probabilityOfSuccess: number` - Probability of success on each trial",
       "`sampleSize?: number` - Number of random draws (default: 1). If 1, returns number; if > 1, returns number[]",

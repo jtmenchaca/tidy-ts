@@ -8,7 +8,7 @@ export const hypergeometricDocs: Record<string, DocEntry> = {
       "Hypergeometric distribution probability mass function (PMF). Models the number of successes when drawing without replacement from a finite population.",
     signature:
       "s.dist.hypergeometric.density({ at, populationSuccesses, populationFailures, drawSize, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (successes in sample, must be integer)",
       "`populationSuccesses: number` - Number of success items in population (m)",
@@ -42,7 +42,7 @@ export const hypergeometricDocs: Record<string, DocEntry> = {
       "Hypergeometric distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.hypergeometric.probability({ at, populationSuccesses, populationFailures, drawSize, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`populationSuccesses: number` - Number of success items in population",
@@ -75,7 +75,7 @@ export const hypergeometricDocs: Record<string, DocEntry> = {
       "Hypergeometric distribution quantile function (inverse CDF). Returns the smallest integer k such that P(X ≤ k) ≥ probability.",
     signature:
       "s.dist.hypergeometric.quantile({ probability, populationSuccesses, populationFailures, drawSize, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`populationSuccesses: number` - Number of success items in population",
@@ -107,7 +107,7 @@ export const hypergeometricDocs: Record<string, DocEntry> = {
       "Generate random samples from hypergeometric distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.hypergeometric.random({ populationSuccesses, populationFailures, drawSize, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`populationSuccesses: number` - Number of success items in population",
       "`populationFailures: number` - Number of failure items in population",

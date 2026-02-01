@@ -111,6 +111,8 @@ export function removeUndefined<Row extends object, Field extends keyof Row>(
 /**
  * Remove rows where field(s) are null or undefined.
  * Automatically narrows the type to exclude both null and undefined.
+ *
+ * @deprecated Use {@link removeNull} and {@link removeUndefined}, or {@link filter}, instead.
  */
 // Single field overload
 export function removeNA<Row extends object, Field extends keyof Row>(

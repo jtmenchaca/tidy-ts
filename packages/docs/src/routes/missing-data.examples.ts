@@ -11,8 +11,8 @@ const data = createDataFrame([
 
 data.print("Data with null and undefined values:");`,
 
-  statsDefaultBehavior: `import { createDataFrame } from "@tidy-ts/dataframe";
-import { sum, mean, max } from "@tidy-ts/dataframe";
+  statsDefaultBehavior:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const data = createDataFrame([
   { id: 1, value: 10 },
@@ -22,17 +22,17 @@ const data = createDataFrame([
 ]);
 
 // By default, stats functions return null when NA values are present
-const total = sum(data.value);
-const average = mean(data.value);
-const maximum = max(data.value);
+const total = s.sum(data.value);
+const average = s.mean(data.value);
+const maximum = s.max(data.value);
 
 console.log("Default behavior (with NA values):");
 console.log("Sum:", total);        // null
 console.log("Mean:", average);     // null  
 console.log("Max:", maximum);      // null`,
 
-  removeNaOption: `import { createDataFrame } from "@tidy-ts/dataframe";
-import { sum, mean, max } from "@tidy-ts/dataframe";
+  removeNaOption:
+    `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const data = createDataFrame([
   { id: 1, value: 10 },
@@ -41,17 +41,17 @@ const data = createDataFrame([
   { id: 4, value: undefined },
 ]);
 
-// Use remove_na: true to ignore NA values
-const total = sum(data.value, true);
-const average = mean(data.value, true);
-const maximum = max(data.value, true);
+// Use removeNull and removeUndefined to ignore null and undefined values
+const total = s.sum(data.value, { removeNull: true, removeUndefined: true });
+const average = s.mean(data.value, { removeNull: true, removeUndefined: true });
+const maximum = s.max(data.value, { removeNull: true, removeUndefined: true });
 
-console.log("With remove_na: true:");
+console.log("With removeNull/removeUndefined: true:");
 console.log("Sum:", total);        // 30 (10 + 20)
 console.log("Mean:", average);     // 15 ((10 + 20) / 2)
 console.log("Max:", maximum);      // 20`,
 
-  replaceNAWithDefaults: `import { createDataFrame } from "@tidy-ts/dataframe";
+  replaceWithDefaults: `import { createDataFrame } from "@tidy-ts/dataframe";
 
 const messyData = createDataFrame([
   { id: 1, name: "Alice", age: 25, score: 85 },
@@ -59,12 +59,10 @@ const messyData = createDataFrame([
   { id: 3, name: "Charlie", age: null, score: 92 },
 ]);
 
-// Replace missing values with defaults
-const cleaned = messyData.replaceNA({
-  name: "Unknown",
-  age: 0,
-  score: -1,
-});
+// Replace null and undefined with defaults (chain replaceNull and replaceUndefined)
+const cleaned = messyData
+  .replaceNull({ name: "Unknown", age: 0, score: -1 })
+  .replaceUndefined({ name: "Unknown", age: 0, score: -1 });
 
-cleaned.print("After replaceNA:");`,
+cleaned.print("After replaceNull/replaceUndefined:");`,
 };

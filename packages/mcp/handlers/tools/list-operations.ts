@@ -13,12 +13,11 @@ export function list_operations(server: TidyMcp) {
           v.literal("dataframe"),
           v.literal("stats"),
           v.literal("io"),
-          v.literal("llm"),
           v.literal("shims"),
           v.literal("all"),
         ]),
         v.description(
-          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), "llm" (LLM utilities), "shims" (cross-runtime compatibility), or "all" (default)',
+          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), "shims" (cross-runtime compatibility), or "all" (default)',
         ),
       ),
       "all",

@@ -8,7 +8,7 @@ export const fDistributionDocs: Record<string, DocEntry> = {
       "F-distribution density function (PDF). Used for ANOVA and comparing variances.",
     signature:
       "s.dist.f.density({ at, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be ≥ 0)",
       "`numeratorDegreesOfFreedom: number` - Numerator degrees of freedom (> 0)",
@@ -39,7 +39,7 @@ export const fDistributionDocs: Record<string, DocEntry> = {
       "F-distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.f.probability({ at, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`numeratorDegreesOfFreedom: number` - Numerator degrees of freedom (> 0)",
@@ -71,7 +71,7 @@ export const fDistributionDocs: Record<string, DocEntry> = {
       "F-distribution quantile function (inverse CDF). Returns critical values for F-tests.",
     signature:
       "s.dist.f.quantile({ probability, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`numeratorDegreesOfFreedom: number` - Numerator degrees of freedom (> 0)",
@@ -104,7 +104,7 @@ export const fDistributionDocs: Record<string, DocEntry> = {
       "Generate random samples from F-distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.f.random({ numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`numeratorDegreesOfFreedom: number` - Numerator degrees of freedom (> 0)",
       "`denominatorDegreesOfFreedom: number` - Denominator degrees of freedom (> 0)",

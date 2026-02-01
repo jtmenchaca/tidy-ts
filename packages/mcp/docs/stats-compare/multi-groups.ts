@@ -8,7 +8,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "Compare central tendencies across three or more independent groups. Tests whether means (ANOVA) or medians (Kruskal-Wallis) differ significantly. Automatically runs post-hoc tests (Tukey HSD, Games-Howell, or Dunn's) when the main test is significant. Supports both one-way and two-way ANOVA designs.",
     signature:
       "s.compare.multiGroups.centralTendency.toEachOther({ groups, parametric?, assumeEqualVariances?, alpha? }): OneWayAnovaWithPostHocResult | WelchAnovaWithPostHocResult | KruskalWallisWithPostHocResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`groups: number[][]` - Array of arrays, each containing values for one group (for one-way ANOVA)",
       "`data?: number[][][]` - Three-dimensional array for two-way ANOVA (rows × columns × values)",
@@ -82,7 +82,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "Test independence of categorical variables across multiple groups using chi-squared test. Determines if there's a significant association between row and column variables in a contingency table.",
     signature:
       "s.compare.multiGroups.proportions.toEachOther({ contingencyTable, alpha? }): ChiSquareIndependenceTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`contingencyTable: number[][]` - 2D array of observed frequencies (rows × columns)",
       "`alpha?: number` - Significance level (default: 0.05)",

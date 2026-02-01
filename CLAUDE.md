@@ -62,7 +62,7 @@ packages/
 │   └── lib/         # Compiled WASM output
 ├── arrow/           # Arrow IPC support (@tidy-ts/arrow)
 ├── parquet/         # Parquet support (@tidy-ts/parquet)
-├── ai/              # AI utilities (@tidy-ts/ai)
+├── ai/              # In development, not yet documented or published
 ├── shims/           # Cross-runtime utilities (@tidy-ts/shims)
 │   ├── async.ts     # Concurrency control
 │   ├── encryption/  # Envelope encryption
@@ -84,7 +84,7 @@ packages/
 ## DataFrame Usage Example
 
 ```typescript
-import { createDataFrame, s } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 // Create from rows
 const sales = createDataFrame([
@@ -132,7 +132,6 @@ analysis.print();
 | `@tidy-ts/dataframe` | Core DataFrame library |
 | `@tidy-ts/arrow` | Arrow IPC file support |
 | `@tidy-ts/parquet` | Parquet file support |
-| `@tidy-ts/ai` | AI/LLM utilities |
 | `@tidy-ts/shims` | Cross-runtime utilities |
 
 ## Build Commands

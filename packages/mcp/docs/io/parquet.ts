@@ -9,7 +9,7 @@ export const parquetDocs: Record<string, DocEntry> = {
     description:
       "Read Parquet file or buffer with Zod schema validation. Supports file paths (Node.js/Deno) or ArrayBuffer (all environments). Efficient columnar format for large datasets.",
     imports: [
-      'import { readParquet } from "@tidy-ts/dataframe";',
+      'import { readParquet } from "@tidy-ts/parquet";',
     ],
     parameters: [
       "pathOrBuffer: File path (Node.js/Deno) or ArrayBuffer",
@@ -37,7 +37,7 @@ export const parquetDocs: Record<string, DocEntry> = {
     description:
       "Write DataFrame to Parquet file. Automatically infers column types. Requires static import. Efficient columnar format for large datasets.",
     imports: [
-      'import { writeParquet } from "@tidy-ts/dataframe/ts/io";',
+      'import { writeParquet } from "@tidy-ts/parquet";',
     ],
     parameters: [
       "df: DataFrame to write",
@@ -45,7 +45,7 @@ export const parquetDocs: Record<string, DocEntry> = {
     ],
     returns: "DataFrame<T> - Original DataFrame for chaining",
     examples: [
-      '// Write to Parquet file\nimport { writeParquet } from "@tidy-ts/dataframe/ts/io";\n\nconst df = createDataFrame([\n  { id: 1, name: "Alice", age: 30 },\n  { id: 2, name: "Bob", age: 25 }\n]);\nwriteParquet(df, "output.parquet")',
+      '// Write to Parquet file\nimport { writeParquet } from "@tidy-ts/parquet";\n\nconst df = createDataFrame([\n  { id: 1, name: "Alice", age: 30 },\n  { id: 2, name: "Bob", age: 25 }\n]);\nwriteParquet(df, "output.parquet")',
     ],
     related: ["readParquet", "writeCSV"],
     bestPractices: [

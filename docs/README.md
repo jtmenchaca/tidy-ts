@@ -20,10 +20,14 @@
 - [Statistical Tests](./api/stats-tests/index.md)
 - [String Utilities](./api/string/index.md)
 
+## Additional
+
+- [Benchmark results](./api/benchmark-results.md)
+
 ## Quick Start
 
 ```typescript
-import { createDataFrame, s } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 
 const df = createDataFrame([
   { name: "Alice", age: 30, score: 85 },

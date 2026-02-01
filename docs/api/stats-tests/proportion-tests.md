@@ -22,7 +22,7 @@ s.test.proportion.oneSample({ data, hypothesizedProportion, alternative?, alpha?
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -39,7 +39,7 @@ OneSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterva
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [true, false, true, true, false, true];
 const result = s.test.proportion.oneSample({ data, hypothesizedProportion: 0.5 });
 console.log(result.pValue);  // p-value
@@ -77,7 +77,7 @@ s.test.proportion.twoSample({ data1, data2, pooled?, alternative?, alpha? }): Tw
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -95,7 +95,7 @@ TwoSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterva
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [true, false, true, true, false];
 const group2 = [true, true, true, false, true];
 const result = s.test.proportion.twoSample({ data1: group1, data2: group2 });

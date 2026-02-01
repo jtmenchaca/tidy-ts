@@ -8,7 +8,7 @@ export const binomialDocs: Record<string, DocEntry> = {
       "Binomial distribution probability mass function (PMF). Used for modeling number of successes in n independent trials.",
     signature:
       "s.dist.binomial.density({ at, trials, probabilityOfSuccess, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (number of successes, 0 ≤ at ≤ trials)",
       "`trials: number` - Number of trials (n > 0)",
@@ -41,7 +41,7 @@ export const binomialDocs: Record<string, DocEntry> = {
       "Binomial distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.binomial.probability({ at, trials, probabilityOfSuccess, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (number of successes)",
       "`trials: number` - Number of trials",
@@ -74,7 +74,7 @@ export const binomialDocs: Record<string, DocEntry> = {
       "Binomial distribution quantile function (inverse CDF). Returns the smallest integer k such that P(X ≤ k) ≥ probability.",
     signature:
       "s.dist.binomial.quantile({ probability, trials, probabilityOfSuccess, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`trials: number` - Number of trials",
@@ -105,7 +105,7 @@ export const binomialDocs: Record<string, DocEntry> = {
       "Generate random samples from binomial distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.binomial.random({ trials, probabilityOfSuccess, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`trials: number` - Number of trials",
       "`probabilityOfSuccess: number` - Probability of success on each trial",
@@ -135,7 +135,7 @@ export const binomialDocs: Record<string, DocEntry> = {
       "Generate data for binomial distribution visualization. Returns a DataFrame with PMF, CDF, or inverse CDF data.",
     signature:
       "s.dist.binomial.data({ trials, probabilityOfSuccess, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`trials: number` - Number of trials",
       "`probabilityOfSuccess: number` - Probability of success on each trial",

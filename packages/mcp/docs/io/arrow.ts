@@ -9,7 +9,7 @@ export const arrowDocs: Record<string, DocEntry> = {
     description:
       "Read Apache Arrow file or buffer with Zod schema validation. Supports file paths (Node.js/Deno) or ArrayBuffer (all environments). Efficient for inter-process data exchange.",
     imports: [
-      'import { readArrow } from "@tidy-ts/dataframe";',
+      'import { readArrow } from "@tidy-ts/arrow";',
     ],
     parameters: [
       "pathOrBuffer: File path (Node.js/Deno) or ArrayBuffer",

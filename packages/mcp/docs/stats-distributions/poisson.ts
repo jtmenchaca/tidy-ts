@@ -7,7 +7,7 @@ export const poissonDocs: Record<string, DocEntry> = {
     description:
       "Poisson distribution probability mass function (PMF). Used for modeling counts of rare events in fixed intervals.",
     signature: "s.dist.poisson.density({ at, rateLambda, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where PMF is evaluated (count k, must be non-negative integer)",
       "`rateLambda: number` - Rate parameter (λ > 0), mean number of events",
@@ -39,7 +39,7 @@ export const poissonDocs: Record<string, DocEntry> = {
       "Poisson distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.poisson.probability({ at, rateLambda, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (count k)",
       "`rateLambda: number` - Rate parameter (λ > 0)",
@@ -70,7 +70,7 @@ export const poissonDocs: Record<string, DocEntry> = {
       "Poisson distribution quantile function (inverse CDF). Returns the smallest integer k such that P(X ≤ k) ≥ probability.",
     signature:
       "s.dist.poisson.quantile({ probability, rateLambda, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`rateLambda: number` - Rate parameter (λ > 0)",
@@ -100,7 +100,7 @@ export const poissonDocs: Record<string, DocEntry> = {
       "Generate random samples from Poisson distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.poisson.random({ rateLambda, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`rateLambda: number` - Rate parameter (λ > 0)",
       "`sampleSize?: number` - Number of random draws (default: 1). If 1, returns number; if > 1, returns number[]",
@@ -129,7 +129,7 @@ export const poissonDocs: Record<string, DocEntry> = {
       "Generate data for Poisson distribution visualization. Returns a DataFrame with PMF, CDF, or inverse CDF data.",
     signature:
       "s.dist.poisson.data({ rateLambda, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`rateLambda: number` - Rate parameter",
       "`type: 'pdf' | 'cdf' | 'inverse_cdf'` - Type of data to generate",

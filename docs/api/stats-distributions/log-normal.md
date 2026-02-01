@@ -24,7 +24,7 @@ s.dist.logNormal.density({ at, meanLog?, standardDeviationLog?, returnLog? }): n
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -70,7 +70,7 @@ s.dist.logNormal.probability({ at, meanLog?, standardDeviationLog?, direction?, 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -116,7 +116,7 @@ s.dist.logNormal.quantile({ probability, meanLog?, standardDeviationLog?, direct
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -163,7 +163,7 @@ s.dist.logNormal.random({ meanLog?, standardDeviationLog?, sampleSize? }): numbe
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

@@ -24,7 +24,7 @@ s.compare.twoGroups.centralTendency.toEachOther({ x, y, parametric?, assumeEqual
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -103,7 +103,7 @@ s.compare.twoGroups.proportions.toEachOther({ data1, data2, comparator?, useChiS
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -179,7 +179,7 @@ s.compare.twoGroups.association.toEachOther({ x, y, method?, comparator?, alpha?
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -257,7 +257,7 @@ s.compare.twoGroups.distributions.toEachOther({ x, y, method?, comparator?, alph
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

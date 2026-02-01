@@ -25,7 +25,7 @@ const _typeCheck: DataFrame<{
 
 jediKnights.print("Created DataFrame with 5 Jedi Knights:");`,
 
-  rawSqlite: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  rawSqlite: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { DatabaseSync } from "node:sqlite";
 import { z } from "zod";
 
@@ -50,7 +50,7 @@ const deptSummary = employeesDF
   .groupBy("department")
   .summarise({
     count: (group) => group.nrows(),
-    avg_salary: (group) => stats.round(stats.mean(group.salary), 0),
+    avg_salary: (group) => s.round(s.mean(group.salary), 0),
   })
   .arrange("avg_salary", "desc");
 
@@ -58,7 +58,7 @@ deptSummary.print("Department Summary");
 
 db.close();`,
 
-  drizzleOrm: `import { createDataFrame, stats } from "@tidy-ts/dataframe";
+  drizzleOrm: `import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import { drizzle } from "npm:drizzle-orm/libsql";
 import { createClient } from "npm:@libsql/client";
 import { integer, real, sqliteTable, text } from "npm:drizzle-orm/sqlite-core";
@@ -84,7 +84,7 @@ const deptSummary = employeesDF
   .groupBy("department")
   .summarise({
     count: (group) => group.nrows(),
-    avg_salary: (group) => stats.round(stats.mean(group.salary), 0),
+    avg_salary: (group) => s.round(s.mean(group.salary), 0),
   })
   .arrange("avg_salary", "desc");
 

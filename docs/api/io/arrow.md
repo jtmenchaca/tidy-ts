@@ -15,7 +15,7 @@ readArrow<T>(pathOrBuffer: string | ArrayBuffer, schema: ZodSchema<T>, opts?: Ar
 ### Import
 
 ```typescript
-import { readArrow } from "@tidy-ts/dataframe";
+import { readArrow } from "@tidy-ts/arrow";
 ```
 
 ### Parameters

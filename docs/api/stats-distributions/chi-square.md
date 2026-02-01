@@ -25,7 +25,7 @@ s.dist.chiSquare.density({ at, degreesOfFreedom, returnLog? }): number
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -69,7 +69,7 @@ s.dist.chiSquare.probability({ at, degreesOfFreedom, direction?, returnLog? }): 
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -114,7 +114,7 @@ s.dist.chiSquare.quantile({ probability, degreesOfFreedom, direction?, probabili
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -160,7 +160,7 @@ s.dist.chiSquare.random({ degreesOfFreedom, sampleSize? }): number | number[]
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -203,7 +203,7 @@ s.dist.chiSquare.data({ degreesOfFreedom, type, range?, points? }): DataFrame
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

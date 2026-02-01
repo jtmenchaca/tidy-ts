@@ -11,7 +11,7 @@ function MissingDataComponent() {
   return (
     <DocPageLayout
       title="Missing Data Handling"
-      description="How tidy-ts handles null and undefined values, including stats functions with remove_na option and data replacement strategies."
+      description="How tidy-ts handles null and undefined values, including stats functions with removeNull/removeUndefined options and data replacement strategies."
       currentPath="/missing-data"
     >
       <CodeBlock
@@ -29,17 +29,17 @@ function MissingDataComponent() {
       />
 
       <CodeBlock
-        title="Using remove_na Option"
+        title="Using removeNull / removeUndefined Options"
         description="Ignore NA values in statistical calculations"
-        explanation="Set remove_na: true to calculate statistics on only the valid (non-NA) values. This is useful when you want to analyze available data despite missing values."
+        explanation="Pass { removeNull: true, removeUndefined: true } to calculate statistics on only the valid (non-NA) values. This is useful when you want to analyze available data despite missing values."
         code={missingDataExamples.removeNaOption}
       />
 
       <CodeBlock
         title="Replace Missing Values"
-        description="Replace NA values with defaults using replaceNA"
-        explanation="Use replaceNA to replace missing values with specific defaults. This is useful for data cleaning and preparation before analysis."
-        code={missingDataExamples.replaceNAWithDefaults}
+        description="Replace null and undefined with defaults using replaceNull and replaceUndefined"
+        explanation="Chain replaceNull and replaceUndefined to replace missing values with specific defaults. Use replaceNull for null and replaceUndefined for undefined; chaining both covers all NA values."
+        code={missingDataExamples.replaceWithDefaults}
       />
     </DocPageLayout>
   );

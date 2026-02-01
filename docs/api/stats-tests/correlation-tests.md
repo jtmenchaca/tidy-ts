@@ -40,7 +40,7 @@ PearsonCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `rej
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 // Basic usage with arrays
 const x = [1, 2, 3, 4, 5];
 const y = [2, 4, 6, 8, 10];
@@ -126,7 +126,7 @@ SpearmanCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `re
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 // Basic usage
 const x = [1, 2, 3, 4, 5];
 const y = [10, 20, 30, 40, 50];
@@ -197,7 +197,7 @@ KendallCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `rej
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 // Basic usage
 const x = [1, 2, 3, 4, 5];
 const y = [5, 4, 3, 2, 1];

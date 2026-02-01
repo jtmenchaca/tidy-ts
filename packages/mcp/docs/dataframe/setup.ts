@@ -8,7 +8,7 @@ export const setupDocs: Record<string, DocEntry> = {
     description:
       "Setup function for browsers - preload and compile the WebAssembly module that powers statistical computations. Call this once before using any tidy-ts statistical or WASM-backed functions in browsers. In Node.js/Deno/Bun environments, this is a no-op as they load WASM synchronously on demand.",
     imports: [
-      'import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";',
+      'import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";',
     ],
     parameters: [
       "url?: string | URL - Optional URL or path to the tidy_ts_dataframe.wasm file. If omitted, automatically resolves the URL relative to the package location. Useful for custom CDN paths or local hosting scenarios.",
@@ -16,9 +16,9 @@ export const setupDocs: Record<string, DocEntry> = {
     returns:
       "Promise<void> - Resolves when the WASM module is compiled and ready",
     examples: [
-      '// BROWSER SETUP - Call once before using stats functions\nimport { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";\n\n// Initialize WASM (required in browsers, no-op elsewhere)\nawait setupTidyTS();\n\n// Now you can use all tidy-ts features\nconst df = createDataFrame([{ x: 1 }, { x: 2 }, { x: 3 }]);\nconst meanValue = s.mean(df.x);',
-      '// HTML EXAMPLE - Complete browser setup\n<!DOCTYPE html>\n<html>\n<head>\n  <script type="importmap">\n    { "imports": { "@tidy-ts/dataframe": "https://esm.sh/@tidy-ts/dataframe" } }\n  </script>\n</head>\n<body>\n  <script type="module">\n    import { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";\n\n    async function main() {\n      // Required: Initialize WASM before using stats\n      await setupTidyTS();\n\n      const df = createDataFrame([\n        { name: "Alice", score: 85 },\n        { name: "Bob", score: 92 },\n        { name: "Charlie", score: 78 },\n      ]);\n\n      console.log("Mean score:", s.mean(df.score));\n      df.print();\n    }\n    main();\n  </script>\n</body>\n</html>',
-      '// REACT/VITE EXAMPLE - Setup in app initialization\nimport { useEffect, useState } from "react";\nimport { setupTidyTS, createDataFrame, s } from "@tidy-ts/dataframe";\n\nfunction App() {\n  const [ready, setReady] = useState(false);\n\n  useEffect(() => {\n    setupTidyTS().then(() => setReady(true));\n  }, []);\n\n  if (!ready) return <div>Loading...</div>;\n\n  // Now safe to use tidy-ts stats functions\n  const df = createDataFrame([{ value: 10 }, { value: 20 }]);\n  return <div>Mean: {s.mean(df.value)}</div>;\n}',
+      '// BROWSER SETUP - Call once before using stats functions\nimport { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";\n\n// Initialize WASM (required in browsers, no-op elsewhere)\nawait setupTidyTS();\n\n// Now you can use all tidy-ts features\nconst df = createDataFrame([{ x: 1 }, { x: 2 }, { x: 3 }]);\nconst meanValue = s.mean(df.x);',
+      '// HTML EXAMPLE - Complete browser setup\n<!DOCTYPE html>\n<html>\n<head>\n  <script type="importmap">\n    { "imports": { "@tidy-ts/dataframe": "https://esm.sh/@tidy-ts/dataframe" } }\n  </script>\n</head>\n<body>\n  <script type="module">\n    import { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";\n\n    async function main() {\n      // Required: Initialize WASM before using stats\n      await setupTidyTS();\n\n      const df = createDataFrame([\n        { name: "Alice", score: 85 },\n        { name: "Bob", score: 92 },\n        { name: "Charlie", score: 78 },\n      ]);\n\n      console.log("Mean score:", s.mean(df.score));\n      df.print();\n    }\n    main();\n  </script>\n</body>\n</html>',
+      '// REACT/VITE EXAMPLE - Setup in app initialization\nimport { useEffect, useState } from "react";\nimport { setupTidyTS, createDataFrame, stats as s } from "@tidy-ts/dataframe";\n\nfunction App() {\n  const [ready, setReady] = useState(false);\n\n  useEffect(() => {\n    setupTidyTS().then(() => setReady(true));\n  }, []);\n\n  if (!ready) return <div>Loading...</div>;\n\n  // Now safe to use tidy-ts stats functions\n  const df = createDataFrame([{ value: 10 }, { value: 20 }]);\n  return <div>Mean: {s.mean(df.value)}</div>;\n}',
       '// Custom WASM URL (CDN or local hosting)\nawait setupTidyTS("https://cdn.example.com/tidy_ts_dataframe.wasm");\n\n// Local path\nawait setupTidyTS("/static/wasm/tidy_ts_dataframe.wasm");',
       '// ERROR HANDLING\ntry {\n  await setupTidyTS();\n} catch (error) {\n  console.error("Failed to load WASM:", error);\n  // Fallback: some operations work without WASM\n}',
     ],
@@ -43,7 +43,7 @@ export const setupDocs: Record<string, DocEntry> = {
     description:
       "Tidy-TS DataFrames use a columnar storage architecture for high performance. Data is stored column-by-column (not row-by-row), enabling vectorized operations and better cache locality. Filtering uses lazy BitSet masks instead of copying data, and transformations use copy-on-write semantics. Performance-critical operations like joins, sorting, and statistical tests are compiled to WebAssembly (Rust).",
     imports: [
-      'import { createDataFrame, s } from "@tidy-ts/dataframe";',
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
     ],
     returns: "High-performance DataFrame operations",
     examples: [

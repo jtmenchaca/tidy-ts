@@ -8,7 +8,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "Test if a single group's central tendency (mean/median) differs from a hypothesized value. Automatically selects parametric (one-sample t-test) or non-parametric (Wilcoxon signed-rank) test based on data distribution.",
     signature:
       "s.compare.oneGroup.centralTendency.toValue({ data, hypothesizedValue, comparator?, alpha?, parametric? }): OneSampleTTestResult | WilcoxonSignedRankTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Sample values to test",
       "`hypothesizedValue: number` - The value to compare against (population mean/median)",
@@ -69,7 +69,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "Test if a sample proportion differs from a hypothesized population proportion. Uses one-sample proportion z-test to compare binary data (0/1 or boolean) against an expected proportion.",
     signature:
       "s.compare.oneGroup.proportions.toValue({ data, hypothesizedProportion, comparator, alpha? }): OneSampleProportionTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: boolean[]` - Binary data (true/false or 0/1 values)",
       "`hypothesizedProportion: number` - Hypothesized population proportion (0 to 1)",
@@ -119,7 +119,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "Test if data follows a normal distribution using the Shapiro-Wilk test. Most reliable for small to medium sample sizes (n < 5000). Returns test results indicating whether the null hypothesis (data is normally distributed) should be rejected.",
     signature:
       "s.compare.oneGroup.distribution.toNormal({ data, alpha? }): ShapiroWilkTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Sample values to test for normality",
       "`alpha?: number` - Significance level (default: 0.05)",

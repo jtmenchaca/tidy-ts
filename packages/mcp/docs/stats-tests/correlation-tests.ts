@@ -20,7 +20,7 @@ export const correlationTestDocs: Record<string, DocEntry> = {
     returns:
       "PearsonCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";\n// Basic usage with arrays\nconst x = [1, 2, 3, 4, 5];\nconst y = [2, 4, 6, 8, 10];\nconst result = s.test.correlation.pearson({ x, y });\nconsole.log(result.correlation);  // 1.0 (perfect positive)\nconsole.log(result.pValue);       // p-value for H0: r = 0\nconsole.log(result.rejectNull);       // true if significant',
+      'import { stats as s } from "@tidy-ts/dataframe";\n// Basic usage with arrays\nconst x = [1, 2, 3, 4, 5];\nconst y = [2, 4, 6, 8, 10];\nconst result = s.test.correlation.pearson({ x, y });\nconsole.log(result.correlation);  // 1.0 (perfect positive)\nconsole.log(result.pValue);       // p-value for H0: r = 0\nconsole.log(result.rejectNull);       // true if significant',
       'import { s, createDataFrame } from "@tidy-ts/dataframe";\n// FROM DATAFRAME COLUMNS - Common pattern\nconst df = createDataFrame([\n  { height: 170, weight: 70 },\n  { height: 180, weight: 85 },\n  { height: 165, weight: 60 },\n  { height: 175, weight: 75 },\n  { height: 185, weight: 90 },\n]);\n\n// Extract columns using df.extract()\nconst result = s.test.correlation.pearson({\n  x: df.extract("height"),\n  y: df.extract("weight"),\n});\n\nconsole.log(`Correlation: ${result.correlation.toFixed(3)}`);\nconsole.log(`p-value: ${result.pValue.toFixed(4)}`);\nconsole.log(`Significant: ${result.rejectNull}`);',
       '// One-tailed test (testing if correlation > 0)\nconst result = s.test.correlation.pearson({\n  x: df.extract("study_hours"),\n  y: df.extract("test_score"),\n  alternative: "greater",\n  alpha: 0.01,\n});',
     ],
@@ -63,7 +63,7 @@ export const correlationTestDocs: Record<string, DocEntry> = {
     returns:
       "SpearmanCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";\n// Basic usage\nconst x = [1, 2, 3, 4, 5];\nconst y = [10, 20, 30, 40, 50];\nconst result = s.test.correlation.spearman({ x, y });\nconsole.log(result.correlation);  // Spearman\'s rho',
+      'import { stats as s } from "@tidy-ts/dataframe";\n// Basic usage\nconst x = [1, 2, 3, 4, 5];\nconst y = [10, 20, 30, 40, 50];\nconst result = s.test.correlation.spearman({ x, y });\nconsole.log(result.correlation);  // Spearman\'s rho',
       'import { s, createDataFrame } from "@tidy-ts/dataframe";\n// FROM DATAFRAME COLUMNS\nconst df = createDataFrame([\n  { satisfaction: 4, loyalty: 8 },\n  { satisfaction: 2, loyalty: 3 },\n  { satisfaction: 5, loyalty: 9 },\n  { satisfaction: 3, loyalty: 5 },\n]);\n\nconst result = s.test.correlation.spearman({\n  x: df.extract("satisfaction"),\n  y: df.extract("loyalty"),\n});\nconsole.log(`Spearman rho: ${result.correlation.toFixed(3)}`);',
     ],
     bestPractices: [
@@ -104,7 +104,7 @@ export const correlationTestDocs: Record<string, DocEntry> = {
     returns:
       "KendallCorrelationTestResult with `correlation`, `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";\n// Basic usage\nconst x = [1, 2, 3, 4, 5];\nconst y = [5, 4, 3, 2, 1];\nconst result = s.test.correlation.kendall({ x, y });\nconsole.log(result.correlation);  // Kendall\'s tau (negative)',
+      'import { stats as s } from "@tidy-ts/dataframe";\n// Basic usage\nconst x = [1, 2, 3, 4, 5];\nconst y = [5, 4, 3, 2, 1];\nconst result = s.test.correlation.kendall({ x, y });\nconsole.log(result.correlation);  // Kendall\'s tau (negative)',
       'import { s, createDataFrame } from "@tidy-ts/dataframe";\n// FROM DATAFRAME COLUMNS\nconst df = createDataFrame([\n  { rank_A: 1, rank_B: 2 },\n  { rank_A: 2, rank_B: 1 },\n  { rank_A: 3, rank_B: 3 },\n  { rank_A: 4, rank_B: 5 },\n]);\n\nconst result = s.test.correlation.kendall({\n  x: df.extract("rank_A"),\n  y: df.extract("rank_B"),\n});\nconsole.log(`Kendall tau: ${result.correlation.toFixed(3)}`);',
     ],
     bestPractices: [

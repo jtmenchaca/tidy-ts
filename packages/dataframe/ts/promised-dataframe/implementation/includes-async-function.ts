@@ -130,6 +130,8 @@ export function makeDataFrameProbe<Row extends object>(
     forEach: () => makeDataFrameProbe(df),
     forEachRow: () => makeDataFrameProbe(df),
     forEachCol: () => makeDataFrameProbe(df),
+    replaceNull: () => makeDataFrameProbe(df),
+    replaceUndefined: () => makeDataFrameProbe(df),
     replaceNA: () => makeDataFrameProbe(df),
     removeNA: () => makeDataFrameProbe(df),
     removeNull: () => makeDataFrameProbe(df),

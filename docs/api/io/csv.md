@@ -1,4 +1,4 @@
-# Csv
+# CSV
 
 > Auto-generated from tidy-ts MCP documentation
 

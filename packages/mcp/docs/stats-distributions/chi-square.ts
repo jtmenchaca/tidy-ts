@@ -8,7 +8,7 @@ export const chiSquareDocs: Record<string, DocEntry> = {
       "Chi-squared distribution density function (PDF). Used for goodness-of-fit tests and variance tests.",
     signature:
       "s.dist.chiSquare.density({ at, degreesOfFreedom, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be ≥ 0)",
       "`degreesOfFreedom: number` - Degrees of freedom (> 0)",
@@ -38,7 +38,7 @@ export const chiSquareDocs: Record<string, DocEntry> = {
       "Chi-squared distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.chiSquare.probability({ at, degreesOfFreedom, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`degreesOfFreedom: number` - Degrees of freedom (> 0)",
@@ -69,7 +69,7 @@ export const chiSquareDocs: Record<string, DocEntry> = {
       "Chi-squared distribution quantile function (inverse CDF). Returns critical values for chi-square tests.",
     signature:
       "s.dist.chiSquare.quantile({ probability, degreesOfFreedom, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`degreesOfFreedom: number` - Degrees of freedom (> 0)",
@@ -101,7 +101,7 @@ export const chiSquareDocs: Record<string, DocEntry> = {
       "Generate random samples from chi-squared distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.chiSquare.random({ degreesOfFreedom, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`degreesOfFreedom: number` - Degrees of freedom (> 0)",
       "`sampleSize?: number` - Number of random draws (default: 1). If 1, returns number; if > 1, returns number[]",
@@ -129,7 +129,7 @@ export const chiSquareDocs: Record<string, DocEntry> = {
       "Generate data for chi-squared distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.chiSquare.data({ degreesOfFreedom, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`degreesOfFreedom: number` - Degrees of freedom",
       "`type: 'pdf' | 'cdf' | 'inverse_cdf'` - Type of data to generate",

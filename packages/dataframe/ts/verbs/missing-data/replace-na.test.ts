@@ -1,9 +1,169 @@
 /**
- * Tests for replaceNA verb - replacing null/undefined values with defaults
+ * Tests for replaceNA, replaceNull, and replaceUndefined verbs
  */
 
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
+
+// --- replaceNull ---
+
+Deno.test("replaceNull - replaces only null, leaves undefined", () => {
+  const data: {
+    id: number;
+    name: string | null | undefined;
+    age: number | undefined | null;
+    score: number | undefined | null;
+  }[] = [
+    { id: 1, name: "Alice", age: null, score: undefined },
+    { id: 2, name: null, age: 30, score: undefined },
+    { id: 3, name: "Charlie", age: null, score: 92 },
+  ];
+
+  const df = createDataFrame(data);
+
+  const cleaned = df.replaceNull({
+    name: "Unknown",
+    age: 0,
+    score: -1,
+  });
+
+  expect(cleaned.nrows()).toBe(3);
+  expect(cleaned[0].name).toBe("Alice");
+  expect(cleaned[0].age).toBe(0); // null replaced
+  expect(cleaned[0].score).toBe(undefined); // undefined NOT replaced
+
+  expect(cleaned[1].name).toBe("Unknown"); // null replaced
+  expect(cleaned[1].age).toBe(30);
+  expect(cleaned[1].score).toBe(undefined); // undefined NOT replaced
+
+  expect(cleaned[2].name).toBe("Charlie");
+  expect(cleaned[2].age).toBe(0); // null replaced
+  expect(cleaned[2].score).toBe(92);
+});
+
+Deno.test("replaceNull - partial replacement", () => {
+  const df = createDataFrame([
+    { id: 1, name: null, age: null, score: null },
+    { id: 2, name: "Bob", age: 25, score: 80 },
+  ]);
+
+  const cleaned = df.replaceNull({ name: "Missing" });
+
+  expect(cleaned.nrows()).toBe(2);
+  expect(cleaned[0].name).toBe("Missing");
+  expect(cleaned[0].age).toBe(null); // not in mapping
+  expect(cleaned[0].score).toBe(null);
+  expect(cleaned[1].name).toBe("Bob");
+  expect(cleaned[1].age).toBe(25);
+  expect(cleaned[1].score).toBe(80);
+});
+
+Deno.test("replaceNull - empty mapping", () => {
+  const df = createDataFrame([
+    { id: 1, name: null, age: 25 },
+    { id: 2, name: "Alice", age: null },
+  ]);
+
+  const cleaned = df.replaceNull({});
+
+  expect(cleaned.nrows()).toBe(2);
+  expect(cleaned[0].name).toBe(null);
+  expect(cleaned[0].age).toBe(25);
+  expect(cleaned[1].name).toBe("Alice");
+  expect(cleaned[1].age).toBe(null);
+});
+
+// --- replaceUndefined ---
+
+Deno.test("replaceUndefined - replaces only undefined, leaves null", () => {
+  const df = createDataFrame([
+    { id: 1, name: "Alice", age: undefined, score: null },
+    { id: 2, name: undefined, age: 30, score: null },
+    { id: 3, name: "Charlie", age: undefined, score: 92 },
+  ]);
+
+  const cleaned = df.replaceUndefined({
+    name: "Unknown",
+    age: 0,
+    score: -1,
+  });
+
+  expect(cleaned.nrows()).toBe(3);
+  expect(cleaned[0].name).toBe("Alice");
+  expect(cleaned[0].age).toBe(0); // undefined replaced
+  expect(cleaned[0].score).toBe(null); // null NOT replaced
+
+  expect(cleaned[1].name).toBe("Unknown"); // undefined replaced
+  expect(cleaned[1].age).toBe(30);
+  expect(cleaned[1].score).toBe(null); // null NOT replaced
+
+  expect(cleaned[2].name).toBe("Charlie");
+  expect(cleaned[2].age).toBe(0); // undefined replaced
+  expect(cleaned[2].score).toBe(92);
+});
+
+Deno.test("replaceUndefined - partial replacement", () => {
+  const df = createDataFrame([
+    { id: 1, name: undefined, age: undefined, score: undefined },
+    { id: 2, name: "Bob", age: 25, score: 80 },
+  ]);
+
+  const cleaned = df.replaceUndefined({ name: "Missing" });
+
+  expect(cleaned.nrows()).toBe(2);
+  expect(cleaned[0].name).toBe("Missing");
+  expect(cleaned[0].age).toBe(undefined); // not in mapping
+  expect(cleaned[0].score).toBe(undefined);
+  expect(cleaned[1].name).toBe("Bob");
+  expect(cleaned[1].age).toBe(25);
+  expect(cleaned[1].score).toBe(80);
+});
+
+Deno.test("replaceUndefined - empty mapping", () => {
+  const df = createDataFrame([
+    { id: 1, name: undefined, age: 25 },
+    { id: 2, name: "Alice", age: undefined },
+  ]);
+
+  const cleaned = df.replaceUndefined({});
+
+  expect(cleaned.nrows()).toBe(2);
+  expect(cleaned[0].name).toBe(undefined);
+  expect(cleaned[0].age).toBe(25);
+  expect(cleaned[1].name).toBe("Alice");
+  expect(cleaned[1].age).toBe(undefined);
+});
+
+Deno.test("replaceNull then replaceUndefined - equivalent to replaceNA", () => {
+  const data: {
+    id: number;
+    name: string | null | undefined;
+    age: number | undefined | null;
+    score: number | undefined | null;
+  }[] = [
+    { id: 1, name: "Alice", age: 25, score: 85 },
+    { id: 2, name: null, age: 30, score: undefined },
+    { id: 3, name: undefined, age: null, score: 92 },
+  ];
+
+  const df = createDataFrame(data);
+
+  const mapping = { name: "Unknown", age: 0, score: -1 };
+
+  const viaChain = df.replaceNull(mapping).replaceUndefined(mapping);
+  const viaReplaceNA = df.replaceNA(mapping);
+
+  expect(viaChain.nrows()).toBe(3);
+  expect(viaReplaceNA.nrows()).toBe(3);
+
+  for (let i = 0; i < 3; i++) {
+    expect(viaChain[i].name).toBe(viaReplaceNA[i].name);
+    expect(viaChain[i].age).toBe(viaReplaceNA[i].age);
+    expect(viaChain[i].score).toBe(viaReplaceNA[i].score);
+  }
+});
+
+// --- replaceNA (deprecated) ---
 
 Deno.test("replaceNA - basic functionality", () => {
   const df = createDataFrame([

@@ -24,7 +24,7 @@ s.test.anova.oneWay(groups: number[][], alpha?: number): OneWayAnovaTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -39,7 +39,7 @@ OneWayAnovaTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejec
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
 const group3 = [20, 21, 19, 22, 20];
@@ -83,7 +83,7 @@ s.test.anova.welch(groups: number[][], alpha?: number): WelchAnovaTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -98,7 +98,7 @@ WelchAnovaTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `reject
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [10, 12, 11, 13, 12];
 const group2 = [15, 16, 14, 17, 15];
 const group3 = [20, 21, 19, 22, 20];
@@ -135,7 +135,7 @@ s.test.anova.twoWay({ data, alpha? }): TwoWayAnovaTestResult
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -153,7 +153,7 @@ TwoWayAnovaTestResult with results for factor A, factor B, and A×B interaction
 // Example: 2x3 factorial design
 // Factor A: 2 levels (treatment, control)
 // Factor B: 3 levels (low, medium, high)
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const data = [
   [[10, 11, 12], [15, 16, 17], [20, 21, 22]],  // Treatment group
   [[8, 9, 10], [12, 13, 14], [18, 19, 20]]     // Control group
@@ -197,7 +197,7 @@ s.test.variance.levene(groups: number[][], alpha?: number): OneWayAnovaTestResul
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -212,7 +212,7 @@ OneWayAnovaTestResult with F-statistic, `pValue`, `rejectNull`
 ### Examples
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 const group1 = [1, 2, 3, 4, 5];
 const group2 = [6, 7, 8, 9, 10];  // similar variance
 const group3 = [1, 5, 10, 15, 20]; // different variance

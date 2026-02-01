@@ -8,7 +8,7 @@ export const logNormalDocs: Record<string, DocEntry> = {
       "Log-normal distribution density function (PDF). If X ~ Normal(μ, σ²), then e^X ~ LogNormal(μ, σ²). Used for modeling positive values with right skew.",
     signature:
       "s.dist.logNormal.density({ at, meanLog?, standardDeviationLog?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (must be > 0)",
       "`meanLog?: number` - Mean of the underlying normal distribution (default: 0)",
@@ -40,7 +40,7 @@ export const logNormalDocs: Record<string, DocEntry> = {
       "Log-normal distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.logNormal.probability({ at, meanLog?, standardDeviationLog?, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated",
       "`meanLog?: number` - Mean of the underlying normal distribution (default: 0)",
@@ -71,7 +71,7 @@ export const logNormalDocs: Record<string, DocEntry> = {
       "Log-normal distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.logNormal.quantile({ probability, meanLog?, standardDeviationLog?, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`meanLog?: number` - Mean of the underlying normal distribution (default: 0)",
@@ -103,7 +103,7 @@ export const logNormalDocs: Record<string, DocEntry> = {
       "Generate random samples from log-normal distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.logNormal.random({ meanLog?, standardDeviationLog?, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`meanLog?: number` - Mean of the underlying normal distribution (default: 0)",
       "`standardDeviationLog?: number` - Standard deviation of the underlying normal distribution (default: 1)",

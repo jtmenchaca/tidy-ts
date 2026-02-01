@@ -8,7 +8,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "Mann-Whitney U test (Wilcoxon rank-sum test) for comparing two independent groups without assuming normality.",
     signature:
       "s.test.nonparametric.mannWhitney({ x, y, exact?, continuityCorrection?, alternative?, alpha? }): MannWhitneyTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First group of values",
       "`y: number[]` - Second group of values",
@@ -20,7 +20,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     returns:
       "MannWhitneyTestResult with `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
       "const result = s.test.nonparametric.mannWhitney({ x: group1, y: group2 });",
@@ -51,7 +51,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "Wilcoxon signed-rank test for comparing two related/paired samples without assuming normality.",
     signature:
       "s.test.nonparametric.wilcoxon({ x, y, alternative?, alpha? }): WilcoxonSignedRankTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First paired measurement",
       "`y: number[]` - Second paired measurement (must have same length as x)",
@@ -61,7 +61,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     returns:
       "WilcoxonSignedRankTestResult with `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const before = [120, 125, 118, 130, 122];",
       "const after = [115, 118, 112, 125, 117];",
       "const result = s.test.nonparametric.wilcoxon({ x: before, y: after });",
@@ -88,7 +88,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "Kruskal-Wallis test for comparing multiple independent groups without assuming normality (non-parametric alternative to one-way ANOVA).",
     signature:
       "s.test.nonparametric.kruskalWallis(groups: number[][], alpha?: number): KruskalWallisTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`groups: number[][]` - Array of groups, where each group is an array of numbers",
       "`alpha?: number` - Significance level (default: 0.05)",
@@ -96,7 +96,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
     returns:
       "KruskalWallisTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
       "const group3 = [20, 21, 19, 22, 20];",

@@ -8,7 +8,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "Shapiro-Wilk test for assessing whether data follows a normal distribution.",
     signature:
       "s.test.normality.shapiroWilk({ data, alpha? }): ShapiroWilkTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values to test",
       "`alpha?: number` - Significance level (default: 0.05)",
@@ -16,7 +16,7 @@ export const normalityDocs: Record<string, DocEntry> = {
     returns:
       "ShapiroWilkTestResult with `testStatistic`, `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2];",
       "const result = s.test.normality.shapiroWilk({ data });",
       "console.log(result.pValue);  // p-value",
@@ -53,7 +53,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "Anderson-Darling test for normality. More sensitive to deviations in the tails of the distribution compared to Shapiro-Wilk.",
     signature:
       "s.test.normality.andersonDarling({ data, alpha? }): AndersonDarlingTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values to test",
       "`alpha?: number` - Significance level (default: 0.05)",
@@ -61,7 +61,7 @@ export const normalityDocs: Record<string, DocEntry> = {
     returns:
       "AndersonDarlingTestResult with `testStatistic` (A²), `pValue`, `rejectNull`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2, 9.1];",
       "const result = s.test.normality.andersonDarling({ data });",
       "console.log(result.pValue);",
@@ -91,7 +91,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "D'Agostino-Pearson K² omnibus test for normality. Combines skewness and kurtosis into a single test statistic.",
     signature:
       "s.test.normality.dagostinoPearson({ data, alpha? }): DAgostinoPearsonTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: number[]` - Array of numeric values to test",
       "`alpha?: number` - Significance level (default: 0.05)",
@@ -99,7 +99,7 @@ export const normalityDocs: Record<string, DocEntry> = {
     returns:
       "DAgostinoPearsonTestResult with `testStatistic` (K²), `pValue`, `rejectNull`, `skewness`, `kurtosis`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = Array.from({length: 50}, () => Math.random() * 10);",
       "const result = s.test.normality.dagostinoPearson({ data });",
       "console.log(`Skewness: ${result.skewness.toFixed(3)}`);",
@@ -130,7 +130,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "One-sample Kolmogorov-Smirnov test against a uniform distribution. Tests whether data comes from a uniform distribution on [min, max].",
     signature:
       "s.test.normality.kolmogorovSmirnovUniform({ x, min?, max?, alternative?, alpha? }): KolmogorovSmirnovTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - Sample data to test",
       "`min?: number` - Minimum of uniform distribution (default: 0)",
@@ -141,7 +141,7 @@ export const normalityDocs: Record<string, DocEntry> = {
     returns:
       "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "// Test if data follows uniform distribution on [0, 1]",
       "const data = [0.1, 0.3, 0.5, 0.7, 0.9];",
       "const result = s.test.normality.kolmogorovSmirnovUniform({ x: data });",
@@ -171,7 +171,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "Two-sample Kolmogorov-Smirnov test. Tests whether two samples come from the same distribution by comparing their empirical CDFs.",
     signature:
       "s.test.normality.kolmogorovSmirnovTwoSample({ x, y, alternative?, alpha? }): KolmogorovSmirnovTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`x: number[]` - First sample",
       "`y: number[]` - Second sample",
@@ -181,7 +181,7 @@ export const normalityDocs: Record<string, DocEntry> = {
     returns:
       "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const sample1 = [1.2, 2.3, 3.4, 4.5, 5.6];",
       "const sample2 = [1.5, 2.5, 3.5, 4.5, 5.5];",
       "const result = s.test.normality.kolmogorovSmirnovTwoSample({ x: sample1, y: sample2 });",

@@ -7,7 +7,7 @@ export const betaDocs: Record<string, DocEntry> = {
     description:
       "Beta distribution density function (PDF). Used for modeling probabilities and proportions.",
     signature: "s.dist.beta.density({ at, alpha, beta, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where density is evaluated (0 ≤ at ≤ 1)",
       "`alpha: number` - First shape parameter (α > 0)",
@@ -39,7 +39,7 @@ export const betaDocs: Record<string, DocEntry> = {
       "Beta distribution cumulative distribution function (CDF). Returns P(X ≤ at) or P(X > at).",
     signature:
       "s.dist.beta.probability({ at, alpha, beta, direction?, returnLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`at: number` - Point where CDF is evaluated (0 ≤ at ≤ 1)",
       "`alpha: number` - First shape parameter (α > 0)",
@@ -70,7 +70,7 @@ export const betaDocs: Record<string, DocEntry> = {
       "Beta distribution quantile function (inverse CDF). Returns the value x such that P(X ≤ x) = probability.",
     signature:
       "s.dist.beta.quantile({ probability, alpha, beta, direction?, probabilityIsLog? }): number",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`probability: number` - Probability value (0..1)",
       "`alpha: number` - First shape parameter (α > 0)",
@@ -102,7 +102,7 @@ export const betaDocs: Record<string, DocEntry> = {
       "Generate random samples from beta distribution. Returns a single number or array of numbers.",
     signature:
       "s.dist.beta.random({ alpha, beta, sampleSize? }): number | number[]",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`alpha: number` - First shape parameter (α > 0)",
       "`beta: number` - Second shape parameter (β > 0)",
@@ -132,7 +132,7 @@ export const betaDocs: Record<string, DocEntry> = {
       "Generate data for beta distribution visualization. Returns a DataFrame with PDF, CDF, or inverse CDF data.",
     signature:
       "s.dist.beta.data({ alpha, beta, type, range?, points? }): DataFrame",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`alpha: number` - First shape parameter",
       "`beta: number` - Second shape parameter",

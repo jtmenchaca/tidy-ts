@@ -24,7 +24,7 @@ s.dist.negativeBinomial.density({ at, numberOfSuccesses, probabilityOfSuccess, r
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -71,7 +71,7 @@ s.dist.negativeBinomial.probability({ at, numberOfSuccesses, probabilityOfSucces
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -117,7 +117,7 @@ s.dist.negativeBinomial.quantile({ probability, numberOfSuccesses, probabilityOf
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters
@@ -163,7 +163,7 @@ s.dist.negativeBinomial.random({ numberOfSuccesses, probabilityOfSuccess, sample
 ### Import
 
 ```typescript
-import { s } from "@tidy-ts/dataframe";
+import { stats as s } from "@tidy-ts/dataframe";
 ```
 
 ### Parameters

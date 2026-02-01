@@ -3,7 +3,7 @@
 > Auto-generated index
 
 - [Arrow](./arrow.md)
-- [Csv](./csv.md)
-- [Json](./json.md)
+- [CSV](./csv.md)
+- [JSON](./json.md)
 - [Parquet](./parquet.md)
-- [Xlsx](./xlsx.md)
+- [XLSX](./xlsx.md)

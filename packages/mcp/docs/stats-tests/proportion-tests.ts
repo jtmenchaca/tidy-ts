@@ -8,7 +8,7 @@ export const proportionTestDocs: Record<string, DocEntry> = {
       "One-sample proportion test to compare observed proportion to a hypothesized population proportion.",
     signature:
       "s.test.proportion.oneSample({ data, hypothesizedProportion, alternative?, alpha? }): OneSampleProportionTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data: boolean[]` - Array of boolean values (true = success, false = failure)",
       "`hypothesizedProportion: number` - Hypothesized population proportion (between 0 and 1)",
@@ -18,7 +18,7 @@ export const proportionTestDocs: Record<string, DocEntry> = {
     returns:
       "OneSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `sampleProportion`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [true, false, true, true, false, true];",
       "const result = s.test.proportion.oneSample({ data, hypothesizedProportion: 0.5 });",
       "console.log(result.pValue);  // p-value",
@@ -44,7 +44,7 @@ export const proportionTestDocs: Record<string, DocEntry> = {
       "Two-sample proportion test to compare proportions between two independent groups.",
     signature:
       "s.test.proportion.twoSample({ data1, data2, pooled?, alternative?, alpha? }): TwoSampleProportionTestResult",
-    imports: ['import { s } from "@tidy-ts/dataframe";'],
+    imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
       "`data1: boolean[]` - First group of boolean values",
       "`data2: boolean[]` - Second group of boolean values",
@@ -55,7 +55,7 @@ export const proportionTestDocs: Record<string, DocEntry> = {
     returns:
       "TwoSampleProportionTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `proportionDifference`",
     examples: [
-      'import { s } from "@tidy-ts/dataframe";',
+      'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [true, false, true, true, false];",
       "const group2 = [true, true, true, false, true];",
       "const result = s.test.proportion.twoSample({ data1: group1, data2: group2 });",
