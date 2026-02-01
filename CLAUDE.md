@@ -1,9 +1,14 @@
 # Tidy-TS Architecture
 
+- **Efficient type checking**: Run checks on relevant packages. Trust the exit code and output - deno check shows green "Check" lines for success and explicit error messages with line numbers for failures. No need to grep/verify output if the command succeeds. For multiple packages, run sequentially:
+  ```bash
+  pnpm check:pkg1 && pnpm check:pkg2 && pnpm check:pkg3
+  ```
+
 ## Quick Reference
 
 ```bash
-# Type check (REQUIRED before reporting success)
+# Type check
 pnpm check
 
 # Run all CI tests
