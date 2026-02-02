@@ -69,14 +69,21 @@ for ((i=1; i<=$ITERATIONS; i++)); do
   ITER_START=$(date +%s)
 
   result=$(claude --permission-mode acceptEdits -p "@${PRD_FILE} @${PROGRESS_FILE}
-1. Find the highest-priority feature to work on and work only on that feature.
-This should be the one YOU decide has the highest priority - not necessarily the first in the list.
-2. Check that the types check via pnpm typecheck and that the tests pass via pnpm test.
-3. Update the PRD with the work that was done.
-4. Append your progress to the ${PROGRESS_FILE} file.
-Use this to leave a note for the next person working in the codebase.
-5. Make a git commit of that feature. ONLY WORK ON A SINGLE FEATURE.
-6. If the PRD is complete (all items pass), update plans/feature-list.md to mark the feature as completed, then output <promise>COMPLETE</promise>.
+
+READ FIRST (saves significant exploration time):
+- The PRD's 'meta' section contains architecture decisions, exact file paths, build commands, and integration patterns
+- The progress file's most recent entry shows what was just completed and the suggested 'Next Priority'
+- If meta.wasmIntegrationPattern or similar patterns exist, follow them exactly - don't re-discover
+- Trust that prior work is complete if marked as 'passes: true' - don't re-verify unless you hit an error
+
+THEN:
+1. Find the highest-priority feature from PRD items where 'passes: false', guided by the progress file's 'Next Priority' suggestion.
+2. Implement the feature. Use exact file paths from meta.architecture if available.
+3. Verify: types with 'pnpm check:dataframe' (or relevant package), tests with the appropriate test command (check meta.build or package.json).
+4. Update the PRD item's 'passes' field to true when all steps are verified.
+5. Append a brief progress note to ${PROGRESS_FILE} with: what you did, key decisions, and suggested 'Next Priority'.
+6. Make ONE git commit for the feature. ONLY WORK ON A SINGLE FEATURE.
+7. If all PRD items pass, update plans/feature-list.md to mark the feature as completed, then output <promise>COMPLETE</promise>.
 ")
 
   echo "$result"

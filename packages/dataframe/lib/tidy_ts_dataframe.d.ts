@@ -879,6 +879,30 @@ export function glm_predict_wasm(
   pred_type: string,
 ): string;
 /**
+ * WASM export for GLMM fitting
+ *
+ * Fits a generalized linear mixed model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Fixed effects formula as string (e.g., "y ~ x1 + x2")
+ * * `random_effects_json` - JSON array of random effect specifications
+ * * `family_name` - Name of the family ("gaussian", "binomial", "poisson", etc.)
+ * * `link_name` - Name of the link function ("identity", "logit", "log", etc.)
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted GLMM result
+ */
+export function glmm_fit_wasm(
+  formula: string,
+  random_effects_json: string,
+  family_name: string,
+  link_name: string,
+  data_json: string,
+  options_json?: string | null,
+): string;
+/**
  * WASM export for Anderson-Darling normality test
  */
 export function anderson_darling_test(

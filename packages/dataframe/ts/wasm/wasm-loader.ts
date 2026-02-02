@@ -34,3 +34,6 @@ export * from "./probability-distributions.ts";
 
 // Export GLM functions
 export * from "./glm-functions.ts";
+
+// Export GLMM functions
+export * from "./glmm-functions.ts";

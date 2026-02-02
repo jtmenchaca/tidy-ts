@@ -29,6 +29,20 @@
 //!    - Profile out fixed effects and random effects
 //!    - BFGS or Newton for variance components
 //!
+//! # Module Structure
+//!
+//! - [`laplace`]: Laplace approximation (modular implementation)
+//!   - `likelihood`: Data log-likelihood using proper distributions
+//!   - `gradient`: Gradient and Hessian computation
+//!   - `mode_finding`: Newton's method for BLUPs
+//!   - `approximation`: Main Laplace approximation
+//!   - `reml`: REML adjustment
+//! - [`fitting`]: Main GLMM fitting routines
+//! - [`random_effects`]: Random effect specification and Z matrix construction
+//! - [`random_effects_likelihood`]: Random effects prior
+//! - [`variance_components`]: Variance component parameterization
+//! - [`types`]: Core GLMM types
+//!
 //! # Example Usage
 //!
 //! ```ignore
@@ -58,6 +72,9 @@ pub mod random_effects;
 pub mod random_effects_likelihood;
 pub mod types;
 pub mod variance_components;
+
+#[cfg(test)]
+mod glmmtmb_fixtures;
 
 // Re-export core types
 pub use types::{
@@ -96,6 +113,6 @@ pub use laplace::{
 // Re-export fitting types
 pub use fitting::{glmm_fit, glmm_fit_simple, OuterOptimizationResult};
 
-// Future submodules (to be implemented):
-// #[cfg(feature = "wasm")]
-// pub mod wasm;               // WASM bindings
+// WASM bindings
+#[cfg(feature = "wasm")]
+pub mod wasm;

@@ -20,6 +20,15 @@
 //!
 //! This gives k(k+1)/2 parameters for a k×k covariance matrix.
 //!
+//! # Compound Symmetry Transformation (Issue 3 fix)
+//!
+//! For compound symmetry with k dimensions, the valid correlation range is
+//! `(-1/(k-1), 1)` to ensure positive definiteness. We use the glmmTMB transformation:
+//!
+//! ```text
+//! rho = invlogit(x) * (1 + a) - a  where a = 1/(k-1)
+//! ```
+//!
 //! # Transformations
 //!
 //! - `theta_to_cholesky`: theta → L (Cholesky factor)
@@ -28,8 +37,64 @@
 //! - `vcov_to_theta`: Σ → theta (inverse)
 //! - `theta_to_sd`: theta → standard deviations
 //! - `theta_to_corr`: theta → correlation matrix
+//! - `cs_correlation_transform`: x → rho for compound symmetry
+//! - `cs_correlation_inv_transform`: rho → x for compound symmetry
 
 use super::types::CovarianceType;
+
+/// Transform unconstrained parameter to valid CS correlation
+///
+/// For compound symmetry with k dimensions, the valid correlation range is
+/// `(-1/(k-1), 1)` to ensure positive definiteness.
+///
+/// glmmTMB transformation (glmmTMB.cpp:441-473):
+/// ```text
+/// a = 1/(k-1)
+/// rho = invlogit(x) * (1 + a) - a
+/// ```
+///
+/// When x → -∞: rho → -a = -1/(k-1)
+/// When x → +∞: rho → 1
+///
+/// # Arguments
+/// * `x` - Unconstrained parameter
+/// * `k` - Dimension of compound symmetry matrix (must be >= 2)
+///
+/// # Returns
+/// Correlation in valid range (-1/(k-1), 1)
+pub fn cs_correlation_transform(x: f64, k: usize) -> f64 {
+    if k <= 1 {
+        return 0.0; // Degenerate case
+    }
+    let a = 1.0 / (k as f64 - 1.0);
+    let invlogit_x = 1.0 / (1.0 + (-x).exp());
+    invlogit_x * (1.0 + a) - a
+}
+
+/// Transform CS correlation to unconstrained parameter
+///
+/// Inverse of cs_correlation_transform.
+///
+/// # Arguments
+/// * `rho` - Correlation in valid range (-1/(k-1), 1)
+/// * `k` - Dimension of compound symmetry matrix
+///
+/// # Returns
+/// Unconstrained parameter x
+pub fn cs_correlation_inv_transform(rho: f64, k: usize) -> f64 {
+    if k <= 1 {
+        return 0.0; // Degenerate case
+    }
+    let a = 1.0 / (k as f64 - 1.0);
+    // rho = invlogit(x) * (1 + a) - a
+    // rho + a = invlogit(x) * (1 + a)
+    // (rho + a) / (1 + a) = invlogit(x)
+    let y = (rho + a) / (1.0 + a);
+    // Clamp to avoid log(0) or log(inf)
+    let y_clamped = y.clamp(1e-10, 1.0 - 1e-10);
+    // logit(y) = ln(y / (1 - y))
+    (y_clamped / (1.0 - y_clamped)).ln()
+}
 
 /// Convert theta parameters to Cholesky factor L
 ///
@@ -368,10 +433,13 @@ pub fn initial_theta(
             theta
         }
         CovarianceType::CompoundSymmetry => {
-            // 2 parameters: log(sd) and correlation
+            // 2 parameters: log(sd) and unconstrained correlation parameter
             // For CS, all variances equal, all correlations equal
-            // We use a simplified parameterization for CS
-            vec![initial_sd.ln(), initial_corr]
+            // Issue 3 fix: Use inverse transform to get unconstrained parameter
+            // Note: k isn't passed to initial_theta, so we assume k=2 for initialization
+            // The actual k is used during transformation in theta_to_variance_component
+            let theta_corr = cs_correlation_inv_transform(initial_corr, k.max(2));
+            vec![initial_sd.ln(), theta_corr]
         }
     }
 }
@@ -426,10 +494,12 @@ pub fn theta_to_variance_component(
             (vcov, std_dev, correlation)
         }
         CovarianceType::CompoundSymmetry => {
-            // theta[0] = log(sd), theta[1] = correlation
+            // theta[0] = log(sd), theta[1] = unconstrained correlation parameter
+            // Issue 3 fix: Use proper bounds transformation for CS correlation
+            // Valid range is (-1/(k-1), 1) for positive definiteness
             assert!(theta.len() >= 2, "CompoundSymmetry requires at least 2 params");
             let sd = theta[0].exp();
-            let rho = theta[1].tanh(); // Transform to (-1, 1)
+            let rho = cs_correlation_transform(theta[1], k); // Transform to valid CS range
 
             let variance = sd * sd;
             let covariance = rho * variance;
@@ -687,7 +757,11 @@ mod tests {
         let theta = initial_theta(3, &CovarianceType::CompoundSymmetry, 2.0, 0.3);
         assert_eq!(theta.len(), 2);
         assert!(approx_eq(theta[0], 2.0_f64.ln(), TOL));
-        assert!(approx_eq(theta[1], 0.3, TOL));
+        // Issue 3 fix: theta[1] is now the unconstrained CS correlation parameter
+        // It should transform back to 0.3 when passed through cs_correlation_transform
+        let recovered_rho = cs_correlation_transform(theta[1], 3);
+        assert!(approx_eq(recovered_rho, 0.3, 1e-6),
+            "CS correlation should round-trip: expected 0.3, got {}", recovered_rho);
     }
 
     #[test]
@@ -711,7 +785,9 @@ mod tests {
 
     #[test]
     fn test_theta_to_variance_component_compound_symmetry() {
-        let theta = vec![1.0_f64.ln(), 0.5]; // sd = 1, rho = tanh(0.5) ≈ 0.462
+        // Issue 3 fix: Use the proper CS transformation
+        // theta = [log(sd), unconstrained_corr_param]
+        let theta = vec![1.0_f64.ln(), 0.5];
         let vc = theta_to_variance_component(
             &theta,
             2,
@@ -720,15 +796,17 @@ mod tests {
             vec!["a".to_string(), "b".to_string()],
         );
 
-        let expected_rho = 0.5_f64.tanh();
+        // For k=2, cs_correlation_transform gives: rho = invlogit(0.5) * 2 - 1
+        let expected_rho = cs_correlation_transform(0.5, 2);
         assert!(approx_eq(vc.std_dev[0], 1.0, TOL));
         assert!(approx_eq(vc.std_dev[1], 1.0, TOL));
         assert!(approx_eq(vc.vcov[0][0], 1.0, TOL));
         assert!(approx_eq(vc.vcov[1][1], 1.0, TOL));
-        assert!(approx_eq(vc.vcov[0][1], expected_rho, TOL));
+        assert!(approx_eq(vc.vcov[0][1], expected_rho, 1e-8),
+            "Expected covariance {}, got {}", expected_rho, vc.vcov[0][1]);
 
         let corr = vc.correlation.unwrap();
-        assert!(approx_eq(corr[0][1], expected_rho, TOL));
+        assert!(approx_eq(corr[0][1], expected_rho, 1e-8));
     }
 
     #[test]

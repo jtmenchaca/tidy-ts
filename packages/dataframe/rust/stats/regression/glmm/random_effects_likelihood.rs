@@ -115,8 +115,10 @@ fn compute_vcov_for_type(theta_re: &[f64], k: usize, cov_type: &CovarianceType) 
         }
         CovarianceType::CompoundSymmetry => {
             // theta_re = [log(sd), raw_corr]
+            // Issue 3 fix: Use proper bounds transformation for CS correlation
+            // Valid range is (-1/(k-1), 1) for positive definiteness
             let sd = theta_re[0].exp();
-            let rho = theta_re[1].tanh(); // Transform to (-1, 1)
+            let rho = super::variance_components::cs_correlation_transform(theta_re[1], k);
             let variance = sd * sd;
             let covariance = rho * variance;
 

@@ -2279,6 +2279,100 @@ export function glm_predict_wasm(result_json, newdata_json, pred_type) {
 }
 
 /**
+ * WASM export for GLMM fitting
+ *
+ * Fits a generalized linear mixed model using the provided formula and data.
+ *
+ * # Arguments
+ * * `formula` - Fixed effects formula as string (e.g., "y ~ x1 + x2")
+ * * `random_effects_json` - JSON array of random effect specifications
+ * * `family_name` - Name of the family ("gaussian", "binomial", "poisson", etc.)
+ * * `link_name` - Name of the link function ("identity", "logit", "log", etc.)
+ * * `data_json` - JSON string containing the data as an object with column names as keys
+ * * `options_json` - JSON string containing optional parameters
+ *
+ * # Returns
+ * JSON string containing the fitted GLMM result
+ * @param {string} formula
+ * @param {string} random_effects_json
+ * @param {string} family_name
+ * @param {string} link_name
+ * @param {string} data_json
+ * @param {string | null} [options_json]
+ * @returns {string}
+ */
+export function glmm_fit_wasm(
+  formula,
+  random_effects_json,
+  family_name,
+  link_name,
+  data_json,
+  options_json,
+) {
+  let deferred7_0;
+  let deferred7_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      formula,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ptr1 = passStringToWasm0(
+      random_effects_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len1 = WASM_VECTOR_LEN;
+    const ptr2 = passStringToWasm0(
+      family_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len2 = WASM_VECTOR_LEN;
+    const ptr3 = passStringToWasm0(
+      link_name,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len3 = WASM_VECTOR_LEN;
+    const ptr4 = passStringToWasm0(
+      data_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len4 = WASM_VECTOR_LEN;
+    var ptr5 = isLikeNone(options_json)
+      ? 0
+      : passStringToWasm0(
+        options_json,
+        wasm.__wbindgen_malloc,
+        wasm.__wbindgen_realloc,
+      );
+    var len5 = WASM_VECTOR_LEN;
+    const ret = wasm.glmm_fit_wasm(
+      ptr0,
+      len0,
+      ptr1,
+      len1,
+      ptr2,
+      len2,
+      ptr3,
+      len3,
+      ptr4,
+      len4,
+      ptr5,
+      len5,
+    );
+    deferred7_0 = ret[0];
+    deferred7_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred7_0, deferred7_1, 1);
+  }
+}
+
+/**
  * WASM export for Anderson-Darling normality test
  * @param {Float64Array} x
  * @param {number} alpha
