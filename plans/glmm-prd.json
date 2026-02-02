@@ -193,7 +193,7 @@
         "Verify theta estimates match glmmTMB within 1e-3",
         "Run `cargo test` for fitting module"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

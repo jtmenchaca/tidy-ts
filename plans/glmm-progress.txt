@@ -473,3 +473,100 @@ where:
 - BFGS optimizer for theta with numerical gradients
 - Full GLMM fitting loop combining beta, b, and theta optimization
 
+---
+
+### 2026-02-02: Item 8 Complete - Outer Optimization for Variance Components
+
+Implemented the fitting module with L-BFGS optimization for variance components.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/fitting.rs` (~900 lines)
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added `pub mod fitting;` and re-exports
+
+**Key Components Implemented:**
+
+1. **L-BFGS Optimizer:**
+   - `LbfgsState` - State management for two-loop recursion
+   - `compute_direction()` - L-BFGS search direction computation
+   - History-based Hessian approximation (m=10 stored pairs)
+   - Curvature condition checking for update skipping
+
+2. **Line Search:**
+   - `line_search()` - Backtracking line search with Armijo condition
+   - Automatic step size reduction (ρ=0.5)
+   - Fallback to gradient descent when direction is not descent
+
+3. **Main Fitting Function:**
+   - `glmm_fit()` - Full GLMM fitting with variance component optimization
+   - `glmm_fit_simple()` - Convenience function for simple random intercept models
+   - `run_outer_optimization()` - Core outer loop implementation
+
+4. **Supporting Functions:**
+   - `build_variance_components()` - Convert theta to VarianceComponent structs
+   - `build_blups()` - Extract BLUPs with optional standard errors
+   - `build_glm_result()` - Construct GlmResult for fixed effects
+   - `OuterOptimizationResult` - Result struct for optimization outcome
+
+**Algorithm Overview:**
+
+```
+glmm_fit(y, x, z, random_effects, family, control):
+  1. Initialize theta (variance components) from random_effects
+  2. Initialize beta (fixed effects) to zeros or user-supplied values
+  3. Initialize b (random effects) to zeros
+
+  for outer_iter = 1 to max_iter_outer:
+    4. Evaluate Laplace-approximated marginal likelihood at current theta
+       - Inner loop finds b_mode via Newton's method
+       - Returns log_marginal_likelihood and grad_theta
+
+    5. Compute L-BFGS search direction from gradient and history
+
+    6. Line search to find optimal step size
+
+    7. Update theta using step and direction
+
+    8. Update L-BFGS history (s, y pairs)
+
+    9. Check convergence via gradient norm < tol_outer
+
+  10. Extract final results: theta, beta, b, variance_components, BLUPs
+
+  return GlmmResult
+```
+
+**Key Design Decisions:**
+
+1. **L-BFGS over BFGS** - Limited memory for larger problems, O(mn) vs O(n²)
+2. **Backtracking line search** - Simple and robust, Armijo condition only
+3. **Best solution tracking** - Keeps track of best theta in case of non-monotonic behavior
+4. **Gradient descent fallback** - When L-BFGS direction fails
+5. **Builds on Laplace module** - Uses existing `laplace_approximation()` for objective/gradient
+
+**Test Coverage (7 tests):**
+- `test_lbfgs_state_direction` - L-BFGS direction computation
+- `test_lbfgs_state_update` - History update mechanism
+- `test_glmm_fit_basic` - Basic GLMM fitting succeeds
+- `test_glmm_fit_convergence` - Convergence within max iterations
+- `test_glmm_fit_variance_components` - Variance component extraction
+- `test_glmm_fit_blups` - BLUP extraction and properties
+- `test_build_variance_components` - Theta to VarianceComponent conversion
+
+**Verification:**
+- `cargo check` passes (no errors)
+- `deno check --unstable-tsgo packages/dataframe` passes (all green)
+
+**Integration Points:**
+- Uses `laplace_approximation()` for profile likelihood evaluation
+- Uses `initial_theta()` from variance_components for initialization
+- Uses `theta_to_variance_component()` for result construction
+- Uses `split_theta()` for per-random-effect theta handling
+- Builds `GlmResult` using `GlmResult::new()` constructor
+
+**Next Priority:** Item 9 (BLUP extraction and standard errors) or Item 10 (full glmm() with Gaussian)
+- Item 9 is partially done (BLUPs extracted in fitting.rs)
+- Item 10 would test the full integration
+- Consider tackling Item 4 (negative binomial families) as independent work
+

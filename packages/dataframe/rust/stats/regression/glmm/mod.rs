@@ -52,6 +52,7 @@
 //! - Brooks et al. (2017). glmmTMB Balances Speed and Flexibility
 //! - Kristensen et al. (2016). TMB: Automatic Differentiation and Laplace Approximation
 
+pub mod fitting;
 pub mod laplace;
 pub mod random_effects;
 pub mod random_effects_likelihood;
@@ -90,9 +91,9 @@ pub use laplace::{
     laplace_approximation, laplace_marginal_likelihood, LaplaceControl, LaplaceResult,
 };
 
+// Re-export fitting types
+pub use fitting::{glmm_fit, glmm_fit_simple, OuterOptimizationResult};
+
 // Future submodules (to be implemented):
-// pub mod variance_components; // Log-Cholesky parameterization
-// pub mod laplace;            // Laplace approximation
-// pub mod fitting;            // Main fitting algorithm
 // #[cfg(feature = "wasm")]
 // pub mod wasm;               // WASM bindings
