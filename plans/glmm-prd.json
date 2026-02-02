@@ -202,7 +202,7 @@
         "Extract conditional modes b_hat from Laplace optimization",
         "Compute conditional variance Var(b | y) from inverse Hessian",
         "Extract BLUP standard errors as sqrt(diag(Var(b | y)))",
-        "Test on sleepstudy-like data - BLUPs should match lme4 ranef() within 0.01",
+        "Test on sleepstudy-like data - BLUPs should match lme4 ranef() within 1e-3",
         "Run `cargo test` for blup extraction"
       ],
       "passes": true
@@ -267,7 +267,7 @@
         "Verify 2x2 variance-covariance matrix extraction",
         "Compare intercept SD to lme4 - within 1e-3",
         "Compare slope SD to lme4 - within 1e-3",
-        "Compare intercept-slope correlation to lme4 - within 0.01",
+        "Compare intercept-slope correlation to lme4 - within 1e-3",
         "Run `cargo test` for random slopes"
       ],
       "passes": true
@@ -354,7 +354,7 @@
       "description": "Document GLMM edge cases and known limitations",
       "steps": [
         "Create packages/testing/glmm/edge-cases.md documenting known limitations",
-        "Document: convergence tolerance used (1e-4 for outer optimization)",
+        "Document: convergence tolerance used (1e-6 for outer optimization gradient norm)",
         "Document: fixed effects tolerance (1e-4, matching PRD goal)",
         "Document: variance component tolerance (1e-3, matching PRD goal)",
         "Document: separation handling in binomial GLMMs (large coefficients, convergence warnings)",
@@ -369,8 +369,8 @@
       "description": "Performance benchmarks for GLMM",
       "steps": [
         "Create packages/testing/glmm/glmm-benchmarks.test.ts",
-        "Benchmark with 5000 obs, 50 groups, 1 random intercept - completes in < 2 seconds",
-        "Benchmark with 10000 obs, 100 groups, 2 random effects - completes in < 10 seconds",
+        "Benchmark with 5000 obs, 50 groups, 1 random intercept - completes in < 1 second",
+        "Benchmark with 10000 obs, 100 groups, 2 random effects - completes in < 5 seconds",
         "Document timing results in test output"
       ],
       "passes": false

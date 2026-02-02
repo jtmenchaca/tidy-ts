@@ -1550,4 +1550,4 @@ Verified the complete WASM integration for GLMM, including Rust WASM bindings, T
 **Note on rust/mod.rs Export:**
 The PRD step 3 mentions adding `pub use stats::regression::glmm::wasm::*` to rust/mod.rs. This is not strictly required for WASM to work since wasm-bindgen exports functions directly via `#[wasm_bindgen]`. The integration works without this re-export, and the tests pass.
 
-**Next Priority:** Item 19 (DataFrame.glmm() method) - Add glmm() as a DataFrame method
+**Next Priority:** Item 19 (comprehensive test suite in packages/testing/glmm/)
