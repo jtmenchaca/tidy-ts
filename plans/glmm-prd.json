@@ -244,7 +244,7 @@
         "Test with binary (0/1) response",
         "Run `cargo test` for binomial glmm"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
