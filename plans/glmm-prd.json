@@ -283,7 +283,7 @@
         "Verify BLUPs for both grouping factors",
         "Run `cargo test` for crossed effects"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

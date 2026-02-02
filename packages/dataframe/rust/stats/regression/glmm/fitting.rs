@@ -878,8 +878,8 @@ mod tests {
     use super::*;
     use crate::stats::regression::family::GaussianFamily;
     use crate::stats::regression::glmm::random_effects::{
-        construct_z_matrix, intercept_slope_term_values, intercept_term_values,
-        populate_random_effect,
+        construct_combined_z_matrix, construct_z_matrix, intercept_slope_term_values,
+        intercept_term_values, populate_random_effect,
     };
 
     #[allow(unused_imports)]
@@ -3172,5 +3172,453 @@ mod tests {
                 g
             );
         }
+    }
+
+    // ============================================================================
+    // Crossed Random Effects Tests (Item 15)
+    // ============================================================================
+
+    /// Create crossed random effects test data with known parameters
+    ///
+    /// Generates data following:
+    ///   y = β₀ + β₁*x + b_patient + b_provider + ε
+    /// where:
+    ///   - b_patient ~ N(0, σ²_patient)
+    ///   - b_provider ~ N(0, σ²_provider)
+    ///   - patient and provider are crossed (not nested)
+    ///
+    /// This mimics clinical data where patients see multiple providers
+    /// and providers see multiple patients.
+    fn create_crossed_random_effects_data(
+    ) -> (Vec<f64>, Vec<Vec<f64>>, Vec<RandomEffect>, SparseMatrix, Vec<f64>, Vec<f64>) {
+        let n_patients = 10;
+        let n_providers = 5;
+        // Each patient sees multiple providers over 5 observations
+        let obs_per_patient = 5;
+        let n = n_patients * obs_per_patient; // 50 observations
+
+        // True fixed effects
+        let beta_0 = 3.0; // Population intercept
+        let beta_1 = 0.5; // Population slope
+
+        // Deterministic patient effects - designed to have SD ≈ 1.0
+        // Mean-centered values: sum = 0
+        // Using larger effects to make them identifiable
+        let patient_effects: Vec<f64> = vec![
+            -1.6, -1.2, -0.8, -0.4, 0.0, 0.0, 0.4, 0.8, 1.2, 1.6,
+        ];
+        // SD = sqrt(sum(x^2)/n) ≈ 0.98
+
+        // Deterministic provider effects - designed to have SD ≈ 0.70
+        // Mean-centered values: sum = 0
+        let provider_effects: Vec<f64> = vec![-1.0, -0.5, 0.0, 0.5, 1.0];
+        // SD ≈ 0.71
+
+        // Patient and provider assignments
+        // Create a crossed design where each patient sees different providers
+        let mut patient_indices = Vec::with_capacity(n);
+        let mut provider_indices = Vec::with_capacity(n);
+
+        for patient in 0..n_patients {
+            for visit in 0..obs_per_patient {
+                patient_indices.push(patient);
+                // Rotate through providers differently for each patient
+                // This creates a truly crossed (non-nested) structure
+                let provider = (patient * 3 + visit * 2) % n_providers;
+                provider_indices.push(provider);
+            }
+        }
+
+        // Create patient random effect
+        let patient_re = RandomEffect {
+            grouping_var: "patient".to_string(),
+            terms: vec!["1".to_string()],
+            n_groups: n_patients,
+            group_sizes: {
+                let mut sizes = vec![0; n_patients];
+                for &p in &patient_indices {
+                    sizes[p] += 1;
+                }
+                sizes
+            },
+            group_ids: (0..n_patients).map(|i| format!("P{}", i + 1)).collect(),
+            group_indices: patient_indices.clone(),
+            covariance: CovarianceType::Independent,
+        };
+
+        // Create provider random effect
+        let provider_re = RandomEffect {
+            grouping_var: "provider".to_string(),
+            terms: vec!["1".to_string()],
+            n_groups: n_providers,
+            group_sizes: {
+                let mut sizes = vec![0; n_providers];
+                for &p in &provider_indices {
+                    sizes[p] += 1;
+                }
+                sizes
+            },
+            group_ids: (0..n_providers).map(|i| format!("D{}", i + 1)).collect(),
+            group_indices: provider_indices.clone(),
+            covariance: CovarianceType::Independent,
+        };
+
+        let random_effects = vec![patient_re, provider_re];
+
+        // Create combined Z matrix
+        let term_values = vec![
+            intercept_term_values(n), // patient intercepts
+            intercept_term_values(n), // provider intercepts
+        ];
+        let z = construct_combined_z_matrix(&random_effects, &term_values)
+            .expect("Combined Z matrix construction should succeed");
+
+        // Create covariate x - using a prime-based pattern to avoid confounding
+        // x values are determined by visit within patient, not by observation order
+        let x_values: Vec<f64> = (0..n)
+            .map(|i| {
+                let visit = i % obs_per_patient;
+                // Use visit number scaled, with small patient-based offset to break symmetry
+                let patient = i / obs_per_patient;
+                (visit as f64) + 0.1 * ((patient * 7) % 11) as f64 - 2.5
+            })
+            .collect();
+
+        // Fixed effect design matrix: intercept + x
+        let x: Vec<Vec<f64>> = x_values.iter().map(|&xi| vec![1.0, xi]).collect();
+
+        // Generate response:
+        // y = β₀ + β₁*x + b_patient + b_provider + noise
+        let y: Vec<f64> = (0..n)
+            .map(|i| {
+                let patient = patient_indices[i];
+                let provider = provider_indices[i];
+                let b_patient = patient_effects[patient];
+                let b_provider = provider_effects[provider];
+                // Small deterministic noise pattern using prime-based jitter
+                let noise = 0.05 * (((i * 17 + 3) % 23) as f64 / 23.0 - 0.5);
+                beta_0 + beta_1 * x_values[i] + b_patient + b_provider + noise
+            })
+            .collect();
+
+        // True random effects vectors
+        let true_b_patient = patient_effects.clone();
+        let true_b_provider = provider_effects.clone();
+
+        (y, x, random_effects, z, true_b_patient, true_b_provider)
+    }
+
+    #[test]
+    fn test_glmm_crossed_random_effects_basic() {
+        // Basic test that crossed random effects model fits without errors
+        //
+        // Reference R code:
+        // ```R
+        // library(lme4)
+        // # Create data with crossed structure
+        // fit <- lmer(y ~ x + (1|patient) + (1|provider), data = df)
+        // summary(fit)
+        // ```
+        let (y, x, random_effects, z, _true_b_patient, _true_b_provider) =
+            create_crossed_random_effects_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None);
+
+        assert!(
+            result.is_ok(),
+            "Crossed random effects GLMM should fit: {:?}",
+            result.err()
+        );
+
+        let result = result.unwrap();
+
+        // Basic sanity checks
+        assert!(
+            result.converged || result.outer_iterations >= 50,
+            "Should make progress towards convergence (iterations: {}, message: {})",
+            result.outer_iterations,
+            result.convergence_message
+        );
+
+        // Should have TWO variance components (one per grouping factor)
+        assert_eq!(
+            result.variance_components.len(),
+            2,
+            "Should have 2 variance components, got {}",
+            result.variance_components.len()
+        );
+
+        // Check patient variance component
+        let vc_patient = &result.variance_components[0];
+        assert_eq!(vc_patient.group_name, "patient");
+        assert_eq!(vc_patient.std_dev.len(), 1);
+        assert!(
+            vc_patient.std_dev[0] > 0.0,
+            "Patient SD should be positive: {}",
+            vc_patient.std_dev[0]
+        );
+
+        // Check provider variance component
+        let vc_provider = &result.variance_components[1];
+        assert_eq!(vc_provider.group_name, "provider");
+        assert_eq!(vc_provider.std_dev.len(), 1);
+        assert!(
+            vc_provider.std_dev[0] > 0.0,
+            "Provider SD should be positive: {}",
+            vc_provider.std_dev[0]
+        );
+    }
+
+    #[test]
+    fn test_glmm_crossed_variance_components() {
+        // Test that variance component estimates are reasonable
+        //
+        // True values in data generation:
+        // - Patient SD ≈ 0.98
+        // - Provider SD ≈ 0.71
+        let (y, x, random_effects, z, _true_b_patient, _true_b_provider) =
+            create_crossed_random_effects_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Crossed random effects GLMM should fit");
+
+        let vc_patient = &result.variance_components[0];
+        let vc_provider = &result.variance_components[1];
+
+        // Both variance components should be positive
+        assert!(
+            vc_patient.std_dev[0] > 0.0,
+            "Patient SD should be positive, got {}",
+            vc_patient.std_dev[0]
+        );
+        assert!(
+            vc_provider.std_dev[0] > 0.0,
+            "Provider SD should be positive, got {}",
+            vc_provider.std_dev[0]
+        );
+
+        // Combined variance should capture most of the random effect variation
+        // The total random effect SD should be in a reasonable range
+        let total_re_variance =
+            vc_patient.std_dev[0].powi(2) + vc_provider.std_dev[0].powi(2);
+        let total_re_sd = total_re_variance.sqrt();
+        assert!(
+            total_re_sd > 0.3 && total_re_sd < 5.0,
+            "Total RE SD should be in reasonable range [0.3, 5.0], got {}",
+            total_re_sd
+        );
+
+        // Variance components should be correctly ordered (patient first, provider second)
+        // This also tests that both are estimated separately
+        println!(
+            "Estimated SDs - Patient: {:.4}, Provider: {:.4}, Total RE SD: {:.4}",
+            vc_patient.std_dev[0], vc_provider.std_dev[0], total_re_sd
+        );
+    }
+
+    #[test]
+    fn test_glmm_crossed_fixed_effects() {
+        // Test that fixed effects are estimated accurately with crossed random effects
+        //
+        // True fixed effects:
+        // - β₀ = 3.0 (intercept)
+        // - β₁ = 0.5 (slope)
+        let (y, x, random_effects, z, _true_b_patient, _true_b_provider) =
+            create_crossed_random_effects_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Crossed random effects GLMM should fit");
+
+        let coefficients = &result.glm_result.coefficients;
+        assert_eq!(coefficients.len(), 2, "Should have 2 fixed effects");
+
+        // Intercept should be close to 3.0
+        let beta_0 = coefficients[0];
+        assert!(
+            (beta_0 - 3.0).abs() < 0.5,
+            "Intercept should be close to 3.0, got {}",
+            beta_0
+        );
+
+        // Slope should be close to 0.5
+        let beta_1 = coefficients[1];
+        assert!(
+            (beta_1 - 0.5).abs() < 0.3,
+            "Slope should be close to 0.5, got {}",
+            beta_1
+        );
+    }
+
+    #[test]
+    fn test_glmm_crossed_blups() {
+        // Test that BLUPs are extracted correctly for both grouping factors
+        let (y, x, random_effects, z, true_b_patient, true_b_provider) =
+            create_crossed_random_effects_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Crossed random effects GLMM should fit");
+
+        // Should have BLUPs for both grouping factors
+        assert_eq!(result.blups.len(), 2, "Should have BLUPs for 2 grouping factors");
+
+        // Patient BLUPs
+        let patient_blups = &result.blups[0];
+        assert_eq!(
+            patient_blups.n_groups(),
+            10,
+            "Should have 10 patient BLUPs"
+        );
+        assert_eq!(patient_blups.n_terms(), 1, "Should have 1 term per patient");
+
+        // Provider BLUPs
+        let provider_blups = &result.blups[1];
+        assert_eq!(
+            provider_blups.n_groups(),
+            5,
+            "Should have 5 provider BLUPs"
+        );
+        assert_eq!(provider_blups.n_terms(), 1, "Should have 1 term per provider");
+
+        // Patient BLUPs should approximately sum to zero
+        let patient_blup_sum: f64 = patient_blups.estimates.iter().map(|b| b[0]).sum();
+        assert!(
+            patient_blup_sum.abs() < 2.0,
+            "Patient BLUPs should approximately sum to zero, got {}",
+            patient_blup_sum
+        );
+
+        // Provider BLUPs should approximately sum to zero
+        let provider_blup_sum: f64 = provider_blups.estimates.iter().map(|b| b[0]).sum();
+        assert!(
+            provider_blup_sum.abs() < 2.0,
+            "Provider BLUPs should approximately sum to zero, got {}",
+            provider_blup_sum
+        );
+
+        // Check correlation between true and estimated patient BLUPs
+        let estimated_patient: Vec<f64> = patient_blups.estimates.iter().map(|b| b[0]).collect();
+        let patient_corr = pearson_correlation(&true_b_patient, &estimated_patient);
+        assert!(
+            patient_corr > 0.3,
+            "Patient BLUP correlation with true values should be positive, got {}",
+            patient_corr
+        );
+
+        // Check correlation between true and estimated provider BLUPs
+        let estimated_provider: Vec<f64> = provider_blups.estimates.iter().map(|b| b[0]).collect();
+        let provider_corr = pearson_correlation(&true_b_provider, &estimated_provider);
+        assert!(
+            provider_corr > 0.3,
+            "Provider BLUP correlation with true values should be positive, got {}",
+            provider_corr
+        );
+    }
+
+    #[test]
+    fn test_glmm_crossed_blup_standard_errors() {
+        // Test that BLUP standard errors are computed for both grouping factors
+        let (y, x, random_effects, z, _true_b_patient, _true_b_provider) =
+            create_crossed_random_effects_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Crossed random effects GLMM should fit");
+
+        // Patient BLUP SEs
+        let patient_blups = &result.blups[0];
+        assert!(
+            patient_blups.std_errors.is_some(),
+            "Patient BLUP standard errors should be computed"
+        );
+        let patient_se = patient_blups.std_errors.as_ref().unwrap();
+        assert_eq!(patient_se.len(), 10, "Should have 10 patient SEs");
+
+        for (g, se) in patient_se.iter().enumerate() {
+            assert_eq!(se.len(), 1, "Patient {} should have 1 SE", g);
+            assert!(
+                se[0] > 0.0 && se[0] < 5.0,
+                "Patient {} SE should be positive and reasonable: {}",
+                g,
+                se[0]
+            );
+        }
+
+        // Provider BLUP SEs
+        let provider_blups = &result.blups[1];
+        assert!(
+            provider_blups.std_errors.is_some(),
+            "Provider BLUP standard errors should be computed"
+        );
+        let provider_se = provider_blups.std_errors.as_ref().unwrap();
+        assert_eq!(provider_se.len(), 5, "Should have 5 provider SEs");
+
+        for (g, se) in provider_se.iter().enumerate() {
+            assert_eq!(se.len(), 1, "Provider {} should have 1 SE", g);
+            assert!(
+                se[0] > 0.0 && se[0] < 5.0,
+                "Provider {} SE should be positive and reasonable: {}",
+                g,
+                se[0]
+            );
+        }
+    }
+
+    #[test]
+    fn test_glmm_crossed_z_matrix_structure() {
+        // Verify the Z matrix structure for crossed random effects
+        let (_y, _x, random_effects, z, _true_b_patient, _true_b_provider) =
+            create_crossed_random_effects_data();
+
+        // Z should have dimensions n × (n_patients + n_providers) = 50 × 15
+        assert_eq!(z.nrow, 50, "Z should have 50 rows");
+        assert_eq!(z.ncol, 15, "Z should have 15 columns (10 patients + 5 providers)");
+
+        // Each row should have exactly 2 non-zero entries (one patient, one provider)
+        for row in 0..z.nrow {
+            let (start, end) = z.row_range(row);
+            assert_eq!(
+                end - start,
+                2,
+                "Row {} should have exactly 2 non-zero entries, got {}",
+                row,
+                end - start
+            );
+        }
+
+        // Check random effects specs
+        assert_eq!(random_effects.len(), 2, "Should have 2 random effects");
+        assert_eq!(random_effects[0].grouping_var, "patient");
+        assert_eq!(random_effects[0].n_groups, 10);
+        assert_eq!(random_effects[1].grouping_var, "provider");
+        assert_eq!(random_effects[1].n_groups, 5);
     }
 }

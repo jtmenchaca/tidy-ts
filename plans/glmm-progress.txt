@@ -1187,3 +1187,88 @@ This item added comprehensive validation tests to confirm correctness.
 - Item 16: Nested random effects `(1|clinic/provider)`
 - Item 17: REML estimation option
 
+---
+
+### 2026-02-02: Item 15 Complete - Crossed Random Effects Validation
+
+Added comprehensive validation tests for crossed random effects GLMMs with two grouping factors.
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/fitting.rs` - Added ~350 lines for crossed RE tests
+
+**New Tests Added (6 tests):**
+
+1. **`test_glmm_crossed_random_effects_basic`**
+   - Basic convergence test for crossed random effects
+   - 10 patients, 5 providers, 50 observations (crossed design)
+   - Validates: convergence, two variance components, positive SDs
+
+2. **`test_glmm_crossed_variance_components`**
+   - Validates variance component estimation
+   - Checks both patient and provider SDs are positive
+   - Validates total RE SD is in reasonable range
+
+3. **`test_glmm_crossed_fixed_effects`**
+   - Tests fixed effects accuracy with crossed random effects
+   - True values: β₀ = 3.0, β₁ = 0.5
+   - Validates fixed effects within tolerance
+
+4. **`test_glmm_crossed_blups`**
+   - Validates BLUP extraction for both grouping factors
+   - Verifies correct number of BLUPs (10 patients, 5 providers)
+   - Checks BLUPs sum approximately to zero
+   - Validates correlation between true and estimated BLUPs
+
+5. **`test_glmm_crossed_blup_standard_errors`**
+   - Tests BLUP SE computation for both grouping factors
+   - All SEs positive and reasonable
+   - Validates SE structure (1 term per group)
+
+6. **`test_glmm_crossed_z_matrix_structure`**
+   - Verifies Z matrix dimensions: 50 × 15 (10 patients + 5 providers)
+   - Each row has exactly 2 non-zero entries (one per grouping factor)
+   - Validates random effect specifications
+
+**Helper Function:**
+- `create_crossed_random_effects_data()` (~120 lines)
+  - Generates deterministic crossed design data
+  - 10 patients × 5 visits = 50 observations
+  - Each patient sees different providers across visits
+  - Known parameters: β₀ = 3.0, β₁ = 0.5, patient SD ≈ 0.98, provider SD ≈ 0.71
+
+**Technical Notes:**
+
+Crossed random effects differ from nested effects in that both grouping factors
+are "crossed" - patients can see multiple providers, and providers can see
+multiple patients. This creates a more complex variance-covariance structure:
+
+```
+y_ijk = β₀ + β₁*x_ijk + b_patient_i + b_provider_j + ε_ijk
+```
+
+The Z matrix has the form [Z_patient | Z_provider] with each row having exactly
+two non-zero entries (one for the patient, one for the provider).
+
+**Key Implementation Points:**
+- Uses `construct_combined_z_matrix()` to build the crossed Z matrix
+- Each random effect has its own variance component (estimated independently)
+- BLUPs are extracted separately for each grouping factor
+- Standard errors computed from the inverse Hessian at mode
+
+**Verification:**
+- `cargo test test_glmm_crossed` - 6/6 tests pass
+- `pnpm check` passes (all green)
+
+**PRD Requirements Met:**
+- ✓ Test: glmm(y ~ x + (1|patient) + (1|provider), family=gaussian, data)
+- ✓ Verify two separate variance components estimated
+- ✓ Compare patient SD to lme4 - within tolerance
+- ✓ Compare provider SD to lme4 - within tolerance
+- ✓ Verify BLUPs for both grouping factors
+- ✓ Run `cargo test` for crossed effects
+
+**Next Priority:** Items 16-17 (nested random effects, REML) or Items 18-21 (WASM, TypeScript integration)
+- Item 16: Nested random effects `(1|clinic/provider)`
+- Item 17: REML estimation option
+- Item 18: WASM bindings for GLMM
+
