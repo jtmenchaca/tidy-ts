@@ -11,6 +11,7 @@ pub mod gamma;
 pub mod gaussian;
 pub mod inverse_gaussian;
 pub mod links;
+pub mod negative_binomial;
 pub mod poisson;
 pub mod quasi;
 pub mod variance;
@@ -20,6 +21,10 @@ pub use binomial::{BinomialDeviance, BinomialFamily, BinomialVariance};
 pub use gamma::GammaFamily;
 pub use gaussian::GaussianFamily;
 pub use inverse_gaussian::InverseGaussianFamily;
+pub use negative_binomial::{
+    calculate_nbinom1_aic, calculate_nbinom2_aic, Nbinom1Deviance, Nbinom1Family, Nbinom1Variance,
+    Nbinom2Deviance, Nbinom2Family, Nbinom2Variance,
+};
 pub use poisson::PoissonFamily;
 pub use quasi::QuasiFamily;
 

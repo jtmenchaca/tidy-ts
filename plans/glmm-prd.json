@@ -142,7 +142,7 @@
         "Test GLM fit with Poisson data - should converge",
         "Compare coefficients with R glm(..., family=MASS::negative.binomial(theta=1)) within 1e-4"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

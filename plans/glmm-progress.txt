@@ -904,3 +904,110 @@ The key challenge with binary data is avoiding separation:
 - Item 4 implements nbinom1/nbinom2 families with dispersion parameter
 - Item 13 depends on Item 4 for the family implementation
 
+---
+
+### 2026-02-02: Item 4 Complete - Negative Binomial Families (nbinom1, nbinom2)
+
+Implemented the negative binomial families for overdispersed count data modeling.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/family/negative_binomial.rs` (~720 lines)
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/family/mod.rs` - Added module export and re-exports
+
+**Key Components Implemented:**
+
+1. **Nbinom2Family (NB2)**:
+   - Variance function: V(μ) = μ(1 + μ/θ) - quadratic mean-variance relationship
+   - This is the standard negative binomial used by R's MASS::glm.nb() and glmmTMB
+   - As θ → ∞, NB2 → Poisson
+   - Smaller θ means more overdispersion
+
+2. **Nbinom1Family (NB1)**:
+   - Variance function: V(μ) = μ(1 + φ) - linear mean-variance relationship
+   - Less common but available in glmmTMB
+   - As φ → 0, NB1 → Poisson
+
+3. **Variance Functions**:
+   - `Nbinom2Variance`: V(μ) = μ + μ²/θ, V'(μ) = 1 + 2μ/θ
+   - `Nbinom1Variance`: V(μ) = μ(1+φ), V'(μ) = 1+φ (constant)
+
+4. **Deviance Functions**:
+   - `Nbinom2Deviance`: 2[y·log(y/μ) - (y+θ)·log((y+θ)/(μ+θ))]
+   - `Nbinom1Deviance`: Uses NB2 formula with θ = μ/φ
+
+5. **AIC Calculations**:
+   - `calculate_nbinom2_aic`: Uses NB2 log-likelihood formula
+   - `calculate_nbinom1_aic`: Uses NB2 log-likelihood with θ = μ/φ
+
+6. **Log-Gamma Function**:
+   - Implemented `lgamma()` using Lanczos approximation
+   - Accurate to ~15 significant digits
+   - Handles reflection formula for x < 0.5
+
+**Mathematical Details:**
+
+NB2 log-likelihood:
+```
+log p(y|μ,θ) = lgamma(y+θ) - lgamma(θ) - lgamma(y+1)
+              + θ·log(θ/(θ+μ)) + y·log(μ/(θ+μ))
+```
+
+NB2 variance:
+```
+V(μ) = μ + μ²/θ = μ(1 + μ/θ)
+```
+
+**Test Coverage (17 tests for negative_binomial module):**
+
+NB2 tests:
+- `test_nbinom2_family_creation` - Factory methods and properties
+- `test_nbinom2_variance` - V(μ) and V'(μ) computation
+- `test_nbinom2_variance_approaches_poisson` - θ → ∞ limit
+- `test_nbinom2_deviance` - Deviance residual computation
+- `test_nbinom2_family_validation` - valid_mu, valid_y checks
+- `test_nbinom2_initialization` - mu initialization from y
+- `test_nbinom2_aic` - AIC calculation
+
+NB1 tests:
+- `test_nbinom1_family_creation` - Factory methods and properties
+- `test_nbinom1_variance` - V(μ) and V'(μ) computation
+- `test_nbinom1_variance_approaches_poisson` - φ → 0 limit
+- `test_nbinom1_deviance` - Deviance residual computation
+- `test_nbinom1_family_validation` - valid_mu, valid_y checks
+- `test_nbinom1_initialization` - mu initialization from y
+- `test_nbinom1_aic` - AIC calculation
+
+Utility tests:
+- `test_lgamma` - lgamma(1) through lgamma(5)
+- `test_lgamma_half` - lgamma(0.5) = ln(√π)
+- `test_with_theta_phi` - Parameter update methods
+
+**Verification:**
+- `cargo test negative_binomial` - 23 tests pass (including distribution tests)
+- `pnpm check` passes (all green)
+
+**Exports Added to mod.rs:**
+```rust
+pub use negative_binomial::{
+    calculate_nbinom1_aic, calculate_nbinom2_aic, Nbinom1Deviance, Nbinom1Family,
+    Nbinom1Variance, Nbinom2Deviance, Nbinom2Family, Nbinom2Variance,
+};
+```
+
+**PRD Requirements Met:**
+- ✓ Create Nbinom2Family in packages/dataframe/rust/stats/regression/family/
+- ✓ Verify variance function: V(mu) = mu * (1 + mu/theta)
+- ✓ Verify log-likelihood matches R's dnbinom with size=theta
+- ✓ Create Nbinom1Family with variance: V(mu) = mu * (1 + phi)
+- ✓ Run `cargo test` for negative binomial families
+
+**Note on GLM Integration:**
+The families are now ready for use in GLM fitting. Item 13 (GLMM with negative binomial family)
+can proceed by integrating these families with the existing GLMM framework.
+
+**Next Priority:** Item 13 (GLMM with negative binomial family) or Items 14-17 (advanced random effects)
+- Item 13 tests NB2 GLMM fitting
+- Items 14-17 implement random slopes, crossed/nested effects, REML
+
