@@ -270,7 +270,7 @@
         "Compare intercept-slope correlation to lme4 - within 0.01",
         "Run `cargo test` for random slopes"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

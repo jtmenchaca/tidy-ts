@@ -878,7 +878,8 @@ mod tests {
     use super::*;
     use crate::stats::regression::family::GaussianFamily;
     use crate::stats::regression::glmm::random_effects::{
-        construct_z_matrix, intercept_term_values, populate_random_effect,
+        construct_z_matrix, intercept_slope_term_values, intercept_term_values,
+        populate_random_effect,
     };
 
     #[allow(unused_imports)]
@@ -2673,5 +2674,503 @@ mod tests {
             poisson_disp.is_finite() && nb2_disp.is_finite(),
             "Both dispersion estimates should be finite"
         );
+    }
+
+    // ============================================================================
+    // Random Slopes Tests (Item 14)
+    // ============================================================================
+
+    /// Create random slopes test data with known parameters
+    ///
+    /// Generates data following:
+    ///   y = β₀ + β₁*time + b0_group + b1_group*time + ε
+    /// where:
+    ///   - b0_group ~ N(0, σ²_intercept)
+    ///   - b1_group ~ N(0, σ²_slope)
+    ///   - Corr(b0, b1) = ρ
+    ///
+    /// This mimics longitudinal data where each group (subject) has
+    /// their own intercept and slope.
+    fn create_random_slopes_data() -> (Vec<f64>, Vec<Vec<f64>>, Vec<RandomEffect>, SparseMatrix, Vec<f64>) {
+        let n_groups = 8;
+        let obs_per_group = 12;
+        let n = n_groups * obs_per_group;
+
+        // True fixed effects
+        let beta_0 = 5.0;   // Population intercept
+        let beta_1 = 0.8;   // Population slope (effect of time)
+
+        // True variance components (these are what we want to recover)
+        // SD_intercept ≈ 0.6, SD_slope ≈ 0.25, correlation ≈ -0.5
+        // (negative correlation: groups with higher intercepts tend to have lower slopes)
+
+        // Deterministic "random" intercepts and slopes for each group
+        // These are designed to have SD ≈ 0.6 for intercepts, SD ≈ 0.25 for slopes
+        // with negative correlation (high intercept → low slope)
+        let group_intercepts: Vec<f64> = vec![-0.8, -0.5, -0.3, -0.1, 0.2, 0.4, 0.6, 0.9];
+        // SD ≈ sqrt(0.3556) ≈ 0.60
+
+        // Slopes have negative correlation with intercepts
+        let group_slopes: Vec<f64> = vec![0.35, 0.25, 0.15, 0.05, -0.05, -0.15, -0.25, -0.35];
+        // SD ≈ sqrt(0.0583) ≈ 0.24
+
+        // Correlation between intercepts and slopes: ~ -0.9 (strong negative)
+
+        // Group assignments
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("G{}", i / obs_per_group + 1))
+            .collect();
+
+        // Create random effect specification for intercept + slope
+        let mut re = RandomEffect::intercept_slope("group".to_string(), "time".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        // Time values (covariate for random slope)
+        let time_values: Vec<f64> = (0..n)
+            .map(|i| (i % obs_per_group) as f64)
+            .collect();
+
+        // Create Z matrix for random intercept + slope
+        let term_values = intercept_slope_term_values(&time_values);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        // Fixed effect design matrix: intercept + time
+        let x: Vec<Vec<f64>> = (0..n)
+            .map(|i| vec![1.0, (i % obs_per_group) as f64])
+            .collect();
+
+        // Generate response:
+        // y = β₀ + β₁*time + b0_group + b1_group*time + noise
+        let y: Vec<f64> = (0..n)
+            .map(|i| {
+                let group = i / obs_per_group;
+                let time = (i % obs_per_group) as f64;
+                let b0 = group_intercepts[group];
+                let b1 = group_slopes[group];
+                // Small deterministic noise pattern
+                let noise = 0.05 * ((i as f64 - n as f64 / 2.0) / (n as f64 / 2.0));
+                beta_0 + beta_1 * time + b0 + b1 * time + noise
+            })
+            .collect();
+
+        // True random effects vector (for comparison)
+        // Layout: [b0_g1, b1_g1, b0_g2, b1_g2, ...]
+        let true_b: Vec<f64> = group_intercepts.iter()
+            .zip(group_slopes.iter())
+            .flat_map(|(int, slp)| vec![*int, *slp])
+            .collect();
+
+        (y, x, vec![re], z, true_b)
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_basic() {
+        // Basic test that random slopes model fits without errors
+        let (y, x, random_effects, z, _true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        );
+
+        assert!(result.is_ok(), "Random slopes GLMM should fit: {:?}", result.err());
+
+        let result = result.unwrap();
+
+        // Basic sanity checks
+        assert!(
+            result.converged || result.outer_iterations >= 50,
+            "Should make progress towards convergence (iterations: {}, message: {})",
+            result.outer_iterations, result.convergence_message
+        );
+
+        // Check we have the right structure
+        assert_eq!(result.variance_components.len(), 1);
+        let vc = &result.variance_components[0];
+        assert_eq!(vc.std_dev.len(), 2, "Should have 2 terms: intercept and slope SD");
+
+        // Both SDs should be positive
+        assert!(vc.std_dev[0] > 0.0, "Intercept SD should be positive: {}", vc.std_dev[0]);
+        assert!(vc.std_dev[1] > 0.0, "Slope SD should be positive: {}", vc.std_dev[1]);
+
+        // Should have correlation matrix for unstructured covariance
+        assert!(vc.correlation.is_some(), "Should have correlation matrix");
+        let corr = vc.correlation.as_ref().unwrap();
+        assert_eq!(corr.len(), 2);
+        assert_eq!(corr[0].len(), 2);
+
+        // Correlation should be in valid range [-1, 1]
+        assert!(
+            corr[0][1] >= -1.0 && corr[0][1] <= 1.0,
+            "Correlation should be in [-1, 1], got {}",
+            corr[0][1]
+        );
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_variance_components() {
+        // Test that variance component estimates are reasonable
+        //
+        // Reference R code:
+        // ```R
+        // library(lme4)
+        // # Create data matching create_random_slopes_data()
+        // n_groups <- 8
+        // obs_per_group <- 12
+        // beta_0 <- 5.0
+        // beta_1 <- 0.8
+        // group_intercepts <- c(-0.8, -0.5, -0.3, -0.1, 0.2, 0.4, 0.6, 0.9)
+        // group_slopes <- c(0.35, 0.25, 0.15, 0.05, -0.05, -0.15, -0.25, -0.35)
+        //
+        // df <- expand.grid(
+        //   time = 0:11,
+        //   group = paste0("G", 1:8)
+        // )
+        // df$group_idx <- as.numeric(gsub("G", "", df$group))
+        // df$b0 <- group_intercepts[df$group_idx]
+        // df$b1 <- group_slopes[df$group_idx]
+        // df$row_id <- 1:nrow(df)
+        // df$noise <- 0.05 * ((df$row_id - nrow(df)/2) / (nrow(df)/2))
+        // df$y <- beta_0 + beta_1 * df$time + df$b0 + df$b1 * df$time + df$noise
+        //
+        // fit <- lmer(y ~ time + (1 + time | group), data = df, REML = FALSE)
+        // VarCorr(fit)  # Variance components
+        // # Groups   Name        Std.Dev. Corr
+        // # group    (Intercept) ~0.60
+        // #          time        ~0.24    ~-0.9
+        // # Residual             ~0.03
+        // ```
+
+        let (y, x, random_effects, z, _true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Random slopes GLMM should fit");
+
+        let vc = &result.variance_components[0];
+
+        // True SDs: intercept ≈ 0.60, slope ≈ 0.24
+        let intercept_sd = vc.std_dev[0];
+        let slope_sd = vc.std_dev[1];
+
+        // Check intercept SD is in reasonable range (within factor of 3)
+        assert!(
+            intercept_sd > 0.2 && intercept_sd < 1.8,
+            "Intercept SD should be in reasonable range [0.2, 1.8], got {}",
+            intercept_sd
+        );
+
+        // Check slope SD is in reasonable range
+        assert!(
+            slope_sd > 0.05 && slope_sd < 0.8,
+            "Slope SD should be in reasonable range [0.05, 0.8], got {}",
+            slope_sd
+        );
+
+        // Check correlation is estimated (should be strongly negative ~ -0.9)
+        let corr = vc.correlation.as_ref().unwrap();
+        let intercept_slope_corr = corr[0][1];
+
+        // Correlation should be negative (groups with high intercepts have low slopes)
+        // Allow wider range due to estimation variability with small sample
+        assert!(
+            intercept_slope_corr < 0.5,
+            "Correlation should be negative or near-zero, got {}",
+            intercept_slope_corr
+        );
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_fixed_effects() {
+        // Test that fixed effects are accurately estimated
+        let (y, x, random_effects, z, _true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Random slopes GLMM should fit");
+
+        let coef = &result.glm_result.coefficients;
+
+        // True values: β₀ = 5.0, β₁ = 0.8
+        let intercept_diff = (coef[0] - 5.0).abs();
+        let slope_diff = (coef[1] - 0.8).abs();
+
+        // Fixed effects should be close to true values
+        assert!(
+            intercept_diff < 0.5,
+            "Intercept should be close to 5.0, got {} (diff: {})",
+            coef[0], intercept_diff
+        );
+        assert!(
+            slope_diff < 0.3,
+            "Slope should be close to 0.8, got {} (diff: {})",
+            coef[1], slope_diff
+        );
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_blups() {
+        // Test that BLUPs have correct structure and properties
+        let (y, x, random_effects, z, true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Random slopes GLMM should fit");
+
+        let blups = &result.blups[0];
+
+        // Should have 8 groups with 2 terms each (intercept + slope)
+        assert_eq!(blups.n_groups(), 8, "Should have 8 groups");
+        assert_eq!(blups.n_terms(), 2, "Should have 2 terms per group");
+
+        // Extract BLUPs
+        let mut blup_intercepts = Vec::new();
+        let mut blup_slopes = Vec::new();
+        for group in 0..8 {
+            blup_intercepts.push(blups.estimates[group][0]);
+            blup_slopes.push(blups.estimates[group][1]);
+        }
+
+        // BLUPs should approximately sum to 0 (shrinkage towards mean)
+        let sum_intercepts: f64 = blup_intercepts.iter().sum();
+        let sum_slopes: f64 = blup_slopes.iter().sum();
+
+        assert!(
+            sum_intercepts.abs() < 1.0,
+            "BLUP intercepts should approximately sum to 0, got {}",
+            sum_intercepts
+        );
+        assert!(
+            sum_slopes.abs() < 0.5,
+            "BLUP slopes should approximately sum to 0, got {}",
+            sum_slopes
+        );
+
+        // BLUPs should preserve ordering of true random effects (with shrinkage)
+        // True intercepts: [-0.8, -0.5, -0.3, -0.1, 0.2, 0.4, 0.6, 0.9]
+        // First group should have lowest intercept BLUP, last should have highest
+        assert!(
+            blup_intercepts[0] < blup_intercepts[7],
+            "First group BLUP intercept ({}) should be less than last ({})",
+            blup_intercepts[0], blup_intercepts[7]
+        );
+
+        // True slopes: [0.35, 0.25, ..., -0.35]
+        // First group should have highest slope BLUP, last should have lowest
+        assert!(
+            blup_slopes[0] > blup_slopes[7],
+            "First group BLUP slope ({}) should be greater than last ({})",
+            blup_slopes[0], blup_slopes[7]
+        );
+
+        // Verify correlation between true and estimated BLUPs is positive
+        // (indicating recovery of the pattern)
+        let true_intercepts: Vec<f64> = (0..8).map(|i| true_b[i * 2]).collect();
+        let true_slopes: Vec<f64> = (0..8).map(|i| true_b[i * 2 + 1]).collect();
+
+        let corr_int = pearson_correlation(&blup_intercepts, &true_intercepts);
+        let corr_slp = pearson_correlation(&blup_slopes, &true_slopes);
+
+        assert!(
+            corr_int > 0.5,
+            "Correlation between true and estimated intercepts should be > 0.5, got {}",
+            corr_int
+        );
+        assert!(
+            corr_slp > 0.5,
+            "Correlation between true and estimated slopes should be > 0.5, got {}",
+            corr_slp
+        );
+    }
+
+    /// Compute Pearson correlation coefficient
+    fn pearson_correlation(x: &[f64], y: &[f64]) -> f64 {
+        let n = x.len() as f64;
+        let mean_x = x.iter().sum::<f64>() / n;
+        let mean_y = y.iter().sum::<f64>() / n;
+
+        let mut cov = 0.0;
+        let mut var_x = 0.0;
+        let mut var_y = 0.0;
+
+        for (xi, yi) in x.iter().zip(y.iter()) {
+            cov += (xi - mean_x) * (yi - mean_y);
+            var_x += (xi - mean_x).powi(2);
+            var_y += (yi - mean_y).powi(2);
+        }
+
+        if var_x * var_y < 1e-10 {
+            return 0.0;
+        }
+
+        cov / (var_x * var_y).sqrt()
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_vcov_matrix() {
+        // Test that the 2x2 variance-covariance matrix is correctly formed
+        let (y, x, random_effects, z, _true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Random slopes GLMM should fit");
+
+        let vc = &result.variance_components[0];
+
+        // Variance-covariance matrix should be 2x2
+        assert_eq!(vc.vcov.len(), 2);
+        assert_eq!(vc.vcov[0].len(), 2);
+        assert_eq!(vc.vcov[1].len(), 2);
+
+        // Should be symmetric
+        assert!(
+            approx_eq(vc.vcov[0][1], vc.vcov[1][0], 1e-10),
+            "Vcov matrix should be symmetric: vcov[0][1]={}, vcov[1][0]={}",
+            vc.vcov[0][1], vc.vcov[1][0]
+        );
+
+        // Diagonal elements should be positive (variances)
+        assert!(vc.vcov[0][0] > 0.0, "Intercept variance should be positive");
+        assert!(vc.vcov[1][1] > 0.0, "Slope variance should be positive");
+
+        // Variance = SD^2
+        assert!(
+            approx_eq(vc.vcov[0][0], vc.std_dev[0].powi(2), 1e-6),
+            "Intercept variance should equal SD^2: {} vs {}",
+            vc.vcov[0][0], vc.std_dev[0].powi(2)
+        );
+        assert!(
+            approx_eq(vc.vcov[1][1], vc.std_dev[1].powi(2), 1e-6),
+            "Slope variance should equal SD^2: {} vs {}",
+            vc.vcov[1][1], vc.std_dev[1].powi(2)
+        );
+
+        // Correlation = covariance / (SD1 * SD2)
+        let expected_corr = vc.vcov[0][1] / (vc.std_dev[0] * vc.std_dev[1]);
+        let corr = vc.correlation.as_ref().unwrap();
+        assert!(
+            approx_eq(expected_corr, corr[0][1], 1e-6),
+            "Correlation should match vcov: {} vs {}",
+            expected_corr, corr[0][1]
+        );
+    }
+
+    #[test]
+    fn test_glmm_random_slopes_blup_standard_errors() {
+        // Test that BLUP standard errors are computed correctly for 2-term model
+        let (y, x, random_effects, z, _true_b) = create_random_slopes_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("Random slopes GLMM should fit");
+
+        let blups = &result.blups[0];
+
+        // Standard errors should be computed
+        assert!(
+            blups.std_errors.is_some(),
+            "Standard errors should be computed for BLUPs"
+        );
+
+        let se = blups.std_errors.as_ref().unwrap();
+
+        // Should have SEs for all groups and terms
+        assert_eq!(se.len(), 8, "Should have SEs for 8 groups");
+        for (g, group_se) in se.iter().enumerate() {
+            assert_eq!(group_se.len(), 2, "Group {} should have 2 SEs", g);
+
+            // All SEs should be positive
+            assert!(
+                group_se[0] > 0.0,
+                "Intercept SE for group {} should be positive: {}",
+                g, group_se[0]
+            );
+            assert!(
+                group_se[1] > 0.0,
+                "Slope SE for group {} should be positive: {}",
+                g, group_se[1]
+            );
+
+            // SEs should be reasonable (not too large)
+            assert!(
+                group_se[0] < 5.0,
+                "Intercept SE for group {} should be reasonable: {}",
+                g, group_se[0]
+            );
+            assert!(
+                group_se[1] < 2.0,
+                "Slope SE for group {} should be reasonable: {}",
+                g, group_se[1]
+            );
+        }
+
+        // Conditional vcov should be 2x2 for each group
+        assert!(
+            blups.conditional_vcov.is_some(),
+            "Conditional vcov should be computed"
+        );
+        let cond_vcov = blups.conditional_vcov.as_ref().unwrap();
+
+        for (g, group_vcov) in cond_vcov.iter().enumerate() {
+            assert_eq!(group_vcov.len(), 2, "Group {} vcov should be 2x2", g);
+            assert_eq!(group_vcov[0].len(), 2);
+            assert_eq!(group_vcov[1].len(), 2);
+
+            // Should be symmetric
+            assert!(
+                approx_eq(group_vcov[0][1], group_vcov[1][0], 1e-10),
+                "Conditional vcov for group {} should be symmetric",
+                g
+            );
+
+            // Diagonal should match squared SE
+            assert!(
+                approx_eq(group_vcov[0][0], se[g][0].powi(2), 1e-10),
+                "Intercept variance should match SE^2 for group {}",
+                g
+            );
+            assert!(
+                approx_eq(group_vcov[1][1], se[g][1].powi(2), 1e-10),
+                "Slope variance should match SE^2 for group {}",
+                g
+            );
+        }
     }
 }

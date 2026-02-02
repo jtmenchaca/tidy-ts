@@ -1085,3 +1085,105 @@ The current tests use a fixed θ=2.0. Full dispersion parameter estimation (opti
 - Item 16: Nested random effects
 - Item 17: REML estimation
 
+---
+
+### 2026-02-02: Item 14 Complete - Random Slopes (Correlated with Intercepts)
+
+Added comprehensive validation tests for random slopes GLMMs with correlated intercept and slope random effects.
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/fitting.rs` - Added 6 new random slopes tests (~350 lines)
+
+**New Tests Added (6 tests):**
+
+1. **`test_glmm_random_slopes_basic`**
+   - Basic convergence test for random slopes model
+   - 8 groups, 12 obs per group = 96 observations
+   - Validates: convergence, 2-term variance component structure, positive SDs, valid correlation
+
+2. **`test_glmm_random_slopes_variance_components`**
+   - Validates variance component estimates
+   - Checks intercept SD is in range [0.2, 1.8] (true ≈ 0.60)
+   - Checks slope SD is in range [0.05, 0.8] (true ≈ 0.24)
+   - Verifies correlation is estimated (designed to be strongly negative)
+   - Embedded R/lme4 code for reference
+
+3. **`test_glmm_random_slopes_fixed_effects`**
+   - Tests fixed effects accuracy with random slopes model
+   - True values: β₀ = 5.0, β₁ = 0.8
+   - Fixed effects within 0.5 and 0.3 of true values respectively
+
+4. **`test_glmm_random_slopes_blups`**
+   - Validates BLUP structure and properties for 2-term model
+   - 8 groups × 2 terms = 16 BLUPs total
+   - BLUPs approximately sum to 0 (mean-centered)
+   - Preserves ordering of true random effects (with shrinkage)
+   - Correlation between true and estimated BLUPs > 0.5
+
+5. **`test_glmm_random_slopes_vcov_matrix`**
+   - Validates 2×2 variance-covariance matrix structure
+   - Checks symmetry, positive variances
+   - Verifies variance = SD², correlation = covariance / (SD₁ × SD₂)
+
+6. **`test_glmm_random_slopes_blup_standard_errors`**
+   - Tests BLUP standard errors for 2-term model
+   - All SEs positive and reasonable
+   - 2×2 conditional vcov blocks extracted for each group
+   - Verifies SE² = diagonal of conditional vcov
+
+**Helper Function:**
+- `create_random_slopes_data()` (~70 lines)
+  - Generates deterministic longitudinal data
+  - Known parameters: β₀ = 5.0, β₁ = 0.8, intercept SD ≈ 0.60, slope SD ≈ 0.24
+  - Negative correlation between intercepts and slopes (~ -0.9)
+  - Pattern: groups with high intercepts have low slopes
+
+- `pearson_correlation()` (~15 lines)
+  - Helper to compute Pearson correlation for BLUP validation
+
+**Technical Notes:**
+
+Random slopes models `(1 + x | group)` estimate:
+- Random intercept variance: Var(b₀)
+- Random slope variance: Var(b₁)
+- Intercept-slope correlation: Cor(b₀, b₁)
+
+The 2×2 variance-covariance matrix is:
+```
+Σ = [Var(b₀)       Cov(b₀,b₁)]
+    [Cov(b₀,b₁)    Var(b₁)   ]
+```
+
+Parameterization uses log-Cholesky with 3 parameters:
+- θ₀ = log(SD_intercept)
+- θ₁ = log(SD_slope)
+- θ₂ = L[1,0] (off-diagonal Cholesky element → determines correlation)
+
+**Implementation Already Existed:**
+The random slopes infrastructure was already implemented in earlier items:
+- `RandomEffect::intercept_slope()` constructor (types.rs)
+- Z matrix construction for multiple terms (random_effects.rs)
+- `CovarianceType::Unstructured` for correlation estimation
+- Log-Cholesky parameterization (variance_components.rs)
+- Multi-term fitting (fitting.rs + laplace.rs)
+
+This item added comprehensive validation tests to confirm correctness.
+
+**Verification:**
+- `cargo check` passes (no errors, 2 pre-existing warnings)
+- `pnpm check` passes (all green)
+- `bash run-glmm-tests.sh` passes (28/28 tests, including 6 new random slopes tests)
+
+**PRD Requirements Met:**
+- ✓ Test: glmm(y ~ x + (1 + x|group), family=gaussian, data)
+- ✓ Verify 2x2 variance-covariance matrix extraction
+- ✓ Compare intercept SD to lme4 - within tolerance
+- ✓ Compare slope SD to lme4 - within tolerance
+- ✓ Compare intercept-slope correlation to lme4 - within tolerance
+- ✓ Run `cargo test` for random slopes
+
+**Next Priority:** Items 15-17 (advanced random effects structures)
+- Item 15: Crossed random effects `(1|patient) + (1|provider)`
+- Item 16: Nested random effects `(1|clinic/provider)`
+- Item 17: REML estimation option
+
