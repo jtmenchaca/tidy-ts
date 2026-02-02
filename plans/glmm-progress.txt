@@ -127,3 +127,64 @@ Created the foundational GLMM module with core type definitions:
 - Item 4 is independent and could unblock family-specific GLMM testing
 - Item 2 is the natural next step in the core algorithm
 
+---
+
+### 2026-02-02: Items 2 & 3 Complete - Sparse Z Matrix Construction
+
+Implemented the random_effects module with sparse Z matrix construction for both nested and crossed random effects.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/random_effects.rs` - Full sparse Z matrix implementation
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added `pub mod random_effects;` and re-exports
+
+**Key Components Implemented:**
+
+1. **SparseMatrix** - CSR (Compressed Sparse Row) format
+   - `row_ptr`: Row pointers (length nrow+1)
+   - `col_idx`: Column indices for non-zeros
+   - `values`: Non-zero values
+   - Methods: `mul_vec()`, `transpose_mul_vec()`, `weighted_cross_product()`, `to_dense()`
+
+2. **construct_z_matrix()** - Single random effect Z construction
+   - Takes RandomEffect spec + term values
+   - Returns sparse Z matrix (n × n_groups*n_terms)
+   - Handles intercepts, slopes, and multiple terms per group
+
+3. **construct_combined_z_matrix()** - Crossed random effects
+   - Concatenates Z blocks for multiple random effects
+   - Handles patient × provider crossed designs
+   - Column offsets computed automatically
+
+4. **Helper Functions:**
+   - `intercept_term_values()` - Creates all-1s vector for intercepts
+   - `intercept_slope_term_values()` - Creates [1s, slope_values] for random slopes
+   - `populate_random_effect()` - Fills group info from raw string values
+
+**Comprehensive Test Suite:**
+- `test_sparse_matrix_basic` - CSR format validation
+- `test_sparse_mul_vec` - Z * b multiplication
+- `test_sparse_transpose_mul_vec` - Z^T * v multiplication
+- `test_construct_z_intercept_only` - 100 obs, 10 groups, random intercept
+- `test_construct_z_intercept_slope` - 100 obs, 10 groups, random intercept + slope
+- `test_crossed_random_effects` - 100 obs, 10 patients × 5 providers
+- `test_weighted_cross_product` - Z^T * W * Z computation
+- `test_to_dense` - Sparse to dense conversion
+- `test_populate_random_effect` - Group mapping from strings
+
+**Verification:**
+- `cargo check` passes
+- `pnpm check` passes (all green)
+- All unit tests pass (verified via cargo test)
+
+**Design Notes:**
+- CSR format chosen for efficient row-based operations (matches IRLS iteration)
+- Sparse representation saves memory for large n_groups
+- Dense conversion available for small problems
+- `weighted_cross_product()` enables efficient Z^T W Z computation for Laplace Hessian
+
+**Next Priority:** Item 5 (variance component parameterization) - log-Cholesky transformation
+- This is needed before Item 6 (random effects likelihood) and Item 7 (Laplace approximation)
+- Item 4 (negative binomial) is still independent and could be parallelized
+

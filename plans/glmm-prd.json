@@ -117,7 +117,7 @@
         "Verify Z matrix is 100x20 with intercept 1s and slope values in correct positions",
         "Run `cargo test` for random_effects module - all tests pass"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
@@ -129,7 +129,7 @@
         "Verify Z * b correctly adds patient and provider effects",
         "Run `cargo test` for crossed effects - all tests pass"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

@@ -52,6 +52,7 @@
 //! - Brooks et al. (2017). glmmTMB Balances Speed and Flexibility
 //! - Kristensen et al. (2016). TMB: Automatic Differentiation and Laplace Approximation
 
+pub mod random_effects;
 pub mod types;
 
 // Re-export core types
@@ -60,8 +61,13 @@ pub use types::{
     RandomEffectEstimates, VarianceComponent,
 };
 
+// Re-export random effects types
+pub use random_effects::{
+    construct_combined_z_matrix, construct_z_matrix, intercept_slope_term_values,
+    intercept_term_values, populate_random_effect, SparseMatrix,
+};
+
 // Future submodules (to be implemented):
-// pub mod random_effects;     // Z matrix construction
 // pub mod variance_components; // Log-Cholesky parameterization
 // pub mod laplace;            // Laplace approximation
 // pub mod fitting;            // Main fitting algorithm
