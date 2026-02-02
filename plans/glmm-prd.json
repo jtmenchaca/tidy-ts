@@ -331,14 +331,36 @@
       "category": "test",
       "description": "Create comprehensive GLMM test suite in packages/testing/glmm/",
       "steps": [
-        "Create test infrastructure following packages/testing/glm/ pattern",
-        "Create glmm-methods.test.ts testing summary(), variance_components, blups getters",
-        "Create glmm-families.test.ts testing Gaussian, Binomial, Poisson, NB2 families",
-        "Create glmm-random-effects.test.ts testing random intercepts, slopes, crossed, nested",
-        "Create glmm-reml.test.ts testing REML vs ML estimation",
+        "Create glmm-methods.test.ts: test GLMM class getters (coefficients, variance_components, blups, loglik, aic, bic, converged, iterations)",
+        "Create glmm-methods.test.ts: test print() method produces readable output without throwing",
+        "Create glmm-families.test.ts: Gaussian random intercept with known parameters, validate fixed effects within 0.1",
+        "Create glmm-families.test.ts: Binomial GLMM avoiding quasi-complete separation (use jittered data like GLM tests)",
+        "Create glmm-families.test.ts: Poisson GLMM with proper beta initialization (intercept = log(mean(y)))",
+        "Create glmm-families.test.ts: NB2 GLMM with overdispersed count data",
+        "Create glmm-random-effects.test.ts: random intercept only (1|group)",
+        "Create glmm-random-effects.test.ts: random slopes (1+x|group) - validate 2x2 vcov matrix, correlation extraction",
+        "Create glmm-random-effects.test.ts: crossed effects (1|patient) + (1|provider) - validate separate variance components",
+        "Create glmm-random-effects.test.ts: nested effects (1|clinic/provider) - validate nested group IDs contain ':'",
+        "Create glmm-reml.test.ts: compare REML vs ML variance estimates (REML should be >= ML)",
+        "Create glmm-reml.test.ts: fixed effects should be nearly identical between REML and ML",
         "All tests use glmm() from glmm-functions.ts (NOT a DataFrame method)",
         "Add pnpm test:glmm script to package.json",
         "Run pnpm test:glmm - all tests pass"
+      ],
+      "passes": false
+    },
+    {
+      "category": "test",
+      "description": "Document GLMM edge cases and known limitations",
+      "steps": [
+        "Create packages/testing/glmm/edge-cases.md documenting known limitations",
+        "Document: convergence tolerance differences vs glmmTMB (1e-4 vs 1e-8)",
+        "Document: fixed effects tolerance (0.1-0.5 depending on family, not 1e-4 like GLM)",
+        "Document: variance component tolerance (0.1-0.5, not 1e-3)",
+        "Document: separation handling in binomial GLMMs (large coefficients, convergence warnings)",
+        "Document: small sample sizes may cause convergence issues (< 20 observations)",
+        "Document: random slopes with high correlation may cause numerical instability",
+        "Create debug-*.ts files for any issues discovered during testing"
       ],
       "passes": false
     },
