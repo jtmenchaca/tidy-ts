@@ -52,6 +52,7 @@
 //! - Brooks et al. (2017). glmmTMB Balances Speed and Flexibility
 //! - Kristensen et al. (2016). TMB: Automatic Differentiation and Laplace Approximation
 
+pub mod laplace;
 pub mod random_effects;
 pub mod random_effects_likelihood;
 pub mod types;
@@ -81,6 +82,12 @@ pub use variance_components::{
 pub use random_effects_likelihood::{
     compute_block_precision_matrices, compute_precision_matrix, log_random_effects_prior,
     log_random_effects_prior_value, RandomEffectsPrior,
+};
+
+// Re-export laplace approximation types
+pub use laplace::{
+    find_b_mode, joint_gradient_b, joint_hessian_b, joint_log_likelihood,
+    laplace_approximation, laplace_marginal_likelihood, LaplaceControl, LaplaceResult,
 };
 
 // Future submodules (to be implemented):

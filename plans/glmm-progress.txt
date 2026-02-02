@@ -357,3 +357,119 @@ pub struct RandomEffectsPrior {
 - Newton optimization to find mode b_hat
 - Laplace approximation via Hessian
 
+---
+
+### 2026-02-02: Item 7 Complete - Laplace Approximation for Marginal Likelihood
+
+Implemented the laplace module for computing the Laplace approximation to the marginal likelihood of GLMMs.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/laplace.rs` (~500 lines)
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added `pub mod laplace;` and re-exports
+
+**Key Functions Implemented:**
+
+1. **Core Likelihood Computation:**
+   - `joint_log_likelihood(y, x, z, beta, b, theta, random_effects, family, weights, offset)` → `f64`
+     - Computes: log p(y | b, β, θ) + log p(b | θ)
+     - Data likelihood via GLM deviance function
+     - Prior from random_effects_likelihood module
+
+2. **Gradient Computation:**
+   - `joint_gradient_b(...)` → `Vec<f64>`
+     - Gradient w.r.t. random effects b
+     - Data contribution: Z^T * working_residuals
+     - Prior contribution: -Σ^{-1} * b
+     - Uses family's variance and mu_eta functions
+
+3. **Hessian Computation:**
+   - `joint_hessian_b(...)` → `Vec<Vec<f64>>`
+     - Hessian of negative joint log-likelihood
+     - Data part: Z^T * diag(IRLS_weights) * Z via `weighted_cross_product()`
+     - Prior part: block-diagonal precision matrices via `compute_block_precision_matrices()`
+
+4. **Mode Finding (Inner Optimization):**
+   - `find_b_mode(y, x, z, beta, b_init, theta, random_effects, family, weights, offset, control)` → (b_mode, iterations, converged)
+     - Newton's method with Cholesky solver
+     - Damping factor for stability
+     - Regularization for ill-conditioned Hessians
+     - Gradient descent fallback if Cholesky fails
+
+5. **Laplace Approximation:**
+   - `laplace_approximation(...)` → `LaplaceResult`
+     - Full result including: marginal likelihood, mode, gradient w.r.t. theta, Hessian
+   - `laplace_marginal_likelihood(...)` → `f64`
+     - Convenience function returning only the value (faster)
+
+6. **Supporting Functions:**
+   - `solve_linear_system(A, b)` → solve A*x = b via Cholesky
+   - `log_determinant(A)` → log|A| via Cholesky
+   - `numerical_grad_theta(...)` → gradient of marginal likelihood w.r.t. theta
+
+**Data Structures:**
+
+```rust
+pub struct LaplaceResult {
+    pub log_marginal_likelihood: f64,  // Laplace-approximated marginal
+    pub b_mode: Vec<f64>,              // Mode of random effects (BLUPs)
+    pub grad_theta: Vec<f64>,          // Gradient for outer optimization
+    pub hessian_b: Option<Vec<Vec<f64>>>,  // Hessian at mode (for SEs)
+    pub inner_iterations: usize,
+    pub inner_converged: bool,
+}
+
+pub struct LaplaceControl {
+    pub max_iter: usize,      // Default: 100
+    pub tol: f64,             // Default: 1e-8
+    pub damping: f64,         // Default: 1.0
+    pub compute_hessian: bool, // Default: true
+    pub min_variance: f64,     // Default: 1e-10 (regularization)
+}
+```
+
+**Algorithm Overview:**
+
+```
+log p(y | β, θ) ≈ log p(y, b̂ | β, θ) - 0.5 * log|H|
+
+where:
+- b̂ = argmax_b [log p(y | b, β, θ) + log p(b | θ)]  (found by Newton)
+- H = Hessian of negative joint log-likelihood at b̂
+- H = Z^T W Z + Σ^{-1}  (block-diagonal structure)
+```
+
+**Test Coverage (12 tests):**
+- `test_joint_log_likelihood_gaussian` - Basic likelihood computation
+- `test_joint_gradient_b` - Gradient validation (analytical vs numerical)
+- `test_joint_hessian_b_symmetric` - Hessian symmetry and positive definiteness
+- `test_find_b_mode_converges` - Newton convergence
+- `test_laplace_approximation_basic` - Full Laplace computation
+- `test_laplace_marginal_likelihood_varies_with_theta` - Sensitivity to variance components
+- `test_solve_linear_system` - Linear solver validation
+- `test_log_determinant` - Log-determinant computation
+- `test_gradient_theta_direction` - Gradient sign consistency
+
+**Verification:**
+- `cargo check` passes (no errors, no warnings)
+- `deno check --unstable-tsgo packages/dataframe` passes (all green)
+
+**Integration Points:**
+- Uses `SparseMatrix.weighted_cross_product()` from random_effects module
+- Uses `compute_block_precision_matrices()` from random_effects_likelihood
+- Uses `cholesky_decompose()` from variance_components
+- Integrates with GLM family trait for data likelihood
+
+**Key Design Decisions:**
+1. **Newton's method** - Uses exact Hessian rather than BFGS for inner optimization
+2. **Cholesky solver** - Efficient and numerically stable for positive-definite Hessians
+3. **Gradient descent fallback** - Handles cases where Hessian isn't positive definite
+4. **Numerical gradient for theta** - Uses central differences for outer optimization gradient
+5. **Separate fast path** - `laplace_marginal_likelihood()` skips Hessian computation when not needed
+
+**Next Priority:** Item 8 (outer optimization for variance components)
+- Use Laplace approximation for profile likelihood
+- BFGS optimizer for theta with numerical gradients
+- Full GLMM fitting loop combining beta, b, and theta optimization
+

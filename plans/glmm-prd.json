@@ -180,7 +180,7 @@
         "Test on simple Gaussian model - should match lme4 within 1e-4",
         "Run `cargo test` for laplace module"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
