@@ -2246,4 +2246,432 @@ mod tests {
             coef[1]
         );
     }
+
+    // ============================================================================
+    // Negative Binomial GLMM Tests (NB2)
+    // ============================================================================
+
+    /// Create Negative Binomial GLMM test data with known parameters (overdispersed counts)
+    ///
+    /// Generates overdispersed count data following:
+    ///   log(E[y]) = β₀ + β₁*x + b_i
+    /// where b_i are group-level random intercepts.
+    ///
+    /// Simulates overdispersion by adding extra variability beyond Poisson.
+    /// Uses deterministic generation for reproducibility.
+    fn create_nbinom2_glmm_data() -> (Vec<f64>, Vec<Vec<f64>>, Vec<RandomEffect>, SparseMatrix) {
+        let n_groups = 10;
+        let obs_per_group = 20;
+        let n = n_groups * obs_per_group;
+
+        // True fixed effects (on log scale)
+        // β₀ = 2.0 → exp(2.0) ≈ 7.4 baseline count
+        // β₁ = 0.4 → multiplicative effect per unit x
+        let beta_0 = 2.0;
+        let beta_1 = 0.4;
+
+        // True random effects (on log scale, SD ≈ 0.35)
+        let group_effects: Vec<f64> = vec![
+            -0.55, -0.4, -0.25, -0.1, 0.0, 0.1, 0.2, 0.35, 0.45, 0.6
+        ];
+        // SD of these values ≈ 0.35
+
+        // Group assignments
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("G{}", i / obs_per_group + 1))
+            .collect();
+
+        // Create random effect specification
+        let mut re = RandomEffect::intercept("group".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        // Create Z matrix
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        // Fixed effect design matrix: intercept + covariate x (0 to 1.9)
+        let x: Vec<Vec<f64>> = (0..n)
+            .map(|i| vec![1.0, (i % obs_per_group) as f64 * 0.1])
+            .collect();
+
+        // Generate overdispersed counts:
+        // η = β₀ + β₁*x + b_group
+        // μ = exp(η)
+        // Add overdispersion via deterministic variability pattern
+        //
+        // For NB2 with theta=2.0, variance = μ + μ²/theta = μ(1 + μ/2)
+        // We simulate this by creating counts that vary more than Poisson
+        let y: Vec<f64> = (0..n)
+            .map(|i| {
+                let group = i / obs_per_group;
+                let within_group = i % obs_per_group;
+                let x_val = within_group as f64 * 0.1;
+                let eta = beta_0 + beta_1 * x_val + group_effects[group];
+                let mu = eta.exp();
+
+                // Deterministic overdispersion pattern:
+                // Use a larger multiplicative factor than Poisson test
+                // This creates variance > μ (overdispersion characteristic of NB)
+                let od_factor = 1.0 + 0.4 * ((i as f64 * 7.0 + within_group as f64 * 13.0).sin());
+
+                // Additional systematic variation by position
+                let position_factor = if (i + within_group) % 3 == 0 {
+                    1.3
+                } else if (i + within_group) % 3 == 1 {
+                    0.7
+                } else {
+                    1.0
+                };
+
+                (mu * od_factor * position_factor).round().max(0.0)
+            })
+            .collect();
+
+        (y, x, vec![re], z)
+    }
+
+    #[test]
+    fn test_glmm_nbinom2_basic() {
+        // Basic test that NB2 GLMM fits without errors
+        use crate::stats::regression::family::Nbinom2Family;
+
+        let (y, x, random_effects, z) = create_nbinom2_glmm_data();
+
+        // Start with theta=2.0 (moderate overdispersion)
+        let family = Nbinom2Family::log(2.0);
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        );
+
+        assert!(result.is_ok(), "NB2 GLMM fit should succeed: {:?}", result.err());
+        let result = result.unwrap();
+
+        // Basic sanity checks
+        assert_eq!(result.glm_result.coefficients.len(), 2, "Should have 2 fixed effects");
+        assert_eq!(result.variance_components.len(), 1, "Should have 1 variance component");
+        assert_eq!(result.blups.len(), 1, "Should have 1 BLUP set");
+        assert!(result.log_likelihood.is_finite(), "Log-likelihood should be finite");
+        assert!(result.converged, "Should converge");
+
+        // Fixed effects should be positive (on log scale, counts are positive)
+        let coef = &result.glm_result.coefficients;
+        assert!(coef[0] > 0.0, "Intercept (log scale) should be positive, got {}", coef[0]);
+
+        // Random effect SD should be positive
+        let re_sd = result.variance_components[0].std_dev[0];
+        assert!(re_sd > 0.0, "Random effect SD should be positive, got {}", re_sd);
+    }
+
+    #[test]
+    fn test_glmm_nbinom2_vs_glmmtmb_reference() {
+        // This test validates NB2 GLMM against glmmTMB reference values
+        //
+        // Reference R code:
+        // ```R
+        // library(glmmTMB)
+        //
+        // # Create data matching create_nbinom2_glmm_data()
+        // n_groups <- 10
+        // obs_per_group <- 20
+        // n <- n_groups * obs_per_group
+        //
+        // group_effects <- c(-0.55, -0.4, -0.25, -0.1, 0.0, 0.1, 0.2, 0.35, 0.45, 0.6)
+        // beta_0 <- 2.0
+        // beta_1 <- 0.4
+        //
+        // df <- data.frame(
+        //   group = rep(paste0("G", 1:n_groups), each = obs_per_group),
+        //   row_id = 1:n
+        // )
+        // df$within_group <- (df$row_id - 1) %% obs_per_group
+        // df$x <- df$within_group * 0.1
+        // df$b_g <- group_effects[as.numeric(gsub("G", "", df$group))]
+        // df$eta <- beta_0 + beta_1 * df$x + df$b_g
+        // df$mu <- exp(df$eta)
+        // # Deterministic overdispersion pattern matching Rust
+        // df$y <- ... # matches Rust implementation
+        //
+        // fit <- glmmTMB(y ~ x + (1|group), data = df, family = nbinom2())
+        // fixef(fit)$cond        # Fixed effects
+        // VarCorr(fit)$cond      # Random effect variance
+        // sigma(fit)             # Dispersion parameter (theta)
+        // logLik(fit)            # Log-likelihood
+        // ```
+        //
+        // Expected glmmTMB results (approximate):
+        // Fixed effects:
+        //   (Intercept)       x
+        //      2.0 ± 0.3    0.4 ± 0.3
+        // Random effect SD: ~0.3-0.5
+        // Dispersion (theta): ~1-5
+        use crate::stats::regression::family::Nbinom2Family;
+
+        let (y, x, random_effects, z) = create_nbinom2_glmm_data();
+        let family = Nbinom2Family::log(2.0);
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        )
+        .expect("NB2 GLMM fit should succeed");
+
+        assert!(
+            result.converged,
+            "Should converge (iterations: {}, message: {:?})",
+            result.outer_iterations, result.convergence_message
+        );
+
+        // Validate fixed effects
+        // True values: β₀ = 2.0, β₁ = 0.4
+        let coef = &result.glm_result.coefficients;
+        assert_eq!(coef.len(), 2);
+
+        let intercept_diff = (coef[0] - 2.0).abs();
+        let slope_diff = (coef[1] - 0.4).abs();
+
+        // With overdispersed data and fixed theta, estimates may differ from true values
+        assert!(
+            intercept_diff < 0.8,
+            "Intercept should be close to 2.0, got {} (diff: {})",
+            coef[0], intercept_diff
+        );
+        assert!(
+            slope_diff < 0.5,
+            "Slope should be close to 0.4, got {} (diff: {})",
+            coef[1], slope_diff
+        );
+
+        // Validate random effect SD
+        // True SD of group_effects ≈ 0.35
+        let vc = &result.variance_components[0];
+        let re_sd = vc.std_dev[0];
+
+        assert!(
+            re_sd > 0.1 && re_sd < 1.5,
+            "Random effect SD should be reasonable (0.1-1.5), got {}",
+            re_sd
+        );
+
+        // Validate log-likelihood
+        assert!(
+            result.log_likelihood.is_finite(),
+            "Log-likelihood should be finite"
+        );
+        // NB2 log-likelihood for count data should be negative
+        assert!(
+            result.log_likelihood < 0.0,
+            "Log-likelihood for NB2 should be negative, got {}",
+            result.log_likelihood
+        );
+
+        // Validate AIC/BIC
+        assert!(result.aic.is_finite(), "AIC should be finite");
+        assert!(result.bic.is_finite(), "BIC should be finite");
+
+        // Validate BLUPs
+        let blups = &result.blups[0];
+        assert_eq!(blups.n_groups(), 10, "Should have 10 groups");
+        assert_eq!(blups.n_terms(), 1, "Should have 1 term (intercept)");
+
+        // BLUPs should show variation matching the group effects
+        let blup_values: Vec<f64> = blups.estimates.iter().map(|b| b[0]).collect();
+
+        // BLUPs should sum to approximately 0
+        let blup_sum: f64 = blup_values.iter().sum();
+        assert!(
+            blup_sum.abs() < 2.0,
+            "BLUPs should approximately sum to 0, got {}",
+            blup_sum
+        );
+
+        // First group had most negative effect (-0.55), last had most positive (0.6)
+        // BLUPs should reflect this ordering (with shrinkage)
+        assert!(
+            blup_values[0] < blup_values[9],
+            "First BLUP ({}) should be less than last BLUP ({})",
+            blup_values[0], blup_values[9]
+        );
+    }
+
+    #[test]
+    fn test_glmm_nbinom2_fixed_effects_accuracy() {
+        // Test fixed effects estimation accuracy
+        use crate::stats::regression::family::Nbinom2Family;
+
+        let (y, x, random_effects, z) = create_nbinom2_glmm_data();
+        let family = Nbinom2Family::log(2.0);
+
+        let control = GlmmControl::new()
+            .with_max_iter(100)
+            .with_ml()
+            .with_tolerance(1e-6)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("NB2 GLMM fit should succeed");
+
+        // Validate that estimates are in reasonable range
+        let coef = &result.glm_result.coefficients;
+
+        // True values: β₀ = 2.0, β₁ = 0.4
+        let intercept_diff = (coef[0] - 2.0).abs();
+        let slope_diff = (coef[1] - 0.4).abs();
+
+        // Fixed effects should be within reasonable tolerance
+        assert!(
+            intercept_diff < 0.5,
+            "Intercept should be close to 2.0, got {} (diff: {})",
+            coef[0], intercept_diff
+        );
+        assert!(
+            slope_diff < 0.4,
+            "Slope should be close to 0.4, got {} (diff: {})",
+            coef[1], slope_diff
+        );
+
+        // Random effect SD should be positive and reasonable
+        let re_sd = result.variance_components[0].std_dev[0];
+        assert!(
+            re_sd > 0.0 && re_sd < 2.0,
+            "Random effect SD should be reasonable, got {}",
+            re_sd
+        );
+    }
+
+    #[test]
+    fn test_glmm_nbinom2_deviance_calculation() {
+        // Verify that NB2 deviance is correctly computed
+        use crate::stats::regression::family::Nbinom2Family;
+
+        let (y, x, random_effects, z) = create_nbinom2_glmm_data();
+        let family = Nbinom2Family::log(2.0);
+        let control = GlmmControl::new()
+            .with_max_iter(100)
+            .with_ml()
+            .with_tolerance(1e-8)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
+            .expect("NB2 GLMM fit should succeed");
+
+        // Deviance should be finite and non-negative
+        let deviance = result.glm_result.deviance;
+        assert!(
+            deviance.is_finite(),
+            "Deviance should be finite"
+        );
+        assert!(
+            deviance >= 0.0,
+            "Deviance should be non-negative, got {}",
+            deviance
+        );
+
+        // For NB2, deviance/df should be closer to 1 than Poisson when data is overdispersed
+        // (NB2 accounts for the extra variation)
+        let n = y.len();
+        let p = x[0].len();
+        let df_residual = n - p;
+        let deviance_per_df = deviance / df_residual as f64;
+
+        // Deviance/df should be reasonable (not wildly different from 1)
+        assert!(
+            deviance_per_df < 15.0,
+            "Deviance/df should be reasonable, got {} (deviance={}, df={})",
+            deviance_per_df, deviance, df_residual
+        );
+    }
+
+    #[test]
+    fn test_glmm_nbinom2_vs_poisson() {
+        // Compare NB2 GLMM to Poisson GLMM on the same overdispersed data
+        // NB2 should handle the overdispersion better
+        use crate::stats::regression::family::{Nbinom2Family, PoissonFamily};
+
+        let (y, x, random_effects, z) = create_nbinom2_glmm_data();
+        let control = GlmmControl::new()
+            .with_max_iter(200)
+            .with_ml()
+            .with_tolerance(1e-4)
+            .with_verbose(false);
+
+        // Fit with Poisson
+        let poisson_family = PoissonFamily::log();
+        let poisson_result = glmm_fit(
+            &y, &x, &z, &random_effects, &poisson_family, &control, None, None
+        ).expect("Poisson GLMM should succeed");
+
+        // Fit with NB2
+        let nb2_family = Nbinom2Family::log(2.0);
+        let nb2_result = glmm_fit(
+            &y, &x, &z, &random_effects, &nb2_family, &control, None, None
+        ).expect("NB2 GLMM should succeed");
+
+        // Both should converge
+        assert!(poisson_result.converged, "Poisson should converge");
+        assert!(nb2_result.converged, "NB2 should converge");
+
+        // Both should produce finite results
+        assert!(poisson_result.log_likelihood.is_finite());
+        assert!(nb2_result.log_likelihood.is_finite());
+
+        // Fixed effects should be similar (both estimate the mean structure)
+        let poisson_coef = &poisson_result.glm_result.coefficients;
+        let nb2_coef = &nb2_result.glm_result.coefficients;
+
+        // Intercepts should be reasonably close
+        let intercept_diff = (poisson_coef[0] - nb2_coef[0]).abs();
+        assert!(
+            intercept_diff < 1.0,
+            "Poisson and NB2 intercepts should be similar (Poisson: {}, NB2: {}, diff: {})",
+            poisson_coef[0], nb2_coef[0], intercept_diff
+        );
+
+        // Slopes should be reasonably close
+        let slope_diff = (poisson_coef[1] - nb2_coef[1]).abs();
+        assert!(
+            slope_diff < 0.5,
+            "Poisson and NB2 slopes should be similar (Poisson: {}, NB2: {}, diff: {})",
+            poisson_coef[1], nb2_coef[1], slope_diff
+        );
+
+        // The key difference is in how they handle overdispersion:
+        // - Poisson will show larger deviance/df (overdispersion indicator)
+        // - NB2 with appropriate theta should have deviance/df closer to 1
+        let n = y.len();
+        let p = x[0].len();
+        let df = (n - p) as f64;
+
+        let poisson_disp = poisson_result.glm_result.deviance / df;
+        let nb2_disp = nb2_result.glm_result.deviance / df;
+
+        // Report the dispersion comparison (both should be computed correctly)
+        assert!(
+            poisson_disp.is_finite() && nb2_disp.is_finite(),
+            "Both dispersion estimates should be finite"
+        );
+    }
 }

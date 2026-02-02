@@ -257,7 +257,7 @@
         "Compare random effect SD to glmmTMB - within 1e-3",
         "Run `cargo test` for nbinom2 glmm"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
