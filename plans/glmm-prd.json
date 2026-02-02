@@ -333,7 +333,7 @@
       "steps": [
         "Create glmm-methods.test.ts: test GLMM class getters (coefficients, variance_components, blups, loglik, aic, bic, converged, iterations)",
         "Create glmm-methods.test.ts: test print() method produces readable output without throwing",
-        "Create glmm-families.test.ts: Gaussian random intercept with known parameters, validate fixed effects within 0.1",
+        "Create glmm-families.test.ts: Gaussian random intercept with known parameters, validate fixed effects within 1e-4",
         "Create glmm-families.test.ts: Binomial GLMM avoiding quasi-complete separation (use jittered data like GLM tests)",
         "Create glmm-families.test.ts: Poisson GLMM with proper beta initialization (intercept = log(mean(y)))",
         "Create glmm-families.test.ts: NB2 GLMM with overdispersed count data",
@@ -354,9 +354,9 @@
       "description": "Document GLMM edge cases and known limitations",
       "steps": [
         "Create packages/testing/glmm/edge-cases.md documenting known limitations",
-        "Document: convergence tolerance differences vs glmmTMB (1e-4 vs 1e-8)",
-        "Document: fixed effects tolerance (0.1-0.5 depending on family, not 1e-4 like GLM)",
-        "Document: variance component tolerance (0.1-0.5, not 1e-3)",
+        "Document: convergence tolerance used (1e-4 for outer optimization)",
+        "Document: fixed effects tolerance (1e-4, matching PRD goal)",
+        "Document: variance component tolerance (1e-3, matching PRD goal)",
         "Document: separation handling in binomial GLMMs (large coefficients, convergence warnings)",
         "Document: small sample sizes may cause convergence issues (< 20 observations)",
         "Document: random slopes with high correlation may cause numerical instability",
