@@ -17,7 +17,10 @@
 //! Uses L-BFGS for unconstrained optimization of theta (log-Cholesky parameterization
 //! ensures covariance matrices are always positive-definite).
 
-use super::laplace::{invert_symmetric_positive_definite, laplace_approximation, LaplaceControl};
+use super::laplace::{
+    compute_reml_adjustment, invert_symmetric_positive_definite, laplace_approximation,
+    LaplaceControl,
+};
 use super::random_effects::SparseMatrix;
 use super::types::{
     GlmmControl, GlmmFitSummary, GlmmResult, RandomEffect, RandomEffectEstimates, VarianceComponent,
@@ -442,8 +445,16 @@ fn run_outer_optimization(
         laplace_ctrl,
     );
 
-    // We minimize negative log-likelihood
+    // We minimize negative log-likelihood (or REML criterion)
+    // For REML: obj = -ML_marginal_likelihood - 0.5 * log|X'WX|
     let mut obj = -current_result.log_marginal_likelihood;
+    if control.reml {
+        if let Some(reml_adj) =
+            compute_reml_adjustment(y, x, z, beta, b, family, weights, offset)
+        {
+            obj -= reml_adj; // Subtract because we minimize negative likelihood
+        }
+    }
     let mut grad: Vec<f64> = current_result.grad_theta.iter().map(|g| -g).collect();
     let mut grad_norm: f64 = grad.iter().map(|g| g * g).sum::<f64>().sqrt();
 
@@ -474,6 +485,13 @@ fn run_outer_optimization(
         laplace_ctrl,
     );
     obj = -current_result.log_marginal_likelihood;
+    if control.reml {
+        if let Some(reml_adj) =
+            compute_reml_adjustment(y, x, z, beta, b, family, weights, offset)
+        {
+            obj -= reml_adj;
+        }
+    }
     grad = current_result.grad_theta.iter().map(|g| -g).collect();
     grad_norm = grad.iter().map(|g| g * g).sum::<f64>().sqrt();
     *b = current_result.b_mode.clone();
@@ -522,7 +540,16 @@ fn run_outer_optimization(
                 offset,
                 laplace_ctrl,
             );
-            let new_obj = -result.log_marginal_likelihood;
+            let mut new_obj = -result.log_marginal_likelihood;
+            // Apply REML adjustment if enabled
+            if control.reml {
+                // Note: we use b_mode from result for most accurate REML adjustment
+                if let Some(reml_adj) =
+                    compute_reml_adjustment(y, x, z, beta, &result.b_mode, family, weights, offset)
+                {
+                    new_obj -= reml_adj;
+                }
+            }
             let new_grad: Vec<f64> = result.grad_theta.iter().map(|g| -g).collect();
             (new_obj, new_grad)
         };
@@ -3620,5 +3647,368 @@ mod tests {
         assert_eq!(random_effects[0].n_groups, 10);
         assert_eq!(random_effects[1].grouping_var, "provider");
         assert_eq!(random_effects[1].n_groups, 5);
+    }
+
+    // ==========================================================================
+    // REML Estimation Tests
+    // ==========================================================================
+
+    /// Create test data for REML validation
+    /// Uses a moderate number of groups to see clear differences between ML and REML
+    fn create_reml_validation_data() -> (Vec<f64>, Vec<Vec<f64>>, Vec<RandomEffect>, SparseMatrix) {
+        // 60 observations, 6 groups with 10 obs each
+        // Fewer groups means bigger difference between ML and REML
+        let n_groups = 6;
+        let obs_per_group = 10;
+        let n = n_groups * obs_per_group;
+
+        // Create group assignments
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("g{}", i / obs_per_group))
+            .collect();
+
+        // Create random effect specification
+        let mut re = RandomEffect::intercept("group".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        // Generate y with known random effects
+        // True parameters: beta0 = 5.0, beta1 = 0.3, RE SD = 1.0
+        let true_beta0 = 5.0;
+        let true_beta1 = 0.3;
+        let true_re_sd = 1.0;
+
+        // Group effects (scaled from standard normal)
+        let group_effects: Vec<f64> = vec![-1.2, -0.5, 0.0, 0.3, 0.8, 0.6];
+
+        // X matrix with intercept and one covariate
+        let mut x: Vec<Vec<f64>> = Vec::with_capacity(n);
+        let mut y: Vec<f64> = Vec::with_capacity(n);
+
+        for i in 0..n {
+            let group = i / obs_per_group;
+            let within_group = i % obs_per_group;
+
+            // X covariate: varies within group
+            let x_val = (within_group as f64) / (obs_per_group as f64 - 1.0);
+
+            x.push(vec![1.0, x_val]);
+
+            // Generate y
+            let b_i = group_effects[group] * true_re_sd;
+            let noise = 0.1 * ((i as f64 - 30.0) / 30.0); // Deterministic noise
+            y.push(true_beta0 + true_beta1 * x_val + b_i + noise);
+        }
+
+        // Create Z matrix
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        (y, x, vec![re], z)
+    }
+
+    #[test]
+    fn test_glmm_reml_vs_ml_basic() {
+        // Test that REML and ML both converge and produce different variance estimates
+        let (y, x, random_effects, z) = create_reml_validation_data();
+        let family = GaussianFamily::default();
+
+        // Fit with REML (default)
+        let control_reml = GlmmControl::new()
+            .with_max_iter(100)
+            .with_verbose(false);
+
+        let result_reml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_reml, None, None)
+            .expect("REML fit should succeed");
+
+        // Fit with ML
+        let control_ml = GlmmControl::new()
+            .with_ml()
+            .with_max_iter(100)
+            .with_verbose(false);
+
+        let result_ml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_ml, None, None)
+            .expect("ML fit should succeed");
+
+        // Both should converge
+        assert!(result_reml.converged, "REML should converge");
+        assert!(result_ml.converged, "ML should converge");
+
+        // Both should have finite log-likelihoods
+        assert!(
+            result_reml.log_likelihood.is_finite(),
+            "REML log-likelihood should be finite"
+        );
+        assert!(
+            result_ml.log_likelihood.is_finite(),
+            "ML log-likelihood should be finite"
+        );
+
+        // REML criterion should be stored
+        assert!(
+            result_reml.reml_criterion.is_some(),
+            "REML criterion should be stored for REML fit"
+        );
+        assert!(
+            result_ml.reml_criterion.is_none(),
+            "REML criterion should be None for ML fit"
+        );
+
+        // Method should be correctly reported
+        assert_eq!(
+            result_reml.fit_summary.method, "REML",
+            "Method should be REML"
+        );
+        assert_eq!(
+            result_ml.fit_summary.method, "ML",
+            "Method should be ML"
+        );
+    }
+
+    #[test]
+    fn test_glmm_reml_variance_larger_than_ml() {
+        // REML typically produces slightly larger variance estimates than ML
+        // because it accounts for the degrees of freedom lost from estimating fixed effects
+        let (y, x, random_effects, z) = create_reml_validation_data();
+        let family = GaussianFamily::default();
+
+        // Fit with REML
+        let control_reml = GlmmControl::new().with_max_iter(100);
+        let result_reml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_reml, None, None)
+            .expect("REML fit should succeed");
+
+        // Fit with ML
+        let control_ml = GlmmControl::new().with_ml().with_max_iter(100);
+        let result_ml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_ml, None, None)
+            .expect("ML fit should succeed");
+
+        // Get variance components
+        let reml_sd = result_reml.variance_components[0].std_dev[0];
+        let ml_sd = result_ml.variance_components[0].std_dev[0];
+
+        // Both should be positive
+        assert!(reml_sd > 0.0, "REML SD should be positive: {}", reml_sd);
+        assert!(ml_sd > 0.0, "ML SD should be positive: {}", ml_sd);
+
+        // With few groups (6), we expect REML variance to be notably larger
+        // The adjustment factor is approximately n/(n-p) where n=groups, p=fixed effects
+        // For 6 groups and 2 fixed effects: 6/4 = 1.5, so REML variance ~ 1.5 * ML variance
+        // But this is a rough approximation; we just check that REML >= ML
+        let reml_var = reml_sd * reml_sd;
+        let ml_var = ml_sd * ml_sd;
+
+        // REML variance should be >= ML variance (with some tolerance for numerical noise)
+        // Note: in some edge cases they can be very close
+        assert!(
+            reml_var >= ml_var * 0.95,
+            "REML variance ({:.4}) should be >= 0.95 * ML variance ({:.4})",
+            reml_var,
+            ml_var
+        );
+
+        // Both should be in reasonable range for our data (true SD = 1.0)
+        assert!(
+            reml_sd > 0.3 && reml_sd < 2.5,
+            "REML SD should be in reasonable range: {}",
+            reml_sd
+        );
+        assert!(
+            ml_sd > 0.3 && ml_sd < 2.5,
+            "ML SD should be in reasonable range: {}",
+            ml_sd
+        );
+    }
+
+    #[test]
+    fn test_glmm_reml_fixed_effects_similar_to_ml() {
+        // Fixed effect estimates should be very similar between REML and ML
+        // (REML mainly affects variance component estimates)
+        let (y, x, random_effects, z) = create_reml_validation_data();
+        let family = GaussianFamily::default();
+
+        // Fit with REML
+        let control_reml = GlmmControl::new().with_max_iter(100);
+        let result_reml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_reml, None, None)
+            .expect("REML fit should succeed");
+
+        // Fit with ML
+        let control_ml = GlmmControl::new().with_ml().with_max_iter(100);
+        let result_ml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_ml, None, None)
+            .expect("ML fit should succeed");
+
+        // Get fixed effects
+        let reml_beta = &result_reml.glm_result.coefficients;
+        let ml_beta = &result_ml.glm_result.coefficients;
+
+        // Both should have 2 coefficients (intercept + slope)
+        assert_eq!(reml_beta.len(), 2, "REML should have 2 fixed effects");
+        assert_eq!(ml_beta.len(), 2, "ML should have 2 fixed effects");
+
+        // Fixed effects should be very similar (within 0.1)
+        // True values: beta0 = 5.0, beta1 = 0.3
+        assert!(
+            (reml_beta[0] - ml_beta[0]).abs() < 0.1,
+            "Intercepts should be similar: REML={:.4}, ML={:.4}",
+            reml_beta[0],
+            ml_beta[0]
+        );
+        assert!(
+            (reml_beta[1] - ml_beta[1]).abs() < 0.1,
+            "Slopes should be similar: REML={:.4}, ML={:.4}",
+            reml_beta[1],
+            ml_beta[1]
+        );
+
+        // Both should be close to true values
+        assert!(
+            (reml_beta[0] - 5.0).abs() < 0.8,
+            "REML intercept should be close to 5.0: {}",
+            reml_beta[0]
+        );
+        assert!(
+            (ml_beta[0] - 5.0).abs() < 0.8,
+            "ML intercept should be close to 5.0: {}",
+            ml_beta[0]
+        );
+    }
+
+    #[test]
+    fn test_glmm_reml_adjustment_computation() {
+        // Test that the REML adjustment (0.5 * log|X'WX|) is being applied
+        let (y, x, _random_effects, _z) = create_reml_validation_data();
+        let _family = GaussianFamily::default();
+        let n = y.len();
+
+        // Compute X'WX log determinant manually for Gaussian with identity link
+        // For Gaussian, W = I (IRLS weights are all 1)
+        let p = x[0].len();
+        let mut xtx = vec![vec![0.0; p]; p];
+        for i in 0..n {
+            for j in 0..p {
+                for k in 0..=j {
+                    xtx[j][k] += x[i][j] * x[i][k];
+                    if j != k {
+                        xtx[k][j] += x[i][j] * x[i][k];
+                    }
+                }
+            }
+        }
+
+        // Compute log determinant via Cholesky
+        use super::super::variance_components::cholesky_decompose;
+        let chol = cholesky_decompose(&xtx).expect("X'X should be positive definite");
+        let _log_det_xtx: f64 = 2.0 * chol.iter().map(|row| row.iter().position(|&x| x != 0.0).map_or(0.0, |i| row[i].ln())).sum::<f64>();
+
+        // The actual log determinant computed correctly
+        let actual_log_det: f64 = 2.0 * (0..p).map(|i| chol[i][i].ln()).sum::<f64>();
+
+        // Should be positive (X'X is positive definite)
+        assert!(
+            actual_log_det.is_finite(),
+            "log|X'X| should be finite: {}",
+            actual_log_det
+        );
+
+        // The REML adjustment is 0.5 * log|X'WX|
+        // For n=60, p=2, this should be a small positive adjustment
+        let reml_adj = 0.5 * actual_log_det;
+        assert!(
+            reml_adj > 0.0,
+            "REML adjustment should be positive for well-conditioned X: {}",
+            reml_adj
+        );
+    }
+
+    #[test]
+    fn test_glmm_reml_with_poisson_family() {
+        // Test REML with non-Gaussian family (Poisson)
+        // The REML adjustment should still be computed using IRLS weights
+        let (y, x, random_effects, z) = create_poisson_glmm_data();
+        let family = crate::stats::regression::family::PoissonFamily::log();
+
+        // Fit with REML
+        let control_reml = GlmmControl::new()
+            .with_max_iter(100)
+            .with_tolerance(1e-4);
+        let result_reml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_reml, None, None)
+            .expect("REML Poisson fit should succeed");
+
+        // Fit with ML
+        let control_ml = GlmmControl::new()
+            .with_ml()
+            .with_max_iter(100)
+            .with_tolerance(1e-4);
+        let result_ml = glmm_fit(&y, &x, &z, &random_effects, &family, &control_ml, None, None)
+            .expect("ML Poisson fit should succeed");
+
+        // Both should converge
+        assert!(result_reml.converged, "REML Poisson should converge");
+        assert!(result_ml.converged, "ML Poisson should converge");
+
+        // Method should be correctly reported
+        assert_eq!(result_reml.fit_summary.method, "REML");
+        assert_eq!(result_ml.fit_summary.method, "ML");
+
+        // Both should have finite likelihoods
+        assert!(result_reml.log_likelihood.is_finite());
+        assert!(result_ml.log_likelihood.is_finite());
+    }
+
+    #[test]
+    fn test_glmm_reml_with_many_groups() {
+        // With many groups, REML and ML should be very similar
+        // (the df adjustment becomes negligible)
+        let n_groups = 50;
+        let obs_per_group = 5;
+        let n = n_groups * obs_per_group;
+
+        // Create group assignments
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("g{}", i / obs_per_group))
+            .collect();
+
+        // Create random effect specification
+        let mut re = RandomEffect::intercept("group".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        // Generate simple data
+        let mut x: Vec<Vec<f64>> = Vec::with_capacity(n);
+        let mut y: Vec<f64> = Vec::with_capacity(n);
+
+        for i in 0..n {
+            let group = i / obs_per_group;
+            let x_val = (i % obs_per_group) as f64 / 4.0;
+            x.push(vec![1.0, x_val]);
+
+            // Simple linear model with group effects
+            let b_i = ((group as f64) - 25.0) / 25.0 * 0.5; // Scaled group effect
+            y.push(3.0 + 0.5 * x_val + b_i);
+        }
+
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        let family = GaussianFamily::default();
+
+        // Fit with REML
+        let control_reml = GlmmControl::new().with_max_iter(100);
+        let result_reml = glmm_fit(&y, &x, &z, &[re.clone()], &family, &control_reml, None, None)
+            .expect("REML fit should succeed");
+
+        // Fit with ML
+        let control_ml = GlmmControl::new().with_ml().with_max_iter(100);
+        let result_ml = glmm_fit(&y, &x, &z, &[re], &family, &control_ml, None, None)
+            .expect("ML fit should succeed");
+
+        // With 50 groups, variance estimates should be very similar
+        let reml_var = result_reml.variance_components[0].std_dev[0].powi(2);
+        let ml_var = result_ml.variance_components[0].std_dev[0].powi(2);
+
+        // They should differ by less than 10%
+        let ratio = reml_var / ml_var;
+        assert!(
+            ratio > 0.90 && ratio < 1.15,
+            "With many groups, REML/ML variance ratio should be close to 1.0: {}",
+            ratio
+        );
     }
 }

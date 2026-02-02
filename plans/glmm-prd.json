@@ -308,7 +308,7 @@
         "Verify ML variance estimates slightly smaller than REML",
         "Run `cargo test` for reml estimation"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

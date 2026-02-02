@@ -87,9 +87,9 @@ pub use random_effects_likelihood::{
 
 // Re-export laplace approximation types
 pub use laplace::{
-    find_b_mode, invert_symmetric_positive_definite, joint_gradient_b, joint_hessian_b,
-    joint_log_likelihood, laplace_approximation, laplace_marginal_likelihood, update_beta,
-    LaplaceControl, LaplaceResult,
+    compute_reml_adjustment, compute_weighted_xtx, find_b_mode, invert_symmetric_positive_definite,
+    joint_gradient_b, joint_hessian_b, joint_log_likelihood, laplace_approximation,
+    laplace_marginal_likelihood, update_beta, LaplaceControl, LaplaceResult,
 };
 
 // Re-export fitting types
