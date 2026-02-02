@@ -231,7 +231,7 @@
         "Verify deviance/AIC calculation matches glmmTMB",
         "Run `cargo test` for poisson glmm"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

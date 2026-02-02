@@ -56,6 +56,8 @@ pub struct LaplaceControl {
     pub compute_hessian: bool,
     /// Minimum variance to add to diagonal for numerical stability
     pub min_variance: f64,
+    /// Whether to compute gradient w.r.t. theta (disable to avoid infinite recursion)
+    pub compute_gradient: bool,
 }
 
 impl Default for LaplaceControl {
@@ -66,6 +68,7 @@ impl Default for LaplaceControl {
             damping: 1.0,
             compute_hessian: true,
             min_variance: 1e-10,
+            compute_gradient: true,
         }
     }
 }
@@ -114,13 +117,21 @@ pub fn joint_log_likelihood(
     let mu = linkinv(&eta);
 
     // Compute data log-likelihood
-    // For exponential families: log p(y | μ, φ) = Σ w_i * [y_i * θ_i - b(θ_i)] / a(φ) + c(y_i, φ)
-    // We use deviance as a proxy since log-lik = -deviance/2 (up to constants)
+    // For exponential families, we use the quasi-likelihood approach:
+    // The deviance D = -2 * (log L(y; μ) - log L(y; y_saturated))
+    // For Gaussian: D = Σ (y - μ)², and -D/2 is proportional to log-lik
+    // For Poisson: D = 2 * Σ [y * log(y/μ) - (y - μ)], and -D/2 captures the key terms
+    //
+    // However, for accurate GLMM optimization, we should use the actual log-likelihood
+    // not just the deviance. The issue is that deviance drops constants that matter
+    // when comparing models with different random effects.
+    //
+    // For now, we use -0.5 * deviance as a proxy which works for Gaussian
+    // and provides good optimization behavior for other families.
     let deviance_fn = family.deviance();
     let dev = deviance_fn.deviance(y, &mu, weights).unwrap_or(f64::INFINITY);
 
-    // Data log-likelihood (negative half deviance, up to dispersion)
-    // For most families, this is proportional to the actual log-likelihood
+    // Data log-likelihood (proportional to negative half deviance)
     let data_ll = -0.5 * dev;
 
     // Random effects log-prior: log p(b | θ)
@@ -420,6 +431,117 @@ pub fn invert_symmetric_positive_definite(a: &[Vec<f64>]) -> Option<Vec<Vec<f64>
     Some(a_inv)
 }
 
+/// Update fixed effects beta given current random effects b
+///
+/// For Gaussian family with identity link, this is a single WLS step.
+/// For other families, runs a few IRLS iterations.
+///
+/// Uses working response: z* = η + (y - μ) / (dμ/dη)
+/// And working weights: w* = weights * (dμ/dη)² / V(μ)
+///
+/// Then solves: X^T W X * beta = X^T W (z* - Z*b - offset)
+pub fn update_beta(
+    y: &[f64],
+    x: &[Vec<f64>],
+    z: &SparseMatrix,
+    b: &[f64],
+    beta_init: &[f64],
+    family: &dyn GlmFamily,
+    weights: &[f64],
+    offset: &[f64],
+) -> Option<Vec<f64>> {
+    let n = y.len();
+    let p = if !x.is_empty() { x[0].len() } else { return None };
+
+    if p == 0 {
+        return Some(vec![]);
+    }
+
+    // Compute Z*b once (this is fixed during beta estimation)
+    let zb = z.mul_vec(b);
+
+    // Initialize beta from previous estimate
+    let mut beta = if beta_init.len() == p {
+        beta_init.to_vec()
+    } else {
+        vec![0.0; p]
+    };
+
+    // Run multiple iterations to converge to correct estimates
+    // Even Gaussian needs iterations if b has already absorbed fixed effects signal
+    let max_iter = 10;
+
+    let linkinv = family.linkinv();
+    let mu_eta_fn = family.mu_eta();
+    let variance_fn = family.variance();
+
+    for _iter in 0..max_iter {
+        // Compute current linear predictor: η = X*β + Z*b + offset
+        let eta: Vec<f64> = (0..n)
+            .map(|i| {
+                let x_beta: f64 = x[i].iter().zip(beta.iter()).map(|(xij, bj)| xij * bj).sum();
+                x_beta + zb[i] + offset[i]
+            })
+            .collect();
+
+        let mu = linkinv(&eta);
+        let mu_eta_vals = mu_eta_fn(&eta);
+
+        // Compute IRLS weights and working response
+        let mut working_response = vec![0.0; n];
+        let mut irls_weights = vec![0.0; n];
+
+        for i in 0..n {
+            let var = variance_fn.variance(mu[i]).unwrap_or(1.0).max(1e-10);
+            let mu_eta = mu_eta_vals[i].abs().max(1e-10);
+
+            irls_weights[i] = weights[i] * mu_eta * mu_eta / var;
+
+            // Working response: z* = η + (y - μ) / (dμ/dη) - Z*b - offset
+            // So that we solve for beta in: X*beta = z*
+            working_response[i] = (y[i] - mu[i]) / mu_eta + eta[i] - zb[i] - offset[i];
+        }
+
+        // Solve weighted least squares: X^T W X * beta = X^T W * working_response
+        // Build X^T W X
+        let mut xtw_x = vec![vec![0.0; p]; p];
+        for j in 0..p {
+            for k in 0..=j {
+                let mut sum = 0.0;
+                for i in 0..n {
+                    sum += x[i][j] * irls_weights[i] * x[i][k];
+                }
+                xtw_x[j][k] = sum;
+                xtw_x[k][j] = sum; // Symmetric
+            }
+        }
+
+        // Add small regularization for numerical stability
+        for j in 0..p {
+            xtw_x[j][j] += 1e-8;
+        }
+
+        // Build X^T W * working_response
+        let mut xtw_z = vec![0.0; p];
+        for j in 0..p {
+            let mut sum = 0.0;
+            for i in 0..n {
+                sum += x[i][j] * irls_weights[i] * working_response[i];
+            }
+            xtw_z[j] = sum;
+        }
+
+        // Solve via Cholesky
+        if let Some(new_beta) = solve_linear_system(&xtw_x, &xtw_z) {
+            beta = new_beta;
+        } else {
+            break;
+        }
+    }
+
+    Some(beta)
+}
+
 /// Compute Laplace approximation for marginal likelihood
 ///
 /// log p(y | β, θ) ≈ log p(y, b_hat | β, θ) - 0.5 * log|H|
@@ -496,19 +618,24 @@ pub fn laplace_approximation(
     let log_marginal = joint_ll + laplace_correction;
 
     // Compute gradient w.r.t. theta using numerical differentiation
-    let grad_theta = numerical_grad_theta(
-        y,
-        x,
-        z,
-        beta,
-        &b_mode,
-        theta,
-        random_effects,
-        family,
-        weights,
-        offset,
-        control,
-    );
+    // Skip if compute_gradient is false (to avoid infinite recursion)
+    let grad_theta = if control.compute_gradient {
+        numerical_grad_theta(
+            y,
+            x,
+            z,
+            beta,
+            &b_mode,
+            theta,
+            random_effects,
+            family,
+            weights,
+            offset,
+            control,
+        )
+    } else {
+        vec![0.0; theta.len()]
+    };
 
     LaplaceResult {
         log_marginal_likelihood: log_marginal,
@@ -543,12 +670,14 @@ fn numerical_grad_theta(
     let mut grad = vec![0.0; n_theta];
 
     // Create a lighter control for gradient evaluation
+    // CRITICAL: compute_gradient = false to avoid infinite recursion!
     let grad_control = LaplaceControl {
         max_iter: control.max_iter,
         tol: control.tol * 10.0, // Slightly looser tolerance for speed
         damping: control.damping,
         compute_hessian: false,
         min_variance: control.min_variance,
+        compute_gradient: false, // Must be false to avoid infinite recursion
     };
 
     for i in 0..n_theta {
@@ -607,6 +736,7 @@ pub fn laplace_marginal_likelihood(
 ) -> f64 {
     let control = LaplaceControl {
         compute_hessian: false,
+        compute_gradient: false, // Don't need gradient for value-only computation
         ..Default::default()
     };
 
@@ -657,8 +787,8 @@ mod tests {
         populate_random_effect(&mut re, &group_values);
 
         // Create Z matrix
-        let term_values = vec![intercept_term_values(n)];
-        let z = construct_z_matrix(&re, &term_values);
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
 
         // Create design matrix (intercept + one covariate)
         let x: Vec<Vec<f64>> = (0..n).map(|i| vec![1.0, i as f64 * 0.1]).collect();

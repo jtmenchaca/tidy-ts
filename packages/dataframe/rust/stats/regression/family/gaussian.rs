@@ -21,6 +21,13 @@ impl Clone for GaussianFamily {
     }
 }
 
+impl Default for GaussianFamily {
+    /// Default Gaussian family uses identity link
+    fn default() -> Self {
+        Self::identity()
+    }
+}
+
 impl GaussianFamily {
     /// Create a new gaussian family with the specified link function
     pub fn new(link: impl LinkFunction + 'static) -> Self {
