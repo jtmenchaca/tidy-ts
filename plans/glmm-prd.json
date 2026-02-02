@@ -314,14 +314,15 @@
       "category": "functional",
       "description": "Implement WASM bindings for GLMM",
       "steps": [
-        "Create glmm_fit_wasm() in packages/dataframe/rust/stats/regression/glmm/wasm.rs with #[wasm_bindgen] annotation",
-        "Add glmm wasm re-exports to packages/dataframe/rust/mod.rs under #[cfg(feature = \"wasm\")]",
-        "Run `pnpm wasmbuild` - should compile without errors and generate updated .wasm, .d.ts, .js in packages/dataframe/lib/",
+        "Create glmm_fit_wasm() in packages/dataframe/rust/stats/regression/glmm/wasm.rs with #![cfg(feature = \"wasm\")] and #[wasm_bindgen]",
+        "Export wasm module from glmm/mod.rs: pub mod wasm;",
+        "Add to packages/dataframe/rust/mod.rs: #[cfg(feature = \"wasm\")] pub use stats::regression::glmm::wasm::*;",
+        "Run `pnpm wasmbuild` - should compile without errors",
         "Verify glmm_fit_wasm appears in packages/dataframe/lib/tidy_ts_dataframe.d.ts",
-        "Create TypeScript interface GlmmFitResult in packages/dataframe/ts/wasm/glmm-functions.ts",
-        "Create glmmFit() TypeScript wrapper function with JSON serialization (follow glm_fit_wasm pattern)",
-        "Test round-trip: TypeScript -> WASM -> TypeScript with simple Gaussian model",
-        "Verify special float handling (NaN, Infinity) works via serde_json",
+        "Create packages/dataframe/ts/wasm/glmm-functions.ts with: import { initWasm, wasmInternal } from './wasm-init.ts'",
+        "Create GlmmFitResult interface and glmmFit() wrapper that calls initWasm() then wasmInternal.glmm_fit_wasm()",
+        "Add export * from './glmm-functions.ts' to packages/dataframe/ts/wasm/wasm-loader.ts",
+        "Test round-trip with simple Gaussian random intercept model",
         "Run `pnpm check` - no TypeScript errors"
       ],
       "passes": false
