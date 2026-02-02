@@ -188,3 +188,79 @@ Implemented the random_effects module with sparse Z matrix construction for both
 - This is needed before Item 6 (random effects likelihood) and Item 7 (Laplace approximation)
 - Item 4 (negative binomial) is still independent and could be parallelized
 
+---
+
+### 2026-02-02: Item 5 Complete - Variance Component Parameterization (Log-Cholesky)
+
+Implemented the variance_components module with log-Cholesky parameterization for variance components.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/variance_components.rs` - Full implementation (~450 lines)
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added module export and re-exports
+
+**Key Functions Implemented:**
+
+1. **Core Transformations:**
+   - `theta_to_cholesky()` - Convert unconstrained theta → Cholesky factor L
+   - `cholesky_to_vcov()` - Convert L → covariance matrix Σ = LL^T
+   - `theta_to_vcov()` - Combined theta → Σ transformation
+   - `vcov_to_theta()` - Inverse transformation Σ → theta (via Cholesky decomposition)
+   - `cholesky_decompose()` - Standard Cholesky decomposition of positive-definite matrix
+
+2. **Derived Quantities:**
+   - `theta_to_sd()` - Extract standard deviations from theta
+   - `theta_to_corr()` - Compute correlation matrix from theta
+   - `vcov_to_corr()` - Convert covariance to correlation matrix
+
+3. **Jacobian for REML:**
+   - `theta_to_vcov_jacobian()` - Numerical Jacobian of theta → vcov transformation
+   - `log_jacobian_determinant()` - Analytical log|J| for likelihood adjustment
+   - `log_jacobian_determinant_gradient()` - Gradient of log|J| w.r.t. theta
+
+4. **Initialization Helpers:**
+   - `initial_theta()` - Create starting theta for different covariance structures
+   - `theta_to_variance_component()` - Convert theta to VarianceComponent struct
+   - `total_theta_params()` - Count total parameters across random effects
+   - `split_theta()` - Split combined theta vector into per-effect slices
+
+**Parameterization Details:**
+
+For a k×k covariance matrix:
+- First k parameters: `theta[0..k] = log(diag(L))` (ensures positive diagonal)
+- Remaining k(k-1)/2 parameters: `theta[k..] = L[i,j]` for i > j (off-diagonal, unconstrained)
+
+This gives k(k+1)/2 parameters total, matching lme4/glmmTMB convention.
+
+**Supported Covariance Structures:**
+- `Independent`: k params (diagonal only, no correlation)
+- `Unstructured`: k(k+1)/2 params (full log-Cholesky)
+- `CompoundSymmetry`: 2 params (shared variance, shared correlation via tanh transform)
+
+**Test Coverage (17 tests):**
+- `test_theta_to_cholesky_1x1` / `test_theta_to_cholesky_2x2`
+- `test_cholesky_to_vcov_1x1` / `test_cholesky_to_vcov_2x2`
+- `test_theta_to_vcov_2x2`
+- `test_round_trip_1x1` / `test_round_trip_2x2` / `test_round_trip_3x3` - Critical tests!
+- `test_theta_to_sd` / `test_theta_to_corr_uncorrelated` / `test_theta_to_corr_correlated`
+- `test_cholesky_decompose_2x2` / `test_cholesky_decompose_not_positive_definite`
+- `test_initial_theta_*` (independent, unstructured, compound_symmetry)
+- `test_theta_to_variance_component_*` (independent, compound_symmetry)
+- `test_log_jacobian_determinant` / `test_log_jacobian_determinant_gradient`
+- `test_total_theta_params` / `test_split_theta`
+
+**Verification:**
+- `cargo check` passes (no errors)
+- `pnpm check` passes (all green)
+
+**Numerical Properties:**
+- Tolerance: 1e-10 for round-trip tests
+- Ensures positive-definite matrices (returns None if not)
+- Handles edge cases (k=0, k=1)
+
+**Next Priority:** Item 6 (random effects log-likelihood)
+- Requires variance_components for Σ computation
+- Implements log p(b | theta) = -0.5 * b' Σ^{-1} b - 0.5 log|Σ|
+- Will need gradients d/db and d/dtheta
+

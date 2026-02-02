@@ -155,7 +155,7 @@
         "Verify Jacobian computation for transformation",
         "Run `cargo test` for variance_components module"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

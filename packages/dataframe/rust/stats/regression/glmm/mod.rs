@@ -54,6 +54,7 @@
 
 pub mod random_effects;
 pub mod types;
+pub mod variance_components;
 
 // Re-export core types
 pub use types::{
@@ -65,6 +66,14 @@ pub use types::{
 pub use random_effects::{
     construct_combined_z_matrix, construct_z_matrix, intercept_slope_term_values,
     intercept_term_values, populate_random_effect, SparseMatrix,
+};
+
+// Re-export variance components types
+pub use variance_components::{
+    cholesky_decompose, cholesky_to_vcov, initial_theta, log_jacobian_determinant,
+    log_jacobian_determinant_gradient, split_theta, theta_to_cholesky, theta_to_corr,
+    theta_to_sd, theta_to_variance_component, theta_to_vcov, theta_to_vcov_jacobian,
+    total_theta_params, vcov_to_corr, vcov_to_theta,
 };
 
 // Future submodules (to be implemented):
