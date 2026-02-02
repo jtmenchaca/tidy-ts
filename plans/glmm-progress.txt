@@ -67,5 +67,63 @@ providers nested in clinics).
 
 ## Implementation Notes
 
-(To be updated as work progresses)
+### 2026-02-02: Item 1 Complete - Module Structure and Type Definitions
+
+Created the foundational GLMM module with core type definitions:
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Module entry point with documentation
+- `packages/dataframe/rust/stats/regression/glmm/types.rs` - Core type definitions
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/mod.rs` - Added `pub mod glmm;` export
+
+**Key Types Implemented:**
+
+1. **RandomEffect** - Specifies a random effect term
+   - `grouping_var`: Variable used for grouping (e.g., "patient")
+   - `terms`: Random effect terms (e.g., ["1", "x"] for intercept + slope)
+   - `n_groups`, `group_sizes`, `group_ids`, `group_indices`: Group metadata
+   - `covariance`: CovarianceType (Independent, Unstructured, CompoundSymmetry)
+   - Helper methods: `n_terms()`, `total_coefficients()`, `n_variance_params()`
+
+2. **GlmmControl** - Control parameters for fitting
+   - `max_iter_outer`, `max_iter_inner`: Iteration limits
+   - `tol_outer`, `tol_inner`: Convergence tolerances
+   - `verbose`, `reml`, `optimizer`: Fitting options
+   - `start_theta`, `start_beta`: Optional starting values
+   - Builder pattern methods: `with_ml()`, `with_max_iter()`, etc.
+
+3. **GlmmResult** - Complete fit result (extends GlmResult)
+   - `glm_result`: Reuses all GLM fixed effects infrastructure
+   - `random_effects`: Vec<RandomEffect> specifications
+   - `variance_components`: Vec<VarianceComponent> estimates
+   - `blups`: Vec<RandomEffectEstimates> (BLUPs with optional SE)
+   - `theta`, `theta_se`: Variance component parameterization
+   - `log_likelihood`, `aic`, `bic`, `reml_criterion`: Fit statistics
+   - `converged`, `convergence_message`, `outer_iterations`: Convergence info
+
+4. **VarianceComponent** - Variance estimates for one random effect
+   - `vcov`: Variance-covariance matrix
+   - `std_dev`: Standard deviations
+   - `correlation`: Optional correlation matrix
+   - `std_errors`: Optional SE of variance parameters
+
+5. **RandomEffectEstimates** - BLUPs for one grouping factor
+   - `estimates`: n_groups x n_terms matrix
+   - `std_errors`: Optional conditional SE
+   - `conditional_vcov`: Optional full conditional variance
+
+6. **CovarianceType** - Enum for covariance structures
+7. **GlmmOptions** - Options for BLUP computation, weights, etc.
+8. **GlmmFitSummary** - Summary statistics
+
+**Verification:**
+- `cargo check` passes
+- `pnpm check` passes (all green)
+- Unit tests included in types.rs
+
+**Next Priority:** Item 2 (sparse Z matrix construction) or Item 4 (negative binomial families)
+- Item 4 is independent and could unblock family-specific GLMM testing
+- Item 2 is the natural next step in the core algorithm
 

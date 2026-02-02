@@ -104,7 +104,7 @@
         "Verify GlmmControl struct has: max_iter_outer, tol_outer, verbose, reml flag",
         "Run `cargo check` in packages/dataframe - should compile without errors"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
