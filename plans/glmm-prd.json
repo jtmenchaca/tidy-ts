@@ -328,41 +328,28 @@
       "passes": true
     },
     {
-      "category": "functional",
-      "description": "Create DataFrame.glmm() method",
+      "category": "test",
+      "description": "Create comprehensive GLMM test suite in packages/testing/glmm/",
       "steps": [
-        "Add glmm() method to DataFrame class",
-        "Test: df.glmm({ formula: 'y ~ x + (1|group)', family: 'gaussian' })",
-        "Verify result includes fixed effects, random effects, variance components",
-        "Verify result.print() produces readable output",
-        "Run `pnpm test:dataframe` - all tests pass"
+        "Create test infrastructure following packages/testing/glm/ pattern",
+        "Create glmm-methods.test.ts testing summary(), variance_components, blups getters",
+        "Create glmm-families.test.ts testing Gaussian, Binomial, Poisson, NB2 families",
+        "Create glmm-random-effects.test.ts testing random intercepts, slopes, crossed, nested",
+        "Create glmm-reml.test.ts testing REML vs ML estimation",
+        "All tests use glmm() from glmm-functions.ts (NOT a DataFrame method)",
+        "Add pnpm test:glmm script to package.json",
+        "Run pnpm test:glmm - all tests pass"
       ],
       "passes": false
     },
     {
       "category": "test",
-      "description": "Create comprehensive GLMM test suite against glmmTMB",
+      "description": "Performance benchmarks for GLMM",
       "steps": [
-        "Create packages/testing/glmm/ directory",
-        "Add sleepstudy benchmark (classic lme4 example)",
-        "Add cbpp benchmark (binomial GLMM)",
-        "Add simulated DiD dataset with multilevel structure",
-        "All coefficient comparisons within 1e-4 of glmmTMB",
-        "All SE comparisons within 1e-3 of glmmTMB",
-        "Run `pnpm test:glmm` - all tests pass"
-      ],
-      "passes": false
-    },
-    {
-      "category": "test",
-      "description": "Performance benchmarks against glmmTMB",
-      "steps": [
-        "Create benchmark with 5000 obs, 50 groups, 1 random intercept",
-        "Rust GLMM completes in < 1 second",
-        "Create benchmark with 10000 obs, 100 groups, 2 random effects",
-        "Rust GLMM completes in < 5 seconds",
-        "Document performance comparison with glmmTMB in benchmark results",
-        "Run `pnpm benchmark` - GLMM benchmarks included"
+        "Create packages/testing/glmm/glmm-benchmarks.test.ts",
+        "Benchmark with 5000 obs, 50 groups, 1 random intercept - completes in < 2 seconds",
+        "Benchmark with 10000 obs, 100 groups, 2 random effects - completes in < 10 seconds",
+        "Document timing results in test output"
       ],
       "passes": false
     }
