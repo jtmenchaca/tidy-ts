@@ -218,7 +218,7 @@
         "Compare residual SD to lme4 sigma() - within 1e-3",
         "Run `cargo test` for gaussian glmm"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

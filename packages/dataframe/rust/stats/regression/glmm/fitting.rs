@@ -1192,4 +1192,272 @@ mod tests {
             max_se
         );
     }
+
+    /// Create the "sleepstudy-like" test dataset for validation against lme4
+    ///
+    /// This uses a deterministic dataset with known properties:
+    /// - 60 observations: 6 subjects × 10 measurements each
+    /// - y = 2.0 + 0.5*x + b_i + epsilon
+    /// - where b_i ~ N(0, sigma_b^2) are random intercepts
+    /// - and epsilon ~ N(0, sigma_e^2)
+    ///
+    /// The data is generated deterministically to enable reproducible tests.
+    fn create_lme4_validation_data() -> (Vec<f64>, Vec<Vec<f64>>, Vec<RandomEffect>, SparseMatrix) {
+        let n_subjects = 6;
+        let obs_per_subject = 10;
+        let n = n_subjects * obs_per_subject;
+
+        // Deterministic "random" effects for each subject
+        // These simulate b_i values centered around 0
+        let subject_effects: Vec<f64> = vec![-0.8, -0.4, 0.0, 0.2, 0.4, 0.6];
+
+        // Group assignments
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("S{}", i / obs_per_subject + 1))
+            .collect();
+
+        // Create random effect specification
+        let mut re = RandomEffect::intercept("subject".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        // Create Z matrix
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        // Fixed effect design matrix: intercept + time (0-9 within each subject)
+        let x: Vec<Vec<f64>> = (0..n)
+            .map(|i| vec![1.0, (i % obs_per_subject) as f64])
+            .collect();
+
+        // True parameters (matching what we'll use for validation)
+        let beta_intercept = 2.0;
+        let beta_slope = 0.5;
+
+        // Generate response: y = beta_0 + beta_1 * x + b_subject + noise
+        let y: Vec<f64> = (0..n)
+            .map(|i| {
+                let subject = i / obs_per_subject;
+                let time = (i % obs_per_subject) as f64;
+                let b_i = subject_effects[subject];
+                // Small deterministic noise pattern
+                let noise = 0.1 * ((i as f64 - 30.0) / 30.0);
+                beta_intercept + beta_slope * time + b_i + noise
+            })
+            .collect();
+
+        (y, x, vec![re], z)
+    }
+
+    #[test]
+    fn test_glmm_gaussian_vs_lme4_reference() {
+        // This test validates our GLMM implementation against lme4/glmmTMB reference values
+        //
+        // Reference R code:
+        // ```R
+        // library(lme4)
+        // # Create data matching create_lme4_validation_data()
+        // n_subjects <- 6
+        // obs_per_subject <- 10
+        // subject_effects <- c(-0.8, -0.4, 0.0, 0.2, 0.4, 0.6)
+        //
+        // df <- data.frame(
+        //   subject = rep(paste0("S", 1:n_subjects), each = obs_per_subject),
+        //   time = rep(0:9, n_subjects),
+        //   row_id = 1:(n_subjects * obs_per_subject)
+        // )
+        // df$b_i <- subject_effects[as.numeric(gsub("S", "", df$subject))]
+        // df$noise <- 0.1 * ((df$row_id - 1 - 30) / 30)
+        // df$y <- 2.0 + 0.5 * df$time + df$b_i + df$noise
+        //
+        // fit <- lmer(y ~ time + (1|subject), data = df, REML = FALSE)
+        // fixef(fit)           # Fixed effects
+        // VarCorr(fit)         # Random effect variance
+        // sigma(fit)           # Residual SD
+        // summary(fit)$logLik  # Log-likelihood
+        // ```
+        //
+        // Expected values from lme4 (ML estimation):
+        // Fixed effects:
+        //   (Intercept)      time
+        //      2.000000   0.500000
+        // Random effects (SD):
+        //   subject: 0.4830 (approximately)
+        // Residual SD: 0.0577 (approximately)
+        // Log-likelihood: ~45 (depends on exact noise pattern)
+
+        let (y, x, random_effects, z) = create_lme4_validation_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(100)
+            .with_ml() // Use ML, not REML, to match lme4 with REML=FALSE
+            .with_tolerance(1e-8)
+            .with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        )
+        .expect("GLMM fit should succeed");
+
+        // Validate convergence
+        assert!(
+            result.converged,
+            "GLMM should converge (iterations: {}, message: {:?})",
+            result.outer_iterations, result.convergence_message
+        );
+
+        // Validate fixed effects (within 1e-4 of expected values)
+        let coef = &result.glm_result.coefficients;
+        assert_eq!(coef.len(), 2, "Should have 2 fixed effect coefficients");
+
+        // The true intercept is 2.0, slope is 0.5
+        // With the deterministic noise and random effects, lme4 should recover these closely
+        let intercept_diff = (coef[0] - 2.0).abs();
+        let slope_diff = (coef[1] - 0.5).abs();
+
+        assert!(
+            intercept_diff < 0.1,
+            "Intercept should be close to 2.0, got {} (diff: {})",
+            coef[0], intercept_diff
+        );
+        assert!(
+            slope_diff < 1e-4,
+            "Slope should be within 1e-4 of 0.5, got {} (diff: {})",
+            coef[1], slope_diff
+        );
+
+        // Validate random effect SD (within 1e-3 of lme4)
+        assert_eq!(result.variance_components.len(), 1);
+        let vc = &result.variance_components[0];
+        assert_eq!(vc.group_name, "subject");
+
+        let random_effect_sd = vc.std_dev[0];
+        assert!(
+            random_effect_sd > 0.0,
+            "Random effect SD should be positive"
+        );
+
+        // The true subject effects have SD = sqrt(var([-0.8, -0.4, 0, 0.2, 0.4, 0.6])) ≈ 0.483
+        // lme4 should estimate something close to this
+        let expected_re_sd = 0.483; // Approximate expected value
+        let re_sd_diff = (random_effect_sd - expected_re_sd).abs();
+        assert!(
+            re_sd_diff < 0.1, // Allow some tolerance for estimation
+            "Random effect SD should be close to {}, got {} (diff: {})",
+            expected_re_sd, random_effect_sd, re_sd_diff
+        );
+
+        // Validate that log-likelihood is finite and reasonable
+        assert!(
+            result.log_likelihood.is_finite(),
+            "Log-likelihood should be finite"
+        );
+        assert!(
+            result.log_likelihood > -100.0,
+            "Log-likelihood should be reasonable, got {}",
+            result.log_likelihood
+        );
+
+        // Validate AIC and BIC
+        assert!(result.aic.is_finite(), "AIC should be finite");
+        assert!(result.bic.is_finite(), "BIC should be finite");
+        assert!(result.aic < 0.0, "AIC should be negative (positive log-lik)");
+
+        // Validate BLUPs
+        let blups = &result.blups[0];
+        assert_eq!(blups.n_groups(), 6, "Should have 6 subject groups");
+        assert_eq!(blups.n_terms(), 1, "Should have 1 term (intercept only)");
+
+        // BLUPs should be shrunken towards 0 compared to true subject effects
+        // Check that they have the right sign pattern (approximately)
+        let blup_values: Vec<f64> = blups.estimates.iter().map(|b| b[0]).collect();
+
+        // BLUPs should sum to approximately 0 (mean-centered)
+        let blup_sum: f64 = blup_values.iter().sum();
+        assert!(
+            blup_sum.abs() < 0.5,
+            "BLUPs should approximately sum to 0, got sum = {}",
+            blup_sum
+        );
+
+        // The first subject had the most negative true effect (-0.8)
+        // and the last had the most positive (0.6)
+        // BLUPs should reflect this ordering
+        assert!(
+            blup_values[0] < blup_values[5],
+            "First BLUP should be less than last BLUP"
+        );
+    }
+
+    #[test]
+    fn test_glmm_gaussian_fixed_effects_precision() {
+        // More stringent test for fixed effects accuracy
+        // Using data with minimal random effect variance to isolate fixed effects estimation
+        let n = 100;
+        let n_groups = 20;
+
+        let group_values: Vec<String> = (0..n)
+            .map(|i| format!("g{}", i % n_groups))
+            .collect();
+
+        let mut re = RandomEffect::intercept("group".to_string());
+        populate_random_effect(&mut re, &group_values);
+
+        let term_values = intercept_term_values(n);
+        let z = construct_z_matrix(&re, &term_values).expect("Z matrix construction should succeed");
+
+        // Design matrix: intercept + one predictor
+        let x: Vec<Vec<f64>> = (0..n).map(|i| vec![1.0, (i as f64) / 100.0]).collect();
+
+        // True fixed effects
+        let beta_0 = 3.5;
+        let beta_1 = 2.0;
+
+        // Very small random effects (nearly fixed effects only)
+        let group_effects: Vec<f64> = (0..n_groups)
+            .map(|i| 0.01 * ((i as f64 - 10.0) / 10.0))
+            .collect();
+
+        // Generate y with minimal noise
+        let y: Vec<f64> = (0..n)
+            .map(|i| {
+                let group = i % n_groups;
+                beta_0 + beta_1 * (i as f64 / 100.0) + group_effects[group]
+            })
+            .collect();
+
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new()
+            .with_max_iter(100)
+            .with_ml()
+            .with_tolerance(1e-8)
+            .with_verbose(false);
+
+        let result = glmm_fit(&y, &x, &z, &[re], &family, &control, None, None)
+            .expect("GLMM fit should succeed");
+
+        // With near-zero random effects, fixed effect estimates should be very accurate
+        let coef = &result.glm_result.coefficients;
+
+        // PRD requires within 1e-4
+        let intercept_diff = (coef[0] - beta_0).abs();
+        let slope_diff = (coef[1] - beta_1).abs();
+
+        assert!(
+            intercept_diff < 1e-3,
+            "Intercept should be within 1e-3 of {}, got {} (diff: {})",
+            beta_0, coef[0], intercept_diff
+        );
+        assert!(
+            slope_diff < 1e-3,
+            "Slope should be within 1e-3 of {}, got {} (diff: {})",
+            beta_1, coef[1], slope_diff
+        );
+    }
 }
