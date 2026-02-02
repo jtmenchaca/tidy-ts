@@ -3,6 +3,9 @@
 		{
 			"name": "tidy-ts",
 			"path": "."
+		},
+		{
+			"path": "../Downloads/glmmTMB-master"
 		}
 	],
 	"extensions": {

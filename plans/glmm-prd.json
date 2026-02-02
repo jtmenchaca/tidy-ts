@@ -1,0 +1,369 @@
+{
+  "meta": {
+    "name": "glmm",
+    "created": "2026-02-02",
+    "intent": "Implement Generalized Linear Mixed Models (GLMM) in Rust with equivalent performance to glmmTMB, enabling clinical/epidemiological analyses with random effects (patient, provider, clinic clustering) exposed via WASM to TypeScript",
+    "goals": [
+      "Support random intercepts and slopes with nested and crossed structures",
+      "Match glmmTMB coefficient estimates within 1e-4 tolerance",
+      "Match glmmTMB standard errors within 1e-3 tolerance",
+      "Support all existing GLM families (Gaussian, Binomial, Poisson, Gamma, InverseGaussian)",
+      "Add negative binomial families (nbinom1, nbinom2) required for count data",
+      "Expose via WASM with TypeScript bindings matching GLM pattern",
+      "Enable DiD analyses with multilevel clustering (patient × provider × clinic)"
+    ],
+    "constraints": [
+      "Build on existing GLM IRLS infrastructure in packages/dataframe/rust/stats/regression/glm/",
+      "Reuse GEE correlation structure patterns from packages/dataframe/rust/stats/regression/gee/",
+      "Use Faer 0.22.0 for linear algebra (WASM-compatible, no external deps)",
+      "Laplace approximation for random effects integration (matches glmmTMB default)",
+      "Sparse Z matrix representation for crossed random effects",
+      "Must compile to WASM without additional dependencies"
+    ],
+    "nonGoals": [
+      "Adaptive Gauss-Hermite quadrature (future enhancement)",
+      "Zero-inflation models (separate feature)",
+      "Spatial correlation structures beyond AR(1)",
+      "MCMC/Bayesian estimation",
+      "Automatic differentiation (manual gradients for Laplace)"
+    ],
+    "decisions": {
+      "estimation": "Laplace approximation via profile likelihood - matches glmmTMB default, O(1) per random effect vs O(n_quad^q) for AGQ",
+      "optimization": "Two-stage: (1) Profile out random effects b given theta, (2) Optimize theta via BFGS/Newton. Inner optimization uses existing IRLS.",
+      "sparseZ": "Block-diagonal sparse representation for nested effects, COO format for crossed effects. Dense fallback for small problems (<1000 obs).",
+      "parameterization": "Log-Cholesky for variance components (theta = log(sd) and raw correlations) - matches glmmTMB/lme4 parameterization",
+      "families": "Extend existing family trait with dispersion parameter support for negative binomial",
+      "blups": "Conditional modes from Laplace approximation; standard errors via observed information matrix inversion",
+      "convergence": "Relative gradient norm < 1e-6 for outer optimization, IRLS convergence 1e-8 for inner (existing)"
+    },
+    "performanceTargets": {
+      "5000obs_50groups_1RE": "< 1 second total fit time",
+      "10000obs_100groups_2RE": "< 5 seconds total fit time",
+      "coefficientAccuracy": "Within 1e-4 of glmmTMB estimates",
+      "seAccuracy": "Within 1e-3 of glmmTMB standard errors"
+    },
+    "docs": {
+      "glmmTMB_cpp": "/Users/jtmenchaca/Downloads/glmmTMB-master/glmmTMB/src/glmmTMB.cpp",
+      "glmmTMB_R": "/Users/jtmenchaca/Downloads/glmmTMB-master/glmmTMB/R/glmmTMB.R",
+      "existing_glm": "packages/dataframe/rust/stats/regression/glm/",
+      "existing_gee": "packages/dataframe/rust/stats/regression/gee/",
+      "existing_families": "packages/dataframe/rust/stats/regression/family/",
+      "glm_wasm_example": "packages/dataframe/rust/stats/regression/glm/wasm.rs"
+    },
+    "build": {
+      "wasmBuild": "pnpm wasmbuild - runs `deno run -A jsr:@deno/wasmbuild@0.19.2 --features wasm --out packages/dataframe/lib`",
+      "wasmOutput": "packages/dataframe/lib/ - generates tidy_ts_dataframe.wasm, .d.ts, .js, .internal.js files",
+      "wasmFeatureFlag": "All WASM exports must be gated with #[cfg(feature = \"wasm\")] and use #[wasm_bindgen]",
+      "typeCheck": "pnpm check - must pass before considering implementation complete",
+      "testGlmm": "Add `pnpm test:glmm` script to package.json similar to existing test:glm"
+    },
+    "wasmIntegrationPattern": {
+      "step1_rust": "Create wasm.rs with #[wasm_bindgen] pub fn glmm_fit_wasm(...) -> String",
+      "step2_rust_mod": "Export wasm module from glmm/mod.rs, then from regression/mod.rs",
+      "step3_rust_root": "Add #[cfg(feature = \"wasm\")] pub use stats::regression::glmm::wasm::* to packages/dataframe/rust/mod.rs",
+      "step4_wasmbuild": "Run pnpm wasmbuild - generates lib/tidy_ts_dataframe.internal.js with glmm_fit_wasm binding",
+      "step5_ts_wrapper": "Create packages/dataframe/ts/wasm/glmm-functions.ts that imports {initWasm, wasmInternal} from wasm-init.ts",
+      "step6_ts_call": "Call initWasm() then wasmInternal.glmm_fit_wasm(formula, family, link, dataJson, optionsJson)",
+      "step7_ts_export": "Add export * from './glmm-functions.ts' to wasm-loader.ts",
+      "jsonPattern": "Data goes in as JSON string, result comes back as JSON string, use encodeWithSpecialFloats/decodeWithSpecialFloats for NaN/Infinity"
+    },
+    "architecture": {
+      "newModules": [
+        "packages/dataframe/rust/stats/regression/glmm/mod.rs",
+        "packages/dataframe/rust/stats/regression/glmm/types.rs",
+        "packages/dataframe/rust/stats/regression/glmm/random_effects.rs",
+        "packages/dataframe/rust/stats/regression/glmm/variance_components.rs",
+        "packages/dataframe/rust/stats/regression/glmm/laplace.rs",
+        "packages/dataframe/rust/stats/regression/glmm/fitting.rs",
+        "packages/dataframe/rust/stats/regression/glmm/wasm.rs"
+      ],
+      "modifiedModules": [
+        "packages/dataframe/rust/stats/regression/family/mod.rs (add nbinom families)",
+        "packages/dataframe/rust/stats/regression/mod.rs (export glmm module)",
+        "packages/dataframe/rust/mod.rs (add #[cfg(feature = \"wasm\")] pub use stats::regression::glmm::wasm::*)",
+        "packages/dataframe/ts/wasm/wasm-loader.ts (add export * from './glmm-functions.ts')",
+        "package.json (add test:glmm script)"
+      ],
+      "reusedComponents": [
+        "glm_fit_core.rs - IRLS algorithm for fixed effects",
+        "qr_decomposition.rs - weighted least squares solver",
+        "family/* - variance/link/deviance functions",
+        "gee/types.rs - ClusterInfo structure",
+        "gee/correlation/* - correlation structure patterns"
+      ]
+    }
+  },
+  "items": [
+    {
+      "category": "functional",
+      "description": "Create GLMM type definitions and module structure",
+      "steps": [
+        "Verify packages/dataframe/rust/stats/regression/glmm/mod.rs exists",
+        "Verify RandomEffect struct has fields: grouping_var, formula, n_groups, group_sizes",
+        "Verify GlmmResult struct extends GlmResult with: random_effects, random_effect_se, variance_components, variance_component_se, log_likelihood",
+        "Verify GlmmControl struct has: max_iter_outer, tol_outer, verbose, reml flag",
+        "Run `cargo check` in packages/dataframe - should compile without errors"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement sparse Z matrix construction for random effects",
+      "steps": [
+        "Create test with 100 observations, 10 groups, random intercept only",
+        "Verify Z matrix is 100x10 with exactly one 1.0 per row",
+        "Verify Z * b produces correct group-level offsets",
+        "Create test with random intercept + slope (2 columns per group)",
+        "Verify Z matrix is 100x20 with intercept 1s and slope values in correct positions",
+        "Run `cargo test` for random_effects module - all tests pass"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement crossed random effects Z matrix",
+      "steps": [
+        "Create test with 100 obs, 10 patients, 5 providers (crossed)",
+        "Verify Z matrix has 100 rows, 15 columns (10 patient + 5 provider)",
+        "Verify each row has exactly 2 non-zero entries (one patient, one provider)",
+        "Verify Z * b correctly adds patient and provider effects",
+        "Run `cargo test` for crossed effects - all tests pass"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement negative binomial families (nbinom1, nbinom2)",
+      "steps": [
+        "Create Nbinom2Family in packages/dataframe/rust/stats/regression/family/",
+        "Verify variance function: V(mu) = mu * (1 + mu/theta)",
+        "Verify log-likelihood matches R's dnbinom with size=theta",
+        "Create Nbinom1Family with variance: V(mu) = mu * (1 + phi)",
+        "Test GLM fit with Poisson data - should converge",
+        "Compare coefficients with R glm(..., family=MASS::negative.binomial(theta=1)) within 1e-4"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement variance component parameterization (log-Cholesky)",
+      "steps": [
+        "Implement theta_to_sigma: theta (unconstrained) -> sigma (positive SD)",
+        "Implement theta_to_corr: theta vector -> correlation matrix",
+        "Verify round-trip: sigma -> theta -> sigma matches original",
+        "Test with 2x2 unstructured covariance (3 params: 2 log-sd, 1 correlation)",
+        "Verify Jacobian computation for transformation",
+        "Run `cargo test` for variance_components module"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement random effects log-likelihood (conditional on theta)",
+      "steps": [
+        "Implement log p(b | theta) = -0.5 * b' * Sigma^{-1} * b - 0.5 * log|Sigma|",
+        "Test with known b, theta values against manual calculation",
+        "Verify gradient d/db of log p(b | theta)",
+        "Verify gradient d/dtheta of log p(b | theta)",
+        "Run `cargo test` for random_effects_likelihood"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement Laplace approximation for marginal likelihood",
+      "steps": [
+        "Implement joint log-likelihood: log p(y | b, beta, theta) + log p(b | theta)",
+        "Implement Newton optimization to find mode b_hat given (beta, theta)",
+        "Implement Laplace approximation: log p(y | beta, theta) ≈ joint at mode - 0.5 * log|H|",
+        "Verify Hessian H computation at mode",
+        "Test on simple Gaussian model - should match lme4 within 1e-4",
+        "Run `cargo test` for laplace module"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement outer optimization for variance components",
+      "steps": [
+        "Implement profile likelihood: for given theta, optimize (beta, b) via IRLS",
+        "Implement gradient of profile likelihood w.r.t. theta",
+        "Implement BFGS optimizer for theta (or Newton with Hessian)",
+        "Test convergence on simple random intercept model",
+        "Verify theta estimates match glmmTMB within 1e-3",
+        "Run `cargo test` for fitting module"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement BLUP extraction and standard errors",
+      "steps": [
+        "Extract conditional modes b_hat from Laplace optimization",
+        "Compute conditional variance Var(b | y) from inverse Hessian",
+        "Extract BLUP standard errors as sqrt(diag(Var(b | y)))",
+        "Test on sleepstudy-like data - BLUPs should match lme4 ranef() within 0.01",
+        "Run `cargo test` for blup extraction"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement full glmm() function with Gaussian family",
+      "steps": [
+        "Create glmm() function signature matching glmmTMB pattern",
+        "Test: glmm(y ~ x + (1|group), family=gaussian, data)",
+        "Compare fixed effects to lme4 lmer() - within 1e-4",
+        "Compare random effect SD to lme4 VarCorr() - within 1e-3",
+        "Compare residual SD to lme4 sigma() - within 1e-3",
+        "Run `cargo test` for gaussian glmm"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement GLMM with Poisson family",
+      "steps": [
+        "Test: glmm(count ~ x + (1|group), family=poisson, data)",
+        "Use simulated Poisson data with known parameters",
+        "Compare fixed effects to glmmTMB - within 1e-4",
+        "Compare random effect SD to glmmTMB - within 1e-3",
+        "Verify deviance/AIC calculation matches glmmTMB",
+        "Run `cargo test` for poisson glmm"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement GLMM with Binomial family",
+      "steps": [
+        "Test: glmm(cbind(success, fail) ~ x + (1|group), family=binomial, data)",
+        "Use simulated binomial data with known parameters",
+        "Compare fixed effects to glmmTMB - within 1e-4",
+        "Compare random effect SD to glmmTMB - within 1e-3",
+        "Test with binary (0/1) response",
+        "Run `cargo test` for binomial glmm"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement GLMM with negative binomial family",
+      "steps": [
+        "Test: glmm(count ~ x + (1|group), family=nbinom2, data)",
+        "Use simulated overdispersed count data",
+        "Compare fixed effects to glmmTMB - within 1e-4",
+        "Compare dispersion parameter to glmmTMB - within 1e-3",
+        "Compare random effect SD to glmmTMB - within 1e-3",
+        "Run `cargo test` for nbinom2 glmm"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement random slopes (correlated with intercepts)",
+      "steps": [
+        "Test: glmm(y ~ x + (1 + x|group), family=gaussian, data)",
+        "Verify 2x2 variance-covariance matrix extraction",
+        "Compare intercept SD to lme4 - within 1e-3",
+        "Compare slope SD to lme4 - within 1e-3",
+        "Compare intercept-slope correlation to lme4 - within 0.01",
+        "Run `cargo test` for random slopes"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement crossed random effects",
+      "steps": [
+        "Test: glmm(y ~ x + (1|patient) + (1|provider), family=gaussian, data)",
+        "Verify two separate variance components estimated",
+        "Compare patient SD to lme4 - within 1e-3",
+        "Compare provider SD to lme4 - within 1e-3",
+        "Verify BLUPs for both grouping factors",
+        "Run `cargo test` for crossed effects"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement nested random effects",
+      "steps": [
+        "Test: glmm(y ~ x + (1|clinic/provider), family=gaussian, data)",
+        "Verify nested structure correctly parsed",
+        "Compare clinic SD to lme4 - within 1e-3",
+        "Compare provider-within-clinic SD to lme4 - within 1e-3",
+        "Run `cargo test` for nested effects"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement REML estimation option",
+      "steps": [
+        "Add reml=true flag to GlmmControl",
+        "Implement REML adjustment to log-likelihood",
+        "Test Gaussian model with REML vs ML",
+        "Compare REML variance estimates to lme4 REML=TRUE - within 1e-3",
+        "Verify ML variance estimates slightly smaller than REML",
+        "Run `cargo test` for reml estimation"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Implement WASM bindings for GLMM",
+      "steps": [
+        "Create glmm_fit_wasm() in packages/dataframe/rust/stats/regression/glmm/wasm.rs with #[wasm_bindgen] annotation",
+        "Add glmm wasm re-exports to packages/dataframe/rust/mod.rs under #[cfg(feature = \"wasm\")]",
+        "Run `pnpm wasmbuild` - should compile without errors and generate updated .wasm, .d.ts, .js in packages/dataframe/lib/",
+        "Verify glmm_fit_wasm appears in packages/dataframe/lib/tidy_ts_dataframe.d.ts",
+        "Create TypeScript interface GlmmFitResult in packages/dataframe/ts/wasm/glmm-functions.ts",
+        "Create glmmFit() TypeScript wrapper function with JSON serialization (follow glm_fit_wasm pattern)",
+        "Test round-trip: TypeScript -> WASM -> TypeScript with simple Gaussian model",
+        "Verify special float handling (NaN, Infinity) works via serde_json",
+        "Run `pnpm check` - no TypeScript errors"
+      ],
+      "passes": false
+    },
+    {
+      "category": "functional",
+      "description": "Create DataFrame.glmm() method",
+      "steps": [
+        "Add glmm() method to DataFrame class",
+        "Test: df.glmm({ formula: 'y ~ x + (1|group)', family: 'gaussian' })",
+        "Verify result includes fixed effects, random effects, variance components",
+        "Verify result.print() produces readable output",
+        "Run `pnpm test:dataframe` - all tests pass"
+      ],
+      "passes": false
+    },
+    {
+      "category": "test",
+      "description": "Create comprehensive GLMM test suite against glmmTMB",
+      "steps": [
+        "Create packages/testing/glmm/ directory",
+        "Add sleepstudy benchmark (classic lme4 example)",
+        "Add cbpp benchmark (binomial GLMM)",
+        "Add simulated DiD dataset with multilevel structure",
+        "All coefficient comparisons within 1e-4 of glmmTMB",
+        "All SE comparisons within 1e-3 of glmmTMB",
+        "Run `pnpm test:glmm` - all tests pass"
+      ],
+      "passes": false
+    },
+    {
+      "category": "test",
+      "description": "Performance benchmarks against glmmTMB",
+      "steps": [
+        "Create benchmark with 5000 obs, 50 groups, 1 random intercept",
+        "Rust GLMM completes in < 1 second",
+        "Create benchmark with 10000 obs, 100 groups, 2 random effects",
+        "Rust GLMM completes in < 5 seconds",
+        "Document performance comparison with glmmTMB in benchmark results",
+        "Run `pnpm benchmark` - GLMM benchmarks included"
+      ],
+      "passes": false
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+# Progress Log: glmm
+
+## PRD Created: 2026-02-02
+Feature: Generalized Linear Mixed Models (GLMM) implementation in Rust
+Items: 21 tasks created
+
+---
+
+## Background
+
+This implementation adds GLMM support to tidy-ts, targeting clinical/epidemiological use cases
+where hierarchical data structures require random effects modeling (e.g., patients nested in
+providers nested in clinics).
+
+### Key Design Decisions
+
+1. **Laplace Approximation** - Matches glmmTMB default, provides good balance of speed/accuracy
+2. **Log-Cholesky Parameterization** - Unconstrained optimization for variance components
+3. **Sparse Z Matrices** - Block-diagonal for nested, COO for crossed random effects
+4. **Reuse GLM IRLS** - Existing infrastructure handles fixed effects estimation
+
+### Reusable Components (from existing codebase)
+
+- `glm_fit_core.rs` - IRLS algorithm (800+ lines)
+- `qr_decomposition.rs` - Weighted least squares solver (420 lines)
+- `family/*` - Gaussian, Binomial, Poisson, Gamma, InverseGaussian
+- `gee/types.rs` - ClusterInfo structure
+- `gee/correlation/*` - Exchangeable, AR1, Unstructured patterns
+
+### New Components Required
+
+1. **Random Effects Module** (`random_effects.rs`)
+   - Z matrix construction (sparse)
+   - Random effect likelihood
+   - BLUP extraction
+
+2. **Variance Components Module** (`variance_components.rs`)
+   - Log-Cholesky parameterization
+   - Theta <-> Sigma transformations
+   - Jacobian for REML
+
+3. **Laplace Module** (`laplace.rs`)
+   - Joint log-likelihood
+   - Mode finding (Newton)
+   - Hessian computation
+   - Marginal likelihood approximation
+
+4. **Fitting Module** (`fitting.rs`)
+   - Profile likelihood
+   - Outer optimization (BFGS/Newton)
+   - Convergence monitoring
+
+5. **Families Extension**
+   - Nbinom1, Nbinom2 families
+   - Dispersion parameter handling
+
+### Performance Targets
+
+| Scenario | Target |
+|----------|--------|
+| 5000 obs, 50 groups, 1 RE | < 1 second |
+| 10000 obs, 100 groups, 2 RE | < 5 seconds |
+| Coefficient accuracy | Within 1e-4 of glmmTMB |
+| SE accuracy | Within 1e-3 of glmmTMB |
+
+---
+
+## Implementation Notes
+
+(To be updated as work progresses)
+
