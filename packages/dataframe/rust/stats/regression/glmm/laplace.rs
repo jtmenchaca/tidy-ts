@@ -369,6 +369,57 @@ fn log_determinant(a: &[Vec<f64>]) -> Option<f64> {
     Some(log_det)
 }
 
+/// Invert a symmetric positive-definite matrix using Cholesky decomposition
+///
+/// For a symmetric positive-definite matrix A with Cholesky decomposition A = LL^T,
+/// the inverse is computed as A^{-1} = L^{-T} L^{-1}.
+///
+/// This is used to compute conditional variances Var(b|y) = H^{-1} where H is
+/// the Hessian of the negative joint log-likelihood.
+pub fn invert_symmetric_positive_definite(a: &[Vec<f64>]) -> Option<Vec<Vec<f64>>> {
+    let n = a.len();
+    if n == 0 {
+        return Some(vec![]);
+    }
+
+    // Cholesky decomposition: A = LL^T
+    let chol = cholesky_decompose(a)?;
+
+    // Compute L^{-1} by forward substitution on identity columns
+    let mut l_inv = vec![vec![0.0; n]; n];
+    for j in 0..n {
+        // Solve L * x = e_j for j-th column of L^{-1}
+        for i in j..n {
+            if i == j {
+                l_inv[i][j] = 1.0 / chol[i][i];
+            } else {
+                let mut sum = 0.0;
+                for k in j..i {
+                    sum += chol[i][k] * l_inv[k][j];
+                }
+                l_inv[i][j] = -sum / chol[i][i];
+            }
+        }
+    }
+
+    // Compute A^{-1} = L^{-T} L^{-1} = (L^{-1})^T (L^{-1})
+    let mut a_inv = vec![vec![0.0; n]; n];
+    for i in 0..n {
+        for j in 0..=i {
+            let mut sum = 0.0;
+            // (L^{-1})^T [i, k] * L^{-1} [k, j] = L^{-1} [k, i] * L^{-1} [k, j]
+            // L^{-1} is lower triangular, so only k from max(i,j) to n-1 contributes
+            for k in i..n {
+                sum += l_inv[k][i] * l_inv[k][j];
+            }
+            a_inv[i][j] = sum;
+            a_inv[j][i] = sum; // Symmetric
+        }
+    }
+
+    Some(a_inv)
+}
+
 /// Compute Laplace approximation for marginal likelihood
 ///
 /// log p(y | β, θ) ≈ log p(y, b_hat | β, θ) - 0.5 * log|H|
@@ -1043,6 +1094,190 @@ mod tests {
                 "Gradient signs should match: computed={} numerical={}",
                 result.grad_theta[0],
                 num_grad
+            );
+        }
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_identity() {
+        // Identity matrix should invert to itself
+        let identity = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        let inv = invert_symmetric_positive_definite(&identity).unwrap();
+
+        assert_eq!(inv.len(), 2);
+        assert!(approx_eq(inv[0][0], 1.0, TOL));
+        assert!(approx_eq(inv[0][1], 0.0, TOL));
+        assert!(approx_eq(inv[1][0], 0.0, TOL));
+        assert!(approx_eq(inv[1][1], 1.0, TOL));
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_diagonal() {
+        // Diagonal matrix with variances 4 and 9
+        let diag = vec![vec![4.0, 0.0], vec![0.0, 9.0]];
+        let inv = invert_symmetric_positive_definite(&diag).unwrap();
+
+        // Inverse should have 1/4 and 1/9 on diagonal
+        assert!(approx_eq(inv[0][0], 0.25, TOL));
+        assert!(approx_eq(inv[0][1], 0.0, TOL));
+        assert!(approx_eq(inv[1][0], 0.0, TOL));
+        assert!(approx_eq(inv[1][1], 1.0 / 9.0, TOL));
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_2x2() {
+        // 2x2 positive definite: [[2, 1], [1, 3]]
+        // Determinant = 2*3 - 1*1 = 5
+        // Inverse = [[3, -1], [-1, 2]] / 5
+        let a = vec![vec![2.0, 1.0], vec![1.0, 3.0]];
+        let inv = invert_symmetric_positive_definite(&a).unwrap();
+
+        assert!(approx_eq(inv[0][0], 0.6, TOL), "inv[0][0] = {}", inv[0][0]);
+        assert!(approx_eq(inv[0][1], -0.2, TOL), "inv[0][1] = {}", inv[0][1]);
+        assert!(approx_eq(inv[1][0], -0.2, TOL), "inv[1][0] = {}", inv[1][0]);
+        assert!(approx_eq(inv[1][1], 0.4, TOL), "inv[1][1] = {}", inv[1][1]);
+
+        // Verify A * A^{-1} = I
+        let product_00 = a[0][0] * inv[0][0] + a[0][1] * inv[1][0];
+        let product_01 = a[0][0] * inv[0][1] + a[0][1] * inv[1][1];
+        let product_10 = a[1][0] * inv[0][0] + a[1][1] * inv[1][0];
+        let product_11 = a[1][0] * inv[0][1] + a[1][1] * inv[1][1];
+
+        assert!(approx_eq(product_00, 1.0, TOL));
+        assert!(approx_eq(product_01, 0.0, TOL));
+        assert!(approx_eq(product_10, 0.0, TOL));
+        assert!(approx_eq(product_11, 1.0, TOL));
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_3x3() {
+        // 3x3 positive definite matrix
+        let a = vec![
+            vec![4.0, 2.0, 1.0],
+            vec![2.0, 5.0, 2.0],
+            vec![1.0, 2.0, 6.0],
+        ];
+        let inv = invert_symmetric_positive_definite(&a).unwrap();
+
+        // Verify A * A^{-1} = I
+        for i in 0..3 {
+            for j in 0..3 {
+                let product: f64 = (0..3).map(|k| a[i][k] * inv[k][j]).sum();
+                let expected = if i == j { 1.0 } else { 0.0 };
+                assert!(
+                    approx_eq(product, expected, TOL),
+                    "(A * A^-1)[{}][{}] = {}, expected {}",
+                    i,
+                    j,
+                    product,
+                    expected
+                );
+            }
+        }
+
+        // Verify symmetry of inverse
+        for i in 0..3 {
+            for j in 0..3 {
+                assert!(
+                    approx_eq(inv[i][j], inv[j][i], TOL),
+                    "Inverse should be symmetric: inv[{}][{}]={} != inv[{}][{}]={}",
+                    i,
+                    j,
+                    inv[i][j],
+                    j,
+                    i,
+                    inv[j][i]
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_empty() {
+        let empty: Vec<Vec<f64>> = vec![];
+        let inv = invert_symmetric_positive_definite(&empty).unwrap();
+        assert!(inv.is_empty());
+    }
+
+    #[test]
+    fn test_invert_symmetric_positive_definite_1x1() {
+        let a = vec![vec![4.0]];
+        let inv = invert_symmetric_positive_definite(&a).unwrap();
+        assert!(approx_eq(inv[0][0], 0.25, TOL));
+    }
+
+    #[test]
+    fn test_blup_standard_errors_from_hessian_inverse() {
+        // Verify that BLUP SEs are extracted correctly from H^{-1}
+        // Create a simple Hessian with known inverse
+        let (y, x, re, z) = create_test_data();
+        let family = GaussianFamily::default();
+
+        let beta = vec![1.0, 0.5];
+        let b_init = vec![0.0, 0.0, 0.0, 0.0];
+        let theta = vec![0.0]; // log(sd) = 0 means sd = 1
+
+        let weights = vec![1.0; y.len()];
+        let offset = vec![0.0; y.len()];
+
+        let control = LaplaceControl::default();
+
+        let result = laplace_approximation(
+            &y,
+            &x,
+            &z,
+            &beta,
+            &b_init,
+            &theta,
+            &[re],
+            &family,
+            &weights,
+            &offset,
+            &control,
+        );
+
+        // Verify we have a Hessian
+        assert!(
+            result.hessian_b.is_some(),
+            "Hessian should be computed"
+        );
+
+        let hessian = result.hessian_b.as_ref().unwrap();
+
+        // Verify Hessian is positive definite (all diagonal elements positive)
+        for i in 0..hessian.len() {
+            assert!(
+                hessian[i][i] > 0.0,
+                "Hessian diagonal element {} should be positive: {}",
+                i,
+                hessian[i][i]
+            );
+        }
+
+        // Compute inverse and verify diagonal gives correct SEs
+        let h_inv = invert_symmetric_positive_definite(hessian).unwrap();
+
+        // Inverse should also have positive diagonal
+        for i in 0..h_inv.len() {
+            assert!(
+                h_inv[i][i] >= 0.0,
+                "H^-1 diagonal element {} should be non-negative: {}",
+                i,
+                h_inv[i][i]
+            );
+        }
+
+        // The correct SEs are sqrt(H^{-1}[i,i]), NOT sqrt(1/H[i,i])
+        // These two are only equal when H is diagonal
+        // For non-diagonal H, they differ
+        for i in 0..hessian.len() {
+            let wrong_se = (1.0 / hessian[i][i]).sqrt();
+            let correct_se = h_inv[i][i].sqrt();
+
+            // Log the values for debugging
+            println!(
+                "Index {}: H[i,i]={:.6}, H^-1[i,i]={:.6}, wrong_SE={:.6}, correct_SE={:.6}",
+                i, hessian[i][i], h_inv[i][i], wrong_se, correct_se
             );
         }
     }

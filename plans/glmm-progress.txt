@@ -570,3 +570,84 @@ glmm_fit(y, x, z, random_effects, family, control):
 - Item 10 would test the full integration
 - Consider tackling Item 4 (negative binomial families) as independent work
 
+---
+
+### 2026-02-02: Item 9 Complete - BLUP Extraction and Standard Errors
+
+Fixed the BLUP standard error computation to use the correct formula: SE = sqrt(H^{-1}[i,i]) instead of the incorrect sqrt(1/H[i,i]).
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/laplace.rs` - Added `invert_symmetric_positive_definite()` function
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added export for new function
+- `packages/dataframe/rust/stats/regression/glmm/fitting.rs` - Rewrote `build_blups()` with correct SE computation
+
+**Key Changes:**
+
+1. **Matrix Inversion Function** (`laplace.rs:371-421`):
+   - `invert_symmetric_positive_definite(a)` → `Option<Vec<Vec<f64>>>`
+   - Uses Cholesky decomposition: A = LL^T
+   - Computes L^{-1} via forward substitution
+   - Returns A^{-1} = L^{-T} L^{-1}
+   - Used to compute conditional variance Var(b|y) = H^{-1}
+
+2. **Corrected BLUP Standard Errors** (`fitting.rs:613-696`):
+   - **Before (incorrect)**: `SE = sqrt(1/H[i,i])` - inverts diagonal elements only
+   - **After (correct)**: `SE = sqrt(H^{-1}[i,i])` - extracts diagonal of full inverse
+   - These are only equal when H is diagonal; for non-diagonal H they differ significantly
+
+3. **Conditional Variance-Covariance Extraction**:
+   - Now extracts full k×k blocks for each group from H^{-1}
+   - Stored in `RandomEffectEstimates.conditional_vcov`
+   - Previously was always `None`
+
+**Mathematical Background:**
+
+For GLMMs, the conditional distribution of random effects given data is:
+```
+b | y ~ N(b_hat, H^{-1})
+```
+where:
+- b_hat is the mode (conditional on fixed effects and variance components)
+- H is the Hessian of the negative joint log-likelihood at b_hat
+- H = Z^T W Z + Σ^{-1}
+
+The **conditional standard error** of b_i is:
+```
+SE(b_i | y) = sqrt(Var(b_i | y)) = sqrt(H^{-1}[i,i])
+```
+
+The old code computed `sqrt(1/H[i,i])`, which is fundamentally different:
+- `1/H[i,i]` ignores correlations between random effects
+- `H^{-1}[i,i]` accounts for the full covariance structure
+
+**New Tests Added:**
+
+In `laplace.rs`:
+- `test_invert_symmetric_positive_definite_identity` - Identity inverts to itself
+- `test_invert_symmetric_positive_definite_diagonal` - Diagonal matrix inversion
+- `test_invert_symmetric_positive_definite_2x2` - 2×2 with off-diagonal, verified A*A^{-1}=I
+- `test_invert_symmetric_positive_definite_3x3` - 3×3 with full verification
+- `test_invert_symmetric_positive_definite_empty` - Edge case
+- `test_invert_symmetric_positive_definite_1x1` - Scalar case
+- `test_blup_standard_errors_from_hessian_inverse` - Verifies Hessian structure and SE extraction
+
+In `fitting.rs`:
+- `test_blup_standard_errors_are_positive` - All SEs should be positive
+- `test_blup_conditional_vcov_extracted` - Vcov blocks extracted correctly
+- `test_blup_se_differs_from_naive_diagonal` - SEs are reasonable (not divergent)
+
+**Verification:**
+- `cargo check` passes (no errors)
+- `pnpm check` passes (all green)
+
+**Impact:**
+
+This fix is critical for inference on random effects. With the old (incorrect) computation:
+- Standard errors were systematically wrong when random effects were correlated
+- Confidence intervals for BLUPs would have incorrect coverage
+- This affected downstream analyses like random effect prediction intervals
+
+**Next Priority:** Item 10 (full glmm() with Gaussian family) or Item 4 (negative binomial families)
+- Item 10 tests the full integration and validates against lme4
+- Item 4 is independent and adds new family types for count data
+

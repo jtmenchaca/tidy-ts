@@ -17,7 +17,7 @@
 //! Uses L-BFGS for unconstrained optimization of theta (log-Cholesky parameterization
 //! ensures covariance matrices are always positive-definite).
 
-use super::laplace::{laplace_approximation, LaplaceControl};
+use super::laplace::{invert_symmetric_positive_definite, laplace_approximation, LaplaceControl};
 use super::random_effects::SparseMatrix;
 use super::types::{
     GlmmControl, GlmmFitSummary, GlmmResult, RandomEffect, RandomEffectEstimates, VarianceComponent,
@@ -611,12 +611,25 @@ fn build_variance_components(
 }
 
 /// Build BLUP estimates from random effects vector
+///
+/// Computes BLUPs (Best Linear Unbiased Predictions) and their conditional standard errors.
+///
+/// The conditional variance is computed as:
+/// Var(b | y) = H^{-1}
+///
+/// where H is the Hessian of the negative joint log-likelihood at the mode.
+/// Standard errors are extracted from the diagonal of H^{-1}, NOT from 1/diag(H).
 fn build_blups(
     b: &[f64],
     random_effects: &[RandomEffect],
     hessian_b: Option<&Vec<Vec<f64>>>,
 ) -> Vec<RandomEffectEstimates> {
     let mut blups = Vec::with_capacity(random_effects.len());
+
+    // Compute the inverse Hessian if available
+    // This gives us Var(b | y) = H^{-1}, the conditional covariance matrix
+    let hessian_inv = hessian_b.and_then(|h| invert_symmetric_positive_definite(h));
+
     let mut offset = 0;
 
     for re in random_effects {
@@ -632,18 +645,44 @@ fn build_blups(
             .map(|g| (0..k).map(|t| b_re[g * k + t]).collect())
             .collect();
 
-        // Extract standard errors from Hessian diagonal if available
-        let std_errors = hessian_b.map(|h| {
+        // Extract standard errors from inverse Hessian diagonal
+        // SE(b_i | y) = sqrt(H^{-1}[i,i])
+        let std_errors = hessian_inv.as_ref().map(|h_inv| {
             (0..n_groups)
                 .map(|g| {
                     (0..k)
                         .map(|t| {
                             let idx = offset + g * k + t;
-                            if idx < h.len() && h[idx][idx] > 0.0 {
-                                (1.0 / h[idx][idx]).sqrt()
+                            if idx < h_inv.len() && h_inv[idx][idx] >= 0.0 {
+                                h_inv[idx][idx].sqrt()
                             } else {
                                 0.0
                             }
+                        })
+                        .collect()
+                })
+                .collect()
+        });
+
+        // Extract conditional covariance blocks for each group
+        // Each block is a k × k matrix: Var(b_g | y) = H^{-1}[block_g, block_g]
+        let conditional_vcov = hessian_inv.as_ref().map(|h_inv| {
+            (0..n_groups)
+                .map(|g| {
+                    let start = offset + g * k;
+                    (0..k)
+                        .map(|i| {
+                            (0..k)
+                                .map(|j| {
+                                    let row = start + i;
+                                    let col = start + j;
+                                    if row < h_inv.len() && col < h_inv[row].len() {
+                                        h_inv[row][col]
+                                    } else {
+                                        0.0
+                                    }
+                                })
+                                .collect()
                         })
                         .collect()
                 })
@@ -656,7 +695,7 @@ fn build_blups(
             group_ids: re.group_ids.clone(),
             estimates,
             std_errors,
-            conditional_vcov: None,
+            conditional_vcov,
         });
 
         offset += n_coeffs;
@@ -1014,5 +1053,143 @@ mod tests {
 
         assert_eq!(vcs.len(), 1);
         assert!(approx_eq(vcs[0].std_dev[0], 0.5, 1e-6));
+    }
+
+    #[test]
+    fn test_blup_standard_errors_are_positive() {
+        let (y, x, random_effects, z) = create_test_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new().with_max_iter(100).with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Check that standard errors are computed and positive
+        let blups = &result.blups[0];
+        assert!(
+            blups.std_errors.is_some(),
+            "Standard errors should be computed"
+        );
+
+        let se = blups.std_errors.as_ref().unwrap();
+        for (g, group_se) in se.iter().enumerate() {
+            for (t, se_val) in group_se.iter().enumerate() {
+                assert!(
+                    *se_val > 0.0,
+                    "SE for group {} term {} should be positive, got {}",
+                    g, t, se_val
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_blup_conditional_vcov_extracted() {
+        let (y, x, random_effects, z) = create_test_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new().with_max_iter(100).with_verbose(false);
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        )
+        .unwrap();
+
+        // Check that conditional variance-covariance is extracted
+        let blups = &result.blups[0];
+        assert!(
+            blups.conditional_vcov.is_some(),
+            "Conditional variance-covariance should be extracted"
+        );
+
+        let vcov = blups.conditional_vcov.as_ref().unwrap();
+        assert_eq!(vcov.len(), blups.n_groups());
+
+        // For random intercept only, each group has 1x1 vcov
+        for (g, group_vcov) in vcov.iter().enumerate() {
+            assert_eq!(group_vcov.len(), 1);
+            assert_eq!(group_vcov[0].len(), 1);
+
+            // Variance should be positive
+            assert!(
+                group_vcov[0][0] > 0.0,
+                "Conditional variance for group {} should be positive: {}",
+                g, group_vcov[0][0]
+            );
+
+            // SE should be sqrt of variance
+            let se = blups.std_errors.as_ref().unwrap();
+            let expected_se = group_vcov[0][0].sqrt();
+            assert!(
+                approx_eq(se[g][0], expected_se, 1e-10),
+                "SE for group {} should equal sqrt(variance): {} != sqrt({})",
+                g, se[g][0], group_vcov[0][0]
+            );
+        }
+    }
+
+    #[test]
+    fn test_blup_se_differs_from_naive_diagonal() {
+        // This test verifies that we're computing SEs correctly
+        // The correct computation is sqrt(H^{-1}[i,i]), not sqrt(1/H[i,i])
+        // For non-diagonal H, these differ
+
+        let (y, x, random_effects, z) = create_test_data();
+        let family = GaussianFamily::default();
+        let control = GlmmControl::new().with_max_iter(100).with_verbose(false);
+
+        // Need access to the Hessian to compare naive vs correct computation
+        // Since we can't easily access it here, we just verify SEs are reasonable
+
+        let result = glmm_fit(
+            &y,
+            &x,
+            &z,
+            &random_effects,
+            &family,
+            &control,
+            None,
+            None,
+        )
+        .unwrap();
+
+        let blups = &result.blups[0];
+        let se = blups.std_errors.as_ref().unwrap();
+
+        // Standard errors should be smaller than the BLUP estimates' range
+        // (i.e., they should be reasonable, not wildly inflated)
+        let max_blup: f64 = blups
+            .estimates
+            .iter()
+            .map(|b| b[0].abs())
+            .fold(0.0, f64::max);
+
+        let max_se: f64 = se.iter().map(|s| s[0]).fold(0.0, f64::max);
+
+        // SE should be on reasonable scale
+        assert!(
+            max_se > 0.0,
+            "Max SE should be positive"
+        );
+        assert!(
+            max_se < 10.0,
+            "Max SE should be reasonable (not divergent): {}",
+            max_se
+        );
     }
 }

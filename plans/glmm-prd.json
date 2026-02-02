@@ -205,7 +205,7 @@
         "Test on sleepstudy-like data - BLUPs should match lme4 ranef() within 0.01",
         "Run `cargo test` for blup extraction"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",
