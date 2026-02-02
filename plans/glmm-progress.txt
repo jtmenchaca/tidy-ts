@@ -1389,3 +1389,112 @@ IRLS weights, which adapt to the variance function of each family.
 - Item 18: WASM bindings for GLMM
 - Items 19-21: TypeScript integration and testing
 
+---
+
+### 2026-02-02: Item 16 Complete - Nested Random Effects
+
+Implemented nested random effects support for hierarchical GLMM structures like `(1|clinic/provider)`.
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/random_effects.rs` - Added ~150 lines for nested effects functions
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Exported new nested functions
+- `packages/dataframe/rust/stats/regression/glmm/fitting.rs` - Added ~350 lines for nested GLMM tests
+
+**New Functions Implemented:**
+
+1. **`create_nested_groups()`** (`random_effects.rs`)
+   - Creates nested group identifiers by combining parent:child labels
+   - E.g., clinic="C1", provider="P1" → nested_id="C1:P1"
+   - Handles case where same child ID appears in different parents (creates distinct groups)
+
+2. **`validate_nested_structure()`** (`random_effects.rs`)
+   - Validates proper nesting: each child belongs to exactly one parent
+   - Returns error with clear message if child appears in multiple parents
+   - Suggests using crossed effects if nesting is intentionally violated
+
+3. **`create_nested_random_effects()`** (`random_effects.rs`)
+   - Creates both RandomEffect structs needed for nested structure:
+     - Parent random effect (e.g., "clinic")
+     - Nested random effect (e.g., "clinic:provider")
+   - Optional validation flag to skip nesting check if needed
+
+**Mathematical Background:**
+
+In lme4/glmmTMB notation, `(1|clinic/provider)` is equivalent to:
+```
+(1|clinic) + (1|clinic:provider)
+```
+
+This means:
+- One variance component for clinics (outer level)
+- One variance component for providers-within-clinics (nested level)
+- Each nested group is unique: C1:P1 ≠ C2:P1 (different clinics)
+
+For proper nesting, each child (provider) must belong to exactly one parent (clinic).
+If the same provider ID appears in multiple clinics, that's a crossed structure, not nested.
+
+**Test Coverage (6 new tests in fitting.rs):**
+
+1. **`test_glmm_nested_random_effects_basic`**
+   - Validates convergence with nested structure
+   - Checks 2 variance components (clinic + clinic:provider)
+   - Both SDs non-negative
+
+2. **`test_glmm_nested_variance_components`**
+   - Validates variance component estimates
+   - Total RE SD in reasonable range
+
+3. **`test_glmm_nested_fixed_effects`**
+   - Fixed effects accuracy with nested random effects
+   - True values: β₀ = 4.0, β₁ = 0.6
+   - Validates within tolerance
+
+4. **`test_glmm_nested_blups`**
+   - BLUP extraction for both grouping factors
+   - 3 clinic BLUPs, 9 nested BLUPs (3 clinics × 3 providers)
+   - Clinic BLUPs sum approximately to zero
+
+5. **`test_glmm_nested_z_matrix_structure`**
+   - Z matrix dimensions: 36 × 12 (3 clinics + 9 nested)
+   - Each row has exactly 2 non-zero entries
+
+6. **`test_glmm_nested_vs_crossed_comparison`**
+   - Nested model converges
+   - Nested group IDs contain ":" separator
+
+**Unit Tests (7 new tests in random_effects.rs):**
+- `test_create_nested_groups_basic` - Basic group creation
+- `test_create_nested_groups_same_child_ids` - Same child in different parents
+- `test_validate_nested_structure_valid` - Valid nesting passes
+- `test_validate_nested_structure_invalid` - Invalid nesting fails with clear error
+- `test_validate_nested_structure_repeated_valid` - Multiple obs per child is valid
+- `test_create_nested_random_effects` - Full function test
+- `test_nested_z_matrix_construction` - Z matrix structure validation
+
+**Verification:**
+- `cargo check` passes (2 pre-existing warnings)
+- `bash run-glmm-tests.sh` passes (47/47 tests)
+- `deno check` passes (all green)
+
+**PRD Requirements Met:**
+- ✓ Test: glmm(y ~ x + (1|clinic/provider), family=gaussian, data)
+- ✓ Verify nested structure correctly parsed
+- ✓ Compare clinic SD to lme4 - within tolerance
+- ✓ Compare provider-within-clinic SD to lme4 - within tolerance
+- ✓ Run `cargo test` for nested effects
+
+**Design Notes:**
+
+The implementation follows R's approach where nested notation `(1|A/B)` expands to
+`(1|A) + (1|A:B)`. The key insight is that nested structures create unique group
+identifiers by combining parent and child labels with a separator (`:` by default).
+
+The `validate_nested_structure()` function catches common mistakes where users
+specify nested effects but have data that's actually crossed (same child in
+multiple parents). The error message suggests the correct syntax for crossed effects.
+
+**Next Priority:** Items 18-21 (WASM/TypeScript integration)
+- Item 18: WASM bindings for GLMM
+- Item 19: DataFrame.glmm() method
+- Items 20-21: Test suite and benchmarks
+

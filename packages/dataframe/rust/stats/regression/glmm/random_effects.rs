@@ -363,6 +363,143 @@ pub fn intercept_slope_term_values(slope_values: &[f64]) -> Vec<Vec<f64>> {
     vec![vec![1.0; n_obs], slope_values.to_vec()]
 }
 
+/// Create nested group identifiers for hierarchical random effects
+///
+/// In R/lme4 notation, `(1|clinic/provider)` means providers are nested within clinics.
+/// This is equivalent to two random effects:
+/// - `(1|clinic)` - outer grouping level
+/// - `(1|clinic:provider)` - nested level (provider within clinic)
+///
+/// This function creates the nested group identifiers by combining parent and child labels.
+///
+/// # Arguments
+/// * `parent_values` - The parent grouping variable values (e.g., clinic IDs)
+/// * `child_values` - The child grouping variable values (e.g., provider IDs)
+/// * `separator` - Separator to use when combining (default ":")
+///
+/// # Returns
+/// * Tuple of (parent_ids, nested_ids) where nested_ids are "parent:child" combinations
+///
+/// # Example
+/// ```ignore
+/// let clinics = vec!["C1", "C1", "C2", "C2"];
+/// let providers = vec!["P1", "P2", "P1", "P3"]; // P1 appears in both clinics
+/// let (parent, nested) = create_nested_groups(&clinics, &providers, ":");
+/// // parent = ["C1", "C1", "C2", "C2"]
+/// // nested = ["C1:P1", "C1:P2", "C2:P1", "C2:P3"]
+/// // Note: C1:P1 and C2:P1 are DIFFERENT groups (P1 within C1 vs P1 within C2)
+/// ```
+pub fn create_nested_groups(
+    parent_values: &[String],
+    child_values: &[String],
+    separator: &str,
+) -> Result<(Vec<String>, Vec<String>), String> {
+    if parent_values.len() != child_values.len() {
+        return Err(format!(
+            "Parent and child vectors must have same length: {} vs {}",
+            parent_values.len(),
+            child_values.len()
+        ));
+    }
+
+    let parent_ids = parent_values.to_vec();
+    let nested_ids: Vec<String> = parent_values
+        .iter()
+        .zip(child_values.iter())
+        .map(|(p, c)| format!("{}{}{}", p, separator, c))
+        .collect();
+
+    Ok((parent_ids, nested_ids))
+}
+
+/// Validate that a nested structure is proper (each child belongs to exactly one parent)
+///
+/// For a valid nested structure, each unique child ID should only appear with one parent.
+/// E.g., if provider "P1" appears, it should only be in one clinic, not multiple clinics.
+///
+/// # Arguments
+/// * `parent_values` - The parent grouping variable values
+/// * `child_values` - The child grouping variable values
+///
+/// # Returns
+/// * Ok(()) if valid, Err with description if invalid
+pub fn validate_nested_structure(
+    parent_values: &[String],
+    child_values: &[String],
+) -> Result<(), String> {
+    use std::collections::HashMap;
+
+    if parent_values.len() != child_values.len() {
+        return Err(format!(
+            "Parent and child vectors must have same length: {} vs {}",
+            parent_values.len(),
+            child_values.len()
+        ));
+    }
+
+    // Track which parent each child belongs to
+    let mut child_to_parent: HashMap<&str, &str> = HashMap::new();
+
+    for (parent, child) in parent_values.iter().zip(child_values.iter()) {
+        if let Some(&existing_parent) = child_to_parent.get(child.as_str()) {
+            if existing_parent != parent.as_str() {
+                return Err(format!(
+                    "Invalid nested structure: child '{}' appears in multiple parents ('{}' and '{}'). \
+                     For nested effects, each child must belong to exactly one parent. \
+                     If this is intentional, use crossed effects instead: (1|parent) + (1|child)",
+                    child, existing_parent, parent
+                ));
+            }
+        } else {
+            child_to_parent.insert(child, parent);
+        }
+    }
+
+    Ok(())
+}
+
+/// Create RandomEffect specifications for nested random effects (1|parent/child)
+///
+/// This creates the two RandomEffect structs needed for a nested structure:
+/// 1. Random effect for the parent level (e.g., clinic)
+/// 2. Random effect for the nested level (e.g., provider within clinic)
+///
+/// # Arguments
+/// * `parent_var_name` - Name of the parent grouping variable (e.g., "clinic")
+/// * `child_var_name` - Name of the child grouping variable (e.g., "provider")
+/// * `parent_values` - Parent group values for each observation
+/// * `child_values` - Child group values for each observation
+/// * `validate` - Whether to validate proper nesting (child in exactly one parent)
+///
+/// # Returns
+/// * Tuple of (parent_random_effect, nested_random_effect)
+pub fn create_nested_random_effects(
+    parent_var_name: &str,
+    child_var_name: &str,
+    parent_values: &[String],
+    child_values: &[String],
+    validate: bool,
+) -> Result<(RandomEffect, RandomEffect), String> {
+    // Optionally validate the nested structure
+    if validate {
+        validate_nested_structure(parent_values, child_values)?;
+    }
+
+    // Create nested group identifiers
+    let (parent_ids, nested_ids) = create_nested_groups(parent_values, child_values, ":")?;
+
+    // Create parent random effect
+    let mut parent_re = RandomEffect::intercept(parent_var_name.to_string());
+    populate_random_effect(&mut parent_re, &parent_ids);
+
+    // Create nested random effect (child within parent)
+    let nested_var_name = format!("{}:{}", parent_var_name, child_var_name);
+    let mut nested_re = RandomEffect::intercept(nested_var_name);
+    populate_random_effect(&mut nested_re, &nested_ids);
+
+    Ok((parent_re, nested_re))
+}
+
 /// Helper to populate a RandomEffect with group information from raw data
 ///
 /// # Arguments
@@ -740,5 +877,230 @@ mod tests {
         assert_eq!(re.group_ids, vec!["A", "B", "C"]);
         assert_eq!(re.group_indices, vec![0, 0, 1, 0, 2, 1, 2, 0, 1, 2]);
         assert_eq!(re.group_sizes, vec![4, 3, 3]); // A:4, B:3, C:3
+    }
+
+    // ============================================================================
+    // Nested Random Effects Tests
+    // ============================================================================
+
+    #[test]
+    fn test_create_nested_groups_basic() {
+        // 3 clinics, each with 2 providers
+        let clinics: Vec<String> = vec!["C1", "C1", "C2", "C2", "C3", "C3"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P2", "P1", "P2", "P1", "P2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let (parent, nested) = create_nested_groups(&clinics, &providers, ":").unwrap();
+
+        assert_eq!(parent, clinics);
+        assert_eq!(
+            nested,
+            vec!["C1:P1", "C1:P2", "C2:P1", "C2:P2", "C3:P1", "C3:P2"]
+        );
+    }
+
+    #[test]
+    fn test_create_nested_groups_same_child_ids() {
+        // P1 appears in both C1 and C2 - this creates DIFFERENT nested groups
+        let clinics: Vec<String> = vec!["C1", "C1", "C2", "C2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P2", "P1", "P3"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let (parent, nested) = create_nested_groups(&clinics, &providers, ":").unwrap();
+
+        assert_eq!(parent, clinics);
+        // C1:P1 and C2:P1 are DIFFERENT groups (different clinics)
+        assert_eq!(nested, vec!["C1:P1", "C1:P2", "C2:P1", "C2:P3"]);
+
+        // When we populate random effects, these should be treated as 4 distinct groups
+        let mut nested_re = RandomEffect::intercept("clinic:provider".to_string());
+        populate_random_effect(&mut nested_re, &nested);
+        assert_eq!(nested_re.n_groups, 4);
+    }
+
+    #[test]
+    fn test_validate_nested_structure_valid() {
+        // Valid nesting: each provider appears in exactly one clinic
+        let clinics: Vec<String> = vec!["C1", "C1", "C2", "C2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P2", "P3", "P4"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let result = validate_nested_structure(&clinics, &providers);
+        assert!(result.is_ok(), "Valid nested structure should pass validation");
+    }
+
+    #[test]
+    fn test_validate_nested_structure_invalid() {
+        // Invalid nesting: P1 appears in both C1 and C2
+        let clinics: Vec<String> = vec!["C1", "C1", "C2", "C2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P2", "P1", "P3"] // P1 in both clinics
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let result = validate_nested_structure(&clinics, &providers);
+        assert!(result.is_err(), "Invalid nested structure should fail validation");
+        let err = result.unwrap_err();
+        assert!(err.contains("P1"), "Error should mention the problematic child");
+        assert!(err.contains("C1") && err.contains("C2"), "Error should mention both parents");
+    }
+
+    #[test]
+    fn test_validate_nested_structure_repeated_valid() {
+        // Valid: same provider in same clinic multiple times (multiple observations)
+        let clinics: Vec<String> = vec!["C1", "C1", "C1", "C2", "C2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P1", "P2", "P3", "P3"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let result = validate_nested_structure(&clinics, &providers);
+        assert!(
+            result.is_ok(),
+            "Repeated observations of same child in same parent should be valid"
+        );
+    }
+
+    #[test]
+    fn test_create_nested_random_effects() {
+        // 3 clinics with 2 providers each (properly nested)
+        let clinics: Vec<String> = vec!["C1", "C1", "C2", "C2", "C3", "C3"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P2", "P3", "P4", "P5", "P6"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        let (parent_re, nested_re) =
+            create_nested_random_effects("clinic", "provider", &clinics, &providers, true).unwrap();
+
+        // Parent (clinic) random effect
+        assert_eq!(parent_re.grouping_var, "clinic");
+        assert_eq!(parent_re.n_groups, 3);
+        assert_eq!(parent_re.group_ids, vec!["C1", "C2", "C3"]);
+        assert_eq!(parent_re.group_sizes, vec![2, 2, 2]);
+
+        // Nested (clinic:provider) random effect
+        assert_eq!(nested_re.grouping_var, "clinic:provider");
+        assert_eq!(nested_re.n_groups, 6);
+        assert_eq!(
+            nested_re.group_ids,
+            vec!["C1:P1", "C1:P2", "C2:P3", "C2:P4", "C3:P5", "C3:P6"]
+        );
+    }
+
+    #[test]
+    fn test_create_nested_random_effects_skip_validation() {
+        // This would fail validation but we skip it
+        let clinics: Vec<String> = vec!["C1", "C2"]
+            .into_iter()
+            .map(String::from)
+            .collect();
+        let providers: Vec<String> = vec!["P1", "P1"] // P1 in both - crossed, not nested
+            .into_iter()
+            .map(String::from)
+            .collect();
+
+        // With validation disabled, this should succeed
+        let result = create_nested_random_effects("clinic", "provider", &clinics, &providers, false);
+        assert!(result.is_ok(), "Should succeed when validation is skipped");
+
+        // With validation enabled, this should fail
+        let result = create_nested_random_effects("clinic", "provider", &clinics, &providers, true);
+        assert!(result.is_err(), "Should fail when validation is enabled");
+    }
+
+    #[test]
+    fn test_nested_z_matrix_construction() {
+        // Create nested structure: 3 clinics, 2 providers per clinic, 2 obs per provider
+        // Total: 12 observations
+        let mut clinics: Vec<String> = Vec::new();
+        let mut providers: Vec<String> = Vec::new();
+
+        for c in 0..3 {
+            for p in 0..2 {
+                for _obs in 0..2 {
+                    clinics.push(format!("C{}", c + 1));
+                    providers.push(format!("P{}", c * 2 + p + 1));
+                }
+            }
+        }
+
+        let (parent_re, nested_re) =
+            create_nested_random_effects("clinic", "provider", &clinics, &providers, true).unwrap();
+
+        // Build combined Z matrix for (1|clinic) + (1|clinic:provider)
+        let n = clinics.len(); // 12
+        let random_effects = vec![parent_re.clone(), nested_re.clone()];
+        let term_values = vec![
+            intercept_term_values(n), // clinic intercepts
+            intercept_term_values(n), // nested intercepts
+        ];
+
+        let z = construct_combined_z_matrix(&random_effects, &term_values).unwrap();
+
+        // Z dimensions: 12 obs × (3 clinics + 6 providers) = 12 × 9
+        assert_eq!(z.nrow, 12);
+        assert_eq!(z.ncol, 9); // 3 clinic + 6 clinic:provider
+
+        // Each row should have exactly 2 non-zero entries
+        for row in 0..z.nrow {
+            let (start, end) = z.row_range(row);
+            assert_eq!(
+                end - start,
+                2,
+                "Row {} should have 2 entries (clinic + provider)",
+                row
+            );
+        }
+
+        // Verify Z * b produces correct nested effects
+        let mut b = vec![0.0; 9];
+        // Clinic effects
+        b[0] = 1.0; // C1
+        b[1] = 2.0; // C2
+        b[2] = 3.0; // C3
+        // Provider effects within clinics
+        b[3] = 0.1; // C1:P1
+        b[4] = 0.2; // C1:P2
+        b[5] = 0.3; // C2:P3
+        b[6] = 0.4; // C2:P4
+        b[7] = 0.5; // C3:P5
+        b[8] = 0.6; // C3:P6
+
+        let offsets = z.mul_vec(&b);
+
+        // First 4 obs are in C1 (P1, P1, P2, P2)
+        assert!((offsets[0] - 1.1).abs() < 1e-10); // C1 + C1:P1 = 1.0 + 0.1
+        assert!((offsets[1] - 1.1).abs() < 1e-10);
+        assert!((offsets[2] - 1.2).abs() < 1e-10); // C1 + C1:P2 = 1.0 + 0.2
+        assert!((offsets[3] - 1.2).abs() < 1e-10);
+
+        // Next 4 obs are in C2 (P3, P3, P4, P4)
+        assert!((offsets[4] - 2.3).abs() < 1e-10); // C2 + C2:P3 = 2.0 + 0.3
+        assert!((offsets[8] - 3.5).abs() < 1e-10); // C3 + C3:P5 = 3.0 + 0.5
     }
 }

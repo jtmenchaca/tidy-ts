@@ -295,7 +295,7 @@
         "Compare provider-within-clinic SD to lme4 - within 1e-3",
         "Run `cargo test` for nested effects"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

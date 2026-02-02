@@ -67,8 +67,9 @@ pub use types::{
 
 // Re-export random effects types
 pub use random_effects::{
-    construct_combined_z_matrix, construct_z_matrix, intercept_slope_term_values,
-    intercept_term_values, populate_random_effect, SparseMatrix,
+    construct_combined_z_matrix, construct_z_matrix, create_nested_groups,
+    create_nested_random_effects, intercept_slope_term_values, intercept_term_values,
+    populate_random_effect, validate_nested_structure, SparseMatrix,
 };
 
 // Re-export variance components types
