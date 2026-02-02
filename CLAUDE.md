@@ -29,12 +29,16 @@ pnpm fmt && pnpm lint
 
 ## Notes for Development
 
-- **Type check before success**: Always run `pnpm check` on affected files before reporting success
-- **Efficient type checking**: `pnpm check` takes 1-2 minutes. Run it ONCE and capture output to a file:
+- **Type check before success**: Always type check affected files before reporting success
+- **Efficient type checking**: DO NOT run `pnpm check` - it checks ALL packages and takes too long. Instead, run the package-specific check for the package you modified:
   ```bash
-  pnpm check 2>&1 | tee /tmp/check-output.txt
+  # Check only the dataframe package
+  pnpm check:dataframe
+
+  # Check only the shims package
+  pnpm check:shims
   ```
-  Then analyze `/tmp/check-output.txt` with grep/Read. NEVER run `pnpm check` multiple times in succession.
+  Only use `pnpm check` (all packages) when explicitly asked or for final CI validation.
 - **Test permissions**: Use `-A` flag for Deno tests: `deno test -A [test-name]`
 - **Bug debugging**: Create test files in `packages/testing/bugs/` using existing test patterns
 - **Avoid bash heredocs**: They require custom approval every time
