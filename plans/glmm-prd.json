@@ -167,7 +167,7 @@
         "Verify gradient d/dtheta of log p(b | theta)",
         "Run `cargo test` for random_effects_likelihood"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "category": "functional",

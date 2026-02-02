@@ -264,3 +264,96 @@ This gives k(k+1)/2 parameters total, matching lme4/glmmTMB convention.
 - Implements log p(b | theta) = -0.5 * b' Σ^{-1} b - 0.5 log|Σ|
 - Will need gradients d/db and d/dtheta
 
+---
+
+### 2026-02-02: Item 6 Complete - Random Effects Log-Likelihood
+
+Implemented the random_effects_likelihood module for computing log p(b | theta) and its gradients.
+
+**Files Created:**
+- `packages/dataframe/rust/stats/regression/glmm/random_effects_likelihood.rs` (~450 lines)
+
+**Files Modified:**
+- `packages/dataframe/rust/stats/regression/glmm/mod.rs` - Added module export and re-exports
+
+**Key Functions Implemented:**
+
+1. **Core Likelihood Computation:**
+   - `log_random_effects_prior(b, theta, random_effects)` → `RandomEffectsPrior`
+     - Computes log p(b | theta) for all random effects across all groups
+     - Returns log-likelihood, gradient w.r.t. b, and gradient w.r.t. theta
+   - `log_random_effects_prior_value(b, theta, random_effects)` → `f64`
+     - Faster version returning only the log-likelihood (no gradients)
+
+2. **Single Group Computation:**
+   - `log_prior_one_group(b_group, theta_re, k, cov_type)` → (log_lik, grad_b, grad_theta)
+     - Core computation for one group's contribution to the prior
+     - Uses Cholesky decomposition for numerical stability
+
+3. **Supporting Functions:**
+   - `compute_vcov_for_type(theta_re, k, cov_type)` → covariance matrix
+     - Supports Independent, Unstructured, and CompoundSymmetry
+   - `forward_solve(L, b)` - Solves L*y = b via forward substitution
+   - `backward_solve(L, y)` - Solves L^T*x = y via back substitution
+   - `compute_precision_matrix(theta_re, k, cov_type)` → Σ^{-1}
+   - `compute_block_precision_matrices(theta, random_effects)` → list of precision matrices
+
+4. **Gradient Computation:**
+   - Analytical gradient d/db: `-Σ^{-1} * b`
+   - Numerical gradient d/dtheta: Central differences with ε=1e-7
+
+**Mathematical Formula:**
+```
+log p(b | θ) = -0.5 * b' Σ^{-1} b - 0.5 log|Σ| - (q/2) log(2π)
+
+where:
+- b is the random effects vector
+- Σ is the covariance matrix derived from θ
+- q is the dimension of b
+```
+
+**Data Structures:**
+
+```rust
+pub struct RandomEffectsPrior {
+    pub log_likelihood: f64,    // log p(b | theta)
+    pub grad_b: Vec<f64>,       // d/db
+    pub grad_theta: Vec<f64>,   // d/dtheta
+}
+```
+
+**Block Structure:**
+- Σ is block-diagonal with one block per group within each random effect
+- Each group's contribution computed independently (efficient for large n_groups)
+- Memory scales linearly with n_groups, not quadratically
+
+**Test Coverage (15 tests):**
+- `test_forward_solve` - Verifies forward substitution
+- `test_backward_solve` - Verifies back substitution
+- `test_log_prior_one_group_identity` - Identity covariance
+- `test_log_prior_one_group_scaled` - Scaled variance (σ² = 4)
+- `test_log_prior_two_terms_independent` - Multiple independent terms
+- `test_log_prior_full` - Multiple groups
+- `test_log_prior_value_only` - Consistency between full and value-only
+- `test_precision_matrix_identity` - Precision of identity matrix
+- `test_precision_matrix_scaled` - Precision with scaled variance
+- `test_precision_matrix_2x2` - 2x2 unstructured covariance
+- `test_gradient_b_numerical_check` - Analytical vs numerical gradient d/db
+- `test_gradient_theta_numerical_check` - Gradient w.r.t. theta
+- `test_crossed_random_effects` - Multiple random effect types
+
+**Verification:**
+- `cargo check` passes (no errors)
+- `pnpm check` passes (all green)
+
+**Numerical Properties:**
+- Tolerance: 1e-8 for equality checks
+- Handles non-positive-definite matrices (returns NEG_INFINITY)
+- Uses Cholesky decomposition for numerical stability
+
+**Next Priority:** Item 7 (Laplace approximation for marginal likelihood)
+- Builds on random_effects_likelihood for the prior term
+- Needs joint log-likelihood: log p(y | b, β, θ) + log p(b | θ)
+- Newton optimization to find mode b_hat
+- Laplace approximation via Hessian
+

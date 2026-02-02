@@ -53,6 +53,7 @@
 //! - Kristensen et al. (2016). TMB: Automatic Differentiation and Laplace Approximation
 
 pub mod random_effects;
+pub mod random_effects_likelihood;
 pub mod types;
 pub mod variance_components;
 
@@ -74,6 +75,12 @@ pub use variance_components::{
     log_jacobian_determinant_gradient, split_theta, theta_to_cholesky, theta_to_corr,
     theta_to_sd, theta_to_variance_component, theta_to_vcov, theta_to_vcov_jacobian,
     total_theta_params, vcov_to_corr, vcov_to_theta,
+};
+
+// Re-export random effects likelihood types
+pub use random_effects_likelihood::{
+    compute_block_precision_matrices, compute_precision_matrix, log_random_effects_prior,
+    log_random_effects_prior_value, RandomEffectsPrior,
 };
 
 // Future submodules (to be implemented):
