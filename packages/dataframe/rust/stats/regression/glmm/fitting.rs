@@ -289,6 +289,7 @@ pub fn glmm_fit(
     let mut b = vec![0.0; q];
 
     // Laplace control for inner optimization
+    // profile_beta: false for joint (beta, theta) optimization like glmmTMB
     let laplace_ctrl = LaplaceControl {
         max_iter: control.max_iter_inner,
         tol: control.tol_inner,
@@ -296,6 +297,7 @@ pub fn glmm_fit(
         compute_hessian: true,
         min_variance: 1e-10,
         compute_gradient: true, // Need gradients for outer optimization
+        profile_beta: false,    // Joint optimization - don't profile beta
     };
 
     // Run outer optimization
@@ -409,7 +411,13 @@ pub fn glmm_fit(
     })
 }
 
-/// Run the outer optimization loop for variance components
+/// Run the outer optimization loop with joint (beta, theta) optimization
+///
+/// This matches glmmTMB's approach where:
+/// - Inner loop: Find b_mode given (beta, theta) via Laplace approximation
+/// - Outer loop: Optimize (beta, theta) jointly using L-BFGS
+///
+/// The parameter vector is: params = [beta_0, beta_1, ..., theta_0, theta_1, ...]
 fn run_outer_optimization(
     y: &[f64],
     x: &[Vec<f64>],
@@ -424,76 +432,115 @@ fn run_outer_optimization(
     laplace_ctrl: &LaplaceControl,
     control: &GlmmControl,
 ) -> Result<OuterOptimizationResult, String> {
+    let n_beta = beta.len();
     let n_theta = theta.len();
+    let n_params = n_beta + n_theta;
+
+    // Create combined parameter vector: [beta..., theta...]
+    let mut params: Vec<f64> = Vec::with_capacity(n_params);
+    params.extend(beta.iter());
+    params.extend(theta.iter());
+
+    // Helper to split params into (beta, theta)
+    let split_params = |p: &[f64]| -> (Vec<f64>, Vec<f64>) {
+        let beta_vec = p[..n_beta].to_vec();
+        let theta_vec = p[n_beta..].to_vec();
+        (beta_vec, theta_vec)
+    };
+
+    // Evaluation function: compute objective and gradient for given params
+    // Returns (objective, gradient, b_mode)
+    let eval_with_b = |params: &[f64], b_init: &[f64]| -> (f64, Vec<f64>, Vec<f64>) {
+        let (beta_eval, theta_eval) = split_params(params);
+
+        // Laplace control without beta profiling and without nested gradients
+        let eval_ctrl = LaplaceControl {
+            max_iter: laplace_ctrl.max_iter,
+            tol: laplace_ctrl.tol,
+            damping: laplace_ctrl.damping,
+            compute_hessian: false,
+            min_variance: laplace_ctrl.min_variance,
+            compute_gradient: false, // We compute our own gradient
+            profile_beta: false,     // Joint optimization - don't profile
+        };
+
+        let result = laplace_approximation(
+            y,
+            x,
+            z,
+            &beta_eval,
+            b_init,
+            &theta_eval,
+            random_effects,
+            family,
+            weights,
+            offset,
+            &eval_ctrl,
+        );
+
+        let mut obj = -result.log_marginal_likelihood;
+
+        // Apply REML adjustment if enabled
+        if control.reml {
+            if let Some(reml_adj) =
+                compute_reml_adjustment(y, x, z, &beta_eval, &result.b_mode, family, weights, offset)
+            {
+                obj -= reml_adj;
+            }
+        }
+
+        // Compute numerical gradient over full (beta, theta) parameter space
+        let eps = 1e-6;
+        let mut grad = vec![0.0; n_params];
+
+        for i in 0..n_params {
+            let mut params_plus = params.to_vec();
+            let mut params_minus = params.to_vec();
+            params_plus[i] += eps;
+            params_minus[i] -= eps;
+
+            let (beta_p, theta_p) = split_params(&params_plus);
+            let (beta_m, theta_m) = split_params(&params_minus);
+
+            let result_plus = laplace_approximation(
+                y, x, z, &beta_p, b_init, &theta_p,
+                random_effects, family, weights, offset, &eval_ctrl,
+            );
+            let result_minus = laplace_approximation(
+                y, x, z, &beta_m, b_init, &theta_m,
+                random_effects, family, weights, offset, &eval_ctrl,
+            );
+
+            let mut obj_plus = -result_plus.log_marginal_likelihood;
+            let mut obj_minus = -result_minus.log_marginal_likelihood;
+
+            // Apply REML adjustment to gradient computation too
+            if control.reml {
+                if let Some(reml_adj) =
+                    compute_reml_adjustment(y, x, z, &beta_p, &result_plus.b_mode, family, weights, offset)
+                {
+                    obj_plus -= reml_adj;
+                }
+                if let Some(reml_adj) =
+                    compute_reml_adjustment(y, x, z, &beta_m, &result_minus.b_mode, family, weights, offset)
+                {
+                    obj_minus -= reml_adj;
+                }
+            }
+
+            grad[i] = (obj_plus - obj_minus) / (2.0 * eps);
+        }
+
+        (obj, grad, result.b_mode)
+    };
 
     // L-BFGS state
     let mut lbfgs = LbfgsState::new(10);
 
     // Evaluate initial objective and gradient
-    let mut current_result = laplace_approximation(
-        y,
-        x,
-        z,
-        beta,
-        b,
-        theta,
-        random_effects,
-        family,
-        weights,
-        offset,
-        laplace_ctrl,
-    );
-
-    // We minimize negative log-likelihood (or REML criterion)
-    // For REML: obj = -ML_marginal_likelihood - 0.5 * log|X'WX|
-    let mut obj = -current_result.log_marginal_likelihood;
-    if control.reml {
-        if let Some(reml_adj) =
-            compute_reml_adjustment(y, x, z, beta, b, family, weights, offset)
-        {
-            obj -= reml_adj; // Subtract because we minimize negative likelihood
-        }
-    }
-    let mut grad: Vec<f64> = current_result.grad_theta.iter().map(|g| -g).collect();
+    let (mut obj, mut grad, b_mode) = eval_with_b(&params, b);
+    *b = b_mode;
     let mut grad_norm: f64 = grad.iter().map(|g| g * g).sum::<f64>().sqrt();
-
-    // Update b with the mode found
-    *b = current_result.b_mode.clone();
-
-    // Update beta given the current b
-    if let Some(new_beta) = super::laplace::update_beta(y, x, z, b, beta, family, weights, offset) {
-        for (i, beta_i) in beta.iter_mut().enumerate() {
-            if i < new_beta.len() {
-                *beta_i = new_beta[i];
-            }
-        }
-    }
-
-    // Re-evaluate with updated beta
-    current_result = laplace_approximation(
-        y,
-        x,
-        z,
-        beta,
-        b,
-        theta,
-        random_effects,
-        family,
-        weights,
-        offset,
-        laplace_ctrl,
-    );
-    obj = -current_result.log_marginal_likelihood;
-    if control.reml {
-        if let Some(reml_adj) =
-            compute_reml_adjustment(y, x, z, beta, b, family, weights, offset)
-        {
-            obj -= reml_adj;
-        }
-    }
-    grad = current_result.grad_theta.iter().map(|g| -g).collect();
-    grad_norm = grad.iter().map(|g| g * g).sum::<f64>().sqrt();
-    *b = current_result.b_mode.clone();
 
     if control.verbose {
         println!(
@@ -505,8 +552,8 @@ fn run_outer_optimization(
     let mut converged = grad_norm < control.tol_outer;
     let mut iter = 0;
 
-    // Track best solution in case of non-monotonic behavior
-    let mut best_theta = theta.clone();
+    // Track best solution
+    let mut best_params = params.clone();
     let mut best_obj = obj;
     let mut best_b = b.clone();
 
@@ -521,89 +568,42 @@ fn run_outer_optimization(
         let direction = lbfgs.compute_direction(&grad);
 
         // Store old values for L-BFGS update
-        let theta_old = theta.clone();
+        let params_old = params.clone();
         let grad_old = grad.clone();
 
-        // Line search
-        let mut eval_fn = |theta_new: &[f64]| -> (f64, Vec<f64>) {
-            let result = laplace_approximation(
-                y,
-                x,
-                z,
-                beta,
-                b,
-                theta_new,
-                random_effects,
-                family,
-                weights,
-                offset,
-                laplace_ctrl,
-            );
-            let mut new_obj = -result.log_marginal_likelihood;
-            // Apply REML adjustment if enabled
-            if control.reml {
-                // Note: we use b_mode from result for most accurate REML adjustment
-                if let Some(reml_adj) =
-                    compute_reml_adjustment(y, x, z, beta, &result.b_mode, family, weights, offset)
-                {
-                    new_obj -= reml_adj;
-                }
-            }
-            let new_grad: Vec<f64> = result.grad_theta.iter().map(|g| -g).collect();
+        // Line search closure
+        let mut eval_fn = |p: &[f64]| -> (f64, Vec<f64>) {
+            let (new_obj, new_grad, _) = eval_with_b(p, b);
             (new_obj, new_grad)
         };
 
-        let (_step, new_obj, new_grad) = line_search(&mut eval_fn, theta, &direction, obj, &grad, 1.0);
+        let (step, new_obj, new_grad) = line_search(&mut eval_fn, &params, &direction, obj, &grad, 1.0);
 
-        // Update theta
-        for i in 0..n_theta {
-            theta[i] = theta_old[i] + _step * direction[i];
+        // Update params
+        for i in 0..n_params {
+            params[i] = params_old[i] + step * direction[i];
         }
 
-        // Re-evaluate to get updated b
-        current_result = laplace_approximation(
-            y,
-            x,
-            z,
-            beta,
-            b,
-            theta,
-            random_effects,
-            family,
-            weights,
-            offset,
-            laplace_ctrl,
-        );
-        *b = current_result.b_mode.clone();
-
-        // Update beta given the new b
-        if let Some(new_beta) = super::laplace::update_beta(y, x, z, b, beta, family, weights, offset) {
-            for (i, beta_i) in beta.iter_mut().enumerate() {
-                if i < new_beta.len() {
-                    *beta_i = new_beta[i];
-                }
-            }
-        }
+        // Re-evaluate to get updated b_mode
+        let (_, _, new_b_mode) = eval_with_b(&params, b);
+        *b = new_b_mode;
 
         obj = new_obj;
         grad = new_grad;
         grad_norm = grad.iter().map(|g| g * g).sum::<f64>().sqrt();
 
-        // Track best solution (including beta)
-        let mut best_beta = beta.clone();
+        // Track best solution
         if obj < best_obj {
             best_obj = obj;
-            best_theta = theta.clone();
+            best_params = params.clone();
             best_b = b.clone();
-            best_beta = beta.clone();
         }
-        let _ = best_beta; // silence unused warning
 
         // Update L-BFGS history
-        let s: Vec<f64> = theta
+        let s: Vec<f64> = params
             .iter()
-            .zip(theta_old.iter())
-            .map(|(t, t_old)| t - t_old)
+            .zip(params_old.iter())
+            .map(|(p, p_old)| p - p_old)
             .collect();
         let y_diff: Vec<f64> = grad
             .iter()
@@ -613,9 +613,10 @@ fn run_outer_optimization(
         lbfgs.update(s, y_diff);
 
         if control.verbose {
+            let (beta_cur, theta_cur) = split_params(&params);
             println!(
-                "Outer iter {}: obj = {:.6}, grad_norm = {:.2e}, step = {:.4}",
-                outer_iter, obj, grad_norm, _step
+                "Outer iter {}: obj = {:.6}, grad_norm = {:.2e}, step = {:.4}, beta = {:?}, theta = {:?}",
+                outer_iter, obj, grad_norm, step, beta_cur, theta_cur
             );
         }
 
@@ -623,9 +624,9 @@ fn run_outer_optimization(
         converged = grad_norm < control.tol_outer;
 
         // Also check for lack of progress
-        if (_step < 1e-10) && (grad_norm > control.tol_outer * 10.0) {
+        if (step < 1e-10) && (grad_norm > control.tol_outer * 10.0) {
             // Stuck - use best solution found
-            *theta = best_theta.clone();
+            params = best_params.clone();
             *b = best_b.clone();
             obj = best_obj;
             break;
@@ -634,12 +635,27 @@ fn run_outer_optimization(
 
     // Use best solution if we didn't converge
     if !converged && best_obj < obj {
-        *theta = best_theta;
+        params = best_params;
         *b = best_b;
         obj = best_obj;
     }
 
+    // Extract final beta and theta from params
+    let (final_beta, final_theta) = split_params(&params);
+    *beta = final_beta;
+    *theta = final_theta;
+
     // Final evaluation to get Hessian
+    let final_ctrl = LaplaceControl {
+        max_iter: laplace_ctrl.max_iter,
+        tol: laplace_ctrl.tol,
+        damping: laplace_ctrl.damping,
+        compute_hessian: true,
+        min_variance: laplace_ctrl.min_variance,
+        compute_gradient: false,
+        profile_beta: false,
+    };
+
     let final_result = laplace_approximation(
         y,
         x,
@@ -651,8 +667,10 @@ fn run_outer_optimization(
         family,
         weights,
         offset,
-        laplace_ctrl,
+        &final_ctrl,
     );
+
+    *b = final_result.b_mode.clone();
 
     Ok(OuterOptimizationResult {
         theta: theta.clone(),

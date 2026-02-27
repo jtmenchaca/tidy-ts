@@ -112,15 +112,28 @@ pub fn compute_fitted_values(eta: &[f64], family: &dyn GlmFamily) -> Vec<f64> {
 // Main Laplace approximation
 // =============================================================================
 
-/// Compute Laplace approximation for marginal likelihood
+/// Compute Laplace approximation for marginal likelihood with beta profiling
 ///
-/// This is the main entry point for the Laplace approximation.
+/// This is the main entry point for the Laplace approximation. It implements
+/// the profile likelihood approach where beta is optimized for each theta.
+///
+/// # Algorithm (Profile Likelihood)
+///
+/// For each theta value:
+/// 1. Find b_mode that maximizes p(y|b,β,θ) * p(b|θ)
+/// 2. **Profile beta**: Update beta to its optimal value given b_mode
+/// 3. Re-find b_mode with updated beta (iterate if needed)
+/// 4. Compute marginal likelihood at profiled (beta, b_mode)
+///
+/// This ensures the objective function is purely a function of theta,
+/// with beta profiled out. This is crucial for consistent gradient-based
+/// optimization of theta.
 ///
 /// # Arguments
 /// * `y` - Response vector
 /// * `x` - Fixed effects design matrix
 /// * `z` - Random effects design matrix (sparse)
-/// * `beta` - Fixed effect coefficients
+/// * `beta` - Fixed effect coefficients (used as starting point)
 /// * `b_init` - Initial random effect values
 /// * `theta` - Variance component parameters (for Gaussian, includes log_sigma as last element)
 /// * `random_effects` - Random effect specifications
@@ -130,7 +143,8 @@ pub fn compute_fitted_values(eta: &[f64], family: &dyn GlmFamily) -> Vec<f64> {
 /// * `control` - Optimization control parameters
 ///
 /// # Returns
-/// LaplaceResult containing marginal likelihood, mode, gradient, and Hessian
+/// LaplaceResult containing marginal likelihood, mode, gradient, and Hessian.
+/// The b_mode and log_marginal_likelihood correspond to the profiled beta.
 ///
 /// # Sigma Handling (glmmTMB approach)
 ///
@@ -153,9 +167,9 @@ pub fn laplace_approximation(
     // Step 1: Extract sigma from theta (glmmTMB approach)
     let (theta_vc, sigma) = extract_sigma_from_theta(theta, random_effects, family);
 
-    // Step 2: Find the mode of the random effects b
-    // Note: Mode finding uses theta_vc (variance components only)
-    // sigma is used to scale IRLS weights for Gaussian
+    // Step 2: Find b_mode given current beta
+    // Note: We do ONE b-mode + beta update cycle per Laplace evaluation.
+    // This keeps the objective consistent with numerical gradients.
     let (b_mode, inner_iter, inner_converged) = find_b_mode(
         y,
         x,
@@ -171,13 +185,23 @@ pub fn laplace_approximation(
         control,
     );
 
-    // Step 3: Compute joint log-likelihood at mode
+    // Step 2b: Conditionally update beta given b_mode
+    // When profile_beta=false (joint optimization), beta is passed through unchanged.
+    // When profile_beta=true (profiled optimization), do IRLS update.
+    let current_beta = if control.profile_beta {
+        super::beta_update::update_beta(y, x, z, &b_mode, beta, family, weights, offset)
+            .unwrap_or_else(|| beta.to_vec())
+    } else {
+        beta.to_vec()
+    };
+
+    // Step 3: Compute joint log-likelihood at mode with profiled beta
     // log p(y | b, β, σ) + log p(b | θ)
     let joint_ll = joint_log_likelihood_with_sigma(
         y,
         x,
         z,
-        beta,
+        &current_beta,
         &b_mode,
         theta_vc,
         random_effects,
@@ -194,7 +218,7 @@ pub fn laplace_approximation(
         y,
         x,
         z,
-        beta,
+        &current_beta,
         &b_mode,
         theta_vc,
         random_effects,
@@ -211,12 +235,13 @@ pub fn laplace_approximation(
     let log_marginal = joint_ll + laplace_correction;
 
     // Step 7: Compute gradient w.r.t. theta (including log_sigma if Gaussian)
+    // Note: gradient is computed with profiled beta for consistency
     let grad_theta = if control.compute_gradient {
         numerical_grad_theta(
             y,
             x,
             z,
-            beta,
+            &current_beta, // Use profiled beta
             &b_mode,
             theta, // Full theta including log_sigma
             random_effects,
@@ -240,6 +265,7 @@ pub fn laplace_approximation(
         },
         inner_iterations: inner_iter,
         inner_converged,
+        profiled_beta: Some(current_beta), // Return profiled beta
     }
 }
 
@@ -308,6 +334,7 @@ fn numerical_grad_theta(
         compute_hessian: false,
         min_variance: control.min_variance,
         compute_gradient: false, // CRITICAL: avoid infinite recursion
+        profile_beta: control.profile_beta, // Maintain consistency with outer call
     };
 
     for i in 0..n_theta {

@@ -18,6 +18,8 @@ pub struct LaplaceResult {
     pub inner_iterations: usize,
     /// Whether inner optimization converged
     pub inner_converged: bool,
+    /// Profiled beta (fixed effects optimized for this theta)
+    pub profiled_beta: Option<Vec<f64>>,
 }
 
 /// Control parameters for Laplace approximation
@@ -35,6 +37,8 @@ pub struct LaplaceControl {
     pub min_variance: f64,
     /// Whether to compute gradient w.r.t. theta (disable to avoid infinite recursion)
     pub compute_gradient: bool,
+    /// Whether to profile beta (update beta given b_mode) - default false for joint optimization
+    pub profile_beta: bool,
 }
 
 impl Default for LaplaceControl {
@@ -46,6 +50,7 @@ impl Default for LaplaceControl {
             compute_hessian: true,
             min_variance: 1e-10,
             compute_gradient: true,
+            profile_beta: false, // Default to joint optimization (like glmmTMB)
         }
     }
 }
