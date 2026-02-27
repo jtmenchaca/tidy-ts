@@ -105,20 +105,26 @@ export const xlsxDocs: Record<string, DocEntry> = {
     category: "io",
     signature:
       "writeXLSX<T>(df: DataFrame<T>, path: string, opts?: { sheet?: string }): Promise<void>",
-    description: "Write DataFrame to XLSX file.",
-    imports: [
-      'import { readCSV, writeCSV, readXLSX, writeXLSX } from "@tidy-ts/dataframe";',
-    ],
+    description:
+      "Write DataFrame to XLSX file. Zero external dependencies. In browser environments, triggers a file download instead of writing to disk. Handles strings, numbers, booleans, and dates (converted to Excel serial numbers).",
+    imports: ['import { writeXLSX } from "@tidy-ts/dataframe";'],
     parameters: [
       "df: DataFrame to write",
-      "path: Output file path",
+      "path: Output file path (Node.js/Deno/Bun) or download filename (browser)",
       'opts.sheet: Sheet name (default: "Sheet1")',
     ],
     returns: "Promise<void>",
     examples: [
-      'await writeXLSX(df, "output.xlsx")',
-      'await writeXLSX(df, "output.xlsx", { sheet: "Summary" })',
+      '// Write to file (Node.js/Deno/Bun)\nawait writeXLSX(df, "output.xlsx")',
+      '// Write to specific sheet\nawait writeXLSX(df, "output.xlsx", { sheet: "Summary" })',
+      '// Browser: triggers download\nawait writeXLSX(df, "report.xlsx")',
+      '// Add sheet to existing file (Node.js/Deno/Bun only)\nawait writeXLSX(df1, "data.xlsx", { sheet: "Sales" })\nawait writeXLSX(df2, "data.xlsx", { sheet: "Products" })',
     ],
     related: ["readXLSX", "writeCSV"],
+    bestPractices: [
+      "✓ GOOD: Works in all environments - file system in Node.js/Deno/Bun, download in browser",
+      "✓ GOOD: Use sheet option to organize data into multiple sheets",
+      "✓ GOOD: Dates are automatically converted to Excel format",
+    ],
   },
 };

@@ -101,18 +101,21 @@ export const csvDocs: Record<string, DocEntry> = {
     name: "writeCSV",
     category: "io",
     signature: "writeCSV<T>(df: DataFrame<T>, path: string): Promise<void>",
-    description: "Write DataFrame to CSV file.",
-    imports: [
-      'import { readCSV, writeCSV, readXLSX, writeXLSX } from "@tidy-ts/dataframe";',
-    ],
+    description:
+      "Write DataFrame to CSV file. In browser environments, triggers a file download instead of writing to disk.",
+    imports: ['import { writeCSV } from "@tidy-ts/dataframe";'],
     parameters: [
       "df: DataFrame to write",
-      "path: Output file path",
+      "path: Output file path (Node.js/Deno/Bun) or download filename (browser)",
     ],
     returns: "Promise<void>",
     examples: [
-      'await writeCSV(df, "output.csv")',
+      '// Write to file (Node.js/Deno/Bun)\nawait writeCSV(df, "output.csv")',
+      '// Browser: triggers download\nawait writeCSV(df, "report.csv")',
     ],
     related: ["readCSV", "writeXLSX", "writeParquet"],
+    bestPractices: [
+      "✓ GOOD: Works in all environments - file system in Node.js/Deno/Bun, download in browser",
+    ],
   },
 };
