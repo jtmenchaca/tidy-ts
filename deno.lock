@@ -40,6 +40,13 @@
       "dependencies": [
         "npm:@eslint/js@^9.17.0",
         "npm:@hookform/resolvers@^4.1.2",
+        "npm:@jsr/cliffy__command@^1.0.0-rc.7",
+        "npm:@jsr/deno__wasmbuild@~0.19.2",
+        "npm:@jsr/std__csv@^1.0.6",
+        "npm:@jsr/std__encoding@^1.0.10",
+        "npm:@jsr/std__expect@^1.0.15",
+        "npm:@jsr/std__path@^1.0.8",
+        "npm:@jsr/std__random@~0.1.2",
         "npm:@libsql/client@~0.15.15",
         "npm:@openai/agents@~0.2.1",
         "npm:@playwright/test@^1.55.0",
@@ -173,6 +180,7 @@
         ],
         "packageJson": {
           "dependencies": [
+            "npm:@jsr/std__csv@^1.0.6",
             "npm:vega-embed@^7.0.2",
             "npm:vega-lite@^6.4.1",
             "npm:vega@^6.2.0",

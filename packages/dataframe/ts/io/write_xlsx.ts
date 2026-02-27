@@ -804,6 +804,37 @@ function crc32(data: Uint8Array): number {
 }
 
 /**
+ * Create a new XLSX file as bytes (without writing to disk).
+ * This is the core function used by both writeXLSX and browser downloads.
+ */
+async function createXLSXBytes<T extends Record<string, unknown>>(
+  dataFrame: DataFrame<T>,
+  opts: WriteXLSXOpts = {},
+): Promise<Uint8Array> {
+  const sheetName = opts.sheet ?? "Sheet1";
+  const rows = dataFrame.toArray();
+  const columns = dataFrame.columns();
+
+  const { sharedStrings, worksheet } = buildWorksheet(rows, columns);
+  const workbookXml = buildWorkbook([sheetName], [1]);
+  const sharedStringsXml = buildSharedStrings(sharedStrings);
+  const stylesXml = buildStyles();
+  const contentTypesXml = buildContentTypes([1]);
+  const relsXml = buildRels();
+  const workbookRelsXml = buildWorkbookRels([1]);
+
+  return createZip({
+    "[Content_Types].xml": contentTypesXml,
+    "_rels/.rels": relsXml,
+    "xl/workbook.xml": workbookXml,
+    "xl/_rels/workbook.xml.rels": workbookRelsXml,
+    "xl/worksheets/sheet1.xml": worksheet,
+    "xl/sharedStrings.xml": sharedStringsXml,
+    "xl/styles.xml": stylesXml,
+  });
+}
+
+/**
  * Write a DataFrame to an XLSX file.
  *
  * Exports DataFrame data to XLSX format using zero external dependencies.
@@ -813,8 +844,10 @@ function crc32(data: Uint8Array): number {
  * Supports writing to specific sheets. If the file exists, it will be updated
  * with the new sheet data (replacing if the sheet exists, or adding if new).
  *
+ * In browser environments, this triggers a file download instead of writing to disk.
+ *
  * @param dataFrame - The DataFrame to export
- * @param path - File path where the XLSX file should be written
+ * @param path - File path where the XLSX file should be written (or filename for browser download)
  * @param opts - Options including sheet name (defaults to "Sheet1")
  *
  * @returns A Promise that resolves when the file is successfully written
@@ -829,6 +862,9 @@ function crc32(data: Uint8Array): number {
  *
  * // Write to a different sheet in the same file
  * await writeXLSX(df2, "./data.xlsx", { sheet: "Products" });
+ *
+ * // In browser, triggers a download
+ * await writeXLSX(df, "report.xlsx");
  * ```
  */
 export const writeXLSX: <Row extends Record<string, unknown>>(
@@ -849,12 +885,28 @@ export const writeXLSX: <Row extends Record<string, unknown>>(
       await writeXLSXImpl(dataFrame, path, opts);
     };
   } else {
-    return () => {
-      return Promise.reject(
-        new Error(
-          "writeXLSX is only available in Node.js/Deno environments.",
-        ),
-      );
+    // Browser environment - trigger download
+    return async <Row extends Record<string, unknown>>(
+      dataFrame: DataFrame<Row>,
+      path: string,
+      opts?: WriteXLSXOpts,
+    ) => {
+      const xlsxBytes = await createXLSXBytes(dataFrame, opts);
+      const blob = new Blob([xlsxBytes as BlobPart], {
+        type:
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = path.split("/").pop() || "data.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Small delay to ensure download starts
+      await new Promise((resolve) => setTimeout(resolve, 100));
     };
   }
 })();
