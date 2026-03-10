@@ -287,7 +287,7 @@ Deno.test("readXLSX - no_types with mixed types", async () => {
   );
 
   expect(df.nrows()).toBe(3);
-  expect(df.ncols()).toBe(5);
+  expect(df.ncols()).toBe(6);
 
   const rows = df.toArray();
   expect(rows[0].name).toBe("Alice");
@@ -466,7 +466,7 @@ Deno.test("readXLSX - ArrayBuffer with no_types", async () => {
   const df = await readXLSX(arrayBuffer, { no_types: true });
 
   expect(df.nrows()).toBe(3);
-  expect(df.ncols()).toBe(5);
+  expect(df.ncols()).toBe(6);
 
   const rows = df.toArray();
   expect(rows[0].name).toBe("Alice");

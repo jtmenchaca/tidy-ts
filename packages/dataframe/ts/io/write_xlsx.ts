@@ -428,7 +428,8 @@ function buildWorksheet<T extends Record<string, unknown>>(
         cells += `<c r="${cellRef}" t="b"><v>${value ? 1 : 0}</v></c>`;
       } else if (value instanceof Date) {
         const serial = dateToExcelSerial(value);
-        cells += `<c r="${cellRef}" s="1"><v>${serial}</v></c>`;
+        const style = dateHasTime(value) ? "2" : "1";
+        cells += `<c r="${cellRef}" s="${style}"><v>${serial}</v></c>`;
       } else {
         // Convert to string
         const strIndex = getStringIndex(String(value));
@@ -489,8 +490,9 @@ ${sheetsXml}
 function buildStyles(): string {
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <numFmts count="1">
+  <numFmts count="2">
     <numFmt numFmtId="164" formatCode="yyyy-mm-dd"/>
+    <numFmt numFmtId="165" formatCode="yyyy-mm-dd h:mm:ss"/>
   </numFmts>
   <fonts count="1">
     <font><sz val="11"/><name val="Calibri"/></font>
@@ -501,9 +503,10 @@ function buildStyles(): string {
   <borders count="1">
     <border><left/><right/><top/><bottom/><diagonal/></border>
   </borders>
-  <cellXfs count="2">
+  <cellXfs count="3">
     <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
     <xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
+    <xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>
   </cellXfs>
 </styleSheet>`;
 }
@@ -566,16 +569,24 @@ function columnIndexToLetter(index: number): string {
 }
 
 function dateToExcelSerial(date: Date): number {
-  // Normalize to local midnight to represent a calendar date (not timestamp)
-  const normalizedDate = new Date(
+  const MS_PER_DAY = 86400000;
+  const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);
+  // Use Date.UTC with local components to avoid DST shifts
+  const localMs = Date.UTC(
     date.getFullYear(),
     date.getMonth(),
     date.getDate(),
+    date.getHours(),
+    date.getMinutes(),
+    date.getSeconds(),
+    date.getMilliseconds(),
   );
-  const excelEpoch = new Date(1899, 11, 30);
-  const diff = normalizedDate.getTime() - excelEpoch.getTime();
-  const days = diff / 86400000; // milliseconds in a day
-  return days;
+  return (localMs - EXCEL_EPOCH_MS) / MS_PER_DAY;
+}
+
+function dateHasTime(date: Date): boolean {
+  return date.getHours() !== 0 || date.getMinutes() !== 0 ||
+    date.getSeconds() !== 0 || date.getMilliseconds() !== 0;
 }
 
 function escapeXml(str: string): string {

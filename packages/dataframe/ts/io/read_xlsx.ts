@@ -116,16 +116,21 @@ const toDate = (s: string): Date => {
 
   // Check if it's a numeric value (Excel serial number)
   // Excel stores dates as days since 1899-12-30, with fractional part for time
-  // Note: negative numbers represent dates before the Excel epoch
   if (!isNaN(num)) {
-    // Use local epoch to match write_xlsx.ts dateToExcelSerial
-    // Then normalize to local midnight to avoid timezone shifts
-    const excelEpoch = new Date(1899, 11, 30); // December 30, 1899 local
-    const milliseconds = num * 86400000; // Convert days to milliseconds
-    const date = new Date(excelEpoch.getTime() + milliseconds);
-
-    // Normalize to local midnight to represent a calendar date (not timestamp)
-    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const MS_PER_DAY = 86400000;
+    const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);
+    const utcMs = EXCEL_EPOCH_MS + num * MS_PER_DAY;
+    // Convert UTC ms back to a local Date using the UTC components
+    const utcDate = new Date(utcMs);
+    return new Date(
+      utcDate.getUTCFullYear(),
+      utcDate.getUTCMonth(),
+      utcDate.getUTCDate(),
+      utcDate.getUTCHours(),
+      utcDate.getUTCMinutes(),
+      utcDate.getUTCSeconds(),
+      utcDate.getUTCMilliseconds(),
+    );
   }
 
   // Try ISO date format (YYYY-MM-DD)
@@ -496,6 +501,141 @@ function columnLettersToIndex(letters: string): number {
     index = index * 26 + (letters.charCodeAt(i) - 64);
   }
   return index - 1; // Convert to 0-based
+}
+
+/*───────────────────────────────────────────────────────────────────────────┐
+│  2b · Style/format parsing from xl/styles.xml                             │
+└───────────────────────────────────────────────────────────────────────────*/
+
+/** Built-in Excel number format codes (not listed in styles.xml) */
+const BUILTIN_NUM_FMTS: Record<number, string> = {
+  0: "General",
+  1: "0",
+  2: "0.00",
+  3: "#,##0",
+  4: "#,##0.00",
+  9: "0%",
+  10: "0.00%",
+  11: "0.00E+00",
+  12: "# ?/?",
+  13: "# ??/??",
+  14: "mm-dd-yy",
+  15: "d-mmm-yy",
+  16: "d-mmm",
+  17: "mmm-yy",
+  18: "h:mm AM/PM",
+  19: "h:mm:ss AM/PM",
+  20: "h:mm",
+  21: "h:mm:ss",
+  22: "m/d/yy h:mm",
+  27: "[$-404]e/m/d",
+  30: "m/d/yy",
+  36: "[$-404]e/m/d",
+  45: "mm:ss",
+  46: "[h]:mm:ss",
+  47: "mmss.0",
+  48: "##0.0E+0",
+  49: "@",
+};
+
+export interface XLSXColumnFormat {
+  column: string;
+  formatCode: string;
+  numFmtId: number;
+}
+
+/**
+ * Parse xl/styles.xml to build a mapping from cell style index (xfId) → format code.
+ * Returns an array where index = style index (`s` attr on `<c>`), value = { numFmtId, formatCode }.
+ */
+function parseStyles(
+  stylesXml: string,
+): { numFmtId: number; formatCode: string }[] {
+  // 1. Parse custom numFmt entries: <numFmt numFmtId="164" formatCode="mm/dd/yyyy"/>
+  const customFmts = new Map<number, string>();
+  const numFmtRegex =
+    /<numFmt[^>]*numFmtId="(\d+)"[^>]*formatCode="([^"]*)"[^>]*\/?>/g;
+  let m;
+  while ((m = numFmtRegex.exec(stylesXml)) !== null) {
+    customFmts.set(parseInt(m[1], 10), unescapeXml(m[2]));
+  }
+
+  // 2. Parse <cellXfs> entries (these are what `s="N"` on cells indexes into)
+  //    Each <xf> has numFmtId="..."
+  const xfFormats: { numFmtId: number; formatCode: string }[] = [];
+
+  // Extract the <cellXfs ...>...</cellXfs> block
+  const cellXfsMatch = stylesXml.match(
+    /<cellXfs[^>]*>([\s\S]*?)<\/cellXfs>/,
+  );
+  if (cellXfsMatch) {
+    const xfRegex = /<xf\s+([^>]*?)\/?>/g;
+    let xfMatch;
+    while ((xfMatch = xfRegex.exec(cellXfsMatch[1])) !== null) {
+      const attrs = xfMatch[1];
+      const fmtIdMatch = attrs.match(/numFmtId="(\d+)"/);
+      const numFmtId = fmtIdMatch ? parseInt(fmtIdMatch[1], 10) : 0;
+      const formatCode = customFmts.get(numFmtId) ??
+        BUILTIN_NUM_FMTS[numFmtId] ?? "General";
+      xfFormats.push({ numFmtId, formatCode });
+    }
+  }
+
+  return xfFormats;
+}
+
+/**
+ * Scan worksheet XML to find the dominant style index per column (from data rows only).
+ * Returns a Map from column index → style index.
+ */
+function parseWorksheetColumnStyles(xml: string): Map<number, number> {
+  const colStyleCounts = new Map<number, Map<number, number>>();
+  const rowRegex = /<row[^>]*>(.*?)<\/row>/g;
+  let rowMatch;
+  let rowNum = 0;
+
+  while ((rowMatch = rowRegex.exec(xml)) !== null) {
+    rowNum++;
+    if (rowNum === 1) continue; // Skip header row
+
+    const rowXml = rowMatch[1];
+    const cellRegex = /<c\s+([^>]+?)(?:\/>|>)/g;
+    let cellMatch;
+
+    while ((cellMatch = cellRegex.exec(rowXml)) !== null) {
+      const attrs = cellMatch[1];
+      const refMatch = attrs.match(/r="([A-Z]+)(\d+)"/);
+      if (!refMatch) continue;
+
+      const colIndex = columnLettersToIndex(refMatch[1]);
+      const styleMatch = attrs.match(/s="(\d+)"/);
+      if (!styleMatch) continue;
+
+      const styleIdx = parseInt(styleMatch[1], 10);
+
+      if (!colStyleCounts.has(colIndex)) {
+        colStyleCounts.set(colIndex, new Map());
+      }
+      const counts = colStyleCounts.get(colIndex)!;
+      counts.set(styleIdx, (counts.get(styleIdx) ?? 0) + 1);
+    }
+  }
+
+  // Pick the most common style per column
+  const result = new Map<number, number>();
+  for (const [colIdx, counts] of colStyleCounts) {
+    let bestStyle = 0;
+    let bestCount = 0;
+    for (const [style, count] of counts) {
+      if (count > bestCount) {
+        bestStyle = style;
+        bestCount = count;
+      }
+    }
+    result.set(colIdx, bestStyle);
+  }
+
+  return result;
 }
 
 /*───────────────────────────────────────────────────────────────────────────┐
@@ -910,7 +1050,10 @@ async function readXLSXMetadataImpl(
     throw new Error("No workbook.xml found in XLSX file");
   }
 
-  const sheetMap = parseWorkbookSheets(workbookXml);
+  // Get relationship mappings
+  const relsXml = await extractFile(fileData, "xl/_rels/workbook.xml.rels");
+
+  const sheetMap = parseWorkbookSheets(workbookXml, relsXml ?? undefined);
   if (sheetMap.length === 0) {
     throw new Error("No sheets found in XLSX file");
   }
@@ -918,18 +1061,78 @@ async function readXLSXMetadataImpl(
   const sheets = sheetMap.map((s, i) => ({ name: s.name, index: i }));
   const defaultSheet = sheetMap[0].name;
 
-  // Get preview of specified sheet (or first sheet)
+  // Determine which sheet to read
   const targetSheet = sheet ?? 0;
-  const rawRows = await parseXLSXRaw(pathOrBuffer, { sheet: targetSheet });
-  const previewData = rawRows.slice(0, previewRows);
+  let sheetPath: string;
+  if (typeof targetSheet === "number") {
+    if (targetSheet < 0 || targetSheet >= sheetMap.length) {
+      throw new Error(
+        `Sheet index ${targetSheet} out of range. Available sheets: 0-${
+          sheetMap.length - 1
+        }`,
+      );
+    }
+    sheetPath = sheetMap[targetSheet].path;
+  } else {
+    const found = sheetMap.find((s) => s.name === targetSheet);
+    if (!found) {
+      const available = sheetMap.map((s) => s.name).join(", ");
+      throw new Error(
+        `Sheet "${targetSheet}" not found. Available sheets: ${available}`,
+      );
+    }
+    sheetPath = found.path;
+  }
 
   const sheetName = typeof targetSheet === "number"
     ? sheetMap[targetSheet].name
     : targetSheet;
 
+  // Extract worksheet, shared strings, and styles
+  const [worksheet, sharedStrings, stylesXml] = await Promise.all([
+    extractFile(fileData, sheetPath),
+    extractFile(fileData, "xl/sharedStrings.xml"),
+    extractFile(fileData, "xl/styles.xml"),
+  ]);
+
+  if (!worksheet) {
+    throw new Error(`Worksheet not found: ${sheetPath}`);
+  }
+
+  const strings = sharedStrings ? parseSharedStrings(sharedStrings) : [];
+  const allRows = parseWorksheet(worksheet, strings);
+
+  const rawRows = allRows;
+  const previewData = rawRows.slice(0, previewRows);
+
   // Extract headers from first row
   const headers = rawRows.length > 0 ? rawRows[0] : [];
   const dataRows = rawRows.slice(1);
+
+  // Parse column formats from styles.xml
+  const columnFormats: XLSXColumnFormat[] = [];
+  if (stylesXml && headers.length > 0) {
+    const styleFormats = parseStyles(stylesXml);
+    const colStyles = parseWorksheetColumnStyles(worksheet);
+
+    for (let i = 0; i < headers.length; i++) {
+      const styleIdx = colStyles.get(i);
+      if (styleIdx !== undefined && styleIdx < styleFormats.length) {
+        const fmt = styleFormats[styleIdx];
+        columnFormats.push({
+          column: headers[i],
+          formatCode: fmt.formatCode,
+          numFmtId: fmt.numFmtId,
+        });
+      } else {
+        columnFormats.push({
+          column: headers[i],
+          formatCode: "General",
+          numFmtId: 0,
+        });
+      }
+    }
+  }
 
   return {
     sheets,
@@ -938,6 +1141,7 @@ async function readXLSXMetadataImpl(
     headers,
     totalRows: dataRows.length,
     firstRows: previewData,
+    columnFormats,
   };
 }
 
@@ -974,6 +1178,7 @@ export const readXLSXMetadata: (
   headers: string[];
   totalRows: number;
   firstRows: string[][];
+  columnFormats: XLSXColumnFormat[];
 }> = (() => {
   return async (
     pathOrBuffer: string | ArrayBuffer | File | Blob,
