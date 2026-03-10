@@ -64,7 +64,14 @@ Deno.test("parseXLSXRaw - mixed types", async () => {
   );
 
   expect(data.length).toBe(4); // header + 3 data rows
-  expect(data[0]).toEqual(["name", "age", "score", "active", "date"]);
+  expect(data[0]).toEqual([
+    "name",
+    "age",
+    "score",
+    "active",
+    "date",
+    "datetime",
+  ]);
   expect(data[1][0]).toBe("Alice");
   expect(data[1][1]).toBe("25"); // Numbers come as strings
 });

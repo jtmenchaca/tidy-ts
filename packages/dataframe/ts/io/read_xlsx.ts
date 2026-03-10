@@ -323,10 +323,17 @@ async function extractFile(
       if (localSig !== 0x04034b50) return null; // Local file header signature
 
       const compMethod = view.getUint16(localHeaderOffset + 8, true);
-      const compSize = view.getUint32(localHeaderOffset + 18, true);
-      const uncompSize = view.getUint32(localHeaderOffset + 22, true);
+      let compSize = view.getUint32(localHeaderOffset + 18, true);
+      let uncompSize = view.getUint32(localHeaderOffset + 22, true);
       const localFilenameLen = view.getUint16(localHeaderOffset + 26, true);
       const localExtraLen = view.getUint16(localHeaderOffset + 28, true);
+
+      // When bit 3 (data descriptor) is set, local header sizes may be 0.
+      // Fall back to the central directory sizes which are always correct.
+      if (compSize === 0 && uncompSize === 0) {
+        compSize = view.getUint32(offset + 20, true);
+        uncompSize = view.getUint32(offset + 24, true);
+      }
 
       const dataOffset = localHeaderOffset + 30 + localFilenameLen +
         localExtraLen;
@@ -439,20 +446,21 @@ function unescapeXml(str: string): string {
 
 function parseWorksheet(xml: string, sharedStrings: string[]): string[][] {
   const rows: string[][] = [];
-  const rowRegex = /<row[^>]*>(.*?)<\/row>/g;
+  const rowRegex = /<row[^>]*>([\s\S]*?)<\/row>/g;
   let rowMatch;
   let maxCols = 0;
 
   while ((rowMatch = rowRegex.exec(xml)) !== null) {
     const rowXml = rowMatch[1];
     const cellMap = new Map<number, string>();
-    const cellRegex = /<c\s+([^>]+)>(?:<v>([^<]*)<\/v>)?<\/c>/g;
+    const cellRegex =
+      /<c\s+([^>\/]+)(?:\/>|>(?:<v>([^<]*)<\/v>|<is><t>([^<]*)<\/t><\/is>)?<\/c>)/g;
     let cellMatch;
     let maxCol = 0;
 
     while ((cellMatch = cellRegex.exec(rowXml)) !== null) {
       const attrs = cellMatch[1];
-      const value = cellMatch[2] || "";
+      const value = cellMatch[2] || cellMatch[3] || "";
 
       // Extract cell reference (e.g., "A1", "B2") from attrs
       const refMatch = attrs.match(/r="([A-Z]+)(\d+)"/);
@@ -590,7 +598,7 @@ function parseStyles(
  */
 function parseWorksheetColumnStyles(xml: string): Map<number, number> {
   const colStyleCounts = new Map<number, Map<number, number>>();
-  const rowRegex = /<row[^>]*>(.*?)<\/row>/g;
+  const rowRegex = /<row[^>]*>([\s\S]*?)<\/row>/g;
   let rowMatch;
   let rowNum = 0;
 
