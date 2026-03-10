@@ -14,7 +14,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneWayAnovaTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejectNull`",
+      "OneWayAnovaTestResult with `testStatistic`, `pValue`, `dfBetween`, `dfWithin`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
@@ -22,16 +22,16 @@ export const anovaDocs: Record<string, DocEntry> = {
       "const group3 = [20, 21, 19, 22, 20];",
       "const result = s.test.anova.oneWay([group1, group2, group3]);",
       "console.log(result.pValue);  // p-value",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  // If significant, use post-hoc tests",
       "  const postHoc = s.compare.postHoc.tukey([group1, group2, group3]);",
       "}",
     ],
     bestPractices: [
       "Check normality of each group before using",
-      "Check equal variances with s.test.variance.levene (consider Welch ANOVA if violated)",
+      "Check equal variances with s.test.variance.levene (consider Welch ANOVA if violated); s.compare.multiGroups.centralTendency.toEachOther assesses this internally",
       "Requires at least 2 groups, each with at least 2 observations",
-      "If significant, follow up with post-hoc tests (Tukey, Games-Howell, etc.)",
+      "If significant, follow up with post-hoc tests (s.compare.postHoc.tukey, etc.)",
     ],
     antiPatterns: [
       "Using ANOVA on non-normal data (consider Kruskal-Wallis test)",
@@ -59,7 +59,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "WelchAnovaTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejectNull`",
+      "WelchAnovaTestResult with `testStatistic`, `pValue`, `df1`, `df2`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
@@ -69,7 +69,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "console.log(result.pValue);  // p-value",
     ],
     bestPractices: [
-      "Use when groups have unequal variances (check with s.test.variance.levene)",
+      "Use when groups have unequal variances (s.compare.multiGroups.centralTendency.toEachOther assesses this internally; or check explicitly with s.test.variance.levene)",
       "More robust than regular ANOVA when equal variance assumption is violated",
       "Requires at least 2 groups, each with at least 2 observations",
     ],
@@ -136,7 +136,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "`groups: number[][]` - Array of groups to test for equal variances",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
-    returns: "OneWayAnovaTestResult with F-statistic, `pValue`, `rejectNull`",
+    returns: "OneWayAnovaTestResult with F-statistic, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [1, 2, 3, 4, 5];",
@@ -146,7 +146,7 @@ export const anovaDocs: Record<string, DocEntry> = {
       "const result = s.test.variance.levene([group1, group2, group3]);",
       "console.log(`p-value: ${result.pValue}`);",
       "",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  console.log('Use Welch ANOVA (unequal variances)');",
       "} else {",
       "  console.log('Use regular ANOVA (equal variances)');",

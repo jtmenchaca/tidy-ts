@@ -12,6 +12,7 @@ export { missingDataDocs } from "./missing-data.ts";
 export { profilingDocs } from "./profiling.ts";
 export { visualizationDocs } from "./visualization.ts";
 export { setupDocs } from "./setup.ts";
+export { performanceDocs } from "./performance.ts";
 
 // Aggregate all for easy import
 import { creationDocs } from "./creation.ts";
@@ -27,6 +28,7 @@ import { missingDataDocs } from "./missing-data.ts";
 import { profilingDocs } from "./profiling.ts";
 import { visualizationDocs } from "./visualization.ts";
 import { setupDocs } from "./setup.ts";
+import { performanceDocs } from "./performance.ts";
 
 export const dataframeDocs = {
   ...creationDocs,
@@ -42,4 +44,5 @@ export const dataframeDocs = {
   ...profilingDocs,
   ...visualizationDocs,
   ...setupDocs,
+  ...performanceDocs,
 };

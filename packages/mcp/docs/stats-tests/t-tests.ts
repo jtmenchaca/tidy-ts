@@ -15,13 +15,13 @@ export const tTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
+      "OneSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [2.3, 2.5, 2.1, 2.4, 2.2];",
       "const result = s.test.t.oneSample({ data, mu: 2.0 });",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.rejectNull);  // true if reject H0",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
     ],
     bestPractices: [
       "Check normality with s.test.normality.shapiroWilk before using",
@@ -56,7 +56,7 @@ export const tTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
+      "TwoSampleTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const control = [5.2, 4.8, 5.1, 4.9, 5.0];",
@@ -98,13 +98,13 @@ export const tTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "PairedTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `rejectNull`",
+      "PairedTTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const before = [120, 125, 118, 130, 122];",
       "const after = [115, 118, 112, 125, 117];",
       "const result = s.test.t.paired({ x: before, y: after });",
-      "console.log(result.rejectNull);  // true if significant change",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
     ],
     bestPractices: [
       "Use for repeated measures or matched subjects",

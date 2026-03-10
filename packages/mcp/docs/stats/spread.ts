@@ -2,10 +2,10 @@ import type { DocEntry } from "../mcp-types.ts";
 
 export const spreadDocs: Record<string, DocEntry> = {
   stdev: {
-    name: "s.sd",
+    name: "s.stdev",
     category: "stats",
     signature:
-      "s.sd(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.stdev(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
     description:
       "Calculate the sample standard deviation of an array of values. Returns null if insufficient data. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -17,11 +17,11 @@ export const spreadDocs: Record<string, DocEntry> = {
     ],
     returns: "number | null",
     examples: [
-      "s.sd(42) // 0 (single value)",
-      "s.sd([1, 2, 3, 4, 5]) // sample standard deviation",
-      "s.sd([1, null, 3], { removeNull: true }) // std dev of [1, 3]",
-      "s.sd([1, NaN, 3], { removeNaN: true }) // std dev of [1, 3]",
-      'df.groupBy("region").summarize({ std: group => s.sd(group.sales) })',
+      "s.stdev(42) // 0 (single value)",
+      "s.stdev([1, 2, 3, 4, 5]) // sample standard deviation",
+      "s.stdev([1, null, 3], { removeNull: true }) // std dev of [1, 3]",
+      "s.stdev([1, NaN, 3], { removeNaN: true }) // std dev of [1, 3]",
+      'df.groupBy("region").summarize({ std: group => s.stdev(group.sales) })',
     ],
     related: ["variance", "mean", "round"],
   },
@@ -47,7 +47,7 @@ export const spreadDocs: Record<string, DocEntry> = {
       "s.variance([1, null, 3], { removeNull: true }) // variance of [1, 3]",
       "s.variance([1, NaN, 3], { removeNaN: true }) // variance of [1, 3]",
     ],
-    related: ["sd", "mean"],
+    related: ["stdev", "mean"],
   },
 
   range: {

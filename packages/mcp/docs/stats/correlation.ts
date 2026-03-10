@@ -29,68 +29,81 @@ export const correlationDocs: Record<string, DocEntry> = {
   },
 
   pearson: {
-    name: "s.pearson",
+    name: "s.test.correlation.pearson (coefficient: .correlation)",
     category: "stats",
-    signature: "s.pearson(x: number[], y: number[]): number | null",
+    signature:
+      "s.test.correlation.pearson({ x, y, alternative?, alpha? }): PearsonCorrelationTestResult",
     description:
-      "Calculate the Pearson correlation coefficient between two numeric arrays. Returns a value between -1 (perfect negative correlation) and 1 (perfect positive correlation). Returns null if calculation is not possible.",
+      "Pearson correlation test: returns a result object with .correlation (the coefficient), .pValue, .alpha, etc. Check result.pValue < (result.alpha ?? 0.05) for significance. To get only the Pearson coefficient between two columns, use the result's .correlation property. Throws if x and y differ in length or have fewer than 3 finite values (no null return).",
     imports: [
       'import { stats as s, createDataFrame } from "@tidy-ts/dataframe";',
     ],
     parameters: [
-      "x: First array of numbers",
-      "y: Second array of numbers (same length as x)",
+      "x: number[] - First array (e.g. df.extract('colA'))",
+      "y: number[] - Second array (same length as x)",
+      "alternative?: 'two-sided' | 'less' | 'greater'",
+      "alpha?: number - Significance level (default 0.05)",
     ],
-    returns: "number | null - Pearson correlation coefficient",
+    returns:
+      "PearsonCorrelationTestResult with .correlation (number), .pValue, .testStatistic, .alpha; significant when pValue < alpha",
     examples: [
-      "// Perfect positive correlation\ns.pearson([1, 2, 3, 4, 5], [2, 4, 6, 8, 10]) // 1.0",
-      "// Perfect negative correlation\ns.pearson([1, 2, 3, 4, 5], [10, 8, 6, 4, 2]) // -1.0",
-      "// No correlation\ns.pearson([1, 2, 3, 4, 5], [3, 1, 4, 1, 5]) // ~0",
-      '// From DataFrame columns - COMMON PATTERN\nconst df = createDataFrame([\n  { height: 170, weight: 70, age: 25 },\n  { height: 180, weight: 85, age: 30 },\n  { height: 165, weight: 60, age: 22 },\n  { height: 175, weight: 75, age: 28 },\n  { height: 185, weight: 90, age: 35 },\n]);\n\n// Extract columns and calculate correlation\nconst r = s.pearson(\n  df.extract("height"),\n  df.extract("weight")\n);\nconsole.log(`Height-Weight correlation: ${r}`); // ~0.98',
-      '// Multiple correlations from same DataFrame\nconst heightWeight = s.pearson(df.extract("height"), df.extract("weight"));\nconst heightAge = s.pearson(df.extract("height"), df.extract("age"));\nconst weightAge = s.pearson(df.extract("weight"), df.extract("age"));',
+      "// Coefficient only: use .correlation from the test result\nconst result = s.test.correlation.pearson({\n  x: [1, 2, 3, 4, 5],\n  y: [2, 4, 6, 8, 10],\n});\nconsole.log(result.correlation);  // 1.0\nconsole.log(result.pValue);       // p-value for H0: r = 0",
+      '// From DataFrame columns - COMMON PATTERN\nconst df = createDataFrame([\n  { height: 170, weight: 70, age: 25 },\n  { height: 180, weight: 85, age: 30 },\n  { height: 165, weight: 60, age: 22 },\n  { height: 175, weight: 75, age: 28 },\n  { height: 185, weight: 90, age: 35 },\n]);\n\nconst result = s.test.correlation.pearson({\n  x: df.extract("height"),\n  y: df.extract("weight"),\n});\nconsole.log(`Correlation: ${result.correlation.toFixed(3)}`);\nconsole.log(`Significant: ${result.pValue < (result.alpha ?? 0.05)}`);',
+      `// Error handling: the test throws (does not return null) for invalid input
+try {
+  const result = s.test.correlation.pearson({
+    x: df.extract("col_a"),
+    y: df.extract("col_b"),
+  });
+  console.log(result.correlation);
+} catch (e) {
+  // e.g. "Pearson correlation test requires at least 3 observations" or length mismatch
+  console.warn("Pearson correlation not available:", e instanceof Error ? e.message : e);
+}`,
     ],
     related: [
-      "s.test.correlation.pearson",
-      "s.spearman",
+      "s.test.correlation.spearman",
+      "s.test.correlation.kendall",
       "s.covariance",
       "extract",
     ],
     bestPractices: [
-      "✓ GOOD: Use df.extract('column') to get numeric arrays from DataFrame",
-      "✓ GOOD: Use s.pearson for quick correlation coefficient only",
-      "✓ GOOD: Use s.test.correlation.pearson for full hypothesis test with p-value",
-      "✓ GOOD: Check for at least 3 observations",
+      "✓ GOOD: Use df.extract('column') for x and y from a DataFrame",
+      "✓ GOOD: Use result.correlation when you only need the coefficient",
+      "✓ GOOD: Use try/catch when data may have fewer than 3 valid pairs or length mismatch (API throws, does not return null)",
     ],
     antiPatterns: [
       "❌ BAD: Using Pearson on non-linear relationships",
       "❌ BAD: Interpreting correlation as causation",
-      "❌ BAD: Using on ranked/ordinal data (use Spearman instead)",
     ],
   },
 
   spearman: {
-    name: "s.spearman",
+    name: "s.test.correlation.spearman (coefficient: .correlation)",
     category: "stats",
-    signature: "s.spearman(x: number[], y: number[]): number | null",
+    signature:
+      "s.test.correlation.spearman({ x, y, alternative?, alpha? }): SpearmanCorrelationTestResult",
     description:
-      "Calculate Spearman's rank correlation coefficient. Measures monotonic (not necessarily linear) relationships. More robust to outliers than Pearson.",
+      "Spearman rank correlation test. Returns a result object with .correlation (Spearman's rho), .pValue, .alpha. Check result.pValue < (result.alpha ?? 0.05) for significance. Use .correlation for the coefficient only. Throws if length mismatch or fewer than 2 observations.",
     imports: [
       'import { stats as s, createDataFrame } from "@tidy-ts/dataframe";',
     ],
     parameters: [
-      "x: First array of numbers",
-      "y: Second array of numbers (same length as x)",
+      "x: number[] - First array",
+      "y: number[] - Second array (same length as x)",
+      "alternative?: 'two-sided' | 'less' | 'greater'",
+      "alpha?: number",
     ],
-    returns: "number | null - Spearman's rho",
+    returns: "SpearmanCorrelationTestResult with .correlation (rho), .pValue, .alpha; significant when pValue < alpha",
     examples: [
-      "s.spearman([1, 2, 3, 4, 5], [2, 4, 6, 8, 10]) // 1.0",
-      '// From DataFrame columns\nconst rho = s.spearman(\n  df.extract("satisfaction_rank"),\n  df.extract("loyalty_score")\n);',
+      "const result = s.test.correlation.spearman({ x: [1,2,3,4,5], y: [10,20,30,40,50] });\nconsole.log(result.correlation);  // Spearman's rho",
+      'const result = s.test.correlation.spearman({\n  x: df.extract("satisfaction_rank"),\n  y: df.extract("loyalty_score"),\n});\nconsole.log(result.correlation);',
     ],
-    related: ["s.test.correlation.spearman", "s.pearson", "extract"],
+    related: ["s.test.correlation.pearson", "s.test.correlation.kendall", "extract"],
     bestPractices: [
       "✓ GOOD: Use for monotonic relationships",
-      "✓ GOOD: Use when data has outliers",
-      "✓ GOOD: Use for ordinal data",
+      "✓ GOOD: Use when data has outliers or ordinal data",
+      "✓ GOOD: Use result.correlation for the coefficient only",
     ],
   },
 };

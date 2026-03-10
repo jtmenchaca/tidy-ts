@@ -17,7 +17,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "`parametric?: 'parametric' | 'nonparametric' | 'auto'` - Test type selection (default: 'auto'). 'auto' uses Shapiro-Wilk to detect normality and selects appropriate test",
     ],
     returns:
-      "OneSampleTTestResult (if parametric) or WilcoxonSignedRankTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `reject`",
+      "OneSampleTTestResult (if parametric) or WilcoxonSignedRankTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       "const data = [23, 25, 24, 26, 22, 24, 25, 23, 27, 24];",
       "const result = s.compare.oneGroup.centralTendency.toValue({",
@@ -27,7 +27,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "  alpha: 0.05",
       "});",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);    // true if reject H0",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
       "",
       "// Force parametric test",
       "const tTest = s.compare.oneGroup.centralTendency.toValue({",
@@ -77,7 +77,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneSampleProportionTestResult with `statistic` (z-statistic), `pValue`, `confidenceInterval`, `reject`",
+      "OneSampleProportionTestResult with `statistic` (z-statistic), `pValue`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       "const data = [true, false, true, true, false, true, false, true];",
       "const result = s.compare.oneGroup.proportions.toValue({",
@@ -87,7 +87,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "  alpha: 0.05",
       "});",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);    // true if proportion differs from 0.5",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
       "",
       "// Test if proportion is greater than 0.3",
       "const greater = s.compare.oneGroup.proportions.toValue({",
@@ -125,7 +125,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "ShapiroWilkTestResult with `statistic` (W statistic), `pValue`, `reject` (true if p < alpha, meaning data is non-normal)",
+      "ShapiroWilkTestResult with `statistic` (W statistic), `pValue`, `alpha`; reject H0 (data non-normal) when pValue < alpha",
     examples: [
       "const data = [1.2, 2.3, 1.8, 2.1, 1.9, 2.0, 1.7, 2.2];",
       "const result = s.compare.oneGroup.distribution.toNormal({",
@@ -133,11 +133,11 @@ export const oneGroupDocs: Record<string, DocEntry> = {
       "  alpha: 0.05",
       "});",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);    // true if data is non-normal (p < 0.05)",
+      "// non-normal when result.pValue < (result.alpha ?? 0.05)",
       "",
       "// Check before using parametric tests",
       "const normalCheck = s.compare.oneGroup.distribution.toNormal({ data });",
-      "if (normalCheck.reject) {",
+      "if (normalCheck.pValue < (normalCheck.alpha ?? 0.05)) {",
       "  // Use non-parametric test",
       "  const test = s.compare.oneGroup.centralTendency.toValue({",
       "    data,",
@@ -149,7 +149,7 @@ export const oneGroupDocs: Record<string, DocEntry> = {
     bestPractices: [
       "Use before selecting parametric vs non-parametric tests",
       "Most reliable for sample sizes between 3 and 5000",
-      "Reject null (reject: true) means data is NOT normally distributed",
+      "Reject H0 (pValue < alpha) means data is NOT normally distributed",
       "Use as part of assumption checking for t-tests and ANOVA",
     ],
     antiPatterns: [

@@ -18,14 +18,14 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "MannWhitneyTestResult with `testStatistic`, `pValue`, `rejectNull`",
+      "MannWhitneyTestResult with `testStatistic`, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
       "const group2 = [15, 16, 14, 17, 15];",
       "const result = s.test.nonparametric.mannWhitney({ x: group1, y: group2 });",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.rejectNull);  // true if reject H0",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
     ],
     bestPractices: [
       "Use when data is not normally distributed",
@@ -59,14 +59,14 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "WilcoxonSignedRankTestResult with `testStatistic`, `pValue`, `rejectNull`",
+      "WilcoxonSignedRankTestResult with `testStatistic`, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const before = [120, 125, 118, 130, 122];",
       "const after = [115, 118, 112, 125, 117];",
       "const result = s.test.nonparametric.wilcoxon({ x: before, y: after });",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.rejectNull);  // true if significant change",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
     ],
     bestPractices: [
       "Use for paired/repeated measures when data is not normally distributed",
@@ -94,7 +94,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KruskalWallisTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `rejectNull`",
+      "KruskalWallisTestResult with `testStatistic`, `pValue`, `degreesOfFreedom`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10, 12, 11, 13, 12];",
@@ -102,7 +102,7 @@ export const nonparametricDocs: Record<string, DocEntry> = {
       "const group3 = [20, 21, 19, 22, 20];",
       "const result = s.test.nonparametric.kruskalWallis([group1, group2, group3]);",
       "console.log(result.pValue);  // p-value",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  // If significant, use post-hoc tests",
       "  const postHoc = s.compare.postHoc.dunn([group1, group2, group3]);",
       "}",

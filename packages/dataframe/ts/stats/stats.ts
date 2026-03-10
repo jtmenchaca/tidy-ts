@@ -431,8 +431,16 @@ export const stats: {
     readonly anova: {
       /** One-way ANOVA (one factor) */
       readonly oneWay: typeof statisticalTests.anovaOneWay;
+      /** Welch's one-way ANOVA (unequal variances) */
+      readonly welch: typeof statisticalTests.welchAnovaOneWay;
       /** Two-way ANOVA (two factors) */
       readonly twoWay: typeof statisticalTests.twoWayAnova;
+    };
+
+    /** Variance equality tests */
+    readonly variance: {
+      /** Levene's test for equality of variances across groups (Brown-Forsythe) */
+      readonly levene: typeof statisticalTests.leveneTest;
     };
 
     /** Correlation tests */
@@ -470,6 +478,14 @@ export const stats: {
     readonly normality: {
       /** Shapiro-Wilk normality test */
       readonly shapiroWilk: typeof statisticalTests.shapiroWilkTest;
+      /** Anderson-Darling normality test */
+      readonly andersonDarling: typeof statisticalTests.andersonDarlingTest;
+      /** D'Agostino-Pearson (skewness-kurtosis) normality test */
+      readonly dagostinoPearson: typeof statisticalTests.dagostinoPearsonTest;
+      /** One-sample Kolmogorov-Smirnov test vs uniform distribution */
+      readonly kolmogorovSmirnovUniform: typeof statisticalTests.kolmogorovSmirnovUniformTest;
+      /** Two-sample Kolmogorov-Smirnov test */
+      readonly kolmogorovSmirnovTwoSample: typeof statisticalTests.kolmogorovSmirnovTest;
     };
   };
 
@@ -734,7 +750,13 @@ export const stats: {
     // ANOVA
     anova: {
       oneWay: statisticalTests.anovaOneWay,
+      welch: statisticalTests.welchAnovaOneWay,
       twoWay: statisticalTests.twoWayAnova,
+    },
+
+    // Variance equality
+    variance: {
+      levene: statisticalTests.leveneTest,
     },
 
     // Correlation tests
@@ -761,6 +783,10 @@ export const stats: {
     // Normality tests
     normality: {
       shapiroWilk: statisticalTests.shapiroWilkTest,
+      andersonDarling: statisticalTests.andersonDarlingTest,
+      dagostinoPearson: statisticalTests.dagostinoPearsonTest,
+      kolmogorovSmirnovUniform: statisticalTests.kolmogorovSmirnovUniformTest,
+      kolmogorovSmirnovTwoSample: statisticalTests.kolmogorovSmirnovTest,
     },
   },
 

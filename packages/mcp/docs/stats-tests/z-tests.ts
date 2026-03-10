@@ -17,13 +17,13 @@ export const zTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "OneSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`",
+      "OneSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [102, 98, 105, 99, 101];",
       "const result = s.test.z.oneSample({ data, popMean: 100, popStd: 5 });",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.rejectNull);  // true if reject H0",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
     ],
     bestPractices: [
       "Use when population standard deviation is known (unlike t-test)",
@@ -54,7 +54,7 @@ export const zTestDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `rejectNull`",
+      "TwoSampleZTestResult with `testStatistic`, `pValue`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [10.2, 9.8, 10.5, 9.9, 10.1];",

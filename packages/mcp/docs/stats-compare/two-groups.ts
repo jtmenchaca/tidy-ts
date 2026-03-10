@@ -18,7 +18,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `reject`, and effect size measures",
+      "TwoSampleTTestResult (if parametric) or MannWhitneyTestResult (if non-parametric) with `statistic`, `pValue`, `degreesOfFreedom` (t-test only), `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       "const group1 = [1.2, 1.4, 1.1, 1.3, 1.5, 1.2, 1.4, 1.3];",
       "const group2 = [2.1, 2.3, 2.0, 2.2, 2.4, 2.1, 2.3, 2.2];",
@@ -30,7 +30,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "  alpha: 0.05",
       "});",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);    // true if groups differ",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
       "",
       "// Force equal variances assumption",
       "const equalVar = s.compare.twoGroups.centralTendency.toEachOther({",
@@ -82,7 +82,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `pValue`, `reject`, and effect size measures",
+      "TwoSampleProportionTestResult, ChiSquareIndependenceTestResult, or FishersExactTestResult depending on test selected, with `statistic`, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       "const data1 = [true, false, true, true, false];",
       "const data2 = [true, true, true, false, true];",
@@ -145,7 +145,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `pValue`, `confidenceInterval`, `reject`",
+      "PearsonCorrelationTestResult, SpearmanCorrelationTestResult, or KendallCorrelationTestResult with `correlation` (coefficient), `statistic`, `pValue`, `confidenceInterval`, `alpha`; significant when pValue < alpha",
     examples: [
       "const x = [1, 2, 3, 4, 5, 6, 7, 8];",
       "const y = [2, 4, 6, 8, 10, 12, 14, 16];",
@@ -209,7 +209,7 @@ export const twoGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `pValue`, `reject`",
+      "KolmogorovSmirnovTestResult (if method='ks') or MannWhitneyTestResult (if method='mann-whitney') with `statistic`, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       "const group1 = [1.2, 1.4, 1.1, 1.3, 1.5];",
       "const group2 = [2.1, 2.3, 2.0, 2.2, 2.4];",

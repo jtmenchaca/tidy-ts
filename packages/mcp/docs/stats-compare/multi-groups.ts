@@ -88,7 +88,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "ChiSquareIndependenceTestResult with `statistic` (chi-squared), `pValue`, `degreesOfFreedom`, `reject`, and effect sizes (Cramér's V, phi)",
+      "ChiSquareIndependenceTestResult with `statistic` (chi-squared), `pValue`, `degreesOfFreedom`, `alpha`; significant when pValue < alpha",
     examples: [
       "// Test independence in a 2×3 contingency table",
       "const table = [",
@@ -100,7 +100,7 @@ export const multiGroupsDocs: Record<string, DocEntry> = {
       "  alpha: 0.05",
       "});",
       "console.log(result.pValue);  // p-value",
-      "console.log(result.reject);    // true if variables are dependent",
+      "// significant when result.pValue < (result.alpha ?? 0.05)",
       "",
       "// Larger contingency table",
       "const largerTable = [",

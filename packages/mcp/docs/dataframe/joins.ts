@@ -75,6 +75,101 @@ export const joinsDocs: Record<string, DocEntry> = {
     ],
   },
 
+  leftJoinGuide: {
+    name: "leftJoin: Performance, suffixes vs different keys, error handling",
+    category: "dataframe",
+    signature: "Guidance and patterns from tests and benchmarks",
+    description:
+      "leftJoin is WASM-backed (hash join). Use keys: { left, right } when the key column has different names in each DataFrame; use suffixes when key names match but other columns collide. Validate key columns exist before joining when keys come from user input. For large datasets, prefer leftJoin over manual loops (benchmarked ~8x faster than Arquero on 500K rows).",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [],
+    returns: "N/A (guidance)",
+    examples: [
+      `// PERFORMANCE (from packages/testing/benchmarks, 500K rows)
+// leftJoin: tidy-ts 50.2ms, arquero 400.1ms (~8x). Use leftJoin for large tables.
+const leftTidyDf = createDataFrame([...]); // 500K rows
+const rightTidyDf = createDataFrame([...]); // 10K rows
+const result = leftTidyDf.leftJoin(rightTidyDf, "id");`,
+      `// WHEN TO USE keys: { left, right } — key column has different names in each table
+// From left-join-multi-key.test.ts
+const employees = createDataFrame([
+  { emp_id: 1, emp_dept: 10, name: "Alice" },
+  { emp_id: 2, emp_dept: 20, name: "Bob" },
+]);
+const departments = createDataFrame([
+  { dept_id: 10, dept_name: "Engineering" },
+]);
+const result = employees.leftJoin(departments, {
+  keys: { left: "emp_dept", right: "dept_id" },
+});
+// result: Alice has dept_id 10, dept_name "Engineering"; Bob has dept_id undefined, dept_name undefined`,
+      `// WHEN TO USE suffixes — same key names but non-key columns collide (e.g. both have "quarter")
+// From left-join-multi-key.test.ts
+const left = createDataFrame([
+  { region: "North", product: "Gadget", quarter: "Q1" },
+  { region: "South", product: "Gadget", quarter: "Q1" },
+]);
+const right = createDataFrame([
+  { region: "North", product: "Gadget", quarter: "Q2" },
+]);
+const result = left.leftJoin(right, {
+  keys: ["region", "product"],
+  suffixes: { left: "_actual", right: "_target" },
+});
+// result columns: region, product, quarter_actual, quarter_target`,
+      `// Multi-key with different names + suffixes (from getting-started-runtime-test)
+const salesData = createDataFrame([
+  { sales_region: "North", sales_product: "Widget A", sales_quarter: "Q1", sales_value: 1000 },
+]);
+const targetsData = createDataFrame([
+  { target_region: "North", target_product: "Widget A", target_quarter: "Q1", target_value: 1200 },
+]);
+salesData.leftJoin(targetsData, {
+  keys: {
+    left: ["sales_region", "sales_product", "sales_quarter"],
+    right: ["target_region", "target_product", "target_quarter"],
+  },
+  suffixes: { left: "_actual", right: "_target" },
+});`,
+      `// Chaining multiple leftJoins on same key (from no-types-reassign.test.ts)
+const patients = createDataFrame([
+  { pat_id: "P001", name: "Alice" },
+  { pat_id: "P002", name: "Bob" },
+]);
+const countsToJoin = [
+  createDataFrame([{ pat_id: "P001", num_visit_diagnoses: 3 }, { pat_id: "P002", num_visit_diagnoses: 1 }]),
+  createDataFrame([{ pat_id: "P001", num_labs: 5 }, { pat_id: "P002", num_labs: 2 }]),
+];
+const summary = countsToJoin.reduce(
+  (df, counts) => df.leftJoin(counts, "pat_id"),
+  patients,
+);`,
+      `// Error handling: validate key columns exist before join (key columns missing will throw at runtime)
+const keyCol = "user_id";
+const leftCols = left.columns();
+const rightCols = right.columns();
+if (!leftCols.includes(keyCol)) {
+  throw new Error(\`Left DataFrame missing key column "\${keyCol}". Available: \${leftCols.join(", ")}\`);
+}
+if (!rightCols.includes(keyCol)) {
+  throw new Error(\`Right DataFrame missing key column "\${keyCol}". Available: \${rightCols.join(", ")}\`);
+}
+const result = left.leftJoin(right, keyCol);`,
+    ],
+    bestPractices: [
+      "✓ Use keys: { left: \"a\", right: \"b\" } when the join key has different column names in each DataFrame",
+      "✓ Use suffixes when both tables share the same key names but have other columns with the same name (e.g. both have \"quarter\" or \"value\")",
+      "✓ For large datasets (100K+ rows), use leftJoin; it is WASM-backed and much faster than manual JS loops",
+      "✓ Check for null/undefined in right-side columns after a left join (non-matches are filled with null)",
+      "✓ Validate key columns with df.columns().includes(key) before joining when keys are dynamic",
+    ],
+    antiPatterns: [
+      "❌ Using suffixes when the key columns have different names (use keys: { left, right } instead)",
+      "❌ Using keys: { left, right } only to rename columns; that is for matching different key column names",
+    ],
+    related: ["leftJoin", "innerJoin", "performanceQuantitative"],
+  },
+
   rightJoin: {
     name: "rightJoin",
     category: "dataframe",

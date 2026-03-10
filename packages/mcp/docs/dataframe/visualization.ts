@@ -95,4 +95,93 @@ export const visualizationDocs: Record<string, DocEntry> = {
       "❌ BAD: Using graph() on empty DataFrames without checking",
     ],
   },
+
+  graphAccessorsAndValidation: {
+    name: "graph: Accessors vs column names, error handling, edge cases",
+    category: "dataframe",
+    signature: "When to use column names vs accessors; validation and error handling",
+    description:
+      "Use column names (strings) in mappings when the axis or encoding maps directly to an existing DataFrame column; use accessor functions when you need computed values, conditional logic, or values derived from multiple columns. Validate data and required columns before calling graph(); handle empty or invalid data to avoid silent empty charts. Edge cases include empty DataFrames, single-row data, all-null columns, and numeric columns that are actually strings.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [],
+    returns: "N/A (guidance)",
+    examples: [
+      `// WHEN TO USE COLUMN NAMES (prefer when possible)
+// Use a string when the column already exists and needs no transformation.
+df.graph({
+  type: "scatter",
+  mappings: { x: "date", y: "value", color: "category" }  // column names
+});
+
+// WHEN TO USE ACCESSOR FUNCTIONS
+// Use (row) => value when you need: computed value, conditional logic, or multiple columns.
+df.graph({
+  type: "scatter",
+  mappings: {
+    x: "date",
+    y: (row) => row.quantity * row.price,           // computed
+    color: (row) => row.status === "active" ? "Active" : "Inactive",  // conditional
+    size: (row) => Math.sqrt(row.volume)           // transformed
+  }
+});
+
+// Rule of thumb: column name = direct mapping, accessor = derived or conditional.`,
+      `// ERROR HANDLING: validate then render
+function safeGraph(df, spec) {
+  const required = ["x", "y"].filter(k => spec.mappings?.[k] == null);
+  if (required.length > 0) {
+    throw new Error(\`graph requires mappings.\${required.join(" and .")}\`);
+  }
+  const colNames = df.columns();
+  const resolve = (v) => typeof v === "string" ? v : null;
+  const xCol = resolve(spec.mappings.x);
+  const yCol = resolve(spec.mappings.y);
+  if (xCol && !colNames.includes(xCol)) {
+    throw new Error(\`Column "\${xCol}" not found. Available: \${colNames.join(", ")}\`);
+  }
+  if (yCol && !colNames.includes(yCol)) {
+    throw new Error(\`Column "\${yCol}" not found. Available: \${colNames.join(", ")}\`);
+  }
+  if (df.nrows() === 0) {
+    console.warn("DataFrame is empty; chart will have no data points");
+  }
+  return df.graph(spec);
+}
+
+const chart = safeGraph(df, { type: "scatter", mappings: { x: "age", y: "income" } });`,
+      `// EDGE CASES AND DATA VALIDATION
+// 1. Empty DataFrame: graph() returns a valid widget with no marks; check nrows() for UX.
+if (df.nrows() === 0) console.warn("No data to display");
+
+// 2. Single row: line/area may show a point; bar shows one bar. No error.
+// 3. All null/NaN in a mapped column: filter first or use replaceNull/replaceUndefined.
+const clean = df.filter(r => r.x != null && r.y != null && !Number.isNaN(r.y));
+clean.graph({ type: "scatter", mappings: { x: "x", y: "y" } });
+
+// 4. Column exists but wrong type (e.g. numbers as strings): mutate to number first.
+df.mutate({ valueNum: (r) => Number(r.value) })
+  .graph({ type: "line", mappings: { x: "date", y: "valueNum" } });
+
+// 5. savePNG/saveSVG: use try/catch for filesystem errors.
+try {
+  await chart.savePNG({ filename: "out.png" });
+} catch (e) {
+  console.error("Failed to save chart:", e);
+}`,
+    ],
+    bestPractices: [
+      "✓ Use column names for x, y, color, series when mapping existing columns; simpler and avoids per-row function calls",
+      "✓ Use accessor functions when you need computed values (e.g. row.a * row.b), conditional encoding, or type coercion",
+      "✓ Validate required columns (df.columns().includes(...)) before graph() when spec uses string mappings",
+      "✓ Check df.nrows() === 0 and handle in UI (message or skip chart) instead of relying on empty chart",
+      "✓ Filter or replace null/undefined/NaN in mapped columns before visualization",
+      "✓ Wrap savePNG/saveSVG in try/catch when writing to disk or when dimensions may be invalid",
+    ],
+    antiPatterns: [
+      "❌ Using accessors for every mapping when column names would suffice (reduces clarity and can affect performance)",
+      "❌ Using column names for derived values (e.g. mappings.y = 'total' when 'total' does not exist; use mutate first or an accessor)",
+      "❌ Calling graph() without checking for missing columns when mappings use strings",
+    ],
+    related: ["graph", "mutate", "filter", "replaceNull", "replaceUndefined"],
+  },
 };

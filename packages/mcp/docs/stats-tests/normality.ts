@@ -14,13 +14,13 @@ export const normalityDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "ShapiroWilkTestResult with `testStatistic`, `pValue`, `rejectNull`",
+      "ShapiroWilkTestResult with `testStatistic`, `pValue`, `alpha`; reject H0 (non-normal) when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2];",
       "const result = s.test.normality.shapiroWilk({ data });",
       "console.log(result.pValue);  // p-value",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  console.log('Data is not normally distributed');",
       "  // Consider non-parametric tests",
       "} else {",
@@ -59,13 +59,13 @@ export const normalityDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "AndersonDarlingTestResult with `testStatistic` (A²), `pValue`, `rejectNull`",
+      "AndersonDarlingTestResult with `testStatistic` (A²), `pValue`, `alpha`; reject H0 when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = [1.2, 2.3, 3.1, 4.5, 5.2, 6.1, 7.3, 8.2, 9.1];",
       "const result = s.test.normality.andersonDarling({ data });",
       "console.log(result.pValue);",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  console.log('Data is not normally distributed (p < 0.05)');",
       "}",
     ],
@@ -97,7 +97,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "DAgostinoPearsonTestResult with `testStatistic` (K²), `pValue`, `rejectNull`, `skewness`, `kurtosis`",
+      "DAgostinoPearsonTestResult with `testStatistic` (K²), `pValue`, `alpha`, `skewness`, `kurtosis`; reject H0 when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const data = Array.from({length: 50}, () => Math.random() * 10);",
@@ -139,7 +139,7 @@ export const normalityDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`",
+      "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `alpha`, `criticalValue`; reject H0 when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "// Test if data follows uniform distribution on [0, 1]",
@@ -179,14 +179,14 @@ export const normalityDocs: Record<string, DocEntry> = {
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
     returns:
-      "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `rejectNull`, `criticalValue`",
+      "KolmogorovSmirnovTestResult with `testStatistic` (D), `pValue`, `alpha`, `criticalValue`; reject H0 when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const sample1 = [1.2, 2.3, 3.4, 4.5, 5.6];",
       "const sample2 = [1.5, 2.5, 3.5, 4.5, 5.5];",
       "const result = s.test.normality.kolmogorovSmirnovTwoSample({ x: sample1, y: sample2 });",
       "console.log(result.pValue);",
-      "if (result.rejectNull) {",
+      "if (result.pValue < (result.alpha ?? 0.05)) {",
       "  console.log('Samples come from different distributions');",
       "}",
     ],
