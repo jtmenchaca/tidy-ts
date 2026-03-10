@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/dataframe",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "exports": "./mod.ts",
   "license": "MIT",
   "imports": {
