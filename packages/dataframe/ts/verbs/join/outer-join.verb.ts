@@ -299,13 +299,22 @@ export function outer_join<
 
     // Ultra-optimized typed array join
     const { leftIndices, rightIndices } = (() => {
-      // Convert to typed arrays
-      const leftTypedArrays = convertToTypedArrays(L.store.columns, leftKeys);
-      const rightTypedArrays = convertToTypedArrays(R.store.columns, rightKeys);
+      // Convert to typed arrays and gather through view index
+      const leftTypedRaw = convertToTypedArrays(L.store.columns, leftKeys);
+      const rightTypedRaw = convertToTypedArrays(R.store.columns, rightKeys);
 
-      // Map to column order
-      const leftColumnData = leftKeys.map((name) => leftTypedArrays[name]);
-      const rightColumnData = rightKeys.map((name) => rightTypedArrays[name]);
+      const leftColumnData = leftKeys.map((name) => {
+        const raw = leftTypedRaw[name];
+        const out = new Uint32Array(L.index.length);
+        for (let i = 0; i < L.index.length; i++) out[i] = raw[L.index[i]];
+        return out;
+      });
+      const rightColumnData = rightKeys.map((name) => {
+        const raw = rightTypedRaw[name];
+        const out = new Uint32Array(R.index.length);
+        for (let i = 0; i < R.index.length; i++) out[i] = raw[R.index[i]];
+        return out;
+      });
 
       // Call WASM
       try {
@@ -316,7 +325,6 @@ export function outer_join<
         const leftIndicesRaw = (wasmResult as any).takeLeft() as Uint32Array;
         const rightIndicesRaw = (wasmResult as any).takeRight() as Uint32Array;
 
-        // Convert sentinel values (0xFFFFFFFF) to null for both indices
         const leftIndices = Array.from(
           leftIndicesRaw,
           (idx: number) => idx === 0xFFFFFFFF ? null : idx,
@@ -328,14 +336,13 @@ export function outer_join<
 
         return { leftIndices, rightIndices };
       } catch {
-        // JavaScript fallback - outer join (include all rows from both sides)
+        // JavaScript fallback — columnData already view-gathered
         const rightMap = new Map<string, number[]>();
 
-        // Build right index
-        for (let i = 0; i < R.index.length; i++) {
-          const keyParts: string[] = [];
-          for (const name of rightKeys) {
-            keyParts.push(String(rightTypedArrays[name][i]));
+        for (let i = 0; i < rightColumnData[0].length; i++) {
+          const keyParts: string[] = new Array(rightColumnData.length);
+          for (let c = 0; c < rightColumnData.length; c++) {
+            keyParts[c] = String(rightColumnData[c][i]);
           }
           const key = keyParts.join("|");
           if (!rightMap.has(key)) rightMap.set(key, []);
@@ -346,11 +353,10 @@ export function outer_join<
         const rightIndices: (number | null)[] = [];
         const matchedRightIndices = new Set<number>();
 
-        // First pass: left rows (matched and unmatched)
-        for (let i = 0; i < L.index.length; i++) {
-          const keyParts: string[] = [];
-          for (const name of leftKeys) {
-            keyParts.push(String(leftTypedArrays[name][i]));
+        for (let i = 0; i < leftColumnData[0].length; i++) {
+          const keyParts: string[] = new Array(leftColumnData.length);
+          for (let c = 0; c < leftColumnData.length; c++) {
+            keyParts[c] = String(leftColumnData[c][i]);
           }
           const key = keyParts.join("|");
           const matches = rightMap.get(key);
@@ -367,8 +373,7 @@ export function outer_join<
           }
         }
 
-        // Second pass: unmatched right rows
-        for (let i = 0; i < R.index.length; i++) {
+        for (let i = 0; i < rightColumnData[0].length; i++) {
           if (!matchedRightIndices.has(i)) {
             leftIndices.push(null);
             rightIndices.push(i);

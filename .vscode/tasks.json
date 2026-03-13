@@ -18,7 +18,7 @@
     {
       "label": "deno: run current file",
       "type": "shell",
-      "command": "deno run --allow-all ${file}",
+      "command": "deno run --no-check --allow-all ${file}",
       "group": "build",
       "presentation": {
         "reveal": "always",
@@ -29,7 +29,7 @@
     {
       "label": "deno: test current file",
       "type": "shell",
-      "command": "deno test -A ${file}",
+      "command": "deno test -A --no-check ${file}",
       "group": "test",
       "presentation": {
         "reveal": "always",

@@ -117,6 +117,8 @@ function buildJoinResultOptimized(
   leftKeys: string[],
   suffixes: { left?: string; right?: string },
   rightDataFrame: any,
+  leftViewIndex: Uint32Array,
+  rightViewIndex: Uint32Array,
 ) {
   const n = leftIndices.length;
 
@@ -131,7 +133,7 @@ function buildJoinResultOptimized(
   const rightColumnNames = rightDataFrame.columns() as string[];
   const rightNameSet = new Set<string>(rightColumnNames);
 
-  // ---------- Left columns ----------
+  // ---------- Left columns — map through view index ----------
   for (let c = 0; c < leftStore.columnNames.length; c++) {
     const name = leftStore.columnNames[c] as string;
     const isKey = leftKeySet.has(name);
@@ -143,16 +145,19 @@ function buildJoinResultOptimized(
     const src = leftStore.columns[name];
     const dst = allocLikeLeft(src, n);
 
-    // Temporarily disable run-aware gathering to debug
     if (ArrayBuffer.isView(dst) && !(dst instanceof DataView)) {
-      for (let i = 0; i < n; i++) (dst as any)[i] = src[leftIndices[i]];
+      for (let i = 0; i < n; i++) {
+        (dst as any)[i] = src[leftViewIndex[leftIndices[i]]];
+      }
     } else {
-      for (let i = 0; i < n; i++) (dst as any[])[i] = src[leftIndices[i]];
+      for (let i = 0; i < n; i++) {
+        (dst as any[])[i] = src[leftViewIndex[leftIndices[i]]];
+      }
     }
     outCols[outName] = dst;
   }
 
-  // ---------- Right columns ----------
+  // ---------- Right columns — map through view index ----------
   const leftNameSet = new Set<string>(leftStore.columnNames as string[]);
 
   for (const name of rightColumnNames) {
@@ -166,8 +171,6 @@ function buildJoinResultOptimized(
     const src = rightStore.columns[name];
     const dst = allocRightArray(n);
 
-    // Gather with NULL handling + runs of RIGHT_NULL or same r
-    // If src is undefined (empty DataFrame), all values will be undefined
     let i = 0;
     while (i < n) {
       const r = rightIndices[i]!;
@@ -176,7 +179,7 @@ function buildJoinResultOptimized(
       if (r === RIGHT_NULL || !src) {
         for (let k = i; k < j; k++) (dst as any[])[k] = undefined;
       } else {
-        const val = src[r];
+        const val = src[rightViewIndex[r]];
         for (let k = i; k < j; k++) (dst as any[])[k] = val;
       }
       i = j;
@@ -291,8 +294,23 @@ export function left_join<
             left as any,
             "map-key-columns",
             () => {
-              const leftColumnData = leftKeys.map((k) => leftTyped[k]);
-              const rightColumnData = rightKeys.map((k) => rightTyped[k]);
+              // Gather only visible rows through the view index
+              const leftColumnData = leftKeys.map((k) => {
+                const raw = leftTyped[k];
+                const out = new Uint32Array(L.index.length);
+                for (let i = 0; i < L.index.length; i++) {
+                  out[i] = raw[L.index[i]];
+                }
+                return out;
+              });
+              const rightColumnData = rightKeys.map((k) => {
+                const raw = rightTyped[k];
+                const out = new Uint32Array(R.index.length);
+                for (let i = 0; i < R.index.length; i++) {
+                  out[i] = raw[R.index[i]];
+                }
+                return out;
+              });
               return { leftColumnData, rightColumnData };
             },
           );
@@ -334,10 +352,10 @@ export function left_join<
               error: error instanceof Error ? error.message : String(error),
             });
 
-            // JS fallback (typed arrays)
+            // JS fallback — columnData arrays are already view-gathered
             const map = new Map<string, number[]>();
             const rcols = rightColumnData;
-            for (let i = 0; i < R.index.length; i++) {
+            for (let i = 0; i < rcols[0].length; i++) {
               const parts: string[] = new Array(rcols.length);
               for (let c = 0; c < rcols.length; c++) {
                 parts[c] = String(rcols[c][i]);
@@ -355,7 +373,7 @@ export function left_join<
             const leftIdxArr: number[] = [];
             const rightIdxArr: number[] = [];
 
-            for (let i = 0; i < L.index.length; i++) {
+            for (let i = 0; i < lcols[0].length; i++) {
               const parts: string[] = new Array(lcols.length);
               for (let c = 0; c < lcols.length; c++) {
                 parts[c] = String(lcols[c][i]);
@@ -393,6 +411,8 @@ export function left_join<
             leftKeys,
             suffixes,
             right,
+            L.index,
+            R.index,
           );
         },
       );

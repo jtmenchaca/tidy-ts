@@ -3,6 +3,7 @@ import {
   createColumnarDataFrameFromStore,
   type DataFrame,
   type GroupedDataFrame,
+  materializeIndex,
   type Prettify,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
@@ -12,18 +13,7 @@ function getStoreAndIndex<T extends Record<string, unknown>>(df: DataFrame<T>) {
   const api: any = df as any;
   const store = api.__store;
   const view = api.__view;
-
-  const index = new Uint32Array(df.nrows());
-  for (let i = 0; i < index.length; i++) {
-    index[i] = i;
-  }
-
-  if (view?.filteredIndex) {
-    return { store, index: view.filteredIndex };
-  }
-  if (view?.sortedIndex) {
-    return { store, index: view.sortedIndex };
-  }
+  const index = materializeIndex(store.length, view);
   return { store, index };
 }
 

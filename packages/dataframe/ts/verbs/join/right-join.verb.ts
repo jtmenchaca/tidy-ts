@@ -232,13 +232,22 @@ export function right_join<
 
     // Ultra-optimized typed array join
     const { leftIndices, rightIndices } = (() => {
-      // Convert to typed arrays
-      const leftTypedArrays = convertToTypedArrays(L.store.columns, leftKeys);
-      const rightTypedArrays = convertToTypedArrays(R.store.columns, rightKeys);
+      // Convert to typed arrays and gather through view index
+      const leftTypedRaw = convertToTypedArrays(L.store.columns, leftKeys);
+      const rightTypedRaw = convertToTypedArrays(R.store.columns, rightKeys);
 
-      // Map to column order
-      const leftColumnData = leftKeys.map((name) => leftTypedArrays[name]);
-      const rightColumnData = rightKeys.map((name) => rightTypedArrays[name]);
+      const leftColumnData = leftKeys.map((name) => {
+        const raw = leftTypedRaw[name];
+        const out = new Uint32Array(L.index.length);
+        for (let i = 0; i < L.index.length; i++) out[i] = raw[L.index[i]];
+        return out;
+      });
+      const rightColumnData = rightKeys.map((name) => {
+        const raw = rightTypedRaw[name];
+        const out = new Uint32Array(R.index.length);
+        for (let i = 0; i < R.index.length; i++) out[i] = raw[R.index[i]];
+        return out;
+      });
 
       // Call WASM
       try {
@@ -249,7 +258,6 @@ export function right_join<
         const leftIndicesRaw = (wasmResult as any).takeLeft() as Uint32Array;
         const rightIndicesRaw = (wasmResult as any).takeRight() as Uint32Array;
 
-        // Convert sentinel values (0xFFFFFFFF) to null for left indices
         const leftIndices = Array.from(
           leftIndicesRaw,
           (idx: number) => idx === 0xFFFFFFFF ? null : idx,
@@ -258,49 +266,36 @@ export function right_join<
 
         return { leftIndices, rightIndices };
       } catch {
-        // JavaScript fallback - build right map and probe with left
-        const rightMap = new Map<string, number[]>();
+        // JavaScript fallback — columnData already view-gathered
+        const leftMap = new Map<string, number[]>();
 
-        // Build right index (always include all right rows)
-        for (let i = 0; i < R.index.length; i++) {
-          const keyParts: string[] = [];
-          for (const name of rightKeys) {
-            keyParts.push(String(rightTypedArrays[name][i]));
+        for (let j = 0; j < leftColumnData[0].length; j++) {
+          const keyParts: string[] = new Array(leftColumnData.length);
+          for (let c = 0; c < leftColumnData.length; c++) {
+            keyParts[c] = String(leftColumnData[c][j]);
           }
           const key = keyParts.join("|");
-          if (!rightMap.has(key)) rightMap.set(key, []);
-          rightMap.get(key)!.push(i);
+          if (!leftMap.has(key)) leftMap.set(key, []);
+          leftMap.get(key)!.push(j);
         }
 
-        // For right join, include ALL right rows
         const leftIndices: (number | null)[] = [];
         const rightIndices: number[] = [];
 
-        for (let i = 0; i < R.index.length; i++) {
-          const keyParts: string[] = [];
-          for (const name of rightKeys) {
-            keyParts.push(String(rightTypedArrays[name][i]));
+        for (let i = 0; i < rightColumnData[0].length; i++) {
+          const keyParts: string[] = new Array(rightColumnData.length);
+          for (let c = 0; c < rightColumnData.length; c++) {
+            keyParts[c] = String(rightColumnData[c][i]);
           }
           const key = keyParts.join("|");
+          const matches = leftMap.get(key);
 
-          // Find matching left rows
-          let found = false;
-          if (L.index.length > 0) {
-            for (let j = 0; j < L.index.length; j++) {
-              const leftKeyParts: string[] = [];
-              for (const name of leftKeys) {
-                leftKeyParts.push(String(leftTypedArrays[name][j]));
-              }
-              const leftKey = leftKeyParts.join("|");
-              if (leftKey === key) {
-                leftIndices.push(j);
-                rightIndices.push(i);
-                found = true;
-              }
+          if (matches) {
+            for (const j of matches) {
+              leftIndices.push(j);
+              rightIndices.push(i);
             }
-          }
-
-          if (!found) {
+          } else {
             leftIndices.push(null);
             rightIndices.push(i);
           }

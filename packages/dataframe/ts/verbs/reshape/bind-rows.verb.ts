@@ -2,6 +2,7 @@
 import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 import type { ColumnarStore } from "../../dataframe/implementation/columnar-store.ts";
 import { createColumnarDataFrameFromStore } from "../../dataframe/implementation/create-dataframe.ts";
+import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 /**
@@ -139,47 +140,63 @@ export function bind_rows<
         throw new Error("bind_rows requires at least one DataFrame argument");
       }
 
-      // COLUMNAR OPTIMIZATION: Work directly with columnar storage
-      const originalApi = df as any;
-      const originalStore = originalApi.__store as ColumnarStore;
+      // Materialize store through view index (respects filter/sort views)
+      function materializeStore(dframe: any): ColumnarStore {
+        const store = dframe.__store as ColumnarStore;
+        const view = dframe.__view;
+        const index = materializeIndex(store.length, view);
 
-      // Get all DataFrames stores for efficient columnar operations
+        // If index is identity (no view), return store as-is
+        if (index.length === store.length) {
+          let isIdentity = true;
+          for (let i = 0; i < index.length; i++) {
+            if (index[i] !== i) {
+              isIdentity = false;
+              break;
+            }
+          }
+          if (isIdentity) return store;
+        }
+
+        // Gather only visible rows
+        const columns: Record<string, unknown[]> = {};
+        for (const name of store.columnNames) {
+          const src = store.columns[name];
+          const out = new Array(index.length);
+          for (let i = 0; i < index.length; i++) out[i] = src[index[i]];
+          columns[name] = out;
+        }
+        return {
+          columns,
+          length: index.length,
+          columnNames: [...store.columnNames],
+        };
+      }
+
+      // COLUMNAR OPTIMIZATION: Work directly with columnar storage
       const allStores = tracer.withSpan(df, "collect-stores", () => {
-        const stores: ColumnarStore[] = [originalStore];
+        const stores: ColumnarStore[] = [materializeStore(df)];
         dataFrames.forEach((dframe) => {
-          const api = dframe as any;
-          stores.push(api.__store as ColumnarStore);
+          stores.push(materializeStore(dframe));
         });
         return stores;
       });
 
       // Calculate total length and get all unique column names
       const columnAnalysis = tracer.withSpan(df, "analyze-columns", () => {
-        let totalLength = originalStore.length;
+        let totalLength = 0;
         const allColumns = new Set<string>();
         const columnInsertionOrder: string[] = [];
 
-        // Add columns from original DataFrame (preserve insertion order)
-        originalStore.columnNames.forEach((col) => {
-          if (!allColumns.has(col)) {
-            allColumns.add(col);
-            columnInsertionOrder.push(col);
-          }
-        });
-
-        // Add columns from other DataFrames and calculate total length
-        dataFrames.forEach((dframe) => {
-          const api = dframe as any;
-          const store = api.__store as ColumnarStore;
+        for (const store of allStores) {
           totalLength += store.length;
-
           store.columnNames.forEach((col) => {
             if (!allColumns.has(col)) {
               allColumns.add(col);
               columnInsertionOrder.push(col);
             }
           });
-        });
+        }
 
         return { totalLength, finalColumns: columnInsertionOrder };
       });

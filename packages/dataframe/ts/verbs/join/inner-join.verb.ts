@@ -76,6 +76,8 @@ function buildJoinResult(
   suffixes: { left?: string; right?: string },
   leftDataFrame: any,
   rightDataFrame: any,
+  leftIndex: Uint32Array,
+  rightIndex: Uint32Array,
 ) {
   const n = leftIndices.length;
   const outCols: Record<string, unknown[]> = {};
@@ -90,7 +92,7 @@ function buildJoinResult(
   const rightColumnNames = rightDataFrame.columns() as string[];
   const leftNameSet = new Set(leftColumnNames);
 
-  // Add left columns
+  // Add left columns — map through view index to get physical store positions
   for (const name of leftColumnNames) {
     const hasConflict = !leftKeySet.has(name) &&
       rightColumnNames.includes(name);
@@ -100,14 +102,14 @@ function buildJoinResult(
     const src = leftStore.columns[name];
     const dst = new Array(n);
     for (let i = 0; i < n; i++) {
-      dst[i] = src?.[leftIndices[i]];
+      dst[i] = src?.[leftIndex[leftIndices[i]]];
     }
     outCols[outName] = dst;
   }
 
   // Add right columns (skip keys that match left keys)
   for (const name of rightColumnNames) {
-    if (leftKeySet.has(name) && leftKeys.includes(name)) continue; // Skip duplicate keys
+    if (leftKeySet.has(name) && leftKeys.includes(name)) continue;
 
     const hasConflict = leftNameSet.has(name);
     const outName = hasConflict && rightSuffix ? `${name}${rightSuffix}` : name;
@@ -116,7 +118,7 @@ function buildJoinResult(
     const src = rightStore.columns[name];
     const dst = new Array(n);
     for (let i = 0; i < n; i++) {
-      dst[i] = src?.[rightIndices[i]];
+      dst[i] = src?.[rightIndex[rightIndices[i]]];
     }
     outCols[outName] = dst;
   }
@@ -200,21 +202,29 @@ export function inner_join<
         left,
         "join-operation",
         () => {
-          // Convert to typed arrays
-          const leftTypedArrays = convertToTypedArrays(
+          // Convert to typed arrays and gather through view index
+          const leftTypedRaw = convertToTypedArrays(
             L.store.columns,
             leftKeys,
           );
-          const rightTypedArrays = convertToTypedArrays(
+          const rightTypedRaw = convertToTypedArrays(
             R.store.columns,
             rightKeys,
           );
 
-          // Map to column order
-          const leftColumnData = leftKeys.map((name) => leftTypedArrays[name]);
-          const rightColumnData = rightKeys.map((name) =>
-            rightTypedArrays[name]
-          );
+          // Gather only visible rows through the view index
+          const leftColumnData = leftKeys.map((name) => {
+            const raw = leftTypedRaw[name];
+            const out = new Uint32Array(L.index.length);
+            for (let i = 0; i < L.index.length; i++) out[i] = raw[L.index[i]];
+            return out;
+          });
+          const rightColumnData = rightKeys.map((name) => {
+            const raw = rightTypedRaw[name];
+            const out = new Uint32Array(R.index.length);
+            for (let i = 0; i < R.index.length; i++) out[i] = raw[R.index[i]];
+            return out;
+          });
 
           // Call WASM
           try {
@@ -226,29 +236,26 @@ export function inner_join<
             const rightIndices = Array.from((wasmResult as any).takeRight());
             return { leftIndices, rightIndices };
           } catch {
-            // Fallback to JavaScript implementation
-            // JavaScript fallback
+            // JavaScript fallback — columnData arrays are already view-gathered
             const rightMap = new Map<string, number[]>();
 
-            // Build right index
-            for (let i = 0; i < R.index.length; i++) {
-              const keyParts: string[] = [];
-              for (const name of rightKeys) {
-                keyParts.push(String(rightTypedArrays[name][i]));
+            for (let i = 0; i < rightColumnData[0].length; i++) {
+              const keyParts: string[] = new Array(rightColumnData.length);
+              for (let c = 0; c < rightColumnData.length; c++) {
+                keyParts[c] = String(rightColumnData[c][i]);
               }
               const key = keyParts.join("|");
               if (!rightMap.has(key)) rightMap.set(key, []);
               rightMap.get(key)!.push(i);
             }
 
-            // Probe with left
             const leftIndices: number[] = [];
             const rightIndices: number[] = [];
 
-            for (let i = 0; i < L.index.length; i++) {
-              const keyParts: string[] = [];
-              for (const name of leftKeys) {
-                keyParts.push(String(leftTypedArrays[name][i]));
+            for (let i = 0; i < leftColumnData[0].length; i++) {
+              const keyParts: string[] = new Array(leftColumnData.length);
+              for (let c = 0; c < leftColumnData.length; c++) {
+                keyParts[c] = String(leftColumnData[c][i]);
               }
               const key = keyParts.join("|");
               const matches = rightMap.get(key);
@@ -283,6 +290,8 @@ export function inner_join<
         suffixes,
         left,
         right,
+        L.index,
+        R.index,
       );
       const outDf = createColumnarDataFrameFromStore(
         outStore,
