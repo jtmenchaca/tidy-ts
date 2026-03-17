@@ -94,12 +94,17 @@ try {
       "alternative?: 'two-sided' | 'less' | 'greater'",
       "alpha?: number",
     ],
-    returns: "SpearmanCorrelationTestResult with .correlation (rho), .pValue, .alpha; significant when pValue < alpha",
+    returns:
+      "SpearmanCorrelationTestResult with .correlation (rho), .pValue, .alpha; significant when pValue < alpha",
     examples: [
       "const result = s.test.correlation.spearman({ x: [1,2,3,4,5], y: [10,20,30,40,50] });\nconsole.log(result.correlation);  // Spearman's rho",
       'const result = s.test.correlation.spearman({\n  x: df.extract("satisfaction_rank"),\n  y: df.extract("loyalty_score"),\n});\nconsole.log(result.correlation);',
     ],
-    related: ["s.test.correlation.pearson", "s.test.correlation.kendall", "extract"],
+    related: [
+      "s.test.correlation.pearson",
+      "s.test.correlation.kendall",
+      "extract",
+    ],
     bestPractices: [
       "✓ GOOD: Use for monotonic relationships",
       "✓ GOOD: Use when data has outliers or ordinal data",

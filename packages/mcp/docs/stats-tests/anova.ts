@@ -123,7 +123,7 @@ export const anovaDocs: Record<string, DocEntry> = {
     ],
     related: ["s.test.anova.oneWay", "s.test.anova.welch"],
   },
-
+ 
   "s.test.variance.levene": {
     name: "s.test.variance.levene",
     category: "stats-tests",
@@ -136,7 +136,8 @@ export const anovaDocs: Record<string, DocEntry> = {
       "`groups: number[][]` - Array of groups to test for equal variances",
       "`alpha?: number` - Significance level (default: 0.05)",
     ],
-    returns: "OneWayAnovaTestResult with F-statistic, `pValue`, `alpha`; significant when pValue < alpha",
+    returns:
+      "OneWayAnovaTestResult with F-statistic, `pValue`, `alpha`; significant when pValue < alpha",
     examples: [
       'import { stats as s } from "@tidy-ts/dataframe";',
       "const group1 = [1, 2, 3, 4, 5];",

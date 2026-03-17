@@ -157,8 +157,8 @@ if (!rightCols.includes(keyCol)) {
 const result = left.leftJoin(right, keyCol);`,
     ],
     bestPractices: [
-      "✓ Use keys: { left: \"a\", right: \"b\" } when the join key has different column names in each DataFrame",
-      "✓ Use suffixes when both tables share the same key names but have other columns with the same name (e.g. both have \"quarter\" or \"value\")",
+      '✓ Use keys: { left: "a", right: "b" } when the join key has different column names in each DataFrame',
+      '✓ Use suffixes when both tables share the same key names but have other columns with the same name (e.g. both have "quarter" or "value")',
       "✓ For large datasets (100K+ rows), use leftJoin; it is WASM-backed and much faster than manual JS loops",
       "✓ Check for null/undefined in right-side columns after a left join (non-matches are filled with null)",
       "✓ Validate key columns with df.columns().includes(key) before joining when keys are dynamic",

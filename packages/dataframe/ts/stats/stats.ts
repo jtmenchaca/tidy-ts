@@ -483,9 +483,11 @@ export const stats: {
       /** D'Agostino-Pearson (skewness-kurtosis) normality test */
       readonly dagostinoPearson: typeof statisticalTests.dagostinoPearsonTest;
       /** One-sample Kolmogorov-Smirnov test vs uniform distribution */
-      readonly kolmogorovSmirnovUniform: typeof statisticalTests.kolmogorovSmirnovUniformTest;
+      readonly kolmogorovSmirnovUniform:
+        typeof statisticalTests.kolmogorovSmirnovUniformTest;
       /** Two-sample Kolmogorov-Smirnov test */
-      readonly kolmogorovSmirnovTwoSample: typeof statisticalTests.kolmogorovSmirnovTest;
+      readonly kolmogorovSmirnovTwoSample:
+        typeof statisticalTests.kolmogorovSmirnovTest;
     };
   };
 

@@ -11,7 +11,9 @@ export const performanceDocs: Record<string, DocEntry> = {
     signature: "Benchmark results (500K rows, typical hardware)",
     description:
       "Tidy-TS is benchmarked against other libraries on 500K-row datasets. Joins and sort are WASM-backed; filter uses BitSet masks. Numbers below are from actual benchmark runs; use them to set expectations and choose when to rely on WASM vs JS paths.",
-    imports: ['import { createDataFrame, stats as s } from "@tidy-ts/dataframe";'],
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
     returns: "Reference timings for performance tuning",
     examples: [
       `// 500K ROWS - REFERENCE TIMINGS (tidy-ts baseline = 1.0)
@@ -81,7 +83,8 @@ result.print(); // Materialization happens here: only visible rows are read from
   performanceCopyOnWrite: {
     name: "Performance: Copy-on-write semantics",
     category: "dataframe",
-    signature: "Unchanged columns are shared; only new/changed columns are new arrays",
+    signature:
+      "Unchanged columns are shared; only new/changed columns are new arrays",
     description:
       "DataFrames are immutable at the API level, but internally unchanged column arrays are shared between the original and the transformed DataFrame. When you mutate() or add columns, only the new column is allocated; existing columns are referenced, not copied. When you select() a subset of columns, the kept columns are shared. Copy-on-write keeps memory usage low and avoids unnecessary allocation when building pipelines.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -115,7 +118,9 @@ const narrow = wide.select("a", "c");
     signature: "Guidance for optimal performance",
     description:
       "Use column access for single-column reads; use WASM-backed functions for large arrays and joins/sort; chain filters instead of one complex predicate when you want mask combination; use extract() when a stats function needs an array. Prefer creation from columns when you already have column arrays.",
-    imports: ['import { createDataFrame, stats as s } from "@tidy-ts/dataframe";'],
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
     returns: "N/A (guidance)",
     examples: [
       `// Single column: use df.columnName (direct array), not toArray().map(r => r.x)
@@ -130,13 +135,13 @@ df.arrange("date", "name"); // WASM sort`,
 df.filter(r => r.a > 0).filter(r => r.b < 10); // Two masks AND'd`,
     ],
     bestPractices: [
-      "✓ Column access: df.x or df[\"x\"] for reading one column; avoid toArray() for that",
+      '✓ Column access: df.x or df["x"] for reading one column; avoid toArray() for that',
       "✓ WASM for scale: joins, arrange, s.mean, s.stdev, s.test.* on large data",
       "✓ extract(): when a function needs a plain array from a column",
       "✓ Chained filters: combine with BitSet AND; no need to merge into one predicate",
     ],
     antiPatterns: [
-      "❌ Using toArray().map(r => r.col) instead of df.col or df.extract(\"col\")",
+      '❌ Using toArray().map(r => r.col) instead of df.col or df.extract("col")',
       "❌ Hand-written JS join/sort on large DataFrames; use leftJoin/arrange",
     ],
     related: ["architecture", "filter", "leftJoin", "arrange", "extract"],
@@ -148,7 +153,9 @@ df.filter(r => r.a > 0).filter(r => r.b < 10); // Two masks AND'd`,
     signature: "Wide vs long, grouped vs ungrouped, creation from columns",
     description:
       "For very wide tables, select() only the columns you need before heavy work to reduce memory and iteration. For creation, prefer createDataFrame({ columns: { ... } }) when you already have column arrays to avoid building rows. Grouped operations respect the view mask; ungrouped mutate/summarize see only visible rows. These patterns help in edge cases and large datasets.",
-    imports: ['import { createDataFrame, stats as s } from "@tidy-ts/dataframe";'],
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
     returns: "N/A (guidance)",
     examples: [
       `// Creation: from columns when you have arrays (no row materialization)

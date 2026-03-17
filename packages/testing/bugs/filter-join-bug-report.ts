@@ -104,7 +104,11 @@ const rightIds = rightResult.extract("id");
 const rightValues = rightResult.extract("value");
 const rightLabels = rightResult.extract("label");
 for (let i = 0; i < rightIds.length; i++) {
-  console.log(`  row ${i}: id=${rightIds[i]}, value=${rightValues[i]}, label=${rightLabels[i]}`);
+  console.log(
+    `  row ${i}: id=${rightIds[i]}, value=${rightValues[i]}, label=${
+      rightLabels[i]
+    }`,
+  );
 }
 
 // ── outerJoin ────────────────────────────────────────────────────────────────
@@ -120,7 +124,11 @@ const outerIds = outerResult.extract("id");
 const outerValues = outerResult.extract("value");
 const outerLabels = outerResult.extract("label");
 for (let i = 0; i < outerIds.length; i++) {
-  console.log(`  row ${i}: id=${outerIds[i]}, value=${outerValues[i]}, label=${outerLabels[i]}`);
+  console.log(
+    `  row ${i}: id=${outerIds[i]}, value=${outerValues[i]}, label=${
+      outerLabels[i]
+    }`,
+  );
 }
 
 // ── asofJoin ─────────────────────────────────────────────────────────────────
@@ -199,7 +207,9 @@ console.log(
 console.log("\n" + "═".repeat(72));
 console.log("BUG 2: rightJoin / outerJoin SCRAMBLED MATCHING (with filter)");
 console.log("First: confirm they work correctly on UNFILTERED data.");
-console.log("Then: show they produce scrambled results when filter is involved.");
+console.log(
+  "Then: show they produce scrambled results when filter is involved.",
+);
 console.log("═".repeat(72));
 
 // ── rightJoin on unfiltered data ─────────────────────────────────────────────
@@ -217,7 +227,9 @@ console.log("Left:");
 leftDf.print();
 console.log("Right:");
 rightDf.print();
-console.log("Expected rightJoin: id=2 → left_val=B, right_val=X; id=3 → left_val=null, right_val=Y");
+console.log(
+  "Expected rightJoin: id=2 → left_val=B, right_val=X; id=3 → left_val=null, right_val=Y",
+);
 const rj = leftDf.rightJoin(rightDf, "id");
 rj.print();
 const rjIds = rj.extract("id");
@@ -233,7 +245,9 @@ for (let i = 0; i < rjIds.length; i++) {
     ? (lv == null) && rv === "Y"
     : false;
   console.log(
-    `  id=${id}, left_val=${lv}, right_val=${rv} — ${expected ? "PASS" : "BUG: values misaligned"}`,
+    `  id=${id}, left_val=${lv}, right_val=${rv} — ${
+      expected ? "PASS" : "BUG: values misaligned"
+    }`,
   );
 }
 
@@ -257,7 +271,9 @@ for (let i = 0; i < ojIds.length; i++) {
   else if (id === 2) expected = lv === "B" && rv === "X";
   else if (id === 3) expected = lv == null && rv === "Y";
   console.log(
-    `  id=${id}, left_val=${lv}, right_val=${rv} — ${expected ? "PASS" : "BUG: values misaligned"}`,
+    `  id=${id}, left_val=${lv}, right_val=${rv} — ${
+      expected ? "PASS" : "BUG: values misaligned"
+    }`,
   );
 }
 
@@ -295,14 +311,18 @@ for (let i = 0; i < rjuIds.length; i++) {
   else if (id === 30) expected = c === "green" && sh === "square";
   else if (id === 40) expected = c == null && sh === "triangle";
   console.log(
-    `  id=${id}, color=${c}, shape=${sh} — ${expected ? "PASS" : "BUG: values misaligned"}`,
+    `  id=${id}, color=${c}, shape=${sh} — ${
+      expected ? "PASS" : "BUG: values misaligned"
+    }`,
   );
 }
 
 // ── rightJoin WITH filter — scrambled matching ──────────────────────────────
 
 console.log("\n=== rightJoin WITH FILTER — scrambled matching ===");
-console.log("Using the original filtered DataFrame (ids 2, 3) joined with other (ids 1, 2, 3):");
+console.log(
+  "Using the original filtered DataFrame (ids 2, 3) joined with other (ids 1, 2, 3):",
+);
 console.log("Expected: id=1 → value=null (filtered out), label=one");
 console.log("          id=2 → value=20, label=two");
 console.log("          id=3 → value=30, label=three");
@@ -319,7 +339,9 @@ for (let i = 0; i < rjFilteredIds.length; i++) {
   else if (id === 2) expected = v === 20 && l === "two";
   else if (id === 3) expected = v === 30 && l === "three";
   console.log(
-    `  id=${id}, value=${v}, label=${l} — ${expected ? "PASS" : "BUG: values misaligned"}`,
+    `  id=${id}, value=${v}, label=${l} — ${
+      expected ? "PASS" : "BUG: values misaligned"
+    }`,
   );
 }
 
@@ -342,7 +364,9 @@ for (let i = 0; i < ojFilteredIds.length; i++) {
   else if (id === 2) expected = v === 20 && l === "two";
   else if (id === 3) expected = v === 30 && l === "three";
   console.log(
-    `  id=${id}, value=${v}, label=${l} — ${expected ? "PASS" : "BUG: values misaligned"}`,
+    `  id=${id}, value=${v}, label=${l} — ${
+      expected ? "PASS" : "BUG: values misaligned"
+    }`,
   );
 }
 
@@ -403,7 +427,9 @@ console.log(
 
 // ── materialize via toArray() + createDataFrame ─────────────────────────────
 
-console.log("\n=== Materialize: createDataFrame(filtered.toArray()) → innerJoin ===");
+console.log(
+  "\n=== Materialize: createDataFrame(filtered.toArray()) → innerJoin ===",
+);
 const materializedArr = filtered.toArray();
 console.log("toArray() returned", materializedArr.length, "rows");
 const materialized = createDataFrame(materializedArr);
@@ -461,9 +487,7 @@ const emptyResult = emptyFiltered.innerJoin(other, "id");
 emptyResult.print();
 console.log(
   `Actual: ${emptyResult.nrows()} rows — ${
-    emptyResult.nrows() === 0
-      ? "PASS"
-      : "BUG: all filtered-out rows reappeared"
+    emptyResult.nrows() === 0 ? "PASS" : "BUG: all filtered-out rows reappeared"
   }`,
 );
 
@@ -643,23 +667,63 @@ console.log("SUMMARY");
 console.log("═".repeat(72));
 
 console.log("\nBug 1: filter() view ignored by hash-based joins:");
-console.log(`  innerJoin after filter:        ${innerResult.nrows()} rows (expected 2)`);
-console.log(`  leftJoin after filter:         ${leftResult.nrows()} rows (expected 2)`);
-console.log(`  asofJoin after filter:         ${asofResult.nrows()} rows (expected 2)`);
-console.log(`  innerJoin filter on right:     ${rightFilteredResult.nrows()} rows (expected 2)`);
-console.log(`  chained filter → join:         ${chainResult.nrows()} rows (expected 1)`);
-console.log(`  filter → select → join:        ${selectResult.nrows()} rows (expected 2)`);
-console.log(`  filter → mutate → join:        ${mutateResult.nrows()} rows (expected 2)`);
-console.log(`  filter → summarize → join:     ${groupResult.nrows()} rows (expected 2)`);
-console.log(`  filter → toArray → new DF → join: ${materializeResult.nrows()} rows (expected 2)`);
-console.log(`  filter → rename → join:        ${renameResult.nrows()} rows (expected 2)`);
-console.log(`  no-op filter → join:           ${noopResult.nrows()} rows (expected 3)`);
-console.log(`  empty filter → join:           ${emptyResult.nrows()} rows (expected 0)`);
-console.log(`  join then filter (control):    ${filterAfter.nrows()} rows (expected 2)`);
-console.log(`  filter BOTH sides → join:      ${bothFilteredResult.nrows()} rows (expected 1)`);
-console.log(`  buggy join → filter → join:    ${secondJoin.nrows()} rows (expected 2)`);
-console.log(`  filter → arrange → join:       ${arrangeResult.nrows()} rows (expected 2)`);
-console.log(`  filter → sliceHead → join:     ${sliceResult.nrows()} rows (expected 1)`);
-console.log(`  bindRows(filtered) → join:     ${bindResult.nrows()} rows (expected 2)`);
-console.log(`  multi-key join with filter:    ${multiResult.nrows()} rows (expected 2)`);
-console.log(`  1-to-many join with filter:    ${oneToManyResult.nrows()} rows (expected 3)`);
+console.log(
+  `  innerJoin after filter:        ${innerResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  leftJoin after filter:         ${leftResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  asofJoin after filter:         ${asofResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  innerJoin filter on right:     ${rightFilteredResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  chained filter → join:         ${chainResult.nrows()} rows (expected 1)`,
+);
+console.log(
+  `  filter → select → join:        ${selectResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → mutate → join:        ${mutateResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → summarize → join:     ${groupResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → toArray → new DF → join: ${materializeResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → rename → join:        ${renameResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  no-op filter → join:           ${noopResult.nrows()} rows (expected 3)`,
+);
+console.log(
+  `  empty filter → join:           ${emptyResult.nrows()} rows (expected 0)`,
+);
+console.log(
+  `  join then filter (control):    ${filterAfter.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter BOTH sides → join:      ${bothFilteredResult.nrows()} rows (expected 1)`,
+);
+console.log(
+  `  buggy join → filter → join:    ${secondJoin.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → arrange → join:       ${arrangeResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  filter → sliceHead → join:     ${sliceResult.nrows()} rows (expected 1)`,
+);
+console.log(
+  `  bindRows(filtered) → join:     ${bindResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  multi-key join with filter:    ${multiResult.nrows()} rows (expected 2)`,
+);
+console.log(
+  `  1-to-many join with filter:    ${oneToManyResult.nrows()} rows (expected 3)`,
+);

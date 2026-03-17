@@ -315,7 +315,9 @@ export class GLMM<Row extends Record<string, number | string>> {
     const ses = this.std_errors;
     for (let i = 0; i < names.length; i++) {
       console.log(
-        `  ${names[i].padEnd(15)} ${coefs[i].toFixed(4).padStart(10)}  (SE: ${ses[i].toFixed(4)})`,
+        `  ${names[i].padEnd(15)} ${coefs[i].toFixed(4).padStart(10)}  (SE: ${
+          ses[i].toFixed(4)
+        })`,
       );
     }
 

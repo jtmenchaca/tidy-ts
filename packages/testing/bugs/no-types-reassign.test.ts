@@ -271,10 +271,7 @@ Deno.test("workaround: leftJoin with reduce pattern", () => {
   });
 });
 
-
-
 // ============================================================================
-
 
 Deno.test("IDEAL: mutate skips undefined values", () => {
   const baseSummary = createDataFrame([
@@ -290,10 +287,10 @@ Deno.test("IDEAL: mutate skips undefined values", () => {
   // undefined values just don't create columns - no skipUndefined option needed
   // This is the natural behavior: "I want these columns if they exist"
   const result = baseSummary
-  .mutate({
-    num_visit_diagnoses: results.visit_diagnoses?.nrows(),
-    num_medications: results.medications?.nrows(),
-  })
+    .mutate({
+      num_visit_diagnoses: results.visit_diagnoses?.nrows(),
+      num_medications: results.medications?.nrows(),
+    });
 
   expect(result.columns()).toContain("num_visit_diagnoses");
   expect(result.columns()).not.toContain("num_medications"); // not added because undefined

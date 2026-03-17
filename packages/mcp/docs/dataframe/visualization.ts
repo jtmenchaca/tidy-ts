@@ -99,7 +99,8 @@ export const visualizationDocs: Record<string, DocEntry> = {
   graphAccessorsAndValidation: {
     name: "graph: Accessors vs column names, error handling, edge cases",
     category: "dataframe",
-    signature: "When to use column names vs accessors; validation and error handling",
+    signature:
+      "When to use column names vs accessors; validation and error handling",
     description:
       "Use column names (strings) in mappings when the axis or encoding maps directly to an existing DataFrame column; use accessor functions when you need computed values, conditional logic, or values derived from multiple columns. Validate data and required columns before calling graph(); handle empty or invalid data to avoid silent empty charts. Edge cases include empty DataFrames, single-row data, all-null columns, and numeric columns that are actually strings.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
