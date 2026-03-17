@@ -15,6 +15,7 @@ import {
   createSyncMethodsHandler,
   createWriteCSVMethodHandler,
   processAsyncMethodResult,
+  SYNC_METHODS,
 } from "./handlers/shared-handler-utils.ts";
 import { wrapThenable } from "./utils.ts";
 // No longer importing handleGroupedSyncMethodCall - inlined below
@@ -55,11 +56,8 @@ export function thenableGroupedDataFrame<
       const symbolResult = symbolHandler(prop, gdfOrPromise, p);
       if (symbolResult !== null) return symbolResult;
 
-      // Special handling for internal properties and core methods that should not be wrapped in function calls
-      // For sync contexts (like probe testing), provide immediate access to resolved value
-      const syncMethods = ["nrows", "extract", "toArray", "columns"];
       const syncHandler = createSyncMethodsHandler<GroupedDataFrame<Row, K>>(
-        syncMethods,
+        SYNC_METHODS,
       );
       const syncResult = syncHandler(prop, gdfOrPromise, p);
       if (syncResult !== null) return syncResult;

@@ -38,7 +38,8 @@ import {
   createNumericIndexHandler, // Handles row access like df[0]
   createPrintMethodHandler, // Handles print() method specially
   createSymbolPropertyHandler, // Handles Symbol properties
-  createSyncMethodsHandler, // Handles sync methods like nrows(), toArray()
+  createSyncMethodsHandler, // Handles sync methods like nrows(), toRows()
+  SYNC_METHODS,
 } from "./handlers/shared-handler-utils.ts";
 // Import async method forwarding handler
 import { handleMethodForwarding } from "./handlers/method-forwarding-handler.ts";
@@ -99,11 +100,9 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
         return symbolResult; // Return symbol property value directly
       }
 
-      // Handle core DataFrame methods that need immediate access (not wrapped in functions)
-      // These are methods that should work directly on the thenable without await
-      // Examples: df.nrows(), df.toArray(), df.columns()
-      const syncMethods = ["nrows", "extract", "toArray", "columns"];
-      const syncHandler = createSyncMethodsHandler<DataFrame<Row>>(syncMethods);
+      const syncHandler = createSyncMethodsHandler<DataFrame<Row>>(
+        SYNC_METHODS,
+      );
       const syncResult = syncHandler(prop, dfOrPromise, p);
       if (syncResult !== null) {
         return syncResult; // Return method result directly

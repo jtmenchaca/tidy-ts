@@ -53,6 +53,8 @@ export function makeDataFrameProbe<Row extends object>(
       ) => [colName, store.columns[colName]]),
     ),
     toArray: () => df.toArray(),
+    toRows: () => df.toRows(),
+    toColumns: () => df.toColumns(),
     // Add ALL DataFrame methods that might be called in summarise functions
     // Core methods
     mutate: () => makeDataFrameProbe(df),

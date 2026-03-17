@@ -1,13 +1,22 @@
 import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { z } from "zod";
 
 // Test data with null values
-const testData = createDataFrame([
-  { id: 1, name: "Luke", homeworld: "Tatooine", mass: 77 },
-  { id: 2, name: "Vader", homeworld: null, mass: 89 },
-  { id: 3, name: "Leia", homeworld: "Alderaan", mass: null },
-  { id: 4, name: "Han", homeworld: null, mass: null },
-]);
+const testData = createDataFrame(
+  [
+    { id: 1, name: "Luke", homeworld: "Tatooine", mass: 77 },
+    { id: 2, name: "Vader", homeworld: null, mass: 89 },
+    { id: 3, name: "Leia", homeworld: "Alderaan", mass: null },
+    { id: 4, name: "Han", homeworld: null, mass: null },
+  ],
+  z.object({
+    id: z.number(),
+    name: z.string(),
+    homeworld: z.string().nullable(),
+    mass: z.number().nullable(),
+  }),
+);
 
 Deno.test("removeNull removes only null values", () => {
   const result = testData.removeNull("homeworld");

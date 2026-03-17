@@ -135,7 +135,12 @@ export type DataFrame<Row extends object = object> =
 
     at(index: number): Row | undefined;
 
+    /** @deprecated Use toRows() instead */
     toArray(): readonly Row[];
+
+    toRows(): Row[];
+
+    toColumns(): { [K in keyof Row]: Row[K][] };
 
     toJSON(options?: { space?: number }): string;
 

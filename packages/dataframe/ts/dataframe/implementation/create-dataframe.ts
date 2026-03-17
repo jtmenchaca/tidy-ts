@@ -117,10 +117,8 @@ export function createColumnarDataFrameFromStore<
     return row;
   };
 
-  // Array conversion (for compatibility - avoid if possible)
-  api.toArray = () => {
+  api.toRows = () => {
     const currentStore = (api as any).__store;
-
     const idx = materializeIndex(currentStore.length, (api as any).__view);
     const result: Row[] = new Array(idx.length);
     for (let i = 0; i < idx.length; i++) {
@@ -132,6 +130,20 @@ export function createColumnarDataFrameFromStore<
     }
     return result;
   };
+
+  api.toColumns = () => {
+    const currentStore = (api as any).__store;
+    const idx = materializeIndex(currentStore.length, (api as any).__view);
+    const result = {} as Record<string, unknown[]>;
+    for (const colName of currentStore.columnNames) {
+      const col = currentStore.columns[colName];
+      result[colName] = Array.from(idx, (i: number) => col[i]);
+    }
+    return result;
+  };
+
+  // @deprecated - use toRows() instead
+  api.toArray = () => api.toRows();
 
   // JSON conversion with nested DataFrame support
   api.toJSON = (options?: { space?: number }) => {

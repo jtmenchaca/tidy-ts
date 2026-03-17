@@ -49,6 +49,64 @@ Deno.test("DataFrame View System - Edge Cases and Limits", () => {
   console.log("✅ Basic operations work correctly");
 });
 
+Deno.test("toRows returns mutable array of row objects", () => {
+  const df = createDataFrame([
+    { id: 1, name: "Alice", value: 10 },
+    { id: 2, name: "Bob", value: 20 },
+  ]);
+
+  const rows = df.toRows();
+  expect(Array.isArray(rows)).toBe(true);
+  expect(rows.length).toBe(2);
+  expect(rows[0]).toEqual({ id: 1, name: "Alice", value: 10 });
+  expect(rows[1]).toEqual({ id: 2, name: "Bob", value: 20 });
+
+  // mutable — can push without type error
+  rows.push({ id: 3, name: "Charlie", value: 30 });
+  expect(rows.length).toBe(3);
+});
+
+Deno.test("toColumns returns columnar object", () => {
+  const df = createDataFrame([
+    { id: 1, name: "Alice", value: 10 },
+    { id: 2, name: "Bob", value: 20 },
+  ]);
+
+  const cols = df.toColumns();
+  expect(cols.id).toEqual([1, 2]);
+  expect(cols.name).toEqual(["Alice", "Bob"]);
+  expect(cols.value).toEqual([10, 20]);
+});
+
+Deno.test("toRows and toColumns work on filtered DataFrames", () => {
+  const df = createDataFrame([
+    { id: 1, name: "Alice", active: true },
+    { id: 2, name: "Bob", active: false },
+    { id: 3, name: "Charlie", active: true },
+  ]);
+
+  const filtered = df.filter((r) => r.active);
+
+  const rows = filtered.toRows();
+  expect(rows.length).toBe(2);
+  expect(rows[0].name).toBe("Alice");
+  expect(rows[1].name).toBe("Charlie");
+
+  const cols = filtered.toColumns();
+  expect(cols.id).toEqual([1, 3]);
+  expect(cols.name).toEqual(["Alice", "Charlie"]);
+  expect(cols.active).toEqual([true, true]);
+});
+
+Deno.test("toArray delegates to toRows", () => {
+  const df = createDataFrame([
+    { id: 1, name: "Alice" },
+    { id: 2, name: "Bob" },
+  ]);
+
+  expect(df.toArray()).toEqual(df.toRows());
+});
+
 Deno.test("DataFrame - Large Dataset Handling", () => {
   console.log("\n=== Large Dataset Handling ===");
 

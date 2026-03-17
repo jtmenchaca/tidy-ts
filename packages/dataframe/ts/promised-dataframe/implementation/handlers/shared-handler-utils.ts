@@ -239,6 +239,16 @@ export function createSymbolPropertyHandler<T>() {
   );
 }
 
+/** Sync methods that should be accessible without await on thenable DataFrames */
+export const SYNC_METHODS = [
+  "nrows",
+  "extract",
+  "toArray",
+  "toRows",
+  "toColumns",
+  "columns",
+];
+
 /**
  * Create a sync methods handler for specific method names
  * Common pattern for internal properties and core methods
