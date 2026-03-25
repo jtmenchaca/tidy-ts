@@ -1,3 +1,5 @@
+import { all } from "./aggregate/all.ts";
+import { any } from "./aggregate/any.ts";
 import { sum } from "./aggregate/sum.ts";
 import { mean } from "./descriptive/central-tendency/mean.ts";
 import { median } from "./descriptive/central-tendency/median.ts";
@@ -103,6 +105,10 @@ import {
  * ```
  */
 export const stats: {
+  /** Check if any value in a boolean array is true */
+  readonly any: typeof any;
+  /** Check if all values in a boolean array are true */
+  readonly all: typeof all;
   /** Calculate the sum of numeric values */
   readonly sum: typeof sum;
   /** Calculate the arithmetic mean (average) of numeric values */
@@ -558,6 +564,10 @@ export const stats: {
     };
   };
 } = {
+  // Boolean aggregates
+  any,
+  all,
+
   // Basic statistics
   sum,
   mean,

@@ -3,6 +3,8 @@
  */
 
 import { expect } from "@std/expect";
+import { all } from "./all.ts";
+import { any } from "./any.ts";
 import { max } from "./max.ts";
 import { min } from "./min.ts";
 import { mean } from "../descriptive/central-tendency/mean.ts";
@@ -393,6 +395,148 @@ Deno.test("TYPE: mean overloads return correct types", () => {
     removeNull: true,
   });
   const _t5: number | null = r5;
+
+  void [_t1, _t2, _t3, _t4, _t5];
+});
+
+// ============================================================================
+// ANY TESTS
+// ============================================================================
+
+Deno.test("any - single boolean value", () => {
+  expect(any(true)).toBe(true);
+  expect(any(false)).toBe(false);
+});
+
+Deno.test("any - clean boolean array", () => {
+  expect(any([true, false, false])).toBe(true);
+  expect(any([false, false, false])).toBe(false);
+  expect(any([true, true, true])).toBe(true);
+});
+
+Deno.test("any - empty array returns null", () => {
+  expect(any([])).toBe(null);
+});
+
+Deno.test("any - array with null (no removal) returns null", () => {
+  expect(any([null, true])).toBe(null);
+  expect(any([false, null])).toBe(null);
+});
+
+Deno.test("any - array with null (removeNull: true)", () => {
+  expect(any([null, true], { removeNull: true })).toBe(true);
+  expect(any([null, false], { removeNull: true })).toBe(false);
+  expect(any([null, null], { removeNull: true })).toBe(null);
+});
+
+Deno.test("any - array with undefined (no removal) returns null", () => {
+  expect(any([undefined, true])).toBe(null);
+});
+
+Deno.test("any - array with undefined (removeUndefined: true)", () => {
+  expect(any([undefined, true], { removeUndefined: true })).toBe(true);
+  expect(any([undefined, false], { removeUndefined: true })).toBe(false);
+});
+
+Deno.test("any - mixed null and undefined with both flags", () => {
+  expect(any([null, undefined, true], { removeNull: true, removeUndefined: true })).toBe(true);
+  expect(any([null, undefined, false], { removeNull: true, removeUndefined: true })).toBe(false);
+  expect(any([null, undefined], { removeNull: true, removeUndefined: true })).toBe(null);
+});
+
+// ============================================================================
+// ALL TESTS
+// ============================================================================
+
+Deno.test("all - single boolean value", () => {
+  expect(all(true)).toBe(true);
+  expect(all(false)).toBe(false);
+});
+
+Deno.test("all - clean boolean array", () => {
+  expect(all([true, true, true])).toBe(true);
+  expect(all([true, false, true])).toBe(false);
+  expect(all([false, false, false])).toBe(false);
+});
+
+Deno.test("all - empty array returns null", () => {
+  expect(all([])).toBe(null);
+});
+
+Deno.test("all - array with null (no removal) returns null", () => {
+  expect(all([null, true])).toBe(null);
+  expect(all([true, null])).toBe(null);
+});
+
+Deno.test("all - array with null (removeNull: true)", () => {
+  expect(all([null, true], { removeNull: true })).toBe(true);
+  expect(all([null, false], { removeNull: true })).toBe(false);
+  expect(all([null, null], { removeNull: true })).toBe(null);
+});
+
+Deno.test("all - array with undefined (no removal) returns null", () => {
+  expect(all([undefined, true])).toBe(null);
+});
+
+Deno.test("all - array with undefined (removeUndefined: true)", () => {
+  expect(all([undefined, true], { removeUndefined: true })).toBe(true);
+  expect(all([undefined, false], { removeUndefined: true })).toBe(false);
+});
+
+Deno.test("all - mixed null and undefined with both flags", () => {
+  expect(all([null, undefined, true], { removeNull: true, removeUndefined: true })).toBe(true);
+  expect(all([null, undefined, false], { removeNull: true, removeUndefined: true })).toBe(false);
+  expect(all([null, undefined], { removeNull: true, removeUndefined: true })).toBe(null);
+});
+
+// ============================================================================
+// TYPE TESTS - any/all
+// ============================================================================
+
+Deno.test("TYPE: any overloads return correct types", () => {
+  const r1 = any([true, false]);
+  const _t1: boolean = r1;
+
+  const r2 = any([true, null] as (boolean | null)[], { removeNull: true });
+  const _t2: boolean = r2;
+
+  const r3 = any([true, undefined] as (boolean | undefined)[], { removeUndefined: true });
+  const _t3: boolean = r3;
+
+  const r4 = any([true, null, undefined] as (boolean | null | undefined)[], {
+    removeNull: true,
+    removeUndefined: true,
+  });
+  const _t4: boolean = r4;
+
+  const r5 = any([true, null, undefined] as (boolean | null | undefined)[], {
+    removeNull: true,
+  });
+  const _t5: boolean | null = r5;
+
+  void [_t1, _t2, _t3, _t4, _t5];
+});
+
+Deno.test("TYPE: all overloads return correct types", () => {
+  const r1 = all([true, false]);
+  const _t1: boolean = r1;
+
+  const r2 = all([true, null] as (boolean | null)[], { removeNull: true });
+  const _t2: boolean = r2;
+
+  const r3 = all([true, undefined] as (boolean | undefined)[], { removeUndefined: true });
+  const _t3: boolean = r3;
+
+  const r4 = all([true, null, undefined] as (boolean | null | undefined)[], {
+    removeNull: true,
+    removeUndefined: true,
+  });
+  const _t4: boolean = r4;
+
+  const r5 = all([true, null, undefined] as (boolean | null | undefined)[], {
+    removeNull: true,
+  });
+  const _t5: boolean | null = r5;
 
   void [_t1, _t2, _t3, _t4, _t5];
 });
