@@ -123,7 +123,7 @@ export const anovaDocs: Record<string, DocEntry> = {
     ],
     related: ["s.test.anova.oneWay", "s.test.anova.welch"],
   },
- 
+
   "s.test.variance.levene": {
     name: "s.test.variance.levene",
     category: "stats-tests",

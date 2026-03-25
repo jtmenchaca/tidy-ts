@@ -14,7 +14,9 @@ interface TemporalComparable {
 }
 
 // Test: does native Temporal.PlainDate satisfy this?
-function acceptComparable<T extends TemporalComparable>(values: readonly T[]): T {
+function acceptComparable<T extends TemporalComparable>(
+  values: readonly T[],
+): T {
   return values[0];
 }
 

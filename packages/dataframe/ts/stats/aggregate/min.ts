@@ -1,4 +1,8 @@
-import { comparableMinMax, isAllFiniteNumbers, isComparable } from "../helpers.ts";
+import {
+  comparableMinMax,
+  isAllFiniteNumbers,
+  isComparable,
+} from "../helpers.ts";
 
 // Math.min/max with spread operator has a limit of ~125k arguments on V8
 // Use a conservative limit to avoid stack overflow
@@ -62,7 +66,10 @@ export interface MinOptions {
 // Single value overloads
 export function min(values: number, options?: MinOptions): number;
 export function min(values: Date, options?: MinOptions): Date;
-export function min<T extends TemporalComparable>(values: T, options?: MinOptions): T;
+export function min<T extends TemporalComparable>(
+  values: T,
+  options?: MinOptions,
+): T;
 
 // Clean array overloads (no nulls/undefined)
 export function min(values: CleanDateArray, options?: MinOptions): Date;
@@ -70,8 +77,14 @@ export function min(values: Date[], options?: MinOptions): Date;
 export function min(values: CleanNumberArray, options?: MinOptions): number;
 export function min(values: number[], options?: MinOptions): number;
 export function min(values: Iterable<number>, options?: MinOptions): number;
-export function min<T extends TemporalComparable>(values: readonly T[], options?: MinOptions): T;
-export function min<T extends TemporalComparable>(values: T[], options?: MinOptions): T;
+export function min<T extends TemporalComparable>(
+  values: readonly T[],
+  options?: MinOptions,
+): T;
+export function min<T extends TemporalComparable>(
+  values: T[],
+  options?: MinOptions,
+): T;
 
 // Arrays with nullables - when all removal flags are true, return non-nullable
 export function min(

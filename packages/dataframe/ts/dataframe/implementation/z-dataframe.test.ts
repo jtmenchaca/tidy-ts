@@ -196,9 +196,7 @@ Deno.test("zDataFrame - enum column", () => {
   expect(df.nrows()).toBe(3);
   expect(df[0].status).toBe("active");
 
-  expect(() =>
-    Schema.parse({ status: ["active", "unknown"] })
-  ).toThrow();
+  expect(() => Schema.parse({ status: ["active", "unknown"] })).toThrow();
 });
 
 Deno.test("zDataFrame - union column type", () => {

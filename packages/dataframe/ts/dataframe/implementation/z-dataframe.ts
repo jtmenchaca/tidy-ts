@@ -33,7 +33,9 @@ export function zDataFrame<T extends z.ZodRawShape>(
       }) as unknown as DataFrame<Row>;
     } catch (error: unknown) {
       ctx.addIssue(
-        `Failed to create DataFrame: ${(error as { message?: string }).message ?? "unknown error"}`,
+        `Failed to create DataFrame: ${
+          (error as { message?: string }).message ?? "unknown error"
+        }`,
       );
       return z.NEVER;
     }

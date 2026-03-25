@@ -25,7 +25,9 @@ Deno.test("type compat - native Temporal.PlainDate assignable to polyfill", () =
 });
 
 Deno.test("type compat - polyfill Temporal.PlainDate assignable to native", () => {
-  const poly: PolyTemporal.PlainDate = PolyTemporal.PlainDate.from("2024-01-01");
+  const poly: PolyTemporal.PlainDate = PolyTemporal.PlainDate.from(
+    "2024-01-01",
+  );
   // Try assigning polyfill to native type
   const native: Temporal.PlainDate = poly;
   expect(native.toString()).toBe("2024-01-01");
@@ -41,8 +43,18 @@ Deno.test("min/max with native Temporal.PlainDate", () => {
   ];
   const minResult = s.min(dates);
   const maxResult = s.max(dates);
-  expect(Temporal.PlainDate.compare(minResult, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
-  expect(Temporal.PlainDate.compare(maxResult, Temporal.PlainDate.from("2024-06-30"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(
+      minResult,
+      Temporal.PlainDate.from("2024-01-01"),
+    ),
+  ).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(
+      maxResult,
+      Temporal.PlainDate.from("2024-06-30"),
+    ),
+  ).toBe(0);
 });
 
 // --- Do our min/max overloads work with polyfill Temporal? ---
@@ -55,8 +67,18 @@ Deno.test("min/max with polyfill Temporal.PlainDate", () => {
   ];
   const minResult = s.min(dates);
   const maxResult = s.max(dates);
-  expect(PolyTemporal.PlainDate.compare(minResult, PolyTemporal.PlainDate.from("2024-01-01"))).toBe(0);
-  expect(PolyTemporal.PlainDate.compare(maxResult, PolyTemporal.PlainDate.from("2024-06-30"))).toBe(0);
+  expect(
+    PolyTemporal.PlainDate.compare(
+      minResult,
+      PolyTemporal.PlainDate.from("2024-01-01"),
+    ),
+  ).toBe(0);
+  expect(
+    PolyTemporal.PlainDate.compare(
+      maxResult,
+      PolyTemporal.PlainDate.from("2024-06-30"),
+    ),
+  ).toBe(0);
 });
 
 // --- Nullable variants ---
@@ -68,7 +90,9 @@ Deno.test("min with native Temporal.PlainDate nullable + removeNull", () => {
     Temporal.PlainDate.from("2024-01-01"),
   ];
   const result = s.min(dates, { removeNull: true });
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01")),
+  ).toBe(0);
 });
 
 Deno.test("min with polyfill Temporal.PlainDate nullable + removeNull", () => {
@@ -78,7 +102,12 @@ Deno.test("min with polyfill Temporal.PlainDate nullable + removeNull", () => {
     PolyTemporal.PlainDate.from("2024-01-01"),
   ];
   const result = s.min(dates, { removeNull: true });
-  expect(PolyTemporal.PlainDate.compare(result, PolyTemporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    PolyTemporal.PlainDate.compare(
+      result,
+      PolyTemporal.PlainDate.from("2024-01-01"),
+    ),
+  ).toBe(0);
 });
 
 // --- PlainDateTime ---
@@ -91,8 +120,18 @@ Deno.test("min/max with native Temporal.PlainDateTime", () => {
   ];
   const minResult = s.min(dts);
   const maxResult = s.max(dts);
-  expect(Temporal.PlainDateTime.compare(minResult, Temporal.PlainDateTime.from("2024-01-01T08:00"))).toBe(0);
-  expect(Temporal.PlainDateTime.compare(maxResult, Temporal.PlainDateTime.from("2024-01-01T16:00"))).toBe(0);
+  expect(
+    Temporal.PlainDateTime.compare(
+      minResult,
+      Temporal.PlainDateTime.from("2024-01-01T08:00"),
+    ),
+  ).toBe(0);
+  expect(
+    Temporal.PlainDateTime.compare(
+      maxResult,
+      Temporal.PlainDateTime.from("2024-01-01T16:00"),
+    ),
+  ).toBe(0);
 });
 
 // --- Instant ---
@@ -105,8 +144,18 @@ Deno.test("min/max with native Temporal.Instant", () => {
   ];
   const minResult = s.min(instants);
   const maxResult = s.max(instants);
-  expect(Temporal.Instant.compare(minResult, Temporal.Instant.from("2024-01-01T00:00:00Z"))).toBe(0);
-  expect(Temporal.Instant.compare(maxResult, Temporal.Instant.from("2024-12-01T00:00:00Z"))).toBe(0);
+  expect(
+    Temporal.Instant.compare(
+      minResult,
+      Temporal.Instant.from("2024-01-01T00:00:00Z"),
+    ),
+  ).toBe(0);
+  expect(
+    Temporal.Instant.compare(
+      maxResult,
+      Temporal.Instant.from("2024-12-01T00:00:00Z"),
+    ),
+  ).toBe(0);
 });
 
 // --- Cross: native values through polyfill-typed overloads ---
@@ -118,5 +167,10 @@ Deno.test("cross compat - native PlainDate values, compare result with polyfill"
   ];
   const result = s.min(dates);
   // Can we use PolyTemporal.PlainDate.compare on a native result?
-  expect(PolyTemporal.PlainDate.compare(result, PolyTemporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    PolyTemporal.PlainDate.compare(
+      result,
+      PolyTemporal.PlainDate.from("2024-01-01"),
+    ),
+  ).toBe(0);
 });

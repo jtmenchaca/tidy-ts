@@ -4,6 +4,13 @@ import {
   type UnifyUnion,
 } from "../../dataframe/index.ts";
 import { interpolate as statsInterpolate } from "../../stats/window/interpolate.ts";
+import {
+  calendarTemporalDistance,
+  isCalendarTemporal,
+  isComparable,
+  isWallClockTemporalWithoutCalendar,
+  temporalToEpochMs,
+} from "../../stats/helpers.ts";
 
 /**
  * Interpolate null/undefined values in a column using linear or spline interpolation.
@@ -50,6 +57,9 @@ export function interpolate<T extends Record<string, unknown>>(
     // Extract arrays from DataFrame
     const values: (unknown)[] = [];
     const xValues: (number | Date)[] = [];
+    let calendarBaseValue:
+      | import("../../stats/helpers.ts").CalendarTemporal
+      | null = null;
 
     for (const row of df) {
       values.push(row[valueColumn as keyof T]);
@@ -58,9 +68,32 @@ export function interpolate<T extends Record<string, unknown>>(
         xValues.push(xValue);
       } else if (typeof xValue === "number") {
         xValues.push(xValue);
+      } else if (isCalendarTemporal(xValue)) {
+        // Calendar path: use until().total() for numeric spacing relative to first value
+        if (!calendarBaseValue) {
+          calendarBaseValue = xValue;
+          xValues.push(0);
+        } else {
+          xValues.push(
+            calendarTemporalDistance(calendarBaseValue, xValue, "days"),
+          );
+        }
+      } else if (isWallClockTemporalWithoutCalendar(xValue)) {
+        throw new Error(
+          `interpolate: xColumn "${xColumn}" contains a PlainTime which has no date component. Use PlainDate, PlainDateTime, Instant, or ZonedDateTime.`,
+        );
+      } else if (isComparable(xValue)) {
+        // Epoch-capable Temporal types (Instant, ZonedDateTime)
+        const ms = temporalToEpochMs(xValue);
+        if (isNaN(ms)) {
+          throw new Error(
+            `interpolate: xColumn "${xColumn}" contains a wall-clock Temporal type which has no epoch value. Use Instant or ZonedDateTime for time-series interpolation.`,
+          );
+        }
+        xValues.push(ms);
       } else {
         throw new Error(
-          `interpolate: xColumn "${xColumn}" must be numeric or Date, got ${typeof xValue}`,
+          `interpolate: xColumn "${xColumn}" must be numeric, Date, or Temporal, got ${typeof xValue}`,
         );
       }
     }

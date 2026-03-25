@@ -18,6 +18,8 @@
       "**/*.md",
       "**/*.mdc",
       "**/*.ipynb",
+      "**/*.svg",
+      "**/*.html",
       ".claude/",
       ".cargo/",
       "target/",

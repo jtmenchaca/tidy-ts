@@ -2,6 +2,7 @@
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { withIndex } from "../../dataframe/index.ts";
 import { withGroupsRebuilt } from "../../dataframe/index.ts";
+import { isComparable } from "../../stats/helpers.ts";
 import {
   // fast path: multi-column numeric/date sorter (column-major f64)
   arrange_multi_f64_wasm,
@@ -71,6 +72,7 @@ function encodeStringCol(col: unknown[], nRows: number): Uint32Array {
         break;
       case "object":
         if (v instanceof Date) uniqSet.add(String(+v));
+        else if (isComparable(v)) uniqSet.add(String(v));
         else uniqSet.add(JSON.stringify(v));
         break;
       default:
@@ -97,6 +99,8 @@ function encodeStringCol(col: unknown[], nRows: number): Uint32Array {
       out[i] = rank.get(v ? "true" : "false") ?? NA_STR_CODE;
     } else if (v instanceof Date) {
       out[i] = rank.get(String(+v)) ?? NA_STR_CODE;
+    } else if (isComparable(v)) {
+      out[i] = rank.get(String(v)) ?? NA_STR_CODE;
     } else {
       out[i] = rank.get(JSON.stringify(v)) ?? NA_STR_CODE;
     }

@@ -1,5 +1,6 @@
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
+import { isComparable } from "../../stats/helpers.ts";
 
 /**
  * Extract the nth value from one column after sorting by another column.
@@ -75,6 +76,11 @@ export function extract_nth_where_sorted<
         return direction === "desc"
           ? bVal.getTime() - aVal.getTime()
           : aVal.getTime() - bVal.getTime();
+      }
+      if (isComparable(aVal) && isComparable(bVal)) {
+        return direction === "desc"
+          ? aVal.constructor.compare(bVal, aVal)
+          : aVal.constructor.compare(aVal, bVal);
       }
       return direction === "desc"
         ? String(bVal).localeCompare(String(aVal))

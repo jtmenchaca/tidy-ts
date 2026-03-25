@@ -13,6 +13,14 @@ import {
 } from "./join-helpers.ts";
 import { withGroupsRebuilt } from "../../dataframe/index.ts";
 import type { StoreAndIndex } from "./types/index.ts";
+import {
+  calendarTemporalDistance,
+  hasEpochMilliseconds,
+  isCalendarTemporal,
+  isComparable,
+  isWallClockTemporalWithoutCalendar,
+  temporalToEpochMs,
+} from "../../stats/helpers.ts";
 
 function projectColumn(
   store: ColumnarStore,
@@ -26,19 +34,43 @@ function projectColumn(
   return out;
 }
 
-function ensureOrderable(v: unknown): "number" | "date" | "bigint" {
+function ensureOrderable(
+  v: unknown,
+): "number" | "date" | "bigint" | "temporal" | "calendar_temporal" {
   if (typeof v === "number") return "number";
   if (typeof v === "bigint") return "bigint";
   if (v instanceof Date) return "date";
-  throw new Error("join_asof: key must be number | bigint | Date");
+  if (hasEpochMilliseconds(v)) return "temporal";
+  if (isCalendarTemporal(v)) return "calendar_temporal";
+  if (isWallClockTemporalWithoutCalendar(v)) {
+    throw new Error(
+      "join_asof: PlainTime has no date component. Use PlainDate, PlainDateTime, Instant, or ZonedDateTime.",
+    );
+  }
+  if (isComparable(v)) {
+    throw new Error(
+      "join_asof: unsupported Temporal type. Use PlainDate, PlainDateTime, Instant, or ZonedDateTime.",
+    );
+  }
+  throw new Error(
+    "join_asof: key must be number | bigint | Date | Temporal type",
+  );
 }
+
 function toScalar(
   x: unknown,
-  kind: "number" | "date" | "bigint",
+  kind: "number" | "date" | "bigint" | "temporal" | "calendar_temporal",
+  calendarRef?: import("../../stats/helpers.ts").CalendarTemporal,
 ): number | bigint {
   if (kind === "number") return (x as number) ?? Number.NaN;
   if (kind === "bigint") {
     return (typeof x === "bigint") ? x : BigInt((x as number) ?? 0);
+  }
+  if (kind === "temporal") return temporalToEpochMs(x);
+  if (kind === "calendar_temporal") {
+    const ct = x as import("../../stats/helpers.ts").CalendarTemporal;
+    if (!calendarRef) return 0;
+    return calendarTemporalDistance(calendarRef, ct, "days");
   }
   // date
   return x instanceof Date ? x.getTime() : Number(x);
@@ -210,10 +242,22 @@ export function asof_join<
       rKeyRaw.find((v) => v != null);
     const kind = ensureOrderable(probe);
 
+    // For calendar_temporal, use the first non-null value as reference for distance computation
+    const calendarRef = kind === "calendar_temporal"
+      ? (lKeyRaw.find((v) => v != null) ??
+        rKeyRaw.find((v) =>
+          v != null
+        )) as import("../../stats/helpers.ts").CalendarTemporal
+      : undefined;
+
     const kL = new Array<number | bigint>(lKeyRaw.length);
-    for (let i = 0; i < kL.length; i++) kL[i] = toScalar(lKeyRaw[i], kind);
+    for (let i = 0; i < kL.length; i++) {
+      kL[i] = toScalar(lKeyRaw[i], kind, calendarRef);
+    }
     const kR = new Array<number | bigint>(rKeyRaw.length);
-    for (let j = 0; j < kR.length; j++) kR[j] = toScalar(rKeyRaw[j], kind);
+    for (let j = 0; j < kR.length; j++) {
+      kR[j] = toScalar(rKeyRaw[j], kind, calendarRef);
+    }
 
     const lGroupKey = (groupNames.length === 0)
       ? null

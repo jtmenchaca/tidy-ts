@@ -439,9 +439,14 @@ Deno.test("any - array with undefined (removeUndefined: true)", () => {
 });
 
 Deno.test("any - mixed null and undefined with both flags", () => {
-  expect(any([null, undefined, true], { removeNull: true, removeUndefined: true })).toBe(true);
-  expect(any([null, undefined, false], { removeNull: true, removeUndefined: true })).toBe(false);
-  expect(any([null, undefined], { removeNull: true, removeUndefined: true })).toBe(null);
+  expect(
+    any([null, undefined, true], { removeNull: true, removeUndefined: true }),
+  ).toBe(true);
+  expect(
+    any([null, undefined, false], { removeNull: true, removeUndefined: true }),
+  ).toBe(false);
+  expect(any([null, undefined], { removeNull: true, removeUndefined: true }))
+    .toBe(null);
 });
 
 // ============================================================================
@@ -484,9 +489,14 @@ Deno.test("all - array with undefined (removeUndefined: true)", () => {
 });
 
 Deno.test("all - mixed null and undefined with both flags", () => {
-  expect(all([null, undefined, true], { removeNull: true, removeUndefined: true })).toBe(true);
-  expect(all([null, undefined, false], { removeNull: true, removeUndefined: true })).toBe(false);
-  expect(all([null, undefined], { removeNull: true, removeUndefined: true })).toBe(null);
+  expect(
+    all([null, undefined, true], { removeNull: true, removeUndefined: true }),
+  ).toBe(true);
+  expect(
+    all([null, undefined, false], { removeNull: true, removeUndefined: true }),
+  ).toBe(false);
+  expect(all([null, undefined], { removeNull: true, removeUndefined: true }))
+    .toBe(null);
 });
 
 // ============================================================================
@@ -500,7 +510,9 @@ Deno.test("TYPE: any overloads return correct types", () => {
   const r2 = any([true, null] as (boolean | null)[], { removeNull: true });
   const _t2: boolean = r2;
 
-  const r3 = any([true, undefined] as (boolean | undefined)[], { removeUndefined: true });
+  const r3 = any([true, undefined] as (boolean | undefined)[], {
+    removeUndefined: true,
+  });
   const _t3: boolean = r3;
 
   const r4 = any([true, null, undefined] as (boolean | null | undefined)[], {
@@ -524,7 +536,9 @@ Deno.test("TYPE: all overloads return correct types", () => {
   const r2 = all([true, null] as (boolean | null)[], { removeNull: true });
   const _t2: boolean = r2;
 
-  const r3 = all([true, undefined] as (boolean | undefined)[], { removeUndefined: true });
+  const r3 = all([true, undefined] as (boolean | undefined)[], {
+    removeUndefined: true,
+  });
   const _t3: boolean = r3;
 
   const r4 = all([true, null, undefined] as (boolean | null | undefined)[], {

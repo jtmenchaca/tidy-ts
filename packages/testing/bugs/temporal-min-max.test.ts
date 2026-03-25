@@ -11,7 +11,9 @@ Deno.test("min - PlainDate clean array", () => {
     Temporal.PlainDate.from("2024-06-30"),
   ];
   const result = s.min(dates);
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01")),
+  ).toBe(0);
 });
 
 Deno.test("max - PlainDate clean array", () => {
@@ -21,7 +23,9 @@ Deno.test("max - PlainDate clean array", () => {
     Temporal.PlainDate.from("2024-06-30"),
   ];
   const result = s.max(dates);
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-06-30"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-06-30")),
+  ).toBe(0);
 });
 
 Deno.test("min - PlainDate single value", () => {
@@ -63,7 +67,9 @@ Deno.test("min - PlainDate with null removed", () => {
     Temporal.PlainDate.from("2024-01-01"),
   ];
   const result = s.min(dates, { removeNull: true });
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01")),
+  ).toBe(0);
 });
 
 Deno.test("max - PlainDate with null removed", () => {
@@ -73,7 +79,9 @@ Deno.test("max - PlainDate with null removed", () => {
     Temporal.PlainDate.from("2024-06-30"),
   ];
   const result = s.max(dates, { removeNull: true });
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-06-30"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-06-30")),
+  ).toBe(0);
 });
 
 Deno.test("min - PlainDate with undefined returns null", () => {
@@ -93,7 +101,9 @@ Deno.test("min - PlainDate with undefined removed", () => {
     Temporal.PlainDate.from("2024-01-01"),
   ];
   const result = s.min(dates, { removeUndefined: true });
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01")),
+  ).toBe(0);
 });
 
 Deno.test("min - PlainDate with null and undefined removed", () => {
@@ -104,7 +114,9 @@ Deno.test("min - PlainDate with null and undefined removed", () => {
     Temporal.PlainDate.from("2024-01-01"),
   ];
   const result = s.min(dates, { removeNull: true, removeUndefined: true });
-  expect(Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01"))).toBe(0);
+  expect(
+    Temporal.PlainDate.compare(result, Temporal.PlainDate.from("2024-01-01")),
+  ).toBe(0);
 });
 
 Deno.test("min - PlainDate empty array returns null", () => {
@@ -121,7 +133,12 @@ Deno.test("min - PlainDateTime clean array", () => {
     Temporal.PlainDateTime.from("2024-01-01T16:00:00"),
   ];
   const result = s.min(dts);
-  expect(Temporal.PlainDateTime.compare(result, Temporal.PlainDateTime.from("2024-01-01T08:00:00"))).toBe(0);
+  expect(
+    Temporal.PlainDateTime.compare(
+      result,
+      Temporal.PlainDateTime.from("2024-01-01T08:00:00"),
+    ),
+  ).toBe(0);
 });
 
 Deno.test("max - PlainDateTime clean array", () => {
@@ -131,7 +148,12 @@ Deno.test("max - PlainDateTime clean array", () => {
     Temporal.PlainDateTime.from("2024-01-01T16:00:00"),
   ];
   const result = s.max(dts);
-  expect(Temporal.PlainDateTime.compare(result, Temporal.PlainDateTime.from("2024-01-01T16:00:00"))).toBe(0);
+  expect(
+    Temporal.PlainDateTime.compare(
+      result,
+      Temporal.PlainDateTime.from("2024-01-01T16:00:00"),
+    ),
+  ).toBe(0);
 });
 
 // --- Instant ---
@@ -143,7 +165,12 @@ Deno.test("min - Instant clean array", () => {
     Temporal.Instant.from("2024-12-01T00:00:00Z"),
   ];
   const result = s.min(instants);
-  expect(Temporal.Instant.compare(result, Temporal.Instant.from("2024-01-01T00:00:00Z"))).toBe(0);
+  expect(
+    Temporal.Instant.compare(
+      result,
+      Temporal.Instant.from("2024-01-01T00:00:00Z"),
+    ),
+  ).toBe(0);
 });
 
 Deno.test("max - Instant clean array", () => {
@@ -153,7 +180,12 @@ Deno.test("max - Instant clean array", () => {
     Temporal.Instant.from("2024-12-01T00:00:00Z"),
   ];
   const result = s.max(instants);
-  expect(Temporal.Instant.compare(result, Temporal.Instant.from("2024-12-01T00:00:00Z"))).toBe(0);
+  expect(
+    Temporal.Instant.compare(
+      result,
+      Temporal.Instant.from("2024-12-01T00:00:00Z"),
+    ),
+  ).toBe(0);
 });
 
 // --- Existing Date behavior still works ---

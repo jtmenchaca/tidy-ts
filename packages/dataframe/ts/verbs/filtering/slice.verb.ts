@@ -11,6 +11,7 @@ import {
   withGroupsRebuilt,
   withIndex,
 } from "../../dataframe/index.ts";
+import { isComparable } from "../../stats/helpers.ts";
 import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { createRandomInt, sampleArray } from "../utility/seedable-random.ts";
 
@@ -508,7 +509,10 @@ export function slice_min<Row extends object>(
             return aVal - bVal;
           }
           if (aVal instanceof Date && bVal instanceof Date) {
-            return aVal.getTime() - bVal.getTime(); // Ascending order for dates
+            return aVal.getTime() - bVal.getTime();
+          }
+          if (isComparable(aVal) && isComparable(bVal)) {
+            return aVal.constructor.compare(aVal, bVal);
           }
           return String(aVal).localeCompare(String(bVal));
         });
@@ -548,7 +552,10 @@ export function slice_min<Row extends object>(
           return aVal - bVal;
         }
         if (aVal instanceof Date && bVal instanceof Date) {
-          return aVal.getTime() - bVal.getTime(); // Ascending order for dates
+          return aVal.getTime() - bVal.getTime();
+        }
+        if (isComparable(aVal) && isComparable(bVal)) {
+          return aVal.constructor.compare(aVal, bVal);
         }
         return String(aVal).localeCompare(String(bVal));
       });
@@ -686,7 +693,10 @@ export function slice_max<Row extends object>(
             return bVal - aVal;
           }
           if (aVal instanceof Date && bVal instanceof Date) {
-            return bVal.getTime() - aVal.getTime(); // Descending order for dates
+            return bVal.getTime() - aVal.getTime();
+          }
+          if (isComparable(aVal) && isComparable(bVal)) {
+            return aVal.constructor.compare(bVal, aVal);
           }
           return String(bVal).localeCompare(String(aVal));
         });
@@ -739,12 +749,15 @@ export function slice_max<Row extends object>(
         if (aVal == null) return 1;
         if (bVal == null) return -1;
         if (typeof aVal === "number" && typeof bVal === "number") {
-          return bVal - aVal; // Descending order
+          return bVal - aVal;
         }
         if (aVal instanceof Date && bVal instanceof Date) {
-          return bVal.getTime() - aVal.getTime(); // Descending order for dates
+          return bVal.getTime() - aVal.getTime();
         }
-        return String(bVal).localeCompare(String(aVal)); // Descending order
+        if (isComparable(aVal) && isComparable(bVal)) {
+          return aVal.constructor.compare(bVal, aVal);
+        }
+        return String(bVal).localeCompare(String(aVal));
       });
 
       // Take first n sorted physical indices

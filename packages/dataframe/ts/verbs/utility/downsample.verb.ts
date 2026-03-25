@@ -9,6 +9,15 @@ import type {
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
 import {
+  type CalendarTemporal,
+  floorCalendarTemporal,
+  generateCalendarTemporalSequence,
+  isCalendarTemporal,
+  isWallClockTemporalWithoutCalendar,
+  parseFrequencyForCalendar,
+  toEpochMs,
+} from "../../stats/helpers.ts";
+import {
   generateCalendarBuckets,
   getCalendarBucket,
   isCalendarFrequency,
@@ -79,13 +88,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
         ? groupRows.filter((row) => {
           const timestamp = row[timeColumn];
           if (timestamp === null || timestamp === undefined) return false;
-          const rowTime = timestamp instanceof Date
-            ? timestamp.getTime()
-            : typeof timestamp === "string"
-            ? new Date(timestamp).getTime()
-            : typeof timestamp === "number"
-            ? timestamp
-            : NaN;
+          const rowTime = toEpochMs(timestamp);
           return !isNaN(rowTime) && rowTime >= effectiveStartTime!;
         })
         : groupRows;
@@ -278,13 +281,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
     ? rows.filter((row) => {
       const timestamp = row[timeColumn];
       if (timestamp === null || timestamp === undefined) return false;
-      const rowTime = timestamp instanceof Date
-        ? timestamp.getTime()
-        : typeof timestamp === "string"
-        ? new Date(timestamp).getTime()
-        : typeof timestamp === "number"
-        ? timestamp
-        : NaN;
+      const rowTime = toEpochMs(timestamp);
       return !isNaN(rowTime) && rowTime >= effectiveStartTime!;
     })
     : rows;
@@ -298,16 +295,12 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
     const bucket = useCalendarBucketing && calendarFreq
       ? getCalendarBucket(
-        timestamp instanceof Date
-          ? timestamp.getTime()
-          : typeof timestamp === "string"
-          ? new Date(timestamp).getTime()
-          : timestamp as number,
+        toEpochMs(timestamp),
         calendarFreq.unit,
         calendarFreq.value,
       )
       : getTimeBucket(
-        timestamp as Date | string | number,
+        timestamp,
         frequencyMs,
       );
     if (!buckets.has(bucket)) {
@@ -460,6 +453,112 @@ function downsampleImpl<T extends Record<string, unknown>>(
 }
 
 /**
+ * Calendar-path downsample for PlainDate/PlainDateTime.
+ * Uses string bucket keys (ISO strings) and native Temporal operations.
+ */
+function downsampleCalendarTemporal<T extends Record<string, unknown>>(
+  rows: T[],
+  timeColumn: keyof T,
+  frequency: Frequency,
+  aggregations: Record<string, (...args: any[]) => any>,
+): DataFrame<any> {
+  const timeColName = String(timeColumn);
+  const freq = parseFrequencyForCalendar(frequency);
+  if (!freq) {
+    throw new Error(
+      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
+    );
+  }
+
+  // Group rows by string bucket key
+  const buckets = new Map<string, T[]>();
+  let firstTemporal: CalendarTemporal | null = null;
+  let lastTemporal: CalendarTemporal | null = null;
+
+  for (const row of rows) {
+    const timestamp = row[timeColumn];
+    if (timestamp === null || timestamp === undefined) continue;
+    if (!isCalendarTemporal(timestamp)) continue;
+
+    const floored = floorCalendarTemporal(timestamp, freq);
+    const key = floored.toString();
+
+    if (
+      !firstTemporal ||
+      timestamp.constructor.compare(timestamp, firstTemporal) < 0
+    ) {
+      firstTemporal = timestamp;
+    }
+    if (
+      !lastTemporal ||
+      timestamp.constructor.compare(timestamp, lastTemporal) > 0
+    ) {
+      lastTemporal = timestamp;
+    }
+
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key)!.push(row);
+  }
+
+  if (!firstTemporal || !lastTemporal) {
+    return createDataFrame([]) as unknown as DataFrame<any>;
+  }
+
+  // Generate all bucket keys in the range
+  const startFloored = floorCalendarTemporal(firstTemporal, freq);
+  const endFloored = floorCalendarTemporal(lastTemporal, freq);
+  const allKeys = generateCalendarTemporalSequence(
+    startFloored,
+    endFloored,
+    freq,
+  );
+
+  // Apply aggregations to each bucket
+  const result: any[] = [];
+  const availableColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
+
+  for (const bucketKey of allKeys) {
+    const bucketRows = buckets.get(bucketKey) || [];
+    const bucketDf = createDataFrame(bucketRows) as unknown as GroupedDataFrame<
+      T,
+      keyof T
+    >;
+    const resultRow: any = { [timeColName]: bucketKey };
+
+    for (const [colName, aggregation] of Object.entries(aggregations)) {
+      if (colName === timeColName) continue;
+      const col = colName as keyof T;
+
+      if (availableColumns.includes(colName)) {
+        resultRow[colName] = applyAggregation(
+          bucketDf,
+          col,
+          aggregation as AggregationFunction<T>,
+        );
+      } else {
+        const numericColumns = availableColumns.filter(
+          (c) =>
+            c !== timeColName &&
+            bucketRows.some((r) => typeof r[c as keyof T] === "number"),
+        );
+        if (numericColumns.length > 0) {
+          resultRow[colName] = applyAggregation(
+            bucketDf,
+            numericColumns[0] as keyof T,
+            aggregation as AggregationFunction<T>,
+          );
+        } else {
+          resultRow[colName] = null;
+        }
+      }
+    }
+    result.push(resultRow);
+  }
+
+  return createDataFrame(result) as unknown as DataFrame<any>;
+}
+
+/**
  * Downsample time-series data by aggregating to a lower frequency.
  *
  * Groups rows by time buckets and applies aggregation functions to each bucket.
@@ -536,6 +635,23 @@ export function downsample<
       return createDataFrame([]) as unknown as DataFrame<
         RowAfterDownsample<T, TimeCol, Aggregations>
       >;
+    }
+
+    // Detect if the time column contains calendar Temporal types (PlainDate/PlainDateTime)
+    const firstTimestamp = rows.find((r) => r[args.timeColumn] != null)
+      ?.[args.timeColumn];
+    if (isWallClockTemporalWithoutCalendar(firstTimestamp)) {
+      throw new Error(
+        "PlainTime cannot be used for time-series downsampling (no date component).",
+      );
+    }
+    if (isCalendarTemporal(firstTimestamp)) {
+      return downsampleCalendarTemporal(
+        rows,
+        args.timeColumn,
+        args.frequency,
+        args.aggregations,
+      ) as unknown as DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>>;
     }
 
     const frequencyMs = frequencyToMs(args.frequency);

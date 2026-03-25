@@ -6,6 +6,13 @@
  */
 
 import type { Frequency } from "./resample.types.ts";
+import {
+  floorCalendarTemporal,
+  isCalendarTemporal,
+  isWallClockTemporalWithoutCalendar,
+  parseFrequencyForCalendar,
+  toEpochMs,
+} from "../../stats/helpers.ts";
 
 /**
  * Convert frequency string to milliseconds.
@@ -103,14 +110,13 @@ export function frequencyToMs(frequency: Frequency): number {
  * // Returns timestamp for 2023-01-01T14:00:00 (UTC)
  */
 export function getTimeBucket(
-  timestamp: Date | string | number,
+  timestamp: Date | string | number | unknown,
   frequencyMs: number,
 ): number {
-  const time = timestamp instanceof Date
-    ? timestamp.getTime()
-    : typeof timestamp === "string"
-    ? new Date(timestamp).getTime()
-    : timestamp;
+  // Accepts Date, string, number, and epoch-capable Temporal types (Instant, ZonedDateTime).
+  // Wall-clock Temporal types (PlainDate, PlainDateTime, PlainTime) will produce NaN
+  // because they have no inherent epoch value.
+  const time = toEpochMs(timestamp);
 
   if (isNaN(time)) {
     throw new Error(`Invalid timestamp: ${timestamp}`);
@@ -118,4 +124,39 @@ export function getTimeBucket(
 
   // Round down to nearest bucket
   return Math.floor(time / frequencyMs) * frequencyMs;
+}
+
+/**
+ * Get a calendar-path time bucket key for a CalendarTemporal value (PlainDate/PlainDateTime).
+ * Returns an ISO string bucket key using native Temporal `with()`/`subtract()`.
+ *
+ * @param timestamp - A CalendarTemporal value (PlainDate or PlainDateTime)
+ * @param frequency - Frequency specification (string or object, NOT raw ms)
+ * @returns ISO string bucket key
+ * @throws Error if frequency can't be parsed or timestamp is PlainTime
+ */
+export function getCalendarTemporalBucket(
+  timestamp: unknown,
+  frequency: string | number | { value: number; unit: string },
+): string {
+  if (isWallClockTemporalWithoutCalendar(timestamp)) {
+    throw new Error(
+      "PlainTime cannot be used for time-series bucketing (no date component).",
+    );
+  }
+
+  if (!isCalendarTemporal(timestamp)) {
+    throw new Error(
+      `Expected a CalendarTemporal (PlainDate/PlainDateTime), got ${typeof timestamp}`,
+    );
+  }
+
+  const freq = parseFrequencyForCalendar(frequency);
+  if (!freq) {
+    throw new Error(
+      `Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.`,
+    );
+  }
+
+  return floorCalendarTemporal(timestamp, freq).toString();
 }

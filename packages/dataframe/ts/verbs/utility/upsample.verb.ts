@@ -4,6 +4,15 @@ import { createDataFrame } from "../../dataframe/index.ts";
 import type { FillMethod, UpsampleArgs } from "./upsample.types.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
+import {
+  type CalendarTemporal,
+  floorCalendarTemporal,
+  generateCalendarTemporalSequence,
+  isCalendarTemporal,
+  isWallClockTemporalWithoutCalendar,
+  parseFrequencyForCalendar,
+  toEpochMs,
+} from "../../stats/helpers.ts";
 
 /**
  * Internal upsample implementation: Generate time sequence and fill missing values.
@@ -48,24 +57,17 @@ function upsampleImpl<T extends Record<string, unknown>>(
       }
 
       // Get time range for this group
-      const timeDates = groupRows
-        .map((row) => {
-          const ts = row[timeColumn];
-          if (ts instanceof Date) return ts;
-          if (typeof ts === "string") return new Date(ts);
-          if (typeof ts === "number") return new Date(ts);
-          return null;
-        })
-        .filter((t): t is Date => t !== null);
+      const timeMs = groupRows
+        .map((row) => toEpochMs(row[timeColumn]))
+        .filter((t) => !isNaN(t));
 
-      if (timeDates.length === 0) {
+      if (timeMs.length === 0) {
         continue; // Skip groups with no valid timestamps
       }
 
       // Get min/max times as milliseconds for this group
-      const times = timeDates.map((d) => d.getTime());
-      const minTime = Math.min(...times);
-      const maxTime = Math.max(...times);
+      const minTime = Math.min(...timeMs);
+      const maxTime = Math.max(...timeMs);
 
       // Determine effective start and end times for this group
       let effectiveStartTime: number;
@@ -125,14 +127,7 @@ function upsampleImpl<T extends Record<string, unknown>>(
             // Forward fill: use most recent value before or at this time
             const valuesUpToNow = groupRows
               .filter((r) => {
-                const rt = r[timeColumn];
-                const rtMs = rt instanceof Date
-                  ? rt.getTime()
-                  : typeof rt === "string"
-                  ? new Date(rt).getTime()
-                  : typeof rt === "number"
-                  ? rt
-                  : NaN;
+                const rtMs = toEpochMs(r[timeColumn]);
                 return !isNaN(rtMs) && rtMs <= bucketTime;
               })
               .map((r) => r[colName]);
@@ -147,14 +142,7 @@ function upsampleImpl<T extends Record<string, unknown>>(
             // Backward fill: use next value after this time
             const valuesFromNow = groupRows
               .filter((r) => {
-                const rt = r[timeColumn];
-                const rtMs = rt instanceof Date
-                  ? rt.getTime()
-                  : typeof rt === "string"
-                  ? new Date(rt).getTime()
-                  : typeof rt === "number"
-                  ? rt
-                  : NaN;
+                const rtMs = toEpochMs(r[timeColumn]);
                 return !isNaN(rtMs) && rtMs >= bucketTime;
               })
               .map((r) => r[colName]);
@@ -189,25 +177,18 @@ function upsampleImpl<T extends Record<string, unknown>>(
   }
 
   // Ungrouped: Process all rows together
-  // Get time range - preserve original Date objects to maintain timezone
-  const timeDates = rows
-    .map((row) => {
-      const ts = row[timeColumn];
-      if (ts instanceof Date) return ts;
-      if (typeof ts === "string") return new Date(ts);
-      if (typeof ts === "number") return new Date(ts);
-      return null;
-    })
-    .filter((t): t is Date => t !== null);
+  // Get time range
+  const timeMs = rows
+    .map((row) => toEpochMs(row[timeColumn]))
+    .filter((t) => !isNaN(t));
 
-  if (timeDates.length === 0) {
+  if (timeMs.length === 0) {
     return createDataFrame([]) as unknown as DataFrame<any>;
   }
 
   // Get min/max times as milliseconds
-  const times = timeDates.map((d) => d.getTime());
-  const minTime = Math.min(...times);
-  const maxTime = Math.max(...times);
+  const minTime = Math.min(...timeMs);
+  const maxTime = Math.max(...timeMs);
 
   // Determine effective start and end times
   let effectiveStartTime: number;
@@ -260,14 +241,7 @@ function upsampleImpl<T extends Record<string, unknown>>(
         // Forward fill: use most recent value before or at this time
         const valuesUpToNow = rows
           .filter((r) => {
-            const rt = r[timeColumn];
-            const rtMs = rt instanceof Date
-              ? rt.getTime()
-              : typeof rt === "string"
-              ? new Date(rt).getTime()
-              : typeof rt === "number"
-              ? rt
-              : NaN;
+            const rtMs = toEpochMs(r[timeColumn]);
             return !isNaN(rtMs) && rtMs <= bucketTime;
           })
           .map((r) => r[colName]);
@@ -282,14 +256,7 @@ function upsampleImpl<T extends Record<string, unknown>>(
         // Backward fill: use next value after this time
         const valuesFromNow = rows
           .filter((r) => {
-            const rt = r[timeColumn];
-            const rtMs = rt instanceof Date
-              ? rt.getTime()
-              : typeof rt === "string"
-              ? new Date(rt).getTime()
-              : typeof rt === "number"
-              ? rt
-              : NaN;
+            const rtMs = toEpochMs(r[timeColumn]);
             return !isNaN(rtMs) && rtMs >= bucketTime;
           })
           .map((r) => r[colName]);
@@ -303,6 +270,99 @@ function upsampleImpl<T extends Record<string, unknown>>(
       }
     }
 
+    result.push(resultRow);
+  }
+
+  return createDataFrame(result) as unknown as DataFrame<any>;
+}
+
+/**
+ * Calendar-path upsample for PlainDate/PlainDateTime.
+ * Uses string bucket keys and native Temporal add()/compare().
+ */
+function upsampleCalendarTemporal<T extends Record<string, unknown>>(
+  rows: T[],
+  timeColumn: keyof T,
+  frequency: Frequency,
+  fillMethod: FillMethod,
+): DataFrame<any> {
+  const timeColName = String(timeColumn);
+  const freq = parseFrequencyForCalendar(frequency);
+  if (!freq) {
+    throw new Error(
+      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
+    );
+  }
+
+  // Find min/max Temporal values
+  let minVal: CalendarTemporal | null = null;
+  let maxVal: CalendarTemporal | null = null;
+  for (const row of rows) {
+    const ts = row[timeColumn];
+    if (!isCalendarTemporal(ts)) continue;
+    if (!minVal || ts.constructor.compare(ts, minVal) < 0) minVal = ts;
+    if (!maxVal || ts.constructor.compare(ts, maxVal) > 0) maxVal = ts;
+  }
+
+  if (!minVal || !maxVal) {
+    return createDataFrame([]) as unknown as DataFrame<any>;
+  }
+
+  const startFloored = floorCalendarTemporal(minVal, freq);
+  const endFloored = floorCalendarTemporal(maxVal, freq);
+  const sequence = generateCalendarTemporalSequence(
+    startFloored,
+    endFloored,
+    freq,
+  );
+
+  // Build a lookup: ISO string key → row values
+  const rowByKey = new Map<string, T>();
+  for (const row of rows) {
+    const ts = row[timeColumn];
+    if (!isCalendarTemporal(ts)) continue;
+    const key = floorCalendarTemporal(ts, freq).toString();
+    rowByKey.set(key, row);
+  }
+
+  // Generate result with fill
+  const result: any[] = [];
+  const firstRow = rows[0];
+
+  for (let i = 0; i < sequence.length; i++) {
+    const bucketKey = sequence[i];
+    const resultRow: any = { [timeColName]: bucketKey };
+
+    for (const key of Object.keys(firstRow)) {
+      if (key === timeColName) continue;
+      const colName = key as keyof T;
+
+      if (fillMethod === "forward") {
+        // Find most recent value at or before this bucket
+        let value: unknown = undefined;
+        for (let j = i; j >= 0; j--) {
+          const match = rowByKey.get(sequence[j]);
+          if (match) {
+            value = match[colName];
+            break;
+          }
+        }
+        resultRow[key] = value !== undefined ? value : firstRow[colName];
+      } else {
+        // Backward fill: find next value at or after this bucket
+        let value: unknown = undefined;
+        for (let j = i; j < sequence.length; j++) {
+          const match = rowByKey.get(sequence[j]);
+          if (match) {
+            value = match[colName];
+            break;
+          }
+        }
+        resultRow[key] = value !== undefined
+          ? value
+          : rows[rows.length - 1][colName];
+      }
+    }
     result.push(resultRow);
   }
 
@@ -359,6 +419,23 @@ export function upsample<
     const rows = Array.from(df);
     if (rows.length === 0) {
       return createDataFrame([]) as unknown as DataFrame<any>;
+    }
+
+    // Detect calendar Temporal types (PlainDate/PlainDateTime)
+    const firstTimestamp = rows.find((r) => r[args.timeColumn] != null)
+      ?.[args.timeColumn];
+    if (isWallClockTemporalWithoutCalendar(firstTimestamp)) {
+      throw new Error(
+        "PlainTime cannot be used for time-series upsampling (no date component).",
+      );
+    }
+    if (isCalendarTemporal(firstTimestamp)) {
+      return upsampleCalendarTemporal(
+        rows,
+        args.timeColumn,
+        args.frequency,
+        args.fillMethod,
+      );
     }
 
     const frequencyMs = frequencyToMs(args.frequency);

@@ -4,6 +4,7 @@ import {
   createColumnarDataFrameFromStore,
   materializeIndex,
 } from "../../dataframe/index.ts";
+import { isComparable } from "../../stats/helpers.ts";
 
 export function groupBy<
   T extends Record<string, unknown>,
@@ -77,10 +78,14 @@ export function groupBy<
     // Key → gid
     let gid = 0;
 
-    // Helper to normalize values for comparison (e.g., Date objects)
+    // Helper to normalize values for comparison (e.g., Date and Temporal objects)
     const normalizeKey = (val: unknown): unknown => {
       if (val instanceof Date) {
         return val.getTime();
+      }
+      // Temporal types: use toString() for consistent grouping keys
+      if (isComparable(val)) {
+        return String(val);
       }
       return val;
     };
