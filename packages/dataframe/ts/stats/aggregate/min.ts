@@ -1,5 +1,4 @@
 import { comparableMinMax, isAllFiniteNumbers, isComparable } from "../helpers.ts";
-import type { Temporal } from "temporal-polyfill";
 
 // Math.min/max with spread operator has a limit of ~125k arguments on V8
 // Use a conservative limit to avoid stack overflow
@@ -17,13 +16,15 @@ export type NumbersWithNullable =
   | (number | null | undefined)[]
   | readonly (number | null | undefined)[];
 
-// Union of Temporal types that support static .compare()
-type TemporalComparable =
-  | Temporal.PlainDate
-  | Temporal.PlainDateTime
-  | Temporal.PlainTime
-  | Temporal.Instant
-  | Temporal.ZonedDateTime;
+// Structural type that matches any Temporal type (native or polyfill)
+// without importing from a specific Temporal source.
+// [Symbol.toStringTag] excludes Date/number/string;
+// toJSON() excludes Map/Set/Promise.
+export interface TemporalComparable {
+  readonly [Symbol.toStringTag]: string;
+  toString(): string;
+  toJSON(): string;
+}
 
 type TemporalWithNullable<T extends TemporalComparable> =
   | (T | null | undefined)[]
