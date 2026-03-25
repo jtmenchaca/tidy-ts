@@ -290,3 +290,66 @@ export const ERROR_MESSAGES = {
   INSUFFICIENT_DATA_SD:
     "Insufficient data to calculate standard deviation (need at least 2 values)",
 } as const;
+
+// ---------------------------------------------------------------------------
+// Temporal helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * A value whose constructor exposes a static `compare(a, b)` method that
+ * returns -1 | 0 | 1.  All TC39 Temporal types satisfy this:
+ *   Temporal.PlainDate, Temporal.PlainDateTime, Temporal.PlainTime,
+ *   Temporal.Instant, Temporal.ZonedDateTime
+ */
+export interface Comparable {
+  constructor: { compare(a: unknown, b: unknown): number };
+}
+
+/**
+ * Runtime check: does `value` look like a Temporal-style comparable?
+ * i.e. is it a non-null object whose constructor has a static `compare` fn?
+ */
+export function isComparable(value: unknown): value is Comparable {
+  return (
+    value != null &&
+    typeof value === "object" &&
+    typeof (value as Comparable).constructor?.compare === "function"
+  );
+}
+
+/**
+ * Find the min or max of an array of Comparable values (e.g. Temporal types)
+ * using `constructor.compare`.
+ *
+ * @param values - array of unknown values (may contain null/undefined)
+ * @param mode - "min" or "max"
+ * @param removeNull - skip null values instead of returning null
+ * @param removeUndefined - skip undefined values instead of returning null
+ * @returns the min/max value, or null
+ */
+export function comparableMinMax(
+  values: unknown[],
+  mode: "min" | "max",
+  removeNull: boolean,
+  removeUndefined: boolean,
+): unknown | null {
+  const target = mode === "min" ? -1 : 1;
+  let best: Comparable | null = null;
+
+  for (const v of values) {
+    if (v === null) {
+      if (!removeNull) return null;
+      continue;
+    }
+    if (v === undefined) {
+      if (!removeUndefined) return null;
+      continue;
+    }
+    if (!isComparable(v)) continue;
+    if (best === null || best.constructor.compare(v, best) === target) {
+      best = v;
+    }
+  }
+
+  return best;
+}

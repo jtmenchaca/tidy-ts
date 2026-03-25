@@ -128,6 +128,7 @@
         "npm:tailwind-merge@^3.0.2",
         "npm:tailwindcss-animate@^1.0.7",
         "npm:tailwindcss@^4.0.9",
+        "npm:temporal-polyfill@~0.3.2",
         "npm:tmcp@^1.13.0",
         "npm:typescript-eslint@^8.18.2",
         "npm:typescript@~5.6.2",
@@ -181,6 +182,7 @@
         "packageJson": {
           "dependencies": [
             "npm:@jsr/std__csv@^1.0.6",
+            "npm:temporal-polyfill@*",
             "npm:vega-embed@^7.0.2",
             "npm:vega-lite@^6.4.1",
             "npm:vega@^6.2.0",

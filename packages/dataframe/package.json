@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/dataframe",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "type": "module",
   "main": "mod.ts",
   "exports": {
@@ -13,6 +13,7 @@
     "vega": "^6.2.0",
     "vega-embed": "^7.0.2",
     "vega-lite": "^6.4.1",
-    "@std/csv": "jsr:@std/csv@^1.0.6"
+    "@std/csv": "jsr:@std/csv@^1.0.6",
+    "temporal-polyfill": "*"
   }
 }

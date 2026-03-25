@@ -137,7 +137,8 @@
     "vega-embed": "^7.0.2",
     "vega-lite": "^6.4.1",
     "vite": "^7.0.4",
-    "zod": "^4.1.8"
+    "zod": "^4.1.8",
+    "temporal-polyfill": "^0.3.2"
   },
   "pnpm": {
     "overrides": {
