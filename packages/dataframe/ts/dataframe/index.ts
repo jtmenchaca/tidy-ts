@@ -8,6 +8,9 @@ export type {
 export { createDataFrame } from "./implementation/create-dataframe.ts";
 export type { DataFrameOptions } from "./implementation/create-dataframe.ts";
 
+export { zDataFrame } from "./implementation/z-dataframe.ts";
+export type { ZodDataFrame } from "./implementation/z-dataframe.ts";
+
 export { resolveVerb } from "./implementation/resolve-verb.ts";
 
 export {

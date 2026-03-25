@@ -7,6 +7,8 @@ export {
   type GroupedDataFrame,
   type PromisedDataFrame,
   type PromisedGroupedDataFrame,
+  zDataFrame,
+  type ZodDataFrame,
 } from "./ts/dataframe/index.ts";
 export { concatDataFrames } from "./ts/verbs/reshape/bind-rows.verb.ts";
 export type {
