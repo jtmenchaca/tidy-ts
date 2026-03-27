@@ -79,8 +79,8 @@ export function mutate<
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => GroupedDataFrame<
-  Prettify<AddColumns<Row, Assignments>>,
-  Extract<GroupName, keyof Prettify<AddColumns<Row, Assignments>>>
+  AddColumns<Row, Assignments>,
+  Extract<GroupName, keyof AddColumns<Row, Assignments>>
 >;
 
 // ---------- UNGROUPED: object spec of functions (preserve return types) ----------
@@ -114,7 +114,7 @@ export function mutate<
   Assignments extends Record<string, ColumnValue<Row>>,
 >(
   spec: Assignments,
-): (df: DataFrame<Row>) => DataFrame<Prettify<AddColumns<Row, Assignments>>>;
+): (df: DataFrame<Row>) => DataFrame<AddColumns<Row, Assignments>>;
 
 // ---------- ASYNC FUNCTION OVERLOADS (when async functions detected) ----------
 
@@ -204,8 +204,8 @@ export function mutate<
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
   GroupedDataFrame<
-    Prettify<AddColumns<Row, Assignments>>,
-    Extract<GroupName, keyof Prettify<AddColumns<Row, Assignments>>>
+    AddColumns<Row, Assignments>,
+    Extract<GroupName, keyof AddColumns<Row, Assignments>>
   >
 >;
 
@@ -218,7 +218,7 @@ export function mutate<
   options: ConcurrencyOptions,
 ): (
   df: DataFrame<Row>,
-) => Promise<DataFrame<Prettify<AddColumns<Row, Assignments>>>>;
+) => Promise<DataFrame<AddColumns<Row, Assignments>>>;
 
 /* =================================================================================
   Implementation (broad; overloads give the precise types).

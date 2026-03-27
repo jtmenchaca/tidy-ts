@@ -89,7 +89,6 @@ Deno.test("filter from empty data", () => {
   // @ts-expect-error - empty dataframe
   const result = createDataFrame([]).filter((row) => row.mass > 50);
   console.log("Filter empty data result:", result);
-  // @ts-expect-error - empty dataframe
   expect(result.toArray()).toEqual([]);
 });
 

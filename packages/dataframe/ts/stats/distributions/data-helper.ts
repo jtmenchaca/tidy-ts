@@ -68,7 +68,7 @@ export function createDistributionData<T extends Record<string, any>>({
   params: T;
   type: "pdf" | "cdf" | "inverse_cdf";
   config?: DistributionDataConfig;
-}) {
+}): DataFrame<{ x: number; density: number }> | DataFrame<{ x: number; probability: number }> | DataFrame<{ probability: number; quantile: number }> {
   const { range, points = 100 } = config;
 
   if (type === "inverse_cdf") {

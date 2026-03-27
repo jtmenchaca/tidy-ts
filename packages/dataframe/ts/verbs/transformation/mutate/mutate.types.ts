@@ -225,12 +225,12 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<Row, GroupName>,
     formulas: Formulas,
   ): AnyPropertyIsAsync<Formulas> extends true ? PromisedGroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Formulas>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Formulas>>>
+      RowAfterMutation<Row, Formulas>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
     >
     : GroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Formulas>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Formulas>>>
+      RowAfterMutation<Row, Formulas>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
     >;
 
   // ── Grouped — async mixed assignments ──────────────────────────────────────
@@ -276,12 +276,12 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<Row, GroupName>,
     assignments: Assignments,
   ): AnyPropertyIsAsync<Assignments> extends true ? PromisedGroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Assignments>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+      RowAfterMutation<Row, Assignments>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
     >
     : GroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Assignments>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+      RowAfterMutation<Row, Assignments>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
     >;
 
   // ── Ungrouped — async formulas ──────────────────────────────────────────────
@@ -328,8 +328,8 @@ export interface MutateMethod<Row extends object> {
   >(
     formulas: Formulas,
   ): AnyPropertyIsAsync<Formulas> extends true
-    ? PromisedDataFrame<Prettify<RowAfterMutation<Row, Formulas>>>
-    : DataFrame<Prettify<RowAfterMutation<Row, Formulas>>>;
+    ? PromisedDataFrame<RowAfterMutation<Row, Formulas>>
+    : DataFrame<RowAfterMutation<Row, Formulas>>;
 
   // ── Ungrouped — async mixed assignments ─────────────────────────────────────
 
@@ -370,8 +370,8 @@ export interface MutateMethod<Row extends object> {
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,
   ): AnyPropertyIsAsync<Assignments> extends true
-    ? PromisedDataFrame<Prettify<RowAfterMutation<Row, Assignments>>>
-    : DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>;
+    ? PromisedDataFrame<RowAfterMutation<Row, Assignments>>
+    : DataFrame<RowAfterMutation<Row, Assignments>>;
 
   // ── Overloads with concurrency options ─────────────────────────────────────
 
@@ -423,8 +423,8 @@ export interface MutateMethod<Row extends object> {
     options: ConcurrencyOptions,
   ): Promise<
     GroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Formulas>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Formulas>>>
+      RowAfterMutation<Row, Formulas>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
     >
   >;
 
@@ -472,8 +472,8 @@ export interface MutateMethod<Row extends object> {
     options: ConcurrencyOptions,
   ): Promise<
     GroupedDataFrame<
-      Prettify<RowAfterMutation<Row, Assignments>>,
-      Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+      RowAfterMutation<Row, Assignments>,
+      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
     >
   >;
 
@@ -520,7 +520,7 @@ export interface MutateMethod<Row extends object> {
   >(
     formulas: Formulas,
     options: ConcurrencyOptions,
-  ): Promise<DataFrame<Prettify<RowAfterMutation<Row, Formulas>>>>;
+  ): Promise<DataFrame<RowAfterMutation<Row, Formulas>>>;
 
   // ── Ungrouped — assignments with concurrency options ───────────────────────
   /**
@@ -560,7 +560,7 @@ export interface MutateMethod<Row extends object> {
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,
     options: ConcurrencyOptions,
-  ): Promise<DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>>;
+  ): Promise<DataFrame<RowAfterMutation<Row, Assignments>>>;
   // ── Grouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
   /**
    * Add or modify columns using expressions.
@@ -606,8 +606,8 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<Row, GroupName>,
     formulas: Formulas,
   ): GroupedDataFrame<
-    Prettify<RowAfterMutation<Row, Formulas>>,
-    Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Formulas>>>
+    RowAfterMutation<Row, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
   >;
 
   // ── Grouped — mixed assignments (functions | arrays | scalars | null) ───────────
@@ -652,8 +652,8 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<Row, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    Prettify<RowAfterMutation<Row, Assignments>>,
-    Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+    RowAfterMutation<Row, Assignments>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
   >;
 
   // ── Grouped — mixed without scalars (functions | arrays | null) for better inference ─
@@ -703,8 +703,8 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<Row, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    Prettify<RowAfterMutation<Row, Assignments>>,
-    Extract<GroupName, keyof Prettify<RowAfterMutation<Row, Assignments>>>
+    RowAfterMutation<Row, Assignments>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
   >;
 
   // ── Ungrouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
@@ -749,7 +749,7 @@ export interface MutateMethod<Row extends object> {
     >,
   >(
     formulas: Formulas,
-  ): DataFrame<Prettify<RowAfterMutation<Row, Formulas>>>;
+  ): DataFrame<RowAfterMutation<Row, Formulas>>;
 
   // ── Ungrouped — mixed assignments with contextual function typing ─────────
   /**
@@ -789,8 +789,8 @@ export interface MutateMethod<Row extends object> {
   <A extends Record<string, unknown>>(
     assignments: WithContextForFunctions<Row, A>,
   ): AnyPropertyIsAsync<A> extends true
-    ? PromisedDataFrame<Prettify<RowAfterMutation<Row, A>>>
-    : DataFrame<Prettify<RowAfterMutation<Row, A>>>;
+    ? PromisedDataFrame<RowAfterMutation<Row, A>>
+    : DataFrame<RowAfterMutation<Row, A>>;
 
   // ── Ungrouped — mixed without scalars (functions | arrays | null) for better inference ─────
   /**
@@ -836,7 +836,7 @@ export interface MutateMethod<Row extends object> {
     },
   >(
     assignments: Assignments,
-  ): DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>;
+  ): DataFrame<RowAfterMutation<Row, Assignments>>;
 
   // ── Ungrouped — fallback for mixed assignments (functions | arrays | scalars | null) ─────────
   /**
@@ -875,5 +875,5 @@ export interface MutateMethod<Row extends object> {
    */
   <Assignments extends Record<string, ColumnValue<Row>>>(
     assignments: Assignments,
-  ): DataFrame<Prettify<RowAfterMutation<Row, Assignments>>>;
+  ): DataFrame<RowAfterMutation<Row, Assignments>>;
 }

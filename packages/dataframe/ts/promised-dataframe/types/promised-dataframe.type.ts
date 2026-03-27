@@ -1,5 +1,10 @@
 // packages/dataframe/ts/core/thenable.ts
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
+import type {
+  DataFrame,
+  DataFrameBase,
+  DataFrameColumns,
+  GroupedDataFrame,
+} from "../../dataframe/index.ts";
 
 /*
  * CRITICAL TYPE SYSTEM DISCOVERY: How PromisedDataFrame Method Overriding Works
@@ -60,7 +65,7 @@ import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
  */
 export type PromisedDataFrame<Row extends Record<string, unknown>> =
   & Omit<
-    DataFrame<Row>,
+    DataFrameBase<Row>,
     | "mutate"
     | "filter"
     | "select"
@@ -84,7 +89,8 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
     | "iloc"
     | "getTrace"
     | "printTrace"
-  > // Remove original methods
+  >
+  & DataFrameColumns<Row>
   & PromiseLike<DataFrame<Row>>
   & {
     // Override mutate to always return PromisedDataFrame with awaited types
@@ -177,7 +183,7 @@ export type PromisedGroupedDataFrame<
   K extends keyof Row,
 > =
   & Omit<
-    GroupedDataFrame<Row, K>,
+    DataFrameBase<Row>,
     | "mutate"
     | "filter"
     | "select"
@@ -201,7 +207,8 @@ export type PromisedGroupedDataFrame<
     | "iloc"
     | "getTrace"
     | "printTrace"
-  > // Remove original methods
+  >
+  & DataFrameColumns<Row>
   & PromiseLike<GroupedDataFrame<Row, K>>
   & {
     // Override mutate to always return PromisedGroupedDataFrame

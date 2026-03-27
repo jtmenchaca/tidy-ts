@@ -1,4 +1,9 @@
-export type { DataFrame, GroupedDataFrame } from "./types/dataframe.type.ts";
+export type {
+  DataFrame,
+  DataFrameBase,
+  DataFrameColumns,
+  GroupedDataFrame,
+} from "./types/dataframe.type.ts";
 
 export type {
   PromisedDataFrame,

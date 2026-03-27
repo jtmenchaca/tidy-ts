@@ -127,7 +127,7 @@ export type DataFrameColumns<Row extends object> = {
  * ```
  */
 /** Static members of DataFrame — cached by the type checker as an interface. */
-interface DataFrameBase<Row extends object = object>
+export interface DataFrameBase<Row extends object = object>
   extends Forbid<ForbiddenArrayMethods> {
   /** read-only random access (so df[0] works in TS) */
   readonly [index: number]: Row;
