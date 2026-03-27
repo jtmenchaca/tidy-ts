@@ -519,7 +519,16 @@ const nearestLegendOrient = (
 function toVegaData<T extends Record<string, unknown>>(
   df: DataFrame<T>,
   spec: GraphOptions<T>,
-) {
+): {
+  data: Record<string, unknown>[];
+  fields: {
+    xField: string;
+    yField: string;
+    colorField: string | null;
+    sizeField: string | null;
+    shapeField: string | null;
+  };
+} {
   const rows = df.toArray() as T[];
   const m = spec.mappings as Record<string, ColumnSpec<T, unknown>>;
 
@@ -536,13 +545,13 @@ function toVegaData<T extends Record<string, unknown>>(
   const sizeField = "size" in m && m.size ? getName(m.size, "size") : null;
   const shapeField = "shape" in m && m.shape ? getName(m.shape, "shape") : null;
 
-  const xVals = arrFrom(df, m.x);
-  const yVals = arrFrom(df, m.y as ColumnSpec<T, number | null | undefined>);
-  const colorVals = colorMapping ? arrFrom(df, colorMapping) : null;
-  const sizeVals = sizeField
+  const xVals: unknown[] = arrFrom(df, m.x);
+  const yVals: unknown[] = arrFrom(df, m.y as ColumnSpec<T, number | null | undefined>);
+  const colorVals: unknown[] | null = colorMapping ? arrFrom(df, colorMapping) : null;
+  const sizeVals: unknown[] | null = sizeField
     ? arrFrom(df, m.size as ColumnSpec<T, number | null | undefined>)
     : null;
-  const shapeVals = shapeField
+  const shapeVals: unknown[] | null = shapeField
     ? arrFrom(df, m.shape as ColumnSpec<T, string | number>)
     : null;
 

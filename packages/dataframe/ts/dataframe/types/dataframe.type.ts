@@ -126,277 +126,286 @@ export type DataFrameColumns<Row extends object> = {
  *   .summarize({ avgAge: group => stats.mean(group.age) });
  * ```
  */
+/** Static members of DataFrame — cached by the type checker as an interface. */
+interface DataFrameBase<Row extends object = object>
+  extends Forbid<ForbiddenArrayMethods> {
+  /** read-only random access (so df[0] works in TS) */
+  readonly [index: number]: Row;
+
+  [Symbol.iterator](): IterableIterator<Row>;
+
+  at(index: number): Row | undefined;
+
+  /** @deprecated Use toRows() instead */
+  toArray(): readonly Row[];
+
+  toRows(): Row[];
+
+  toColumns(): { [K in keyof Row]: Row[K][] };
+
+  toJSON(options?: { space?: number }): string;
+
+  toString(
+    options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean },
+  ): string;
+
+  nrows(): number;
+
+  ncols(): number;
+
+  columns(): string[];
+
+  isEmpty(): boolean;
+
+  print(
+    messageOrOpts?: string | {
+      maxCols?: number;
+      maxWidth?: number;
+      transpose?: boolean;
+      showIndex?: boolean;
+      colorRows?: boolean;
+    },
+    opts?: {
+      maxCols?: number;
+      maxWidth?: number;
+      transpose?: boolean;
+      showIndex?: boolean;
+      colorRows?: boolean;
+    },
+  ): DataFrame<Row>;
+
+  profile: ProfileMethod<Row>;
+
+  // ---------- Transformations ----------
+  mutate: MutateMethod<Row>;
+  mutateColumns: MutateColumnsMethod<Row>;
+  filter: FilterRowsMethod<Row>;
+  select: SelectMethod<Row>;
+  extract: ExtractMethod<Row>;
+  extractHead: ExtractHeadMethod<Row>;
+  extractTail: ExtractTailMethod<Row>;
+  extractNth: ExtractNthMethod<Row>;
+  extractSample: ExtractSampleMethod<Row>;
+  extractUnique: ExtractUniqueMethod<Row>;
+
+  extractNthWhereSorted: ExtractNthWhereSortedMethod<Row>;
+  arrange: ArrangeMethod<Row>;
+  sort: ArrangeMethod<Row>;
+  distinct: DistinctMethod<Row>;
+  rename: RenameMethod<Row>;
+  drop: DropMethod<Row>;
+  reorder: ReorderMethod<Row>;
+
+  // ---------- Joins ----------
+  innerJoin: InnerJoinMethod<Row>;
+  leftJoin: LeftJoinMethod<Row>;
+  rightJoin: RightJoinMethod<Row>;
+  outerJoin: OuterJoinMethod<Row>;
+  crossJoin: CrossJoinMethod<Row>;
+  asofJoin: AsofJoinMethod<Row>;
+
+  // ---------- Grouping / Aggregation ----------
+  groupBy: GroupByMethod<Row>;
+  summarise: SummariseMethod<Row>;
+  summarize: SummariseMethod<Row>;
+  summariseColumns: SummariseColumnsMethod<Row>;
+  summarizeColumns: SummariseColumnsMethod<Row>;
+  crossTabulate: CrossTabulateMethod<Row>;
+  count: CountMethod<Row>;
+
+  // ---------- Utilities ----------
+  dummyCol: DummyColMethod<Row>;
+  bindRows: BindRowsMethod<Row>;
+  /** @deprecated Use bindRows instead */
+  bind: BindRowsMethod<Row>;
+
+  resample: ResampleMethod<Row>;
+  downsample: DownsampleMethod<Row>;
+  upsample: UpsampleMethod<Row>;
+
+  // ---------- Missing Data ----------
+  replaceNull: ReplaceNullMethod<Row>;
+  replaceUndefined: ReplaceUndefinedMethod<Row>;
+
+  /** @deprecated Use replaceNull and replaceUndefined instead. */
+  replaceNA: ReplaceNaMethod<Row>;
+
+  fillForward: FillForwardMethod<Row>;
+
+  fillBackward: FillBackwardMethod<Row>;
+
+  interpolate: InterpolateMethod<Row>;
+
+  /** @deprecated Use removeNull and removeUndefined, or filter, instead. */
+  removeNA: {
+    <Field extends keyof Row>(
+      field: Field,
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+      >
+    >;
+    <Field extends keyof Row>(
+      field: Field,
+      ...fields: Field[]
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+      >
+    >;
+    <Field extends keyof Row>(
+      fields: Field[],
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+      >
+    >;
+  };
+
+  removeNull: {
+    <Field extends keyof Row>(
+      field: Field,
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+    <Field extends keyof Row>(
+      field: Field,
+      ...fields: Field[]
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+    <Field extends keyof Row>(
+      fields: Field[],
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+  };
+
+  removeNulls: {
+    <Field extends keyof Row>(
+      field: Field,
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+    <Field extends keyof Row>(
+      field: Field,
+      ...fields: Field[]
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+    <Field extends keyof Row>(
+      fields: Field[],
+    ): DataFrame<
+      Prettify<
+        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+      >
+    >;
+  };
+
+  removeUndefined: {
+    <Field extends keyof Row>(
+      field: Field,
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+      >
+    >;
+    <Field extends keyof Row>(
+      field: Field,
+      ...fields: Field[]
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+      >
+    >;
+    <Field extends keyof Row>(
+      fields: Field[],
+    ): DataFrame<
+      Prettify<
+        & UnifyUnion<Row>
+        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+      >
+    >;
+  };
+
+  // ---------- Convenience Verbs ----------
+  append: AppendMethod<Row>;
+  prepend: PrependMethod<Row>;
+  shuffle: ShuffleMethod<Row>;
+
+  // ---------- Pivoting ----------
+  pivotWider: PivotWiderMethod<Row>;
+  pivotLonger: PivotLongerMethod<Row>;
+  transpose: TransposeMethod<Row>;
+  unnest: UnnestMethod<Row>;
+
+  // ---------- Slicing ----------
+  slice: SliceRowsMethod<Row>;
+  sliceHead: SliceHeadMethod<Row>;
+  sliceTail: SliceTailMethod<Row>;
+  sliceMin: SliceMinMethod<Row>;
+  sliceMax: SliceMaxMethod<Row>;
+  sliceSample: SliceSampleMethod<Row>;
+  /** @deprecated Use sliceSample instead */
+  sample: SliceSampleMethod<Row>;
+  /** @deprecated Use sliceHead instead */
+  head: SliceHeadMethod<Row>;
+  /** @deprecated Use sliceTail instead */
+  tail: SliceTailMethod<Row>;
+
+  // ---------- Graph ----------
+  graph(spec: GraphOptions<Row>): TidyGraphWidget;
+
+  // ---------- Side-effects ----------
+  forEach: ForEachRowMethod<Row>;
+  /** @deprecated Use forEach instead */
+  forEachRow: ForEachRowMethod<Row>;
+  forEachCol: ForEachColMethod<Row>;
+
+  // ---------- Grouping ----------
+  ungroup: UngroupMethod<Row>;
+
+  // ---------- Row Labels ----------
+  setRowLabels<const Labels extends readonly RowLabel[]>(
+    labels: Labels,
+  ): DataFrame<Prettify<Row & { [K in typeof ROW_LABEL]: Labels[number] }>>;
+
+  getRowLabels(): RowLabel[];
+
+  loc(label: RowLabel): Row | undefined;
+
+  iloc(labels: RowLabel[]): DataFrame<Row>;
+
+  // ---------- Tracing ----------
+  getTrace(): unknown[];
+
+  printTrace(): void;
+}
+
+/**
+ * A DataFrame is a two-dimensional data structure with labeled columns, similar to a table or spreadsheet.
+ *
+ * Uses an interface (DataFrameBase) for the static method surface so the type checker
+ * can cache structural comparisons, combined with DataFrameColumns for dynamic column accessors.
+ */
 export type DataFrame<Row extends object = object> =
-  & {
-    /** read-only random access (so df[0] works in TS) */
-    readonly [index: number]: Row;
-
-    [Symbol.iterator](): IterableIterator<Row>;
-
-    at(index: number): Row | undefined;
-
-    /** @deprecated Use toRows() instead */
-    toArray(): readonly Row[];
-
-    toRows(): Row[];
-
-    toColumns(): { [K in keyof Row]: Row[K][] };
-
-    toJSON(options?: { space?: number }): string;
-
-    toString(
-      options?: { maxRows?: number; maxWidth?: number; showIndex?: boolean },
-    ): string;
-
-    nrows(): number;
-
-    ncols(): number;
-
-    columns(): string[];
-
-    isEmpty(): boolean;
-
-    print(
-      messageOrOpts?: string | {
-        maxCols?: number;
-        maxWidth?: number;
-        transpose?: boolean;
-        showIndex?: boolean;
-        colorRows?: boolean;
-      },
-      opts?: {
-        maxCols?: number;
-        maxWidth?: number;
-        transpose?: boolean;
-        showIndex?: boolean;
-        colorRows?: boolean;
-      },
-    ): DataFrame<Row>;
-
-    profile: ProfileMethod<Row>;
-
-    // ---------- Transformations ----------
-    mutate: MutateMethod<Row>;
-    mutateColumns: MutateColumnsMethod<Row>;
-    filter: FilterRowsMethod<Row>;
-    select: SelectMethod<Row>;
-    extract: ExtractMethod<Row>;
-    extractHead: ExtractHeadMethod<Row>;
-    extractTail: ExtractTailMethod<Row>;
-    extractNth: ExtractNthMethod<Row>;
-    extractSample: ExtractSampleMethod<Row>;
-    extractUnique: ExtractUniqueMethod<Row>;
-
-    extractNthWhereSorted: ExtractNthWhereSortedMethod<Row>;
-    arrange: ArrangeMethod<Row>;
-    sort: ArrangeMethod<Row>;
-    distinct: DistinctMethod<Row>;
-    rename: RenameMethod<Row>;
-    drop: DropMethod<Row>;
-    reorder: ReorderMethod<Row>;
-
-    // ---------- Joins ----------
-    innerJoin: InnerJoinMethod<Row>;
-    leftJoin: LeftJoinMethod<Row>;
-    rightJoin: RightJoinMethod<Row>;
-    outerJoin: OuterJoinMethod<Row>;
-    crossJoin: CrossJoinMethod<Row>;
-    asofJoin: AsofJoinMethod<Row>;
-
-    // ---------- Grouping / Aggregation ----------
-    groupBy: GroupByMethod<Row>;
-    summarise: SummariseMethod<Row>;
-    summarize: SummariseMethod<Row>;
-    summariseColumns: SummariseColumnsMethod<Row>;
-    summarizeColumns: SummariseColumnsMethod<Row>;
-    crossTabulate: CrossTabulateMethod<Row>;
-    count: CountMethod<Row>;
-
-    // ---------- Utilities ----------
-    dummyCol: DummyColMethod<Row>;
-    bindRows: BindRowsMethod<Row>;
-    /** @deprecated Use bindRows instead */
-    bind: BindRowsMethod<Row>;
-
-    resample: ResampleMethod<Row>;
-    downsample: DownsampleMethod<Row>;
-    upsample: UpsampleMethod<Row>;
-
-    // ---------- Missing Data ----------
-    replaceNull: ReplaceNullMethod<Row>;
-    replaceUndefined: ReplaceUndefinedMethod<Row>;
-
-    /** @deprecated Use replaceNull and replaceUndefined instead. */
-    replaceNA: ReplaceNaMethod<Row>;
-
-    fillForward: FillForwardMethod<Row>;
-
-    fillBackward: FillBackwardMethod<Row>;
-
-    interpolate: InterpolateMethod<Row>;
-
-    /** @deprecated Use removeNull and removeUndefined, or filter, instead. */
-    removeNA: {
-      <Field extends keyof Row>(
-        field: Field,
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
-        >
-      >;
-      <Field extends keyof Row>(
-        field: Field,
-        ...fields: Field[]
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
-        >
-      >;
-      <Field extends keyof Row>(
-        fields: Field[],
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
-        >
-      >;
-    };
-
-    removeNull: {
-      <Field extends keyof Row>(
-        field: Field,
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-      <Field extends keyof Row>(
-        field: Field,
-        ...fields: Field[]
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-      <Field extends keyof Row>(
-        fields: Field[],
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-    };
-
-    removeNulls: {
-      <Field extends keyof Row>(
-        field: Field,
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-      <Field extends keyof Row>(
-        field: Field,
-        ...fields: Field[]
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-      <Field extends keyof Row>(
-        fields: Field[],
-      ): DataFrame<
-        Prettify<
-          UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
-        >
-      >;
-    };
-
-    removeUndefined: {
-      <Field extends keyof Row>(
-        field: Field,
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
-        >
-      >;
-      <Field extends keyof Row>(
-        field: Field,
-        ...fields: Field[]
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
-        >
-      >;
-      <Field extends keyof Row>(
-        fields: Field[],
-      ): DataFrame<
-        Prettify<
-          & UnifyUnion<Row>
-          & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
-        >
-      >;
-    };
-
-    // ---------- Convenience Verbs ----------
-    append: AppendMethod<Row>;
-    prepend: PrependMethod<Row>;
-    shuffle: ShuffleMethod<Row>;
-
-    // ---------- Pivoting ----------
-    pivotWider: PivotWiderMethod<Row>;
-    pivotLonger: PivotLongerMethod<Row>;
-    transpose: TransposeMethod<Row>;
-    unnest: UnnestMethod<Row>;
-
-    // ---------- Slicing ----------
-    slice: SliceRowsMethod<Row>;
-    sliceHead: SliceHeadMethod<Row>;
-    sliceTail: SliceTailMethod<Row>;
-    sliceMin: SliceMinMethod<Row>;
-    sliceMax: SliceMaxMethod<Row>;
-    sliceSample: SliceSampleMethod<Row>;
-    /** @deprecated Use sliceSample instead */
-    sample: SliceSampleMethod<Row>;
-    /** @deprecated Use sliceHead instead */
-    head: SliceHeadMethod<Row>;
-    /** @deprecated Use sliceTail instead */
-    tail: SliceTailMethod<Row>;
-
-    // ---------- Graph ----------
-    graph(spec: GraphOptions<Row>): TidyGraphWidget;
-
-    // ---------- Side-effects ----------
-    forEach: ForEachRowMethod<Row>;
-    /** @deprecated Use forEach instead */
-    forEachRow: ForEachRowMethod<Row>;
-    forEachCol: ForEachColMethod<Row>;
-
-    // ---------- Grouping ----------
-    ungroup: UngroupMethod<Row>;
-
-    // ---------- Row Labels ----------
-    setRowLabels<const Labels extends readonly RowLabel[]>(
-      labels: Labels,
-    ): DataFrame<Prettify<Row & { [K in typeof ROW_LABEL]: Labels[number] }>>;
-
-    getRowLabels(): RowLabel[];
-
-    loc(label: RowLabel): Row | undefined;
-
-    iloc(labels: RowLabel[]): DataFrame<Row>;
-
-    // ---------- Tracing ----------
-    getTrace(): unknown[];
-
-    printTrace(): void;
-  }
-  & DataFrameColumns<Row>
-  & Forbid<ForbiddenArrayMethods>;
+  & DataFrameBase<Row>
+  & DataFrameColumns<Row>;
 
 /** DataFrameWithRowLabels adds row label metadata while keeping the DataFrame surface. */
 export type DataFrameWithRowLabels<

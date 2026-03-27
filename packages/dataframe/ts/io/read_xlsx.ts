@@ -928,18 +928,14 @@ async function readXLSXImpl<S extends z.ZodObject<any>>(
       }
     }
 
-    // Create DataFrame with dummy row, then filter to empty
+    // Create an empty DataFrame with the correct column structure
     if (noTypes) {
-      // @ts-ignore - filter returns correct type but TypeScript can't infer it
-      return createDataFrame([dummyRow as z.infer<S>], {
+      return createDataFrame([], {
         schema,
         no_types: true,
-      }).filter(() => false);
+      }) as unknown as DataFrame<z.infer<S>>;
     }
-    // @ts-ignore - filter returns correct type but TypeScript can't infer it
-    return createDataFrame([dummyRow as z.infer<S>], schema).filter(() =>
-      false
-    );
+    return createDataFrame([], schema) as unknown as DataFrame<z.infer<S>>;
   }
 
   if (noTypes) {
