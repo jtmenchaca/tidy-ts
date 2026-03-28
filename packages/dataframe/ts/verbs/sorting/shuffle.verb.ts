@@ -1,5 +1,10 @@
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
-import { createDataFrame } from "../../dataframe/index.ts";
+import {
+  createDataFrame,
+  materializeIndex,
+  withGroupsRebuilt,
+} from "../../dataframe/index.ts";
+import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { shuffleArray } from "../utility/seedable-random.ts";
 
 /**
@@ -36,34 +41,56 @@ import { shuffleArray } from "../utility/seedable-random.ts";
  */
 export function shuffle<T extends Record<string, unknown>>(seed?: number) {
   return (df: DataFrame<T> | GroupedDataFrame<T>): DataFrame<T> => {
+    const api = df as any;
+    const store = api.__store;
     const groupedDf = df as GroupedDataFrame<T>;
 
     if (groupedDf.__groups) {
-      // Handle grouped DataFrames - shuffle within each group
-      const rows = [...df];
+      const mask = api.__view?.mask;
       const rebuilt: T[] = [];
-
       const { head, next, size } = groupedDf.__groups;
 
-      // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
-        // Collect all rows in this group
-        const groupRows: number[] = [];
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
 
-        const groupData = groupRows.map((i: number) => rows[i]);
-        const shuffled = shuffleArray(groupData, seed);
-        rebuilt.push(...shuffled);
+        const groupRows: T[] = [];
+        for (const physIdx of groupIndices) {
+          const row: any = {};
+          for (const colName of store.columnNames) {
+            row[colName] = store.columns[colName][physIdx];
+          }
+          groupRows.push(row);
+        }
+
+        rebuilt.push(...shuffleArray(groupRows, seed));
       }
 
-      return createDataFrame(rebuilt) as unknown as DataFrame<T>;
+      const out = rebuilt.length > 0
+        ? createDataFrame(rebuilt)
+        : createDataFrame({
+          columns: Object.fromEntries(
+            store.columnNames.map((col: string) => [col, []]),
+          ),
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
-      // Handle ungrouped DataFrames
-      const result = shuffleArray([...df], seed);
+      const idx = materializeIndex(store.length, api.__view);
+      const rows: T[] = [];
+      for (let i = 0; i < idx.length; i++) {
+        const row: any = {};
+        for (const colName of store.columnNames) {
+          row[colName] = store.columns[colName][idx[i]];
+        }
+        rows.push(row);
+      }
+      const result = shuffleArray(rows, seed);
       return createDataFrame(result) as unknown as DataFrame<T>;
     }
   };

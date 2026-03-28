@@ -1,5 +1,5 @@
+// deno-lint-ignore-file no-explicit-any
 // packages/dataframe/ts/transformation/arrange.ts
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { withIndex } from "../../dataframe/index.ts";
 import { withGroupsRebuilt } from "../../dataframe/index.ts";
 import { isComparable } from "../../stats/helpers.ts";
@@ -117,14 +117,13 @@ function encodeStringCol(col: unknown[], nRows: number): Uint32Array {
  *   - Build an index buffer
  *   - For each key from last→first, perform a **stable** in-place sort of indices
  */
-function arrangeWasmStable<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  columns: (keyof Row)[],
+function arrangeWasmStable(
+  df: any,
+  columns: any[],
   directions: SortDirection[],
-): DataFrame<Row> | GroupedDataFrame<Row> {
-  const g = df as GroupedDataFrame<Row>;
-  // deno-lint-ignore no-explicit-any
-  const api = df as any;
+): any {
+  const g = df;
+  const api = df;
   const store = api.__store;
   const nRows: number = store.length;
 
@@ -164,7 +163,7 @@ function arrangeWasmStable<Row extends Record<string, unknown>>(
     for (let k = specs.length - 1; k >= 0; k--) {
       stableSortByKey(idx, k);
     }
-    return withIndex(df as DataFrame<Row>, idx);
+    return withIndex(df, idx);
   }
 
   // Grouped: sort each group index slice independently; preserve group block order
@@ -188,63 +187,32 @@ function arrangeWasmStable<Row extends Record<string, unknown>>(
     for (let i = 0; i < idx.length; i++) blocks.push(idx[i]);
   }
   const result = withIndex(
-    df as DataFrame<Row>,
+    df,
     new Uint32Array(blocks),
   );
   // Rebuild groups over reordered rows to keep adjacency correct
-  const outRows = (result as DataFrame<Row>).toArray() as readonly Row[];
+  const outRows = result.toArray();
   return withGroupsRebuilt(
     g,
     outRows,
-    result as DataFrame<Row>,
-  ) as unknown as GroupedDataFrame<Row>;
+    result,
+  );
 }
-
-// ---------- Public API overloads ----------
-
-// Single column overload
-export function arrange<Row extends Record<string, unknown>>(
-  column: keyof Row,
-  direction?: SortDirection,
-): (
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<Row> | GroupedDataFrame<Row>;
-
-// Variadic columns overload (df.arrange("col1", "col2", "col3"))
-export function arrange<Row extends Record<string, unknown>>(
-  column1: keyof Row,
-  ...columns: (keyof Row)[]
-): (
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<Row> | GroupedDataFrame<Row>;
-
-// Array overload (df.arrange(["col1", "col2"], ["asc", "desc"]))
-export function arrange<Row extends Record<string, unknown>>(
-  columns: (keyof Row)[],
-  directions?: SortDirection | SortDirection[],
-): (
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<Row> | GroupedDataFrame<Row>;
 
 // ---------- Implementation ----------
 
-export function arrange<Row extends Record<string, unknown>>(
-  columnOrColumns: keyof Row | (keyof Row)[],
-  directionOrColumnsOrDirections?:
-    | keyof Row
-    | SortDirection
-    | (keyof Row)[]
-    | SortDirection[],
-  ...additionalColumns: (keyof Row)[]
-) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const g = df as GroupedDataFrame<Row>;
-    // deno-lint-ignore no-explicit-any
-    const api = df as any;
+export function arrange(
+  columnOrColumns: any,
+  directionOrColumnsOrDirections?: any,
+  ...additionalColumns: any[]
+): any {
+  return (df: any) => {
+    const g = df;
+    const api = df;
     const store = api.__store;
 
     // Normalize inputs - handle array, single column, and variadic syntax
-    let columns: (keyof Row)[];
+    let columns: any[];
     let directions: SortDirection[] = [];
 
     if (Array.isArray(columnOrColumns)) {
@@ -281,10 +249,10 @@ export function arrange<Row extends Record<string, unknown>>(
         // Variadic: arrange("col1", "col2", "col3")
         // Accept a property key as the second parameter; reject array forms here
         const maybeSecond = directionOrColumnsOrDirections;
-        const moreCols: (keyof Row)[] = [];
+        const moreCols: any[] = [];
         const t = typeof maybeSecond;
         if (t === "string" || t === "number" || t === "symbol") {
-          moreCols.push(maybeSecond as keyof Row);
+          moreCols.push(maybeSecond);
         } else if (Array.isArray(maybeSecond)) {
           throw new Error(
             "Invalid arrange arguments: use arrange([cols], directions?) for array syntax.",
@@ -331,7 +299,7 @@ export function arrange<Row extends Record<string, unknown>>(
         const outIdx = new Uint32Array(nRows);
         try {
           arrange_multi_f64_wasm(flat, nRows, cols.length, dirs, outIdx);
-          return withIndex(df as DataFrame<Row>, outIdx);
+          return withIndex(df, outIdx);
         } catch (_e) {
           // fall through to general stable path
           // console.warn("arrange_multi_f64_wasm failed; using stable path:", _e);

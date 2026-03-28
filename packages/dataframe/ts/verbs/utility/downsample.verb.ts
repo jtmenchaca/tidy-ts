@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
-import { createDataFrame } from "../../dataframe/index.ts";
+import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import type {
   AggregationFunction,
   DownsampleArgs,
@@ -38,7 +39,6 @@ function downsampleImpl<T extends Record<string, unknown>>(
   endDate?: Date,
 ): DataFrame<any> {
   const timeColName = String(timeColumn);
-  const rows = Array.from(df);
 
   // Check if we need calendar-aware bucketing
   const useCalendarBucketing = isCalendarFrequency(frequency);
@@ -49,24 +49,42 @@ function downsampleImpl<T extends Record<string, unknown>>(
   // Check if this is a grouped DataFrame
   const groupedDf = df as any;
   if (groupedDf.__groups) {
-    const { head, next, keyRow, groupingColumns, size } = groupedDf.__groups;
+    const { head, next, keyRow, groupingColumns, size, usesRawIndices } =
+      groupedDf.__groups;
+    const api = df as any;
+    const store = api.__store;
+    const mask = api.__view?.mask;
+    const baseIndex = usesRawIndices
+      ? null
+      : materializeIndex(store.length, api.__view);
     const allResults: any[] = [];
 
     // Process each group separately
     for (let g = 0; g < size; g++) {
-      // Collect rows for this group
+      // Collect rows for this group, filtering by mask
       const groupRows: T[] = [];
       let rowIdx = head[g];
       while (rowIdx !== -1) {
-        groupRows.push(rows[rowIdx]);
+        if (!mask || bitsetGet(mask, rowIdx)) {
+          const physIdx = baseIndex ? baseIndex[rowIdx] : rowIdx;
+          const row: any = {};
+          for (const colName of store.columnNames) {
+            row[colName] = store.columns[colName][physIdx];
+          }
+          groupRows.push(row);
+        }
         rowIdx = next[rowIdx];
       }
 
+      if (groupRows.length === 0) continue;
+
       // Get group key values
-      const groupKeyRow = rows[keyRow[g]];
+      const keyViewIdx = keyRow[g];
+      const keyPhysIdx = baseIndex ? baseIndex[keyViewIdx] : keyViewIdx;
       const groupKeys: Record<string, unknown> = {};
       for (const col of groupingColumns) {
-        groupKeys[String(col)] = groupKeyRow[col];
+        const colName = String(col);
+        groupKeys[colName] = store.columns[colName][keyPhysIdx];
       }
 
       // Determine effective start and end times for this group
@@ -246,6 +264,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
   }
 
   // Ungrouped: Group rows by time bucket
+  const rows = Array.from(df);
   const buckets = new Map<number, T[]>();
 
   // Determine effective start and end times

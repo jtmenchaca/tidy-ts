@@ -1,9 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type {
-  ColumnarStore,
-  DataFrame,
-  GroupedDataFrame,
-} from "../../dataframe/index.ts";
 import {
   createColumnarDataFrameFromStore,
   createDataFrame,
@@ -47,19 +42,19 @@ import { createRandomInt, sampleArray } from "../utility/seedable-random.ts";
  * - Preserves group order for grouped data
  * - Returns empty array if range is invalid
  */
-export function slice<Row extends object>(
+export function slice(
   start: number,
   end?: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
+  return (df: any) => {
     const api: any = df as any;
     const store = api.__store;
 
     // If grouped, apply slice within each group
-    const groupedDf = df as GroupedDataFrame<Row>;
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
       const { head, next, size } = groupedDf.__groups;
 
       for (let g = 0; g < size; g++) {
@@ -81,7 +76,7 @@ export function slice<Row extends object>(
         const e = Math.min(n, e0);
         for (let i = s; i < e; i++) {
           const actualRowIdx = groupIndices[i];
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][actualRowIdx];
           }
@@ -95,8 +90,8 @@ export function slice<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     }
 
     // Ungrouped: slice over current view
@@ -135,18 +130,18 @@ export function slice<Row extends object>(
  * - Preserves group order for grouped data
  * - Returns empty array if no valid indices
  */
-export function slice_indices<Row extends object>(
+export function slice_indices(
   ...indices: number[]
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -167,7 +162,7 @@ export function slice_indices<Row extends object>(
         for (const idx of indices) {
           if (idx >= 0 && idx < groupIndices.length) {
             const actualRowIdx = groupIndices[idx];
-            const row = {} as Row;
+            const row: any = {};
             for (const colName of store.columnNames) {
               (row as any)[colName] = store.columns[colName][actualRowIdx];
             }
@@ -181,8 +176,8 @@ export function slice_indices<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path
       const api: any = df as any;
@@ -199,11 +194,11 @@ export function slice_indices<Row extends object>(
       }
 
       if (validPhysicalIndices.length === 0) {
-        return createDataFrame([] as readonly Row[]);
+        return createDataFrame([]);
       }
 
       // Create new store from selected physical indices
-      const newStore: ColumnarStore = {
+      const newStore: any = {
         columns: {},
         length: validPhysicalIndices.length,
         columnNames: [...store.columnNames],
@@ -218,7 +213,7 @@ export function slice_indices<Row extends object>(
         newStore.columns[colName] = newCol;
       }
 
-      const out = createColumnarDataFrameFromStore<Row>(newStore);
+      const out = createColumnarDataFrameFromStore(newStore);
       (out as any).__view = {}; // reset view
 
       // reconstruct a rowView
@@ -273,18 +268,18 @@ export function slice_indices<Row extends object>(
  * - Preserves group order for grouped data
  * - Returns empty array for empty dataframes
  */
-export function slice_head<Row extends object>(
+export function slice_head(
   n: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -305,7 +300,7 @@ export function slice_head<Row extends object>(
         const takeCount = Math.min(n, groupIndices.length);
         for (let i = 0; i < takeCount; i++) {
           const actualRowIdx = groupIndices[i];
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][actualRowIdx];
           }
@@ -319,8 +314,8 @@ export function slice_head<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path - equivalent to slice(0, n)
       const api: any = df as any;
@@ -330,7 +325,7 @@ export function slice_head<Row extends object>(
 
       const sliceLength = Math.min(n, viewLength);
       if (sliceLength === 0) {
-        return createDataFrame([] as readonly Row[]);
+        return createDataFrame([]);
       }
 
       // Take first n physical indices from the view
@@ -365,18 +360,18 @@ export function slice_head<Row extends object>(
  * - Preserves group order for grouped data
  * - Returns empty array for empty dataframes
  */
-export function slice_tail<Row extends object>(
+export function slice_tail(
   n: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -400,7 +395,7 @@ export function slice_tail<Row extends object>(
           ++i
         ) {
           const actualRowIdx = groupIndices[i];
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][actualRowIdx];
           }
@@ -413,8 +408,8 @@ export function slice_tail<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path - equivalent to slice(-n)
       const api: any = df as any;
@@ -424,7 +419,7 @@ export function slice_tail<Row extends object>(
 
       const startIndex = Math.max(0, viewLength - n);
       if (startIndex >= viewLength) {
-        return createDataFrame([] as readonly Row[]);
+        return createDataFrame([]);
       }
 
       // Take last n physical indices from the view
@@ -461,19 +456,19 @@ export function slice_tail<Row extends object>(
  * - Preserves group order for grouped data
  * - Returns fewer rows if dataframe is smaller than n
  */
-export function slice_min<Row extends object>(
-  column: keyof Row,
+export function slice_min(
+  column: any,
   n: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -492,7 +487,7 @@ export function slice_min<Row extends object>(
 
         // Build rows from indices and sort
         const groupData = groupIndices.map((i: number) => {
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][i];
           }
@@ -526,8 +521,8 @@ export function slice_min<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path
       const api: any = df as any;
@@ -571,7 +566,7 @@ export function slice_min<Row extends object>(
         });
       }
 
-      const newStore: ColumnarStore = {
+      const newStore: any = {
         columns: {},
         length: selectedIndices.length,
         columnNames: [...store.columnNames],
@@ -586,7 +581,7 @@ export function slice_min<Row extends object>(
         newStore.columns[colName] = newCol;
       }
 
-      const out = createColumnarDataFrameFromStore<Row>(newStore);
+      const out = createColumnarDataFrameFromStore(newStore);
       (out as any).__view = {}; // reset view
 
       // reconstruct a rowView
@@ -643,19 +638,19 @@ export function slice_min<Row extends object>(
  * - Preserves group order for grouped data
  * - Returns fewer rows if dataframe is smaller than n
  */
-export function slice_max<Row extends object>(
-  column: keyof Row,
+export function slice_max(
+  column: any,
   n: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -674,7 +669,7 @@ export function slice_max<Row extends object>(
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][i];
           }
@@ -726,8 +721,8 @@ export function slice_max<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path
       const api: any = df as any;
@@ -771,7 +766,7 @@ export function slice_max<Row extends object>(
         });
       }
 
-      const newStore: ColumnarStore = {
+      const newStore: any = {
         columns: {},
         length: selectedIndices.length,
         columnNames: [...store.columnNames],
@@ -786,7 +781,7 @@ export function slice_max<Row extends object>(
         newStore.columns[colName] = newCol;
       }
 
-      const out = createColumnarDataFrameFromStore<Row>(newStore);
+      const out = createColumnarDataFrameFromStore(newStore);
       (out as any).__view = {}; // reset view
 
       // reconstruct a rowView
@@ -843,19 +838,19 @@ export function slice_max<Row extends object>(
  * - Returns empty array for empty dataframes
  * - Each call produces different results (random)
  */
-export function slice_sample<Row extends object>(
+export function slice_sample(
   n: number,
   seed?: number,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    const groupedDf = df as GroupedDataFrame<Row>;
+  return (df: any) => {
+    const groupedDf = df;
     if (groupedDf.__groups) {
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
-      const rebuilt: Row[] = [];
+      const rebuilt: any[] = [];
 
-      if (!groupedDf.__groups) return df as DataFrame<Row>;
+      if (!groupedDf.__groups) return df;
       const { head, next, size } = groupedDf.__groups;
 
       // Iterate through each group using adjacency list
@@ -874,7 +869,7 @@ export function slice_sample<Row extends object>(
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
-          const row = {} as Row;
+          const row: any = {};
           for (const colName of store.columnNames) {
             (row as any)[colName] = store.columns[colName][i];
           }
@@ -886,7 +881,7 @@ export function slice_sample<Row extends object>(
           Math.min(n, groupData.length),
           seed,
         );
-        rebuilt.push(...(sampled as Row[]));
+        rebuilt.push(...sampled);
       }
       const out = rebuilt.length > 0
         ? createDataFrame(rebuilt)
@@ -894,8 +889,8 @@ export function slice_sample<Row extends object>(
           columns: Object.fromEntries(
             store.columnNames.map((col: string) => [col, []]),
           ),
-        }) as unknown as DataFrame<Row>;
-      return withGroupsRebuilt(groupedDf, rebuilt, out);
+        });
+      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
     } else {
       // View-aware ungrouped data path
       const api: any = df as any;
@@ -930,7 +925,7 @@ export function slice_sample<Row extends object>(
         });
       }
 
-      const newStore: ColumnarStore = {
+      const newStore: any = {
         columns: {},
         length: selectedIndices.length,
         columnNames: [...store.columnNames],
@@ -945,7 +940,7 @@ export function slice_sample<Row extends object>(
         newStore.columns[colName] = newCol;
       }
 
-      const out = createColumnarDataFrameFromStore<Row>(newStore);
+      const out = createColumnarDataFrameFromStore(newStore);
       (out as any).__view = {}; // reset view
 
       // reconstruct a rowView

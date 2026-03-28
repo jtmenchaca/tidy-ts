@@ -4,7 +4,8 @@ import type {
   GroupedDataFrame,
   Prettify,
 } from "../../dataframe/index.ts";
-import { createDataFrame } from "../../dataframe/index.ts";
+import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import type { ColumnTypeMap } from "./summarise-columns.types.ts";
 
 /**
@@ -188,32 +189,53 @@ export function summarise_columns<
         keyRow,
         groupingColumns,
         size,
+        usesRawIndices,
       } = groupedDf.__groups;
-      const rows = [...df];
+
+      const api = df as any;
+      const store = api.__store;
+      const mask = api.__view?.mask;
+      const baseIndex = usesRawIndices
+        ? null
+        : materializeIndex(store.length, api.__view);
 
       const results: object[] = [];
 
       const buildKeyObj = (viewIdx: number): object => {
         const o: object = {};
+        const physIdx = baseIndex ? baseIndex[viewIdx] : viewIdx;
         for (const c of groupingColumns) {
           const name = String(c);
-          (o as any)[name] = (rows[viewIdx] as any)[name];
+          (o as any)[name] = store.columns[name][physIdx];
         }
         return o;
       };
 
       for (let g = 0; g < size; g++) {
-        // Collect rows for this group
-        const groupRows: number[] = [];
+        // Collect physical indices for this group, filtering by mask
+        const groupIndices: number[] = [];
         let rowIdx = head[g];
         while (rowIdx !== -1) {
-          groupRows.push(rowIdx);
+          if (!mask || bitsetGet(mask, rowIdx)) {
+            groupIndices.push(rowIdx);
+          }
           rowIdx = next[rowIdx];
         }
 
-        const groupData = createDataFrame(
-          groupRows.map((rowIndex) => rows[rowIndex]),
-        );
+        if (groupIndices.length === 0) continue;
+
+        // Build rows from columnar store for this group
+        const groupRowObjects: any[] = [];
+        for (const idx of groupIndices) {
+          const physIdx = baseIndex ? baseIndex[idx] : idx;
+          const row: any = {};
+          for (const colName of store.columnNames) {
+            row[colName] = store.columns[colName][physIdx];
+          }
+          groupRowObjects.push(row);
+        }
+
+        const groupData = createDataFrame(groupRowObjects);
 
         const result: object = {
           ...buildKeyObj(keyRow[g]),

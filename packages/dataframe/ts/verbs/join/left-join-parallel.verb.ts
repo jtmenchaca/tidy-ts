@@ -3,17 +3,14 @@
 import { currentRuntime, Runtime } from "@tidy-ts/shims";
 import {
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
   materializeIndex,
-  type Prettify,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 // Note: Worker functionality removed - parallel joins disabled
 // import { getWasmBytes } from "../../wasm/wasm-loader.ts";
-import type { JoinKey, ObjectJoinOptions } from "./types/index.ts";
+
 
 /**
  * Parallel left-join overview
@@ -69,10 +66,10 @@ function getTypedColsCached(
 /* Helpers (shared)                                                            */
 /* -------------------------------------------------------------------------- */
 
-function getStoreAndIndex<Row extends Record<string, unknown>>(
-  df: DataFrame<Row>,
+function getStoreAndIndex(
+  df: any,
 ) {
-  const anyDf = df as any;
+  const anyDf = df;
   const store = anyDf.__store;
   const view = anyDf.__view;
   const index = materializeIndex(store.length, view);
@@ -218,20 +215,12 @@ export function shouldUseAsyncForJoin(nLeft: number, nRight: number): boolean {
  * Parallel join factory — returns an async function (await like your async filter).
  * Uses hash partitioning so each worker receives only its matching right-partition.
  */
-export function left_join_parallel<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
->(
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | (JoinKey<LeftRow> & JoinKey<RightRow>)
-    | Array<JoinKey<LeftRow> & JoinKey<RightRow>>
-    | ObjectJoinOptions<LeftRow, RightRow>,
+export function left_join_parallel(
+  right: any,
+  byOrOptions: any,
   options?: { suffixes?: { left?: string; right?: string }; workers?: number },
-): (
-  left: DataFrame<LeftRow>,
-) => Promise<DataFrame<Prettify<LeftRow & Partial<RightRow>>>> {
-  return async (left: DataFrame<LeftRow>) => {
+): any {
+  return async (left: any) => {
     throw new Error(
       "Parallel joins are currently disabled due to worker functionality removal",
     );
@@ -716,17 +705,14 @@ async function spawnPortableWorker(workerUrl: URL): Promise<any> {
 /* Finalize result (sync; avoids require-await)                                */
 /* -------------------------------------------------------------------------- */
 
-function finalizeJoin<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
->(
-  left: DataFrame<LeftRow>,
-  right: DataFrame<RightRow>,
+function finalizeJoin(
+  left: any,
+  right: any,
   leftIdxTA: Uint32Array,
   rightIdxTA: Uint32Array,
   leftKeys: string[],
   suffixes: { left?: string; right?: string } | undefined,
-): DataFrame<Prettify<LeftRow & Partial<RightRow>>> {
+): any {
   const L = getStoreAndIndex(left);
   const R = getStoreAndIndex(right);
 
@@ -739,28 +725,20 @@ function finalizeJoin<
     suffixes || {},
   );
 
-  const outDf = createColumnarDataFrameFromStore(
-    outStore,
-  ) as unknown as DataFrame<
-    Prettify<LeftRow & Partial<RightRow>>
-  >;
+  const outDf = createColumnarDataFrameFromStore(outStore);
 
-  if ((left as any).__groups) {
-    const src = left as unknown as GroupedDataFrame<LeftRow, keyof LeftRow>;
-    const outRows = (outDf as DataFrame<LeftRow>)
-      .toArray() as readonly LeftRow[];
+  if (left.__groups) {
+    const outRows = outDf.toArray();
     const rebuilt = withGroupsRebuilt(
-      src,
+      left,
       outRows as any,
       outDf as any,
-    ) as unknown as DataFrame<
-      Prettify<LeftRow & Partial<RightRow>>
-    >;
-    (rebuilt as any).__groups = (left as any).__groups;
-    tracer.copyContext(left as any, rebuilt as any);
+    );
+    (rebuilt as any).__groups = left.__groups;
+    tracer.copyContext(left, rebuilt as any);
     return rebuilt;
   }
 
-  tracer.copyContext(left as any, outDf as any);
+  tracer.copyContext(left, outDf as any);
   return outDf;
 }

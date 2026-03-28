@@ -431,18 +431,74 @@ Total comparisons dropped from 545 to 537. Depth-limit hits dropped from 1,369 t
 
 ---
 
-## Remaining opportunities — reassessed after Change 12 (2026-03-27)
+## Changes 13–15: Remove generics from arrange, slice, left-join-parallel verb files (2026-03-27)
+
+Same pattern as Change 12 — all user-facing type safety comes from companion `.types.ts` files; the `.verb.ts` implementations are called via `(verb as any)(...a)(df)` from `resolve-verb.ts`, so their generics provide zero type safety.
+
+### Change 13: arrange.verb.ts
+
+**What**: Removed `<Row extends Record<string, unknown>>` generic from `arrangeWasmStable` and the `arrange` implementation. Removed all 3 overload signatures (single column, variadic, array). Changed `(df: DataFrame<Row> | GroupedDataFrame<Row>)` → `(df: any)`, `let columns: (keyof Row)[]` → `let columns: any[]`, and removed all DataFrame/GroupedDataFrame casts from `withIndex` and `withGroupsRebuilt` calls.
+
+**File changed**: `packages/dataframe/ts/verbs/sorting/arrange.verb.ts`
+
+**Impact**: arrange.verb.ts dropped from 2,282ms / 113 comparisons / 303 depth hits to effectively zero.
+
+### Change 14: slice.verb.ts
+
+**What**: Removed `<Row extends object>` generics from all 7 exported functions (slice, slice_indices, slice_head, slice_tail, slice_min, slice_max, slice_sample) and their internal helpers. Removed `DataFrame`, `GroupedDataFrame`, `ColumnarStore` type imports. Changed all `(df: DataFrame<Row> | GroupedDataFrame<Row>)` → `(df: any)`, all casts (`as DataFrame<Row>`, `as GroupedDataFrame<Row>`, `as Row`, `as readonly Row[]`), and generic type parameters on `createColumnarDataFrameFromStore<Row>`.
+
+**File changed**: `packages/dataframe/ts/verbs/filtering/slice.verb.ts`
+
+**Impact**: slice.verb.ts dropped from 424ms / 51 comparisons / 265 depth hits to 46ms / 53 depth hits.
+
+### Change 15: left-join-parallel.verb.ts
+
+**What**: Removed generics from `getStoreAndIndex<Row>`, `left_join_parallel<LeftRow, RightRow>`, and `finalizeJoin<LeftRow, RightRow>`. Removed `DataFrame`, `GroupedDataFrame`, `Prettify`, `JoinKey`, `ObjectJoinOptions` type imports. Changed all typed parameters to `any`.
+
+**File changed**: `packages/dataframe/ts/verbs/join/left-join-parallel.verb.ts`
+
+**Impact**: left-join-parallel.verb.ts dropped from 593ms / 23 comparisons / 108 depth hits to effectively zero.
+
+### Cumulative results after Changes 1–15
+
+| Metric              | Baseline    | After 1-12  | After 1-15  | Total Change |
+|---------------------|-------------|-------------|-------------|--------------|
+| Check time          | 86.32s      | 21.57s      | 20.85s      | -76%         |
+| Instantiations      | 48,014,546  | 26,425,105  | 26,223,456  | -45%         |
+| Types               | 3,986,451   | 1,817,059   | 1,792,461   | -55%         |
+| Symbols             | 10,018,516  | 4,134,575   | 4,099,240   | -59%         |
+| Assignability cache | 1,304,647   | 664,614     | 660,884     | -49%         |
+
+`deno check packages/dataframe` — 0 errors.
+
+Total comparisons dropped from 537 to 465 (-13%). Depth-limit hits dropped from 1,261 to 941 (-25%). Check time only dropped 0.72s (21.57s → 20.85s) — confirming diminishing returns from the verb-generic removal pattern. The dominant remaining cost is type instantiation (26M) and symbol resolution (4.1M), not structural comparisons (6.4s comparison time is now a small fraction of the 20.85s total).
+
+**Key insight**: The verb-generic removal pattern has been exhausted for high-value targets. The next frontier requires a fundamentally different approach — reducing the 26M type instantiation count rather than continuing to eliminate structural comparisons in verb files.
+
+---
+
+## Remaining opportunities — reassessed after Change 15 (2026-03-27)
 
 ### Top cost centers by file (comparison time / depth-limit hits)
 
 | File | Comparison time | Comparisons | Depth hits | Notes |
 |------|---------------:|------------:|-----------:|-------|
-| create-dataframe.ts | 2,305ms | 85x | 304 | Already has `: any` return. Structural overload cost |
-| arrange.verb.ts | 2,282ms | 113x | 303 | Candidate for Change 12 pattern (remove generics) |
-| zod schemas.d.cts | 662ms | 43x | 5 | Third-party cost |
-| left-join-parallel.verb.ts | 593ms | 23x | 108 | Candidate for Change 12 pattern |
-| slice.verb.ts | 424ms | 51x | 265 | Candidate for Change 12 pattern |
-| filter.verb.ts | 3ms | 3x | 4 | **Resolved by Change 12** (was 5,585ms/#1) |
+| rename.verb.ts | 2,267ms | — | 303 | New #1 verb cost center. Same verb-generic pattern but diminishing returns |
+| create-dataframe.ts | 2,318ms | — | 304 | Already has `: any` return. Structural overload cost |
+| zod schemas.d.cts | 742ms | — | 5 | Third-party cost |
+| data-helper.ts | 220ms | — | 204 | Distribution helper, residual |
+| filter.verb.ts | 3ms | 3x | 4 | **Resolved by Change 12** |
+| arrange.verb.ts | ~0ms | — | ~0 | **Resolved by Change 13** |
+| slice.verb.ts | 46ms | — | 53 | **Mostly resolved by Change 14** |
+| left-join-parallel.verb.ts | ~0ms | — | ~0 | **Resolved by Change 15** |
+
+### Cost structure shift
+
+The dominant cost is no longer structural comparisons — it's type instantiation:
+- **26M type instantiations** account for the bulk of the 20.85s check time
+- **Comparison time (6.4s)** is now a small fraction of total check time
+- **`findSourceFile` (5.5s)** is pure I/O and cannot be optimized
+- **Most instantiated types**: DataFrame (3,138), DataFrameBase (4,029), ColName (4,986) — these are driven by the type definition files, not verb implementations
 
 ### Not actionable (structural or intentional)
 
@@ -451,25 +507,26 @@ Total comparisons dropped from 545 to 537. Depth-limit hits dropped from 1,369 t
 - **ColName conditional mapped key: ~7,100 instances** — Bound variable from `DataFrameColumns<Row>` mapped type. Fundamental to column accessors.
 - **Join suffix types: ~3,800 anonymous types** — Five `*WithSuffixes` types already behind conditional dispatch.
 - **RestrictEmptyDataFrame: ~1,450 instances** — Intentional UX feature for error clarity.
-- **DataFrame vs DataFrame depth-limit hits** — Inherent cost of comparing the ~70-member DataFrameBase interface. Already mitigated by caching (Change 1).
-- **create-dataframe.ts (2,305ms)** — Already optimized with `: any` impl return type. Remaining cost is structural (overload signatures require DataFrame instantiation).
-- **graph.ts (13ms)** — Fully optimized. Zero comparisons, zero depth hits.
-- **filter.verb.ts (3ms)** — Fully optimized by Change 12.
+- **create-dataframe.ts (2,318ms)** — Already optimized with `: any` impl return type. Remaining cost is structural (overload signatures require DataFrame instantiation).
 
-### Actionable (same pattern as Change 12)
+### Actionable — verb-generic removal (diminishing returns)
 
-The following verb implementation files have generics that serve no user-facing purpose (type safety comes from companion `.types.ts` files). Removing generics from each would follow the exact same pattern as Change 12:
+- **rename.verb.ts (2,267ms / 303 depth hits)** — Same pattern as Changes 12-15. Would eliminate its cost but check time improvement likely <0.5s.
+- **Remaining ~42 verb files** — Individually small costs. Collectively may save 1-2s. Could be batch-processed.
 
-- **arrange.verb.ts (2,282ms / 113 comparisons / 303 depth hits)** — Now the #1 verb cost center. Same pattern: generics force DataFrame instantiation at internal call sites.
-- **slice.verb.ts (424ms / 51 comparisons / 265 depth hits)** — Overload-heavy verb file with generics on internal helpers.
-- **left-join-parallel.verb.ts (593ms / 23 comparisons / 108 depth hits)** — Join verb with generics on the parallel execution helpers.
-- **Remaining ~43 verb files** — Likely have smaller individual costs but collectively significant. Could be batch-processed since the pattern is mechanical.
+### Potentially high-impact — reduce DataFrame instantiation count
+
+The next frontier for substantial improvement. 26M type instantiations are driven by:
+- Every `.types.ts` file that references `DataFrame<Row>` forces a new instantiation
+- Overload signatures in types files create distinct `DataFrame<T>` per overload
+- The `DataFrameColumns<Row>` mapped type (part of every DataFrame) creates ColName + __type instances
+- Possible approaches: lazy type resolution in type files, consolidating overload signatures that produce distinct DataFrame<T> instantiations, reducing the method count on DataFrameBase
 
 ### Possibly actionable (diminishing returns, some risk)
 
 - **MutateMethod overloads: ~24 comparisons at ~900ms** — 14 overloads. Consolidation could reduce comparisons but risks degrading parameter inference quality.
-- **Zod schemas: ~660ms** — Third-party cost. Could reduce by lazy-loading `zDataFrame` or separate entry point.
+- **Zod schemas: ~742ms** — Third-party cost. Could reduce by lazy-loading `zDataFrame` or separate entry point.
 
 ### Summary
 
-From 86s to 21.6s (75% reduction). Depth-limit hits from 3,248 to 1,261 (-61%). Instantiations from 48M to 26.4M (-45%). The most impactful pattern discovered — removing generics from verb implementation files — has been proven on the #1 cost center (filter.verb.ts: 5,585ms → 3ms) and is mechanically applicable to the remaining ~46 verb files. The next highest-value targets are arrange.verb.ts (2,282ms), left-join-parallel.verb.ts (593ms), and slice.verb.ts (424ms).
+From 86s to 20.85s (76% reduction). Depth-limit hits from 3,248 to 941 (-71%). Instantiations from 48M to 26.2M (-45%). The verb-generic removal pattern (Changes 12-15) has been exhausted for high-value targets. Remaining verb files would yield diminishing returns (<0.5s each). The next substantial improvement requires reducing the 26M type instantiation count — a fundamentally different approach targeting `.types.ts` definition files and DataFrame type structure rather than `.verb.ts` implementations.

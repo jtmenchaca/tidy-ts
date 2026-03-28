@@ -361,36 +361,25 @@ export function mutate_columns<
       return rawValue as ColumnValueMap[ColType];
     };
 
-    // Check if this is a grouped dataframe
-    if (groupedDf.__groups) {
-      // Grouped mutate_columns
-      const { head, next, size } = groupedDf.__groups;
+    // Apply row-level mutations to all rows (same logic for grouped and ungrouped)
+    for (let rowIndex = 0; rowIndex < out.length; rowIndex++) {
+      const row = out[rowIndex];
+      for (const col of config.columns) {
+        const colValue = getColumnValue(row, col);
 
-      for (let g = 0; g < size; g++) {
-        // Collect rows for this group and process each row
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          const rowIndex = rowIdx;
-          const row = out[rowIndex];
-
-          // For each column, apply each function
-          for (const col of config.columns) {
-            const colValue = getColumnValue(row, col);
-
-            for (const newCol of config.newColumns) {
-              const { prefix = "", suffix = "", fn } = newCol;
-              const newColName = `${prefix}${String(col)}${suffix}`;
-              out[rowIndex][newColName] = fn(colValue);
-            }
-          }
-
-          rowIdx = next[rowIdx];
+        for (const newCol of config.newColumns) {
+          const { prefix = "", suffix = "", fn } = newCol;
+          const newColName = `${prefix}${String(col)}${suffix}`;
+          out[rowIndex][newColName] = fn(colValue);
         }
       }
+    }
 
-      const outDf = createDataFrame(out) as unknown as DataFrame<
-        Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-      >;
+    const outDf = createDataFrame(out) as unknown as DataFrame<
+      Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
+    >;
+
+    if (groupedDf.__groups) {
       return withGroups(
         groupedDf as GroupedDataFrame<
           Row,
@@ -400,24 +389,8 @@ export function mutate_columns<
       ) as unknown as DataFrame<
         Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
       >;
-    } else {
-      // Ungrouped mutate_columns
-      out.forEach((row, rowIndex) => {
-        // For each column, apply each function
-        for (const col of config.columns) {
-          const colValue = getColumnValue(row, col);
-
-          for (const newCol of config.newColumns) {
-            const { prefix = "", suffix = "", fn } = newCol;
-            const newColName = `${prefix}${String(col)}${suffix}`;
-            out[rowIndex][newColName] = fn(colValue);
-          }
-        }
-      });
-
-      return createDataFrame(out) as unknown as DataFrame<
-        Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-      >;
     }
+
+    return outDf;
   };
 }
