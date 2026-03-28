@@ -1,9 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type {
-  DataFrame,
-  GroupedDataFrame,
-  Prettify,
-} from "../../dataframe/index.ts";
 import {
   bitsetClear,
   bitsetGet,
@@ -25,10 +20,6 @@ import {
   processConcurrently,
 } from "../../promised-dataframe/concurrency-utils.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-
-export type Predicate<Row extends object> =
-  | ((row: Row, idx: number, df: DataFrame<Row>) => boolean | null | undefined)
-  | ReadonlyArray<boolean | null | undefined>;
 
 // Helper function for filter verb that handles logical indexing
 function makeRowSnapshot(
@@ -59,157 +50,11 @@ const WASM_MIN_ROWS_NUMERIC = Infinity; // below this, JS tends to be faster
 /* Public API                                                                  */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Filter rows based on one or more predicates.
- *
- * @example
- * // Sync filtering
- * df.filter(row => row.age > 18)
- *
- * @example
- * // Multiple predicates (AND logic)
- * df.filter(
- *   row => row.age > 18,
- *   row => row.status === "active"
- * )
- *
- * @example
- * // Async filtering with concurrency
- * df.filter(
- *   async (row) => await validateUser(row.id),
- *   { concurrency: 10 }
- * )
- *
- * @example
- * // Boolean array predicate
- * df.filter([true, false, true, false])
- */
-export function filter<Row extends object>(
-  predicate: (
-    row: Row,
-    idx: number,
-    df: DataFrame<Row>,
-  ) => Promise<boolean | null | undefined>,
-  options?: ConcurrencyOptions,
-): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
-
-/**
- * Filter rows based on one or more predicates.
- *
- * @example
- * // Sync filtering
- * df.filter(row => row.age > 18)
- *
- * @example
- * // Multiple predicates (AND logic)
- * df.filter(
- *   row => row.age > 18,
- *   row => row.status === "active"
- * )
- *
- * @example
- * // Async filtering with concurrency
- * df.filter(
- *   async (row) => await validateUser(row.id),
- *   { concurrency: 10 }
- * )
- *
- * @example
- * // Boolean array predicate
- * df.filter([true, false, true, false])
- */
-export function filter<Row extends object>(
-  predicates: Array<
-    | ((
-      row: Row,
-      idx: number,
-      df: DataFrame<Row>,
-    ) => Promise<boolean | null | undefined>)
-    | ((
-      row: Row,
-      idx: number,
-      df: DataFrame<Row>,
-    ) => boolean | null | undefined)
-    | ReadonlyArray<boolean | null | undefined>
-  >,
-  options?: ConcurrencyOptions,
-): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
-
-/**
- * Filter rows based on one or more predicates.
- *
- * @example
- * // Sync filtering
- * df.filter(row => row.age > 18)
- *
- * @example
- * // Multiple predicates (AND logic)
- * df.filter(
- *   row => row.age > 18,
- *   row => row.status === "active"
- * )
- *
- * @example
- * // Async filtering with concurrency
- * df.filter(
- *   async (row) => await validateUser(row.id),
- *   { concurrency: 10 }
- * )
- *
- * @example
- * // Boolean array predicate
- * df.filter([true, false, true, false])
- */
-export function filter<Row extends object>(
-  predicate: (
-    row: Row,
-    idx: number,
-    df: DataFrame<Row>,
-  ) => boolean | null | undefined,
-  options: ConcurrencyOptions,
-): (df: DataFrame<Row>) => Promise<DataFrame<Prettify<Row>>>;
-
-/**
- * Filter rows based on one or more predicates.
- *
- * @example
- * // Sync filtering
- * df.filter(row => row.age > 18)
- *
- * @example
- * // Multiple predicates (AND logic)
- * df.filter(
- *   row => row.age > 18,
- *   row => row.status === "active"
- * )
- *
- * @example
- * // Async filtering with concurrency
- * df.filter(
- *   async (row) => await validateUser(row.id),
- *   { concurrency: 10 }
- * )
- *
- * @example
- * // Boolean array predicate
- * df.filter([true, false, true, false])
- */
-export function filter<Row extends object>(
-  ...predicates: Array<
-    | ((
-      row: Row,
-      idx: number,
-      df: DataFrame<Row>,
-    ) => boolean | null | undefined)
-    | ReadonlyArray<boolean | null | undefined>
-  >
-): (df: DataFrame<Row>) => DataFrame<Prettify<Row>>;
-
-// Implementation
-export function filter<Row extends object>(
+// Implementation — user-facing types are in filter.types.ts
+export function filter(
   ...args: any[]
 ): any {
-  return (df: DataFrame<Row>): any => {
+  return (df: any): any => {
     // Handle both old (...predicates) and new (predicates, options) signatures
     let predicates: any[];
     let options: ConcurrencyOptions | undefined;
@@ -245,16 +90,16 @@ export function filter<Row extends object>(
         DEFAULT_CONCURRENCY.filter;
       return filterRowsAsync(df, predicates, concurrencyOptions);
     } else {
-      return filterRowsSync(df, predicates as Predicate<Row>[]);
+      return filterRowsSync(df, predicates);
     }
   };
 }
 
 // Sync implementation (original logic)
-function filterRowsSync<Row extends object>(
-  df: DataFrame<Row>,
-  predicates: Predicate<Row>[],
-): DataFrame<Prettify<Row>> {
+function filterRowsSync(
+  df: any,
+  predicates: any[],
+): any {
   const span = tracer.startSpan(df, "filter", {
     predicates: predicates.length,
   });
@@ -274,16 +119,11 @@ function filterRowsSync<Row extends object>(
         const wasmMask = tryWasmFilterPathNumericOnly(df, predicates);
         if (wasmMask) {
           const bs = maskToBitset(wasmMask, nRowsFull);
-          const out = withMask(df as DataFrame<Row>, bs) as DataFrame<
-            Prettify<Row>
-          >;
-          if ((df as GroupedDataFrame<Row, keyof Row>).__groups) {
-            (out as any).__groups = (df as any).__groups;
+          const out = withMask(df, bs);
+          if (df.__groups) {
+            (out as any).__groups = df.__groups;
             tracer.copyContext(df, out);
-            return out as unknown as GroupedDataFrame<
-              Prettify<Row>,
-              keyof Prettify<Row>
-            >;
+            return out;
           }
           tracer.copyContext(df, out);
           return out;
@@ -320,20 +160,15 @@ function filterRowsSync<Row extends object>(
     });
 
     const out = tracer.withSpan(df, "create-filtered-dataframe", () => {
-      return withMask(df as DataFrame<Row>, finalMask) as DataFrame<
-        Prettify<Row>
-      >;
+      return withMask(df, finalMask);
     });
 
     // Copy trace context to new DataFrame
     tracer.copyContext(df, out);
 
-    if ((df as GroupedDataFrame<Row, keyof Row>).__groups) {
-      (out as any).__groups = (df as any).__groups;
-      return out as unknown as GroupedDataFrame<
-        Prettify<Row>,
-        keyof Prettify<Row>
-      >;
+    if (df.__groups) {
+      (out as any).__groups = df.__groups;
+      return out;
     }
     return out;
   } finally {
@@ -365,9 +200,9 @@ function andMasksInPlace(target: Uint8Array, src: Uint8Array): void {
 /* -------------------------------------------------------------------------- */
 /* WASM (numeric-only)                                                         */
 /* -------------------------------------------------------------------------- */
-function tryWasmFilterPathNumericOnly<Row extends object>(
-  df: DataFrame<Row>,
-  predicates: Predicate<Row>[],
+function tryWasmFilterPathNumericOnly(
+  df: any,
+  predicates: any[],
 ): Uint8Array | null {
   if (predicates.length === 0) return null;
 
@@ -389,13 +224,7 @@ function tryWasmFilterPathNumericOnly<Row extends object>(
       continue;
     }
 
-    const op = detectSimplePredicate(
-      pred as (
-        row: Row,
-        idx: number,
-        df: DataFrame<Row>,
-      ) => boolean | null | undefined,
-    );
+    const op = detectSimplePredicate(pred);
     if (!op) return null;
 
     // Keep string/nullcheck off this path (we bail to JS)
@@ -436,12 +265,8 @@ type DetectedOp =
   }
   | { kind: "nullcheck"; column: string; operator: "== null" | "!= null" };
 
-function detectSimplePredicate<Row extends object>(
-  pred: (
-    row: Row,
-    idx: number,
-    df: DataFrame<Row>,
-  ) => boolean | null | undefined,
+function detectSimplePredicate(
+  pred: (...args: any[]) => any,
 ): DetectedOp | null {
   const s = String(pred);
 
@@ -514,9 +339,9 @@ function opToCode(op: string): number | null {
 /* -------------------------------------------------------------------------- */
 /* JS path: direct BitSet with correct AND semantics                           */
 /* -------------------------------------------------------------------------- */
-function computeFilterMaskDirectly_AND<Row extends object>(
-  df: DataFrame<Row>,
-  preds: Predicate<Row>[],
+function computeFilterMaskDirectly_AND(
+  df: any,
+  preds: any[],
   bs: any,
 ): void {
   const api: any = df as any;
@@ -649,12 +474,8 @@ function computeFilterMaskDirectly_AND<Row extends object>(
   }
 }
 
-function tryOptimizeCompoundPredicate<Row extends object>(
-  pred: (
-    row: Row,
-    idx: number,
-    df: DataFrame<Row>,
-  ) => boolean | null | undefined,
+function tryOptimizeCompoundPredicate(
+  pred: (...args: any[]) => any,
   columnNames: string[],
 ): OptimizedPredicate | null {
   try {
@@ -762,12 +583,8 @@ function tryOptimizeCompoundPredicate<Row extends object>(
   }
 }
 
-function tryOptimizeNumericPredicate<Row extends object>(
-  pred: (
-    row: Row,
-    idx: number,
-    df: DataFrame<Row>,
-  ) => boolean | null | undefined,
+function tryOptimizeNumericPredicate(
+  pred: (...args: any[]) => any,
   columnNames: string[],
 ): OptimizedPredicate | null {
   try {
@@ -844,11 +661,11 @@ function getPhysicalIndex(api: any, logicalIndex: number): number {
 }
 
 // Async implementation with concurrency control
-async function filterRowsAsync<Row extends object>(
-  df: DataFrame<Row>,
+async function filterRowsAsync(
+  df: any,
   predicates: any[],
   options: ConcurrencyOptions = DEFAULT_CONCURRENCY.filter,
-): Promise<DataFrame<Prettify<Row>>> {
+): Promise<any> {
   const api = df as any;
   const store = api.__store;
   const n = df.nrows();
@@ -938,15 +755,10 @@ async function filterRowsAsync<Row extends object>(
     finalMask = combinedMask;
   }
 
-  const out = withMask(df as DataFrame<Row>, finalMask) as DataFrame<
-    Prettify<Row>
-  >;
-  if ((df as GroupedDataFrame<Row, keyof Row>).__groups) {
-    (out as any).__groups = (df as any).__groups;
-    return out as unknown as GroupedDataFrame<
-      Prettify<Row>,
-      keyof Prettify<Row>
-    >;
+  const out = withMask(df, finalMask);
+  if (df.__groups) {
+    (out as any).__groups = df.__groups;
+    return out;
   }
   return out;
 }
