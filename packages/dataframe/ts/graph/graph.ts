@@ -1,7 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import type {
   DataFrame,
-  GroupedDataFrame,
   Prettify,
 } from "../dataframe/index.ts";
 import type { TidyGraphWidget } from "./graph-types.ts";
@@ -27,7 +26,7 @@ export type TooltipOptions<T> = {
 /**
  * Axis configuration options for charts.
  */
-export type AxisConfig = Prettify<{
+export type AxisConfig = {
   /** Label text for the axis */
   label?: string;
   /** Fixed domain range [min, max] */
@@ -36,24 +35,24 @@ export type AxisConfig = Prettify<{
   tickFormat?: (v: unknown) => string;
   /** Hide this axis completely */
   hide?: boolean;
-}>;
+};
 
 /**
  * Grid configuration options for charts.
  */
-export type GridConfig = Prettify<{
+export type GridConfig = {
   /** Show/hide grid lines (default: true) */
   show?: boolean;
   /** Show/hide vertical grid lines */
   vertical?: boolean;
   /** Show/hide horizontal grid lines */
   horizontal?: boolean;
-}>;
+};
 
 /**
  * Layout configuration options for charts.
  */
-export type LayoutConfig = Prettify<{
+export type LayoutConfig = {
   /** Chart title displayed at the top */
   title?: string;
   /** Subtitle/description text displayed below the title */
@@ -62,12 +61,12 @@ export type LayoutConfig = Prettify<{
   width?: number | "container";
   /** Chart height in pixels */
   height?: number;
-}>;
+};
 
 /**
  * Color and theming configuration options for charts.
  */
-export type ColorConfig = Prettify<{
+export type ColorConfig = {
   /** Custom color palette as array of hex/rgb/hsl colors */
   colors?: string[];
   /**
@@ -88,12 +87,12 @@ export type ColorConfig = Prettify<{
     | "vibrant"
     | "professional"
     | "high_contrast";
-}>;
+};
 
 /**
  * Legend configuration options for charts.
  */
-export type LegendConfig = Prettify<{
+export type LegendConfig = {
   /** Show/hide legend (default: true when using color/series) */
   show?: boolean;
   /**
@@ -114,46 +113,46 @@ export type LegendConfig = Prettify<{
   fontSize?: number;
   /** Font size for legend title in pixels (default: 13) */
   titleFontSize?: number;
-}>;
+};
 
 /**
  * Tooltip configuration options for charts.
  */
-export type TooltipConfig = Prettify<{
+export type TooltipConfig = {
   /** Show/hide interactive tooltips on hover (default: true) */
   show?: boolean;
-}>;
+};
 
 /**
  * Interactivity configuration options for charts.
  */
-export type InteractivityConfig = Prettify<{
+export type InteractivityConfig = {
   /** Enable zoom functionality (mouse wheel/pinch) */
   zoom?: boolean;
   /** Enable pan functionality (click and drag) */
   pan?: boolean;
-}>;
+};
 
 /**
  * Accessibility configuration options for charts.
  */
-export type AccessibilityConfig = Prettify<{
+export type AccessibilityConfig = {
   /** Add accessibility layer for screen readers */
   layer?: boolean;
-}>;
+};
 
 /**
  * Animation configuration options for charts.
  */
-export type AnimationConfig = Prettify<{
+export type AnimationConfig = {
   /** Animation duration in milliseconds for transitions */
   duration?: number;
-}>;
+};
 
 /**
  * Line chart specific configuration options.
  */
-export type LineChartConfig = Prettify<{
+export type LineChartConfig = {
   /**
    * Line interpolation style:
    * - "linear": Straight lines between points
@@ -169,32 +168,32 @@ export type LineChartConfig = Prettify<{
   strokeWidth?: number;
   /** Connect points across null/undefined values (default: false) */
   connectNulls?: boolean;
-}>;
+};
 
 /**
  * Scatter plot specific configuration options.
  */
-export type ScatterChartConfig = Prettify<{
+export type ScatterChartConfig = {
   /** Size of scatter plot points in pixels (default: 60) */
   pointSize?: number;
   /** Opacity of scatter plot points from 0-1 (default: 0.8) */
   pointOpacity?: number;
-}>;
+};
 
 /**
  * Bar chart specific configuration options.
  */
-export type BarChartConfig = Prettify<{
+export type BarChartConfig = {
   /** Stack bars on top of each other when using series (default: false) */
   stacked?: boolean;
   /** Corner radius for bar ends in pixels (default: 4) */
   radius?: number;
-}>;
+};
 
 /**
  * Area chart specific configuration options.
  */
-export type AreaChartConfig = Prettify<{
+export type AreaChartConfig = {
   /** Stack areas on top of each other when using series (default: false) */
   stacked?: boolean;
   /**
@@ -210,13 +209,13 @@ export type AreaChartConfig = Prettify<{
   strokeWidth?: number;
   /** Opacity of the area fill from 0-1 (default: 0.7) */
   opacity?: number;
-}>;
+};
 
 /**
  * Common configuration options available for all chart types.
  * These are shared across all chart types but don't include chart-specific sections.
  */
-export type CommonConfig = Prettify<{
+export type CommonConfig = {
   /** Layout and sizing options */
   layout?: LayoutConfig;
   /** X-axis configuration */
@@ -237,7 +236,7 @@ export type CommonConfig = Prettify<{
   accessibility?: AccessibilityConfig;
   /** Animation options */
   animation?: AnimationConfig;
-}>;
+};
 
 /**
  * Internal config type used for runtime - includes all chart options.
@@ -262,7 +261,7 @@ type InternalConfig = Prettify<
  * Column mappings for scatter plots.
  * Defines which data columns map to visual properties.
  */
-export type ScatterMappings<T> = Prettify<{
+export type ScatterMappings<T> = {
   /** Column name or accessor function for X-axis position */
   x: ColumnSpec<T>;
   /** Column name or accessor function for Y-axis position */
@@ -273,7 +272,7 @@ export type ScatterMappings<T> = Prettify<{
   size?: ColumnSpec<T, number | null | undefined>;
   /** Optional: Column for point shape encoding (categorical values) */
   shape?: ColumnSpec<T, string | number>;
-}>;
+};
 /**
  * Configuration options specific to scatter plots.
  * Includes common options plus scatter-specific options only.
@@ -289,7 +288,7 @@ export type ScatterConfig = Prettify<
  * Column mappings for line charts.
  * Defines which data columns map to visual properties.
  */
-export type LineMappings<T> = Prettify<{
+export type LineMappings<T> = {
   /** Column name or accessor function for X-axis position */
   x: ColumnSpec<T>;
   /** Column name or accessor function for Y-axis position */
@@ -298,7 +297,7 @@ export type LineMappings<T> = Prettify<{
   series?: ColumnSpec<T, string | number>;
   /** Optional: Column for line color encoding (alternative to series) */
   color?: ColumnSpec<T, string | number>;
-}>;
+};
 
 /**
  * Configuration options specific to line charts.
@@ -315,7 +314,7 @@ export type LineConfig = Prettify<
  * Column mappings for bar charts.
  * Defines which data columns map to visual properties.
  */
-export type BarMappings<T> = Prettify<{
+export type BarMappings<T> = {
   /** Column name or accessor function for X-axis categories */
   x: ColumnSpec<T>;
   /** Column name or accessor function for Y-axis values (bar heights) */
@@ -324,7 +323,7 @@ export type BarMappings<T> = Prettify<{
   series?: ColumnSpec<T, string | number>;
   /** Optional: Column for bar color encoding (alternative to series) */
   color?: ColumnSpec<T, string | number>;
-}>;
+};
 
 /**
  * Configuration options specific to bar charts.
@@ -341,7 +340,7 @@ export type BarConfig = Prettify<
  * Column mappings for area charts.
  * Defines which data columns map to visual properties.
  */
-export type AreaMappings<T> = Prettify<{
+export type AreaMappings<T> = {
   /** Column name or accessor function for X-axis position */
   x: ColumnSpec<T>;
   /** Column name or accessor function for Y-axis values (area heights) */
@@ -350,7 +349,7 @@ export type AreaMappings<T> = Prettify<{
   series?: ColumnSpec<T, string | number>;
   /** Optional: Column for area color encoding (alternative to series) */
   color?: ColumnSpec<T, string | number>;
-}>;
+};
 
 /**
  * Configuration options specific to area charts.
@@ -486,15 +485,15 @@ const COLOR_SCHEMES = {
 
 /* helpers */
 
-function arrFrom<T extends Record<string, unknown>, U>(
-  df: DataFrame<T> | GroupedDataFrame<T>,
-  selector: ColumnSpec<T, U>,
-): U[] {
-  if (Array.isArray(selector)) return selector as U[];
+function arrFrom(
+  df: any,
+  selector: any,
+): unknown[] {
+  if (Array.isArray(selector)) return selector;
   if (typeof selector === "function") {
-    return (df.toArray() as T[]).map(selector as (r: T) => U);
+    return df.toArray().map(selector);
   }
-  return ((df as any)[String(selector)] as U[]) ?? [];
+  return (df[String(selector)] as unknown[]) ?? [];
 }
 
 const mapLineInterpolation = (s?: string): string =>
@@ -516,9 +515,9 @@ const nearestLegendOrient = (
    Data → rows with stable field names, driven by mappings
    ────────────────────────────────────────────────────────────────────────── */
 
-function toVegaData<T extends Record<string, unknown>>(
-  df: DataFrame<T>,
-  spec: GraphOptions<T>,
+function toVegaData(
+  df: any,
+  spec: GraphOptions<any>,
 ): {
   data: Record<string, unknown>[];
   fields: {
@@ -529,14 +528,13 @@ function toVegaData<T extends Record<string, unknown>>(
     shapeField: string | null;
   };
 } {
-  const rows = df.toArray() as T[];
-  const m = spec.mappings as Record<string, ColumnSpec<T, unknown>>;
+  const rows = df.toArray();
+  const m = spec.mappings as Record<string, any>;
 
   // Prefer explicit color; fall back to series if provided
-  const colorMapping = m.color ??
-    (m.series as ColumnSpec<T, string | number> | undefined);
+  const colorMapping = m.color ?? m.series;
 
-  const getName = (sel: ColumnSpec<T, unknown> | undefined, fallback: string) =>
+  const getName = (sel: any, fallback: string) =>
     typeof sel === "string" ? sel : fallback;
 
   const xField = getName(m.x, "x");
@@ -546,13 +544,13 @@ function toVegaData<T extends Record<string, unknown>>(
   const shapeField = "shape" in m && m.shape ? getName(m.shape, "shape") : null;
 
   const xVals: unknown[] = arrFrom(df, m.x);
-  const yVals: unknown[] = arrFrom(df, m.y as ColumnSpec<T, number | null | undefined>);
+  const yVals: unknown[] = arrFrom(df, m.y);
   const colorVals: unknown[] | null = colorMapping ? arrFrom(df, colorMapping) : null;
   const sizeVals: unknown[] | null = sizeField
-    ? arrFrom(df, m.size as ColumnSpec<T, number | null | undefined>)
+    ? arrFrom(df, m.size)
     : null;
   const shapeVals: unknown[] | null = shapeField
-    ? arrFrom(df, m.shape as ColumnSpec<T, string | number>)
+    ? arrFrom(df, m.shape)
     : null;
 
   const out: any[] = [];
@@ -586,9 +584,9 @@ function toVegaData<T extends Record<string, unknown>>(
 
 // Helper function to extract config values with both nested and flat support
 
-function buildVegaSpec<T extends Record<string, unknown>>(
+function buildVegaSpec(
   rows: any[],
-  spec: GraphOptions<T>,
+  spec: GraphOptions<any>,
   fields: {
     xField: string;
     yField: string;
@@ -596,7 +594,7 @@ function buildVegaSpec<T extends Record<string, unknown>>(
     sizeField: string | null;
     shapeField: string | null;
   },
-) {
+): Record<string, any> {
   const cfg = (spec.config ?? {}) as InternalConfig;
   const { xField, yField, colorField, sizeField, shapeField } = fields;
 

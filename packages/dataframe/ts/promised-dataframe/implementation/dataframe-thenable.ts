@@ -86,7 +86,7 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
       }
 
       // Handle numeric indices for row access (e.g., df[0] to get first row)
-      const numericHandler = createNumericIndexHandler<DataFrame<Row>>();
+      const numericHandler = createNumericIndexHandler();
       const numericResult = numericHandler(prop, dfOrPromise, p);
       if (numericResult !== null) {
         return numericResult; // Return row data if numeric index was accessed
@@ -94,13 +94,13 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
 
       // Handle special Symbol properties (like Symbol.iterator, Symbol.toStringTag)
       // These are special JavaScript symbols that need direct access
-      const symbolHandler = createSymbolPropertyHandler<DataFrame<Row>>();
+      const symbolHandler = createSymbolPropertyHandler();
       const symbolResult = symbolHandler(prop, dfOrPromise, p);
       if (symbolResult !== null) {
         return symbolResult; // Return symbol property value directly
       }
 
-      const syncHandler = createSyncMethodsHandler<DataFrame<Row>>(
+      const syncHandler = createSyncMethodsHandler(
         SYNC_METHODS,
       );
       const syncResult = syncHandler(prop, dfOrPromise, p);
@@ -110,7 +110,7 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
 
       // Handle direct column access - check if property is a column name
       // Allows access like df.columnName or df['columnName'] to get column data
-      const columnHandler = createColumnAccessHandler<DataFrame<Row>>(
+      const columnHandler = createColumnAccessHandler(
         (df) => (df as any).columns?.(), // Function to get column names from DataFrame
       );
       const columnResult = columnHandler(
@@ -124,7 +124,7 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
 
       // Special handling for print method - it should return the thenable for chaining
       // Rather than returning void, print() returns the thenable so you can do df.print().mutate(...)
-      const printHandler = createPrintMethodHandler<DataFrame<Row>>(
+      const printHandler = createPrintMethodHandler(
         thenableDataFrame, // Function to wrap result back in thenable
       );
       const printResult = printHandler(prop, dfOrPromise, p);

@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 
-import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
 import {
   isThenable,
   isThenableDataFrame,
@@ -11,20 +10,20 @@ import { wrapThenable } from "../utils.ts";
  * Generic utility to resolve a property from either a resolved object or a promise
  * This is the most common pattern across all handlers
  */
-export function resolveProperty<T>(
+export function resolveProperty(
   prop: string | number | symbol,
-  objOrPromise: T | Promise<T>,
-  promise: Promise<T>,
-): any | Promise<any> {
+  objOrPromise: any,
+  promise: Promise<any>,
+): any {
   // Check if this is already a resolved object (not a promise)
   if (
     objOrPromise && typeof objOrPromise === "object" &&
     !isThenable(objOrPromise)
   ) {
-    return (objOrPromise as any)[prop];
+    return objOrPromise[prop];
   }
-  return promise.then((obj) => {
-    return (obj as any)[prop];
+  return promise.then((obj: any) => {
+    return obj[prop];
   });
 }
 
@@ -47,15 +46,12 @@ export function accessPropertyWithBinding(
  * Process method call results and handle different return types
  * Common pattern in method call handlers
  */
-export function processMethodResult<
-  Row extends Record<string, unknown>,
-  K extends keyof Row,
->(
+export function processMethodResult(
   result: unknown,
-  isDataFrame: (x: unknown) => x is DataFrame<Row>,
-  isGroupedDataFrame: (x: unknown) => x is GroupedDataFrame<Row, K>,
-  chainFn: (df: DataFrame<Row>) => any,
-  chainGroupedFn: (gdf: GroupedDataFrame<Row, K>) => any,
+  isDataFrame: (x: unknown) => boolean,
+  isGroupedDataFrame: (x: unknown) => boolean,
+  chainFn: (df: any) => any,
+  chainGroupedFn: (gdf: any) => any,
 ): any {
   // Handle Promise results
   if (isThenable(result)) {
@@ -68,9 +64,9 @@ export function processMethodResult<
 
   // Only chain DataFrames, return primitives directly
   if (isDataFrame(result)) {
-    return chainFn(result as unknown as DataFrame<Row>);
+    return chainFn(result);
   } else if (isGroupedDataFrame(result)) {
-    return chainGroupedFn(result as unknown as GroupedDataFrame<Row, K>);
+    return chainGroupedFn(result);
   }
 
   return result;
@@ -80,15 +76,12 @@ export function processMethodResult<
  * Process method call results for async contexts (with Promise chaining)
  * Common pattern in async method call handlers
  */
-export function processAsyncMethodResult<
-  Row extends Record<string, unknown>,
-  K extends keyof Row,
->(
+export function processAsyncMethodResult(
   result: unknown,
-  isDataFrame: (x: unknown) => x is DataFrame<Row>,
-  isGroupedDataFrame: (x: unknown) => x is GroupedDataFrame<Row, K>,
-  chainFn: (df: DataFrame<Row> | Promise<DataFrame<Row>>) => any,
-  chainGroupedFn: (gdf: GroupedDataFrame<Row, K>) => any,
+  isDataFrame: (x: unknown) => boolean,
+  isGroupedDataFrame: (x: unknown) => boolean,
+  chainFn: (df: any) => any,
+  chainGroupedFn: (gdf: any) => any,
 ): any {
   // Handle Promise results
   if (isThenable(result)) {
@@ -101,9 +94,9 @@ export function processAsyncMethodResult<
 
   // Only chain DataFrames, return primitives directly
   if (isDataFrame(result)) {
-    return chainFn(result as unknown as DataFrame<Row>);
+    return chainFn(result);
   } else if (isGroupedDataFrame(result)) {
-    return chainGroupedFn(result as unknown as GroupedDataFrame<Row, K>);
+    return chainGroupedFn(result);
   }
 
   return result;
@@ -113,13 +106,13 @@ export function processAsyncMethodResult<
  * Create a print method handler that returns the chain proxy
  * Common pattern in print method handlers
  */
-export function createPrintMethodHandler<T>(
-  chainFn: (obj: T) => any,
+export function createPrintMethodHandler(
+  chainFn: (obj: any) => any,
 ) {
   return (
     prop: string | number | symbol,
-    objOrPromise: T | Promise<T>,
-    promise: Promise<T>,
+    objOrPromise: any,
+    promise: Promise<any>,
   ): any => {
     if (prop === "print") {
       if (
@@ -127,22 +120,22 @@ export function createPrintMethodHandler<T>(
         !isThenable(objOrPromise)
       ) {
         return ((...args: unknown[]) => {
-          const printMethod = (objOrPromise as any).print;
+          const printMethod = objOrPromise.print;
           if (typeof printMethod === "function") {
             printMethod.apply(objOrPromise, args);
-            return chainFn(objOrPromise as any);
+            return chainFn(objOrPromise);
           }
-          return chainFn(objOrPromise as any);
+          return chainFn(objOrPromise);
         });
       }
-      return promise.then((obj) => {
+      return promise.then((obj: any) => {
         return ((...args: unknown[]) => {
-          const printMethod = (obj as any).print;
+          const printMethod = obj.print;
           if (typeof printMethod === "function") {
             printMethod.apply(obj, args);
-            return chainFn(obj as any);
+            return chainFn(obj);
           }
-          return chainFn(obj as any);
+          return chainFn(obj);
         });
       });
     }
@@ -154,13 +147,13 @@ export function createPrintMethodHandler<T>(
  * Create a writeCSV method handler that returns the chain proxy
  * Common pattern in writeCSV method handlers
  */
-export function createWriteCSVMethodHandler<T>(
-  chainFn: (obj: T) => any,
+export function createWriteCSVMethodHandler(
+  chainFn: (obj: any) => any,
 ) {
   return (
     prop: string | number | symbol,
-    objOrPromise: T | Promise<T>,
-    promise: Promise<T>,
+    objOrPromise: any,
+    promise: Promise<any>,
   ): any => {
     if (prop === "writeCSV") {
       if (
@@ -168,22 +161,22 @@ export function createWriteCSVMethodHandler<T>(
         !isThenable(objOrPromise)
       ) {
         return ((...args: unknown[]) => {
-          const writeCSVMethod = (objOrPromise as any).writeCSV;
+          const writeCSVMethod = objOrPromise.writeCSV;
           if (typeof writeCSVMethod === "function") {
             writeCSVMethod.apply(objOrPromise, args);
-            return chainFn(objOrPromise as any);
+            return chainFn(objOrPromise);
           }
-          return chainFn(objOrPromise as any);
+          return chainFn(objOrPromise);
         });
       }
-      return promise.then((obj) => {
+      return promise.then((obj: any) => {
         return ((...args: unknown[]) => {
-          const writeCSVMethod = (obj as any).writeCSV;
+          const writeCSVMethod = obj.writeCSV;
           if (typeof writeCSVMethod === "function") {
             writeCSVMethod.apply(obj, args);
-            return chainFn(obj as any);
+            return chainFn(obj);
           }
-          return chainFn(obj as any);
+          return chainFn(obj);
         });
       });
     }
@@ -195,18 +188,18 @@ export function createWriteCSVMethodHandler<T>(
  * Create a property matcher that handles specific property types
  * Common pattern for type-specific handlers
  */
-export function createPropertyMatcher<T>(
+export function createPropertyMatcher(
   predicate: (prop: string | number | symbol) => boolean,
   handler: (
     prop: string | number | symbol,
-    objOrPromise: T | Promise<T>,
-    promise: Promise<T>,
+    objOrPromise: any,
+    promise: Promise<any>,
   ) => any,
 ) {
   return (
     prop: string | number | symbol,
-    objOrPromise: T | Promise<T>,
-    promise: Promise<T>,
+    objOrPromise: any,
+    promise: Promise<any>,
   ): any => {
     if (predicate(prop)) {
       return handler(prop, objOrPromise, promise);
@@ -219,8 +212,8 @@ export function createPropertyMatcher<T>(
  * Create a numeric index handler
  * Common pattern for numeric property access
  */
-export function createNumericIndexHandler<T>() {
-  return createPropertyMatcher<T>(
+export function createNumericIndexHandler() {
+  return createPropertyMatcher(
     (prop) =>
       (typeof prop === "string" && /^\d+$/.test(prop)) ||
       (typeof prop === "number" && Number.isInteger(prop)),
@@ -232,8 +225,8 @@ export function createNumericIndexHandler<T>() {
  * Create a symbol property handler
  * Common pattern for symbol property access
  */
-export function createSymbolPropertyHandler<T>() {
-  return createPropertyMatcher<T>(
+export function createSymbolPropertyHandler() {
+  return createPropertyMatcher(
     (prop) => typeof prop === "symbol",
     resolveProperty,
   );
@@ -253,10 +246,10 @@ export const SYNC_METHODS = [
  * Create a sync methods handler for specific method names
  * Common pattern for internal properties and core methods
  */
-export function createSyncMethodsHandler<T>(
+export function createSyncMethodsHandler(
   syncMethods: string[],
 ) {
-  return createPropertyMatcher<T>(
+  return createPropertyMatcher(
     (prop) =>
       typeof prop === "string" &&
       (prop.startsWith("__") || syncMethods.includes(prop)),
@@ -272,7 +265,7 @@ export function createSyncMethodsHandler<T>(
       if (isThenableDataFrame(objOrPromise)) {
         return accessPropertyWithBinding(objOrPromise, prop);
       }
-      return promise.then((obj) => {
+      return promise.then((obj: any) => {
         return accessPropertyWithBinding(obj, prop);
       });
     },
@@ -283,10 +276,10 @@ export function createSyncMethodsHandler<T>(
  * Create a column access handler
  * Common pattern for checking if property is a column name
  */
-export function createColumnAccessHandler<T>(
-  getColumns: (obj: T) => string[] | undefined,
+export function createColumnAccessHandler(
+  getColumns: (obj: any) => string[] | undefined,
 ) {
-  return createPropertyMatcher<T>(
+  return createPropertyMatcher(
     (prop) => typeof prop === "string",
     (prop, objOrPromise, _promise) => {
       if (
@@ -295,7 +288,7 @@ export function createColumnAccessHandler<T>(
       ) {
         const cols = getColumns(objOrPromise);
         if (cols && typeof prop === "string" && cols.includes(prop)) {
-          return (objOrPromise as any)[prop];
+          return objOrPromise[prop];
         }
       }
       return null;

@@ -597,12 +597,7 @@ export function createDataFrame<
 >(
   rows: R | readonly object[] | readonly [] | { columns: T },
   schemaOrOptions?: S | null | DataFrameOptions,
-):
-  | DataFrame<R[number]>
-  | DataFrame<z.infer<S>>
-  | DataFrame<never>
-  | DataFrame<{ [K in keyof T]: T[K][number] }>
-  | DataFrame<any> {
+): any {
   // Check for conflicting rows and columns first
   if (
     rows && typeof rows === "object" && !Array.isArray(rows) &&

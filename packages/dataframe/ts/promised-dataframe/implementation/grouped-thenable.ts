@@ -43,27 +43,23 @@ export function thenableGroupedDataFrame<
       }
 
       // Handle numeric indices for row access
-      const numericHandler = createNumericIndexHandler<
-        GroupedDataFrame<Row, K>
-      >();
+      const numericHandler = createNumericIndexHandler();
       const numericResult = numericHandler(prop, gdfOrPromise, p);
       if (numericResult !== null) return numericResult;
 
       // Handle special Symbol properties that should not be callable
-      const symbolHandler = createSymbolPropertyHandler<
-        GroupedDataFrame<Row, K>
-      >();
+      const symbolHandler = createSymbolPropertyHandler();
       const symbolResult = symbolHandler(prop, gdfOrPromise, p);
       if (symbolResult !== null) return symbolResult;
 
-      const syncHandler = createSyncMethodsHandler<GroupedDataFrame<Row, K>>(
+      const syncHandler = createSyncMethodsHandler(
         SYNC_METHODS,
       );
       const syncResult = syncHandler(prop, gdfOrPromise, p);
       if (syncResult !== null) return syncResult;
 
       // Handle direct column access - check if it's a column name
-      const columnHandler = createColumnAccessHandler<GroupedDataFrame<Row, K>>(
+      const columnHandler = createColumnAccessHandler(
         (gdf) => (gdf as any).columns?.(),
       );
       const columnResult = columnHandler(
@@ -106,16 +102,14 @@ export function thenableGroupedDataFrame<
       }
 
       // Special handling for print method - need to return the thenableDataFrame proxy, not the underlying object
-      const printHandler = createPrintMethodHandler<GroupedDataFrame<Row, K>>(
+      const printHandler = createPrintMethodHandler(
         thenableGroupedDataFrame,
       );
       const printResult = printHandler(prop, gdfOrPromise, p);
       if (printResult !== null) return printResult;
 
       // Special handling for writeCSV method - need to return the thenableDataFrame proxy, not the underlying object
-      const writeCSVHandler = createWriteCSVMethodHandler<
-        GroupedDataFrame<Row, K>
-      >(
+      const writeCSVHandler = createWriteCSVMethodHandler(
         thenableGroupedDataFrame,
       );
       const writeCSVResult = writeCSVHandler(prop, gdfOrPromise, p);

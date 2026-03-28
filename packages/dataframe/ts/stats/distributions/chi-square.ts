@@ -167,7 +167,7 @@ export function chiSquareData({
   type: "pdf" | "cdf" | "inverse_cdf";
   range?: [number, number];
   points?: number;
-}) {
+}): any {
   if (type === "pdf") {
     return createDistributionData({
       distribution: {

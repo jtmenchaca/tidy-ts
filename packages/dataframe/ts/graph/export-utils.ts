@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame } from "../dataframe/index.ts";
 import type { GraphOptions } from "./graph.ts";
 import { graphReact } from "./graph.ts";
 
@@ -50,11 +49,11 @@ function normalizeRows(rows: any[]): any[] {
 }
 
 /** Build a standalone Vega-Lite spec with inlined data and numeric size. */
-export function buildStandaloneVlSpec<T extends Record<string, unknown>>(
-  df: DataFrame<T>,
-  spec: GraphOptions<T>,
+export function buildStandaloneVlSpec(
+  df: any,
+  spec: GraphOptions<any>,
   opts?: { width?: number; height?: number; background?: string },
-) {
+): Record<string, any> {
   // Reuse your existing pipeline to get (specWithoutData, rows)
   const { spec: specNoData, data } = graphReact(spec)(df);
   const { width, height } = normalizeSize(specNoData, opts);
@@ -163,9 +162,9 @@ export async function svgToPNG(
 
 // ---- Public helpers -------------------------------------------------------
 
-export async function saveGraphAsSVG<T extends Record<string, unknown>>(
-  df: DataFrame<T>,
-  spec: GraphOptions<T>,
+export async function saveGraphAsSVG(
+  df: any,
+  spec: GraphOptions<any>,
   {
     filename,
     width,
@@ -177,7 +176,7 @@ export async function saveGraphAsSVG<T extends Record<string, unknown>>(
     height?: number;
     background?: string;
   },
-) {
+): Promise<void> {
   // Validate filename
   if (typeof filename !== "string" || filename.trim() === "") {
     throw new Error(
@@ -203,9 +202,9 @@ export async function saveGraphAsSVG<T extends Record<string, unknown>>(
   writeFileSync(filename, svg);
 }
 
-export async function saveGraphAsPNG<T extends Record<string, unknown>>(
-  df: DataFrame<T>,
-  spec: GraphOptions<T>,
+export async function saveGraphAsPNG(
+  df: any,
+  spec: GraphOptions<any>,
   {
     filename,
     width,
@@ -219,7 +218,7 @@ export async function saveGraphAsPNG<T extends Record<string, unknown>>(
     background?: string;
     scale?: number;
   },
-) {
+): Promise<void> {
   // Validate filename
   if (typeof filename !== "string" || filename.trim() === "") {
     throw new Error(

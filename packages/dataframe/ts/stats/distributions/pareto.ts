@@ -249,7 +249,7 @@ export function paretoData({
   type: "pdf" | "cdf" | "inverse_cdf";
   range?: [number, number];
   points?: number;
-}) {
+}): any {
   const defaultRange: [number, number] = [
     scale,
     scale + 3 * (scale / (shape - 1)),

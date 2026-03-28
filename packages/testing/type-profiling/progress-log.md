@@ -297,11 +297,135 @@ PromisedGroupedDataFrame comparisons dropped from 12x to 1x. MutateMethod compar
 
 ---
 
-## Remaining opportunities
+## Changes 8 & 9 (2026-03-27)
 
-Other patterns from the deep analysis that remain:
-- **Prettify<T> in non-mutate locations** — remaining single-layer Prettify sites are needed for tooltip flattening on raw intersections (joins, pivots, etc.)
-- **MutateMethod 14 overloads** — still 27 comparisons at 759ms; overload consolidation could help but risks inference quality
-- **ColName conditional mapped key** — 10,519 instances
-- **Join suffix types** — 3,815 anonymous types
-- **RestrictEmptyDataFrame** — 1,449 conditional evaluations (intentional UX feature, not worth removing)
+Changes 8 and 9 were developed concurrently and measured together.
+
+### Change 8: Explicit return type on `createDataFrame` implementation overload
+
+**What**: Added explicit return type union to the `createDataFrame` implementation signature:
+```typescript
+): DataFrame<R[number]> | DataFrame<z.infer<S>> | DataFrame<never> | DataFrame<{ [K in keyof T]: T[K][number] }> | DataFrame<any> {
+```
+
+**Why**: Without it, tsc inferred the return type through ~7 code paths, each calling `createColumnarDataFrameFromStore` and casting to various `DataFrame<...>` types. The implementation body is 125 lines with multiple branches — tsc had to unify all return expressions. Same pattern as Changes 3 and 5.
+
+**File changed**: `packages/dataframe/ts/dataframe/implementation/create-dataframe.ts`
+
+**Impact**: create-dataframe.ts was the second-heaviest file at 2,863ms / 131 comparisons / 1,517 depth-limit hits. The explicit return type cut off the bulk of depth-limit hits (~1,400 reduction).
+
+### Change 9: Remove needless Prettify on plain object types in graph.ts + explicit return types
+
+**What**:
+1. Removed `Prettify<>` wrapping from ~19 plain object type aliases in graph.ts (AxisConfig, GridConfig, LayoutConfig, ColorConfig, LegendConfig, TooltipConfig, InteractivityConfig, AccessibilityConfig, AnimationConfig, LineChartConfig, ScatterChartConfig, BarChartConfig, AreaChartConfig, CommonConfig, ScatterMappings, LineMappings, BarMappings, AreaMappings). Kept Prettify on 5 intersection types (InternalConfig, ScatterConfig, LineConfig, BarConfig, AreaConfig) where it's needed for tooltip flattening.
+2. Added explicit `Record<string, any>` return type to `buildVegaSpec()` in graph.ts and `buildStandaloneVlSpec()` in export-utils.ts.
+
+**Why**: `Prettify<{ a?: string; b?: number }>` on a plain object (no intersection) creates an anonymous mapped type identical to the input — pure waste. Removing them eliminates anonymous type generation. The return type annotations cut off inference through ~250 lines of Vega-Lite spec construction.
+
+**Files changed**: `packages/dataframe/ts/graph/graph.ts`, `packages/dataframe/ts/graph/export-utils.ts`
+
+**Impact**: graph.ts was the heaviest single file at 3,465ms / 147 comparisons / 388 depth-limit hits. Comparisons dropped from 147 to ~67 range.
+
+### Cumulative results after Changes 1–9
+
+| Metric              | Baseline    | After 1-7   | After 1-9   | Total Change |
+|---------------------|-------------|-------------|-------------|--------------|
+| Check time          | 86.32s      | 21.88s      | 21.07s      | -76%         |
+| Instantiations      | 48,014,546  | 27,117,223  | 26,708,072  | -44%         |
+| Types               | 3,986,451   | 1,926,862   | 1,858,503   | -53%         |
+| Symbols             | 10,018,516  | 4,493,560   | 4,261,629   | -57%         |
+| Assignability cache | 1,304,647   | 682,612     | 673,436     | -48%         |
+
+`deno check packages/dataframe` — 0 errors.
+
+Depth-limit hits dropped from 3,893 to 2,491 (-36%). DataFrame comparisons dropped from 93x to 67x (-28%). Total comparison time dropped from 10,275ms to 8,406ms (-18%).
+
+---
+
+## Changes 10 & 11 (2026-03-27)
+
+Changes 10 and 11 were developed concurrently and measured together.
+
+### Change 10: Remove generics from shared-handler-utils.ts
+
+**What**: Replaced all generic type parameters (`<T>`, `<Row, K>`) with `any` in `shared-handler-utils.ts`. Removed `DataFrame` and `GroupedDataFrame` imports entirely. Changed type guard parameters from `(x: unknown) => x is DataFrame<Row>` to `(x: unknown) => boolean`.
+
+**Why**: This file is a runtime proxy implementation — all type safety comes from the PromisedDataFrame type definitions, not from the handler internals. The generic parameters on `processMethodResult<Row, K>`, `processAsyncMethodResult<Row, K>`, `resolveProperty<T>`, `createPrintMethodHandler<T>`, etc. forced tsc to instantiate `DataFrame<Row>` and `GroupedDataFrame<Row, K>` at every call site, triggering full structural comparisons. Since the proxy already uses `any` casts internally, the generics provided zero type safety.
+
+**File changed**: `packages/dataframe/ts/promised-dataframe/implementation/handlers/shared-handler-utils.ts`
+
+**Impact**: shared-handler-utils.ts was the #1 cost center at 497ms / 175 comparisons / 390 depth-limit hits. Dropped to 0ms / 0 comparisons / 2 depth hits.
+
+### Change 11: Explicit `: any` return type on distribution implementation signatures
+
+**What**: Added `: any` return type to the implementation overload of all 11 distribution `*Data` functions (normalData, betaData, binomialData, poissonData, gammaData, tData, paretoData, uniformData, weibullData, chiSquareData, exponentialData).
+
+**Why**: The implementation signatures had no return type annotation, forcing tsc to infer the return through `createDistributionData()` → `createDataFrame()` for each of 3 code paths per file. The overload signatures already provide the correct specific `DataFrame<{...}>` return types for callers — the implementation signature only needs to satisfy the compiler. Using `: any` cuts off the inference chain entirely.
+
+**Note**: An earlier attempt using `DistributionDataResult` (a union of 3 DataFrame types) was neutral on check time but introduced a new `DataFrame vs DistributionDataResult` comparison pair (250ms/29x). Switching to `: any` eliminated that overhead.
+
+**Files changed**: All 11 distribution files in `packages/dataframe/ts/stats/distributions/`
+
+**Impact**: Distribution depth-limit hits dropped from 1,134 to 162 (-86%). Distribution comparison time dropped from ~1,055ms to 183ms (-83%). All 11 individual files removed from the depth-limit hot list.
+
+### Cumulative results after Changes 1–11
+
+| Metric              | Baseline    | After 1-9   | After 1-11  | Total Change |
+|---------------------|-------------|-------------|-------------|--------------|
+| Check time          | 86.32s      | 21.07s      | 21.10s      | -76%         |
+| Instantiations      | 48,014,546  | 26,708,072  | 26,514,337  | -45%         |
+| Types               | 3,986,451   | 1,858,503   | 1,829,652   | -54%         |
+| Symbols             | 10,018,516  | 4,261,629   | 4,156,317   | -59%         |
+| Assignability cache | 1,304,647   | 673,436     | 665,705     | -49%         |
+
+`deno check packages/dataframe` — 0 errors.
+
+Depth-limit hits dropped from 2,491 to 1,369 (-45%). Total comparisons dropped from ~686 to 545 (-21%). graph.ts dropped from 3,528ms to 13ms (effectively zero — Changes 3/9 explicit return types now fully effective). shared-handler-utils.ts dropped from 497ms/#1 to 0ms.
+
+---
+
+## Remaining opportunities — reassessed after Change 11 (2026-03-27)
+
+### Top cost centers by file (comparison time / depth-limit hits)
+
+| File | Comparison time | Comparisons | Depth hits | Notes |
+|------|---------------:|------------:|-----------:|-------|
+| filter.verb.ts | 5,585ms | 147x | 415 | New #1. MutateMethod 706ms/15x, DataFrameBase 989ms/11x |
+| create-dataframe.ts | 2,494ms | 87x | 304 | Down from 2,863ms. Structural overload cost |
+| zod schemas.d.cts | 719ms | 57x | 5 | Third-party cost |
+| left-join-parallel.verb.ts | 578ms | 26x | 108 | Join verb comparison cascade |
+| slice.verb.ts | 417ms | 40x | 265 | Overload comparison cascade |
+| data-helper.ts | 184ms | 26x | 204 | Distribution helper (residual) |
+
+### Top comparison pairs globally
+
+| Pair | Time | Count |
+|------|-----:|------:|
+| DataFrame vs DataFrame | 1,694ms | 39x |
+| DataFrameBase vs DataFrameBase | 1,511ms | 30x |
+| DataFrame vs DataFrameBase | 1,298ms | 22x |
+| MutateMethod vs MutateMethod | 924ms | 24x |
+| GroupedDataFrame vs DataFrameBase | 859ms | 21x |
+| GroupedDataFrame vs GroupedDataFrame | 807ms | 18x |
+
+### Not actionable (structural or intentional)
+
+- **`__type` from utility-types.ts (Prettify): 5,557 instances** — Single-layer Prettify needed for tooltip UX. Double-layer redundancies already removed in Change 7.
+- **`__type` from dataframe.type.ts: 3,292 instances** — Generated by `DataFrameColumns<Row>` mapped type. Structural to column accessor API.
+- **ColName conditional mapped key: 7,103 instances** — Bound variable from `DataFrameColumns<Row>` mapped type. Fundamental to column accessors.
+- **Join suffix types: 3,815 anonymous types** — Five `*WithSuffixes` types already behind conditional dispatch.
+- **RestrictEmptyDataFrame: 1,448 instances** — Intentional UX feature for error clarity.
+- **DataFrame vs DataFrame depth-limit hits (817 total)** — Inherent cost of comparing the ~70-member DataFrameBase interface. Already mitigated by caching (Change 1).
+- **create-dataframe.ts (2,494ms)** — Already optimized with `: any` impl return type. Remaining cost is structural (overload signatures require DataFrame instantiation).
+- **graph.ts (13ms)** — Fully optimized. Zero comparisons, zero depth hits.
+
+### Possibly actionable (diminishing returns, some risk)
+
+- **filter.verb.ts (5,585ms/415 depth hits)** — New #1 cost center. 147 comparisons dominated by DataFrameBase (989ms/11x), DataFrame (782ms/12x), MutateMethod (706ms/15x), GroupedDataFrame (609ms/10x each for GDF vs GDF and GDF vs DFBase). Worth investigating whether explicit return types or restructuring could help.
+- **MutateMethod overloads: 24 comparisons at 924ms** — 14 overloads. Consolidation could reduce comparisons but risks degrading parameter inference quality.
+- **Zod schemas: 719ms** — Third-party cost. Could reduce by lazy-loading `zDataFrame` or separate entry point.
+- **slice.verb.ts (417ms/265 depth hits)** — Overload-heavy verb file.
+
+### Summary
+
+From 86s to 21s (76% reduction). Depth-limit hits from 3,248 to 1,369 (-58%). The remaining cost is dominated by structural DataFrame comparisons in verb implementation files — filter.verb.ts alone accounts for 5,585ms of comparison time. These are inherent costs of tsc structurally comparing the ~70-member DataFrameBase interface at verb call boundaries. Further gains would require either reducing the number of verb overloads or accepting `any` at more implementation boundaries, both of which risk degrading type inference quality for end users.
