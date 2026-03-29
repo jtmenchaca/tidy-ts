@@ -4,13 +4,13 @@ import {
   type UnifyUnion,
 } from "../../dataframe/index.ts";
 import { interpolate as statsInterpolate } from "../../stats/window/interpolate.ts";
+import { isComparable } from "../../stats/helpers.ts";
 import {
   calendarTemporalDistance,
   isCalendarTemporal,
-  isComparable,
   isWallClockTemporalWithoutCalendar,
   temporalToEpochMs,
-} from "../../stats/helpers.ts";
+} from "../../stats/temporal-helpers.ts";
 
 /**
  * Interpolate null/undefined values in a column using linear or spline interpolation.
@@ -58,7 +58,7 @@ export function interpolate<T extends Record<string, unknown>>(
     const values: (unknown)[] = [];
     const xValues: (number | Date)[] = [];
     let calendarBaseValue:
-      | import("../../stats/helpers.ts").CalendarTemporal
+      | import("../../stats/temporal-helpers.ts").CalendarTemporal
       | null = null;
 
     for (const row of df) {

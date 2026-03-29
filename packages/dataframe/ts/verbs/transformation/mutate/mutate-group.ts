@@ -9,6 +9,7 @@ import {
   createDataFrame,
   preserveDataFrameMetadata,
 } from "../../../dataframe/index.ts";
+import { RowView } from "../../verb-helpers.ts";
 
 /* =================================================================================
    Group-level mutate (value per group, recycled to rows)
@@ -147,29 +148,10 @@ function impl_grouped<Row extends Record<string, unknown>>(
   (out as any).__store = nextStore;
   (out as any).__view = (df as any).__view; // preserve view
 
-  // Create new RowView for the updated columns
-  class RowView {
-    private _i = 0;
-    constructor(
-      private cols: Record<string, unknown[]>,
-      private names: string[],
-    ) {
-      // Create getters for each column
-      for (const name of names) {
-        Object.defineProperty(this, name, {
-          get: () => this.cols[name][this._i],
-          enumerable: true,
-          configurable: true,
-        });
-      }
-    }
-    setCursor(i: number) {
-      this._i = i;
-    }
-  }
   (out as any).__rowView = new RowView(
     nextStore.columns,
     nextStore.columnNames,
+    true,
   );
 
   // Preserve DataFrame metadata (__kind, __groups, __rowLabels)

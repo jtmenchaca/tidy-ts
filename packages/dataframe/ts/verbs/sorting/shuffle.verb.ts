@@ -4,8 +4,8 @@ import {
   materializeIndex,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
-import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { shuffleArray } from "../utility/seedable-random.ts";
+import { collectGroupIndices } from "../verb-helpers.ts";
 
 /**
  * Randomize the order of rows in a DataFrame.
@@ -51,14 +51,7 @@ export function shuffle<T extends Record<string, unknown>>(seed?: number) {
       const { head, next, size } = groupedDf.__groups;
 
       for (let g = 0; g < size; g++) {
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         const groupRows: T[] = [];
         for (const physIdx of groupIndices) {

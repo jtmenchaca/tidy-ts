@@ -12,7 +12,7 @@ import {
   isWallClockTemporalWithoutCalendar,
   parseFrequencyForCalendar,
   toEpochMs,
-} from "../../stats/helpers.ts";
+} from "../../stats/temporal-helpers.ts";
 
 /**
  * Convert frequency string to milliseconds.

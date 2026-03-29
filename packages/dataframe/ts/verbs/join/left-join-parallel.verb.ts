@@ -3,11 +3,11 @@
 import { currentRuntime, Runtime } from "@tidy-ts/shims";
 import {
   createColumnarDataFrameFromStore,
-  materializeIndex,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+import { getStoreAndIndex, parseJoinArgs } from "./join-helpers.ts";
 // Note: Worker functionality removed - parallel joins disabled
 // import { getWasmBytes } from "../../wasm/wasm-loader.ts";
 
@@ -60,53 +60,6 @@ function getTypedColsCached(
     out[k] = arr;
   }
   return out;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Helpers (shared)                                                            */
-/* -------------------------------------------------------------------------- */
-
-function getStoreAndIndex(
-  df: any,
-) {
-  const anyDf = df;
-  const store = anyDf.__store;
-  const view = anyDf.__view;
-  const index = materializeIndex(store.length, view);
-  return { store, index };
-}
-
-function parseJoinKeys(
-  byOrOptions: any,
-  options?: any,
-): {
-  leftKeys: string[];
-  rightKeys: string[];
-  suffixes: { left?: string; right?: string };
-} {
-  if (
-    byOrOptions && typeof byOrOptions === "object" &&
-    !Array.isArray(byOrOptions) && "keys" in byOrOptions
-  ) {
-    const opts = byOrOptions;
-    if (Array.isArray(opts.keys)) {
-      const keys = opts.keys.map(String);
-      return { leftKeys: keys, rightKeys: keys, suffixes: opts.suffixes || {} };
-    } else {
-      const mapping = opts.keys;
-      const leftKeys = Array.isArray(mapping.left)
-        ? mapping.left.map(String)
-        : [String(mapping.left)];
-      const rightKeys = Array.isArray(mapping.right)
-        ? mapping.right.map(String)
-        : [String(mapping.right)];
-      return { leftKeys, rightKeys, suffixes: opts.suffixes || {} };
-    }
-  }
-  const keys = Array.isArray(byOrOptions)
-    ? byOrOptions.map(String)
-    : [String(byOrOptions)];
-  return { leftKeys: keys, rightKeys: keys, suffixes: options?.suffixes || {} };
 }
 
 function allocLikeLeft(src: any, length: number): any {
@@ -240,7 +193,7 @@ export function left_join_parallel(
       const { leftKeys, rightKeys, suffixes } = tracer.withSpan(
         left as any,
         "parse-join-keys",
-        () => parseJoinKeys(byOrOptions, options),
+        () => parseJoinArgs(byOrOptions, options),
       );
 
       // Create typed key columns

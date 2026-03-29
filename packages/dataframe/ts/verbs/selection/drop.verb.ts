@@ -8,6 +8,7 @@ import {
   type Prettify,
   withGroups,
 } from "../../dataframe/index.ts";
+import { RowView } from "../verb-helpers.ts";
 
 /**
  * Remove columns by name from a dataframe.
@@ -136,24 +137,6 @@ export function drop<Row extends Record<string, unknown>>(
       (out as any).__store = newStore;
       (out as any).__view = {}; // reset view
 
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
       (out as any).__rowView = new RowView(newColumns, keepColumns);
 
       // Preserve groups if they exist (column-only operation)

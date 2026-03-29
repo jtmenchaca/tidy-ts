@@ -2,14 +2,7 @@
 // deno-lint-ignore-file
 // deno-fmt-ignore-file
 
-/**
- * Sum aggregation for f64 values
- */
-export function reduce_sum_f64(
-  gid_per_row: Uint32Array,
-  vals: Float64Array,
-  n_groups: number,
-): Float64Array;
+export function wasm_test(): number;
 /**
  * Count aggregation (number of non-null values)
  */
@@ -28,48 +21,38 @@ export function reduce_mean_f64(
   n_groups: number,
 ): Float64Array;
 /**
- * WASM export: fill `indices` with sorted order (u32).
- * - `flat_cols`: column-major f64 matrix [n_cols * n_rows]
- * - `dirs`: i8 (+1 = asc, -1 = desc), length = n_cols
+ * Sum aggregation for f64 values
  */
-export function arrange_multi_f64_wasm(
-  flat_cols: Float64Array,
-  n_rows: number,
-  n_cols: number,
-  dirs: Int8Array,
-  indices: Uint32Array,
-): void;
-/**
- * Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
- */
-export function stable_sort_indices_f64_wasm(
-  values: Float64Array,
-  indices: Uint32Array,
-  ascending: boolean,
-): void;
-/**
- * Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
- */
-export function stable_sort_indices_u32_wasm(
-  ranks: Uint32Array,
-  indices: Uint32Array,
-  ascending: boolean,
-  na_code: number,
-): void;
-export function count_f64(values: Float64Array, target: number): number;
-export function count_i32(values: Int32Array, target: number): number;
-export function count_str(values: string[], target: string): number;
+export function reduce_sum_f64(
+  gid_per_row: Uint32Array,
+  vals: Float64Array,
+  n_groups: number,
+): Float64Array;
 /**
  * Cross join (Cartesian product) - returns u32 indices
  */
 export function cross_join_u32(left_len: number, right_len: number): JoinIdxU32;
 /**
- * Ultra-optimized distinct using direct typed arrays - exactly like test_ultra_optimized_distinct.rs
+ * Ultra-optimized inner join using shared utilities and specialized kernels
  */
-export function distinct_rows_generic_typed(
-  column_data: Uint32Array[],
-  view_index: Uint32Array,
-): Uint32Array;
+export function inner_join_typed_multi_u32(
+  left_columns: Uint32Array[],
+  right_columns: Uint32Array[],
+): JoinIdxU32;
+/**
+ * Ultra-optimized outer join using shared utilities and specialized kernels
+ */
+export function outer_join_typed_multi_u32(
+  left_columns: Uint32Array[],
+  right_columns: Uint32Array[],
+): JoinIdxU32;
+/**
+ * Ultra-optimized right join using shared utilities and specialized kernels
+ */
+export function right_join_typed_multi_u32(
+  left_columns: Uint32Array[],
+  right_columns: Uint32Array[],
+): JoinIdxU32;
 /**
  * WASM export for batch numeric filtering
  *
@@ -83,157 +66,17 @@ export function batch_filter_numbers(
   output: Uint8Array,
 ): void;
 /**
- * Perform grouping in a single pass, returning all necessary data
+ * Combined pivot operation that returns values and seen flags in one pass
+ * policy: 0=first, 1=last, 2=sum, 3=mean
  */
-export function group_ids_codes_all(
-  keys_codes: Uint32Array,
-  n_rows: number,
-  n_key_cols: number,
-): Grouping;
-export function group_ids_codes(
-  keys_codes: Uint32Array,
-  n_rows: number,
-  n_key_cols: number,
-): Uint32Array;
-/**
- * Get unique group keys from grouping operation
- *
- * This function needs to be called after group_ids_codes to get the unique keys.
- * The keys are stored in row-major order (group then columns).
- */
-export function get_unique_group_keys(
-  keys_codes: Uint32Array,
-  n_rows: number,
-  n_key_cols: number,
-): Uint32Array;
-/**
- * Get number of groups from grouping operation
- */
-export function get_group_count(
-  keys_codes: Uint32Array,
-  n_rows: number,
-  n_key_cols: number,
-): number;
-/**
- * Get group information for a specific group
- *
- * Args:
- * - unique_keys: Unique group keys from group_ids_codes
- * - n_key_cols: Number of key columns
- * - group_id: Group ID to get information for
- *
- * Returns:
- * - key_values: The group's key values
- */
-export function get_group_info(
-  unique_keys: Uint32Array,
-  n_key_cols: number,
-  group_id: number,
-): Uint32Array;
-/**
- * Ultra-optimized inner join using shared utilities and specialized kernels
- */
-export function inner_join_typed_multi_u32(
-  left_columns: Uint32Array[],
-  right_columns: Uint32Array[],
-): JoinIdxU32;
-/**
- * WASM export for interquartile range
- */
-export function iqr_wasm(data: Float64Array): number;
-export function left_join_typed_multi_u32(
-  left_columns: Uint32Array[],
-  right_columns: Uint32Array[],
-): JoinIdxU32;
-/**
- * WASM export for median calculation
- */
-export function median_wasm(data: Float64Array): number;
-/**
- * Ultra-optimized outer join using shared utilities and specialized kernels
- */
-export function outer_join_typed_multi_u32(
-  left_columns: Uint32Array[],
-  right_columns: Uint32Array[],
-): JoinIdxU32;
-/**
- * Ultra-optimized pivot_longer using typed arrays and bulk copying
- */
-export function pivot_longer_typed_arrays(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Float64Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerResult;
-/**
- * Ultra-optimized pivot_longer for numeric data with validation
- */
-export function pivot_longer_typed_numeric(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Float64Array,
-  fold_cols_valid: Uint8Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerResult;
-/**
- * Ultra-optimized pivot_longer for string data
- */
-export function pivot_longer_typed_strings(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Uint32Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerStringResult;
-/**
- * Perform pivot_longer operation on dictionary-encoded columns
- *
- * Args:
- * - keep_cols_data: Column-major dictionary-encoded data for columns to keep (n_keep_cols × n_input_rows)
- * - fold_cols_data: Column-major data for columns to fold/melt (n_fold_cols × n_input_rows)
- * - fold_cols_names: Dictionary codes for the names of columns being folded
- * - n_input_rows: Number of input rows
- * - n_keep_cols: Number of columns to keep
- * - n_fold_cols: Number of columns to fold/melt
- */
-export function pivot_longer_dense(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Float64Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerResult;
-/**
- * Optimized pivot_longer for the common case of numeric values
- * This version handles NaN/undefined values appropriately
- */
-export function pivot_longer_numeric(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Float64Array,
-  fold_cols_valid: Uint8Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerResult;
-/**
- * Fast pivot_longer specifically for string columns
- * Returns dictionary codes that can be decoded in TypeScript
- */
-export function pivot_longer_strings(
-  keep_cols_data: Uint32Array,
-  fold_cols_data: Uint32Array,
-  fold_cols_names: Uint32Array,
-  n_input_rows: number,
-  n_keep_cols: number,
-  n_fold_cols: number,
-): PivotLongerStringResult;
+export function pivot_wider_dense_f64_all(
+  gid_per_row: Uint32Array,
+  cat_codes: Uint32Array,
+  values: Float64Array,
+  n_groups: number,
+  n_cats: number,
+  policy: number,
+): PivotDenseF64;
 /**
  * policy: 0=first, 1=last, 2=sum, 3=mean
  */
@@ -260,552 +103,98 @@ export function pivot_wider_seen_flags(
   _policy: number,
 ): Uint8Array;
 /**
- * Combined pivot operation that returns values and seen flags in one pass
- * policy: 0=first, 1=last, 2=sum, 3=mean
+ * Ultra-optimized pivot_longer for numeric data with validation
  */
-export function pivot_wider_dense_f64_all(
-  gid_per_row: Uint32Array,
-  cat_codes: Uint32Array,
-  values: Float64Array,
-  n_groups: number,
-  n_cats: number,
-  policy: number,
-): PivotDenseF64;
+export function pivot_longer_typed_numeric(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Float64Array,
+  fold_cols_valid: Uint8Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerResult;
 /**
- * WASM export for general quantile calculation
- * Uses R's Type 7 algorithm (default)
+ * Perform pivot_longer operation on dictionary-encoded columns
+ *
+ * Args:
+ * - keep_cols_data: Column-major dictionary-encoded data for columns to keep (n_keep_cols × n_input_rows)
+ * - fold_cols_data: Column-major data for columns to fold/melt (n_fold_cols × n_input_rows)
+ * - fold_cols_names: Dictionary codes for the names of columns being folded
+ * - n_input_rows: Number of input rows
+ * - n_keep_cols: Number of columns to keep
+ * - n_fold_cols: Number of columns to fold/melt
  */
-export function quantile_wasm(
-  data: Float64Array,
-  probs: Float64Array,
-): Float64Array;
+export function pivot_longer_dense(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Float64Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerResult;
 /**
- * Ultra-optimized right join using shared utilities and specialized kernels
+ * Ultra-optimized pivot_longer using typed arrays and bulk copying
  */
-export function right_join_typed_multi_u32(
-  left_columns: Uint32Array[],
-  right_columns: Uint32Array[],
-): JoinIdxU32;
+export function pivot_longer_typed_arrays(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Float64Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerResult;
 /**
- * WASM export for sum calculation
+ * Ultra-optimized pivot_longer for string data
  */
-export function sum_wasm(values: Float64Array): number;
+export function pivot_longer_typed_strings(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Uint32Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerStringResult;
+/**
+ * Fast pivot_longer specifically for string columns
+ * Returns dictionary codes that can be decoded in TypeScript
+ */
+export function pivot_longer_strings(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Uint32Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerStringResult;
+/**
+ * Optimized pivot_longer for the common case of numeric values
+ * This version handles NaN/undefined values appropriately
+ */
+export function pivot_longer_numeric(
+  keep_cols_data: Uint32Array,
+  fold_cols_data: Float64Array,
+  fold_cols_valid: Uint8Array,
+  fold_cols_names: Uint32Array,
+  n_input_rows: number,
+  n_keep_cols: number,
+  n_fold_cols: number,
+): PivotLongerResult;
+/**
+ * WASM export for interquartile range
+ */
+export function iqr_wasm(data: Float64Array): number;
 /**
  * WASM export for mean calculation
  */
 export function mean_wasm(values: Float64Array): number;
 /**
- * WASM export for unique f64 values
- */
-export function unique_f64(values: Float64Array): Float64Array;
-/**
- * WASM export for unique i32 values
- */
-export function unique_i32(values: Int32Array): Int32Array;
-/**
- * WASM export for unique string values
- */
-export function unique_str(values: string[]): string[];
-/**
- * WASM export for beta density function
- */
-export function wasm_dbeta(
-  x: number,
-  shape1: number,
-  shape2: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for beta cumulative distribution function
- */
-export function wasm_pbeta(
-  x: number,
-  shape1: number,
-  shape2: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for beta quantile function
- */
-export function wasm_qbeta(
-  p: number,
-  shape1: number,
-  shape2: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for beta random number generation
- */
-export function wasm_rbeta(shape1: number, shape2: number): number;
-/**
- * WASM export for normal density function
- */
-export function wasm_dnorm(
-  x: number,
-  mean: number,
-  sd: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for normal cumulative distribution function
- */
-export function wasm_pnorm(
-  x: number,
-  mean: number,
-  sd: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for normal quantile function
- */
-export function wasm_qnorm(
-  p: number,
-  mean: number,
-  sd: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for normal random number generation
- */
-export function wasm_rnorm(mean: number, sd: number): number;
-/**
- * WASM export for gamma density function
- */
-export function wasm_dgamma(
-  x: number,
-  shape: number,
-  rate: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for gamma cumulative distribution function
- */
-export function wasm_pgamma(
-  x: number,
-  shape: number,
-  rate: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for gamma quantile function
- */
-export function wasm_qgamma(
-  p: number,
-  shape: number,
-  rate: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for gamma random number generation
- */
-export function wasm_rgamma(shape: number, rate: number): number;
-/**
- * WASM export for exponential density function
- */
-export function wasm_dexp(x: number, rate: number, give_log: boolean): number;
-/**
- * WASM export for exponential cumulative distribution function
- */
-export function wasm_pexp(
-  x: number,
-  rate: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for exponential quantile function
- */
-export function wasm_qexp(
-  p: number,
-  rate: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for exponential random number generation
- */
-export function wasm_rexp(rate: number): number;
-/**
- * WASM export for chi-squared density function
- */
-export function wasm_dchisq(x: number, df: number, give_log: boolean): number;
-/**
- * WASM export for chi-squared cumulative distribution function
- */
-export function wasm_pchisq(
-  x: number,
-  df: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for chi-squared quantile function
- */
-export function wasm_qchisq(
-  p: number,
-  df: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for chi-squared random number generation
- */
-export function wasm_rchisq(df: number): number;
-/**
- * WASM export for F density function
- */
-export function wasm_df(
-  x: number,
-  df1: number,
-  df2: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for F cumulative distribution function
- */
-export function wasm_pf(
-  x: number,
-  df1: number,
-  df2: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for F quantile function
- */
-export function wasm_qf(
-  p: number,
-  df1: number,
-  df2: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for F distribution random number generation
- */
-export function wasm_rf(df1: number, df2: number): number;
-/**
- * WASM export for t density function
- */
-export function wasm_dt(x: number, df: number, give_log: boolean): number;
-/**
- * WASM export for t cumulative distribution function
- */
-export function wasm_pt(
-  x: number,
-  df: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for t quantile function
- */
-export function wasm_qt(
-  p: number,
-  df: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for t distribution random number generation
- */
-export function wasm_rt(df: number): number;
-/**
- * WASM export for Poisson density function
- */
-export function wasm_dpois(
-  x: number,
-  lambda: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for Poisson cumulative distribution function
- */
-export function wasm_ppois(
-  x: number,
-  lambda: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Poisson quantile function
- */
-export function wasm_qpois(
-  p: number,
-  lambda: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Poisson random number generation
- */
-export function wasm_rpois(lambda: number): number;
-/**
- * WASM export for binomial density function
- */
-export function wasm_dbinom(
-  x: number,
-  size: number,
-  prob: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for binomial cumulative distribution function
- */
-export function wasm_pbinom(
-  x: number,
-  size: number,
-  prob: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for binomial quantile function
- */
-export function wasm_qbinom(
-  p: number,
-  size: number,
-  prob: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for binomial random number generation
- */
-export function wasm_rbinom(size: number, prob: number): number;
-/**
- * WASM export for uniform density function
- */
-export function wasm_dunif(
-  x: number,
-  min: number,
-  max: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for uniform cumulative distribution function
- */
-export function wasm_punif(
-  x: number,
-  min: number,
-  max: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for uniform quantile function
- */
-export function wasm_qunif(
-  p: number,
-  min: number,
-  max: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for uniform random number generation
- */
-export function wasm_runif(min: number, max: number): number;
-/**
- * WASM export for Weibull density function
- */
-export function wasm_dweibull(
-  x: number,
-  shape: number,
-  scale: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for Weibull cumulative distribution function
- */
-export function wasm_pweibull(
-  x: number,
-  shape: number,
-  scale: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Weibull quantile function
- */
-export function wasm_qweibull(
-  p: number,
-  shape: number,
-  scale: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Weibull random number generation
- */
-export function wasm_rweibull(shape: number, scale: number): number;
-/**
- * WASM export for geometric density function
- */
-export function wasm_dgeom(x: number, prob: number, give_log: boolean): number;
-/**
- * WASM export for geometric cumulative distribution function
- */
-export function wasm_pgeom(
-  x: number,
-  prob: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for geometric quantile function
- */
-export function wasm_qgeom(
-  p: number,
-  prob: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for geometric random number generation
- */
-export function wasm_rgeom(prob: number): number;
-/**
- * WASM export for hypergeometric density function
- */
-export function wasm_dhyper(
-  x: number,
-  m: number,
-  n: number,
-  k: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for hypergeometric cumulative distribution function
- */
-export function wasm_phyper(
-  x: number,
-  m: number,
-  n: number,
-  k: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for hypergeometric quantile function
- */
-export function wasm_qhyper(
-  p: number,
-  m: number,
-  n: number,
-  k: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for hypergeometric random number generation
- */
-export function wasm_rhyper(m: number, n: number, k: number): number;
-/**
- * WASM export for log-normal density function
- */
-export function wasm_dlnorm(
-  x: number,
-  meanlog: number,
-  sdlog: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for log-normal cumulative distribution function
- */
-export function wasm_plnorm(
-  x: number,
-  meanlog: number,
-  sdlog: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for log-normal quantile function
- */
-export function wasm_qlnorm(
-  p: number,
-  meanlog: number,
-  sdlog: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for log-normal random number generation
- */
-export function wasm_rlnorm(meanlog: number, sdlog: number): number;
-/**
- * WASM export for negative binomial density function
- */
-export function wasm_dnbinom(
-  x: number,
-  r: number,
-  p: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for negative binomial cumulative distribution function
- */
-export function wasm_pnbinom(
-  x: number,
-  r: number,
-  p: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for negative binomial quantile function
- */
-export function wasm_qnbinom(
-  p: number,
-  r: number,
-  prob: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for negative binomial random number generation
- */
-export function wasm_rnbinom(r: number, prob: number): number;
-/**
- * WASM export for Wilcoxon density function
- */
-export function wasm_dwilcox(
-  x: number,
-  m: number,
-  n: number,
-  give_log: boolean,
-): number;
-/**
- * WASM export for Wilcoxon cumulative distribution function
- */
-export function wasm_pwilcox(
-  q: number,
-  m: number,
-  n: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Wilcoxon quantile function
- */
-export function wasm_qwilcox(
-  p: number,
-  m: number,
-  n: number,
-  lower_tail: boolean,
-  log_p: boolean,
-): number;
-/**
- * WASM export for Wilcoxon random number generation
- */
-export function wasm_rwilcox(m: number, n: number): number;
+ * WASM export for sum calculation
+ */
+export function sum_wasm(values: Float64Array): number;
+export function count_f64(values: Float64Array, target: number): number;
+export function count_str(values: string[], target: string): number;
+export function count_i32(values: Int32Array, target: number): number;
 export function geeglm_fit_wasm(
   formula: string,
   family_name: string,
@@ -840,12 +229,6 @@ export function glm_fit_wasm(
   options_json?: string | null,
 ): string;
 /**
- * WASM export for GLM summary
- *
- * Returns coefficient table with test statistics and p-values
- */
-export function glm_summary_wasm(result_json: string): string;
-/**
  * WASM export for standardized residuals
  *
  * Returns rstandard() values
@@ -867,9 +250,11 @@ export function glm_rstudent_wasm(result_json: string): string;
  */
 export function glm_influence_wasm(result_json: string): string;
 /**
- * GLM confint() - Compute confidence intervals for coefficients
+ * WASM export for GLM summary
+ *
+ * Returns coefficient table with test statistics and p-values
  */
-export function glm_confint_wasm(result_json: string, level: number): string;
+export function glm_summary_wasm(result_json: string): string;
 /**
  * GLM predict() - Make predictions on new data
  */
@@ -878,6 +263,10 @@ export function glm_predict_wasm(
   newdata_json: string,
   pred_type: string,
 ): string;
+/**
+ * GLM confint() - Compute confidence intervals for coefficients
+ */
+export function glm_confint_wasm(result_json: string, level: number): string;
 /**
  * WASM export for GLMM fitting
  *
@@ -903,69 +292,505 @@ export function glmm_fit_wasm(
   options_json?: string | null,
 ): string;
 /**
- * WASM export for Anderson-Darling normality test
+ * WASM export for Weibull density function
  */
-export function anderson_darling_test(
-  x: Float64Array,
-  alpha: number,
-): AndersonDarlingTestResult;
+export function wasm_dweibull(
+  x: number,
+  shape: number,
+  scale: number,
+  give_log: boolean,
+): number;
 /**
- * WASM export for one-way ANOVA
+ * WASM export for gamma random number generation
  */
-export function anova_one_way(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): OneWayAnovaTestResult;
+export function wasm_rgamma(shape: number, rate: number): number;
 /**
- * WASM export for two-way ANOVA factor A
+ * WASM export for negative binomial cumulative distribution function
  */
-export function anova_two_way_factor_a_wasm(
-  data: Float64Array,
-  a_levels: number,
-  b_levels: number,
-  cell_sizes: Uint32Array,
-  alpha: number,
-): OneWayAnovaTestResult;
+export function wasm_pnbinom(
+  x: number,
+  r: number,
+  p: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
 /**
- * WASM export for two-way ANOVA factor B
+ * WASM export for Poisson cumulative distribution function
  */
-export function anova_two_way_factor_b_wasm(
-  data: Float64Array,
-  a_levels: number,
-  b_levels: number,
-  cell_sizes: Uint32Array,
-  alpha: number,
-): OneWayAnovaTestResult;
+export function wasm_ppois(
+  x: number,
+  lambda: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
 /**
- * WASM export for two-way ANOVA interaction
+ * WASM export for t distribution random number generation
  */
-export function anova_two_way_interaction_wasm(
-  data: Float64Array,
-  a_levels: number,
-  b_levels: number,
-  cell_sizes: Uint32Array,
-  alpha: number,
-): OneWayAnovaTestResult;
+export function wasm_rt(df: number): number;
 /**
- * WASM export for two-way ANOVA
- * Takes flattened data with group information to reconstruct 2D factorial design
+ * WASM export for Wilcoxon quantile function
  */
-export function anova_two_way(
-  data: Float64Array,
-  a_levels: number,
-  b_levels: number,
-  cell_sizes: Uint32Array,
-  alpha: number,
-): TwoWayAnovaTestResult;
+export function wasm_qwilcox(
+  p: number,
+  m: number,
+  n: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
 /**
- * WASM export for Welch's ANOVA (unequal variances)
+ * WASM export for uniform random number generation
  */
-export function welch_anova_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): WelchAnovaTestResult;
+export function wasm_runif(min: number, max: number): number;
+/**
+ * WASM export for geometric density function
+ */
+export function wasm_dgeom(x: number, prob: number, give_log: boolean): number;
+/**
+ * WASM export for Weibull quantile function
+ */
+export function wasm_qweibull(
+  p: number,
+  shape: number,
+  scale: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for beta density function
+ */
+export function wasm_dbeta(
+  x: number,
+  shape1: number,
+  shape2: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for F cumulative distribution function
+ */
+export function wasm_pf(
+  x: number,
+  df1: number,
+  df2: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for beta quantile function
+ */
+export function wasm_qbeta(
+  p: number,
+  shape1: number,
+  shape2: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Poisson density function
+ */
+export function wasm_dpois(
+  x: number,
+  lambda: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for negative binomial quantile function
+ */
+export function wasm_qnbinom(
+  p: number,
+  r: number,
+  prob: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for gamma density function
+ */
+export function wasm_dgamma(
+  x: number,
+  shape: number,
+  rate: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for uniform density function
+ */
+export function wasm_dunif(
+  x: number,
+  min: number,
+  max: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for gamma cumulative distribution function
+ */
+export function wasm_pgamma(
+  x: number,
+  shape: number,
+  rate: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for binomial random number generation
+ */
+export function wasm_rbinom(size: number, prob: number): number;
+/**
+ * WASM export for normal quantile function
+ */
+export function wasm_qnorm(
+  p: number,
+  mean: number,
+  sd: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for beta random number generation
+ */
+export function wasm_rbeta(shape1: number, shape2: number): number;
+/**
+ * WASM export for t quantile function
+ */
+export function wasm_qt(
+  p: number,
+  df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Wilcoxon density function
+ */
+export function wasm_dwilcox(
+  x: number,
+  m: number,
+  n: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for hypergeometric quantile function
+ */
+export function wasm_qhyper(
+  p: number,
+  m: number,
+  n: number,
+  k: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for negative binomial random number generation
+ */
+export function wasm_rnbinom(r: number, prob: number): number;
+/**
+ * WASM export for chi-squared cumulative distribution function
+ */
+export function wasm_pchisq(
+  x: number,
+  df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for exponential random number generation
+ */
+export function wasm_rexp(rate: number): number;
+/**
+ * WASM export for chi-squared density function
+ */
+export function wasm_dchisq(x: number, df: number, give_log: boolean): number;
+/**
+ * WASM export for log-normal quantile function
+ */
+export function wasm_qlnorm(
+  p: number,
+  meanlog: number,
+  sdlog: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for negative binomial density function
+ */
+export function wasm_dnbinom(
+  x: number,
+  r: number,
+  p: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for t density function
+ */
+export function wasm_dt(x: number, df: number, give_log: boolean): number;
+/**
+ * WASM export for beta cumulative distribution function
+ */
+export function wasm_pbeta(
+  x: number,
+  shape1: number,
+  shape2: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for hypergeometric random number generation
+ */
+export function wasm_rhyper(m: number, n: number, k: number): number;
+/**
+ * WASM export for uniform quantile function
+ */
+export function wasm_qunif(
+  p: number,
+  min: number,
+  max: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for uniform cumulative distribution function
+ */
+export function wasm_punif(
+  x: number,
+  min: number,
+  max: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for binomial density function
+ */
+export function wasm_dbinom(
+  x: number,
+  size: number,
+  prob: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for t cumulative distribution function
+ */
+export function wasm_pt(
+  x: number,
+  df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for normal cumulative distribution function
+ */
+export function wasm_pnorm(
+  x: number,
+  mean: number,
+  sd: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for binomial cumulative distribution function
+ */
+export function wasm_pbinom(
+  x: number,
+  size: number,
+  prob: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Wilcoxon random number generation
+ */
+export function wasm_rwilcox(m: number, n: number): number;
+/**
+ * WASM export for hypergeometric cumulative distribution function
+ */
+export function wasm_phyper(
+  x: number,
+  m: number,
+  n: number,
+  k: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for exponential density function
+ */
+export function wasm_dexp(x: number, rate: number, give_log: boolean): number;
+/**
+ * WASM export for F quantile function
+ */
+export function wasm_qf(
+  p: number,
+  df1: number,
+  df2: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Poisson random number generation
+ */
+export function wasm_rpois(lambda: number): number;
+/**
+ * WASM export for normal density function
+ */
+export function wasm_dnorm(
+  x: number,
+  mean: number,
+  sd: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for log-normal random number generation
+ */
+export function wasm_rlnorm(meanlog: number, sdlog: number): number;
+/**
+ * WASM export for F density function
+ */
+export function wasm_df(
+  x: number,
+  df1: number,
+  df2: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for geometric quantile function
+ */
+export function wasm_qgeom(
+  p: number,
+  prob: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Poisson quantile function
+ */
+export function wasm_qpois(
+  p: number,
+  lambda: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for gamma quantile function
+ */
+export function wasm_qgamma(
+  p: number,
+  shape: number,
+  rate: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for Weibull random number generation
+ */
+export function wasm_rweibull(shape: number, scale: number): number;
+/**
+ * WASM export for F distribution random number generation
+ */
+export function wasm_rf(df1: number, df2: number): number;
+/**
+ * WASM export for binomial quantile function
+ */
+export function wasm_qbinom(
+  p: number,
+  size: number,
+  prob: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for log-normal cumulative distribution function
+ */
+export function wasm_plnorm(
+  x: number,
+  meanlog: number,
+  sdlog: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for exponential quantile function
+ */
+export function wasm_qexp(
+  p: number,
+  rate: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for normal random number generation
+ */
+export function wasm_rnorm(mean: number, sd: number): number;
+/**
+ * WASM export for Weibull cumulative distribution function
+ */
+export function wasm_pweibull(
+  x: number,
+  shape: number,
+  scale: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for geometric random number generation
+ */
+export function wasm_rgeom(prob: number): number;
+/**
+ * WASM export for chi-squared random number generation
+ */
+export function wasm_rchisq(df: number): number;
+/**
+ * WASM export for chi-squared quantile function
+ */
+export function wasm_qchisq(
+  p: number,
+  df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for log-normal density function
+ */
+export function wasm_dlnorm(
+  x: number,
+  meanlog: number,
+  sdlog: number,
+  give_log: boolean,
+): number;
+/**
+ * WASM export for Wilcoxon cumulative distribution function
+ */
+export function wasm_pwilcox(
+  q: number,
+  m: number,
+  n: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for exponential cumulative distribution function
+ */
+export function wasm_pexp(
+  x: number,
+  rate: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for geometric cumulative distribution function
+ */
+export function wasm_pgeom(
+  x: number,
+  prob: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+/**
+ * WASM export for hypergeometric density function
+ */
+export function wasm_dhyper(
+  x: number,
+  m: number,
+  n: number,
+  k: number,
+  give_log: boolean,
+): number;
 /**
  * WASM export for chi-square test of independence
  */
@@ -975,14 +800,6 @@ export function chi_square_independence(
   cols: number,
   alpha: number,
 ): ChiSquareIndependenceTestResult;
-/**
- * WASM export for chi-square goodness of fit test
- */
-export function chi_square_goodness_of_fit(
-  observed: Float64Array,
-  expected: Float64Array,
-  alpha: number,
-): ChiSquareGoodnessOfFitTestResult;
 /**
  * WASM export for chi-square test for variance
  */
@@ -1001,146 +818,14 @@ export function chi_square_sample_size_wasm(
   power: number,
   _df: number,
 ): number;
-export function pearson_correlation_test(
-  x: Float64Array,
-  y: Float64Array,
-  alternative: string,
-  alpha: number,
-): PearsonCorrelationTestResult;
-export function spearman_correlation_test(
-  x: Float64Array,
-  y: Float64Array,
-  alternative: string,
-  alpha: number,
-): SpearmanCorrelationTestResult;
-export function kendall_correlation_test(
-  x: Float64Array,
-  y: Float64Array,
-  alternative: string,
-  alpha: number,
-  exact?: boolean | null,
-): KendallCorrelationTestResult;
 /**
- * WASM export for D'Agostino-Pearson K² normality test
+ * WASM export for chi-square goodness of fit test
  */
-export function dagostino_pearson_test(
-  x: Float64Array,
+export function chi_square_goodness_of_fit(
+  observed: Float64Array,
+  expected: Float64Array,
   alpha: number,
-): DAgostinoPearsonTestResult;
-/**
- * WASM export for Fisher's exact test
- */
-export function fishers_exact_test_wasm(
-  a: number,
-  b: number,
-  c: number,
-  d: number,
-  alternative: string,
-  odds_ratio: number,
-  alpha: number,
-): FishersExactTestResult;
-/**
- * WASM export for two-sample Kolmogorov-Smirnov test
- */
-export function kolmogorov_smirnov_test_wasm(
-  x: Float64Array,
-  y: Float64Array,
-  alternative: string,
-  alpha: number,
-): KolmogorovSmirnovTestResult;
-/**
- * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
- */
-export function kolmogorov_smirnov_uniform_wasm(
-  x: Float64Array,
-  min: number,
-  max: number,
-  alternative: string,
-  alpha: number,
-): KolmogorovSmirnovTestResult;
-/**
- * WASM export for Kruskal-Wallis test
- */
-export function kruskal_wallis_test_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): KruskalWallisTestResult;
-/**
- * WASM wrapper for Levene's test for equality of variances
- *
- * Tests whether groups have equal variances using the Brown-Forsythe
- * modification (deviations from medians rather than means).
- *
- * # Arguments
- * * `data` - Flattened array of all group data
- * * `group_sizes` - Array of group sizes
- * * `alpha` - Significance level
- *
- * # Returns
- * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
- *   - p < alpha indicates unequal variances (reject null hypothesis)
- *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
- */
-export function levene_test_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): OneWayAnovaTestResult;
-/**
- * WASM export for Mann-Whitney U test (automatically chooses exact vs asymptotic)
- */
-export function mann_whitney_test(
-  x: Float64Array,
-  y: Float64Array,
-  alpha: number,
-  alternative: string,
-): MannWhitneyTestResult;
-/**
- * WASM export for Mann-Whitney U test with configuration
- */
-export function mann_whitney_test_with_config(
-  x: Float64Array,
-  y: Float64Array,
-  exact: boolean,
-  continuity_correction: boolean,
-  alpha: number,
-  alternative: string,
-): MannWhitneyTestResult;
-/**
- * WASM export for Tukey HSD test
- */
-export function tukey_hsd_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): TukeyHsdTestResult;
-/**
- * WASM export for Games-Howell test
- */
-export function games_howell_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): GamesHowellTestResult;
-/**
- * WASM export for Dunn's test
- */
-export function dunn_test_wasm(
-  data: Float64Array,
-  group_sizes: Uint32Array,
-  alpha: number,
-): DunnTestResult;
-/**
- * WASM export for one-sample proportion test (chi-square approach, matches R)
- */
-export function proportion_test_one_sample(
-  x: number,
-  n: number,
-  p0: number,
-  alpha: number,
-  alternative: string,
-): OneSampleProportionTestResult;
+): ChiSquareGoodnessOfFitTestResult;
 /**
  * WASM export for two-sample proportion test (chi-square approach, matches R)
  */
@@ -1163,12 +848,114 @@ export function proportion_sample_size_wasm(
   power: number,
 ): number;
 /**
+ * WASM export for one-sample proportion test (chi-square approach, matches R)
+ */
+export function proportion_test_one_sample(
+  x: number,
+  n: number,
+  p0: number,
+  alpha: number,
+  alternative: string,
+): OneSampleProportionTestResult;
+export function spearman_correlation_test(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+): SpearmanCorrelationTestResult;
+export function kendall_correlation_test(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+  exact?: boolean | null,
+): KendallCorrelationTestResult;
+export function pearson_correlation_test(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+): PearsonCorrelationTestResult;
+/**
+ * WASM export for Fisher's exact test
+ */
+export function fishers_exact_test_wasm(
+  a: number,
+  b: number,
+  c: number,
+  d: number,
+  alternative: string,
+  odds_ratio: number,
+  alpha: number,
+): FishersExactTestResult;
+/**
+ * WASM export for Mann-Whitney U test (automatically chooses exact vs asymptotic)
+ */
+export function mann_whitney_test(
+  x: Float64Array,
+  y: Float64Array,
+  alpha: number,
+  alternative: string,
+): MannWhitneyTestResult;
+/**
+ * WASM export for Mann-Whitney U test with configuration
+ */
+export function mann_whitney_test_with_config(
+  x: Float64Array,
+  y: Float64Array,
+  exact: boolean,
+  continuity_correction: boolean,
+  alpha: number,
+  alternative: string,
+): MannWhitneyTestResult;
+/**
  * WASM export for Shapiro-Wilk normality test
  */
 export function shapiro_wilk_test(
   x: Float64Array,
   alpha: number,
 ): ShapiroWilkTestResult;
+/**
+ * WASM export for Kruskal-Wallis test
+ */
+export function kruskal_wallis_test_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): KruskalWallisTestResult;
+/**
+ * WASM export for Anderson-Darling normality test
+ */
+export function anderson_darling_test(
+  x: Float64Array,
+  alpha: number,
+): AndersonDarlingTestResult;
+/**
+ * WASM export for D'Agostino-Pearson K² normality test
+ */
+export function dagostino_pearson_test(
+  x: Float64Array,
+  alpha: number,
+): DAgostinoPearsonTestResult;
+/**
+ * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
+ */
+export function kolmogorov_smirnov_uniform_wasm(
+  x: Float64Array,
+  min: number,
+  max: number,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult;
+/**
+ * WASM export for two-sample Kolmogorov-Smirnov test
+ */
+export function kolmogorov_smirnov_test_wasm(
+  x: Float64Array,
+  y: Float64Array,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult;
 /**
  * WASM export for one-sample t-test
  */
@@ -1178,6 +965,15 @@ export function t_test_one_sample(
   alpha: number,
   alternative: string,
 ): OneSampleTTestResult;
+/**
+ * WASM export for t-test sample size calculation
+ */
+export function t_sample_size_wasm(
+  effect_size: number,
+  alpha: number,
+  power: number,
+  std_dev: number,
+): number;
 /**
  * WASM export for independent two-sample t-test
  */
@@ -1198,24 +994,6 @@ export function t_test_paired(
   alternative: string,
 ): PairedTTestResult;
 /**
- * WASM export for t-test sample size calculation
- */
-export function t_sample_size_wasm(
-  effect_size: number,
-  alpha: number,
-  power: number,
-  std_dev: number,
-): number;
-/**
- * WASM export for Wilcoxon W test (paired)
- */
-export function wilcoxon_w_test(
-  x: Float64Array,
-  y: Float64Array,
-  alpha: number,
-  alternative: string,
-): WilcoxonSignedRankTestResult;
-/**
  * WASM export for one-sample z-test
  */
 export function z_test_one_sample(
@@ -1225,6 +1003,15 @@ export function z_test_one_sample(
   alpha: number,
   alternative: string,
 ): OneSampleZTestResult;
+/**
+ * WASM export for z-test sample size calculation
+ */
+export function z_sample_size_wasm(
+  effect_size: number,
+  alpha: number,
+  power: number,
+  test_type: string,
+): number;
 /**
  * WASM export for two-sample z-test
  */
@@ -1237,15 +1024,228 @@ export function z_test_two_sample(
   alternative: string,
 ): TwoSampleZTestResult;
 /**
- * WASM export for z-test sample size calculation
+ * WASM export for two-way ANOVA
+ * Takes flattened data with group information to reconstruct 2D factorial design
  */
-export function z_sample_size_wasm(
-  effect_size: number,
+export function anova_two_way(
+  data: Float64Array,
+  a_levels: number,
+  b_levels: number,
+  cell_sizes: Uint32Array,
   alpha: number,
-  power: number,
-  test_type: string,
+): TwoWayAnovaTestResult;
+/**
+ * WASM export for two-way ANOVA factor B
+ */
+export function anova_two_way_factor_b_wasm(
+  data: Float64Array,
+  a_levels: number,
+  b_levels: number,
+  cell_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for two-way ANOVA factor A
+ */
+export function anova_two_way_factor_a_wasm(
+  data: Float64Array,
+  a_levels: number,
+  b_levels: number,
+  cell_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for one-way ANOVA
+ */
+export function anova_one_way(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for two-way ANOVA interaction
+ */
+export function anova_two_way_interaction_wasm(
+  data: Float64Array,
+  a_levels: number,
+  b_levels: number,
+  cell_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for Welch's ANOVA (unequal variances)
+ */
+export function welch_anova_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): WelchAnovaTestResult;
+/**
+ * WASM wrapper for Levene's test for equality of variances
+ *
+ * Tests whether groups have equal variances using the Brown-Forsythe
+ * modification (deviations from medians rather than means).
+ *
+ * # Arguments
+ * * `data` - Flattened array of all group data
+ * * `group_sizes` - Array of group sizes
+ * * `alpha` - Significance level
+ *
+ * # Returns
+ * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
+ *   - p < alpha indicates unequal variances (reject null hypothesis)
+ *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
+ */
+export function levene_test_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): OneWayAnovaTestResult;
+/**
+ * WASM export for Tukey HSD test
+ */
+export function tukey_hsd_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): TukeyHsdTestResult;
+/**
+ * WASM export for Dunn's test
+ */
+export function dunn_test_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): DunnTestResult;
+/**
+ * WASM export for Games-Howell test
+ */
+export function games_howell_wasm(
+  data: Float64Array,
+  group_sizes: Uint32Array,
+  alpha: number,
+): GamesHowellTestResult;
+/**
+ * WASM export for Wilcoxon W test (paired)
+ */
+export function wilcoxon_w_test(
+  x: Float64Array,
+  y: Float64Array,
+  alpha: number,
+  alternative: string,
+): WilcoxonSignedRankTestResult;
+/**
+ * WASM export for median calculation
+ */
+export function median_wasm(data: Float64Array): number;
+/**
+ * WASM export for unique f64 values
+ */
+export function unique_f64(values: Float64Array): Float64Array;
+/**
+ * WASM export for unique string values
+ */
+export function unique_str(values: string[]): string[];
+/**
+ * WASM export for unique i32 values
+ */
+export function unique_i32(values: Int32Array): Int32Array;
+/**
+ * WASM export: fill `indices` with sorted order (u32).
+ * - `flat_cols`: column-major f64 matrix [n_cols * n_rows]
+ * - `dirs`: i8 (+1 = asc, -1 = desc), length = n_cols
+ */
+export function arrange_multi_f64_wasm(
+  flat_cols: Float64Array,
+  n_rows: number,
+  n_cols: number,
+  dirs: Int8Array,
+  indices: Uint32Array,
+): void;
+/**
+ * Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
+ */
+export function stable_sort_indices_f64_wasm(
+  values: Float64Array,
+  indices: Uint32Array,
+  ascending: boolean,
+): void;
+/**
+ * Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
+ */
+export function stable_sort_indices_u32_wasm(
+  ranks: Uint32Array,
+  indices: Uint32Array,
+  ascending: boolean,
+  na_code: number,
+): void;
+/**
+ * Ultra-optimized distinct using direct typed arrays - exactly like test_ultra_optimized_distinct.rs
+ */
+export function distinct_rows_generic_typed(
+  column_data: Uint32Array[],
+  view_index: Uint32Array,
+): Uint32Array;
+/**
+ * Get number of groups from grouping operation
+ */
+export function get_group_count(
+  keys_codes: Uint32Array,
+  n_rows: number,
+  n_key_cols: number,
 ): number;
-export function wasm_test(): number;
+export function group_ids_codes(
+  keys_codes: Uint32Array,
+  n_rows: number,
+  n_key_cols: number,
+): Uint32Array;
+/**
+ * Perform grouping in a single pass, returning all necessary data
+ */
+export function group_ids_codes_all(
+  keys_codes: Uint32Array,
+  n_rows: number,
+  n_key_cols: number,
+): Grouping;
+/**
+ * Get group information for a specific group
+ *
+ * Args:
+ * - unique_keys: Unique group keys from group_ids_codes
+ * - n_key_cols: Number of key columns
+ * - group_id: Group ID to get information for
+ *
+ * Returns:
+ * - key_values: The group's key values
+ */
+export function get_group_info(
+  unique_keys: Uint32Array,
+  n_key_cols: number,
+  group_id: number,
+): Uint32Array;
+/**
+ * Get unique group keys from grouping operation
+ *
+ * This function needs to be called after group_ids_codes to get the unique keys.
+ * The keys are stored in row-major order (group then columns).
+ */
+export function get_unique_group_keys(
+  keys_codes: Uint32Array,
+  n_rows: number,
+  n_key_cols: number,
+): Uint32Array;
+/**
+ * WASM export for general quantile calculation
+ * Uses R's Type 7 algorithm (default)
+ */
+export function quantile_wasm(
+  data: Float64Array,
+  probs: Float64Array,
+): Float64Array;
+export function left_join_typed_multi_u32(
+  left_columns: Uint32Array[],
+  right_columns: Uint32Array[],
+): JoinIdxU32;
 /**
  * Represents the type of alternative hypothesis for statistical tests.
  */
@@ -1636,13 +1636,13 @@ export class JoinIdxU32 {
   private constructor();
   free(): void;
   /**
-   * Move out the left indices (no clone)
-   */
-  takeLeft(): Uint32Array;
-  /**
    * Move out the right indices (no clone)
    */
   takeRight(): Uint32Array;
+  /**
+   * Move out the left indices (no clone)
+   */
+  takeLeft(): Uint32Array;
 }
 /**
  * Kendall correlation test result
@@ -1671,9 +1671,9 @@ export class KolmogorovSmirnovTestResult {
   dPlus: number;
   dMinus: number;
   alpha: number;
+  readonly alternative: string;
   readonly testStatistic: TestStatistic;
   readonly testName: string;
-  readonly alternative: string;
 }
 /**
  * Kruskal-Wallis test result

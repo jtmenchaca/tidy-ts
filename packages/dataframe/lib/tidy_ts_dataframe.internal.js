@@ -133,6 +133,13 @@ function getDataViewMemory0() {
   }
   return cachedDataViewMemory0;
 }
+/**
+ * @returns {number}
+ */
+export function wasm_test() {
+  const ret = wasm.wasm_test();
+  return ret;
+}
 
 let cachedUint32ArrayMemory0 = null;
 
@@ -146,16 +153,40 @@ function getUint32ArrayMemory0() {
   return cachedUint32ArrayMemory0;
 }
 
-function getArrayU32FromWasm0(ptr, len) {
-  ptr = ptr >>> 0;
-  return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
-}
-
 function passArray32ToWasm0(arg, malloc) {
   const ptr = malloc(arg.length * 4, 4) >>> 0;
   getUint32ArrayMemory0().set(arg, ptr / 4);
   WASM_VECTOR_LEN = arg.length;
   return ptr;
+}
+
+function passArray8ToWasm0(arg, malloc) {
+  const ptr = malloc(arg.length * 1, 1) >>> 0;
+  getUint8ArrayMemory0().set(arg, ptr / 1);
+  WASM_VECTOR_LEN = arg.length;
+  return ptr;
+}
+
+function getArrayU32FromWasm0(ptr, len) {
+  ptr = ptr >>> 0;
+  return getUint32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+/**
+ * Count aggregation (number of non-null values)
+ * @param {Uint32Array} gid_per_row
+ * @param {Uint8Array} valid
+ * @param {number} n_groups
+ * @returns {Uint32Array}
+ */
+export function reduce_count_u32(gid_per_row, valid, n_groups) {
+  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray8ToWasm0(valid, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.reduce_count_u32(ptr0, len0, ptr1, len1, n_groups);
+  var v3 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v3;
 }
 
 let cachedFloat64ArrayMemory0 = null;
@@ -181,48 +212,6 @@ function getArrayF64FromWasm0(ptr, len) {
   ptr = ptr >>> 0;
   return getFloat64ArrayMemory0().subarray(ptr / 8, ptr / 8 + len);
 }
-/**
- * Sum aggregation for f64 values
- * @param {Uint32Array} gid_per_row
- * @param {Float64Array} vals
- * @param {number} n_groups
- * @returns {Float64Array}
- */
-export function reduce_sum_f64(gid_per_row, vals, n_groups) {
-  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(vals, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.reduce_sum_f64(ptr0, len0, ptr1, len1, n_groups);
-  var v3 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-  return v3;
-}
-
-function passArray8ToWasm0(arg, malloc) {
-  const ptr = malloc(arg.length * 1, 1) >>> 0;
-  getUint8ArrayMemory0().set(arg, ptr / 1);
-  WASM_VECTOR_LEN = arg.length;
-  return ptr;
-}
-/**
- * Count aggregation (number of non-null values)
- * @param {Uint32Array} gid_per_row
- * @param {Uint8Array} valid
- * @param {number} n_groups
- * @returns {Uint32Array}
- */
-export function reduce_count_u32(gid_per_row, valid, n_groups) {
-  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray8ToWasm0(valid, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.reduce_count_u32(ptr0, len0, ptr1, len1, n_groups);
-  var v3 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v3;
-}
-
 /**
  * Mean aggregation for f64 values
  * @param {Uint32Array} gid_per_row
@@ -252,154 +241,22 @@ export function reduce_mean_f64(gid_per_row, vals, valid, n_groups) {
   return v4;
 }
 
-function takeFromExternrefTable0(idx) {
-  const value = wasm.__wbindgen_export_2.get(idx);
-  wasm.__externref_table_dealloc(idx);
-  return value;
-}
 /**
- * WASM export: fill `indices` with sorted order (u32).
- * - `flat_cols`: column-major f64 matrix [n_cols * n_rows]
- * - `dirs`: i8 (+1 = asc, -1 = desc), length = n_cols
- * @param {Float64Array} flat_cols
- * @param {number} n_rows
- * @param {number} n_cols
- * @param {Int8Array} dirs
- * @param {Uint32Array} indices
+ * Sum aggregation for f64 values
+ * @param {Uint32Array} gid_per_row
+ * @param {Float64Array} vals
+ * @param {number} n_groups
+ * @returns {Float64Array}
  */
-export function arrange_multi_f64_wasm(
-  flat_cols,
-  n_rows,
-  n_cols,
-  dirs,
-  indices,
-) {
-  const ptr0 = passArrayF64ToWasm0(flat_cols, wasm.__wbindgen_malloc);
+export function reduce_sum_f64(gid_per_row, vals, n_groups) {
+  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray8ToWasm0(dirs, wasm.__wbindgen_malloc);
+  const ptr1 = passArrayF64ToWasm0(vals, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
-  var ptr2 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
-  var len2 = WASM_VECTOR_LEN;
-  const ret = wasm.arrange_multi_f64_wasm(
-    ptr0,
-    len0,
-    n_rows,
-    n_cols,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    indices,
-  );
-  if (ret[1]) {
-    throw takeFromExternrefTable0(ret[0]);
-  }
-}
-
-/**
- * Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
- * @param {Float64Array} values
- * @param {Uint32Array} indices
- * @param {boolean} ascending
- */
-export function stable_sort_indices_f64_wasm(values, indices, ascending) {
-  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  var ptr1 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
-  var len1 = WASM_VECTOR_LEN;
-  const ret = wasm.stable_sort_indices_f64_wasm(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    indices,
-    ascending,
-  );
-  if (ret[1]) {
-    throw takeFromExternrefTable0(ret[0]);
-  }
-}
-
-/**
- * Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
- * @param {Uint32Array} ranks
- * @param {Uint32Array} indices
- * @param {boolean} ascending
- * @param {number} na_code
- */
-export function stable_sort_indices_u32_wasm(
-  ranks,
-  indices,
-  ascending,
-  na_code,
-) {
-  const ptr0 = passArray32ToWasm0(ranks, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  var ptr1 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
-  var len1 = WASM_VECTOR_LEN;
-  const ret = wasm.stable_sort_indices_u32_wasm(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    indices,
-    ascending,
-    na_code,
-  );
-  if (ret[1]) {
-    throw takeFromExternrefTable0(ret[0]);
-  }
-}
-
-/**
- * @param {Float64Array} values
- * @param {number} target
- * @returns {number}
- */
-export function count_f64(values, target) {
-  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.count_f64(ptr0, len0, target);
-  return ret >>> 0;
-}
-
-/**
- * @param {Int32Array} values
- * @param {number} target
- * @returns {number}
- */
-export function count_i32(values, target) {
-  const ptr0 = passArray32ToWasm0(values, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.count_i32(ptr0, len0, target);
-  return ret >>> 0;
-}
-
-function passArrayJsValueToWasm0(array, malloc) {
-  const ptr = malloc(array.length * 4, 4) >>> 0;
-  for (let i = 0; i < array.length; i++) {
-    const add = addToExternrefTable0(array[i]);
-    getDataViewMemory0().setUint32(ptr + 4 * i, add, true);
-  }
-  WASM_VECTOR_LEN = array.length;
-  return ptr;
-}
-/**
- * @param {string[]} values
- * @param {string} target
- * @returns {number}
- */
-export function count_str(values, target) {
-  const ptr0 = passArrayJsValueToWasm0(values, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passStringToWasm0(
-    target,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.count_str(ptr0, len0, ptr1, len1);
-  return ret >>> 0;
+  const ret = wasm.reduce_sum_f64(ptr0, len0, ptr1, len1, n_groups);
+  var v3 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v3;
 }
 
 /**
@@ -413,23 +270,65 @@ export function cross_join_u32(left_len, right_len) {
   return JoinIdxU32.__wrap(ret);
 }
 
+function passArrayJsValueToWasm0(array, malloc) {
+  const ptr = malloc(array.length * 4, 4) >>> 0;
+  for (let i = 0; i < array.length; i++) {
+    const add = addToExternrefTable0(array[i]);
+    getDataViewMemory0().setUint32(ptr + 4 * i, add, true);
+  }
+  WASM_VECTOR_LEN = array.length;
+  return ptr;
+}
 /**
- * Ultra-optimized distinct using direct typed arrays - exactly like test_ultra_optimized_distinct.rs
- * @param {Uint32Array[]} column_data
- * @param {Uint32Array} view_index
- * @returns {Uint32Array}
+ * Ultra-optimized inner join using shared utilities and specialized kernels
+ * @param {Uint32Array[]} left_columns
+ * @param {Uint32Array[]} right_columns
+ * @returns {JoinIdxU32}
  */
-export function distinct_rows_generic_typed(column_data, view_index) {
-  const ptr0 = passArrayJsValueToWasm0(column_data, wasm.__wbindgen_malloc);
+export function inner_join_typed_multi_u32(left_columns, right_columns) {
+  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(view_index, wasm.__wbindgen_malloc);
+  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.distinct_rows_generic_typed(ptr0, len0, ptr1, len1);
-  var v3 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v3;
+  const ret = wasm.inner_join_typed_multi_u32(ptr0, len0, ptr1, len1);
+  return JoinIdxU32.__wrap(ret);
 }
 
+/**
+ * Ultra-optimized outer join using shared utilities and specialized kernels
+ * @param {Uint32Array[]} left_columns
+ * @param {Uint32Array[]} right_columns
+ * @returns {JoinIdxU32}
+ */
+export function outer_join_typed_multi_u32(left_columns, right_columns) {
+  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.outer_join_typed_multi_u32(ptr0, len0, ptr1, len1);
+  return JoinIdxU32.__wrap(ret);
+}
+
+/**
+ * Ultra-optimized right join using shared utilities and specialized kernels
+ * @param {Uint32Array[]} left_columns
+ * @param {Uint32Array[]} right_columns
+ * @returns {JoinIdxU32}
+ */
+export function right_join_typed_multi_u32(left_columns, right_columns) {
+  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.right_join_typed_multi_u32(ptr0, len0, ptr1, len1);
+  return JoinIdxU32.__wrap(ret);
+}
+
+function takeFromExternrefTable0(idx) {
+  const value = wasm.__wbindgen_export_2.get(idx);
+  wasm.__externref_table_dealloc(idx);
+  return value;
+}
 /**
  * WASM export for batch numeric filtering
  *
@@ -460,383 +359,42 @@ export function batch_filter_numbers(values, threshold, operation, output) {
 }
 
 /**
- * Perform grouping in a single pass, returning all necessary data
- * @param {Uint32Array} keys_codes
- * @param {number} n_rows
- * @param {number} n_key_cols
- * @returns {Grouping}
+ * Combined pivot operation that returns values and seen flags in one pass
+ * policy: 0=first, 1=last, 2=sum, 3=mean
+ * @param {Uint32Array} gid_per_row
+ * @param {Uint32Array} cat_codes
+ * @param {Float64Array} values
+ * @param {number} n_groups
+ * @param {number} n_cats
+ * @param {number} policy
+ * @returns {PivotDenseF64}
  */
-export function group_ids_codes_all(keys_codes, n_rows, n_key_cols) {
-  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.group_ids_codes_all(ptr0, len0, n_rows, n_key_cols);
-  return Grouping.__wrap(ret);
-}
-
-/**
- * @param {Uint32Array} keys_codes
- * @param {number} n_rows
- * @param {number} n_key_cols
- * @returns {Uint32Array}
- */
-export function group_ids_codes(keys_codes, n_rows, n_key_cols) {
-  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.group_ids_codes(ptr0, len0, n_rows, n_key_cols);
-  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v2;
-}
-
-/**
- * Get unique group keys from grouping operation
- *
- * This function needs to be called after group_ids_codes to get the unique keys.
- * The keys are stored in row-major order (group then columns).
- * @param {Uint32Array} keys_codes
- * @param {number} n_rows
- * @param {number} n_key_cols
- * @returns {Uint32Array}
- */
-export function get_unique_group_keys(keys_codes, n_rows, n_key_cols) {
-  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.get_unique_group_keys(ptr0, len0, n_rows, n_key_cols);
-  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v2;
-}
-
-/**
- * Get number of groups from grouping operation
- * @param {Uint32Array} keys_codes
- * @param {number} n_rows
- * @param {number} n_key_cols
- * @returns {number}
- */
-export function get_group_count(keys_codes, n_rows, n_key_cols) {
-  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.get_group_count(ptr0, len0, n_rows, n_key_cols);
-  return ret >>> 0;
-}
-
-/**
- * Get group information for a specific group
- *
- * Args:
- * - unique_keys: Unique group keys from group_ids_codes
- * - n_key_cols: Number of key columns
- * - group_id: Group ID to get information for
- *
- * Returns:
- * - key_values: The group's key values
- * @param {Uint32Array} unique_keys
- * @param {number} n_key_cols
- * @param {number} group_id
- * @returns {Uint32Array}
- */
-export function get_group_info(unique_keys, n_key_cols, group_id) {
-  const ptr0 = passArray32ToWasm0(unique_keys, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.get_group_info(ptr0, len0, n_key_cols, group_id);
-  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v2;
-}
-
-/**
- * Ultra-optimized inner join using shared utilities and specialized kernels
- * @param {Uint32Array[]} left_columns
- * @param {Uint32Array[]} right_columns
- * @returns {JoinIdxU32}
- */
-export function inner_join_typed_multi_u32(left_columns, right_columns) {
-  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.inner_join_typed_multi_u32(ptr0, len0, ptr1, len1);
-  return JoinIdxU32.__wrap(ret);
-}
-
-/**
- * WASM export for interquartile range
- * @param {Float64Array} data
- * @returns {number}
- */
-export function iqr_wasm(data) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.iqr_wasm(ptr0, len0);
-  if (ret[2]) {
-    throw takeFromExternrefTable0(ret[1]);
-  }
-  return ret[0];
-}
-
-/**
- * @param {Uint32Array[]} left_columns
- * @param {Uint32Array[]} right_columns
- * @returns {JoinIdxU32}
- */
-export function left_join_typed_multi_u32(left_columns, right_columns) {
-  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.left_join_typed_multi_u32(ptr0, len0, ptr1, len1);
-  return JoinIdxU32.__wrap(ret);
-}
-
-/**
- * WASM export for median calculation
- * @param {Float64Array} data
- * @returns {number}
- */
-export function median_wasm(data) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.median_wasm(ptr0, len0);
-  if (ret[2]) {
-    throw takeFromExternrefTable0(ret[1]);
-  }
-  return ret[0];
-}
-
-/**
- * Ultra-optimized outer join using shared utilities and specialized kernels
- * @param {Uint32Array[]} left_columns
- * @param {Uint32Array[]} right_columns
- * @returns {JoinIdxU32}
- */
-export function outer_join_typed_multi_u32(left_columns, right_columns) {
-  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.outer_join_typed_multi_u32(ptr0, len0, ptr1, len1);
-  return JoinIdxU32.__wrap(ret);
-}
-
-/**
- * Ultra-optimized pivot_longer using typed arrays and bulk copying
- * @param {Uint32Array} keep_cols_data
- * @param {Float64Array} fold_cols_data
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerResult}
- */
-export function pivot_longer_typed_arrays(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
+export function pivot_wider_dense_f64_all(
+  gid_per_row,
+  cat_codes,
+  values,
+  n_groups,
+  n_cats,
+  policy,
 ) {
-  const ret = wasm.pivot_longer_typed_arrays(
-    keep_cols_data,
-    fold_cols_data,
-    fold_cols_names,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
-  );
-  return PivotLongerResult.__wrap(ret);
-}
-
-/**
- * Ultra-optimized pivot_longer for numeric data with validation
- * @param {Uint32Array} keep_cols_data
- * @param {Float64Array} fold_cols_data
- * @param {Uint8Array} fold_cols_valid
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerResult}
- */
-export function pivot_longer_typed_numeric(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_valid,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
-) {
-  const ret = wasm.pivot_longer_typed_numeric(
-    keep_cols_data,
-    fold_cols_data,
-    fold_cols_valid,
-    fold_cols_names,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
-  );
-  return PivotLongerResult.__wrap(ret);
-}
-
-/**
- * Ultra-optimized pivot_longer for string data
- * @param {Uint32Array} keep_cols_data
- * @param {Uint32Array} fold_cols_data
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerStringResult}
- */
-export function pivot_longer_typed_strings(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
-) {
-  const ret = wasm.pivot_longer_typed_strings(
-    keep_cols_data,
-    fold_cols_data,
-    fold_cols_names,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
-  );
-  return PivotLongerStringResult.__wrap(ret);
-}
-
-/**
- * Perform pivot_longer operation on dictionary-encoded columns
- *
- * Args:
- * - keep_cols_data: Column-major dictionary-encoded data for columns to keep (n_keep_cols × n_input_rows)
- * - fold_cols_data: Column-major data for columns to fold/melt (n_fold_cols × n_input_rows)
- * - fold_cols_names: Dictionary codes for the names of columns being folded
- * - n_input_rows: Number of input rows
- * - n_keep_cols: Number of columns to keep
- * - n_fold_cols: Number of columns to fold/melt
- * @param {Uint32Array} keep_cols_data
- * @param {Float64Array} fold_cols_data
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerResult}
- */
-export function pivot_longer_dense(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
-) {
-  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
+  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
+  const ptr1 = passArray32ToWasm0(cat_codes, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
+  const ptr2 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
   const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.pivot_longer_dense(
+  const ret = wasm.pivot_wider_dense_f64_all(
     ptr0,
     len0,
     ptr1,
     len1,
     ptr2,
     len2,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
+    n_groups,
+    n_cats,
+    policy,
   );
-  return PivotLongerResult.__wrap(ret);
-}
-
-/**
- * Optimized pivot_longer for the common case of numeric values
- * This version handles NaN/undefined values appropriately
- * @param {Uint32Array} keep_cols_data
- * @param {Float64Array} fold_cols_data
- * @param {Uint8Array} fold_cols_valid
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerResult}
- */
-export function pivot_longer_numeric(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_valid,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
-) {
-  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passArray8ToWasm0(fold_cols_valid, wasm.__wbindgen_malloc);
-  const len2 = WASM_VECTOR_LEN;
-  const ptr3 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
-  const len3 = WASM_VECTOR_LEN;
-  const ret = wasm.pivot_longer_numeric(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    ptr3,
-    len3,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
-  );
-  return PivotLongerResult.__wrap(ret);
-}
-
-/**
- * Fast pivot_longer specifically for string columns
- * Returns dictionary codes that can be decoded in TypeScript
- * @param {Uint32Array} keep_cols_data
- * @param {Uint32Array} fold_cols_data
- * @param {Uint32Array} fold_cols_names
- * @param {number} n_input_rows
- * @param {number} n_keep_cols
- * @param {number} n_fold_cols
- * @returns {PivotLongerStringResult}
- */
-export function pivot_longer_strings(
-  keep_cols_data,
-  fold_cols_data,
-  fold_cols_names,
-  n_input_rows,
-  n_keep_cols,
-  n_fold_cols,
-) {
-  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
-  const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.pivot_longer_strings(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    n_input_rows,
-    n_keep_cols,
-    n_fold_cols,
-  );
-  return PivotLongerStringResult.__wrap(ret);
+  return PivotDenseF64.__wrap(ret);
 }
 
 /**
@@ -923,90 +481,238 @@ export function pivot_wider_seen_flags(
 }
 
 /**
- * Combined pivot operation that returns values and seen flags in one pass
- * policy: 0=first, 1=last, 2=sum, 3=mean
- * @param {Uint32Array} gid_per_row
- * @param {Uint32Array} cat_codes
- * @param {Float64Array} values
- * @param {number} n_groups
- * @param {number} n_cats
- * @param {number} policy
- * @returns {PivotDenseF64}
+ * Ultra-optimized pivot_longer for numeric data with validation
+ * @param {Uint32Array} keep_cols_data
+ * @param {Float64Array} fold_cols_data
+ * @param {Uint8Array} fold_cols_valid
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerResult}
  */
-export function pivot_wider_dense_f64_all(
-  gid_per_row,
-  cat_codes,
-  values,
-  n_groups,
-  n_cats,
-  policy,
+export function pivot_longer_typed_numeric(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_valid,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
 ) {
-  const ptr0 = passArray32ToWasm0(gid_per_row, wasm.__wbindgen_malloc);
+  const ret = wasm.pivot_longer_typed_numeric(
+    keep_cols_data,
+    fold_cols_data,
+    fold_cols_valid,
+    fold_cols_names,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
+  );
+  return PivotLongerResult.__wrap(ret);
+}
+
+/**
+ * Perform pivot_longer operation on dictionary-encoded columns
+ *
+ * Args:
+ * - keep_cols_data: Column-major dictionary-encoded data for columns to keep (n_keep_cols × n_input_rows)
+ * - fold_cols_data: Column-major data for columns to fold/melt (n_fold_cols × n_input_rows)
+ * - fold_cols_names: Dictionary codes for the names of columns being folded
+ * - n_input_rows: Number of input rows
+ * - n_keep_cols: Number of columns to keep
+ * - n_fold_cols: Number of columns to fold/melt
+ * @param {Uint32Array} keep_cols_data
+ * @param {Float64Array} fold_cols_data
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerResult}
+ */
+export function pivot_longer_dense(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
+) {
+  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(cat_codes, wasm.__wbindgen_malloc);
+  const ptr1 = passArrayF64ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const ptr2 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
   const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.pivot_wider_dense_f64_all(
+  const ret = wasm.pivot_longer_dense(
     ptr0,
     len0,
     ptr1,
     len1,
     ptr2,
     len2,
-    n_groups,
-    n_cats,
-    policy,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
   );
-  return PivotDenseF64.__wrap(ret);
+  return PivotLongerResult.__wrap(ret);
 }
 
 /**
- * WASM export for general quantile calculation
- * Uses R's Type 7 algorithm (default)
+ * Ultra-optimized pivot_longer using typed arrays and bulk copying
+ * @param {Uint32Array} keep_cols_data
+ * @param {Float64Array} fold_cols_data
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerResult}
+ */
+export function pivot_longer_typed_arrays(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
+) {
+  const ret = wasm.pivot_longer_typed_arrays(
+    keep_cols_data,
+    fold_cols_data,
+    fold_cols_names,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
+  );
+  return PivotLongerResult.__wrap(ret);
+}
+
+/**
+ * Ultra-optimized pivot_longer for string data
+ * @param {Uint32Array} keep_cols_data
+ * @param {Uint32Array} fold_cols_data
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerStringResult}
+ */
+export function pivot_longer_typed_strings(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
+) {
+  const ret = wasm.pivot_longer_typed_strings(
+    keep_cols_data,
+    fold_cols_data,
+    fold_cols_names,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
+  );
+  return PivotLongerStringResult.__wrap(ret);
+}
+
+/**
+ * Fast pivot_longer specifically for string columns
+ * Returns dictionary codes that can be decoded in TypeScript
+ * @param {Uint32Array} keep_cols_data
+ * @param {Uint32Array} fold_cols_data
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerStringResult}
+ */
+export function pivot_longer_strings(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
+) {
+  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
+  const len2 = WASM_VECTOR_LEN;
+  const ret = wasm.pivot_longer_strings(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
+  );
+  return PivotLongerStringResult.__wrap(ret);
+}
+
+/**
+ * Optimized pivot_longer for the common case of numeric values
+ * This version handles NaN/undefined values appropriately
+ * @param {Uint32Array} keep_cols_data
+ * @param {Float64Array} fold_cols_data
+ * @param {Uint8Array} fold_cols_valid
+ * @param {Uint32Array} fold_cols_names
+ * @param {number} n_input_rows
+ * @param {number} n_keep_cols
+ * @param {number} n_fold_cols
+ * @returns {PivotLongerResult}
+ */
+export function pivot_longer_numeric(
+  keep_cols_data,
+  fold_cols_data,
+  fold_cols_valid,
+  fold_cols_names,
+  n_input_rows,
+  n_keep_cols,
+  n_fold_cols,
+) {
+  const ptr0 = passArray32ToWasm0(keep_cols_data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(fold_cols_data, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passArray8ToWasm0(fold_cols_valid, wasm.__wbindgen_malloc);
+  const len2 = WASM_VECTOR_LEN;
+  const ptr3 = passArray32ToWasm0(fold_cols_names, wasm.__wbindgen_malloc);
+  const len3 = WASM_VECTOR_LEN;
+  const ret = wasm.pivot_longer_numeric(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    ptr3,
+    len3,
+    n_input_rows,
+    n_keep_cols,
+    n_fold_cols,
+  );
+  return PivotLongerResult.__wrap(ret);
+}
+
+/**
+ * WASM export for interquartile range
  * @param {Float64Array} data
- * @param {Float64Array} probs
- * @returns {Float64Array}
- */
-export function quantile_wasm(data, probs) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(probs, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.quantile_wasm(ptr0, len0, ptr1, len1);
-  if (ret[3]) {
-    throw takeFromExternrefTable0(ret[2]);
-  }
-  var v3 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-  return v3;
-}
-
-/**
- * Ultra-optimized right join using shared utilities and specialized kernels
- * @param {Uint32Array[]} left_columns
- * @param {Uint32Array[]} right_columns
- * @returns {JoinIdxU32}
- */
-export function right_join_typed_multi_u32(left_columns, right_columns) {
-  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.right_join_typed_multi_u32(ptr0, len0, ptr1, len1);
-  return JoinIdxU32.__wrap(ret);
-}
-
-/**
- * WASM export for sum calculation
- * @param {Float64Array} values
  * @returns {number}
  */
-export function sum_wasm(values) {
-  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+export function iqr_wasm(data) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.sum_wasm(ptr0, len0);
-  return ret;
+  const ret = wasm.iqr_wasm(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return ret[0];
 }
 
 /**
@@ -1022,891 +728,57 @@ export function mean_wasm(values) {
 }
 
 /**
- * WASM export for unique f64 values
+ * WASM export for sum calculation
  * @param {Float64Array} values
- * @returns {Float64Array}
+ * @returns {number}
  */
-export function unique_f64(values) {
+export function sum_wasm(values) {
   const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.unique_f64(ptr0, len0);
-  var v2 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-  return v2;
+  const ret = wasm.sum_wasm(ptr0, len0);
+  return ret;
 }
 
-let cachedInt32ArrayMemory0 = null;
-
-function getInt32ArrayMemory0() {
-  if (
-    cachedInt32ArrayMemory0 === null || cachedInt32ArrayMemory0.byteLength === 0
-  ) {
-    cachedInt32ArrayMemory0 = new Int32Array(wasm.memory.buffer);
-  }
-  return cachedInt32ArrayMemory0;
-}
-
-function getArrayI32FromWasm0(ptr, len) {
-  ptr = ptr >>> 0;
-  return getInt32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
-}
 /**
- * WASM export for unique i32 values
- * @param {Int32Array} values
- * @returns {Int32Array}
+ * @param {Float64Array} values
+ * @param {number} target
+ * @returns {number}
  */
-export function unique_i32(values) {
-  const ptr0 = passArray32ToWasm0(values, wasm.__wbindgen_malloc);
+export function count_f64(values, target) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.unique_i32(ptr0, len0);
-  var v2 = getArrayI32FromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v2;
+  const ret = wasm.count_f64(ptr0, len0, target);
+  return ret >>> 0;
 }
 
-function getArrayJsValueFromWasm0(ptr, len) {
-  ptr = ptr >>> 0;
-  const mem = getDataViewMemory0();
-  const result = [];
-  for (let i = ptr; i < ptr + 4 * len; i += 4) {
-    result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
-  }
-  wasm.__externref_drop_slice(ptr, len);
-  return result;
-}
 /**
- * WASM export for unique string values
  * @param {string[]} values
- * @returns {string[]}
+ * @param {string} target
+ * @returns {number}
  */
-export function unique_str(values) {
+export function count_str(values, target) {
   const ptr0 = passArrayJsValueToWasm0(values, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.unique_str(ptr0, len0);
-  var v2 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
-  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-  return v2;
+  const ptr1 = passStringToWasm0(
+    target,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.count_str(ptr0, len0, ptr1, len1);
+  return ret >>> 0;
 }
 
-function _assertClass(instance, klass) {
-  if (!(instance instanceof klass)) {
-    throw new Error(`expected instance of ${klass.name}`);
-  }
-}
-/**
- * WASM export for beta density function
- * @param {number} x
- * @param {number} shape1
- * @param {number} shape2
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dbeta(x, shape1, shape2, give_log) {
-  const ret = wasm.wasm_dbeta(x, shape1, shape2, give_log);
-  return ret;
-}
-
-/**
- * WASM export for beta cumulative distribution function
- * @param {number} x
- * @param {number} shape1
- * @param {number} shape2
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pbeta(x, shape1, shape2, lower_tail, log_p) {
-  const ret = wasm.wasm_pbeta(x, shape1, shape2, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for beta quantile function
- * @param {number} p
- * @param {number} shape1
- * @param {number} shape2
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qbeta(p, shape1, shape2, lower_tail, log_p) {
-  const ret = wasm.wasm_qbeta(p, shape1, shape2, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for beta random number generation
- * @param {number} shape1
- * @param {number} shape2
- * @returns {number}
- */
-export function wasm_rbeta(shape1, shape2) {
-  const ret = wasm.wasm_rbeta(shape1, shape2);
-  return ret;
-}
-
-/**
- * WASM export for normal density function
- * @param {number} x
- * @param {number} mean
- * @param {number} sd
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dnorm(x, mean, sd, give_log) {
-  const ret = wasm.wasm_dnorm(x, mean, sd, give_log);
-  return ret;
-}
-
-/**
- * WASM export for normal cumulative distribution function
- * @param {number} x
- * @param {number} mean
- * @param {number} sd
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pnorm(x, mean, sd, lower_tail, log_p) {
-  const ret = wasm.wasm_pnorm(x, mean, sd, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for normal quantile function
- * @param {number} p
- * @param {number} mean
- * @param {number} sd
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qnorm(p, mean, sd, lower_tail, log_p) {
-  const ret = wasm.wasm_qnorm(p, mean, sd, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for normal random number generation
- * @param {number} mean
- * @param {number} sd
- * @returns {number}
- */
-export function wasm_rnorm(mean, sd) {
-  const ret = wasm.wasm_rnorm(mean, sd);
-  return ret;
-}
-
-/**
- * WASM export for gamma density function
- * @param {number} x
- * @param {number} shape
- * @param {number} rate
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dgamma(x, shape, rate, give_log) {
-  const ret = wasm.wasm_dgamma(x, shape, rate, give_log);
-  return ret;
-}
-
-/**
- * WASM export for gamma cumulative distribution function
- * @param {number} x
- * @param {number} shape
- * @param {number} rate
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pgamma(x, shape, rate, lower_tail, log_p) {
-  const ret = wasm.wasm_pgamma(x, shape, rate, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for gamma quantile function
- * @param {number} p
- * @param {number} shape
- * @param {number} rate
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qgamma(p, shape, rate, lower_tail, log_p) {
-  const ret = wasm.wasm_qgamma(p, shape, rate, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for gamma random number generation
- * @param {number} shape
- * @param {number} rate
- * @returns {number}
- */
-export function wasm_rgamma(shape, rate) {
-  const ret = wasm.wasm_rgamma(shape, rate);
-  return ret;
-}
-
-/**
- * WASM export for exponential density function
- * @param {number} x
- * @param {number} rate
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dexp(x, rate, give_log) {
-  const ret = wasm.wasm_dexp(x, rate, give_log);
-  return ret;
-}
-
-/**
- * WASM export for exponential cumulative distribution function
- * @param {number} x
- * @param {number} rate
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pexp(x, rate, lower_tail, log_p) {
-  const ret = wasm.wasm_pexp(x, rate, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for exponential quantile function
- * @param {number} p
- * @param {number} rate
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qexp(p, rate, lower_tail, log_p) {
-  const ret = wasm.wasm_qexp(p, rate, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for exponential random number generation
- * @param {number} rate
- * @returns {number}
- */
-export function wasm_rexp(rate) {
-  const ret = wasm.wasm_rexp(rate);
-  return ret;
-}
-
-/**
- * WASM export for chi-squared density function
- * @param {number} x
- * @param {number} df
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dchisq(x, df, give_log) {
-  const ret = wasm.wasm_dchisq(x, df, give_log);
-  return ret;
-}
-
-/**
- * WASM export for chi-squared cumulative distribution function
- * @param {number} x
- * @param {number} df
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pchisq(x, df, lower_tail, log_p) {
-  const ret = wasm.wasm_pchisq(x, df, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for chi-squared quantile function
- * @param {number} p
- * @param {number} df
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qchisq(p, df, lower_tail, log_p) {
-  const ret = wasm.wasm_qchisq(p, df, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for chi-squared random number generation
- * @param {number} df
- * @returns {number}
- */
-export function wasm_rchisq(df) {
-  const ret = wasm.wasm_rchisq(df);
-  return ret;
-}
-
-/**
- * WASM export for F density function
- * @param {number} x
- * @param {number} df1
- * @param {number} df2
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_df(x, df1, df2, give_log) {
-  const ret = wasm.wasm_df(x, df1, df2, give_log);
-  return ret;
-}
-
-/**
- * WASM export for F cumulative distribution function
- * @param {number} x
- * @param {number} df1
- * @param {number} df2
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pf(x, df1, df2, lower_tail, log_p) {
-  const ret = wasm.wasm_pf(x, df1, df2, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for F quantile function
- * @param {number} p
- * @param {number} df1
- * @param {number} df2
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qf(p, df1, df2, lower_tail, log_p) {
-  const ret = wasm.wasm_qf(p, df1, df2, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for F distribution random number generation
- * @param {number} df1
- * @param {number} df2
- * @returns {number}
- */
-export function wasm_rf(df1, df2) {
-  const ret = wasm.wasm_rf(df1, df2);
-  return ret;
-}
-
-/**
- * WASM export for t density function
- * @param {number} x
- * @param {number} df
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dt(x, df, give_log) {
-  const ret = wasm.wasm_dt(x, df, give_log);
-  return ret;
-}
-
-/**
- * WASM export for t cumulative distribution function
- * @param {number} x
- * @param {number} df
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pt(x, df, lower_tail, log_p) {
-  const ret = wasm.wasm_pt(x, df, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for t quantile function
- * @param {number} p
- * @param {number} df
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qt(p, df, lower_tail, log_p) {
-  const ret = wasm.wasm_qt(p, df, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for t distribution random number generation
- * @param {number} df
- * @returns {number}
- */
-export function wasm_rt(df) {
-  const ret = wasm.wasm_rt(df);
-  return ret;
-}
-
-/**
- * WASM export for Poisson density function
- * @param {number} x
- * @param {number} lambda
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dpois(x, lambda, give_log) {
-  const ret = wasm.wasm_dpois(x, lambda, give_log);
-  return ret;
-}
-
-/**
- * WASM export for Poisson cumulative distribution function
- * @param {number} x
- * @param {number} lambda
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_ppois(x, lambda, lower_tail, log_p) {
-  const ret = wasm.wasm_ppois(x, lambda, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for Poisson quantile function
- * @param {number} p
- * @param {number} lambda
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qpois(p, lambda, lower_tail, log_p) {
-  const ret = wasm.wasm_qpois(p, lambda, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for Poisson random number generation
- * @param {number} lambda
- * @returns {number}
- */
-export function wasm_rpois(lambda) {
-  const ret = wasm.wasm_rpois(lambda);
-  return ret;
-}
-
-/**
- * WASM export for binomial density function
- * @param {number} x
- * @param {number} size
- * @param {number} prob
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dbinom(x, size, prob, give_log) {
-  const ret = wasm.wasm_dbinom(x, size, prob, give_log);
-  return ret;
-}
-
-/**
- * WASM export for binomial cumulative distribution function
- * @param {number} x
- * @param {number} size
- * @param {number} prob
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pbinom(x, size, prob, lower_tail, log_p) {
-  const ret = wasm.wasm_pbinom(x, size, prob, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for binomial quantile function
- * @param {number} p
- * @param {number} size
- * @param {number} prob
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qbinom(p, size, prob, lower_tail, log_p) {
-  const ret = wasm.wasm_qbinom(p, size, prob, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for binomial random number generation
- * @param {number} size
- * @param {number} prob
- * @returns {number}
- */
-export function wasm_rbinom(size, prob) {
-  const ret = wasm.wasm_rbinom(size, prob);
-  return ret;
-}
-
-/**
- * WASM export for uniform density function
- * @param {number} x
- * @param {number} min
- * @param {number} max
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dunif(x, min, max, give_log) {
-  const ret = wasm.wasm_dunif(x, min, max, give_log);
-  return ret;
-}
-
-/**
- * WASM export for uniform cumulative distribution function
- * @param {number} x
- * @param {number} min
- * @param {number} max
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_punif(x, min, max, lower_tail, log_p) {
-  const ret = wasm.wasm_punif(x, min, max, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for uniform quantile function
- * @param {number} p
- * @param {number} min
- * @param {number} max
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qunif(p, min, max, lower_tail, log_p) {
-  const ret = wasm.wasm_qunif(p, min, max, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for uniform random number generation
- * @param {number} min
- * @param {number} max
- * @returns {number}
- */
-export function wasm_runif(min, max) {
-  const ret = wasm.wasm_runif(min, max);
-  return ret;
-}
-
-/**
- * WASM export for Weibull density function
- * @param {number} x
- * @param {number} shape
- * @param {number} scale
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dweibull(x, shape, scale, give_log) {
-  const ret = wasm.wasm_dweibull(x, shape, scale, give_log);
-  return ret;
-}
-
-/**
- * WASM export for Weibull cumulative distribution function
- * @param {number} x
- * @param {number} shape
- * @param {number} scale
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pweibull(x, shape, scale, lower_tail, log_p) {
-  const ret = wasm.wasm_pweibull(x, shape, scale, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for Weibull quantile function
- * @param {number} p
- * @param {number} shape
- * @param {number} scale
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qweibull(p, shape, scale, lower_tail, log_p) {
-  const ret = wasm.wasm_qweibull(p, shape, scale, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for Weibull random number generation
- * @param {number} shape
- * @param {number} scale
- * @returns {number}
- */
-export function wasm_rweibull(shape, scale) {
-  const ret = wasm.wasm_rweibull(shape, scale);
-  return ret;
-}
-
-/**
- * WASM export for geometric density function
- * @param {number} x
- * @param {number} prob
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dgeom(x, prob, give_log) {
-  const ret = wasm.wasm_dgeom(x, prob, give_log);
-  return ret;
-}
-
-/**
- * WASM export for geometric cumulative distribution function
- * @param {number} x
- * @param {number} prob
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pgeom(x, prob, lower_tail, log_p) {
-  const ret = wasm.wasm_pgeom(x, prob, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for geometric quantile function
- * @param {number} p
- * @param {number} prob
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qgeom(p, prob, lower_tail, log_p) {
-  const ret = wasm.wasm_qgeom(p, prob, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for geometric random number generation
- * @param {number} prob
- * @returns {number}
- */
-export function wasm_rgeom(prob) {
-  const ret = wasm.wasm_rgeom(prob);
-  return ret;
-}
-
-/**
- * WASM export for hypergeometric density function
- * @param {number} x
- * @param {number} m
- * @param {number} n
- * @param {number} k
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dhyper(x, m, n, k, give_log) {
-  const ret = wasm.wasm_dhyper(x, m, n, k, give_log);
-  return ret;
-}
-
-/**
- * WASM export for hypergeometric cumulative distribution function
- * @param {number} x
- * @param {number} m
- * @param {number} n
- * @param {number} k
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_phyper(x, m, n, k, lower_tail, log_p) {
-  const ret = wasm.wasm_phyper(x, m, n, k, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for hypergeometric quantile function
- * @param {number} p
- * @param {number} m
- * @param {number} n
- * @param {number} k
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qhyper(p, m, n, k, lower_tail, log_p) {
-  const ret = wasm.wasm_qhyper(p, m, n, k, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for hypergeometric random number generation
- * @param {number} m
- * @param {number} n
- * @param {number} k
- * @returns {number}
- */
-export function wasm_rhyper(m, n, k) {
-  const ret = wasm.wasm_rhyper(m, n, k);
-  return ret;
-}
-
-/**
- * WASM export for log-normal density function
- * @param {number} x
- * @param {number} meanlog
- * @param {number} sdlog
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dlnorm(x, meanlog, sdlog, give_log) {
-  const ret = wasm.wasm_dlnorm(x, meanlog, sdlog, give_log);
-  return ret;
-}
-
-/**
- * WASM export for log-normal cumulative distribution function
- * @param {number} x
- * @param {number} meanlog
- * @param {number} sdlog
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_plnorm(x, meanlog, sdlog, lower_tail, log_p) {
-  const ret = wasm.wasm_plnorm(x, meanlog, sdlog, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for log-normal quantile function
- * @param {number} p
- * @param {number} meanlog
- * @param {number} sdlog
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qlnorm(p, meanlog, sdlog, lower_tail, log_p) {
-  const ret = wasm.wasm_qlnorm(p, meanlog, sdlog, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for log-normal random number generation
- * @param {number} meanlog
- * @param {number} sdlog
- * @returns {number}
- */
-export function wasm_rlnorm(meanlog, sdlog) {
-  const ret = wasm.wasm_rlnorm(meanlog, sdlog);
-  return ret;
-}
-
-/**
- * WASM export for negative binomial density function
- * @param {number} x
- * @param {number} r
- * @param {number} p
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dnbinom(x, r, p, give_log) {
-  const ret = wasm.wasm_dnbinom(x, r, p, give_log);
-  return ret;
-}
-
-/**
- * WASM export for negative binomial cumulative distribution function
- * @param {number} x
- * @param {number} r
- * @param {number} p
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pnbinom(x, r, p, lower_tail, log_p) {
-  const ret = wasm.wasm_pnbinom(x, r, p, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for negative binomial quantile function
- * @param {number} p
- * @param {number} r
- * @param {number} prob
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qnbinom(p, r, prob, lower_tail, log_p) {
-  const ret = wasm.wasm_qnbinom(p, r, prob, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for negative binomial random number generation
- * @param {number} r
- * @param {number} prob
- * @returns {number}
- */
-export function wasm_rnbinom(r, prob) {
-  const ret = wasm.wasm_rnbinom(r, prob);
-  return ret;
-}
-
-/**
- * WASM export for Wilcoxon density function
- * @param {number} x
- * @param {number} m
- * @param {number} n
- * @param {boolean} give_log
- * @returns {number}
- */
-export function wasm_dwilcox(x, m, n, give_log) {
-  const ret = wasm.wasm_dwilcox(x, m, n, give_log);
-  return ret;
-}
-
-/**
- * WASM export for Wilcoxon cumulative distribution function
- * @param {number} q
- * @param {number} m
- * @param {number} n
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_pwilcox(q, m, n, lower_tail, log_p) {
-  const ret = wasm.wasm_pwilcox(q, m, n, lower_tail, log_p);
-  return ret;
-}
-
-/**
- * WASM export for Wilcoxon quantile function
- * @param {number} p
- * @param {number} m
- * @param {number} n
- * @param {boolean} lower_tail
- * @param {boolean} log_p
- * @returns {number}
- */
-export function wasm_qwilcox(p, m, n, lower_tail, log_p) {
-  const ret = wasm.wasm_qwilcox(p, m, n, lower_tail, log_p);
-  return ret;
-}
-
 /**
- * WASM export for Wilcoxon random number generation
- * @param {number} m
- * @param {number} n
+ * @param {Int32Array} values
+ * @param {number} target
  * @returns {number}
  */
-export function wasm_rwilcox(m, n) {
-  const ret = wasm.wasm_rwilcox(m, n);
-  return ret;
+export function count_i32(values, target) {
+  const ptr0 = passArray32ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.count_i32(ptr0, len0, target);
+  return ret >>> 0;
 }
 
 /**
@@ -2105,32 +977,6 @@ export function glm_fit_wasm(
 }
 
 /**
- * WASM export for GLM summary
- *
- * Returns coefficient table with test statistics and p-values
- * @param {string} result_json
- * @returns {string}
- */
-export function glm_summary_wasm(result_json) {
-  let deferred2_0;
-  let deferred2_1;
-  try {
-    const ptr0 = passStringToWasm0(
-      result_json,
-      wasm.__wbindgen_malloc,
-      wasm.__wbindgen_realloc,
-    );
-    const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.glm_summary_wasm(ptr0, len0);
-    deferred2_0 = ret[0];
-    deferred2_1 = ret[1];
-    return getStringFromWasm0(ret[0], ret[1]);
-  } finally {
-    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
-  }
-}
-
-/**
  * WASM export for standardized residuals
  *
  * Returns rstandard() values
@@ -2216,12 +1062,13 @@ export function glm_influence_wasm(result_json) {
 }
 
 /**
- * GLM confint() - Compute confidence intervals for coefficients
+ * WASM export for GLM summary
+ *
+ * Returns coefficient table with test statistics and p-values
  * @param {string} result_json
- * @param {number} level
  * @returns {string}
  */
-export function glm_confint_wasm(result_json, level) {
+export function glm_summary_wasm(result_json) {
   let deferred2_0;
   let deferred2_1;
   try {
@@ -2231,7 +1078,7 @@ export function glm_confint_wasm(result_json, level) {
       wasm.__wbindgen_realloc,
     );
     const len0 = WASM_VECTOR_LEN;
-    const ret = wasm.glm_confint_wasm(ptr0, len0, level);
+    const ret = wasm.glm_summary_wasm(ptr0, len0);
     deferred2_0 = ret[0];
     deferred2_1 = ret[1];
     return getStringFromWasm0(ret[0], ret[1]);
@@ -2275,6 +1122,31 @@ export function glm_predict_wasm(result_json, newdata_json, pred_type) {
     return getStringFromWasm0(ret[0], ret[1]);
   } finally {
     wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+  }
+}
+
+/**
+ * GLM confint() - Compute confidence intervals for coefficients
+ * @param {string} result_json
+ * @param {number} level
+ * @returns {string}
+ */
+export function glm_confint_wasm(result_json, level) {
+  let deferred2_0;
+  let deferred2_1;
+  try {
+    const ptr0 = passStringToWasm0(
+      result_json,
+      wasm.__wbindgen_malloc,
+      wasm.__wbindgen_realloc,
+    );
+    const len0 = WASM_VECTOR_LEN;
+    const ret = wasm.glm_confint_wasm(ptr0, len0, level);
+    deferred2_0 = ret[0];
+    deferred2_1 = ret[1];
+    return getStringFromWasm0(ret[0], ret[1]);
+  } finally {
+    wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
   }
 }
 
@@ -2373,171 +1245,819 @@ export function glmm_fit_wasm(
 }
 
 /**
- * WASM export for Anderson-Darling normality test
- * @param {Float64Array} x
- * @param {number} alpha
- * @returns {AndersonDarlingTestResult}
+ * WASM export for Weibull density function
+ * @param {number} x
+ * @param {number} shape
+ * @param {number} scale
+ * @param {boolean} give_log
+ * @returns {number}
  */
-export function anderson_darling_test(x, alpha) {
-  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.anderson_darling_test(ptr0, len0, alpha);
-  return AndersonDarlingTestResult.__wrap(ret);
+export function wasm_dweibull(x, shape, scale, give_log) {
+  const ret = wasm.wasm_dweibull(x, shape, scale, give_log);
+  return ret;
 }
 
 /**
- * WASM export for one-way ANOVA
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {OneWayAnovaTestResult}
+ * WASM export for gamma random number generation
+ * @param {number} shape
+ * @param {number} rate
+ * @returns {number}
  */
-export function anova_one_way(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.anova_one_way(ptr0, len0, ptr1, len1, alpha);
-  return OneWayAnovaTestResult.__wrap(ret);
+export function wasm_rgamma(shape, rate) {
+  const ret = wasm.wasm_rgamma(shape, rate);
+  return ret;
 }
 
 /**
- * WASM export for two-way ANOVA factor A
- * @param {Float64Array} data
- * @param {number} a_levels
- * @param {number} b_levels
- * @param {Uint32Array} cell_sizes
- * @param {number} alpha
- * @returns {OneWayAnovaTestResult}
+ * WASM export for negative binomial cumulative distribution function
+ * @param {number} x
+ * @param {number} r
+ * @param {number} p
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
  */
-export function anova_two_way_factor_a_wasm(
-  data,
-  a_levels,
-  b_levels,
-  cell_sizes,
-  alpha,
-) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.anova_two_way_factor_a_wasm(
-    ptr0,
-    len0,
-    a_levels,
-    b_levels,
-    ptr1,
-    len1,
-    alpha,
-  );
-  return OneWayAnovaTestResult.__wrap(ret);
+export function wasm_pnbinom(x, r, p, lower_tail, log_p) {
+  const ret = wasm.wasm_pnbinom(x, r, p, lower_tail, log_p);
+  return ret;
 }
 
 /**
- * WASM export for two-way ANOVA factor B
- * @param {Float64Array} data
- * @param {number} a_levels
- * @param {number} b_levels
- * @param {Uint32Array} cell_sizes
- * @param {number} alpha
- * @returns {OneWayAnovaTestResult}
+ * WASM export for Poisson cumulative distribution function
+ * @param {number} x
+ * @param {number} lambda
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
  */
-export function anova_two_way_factor_b_wasm(
-  data,
-  a_levels,
-  b_levels,
-  cell_sizes,
-  alpha,
-) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.anova_two_way_factor_b_wasm(
-    ptr0,
-    len0,
-    a_levels,
-    b_levels,
-    ptr1,
-    len1,
-    alpha,
-  );
-  return OneWayAnovaTestResult.__wrap(ret);
+export function wasm_ppois(x, lambda, lower_tail, log_p) {
+  const ret = wasm.wasm_ppois(x, lambda, lower_tail, log_p);
+  return ret;
 }
 
 /**
- * WASM export for two-way ANOVA interaction
- * @param {Float64Array} data
- * @param {number} a_levels
- * @param {number} b_levels
- * @param {Uint32Array} cell_sizes
- * @param {number} alpha
- * @returns {OneWayAnovaTestResult}
+ * WASM export for t distribution random number generation
+ * @param {number} df
+ * @returns {number}
  */
-export function anova_two_way_interaction_wasm(
-  data,
-  a_levels,
-  b_levels,
-  cell_sizes,
-  alpha,
-) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.anova_two_way_interaction_wasm(
-    ptr0,
-    len0,
-    a_levels,
-    b_levels,
-    ptr1,
-    len1,
-    alpha,
-  );
-  return OneWayAnovaTestResult.__wrap(ret);
+export function wasm_rt(df) {
+  const ret = wasm.wasm_rt(df);
+  return ret;
 }
 
 /**
- * WASM export for two-way ANOVA
- * Takes flattened data with group information to reconstruct 2D factorial design
- * @param {Float64Array} data
- * @param {number} a_levels
- * @param {number} b_levels
- * @param {Uint32Array} cell_sizes
- * @param {number} alpha
- * @returns {TwoWayAnovaTestResult}
+ * WASM export for Wilcoxon quantile function
+ * @param {number} p
+ * @param {number} m
+ * @param {number} n
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
  */
-export function anova_two_way(data, a_levels, b_levels, cell_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.anova_two_way(
-    ptr0,
-    len0,
-    a_levels,
-    b_levels,
-    ptr1,
-    len1,
-    alpha,
-  );
-  return TwoWayAnovaTestResult.__wrap(ret);
+export function wasm_qwilcox(p, m, n, lower_tail, log_p) {
+  const ret = wasm.wasm_qwilcox(p, m, n, lower_tail, log_p);
+  return ret;
 }
 
 /**
- * WASM export for Welch's ANOVA (unequal variances)
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {WelchAnovaTestResult}
+ * WASM export for uniform random number generation
+ * @param {number} min
+ * @param {number} max
+ * @returns {number}
  */
-export function welch_anova_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.welch_anova_wasm(ptr0, len0, ptr1, len1, alpha);
-  return WelchAnovaTestResult.__wrap(ret);
+export function wasm_runif(min, max) {
+  const ret = wasm.wasm_runif(min, max);
+  return ret;
+}
+
+/**
+ * WASM export for geometric density function
+ * @param {number} x
+ * @param {number} prob
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dgeom(x, prob, give_log) {
+  const ret = wasm.wasm_dgeom(x, prob, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for Weibull quantile function
+ * @param {number} p
+ * @param {number} shape
+ * @param {number} scale
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qweibull(p, shape, scale, lower_tail, log_p) {
+  const ret = wasm.wasm_qweibull(p, shape, scale, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for beta density function
+ * @param {number} x
+ * @param {number} shape1
+ * @param {number} shape2
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dbeta(x, shape1, shape2, give_log) {
+  const ret = wasm.wasm_dbeta(x, shape1, shape2, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for F cumulative distribution function
+ * @param {number} x
+ * @param {number} df1
+ * @param {number} df2
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pf(x, df1, df2, lower_tail, log_p) {
+  const ret = wasm.wasm_pf(x, df1, df2, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for beta quantile function
+ * @param {number} p
+ * @param {number} shape1
+ * @param {number} shape2
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qbeta(p, shape1, shape2, lower_tail, log_p) {
+  const ret = wasm.wasm_qbeta(p, shape1, shape2, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Poisson density function
+ * @param {number} x
+ * @param {number} lambda
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dpois(x, lambda, give_log) {
+  const ret = wasm.wasm_dpois(x, lambda, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for negative binomial quantile function
+ * @param {number} p
+ * @param {number} r
+ * @param {number} prob
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qnbinom(p, r, prob, lower_tail, log_p) {
+  const ret = wasm.wasm_qnbinom(p, r, prob, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for gamma density function
+ * @param {number} x
+ * @param {number} shape
+ * @param {number} rate
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dgamma(x, shape, rate, give_log) {
+  const ret = wasm.wasm_dgamma(x, shape, rate, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for uniform density function
+ * @param {number} x
+ * @param {number} min
+ * @param {number} max
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dunif(x, min, max, give_log) {
+  const ret = wasm.wasm_dunif(x, min, max, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for gamma cumulative distribution function
+ * @param {number} x
+ * @param {number} shape
+ * @param {number} rate
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pgamma(x, shape, rate, lower_tail, log_p) {
+  const ret = wasm.wasm_pgamma(x, shape, rate, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for binomial random number generation
+ * @param {number} size
+ * @param {number} prob
+ * @returns {number}
+ */
+export function wasm_rbinom(size, prob) {
+  const ret = wasm.wasm_rbinom(size, prob);
+  return ret;
+}
+
+/**
+ * WASM export for normal quantile function
+ * @param {number} p
+ * @param {number} mean
+ * @param {number} sd
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qnorm(p, mean, sd, lower_tail, log_p) {
+  const ret = wasm.wasm_qnorm(p, mean, sd, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for beta random number generation
+ * @param {number} shape1
+ * @param {number} shape2
+ * @returns {number}
+ */
+export function wasm_rbeta(shape1, shape2) {
+  const ret = wasm.wasm_rbeta(shape1, shape2);
+  return ret;
+}
+
+/**
+ * WASM export for t quantile function
+ * @param {number} p
+ * @param {number} df
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qt(p, df, lower_tail, log_p) {
+  const ret = wasm.wasm_qt(p, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Wilcoxon density function
+ * @param {number} x
+ * @param {number} m
+ * @param {number} n
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dwilcox(x, m, n, give_log) {
+  const ret = wasm.wasm_dwilcox(x, m, n, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for hypergeometric quantile function
+ * @param {number} p
+ * @param {number} m
+ * @param {number} n
+ * @param {number} k
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qhyper(p, m, n, k, lower_tail, log_p) {
+  const ret = wasm.wasm_qhyper(p, m, n, k, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for negative binomial random number generation
+ * @param {number} r
+ * @param {number} prob
+ * @returns {number}
+ */
+export function wasm_rnbinom(r, prob) {
+  const ret = wasm.wasm_rnbinom(r, prob);
+  return ret;
+}
+
+/**
+ * WASM export for chi-squared cumulative distribution function
+ * @param {number} x
+ * @param {number} df
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pchisq(x, df, lower_tail, log_p) {
+  const ret = wasm.wasm_pchisq(x, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for exponential random number generation
+ * @param {number} rate
+ * @returns {number}
+ */
+export function wasm_rexp(rate) {
+  const ret = wasm.wasm_rexp(rate);
+  return ret;
+}
+
+/**
+ * WASM export for chi-squared density function
+ * @param {number} x
+ * @param {number} df
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dchisq(x, df, give_log) {
+  const ret = wasm.wasm_dchisq(x, df, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for log-normal quantile function
+ * @param {number} p
+ * @param {number} meanlog
+ * @param {number} sdlog
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qlnorm(p, meanlog, sdlog, lower_tail, log_p) {
+  const ret = wasm.wasm_qlnorm(p, meanlog, sdlog, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for negative binomial density function
+ * @param {number} x
+ * @param {number} r
+ * @param {number} p
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dnbinom(x, r, p, give_log) {
+  const ret = wasm.wasm_dnbinom(x, r, p, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for t density function
+ * @param {number} x
+ * @param {number} df
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dt(x, df, give_log) {
+  const ret = wasm.wasm_dt(x, df, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for beta cumulative distribution function
+ * @param {number} x
+ * @param {number} shape1
+ * @param {number} shape2
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pbeta(x, shape1, shape2, lower_tail, log_p) {
+  const ret = wasm.wasm_pbeta(x, shape1, shape2, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for hypergeometric random number generation
+ * @param {number} m
+ * @param {number} n
+ * @param {number} k
+ * @returns {number}
+ */
+export function wasm_rhyper(m, n, k) {
+  const ret = wasm.wasm_rhyper(m, n, k);
+  return ret;
+}
+
+/**
+ * WASM export for uniform quantile function
+ * @param {number} p
+ * @param {number} min
+ * @param {number} max
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qunif(p, min, max, lower_tail, log_p) {
+  const ret = wasm.wasm_qunif(p, min, max, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for uniform cumulative distribution function
+ * @param {number} x
+ * @param {number} min
+ * @param {number} max
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_punif(x, min, max, lower_tail, log_p) {
+  const ret = wasm.wasm_punif(x, min, max, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for binomial density function
+ * @param {number} x
+ * @param {number} size
+ * @param {number} prob
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dbinom(x, size, prob, give_log) {
+  const ret = wasm.wasm_dbinom(x, size, prob, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for t cumulative distribution function
+ * @param {number} x
+ * @param {number} df
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pt(x, df, lower_tail, log_p) {
+  const ret = wasm.wasm_pt(x, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for normal cumulative distribution function
+ * @param {number} x
+ * @param {number} mean
+ * @param {number} sd
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pnorm(x, mean, sd, lower_tail, log_p) {
+  const ret = wasm.wasm_pnorm(x, mean, sd, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for binomial cumulative distribution function
+ * @param {number} x
+ * @param {number} size
+ * @param {number} prob
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pbinom(x, size, prob, lower_tail, log_p) {
+  const ret = wasm.wasm_pbinom(x, size, prob, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Wilcoxon random number generation
+ * @param {number} m
+ * @param {number} n
+ * @returns {number}
+ */
+export function wasm_rwilcox(m, n) {
+  const ret = wasm.wasm_rwilcox(m, n);
+  return ret;
+}
+
+/**
+ * WASM export for hypergeometric cumulative distribution function
+ * @param {number} x
+ * @param {number} m
+ * @param {number} n
+ * @param {number} k
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_phyper(x, m, n, k, lower_tail, log_p) {
+  const ret = wasm.wasm_phyper(x, m, n, k, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for exponential density function
+ * @param {number} x
+ * @param {number} rate
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dexp(x, rate, give_log) {
+  const ret = wasm.wasm_dexp(x, rate, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for F quantile function
+ * @param {number} p
+ * @param {number} df1
+ * @param {number} df2
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qf(p, df1, df2, lower_tail, log_p) {
+  const ret = wasm.wasm_qf(p, df1, df2, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Poisson random number generation
+ * @param {number} lambda
+ * @returns {number}
+ */
+export function wasm_rpois(lambda) {
+  const ret = wasm.wasm_rpois(lambda);
+  return ret;
+}
+
+/**
+ * WASM export for normal density function
+ * @param {number} x
+ * @param {number} mean
+ * @param {number} sd
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dnorm(x, mean, sd, give_log) {
+  const ret = wasm.wasm_dnorm(x, mean, sd, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for log-normal random number generation
+ * @param {number} meanlog
+ * @param {number} sdlog
+ * @returns {number}
+ */
+export function wasm_rlnorm(meanlog, sdlog) {
+  const ret = wasm.wasm_rlnorm(meanlog, sdlog);
+  return ret;
+}
+
+/**
+ * WASM export for F density function
+ * @param {number} x
+ * @param {number} df1
+ * @param {number} df2
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_df(x, df1, df2, give_log) {
+  const ret = wasm.wasm_df(x, df1, df2, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for geometric quantile function
+ * @param {number} p
+ * @param {number} prob
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qgeom(p, prob, lower_tail, log_p) {
+  const ret = wasm.wasm_qgeom(p, prob, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Poisson quantile function
+ * @param {number} p
+ * @param {number} lambda
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qpois(p, lambda, lower_tail, log_p) {
+  const ret = wasm.wasm_qpois(p, lambda, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for gamma quantile function
+ * @param {number} p
+ * @param {number} shape
+ * @param {number} rate
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qgamma(p, shape, rate, lower_tail, log_p) {
+  const ret = wasm.wasm_qgamma(p, shape, rate, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for Weibull random number generation
+ * @param {number} shape
+ * @param {number} scale
+ * @returns {number}
+ */
+export function wasm_rweibull(shape, scale) {
+  const ret = wasm.wasm_rweibull(shape, scale);
+  return ret;
+}
+
+/**
+ * WASM export for F distribution random number generation
+ * @param {number} df1
+ * @param {number} df2
+ * @returns {number}
+ */
+export function wasm_rf(df1, df2) {
+  const ret = wasm.wasm_rf(df1, df2);
+  return ret;
+}
+
+/**
+ * WASM export for binomial quantile function
+ * @param {number} p
+ * @param {number} size
+ * @param {number} prob
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qbinom(p, size, prob, lower_tail, log_p) {
+  const ret = wasm.wasm_qbinom(p, size, prob, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for log-normal cumulative distribution function
+ * @param {number} x
+ * @param {number} meanlog
+ * @param {number} sdlog
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_plnorm(x, meanlog, sdlog, lower_tail, log_p) {
+  const ret = wasm.wasm_plnorm(x, meanlog, sdlog, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for exponential quantile function
+ * @param {number} p
+ * @param {number} rate
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qexp(p, rate, lower_tail, log_p) {
+  const ret = wasm.wasm_qexp(p, rate, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for normal random number generation
+ * @param {number} mean
+ * @param {number} sd
+ * @returns {number}
+ */
+export function wasm_rnorm(mean, sd) {
+  const ret = wasm.wasm_rnorm(mean, sd);
+  return ret;
+}
+
+/**
+ * WASM export for Weibull cumulative distribution function
+ * @param {number} x
+ * @param {number} shape
+ * @param {number} scale
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pweibull(x, shape, scale, lower_tail, log_p) {
+  const ret = wasm.wasm_pweibull(x, shape, scale, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for geometric random number generation
+ * @param {number} prob
+ * @returns {number}
+ */
+export function wasm_rgeom(prob) {
+  const ret = wasm.wasm_rgeom(prob);
+  return ret;
+}
+
+/**
+ * WASM export for chi-squared random number generation
+ * @param {number} df
+ * @returns {number}
+ */
+export function wasm_rchisq(df) {
+  const ret = wasm.wasm_rchisq(df);
+  return ret;
+}
+
+/**
+ * WASM export for chi-squared quantile function
+ * @param {number} p
+ * @param {number} df
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qchisq(p, df, lower_tail, log_p) {
+  const ret = wasm.wasm_qchisq(p, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for log-normal density function
+ * @param {number} x
+ * @param {number} meanlog
+ * @param {number} sdlog
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dlnorm(x, meanlog, sdlog, give_log) {
+  const ret = wasm.wasm_dlnorm(x, meanlog, sdlog, give_log);
+  return ret;
+}
+
+/**
+ * WASM export for Wilcoxon cumulative distribution function
+ * @param {number} q
+ * @param {number} m
+ * @param {number} n
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pwilcox(q, m, n, lower_tail, log_p) {
+  const ret = wasm.wasm_pwilcox(q, m, n, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for exponential cumulative distribution function
+ * @param {number} x
+ * @param {number} rate
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pexp(x, rate, lower_tail, log_p) {
+  const ret = wasm.wasm_pexp(x, rate, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for geometric cumulative distribution function
+ * @param {number} x
+ * @param {number} prob
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pgeom(x, prob, lower_tail, log_p) {
+  const ret = wasm.wasm_pgeom(x, prob, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * WASM export for hypergeometric density function
+ * @param {number} x
+ * @param {number} m
+ * @param {number} n
+ * @param {number} k
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dhyper(x, m, n, k, give_log) {
+  const ret = wasm.wasm_dhyper(x, m, n, k, give_log);
+  return ret;
 }
 
 /**
@@ -2553,22 +2073,6 @@ export function chi_square_independence(observed, rows, cols, alpha) {
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.chi_square_independence(ptr0, len0, rows, cols, alpha);
   return ChiSquareIndependenceTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for chi-square goodness of fit test
- * @param {Float64Array} observed
- * @param {Float64Array} expected
- * @param {number} alpha
- * @returns {ChiSquareGoodnessOfFitTestResult}
- */
-export function chi_square_goodness_of_fit(observed, expected, alpha) {
-  const ptr0 = passArrayF64ToWasm0(observed, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(expected, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.chi_square_goodness_of_fit(ptr0, len0, ptr1, len1, alpha);
-  return ChiSquareGoodnessOfFitTestResult.__wrap(ret);
 }
 
 /**
@@ -2613,33 +2117,91 @@ export function chi_square_sample_size_wasm(effect_size, alpha, power, _df) {
 }
 
 /**
- * @param {Float64Array} x
- * @param {Float64Array} y
- * @param {string} alternative
+ * WASM export for chi-square goodness of fit test
+ * @param {Float64Array} observed
+ * @param {Float64Array} expected
  * @param {number} alpha
- * @returns {PearsonCorrelationTestResult}
+ * @returns {ChiSquareGoodnessOfFitTestResult}
  */
-export function pearson_correlation_test(x, y, alternative, alpha) {
-  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+export function chi_square_goodness_of_fit(observed, expected, alpha) {
+  const ptr0 = passArrayF64ToWasm0(observed, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+  const ptr1 = passArrayF64ToWasm0(expected, wasm.__wbindgen_malloc);
   const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passStringToWasm0(
+  const ret = wasm.chi_square_goodness_of_fit(ptr0, len0, ptr1, len1, alpha);
+  return ChiSquareGoodnessOfFitTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for two-sample proportion test (chi-square approach, matches R)
+ * @param {number} x1
+ * @param {number} n1
+ * @param {number} x2
+ * @param {number} n2
+ * @param {number} alpha
+ * @param {string} alternative
+ * @param {boolean} _pooled
+ * @returns {TwoSampleProportionTestResult}
+ */
+export function proportion_test_two_sample(
+  x1,
+  n1,
+  x2,
+  n2,
+  alpha,
+  alternative,
+  _pooled,
+) {
+  const ptr0 = passStringToWasm0(
     alternative,
     wasm.__wbindgen_malloc,
     wasm.__wbindgen_realloc,
   );
-  const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.pearson_correlation_test(
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.proportion_test_two_sample(
+    x1,
+    n1,
+    x2,
+    n2,
+    alpha,
     ptr0,
     len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    alpha,
+    _pooled,
   );
-  return PearsonCorrelationTestResult.__wrap(ret);
+  return TwoSampleProportionTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for proportion sample size calculation
+ * @param {number} p1
+ * @param {number} p2
+ * @param {number} alpha
+ * @param {number} power
+ * @returns {number}
+ */
+export function proportion_sample_size_wasm(p1, p2, alpha, power) {
+  const ret = wasm.proportion_sample_size_wasm(p1, p2, alpha, power);
+  return ret;
+}
+
+/**
+ * WASM export for one-sample proportion test (chi-square approach, matches R)
+ * @param {number} x
+ * @param {number} n
+ * @param {number} p0
+ * @param {number} alpha
+ * @param {string} alternative
+ * @returns {OneSampleProportionTestResult}
+ */
+export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
+  const ptr0 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.proportion_test_one_sample(x, n, p0, alpha, ptr0, len0);
+  return OneSampleProportionTestResult.__wrap(ret);
 }
 
 /**
@@ -2705,16 +2267,33 @@ export function kendall_correlation_test(x, y, alternative, alpha, exact) {
 }
 
 /**
- * WASM export for D'Agostino-Pearson K² normality test
  * @param {Float64Array} x
+ * @param {Float64Array} y
+ * @param {string} alternative
  * @param {number} alpha
- * @returns {DAgostinoPearsonTestResult}
+ * @returns {PearsonCorrelationTestResult}
  */
-export function dagostino_pearson_test(x, alpha) {
+export function pearson_correlation_test(x, y, alternative, alpha) {
   const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.dagostino_pearson_test(ptr0, len0, alpha);
-  return DAgostinoPearsonTestResult.__wrap(ret);
+  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len2 = WASM_VECTOR_LEN;
+  const ret = wasm.pearson_correlation_test(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    alpha,
+  );
+  return PearsonCorrelationTestResult.__wrap(ret);
 }
 
 /**
@@ -2754,118 +2333,6 @@ export function fishers_exact_test_wasm(
     alpha,
   );
   return FishersExactTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for two-sample Kolmogorov-Smirnov test
- * @param {Float64Array} x
- * @param {Float64Array} y
- * @param {string} alternative
- * @param {number} alpha
- * @returns {KolmogorovSmirnovTestResult}
- */
-export function kolmogorov_smirnov_test_wasm(x, y, alternative, alpha) {
-  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passStringToWasm0(
-    alternative,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.kolmogorov_smirnov_test_wasm(
-    ptr0,
-    len0,
-    ptr1,
-    len1,
-    ptr2,
-    len2,
-    alpha,
-  );
-  return KolmogorovSmirnovTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
- * @param {Float64Array} x
- * @param {number} min
- * @param {number} max
- * @param {string} alternative
- * @param {number} alpha
- * @returns {KolmogorovSmirnovTestResult}
- */
-export function kolmogorov_smirnov_uniform_wasm(
-  x,
-  min,
-  max,
-  alternative,
-  alpha,
-) {
-  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passStringToWasm0(
-    alternative,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.kolmogorov_smirnov_uniform_wasm(
-    ptr0,
-    len0,
-    min,
-    max,
-    ptr1,
-    len1,
-    alpha,
-  );
-  return KolmogorovSmirnovTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for Kruskal-Wallis test
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {KruskalWallisTestResult}
- */
-export function kruskal_wallis_test_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.kruskal_wallis_test_wasm(ptr0, len0, ptr1, len1, alpha);
-  return KruskalWallisTestResult.__wrap(ret);
-}
-
-/**
- * WASM wrapper for Levene's test for equality of variances
- *
- * Tests whether groups have equal variances using the Brown-Forsythe
- * modification (deviations from medians rather than means).
- *
- * # Arguments
- * * `data` - Flattened array of all group data
- * * `group_sizes` - Array of group sizes
- * * `alpha` - Significance level
- *
- * # Returns
- * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
- *   - p < alpha indicates unequal variances (reject null hypothesis)
- *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {OneWayAnovaTestResult}
- */
-export function levene_test_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.levene_test_wasm(ptr0, len0, ptr1, len1, alpha);
-  return OneWayAnovaTestResult.__wrap(ret);
 }
 
 /**
@@ -2934,126 +2401,6 @@ export function mann_whitney_test_with_config(
 }
 
 /**
- * WASM export for Tukey HSD test
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {TukeyHsdTestResult}
- */
-export function tukey_hsd_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.tukey_hsd_wasm(ptr0, len0, ptr1, len1, alpha);
-  return TukeyHsdTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for Games-Howell test
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {GamesHowellTestResult}
- */
-export function games_howell_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.games_howell_wasm(ptr0, len0, ptr1, len1, alpha);
-  return GamesHowellTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for Dunn's test
- * @param {Float64Array} data
- * @param {Uint32Array} group_sizes
- * @param {number} alpha
- * @returns {DunnTestResult}
- */
-export function dunn_test_wasm(data, group_sizes, alpha) {
-  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ret = wasm.dunn_test_wasm(ptr0, len0, ptr1, len1, alpha);
-  return DunnTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for one-sample proportion test (chi-square approach, matches R)
- * @param {number} x
- * @param {number} n
- * @param {number} p0
- * @param {number} alpha
- * @param {string} alternative
- * @returns {OneSampleProportionTestResult}
- */
-export function proportion_test_one_sample(x, n, p0, alpha, alternative) {
-  const ptr0 = passStringToWasm0(
-    alternative,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.proportion_test_one_sample(x, n, p0, alpha, ptr0, len0);
-  return OneSampleProportionTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for two-sample proportion test (chi-square approach, matches R)
- * @param {number} x1
- * @param {number} n1
- * @param {number} x2
- * @param {number} n2
- * @param {number} alpha
- * @param {string} alternative
- * @param {boolean} _pooled
- * @returns {TwoSampleProportionTestResult}
- */
-export function proportion_test_two_sample(
-  x1,
-  n1,
-  x2,
-  n2,
-  alpha,
-  alternative,
-  _pooled,
-) {
-  const ptr0 = passStringToWasm0(
-    alternative,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.proportion_test_two_sample(
-    x1,
-    n1,
-    x2,
-    n2,
-    alpha,
-    ptr0,
-    len0,
-    _pooled,
-  );
-  return TwoSampleProportionTestResult.__wrap(ret);
-}
-
-/**
- * WASM export for proportion sample size calculation
- * @param {number} p1
- * @param {number} p2
- * @param {number} alpha
- * @param {number} power
- * @returns {number}
- */
-export function proportion_sample_size_wasm(p1, p2, alpha, power) {
-  const ret = wasm.proportion_sample_size_wasm(p1, p2, alpha, power);
-  return ret;
-}
-
-/**
  * WASM export for Shapiro-Wilk normality test
  * @param {Float64Array} x
  * @param {number} alpha
@@ -3064,6 +2411,115 @@ export function shapiro_wilk_test(x, alpha) {
   const len0 = WASM_VECTOR_LEN;
   const ret = wasm.shapiro_wilk_test(ptr0, len0, alpha);
   return ShapiroWilkTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Kruskal-Wallis test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {KruskalWallisTestResult}
+ */
+export function kruskal_wallis_test_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.kruskal_wallis_test_wasm(ptr0, len0, ptr1, len1, alpha);
+  return KruskalWallisTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Anderson-Darling normality test
+ * @param {Float64Array} x
+ * @param {number} alpha
+ * @returns {AndersonDarlingTestResult}
+ */
+export function anderson_darling_test(x, alpha) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.anderson_darling_test(ptr0, len0, alpha);
+  return AndersonDarlingTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for D'Agostino-Pearson K² normality test
+ * @param {Float64Array} x
+ * @param {number} alpha
+ * @returns {DAgostinoPearsonTestResult}
+ */
+export function dagostino_pearson_test(x, alpha) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.dagostino_pearson_test(ptr0, len0, alpha);
+  return DAgostinoPearsonTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for one-sample Kolmogorov-Smirnov test against uniform distribution
+ * @param {Float64Array} x
+ * @param {number} min
+ * @param {number} max
+ * @param {string} alternative
+ * @param {number} alpha
+ * @returns {KolmogorovSmirnovTestResult}
+ */
+export function kolmogorov_smirnov_uniform_wasm(
+  x,
+  min,
+  max,
+  alternative,
+  alpha,
+) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.kolmogorov_smirnov_uniform_wasm(
+    ptr0,
+    len0,
+    min,
+    max,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return KolmogorovSmirnovTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for two-sample Kolmogorov-Smirnov test
+ * @param {Float64Array} x
+ * @param {Float64Array} y
+ * @param {string} alternative
+ * @param {number} alpha
+ * @returns {KolmogorovSmirnovTestResult}
+ */
+export function kolmogorov_smirnov_test_wasm(x, y, alternative, alpha) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len2 = WASM_VECTOR_LEN;
+  const ret = wasm.kolmogorov_smirnov_test_wasm(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    alpha,
+  );
+  return KolmogorovSmirnovTestResult.__wrap(ret);
 }
 
 /**
@@ -3085,6 +2541,19 @@ export function t_test_one_sample(x, mu, alpha, alternative) {
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.t_test_one_sample(ptr0, len0, mu, alpha, ptr1, len1);
   return OneSampleTTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for t-test sample size calculation
+ * @param {number} effect_size
+ * @param {number} alpha
+ * @param {number} power
+ * @param {number} std_dev
+ * @returns {number}
+ */
+export function t_sample_size_wasm(effect_size, alpha, power, std_dev) {
+  const ret = wasm.t_sample_size_wasm(effect_size, alpha, power, std_dev);
+  return ret;
 }
 
 /**
@@ -3150,42 +2619,6 @@ export function t_test_paired(x, y, alpha, alternative) {
 }
 
 /**
- * WASM export for t-test sample size calculation
- * @param {number} effect_size
- * @param {number} alpha
- * @param {number} power
- * @param {number} std_dev
- * @returns {number}
- */
-export function t_sample_size_wasm(effect_size, alpha, power, std_dev) {
-  const ret = wasm.t_sample_size_wasm(effect_size, alpha, power, std_dev);
-  return ret;
-}
-
-/**
- * WASM export for Wilcoxon W test (paired)
- * @param {Float64Array} x
- * @param {Float64Array} y
- * @param {number} alpha
- * @param {string} alternative
- * @returns {WilcoxonSignedRankTestResult}
- */
-export function wilcoxon_w_test(x, y, alpha, alternative) {
-  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
-  const len0 = WASM_VECTOR_LEN;
-  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
-  const len1 = WASM_VECTOR_LEN;
-  const ptr2 = passStringToWasm0(
-    alternative,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
-  const len2 = WASM_VECTOR_LEN;
-  const ret = wasm.wilcoxon_w_test(ptr0, len0, ptr1, len1, alpha, ptr2, len2);
-  return WilcoxonSignedRankTestResult.__wrap(ret);
-}
-
-/**
  * WASM export for one-sample z-test
  * @param {Float64Array} x
  * @param {number} mu
@@ -3205,6 +2638,25 @@ export function z_test_one_sample(x, mu, sigma, alpha, alternative) {
   const len1 = WASM_VECTOR_LEN;
   const ret = wasm.z_test_one_sample(ptr0, len0, mu, sigma, alpha, ptr1, len1);
   return OneSampleZTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for z-test sample size calculation
+ * @param {number} effect_size
+ * @param {number} alpha
+ * @param {number} power
+ * @param {string} test_type
+ * @returns {number}
+ */
+export function z_sample_size_wasm(effect_size, alpha, power, test_type) {
+  const ptr0 = passStringToWasm0(
+    test_type,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.z_sample_size_wasm(effect_size, alpha, power, ptr0, len0);
+  return ret;
 }
 
 /**
@@ -3243,30 +2695,578 @@ export function z_test_two_sample(x, y, sigma_x, sigma_y, alpha, alternative) {
 }
 
 /**
- * WASM export for z-test sample size calculation
- * @param {number} effect_size
+ * WASM export for two-way ANOVA
+ * Takes flattened data with group information to reconstruct 2D factorial design
+ * @param {Float64Array} data
+ * @param {number} a_levels
+ * @param {number} b_levels
+ * @param {Uint32Array} cell_sizes
  * @param {number} alpha
- * @param {number} power
- * @param {string} test_type
- * @returns {number}
+ * @returns {TwoWayAnovaTestResult}
  */
-export function z_sample_size_wasm(effect_size, alpha, power, test_type) {
-  const ptr0 = passStringToWasm0(
-    test_type,
-    wasm.__wbindgen_malloc,
-    wasm.__wbindgen_realloc,
-  );
+export function anova_two_way(data, a_levels, b_levels, cell_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.z_sample_size_wasm(effect_size, alpha, power, ptr0, len0);
-  return ret;
+  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.anova_two_way(
+    ptr0,
+    len0,
+    a_levels,
+    b_levels,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return TwoWayAnovaTestResult.__wrap(ret);
 }
 
 /**
+ * WASM export for two-way ANOVA factor B
+ * @param {Float64Array} data
+ * @param {number} a_levels
+ * @param {number} b_levels
+ * @param {Uint32Array} cell_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function anova_two_way_factor_b_wasm(
+  data,
+  a_levels,
+  b_levels,
+  cell_sizes,
+  alpha,
+) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.anova_two_way_factor_b_wasm(
+    ptr0,
+    len0,
+    a_levels,
+    b_levels,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for two-way ANOVA factor A
+ * @param {Float64Array} data
+ * @param {number} a_levels
+ * @param {number} b_levels
+ * @param {Uint32Array} cell_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function anova_two_way_factor_a_wasm(
+  data,
+  a_levels,
+  b_levels,
+  cell_sizes,
+  alpha,
+) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.anova_two_way_factor_a_wasm(
+    ptr0,
+    len0,
+    a_levels,
+    b_levels,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for one-way ANOVA
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function anova_one_way(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.anova_one_way(ptr0, len0, ptr1, len1, alpha);
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for two-way ANOVA interaction
+ * @param {Float64Array} data
+ * @param {number} a_levels
+ * @param {number} b_levels
+ * @param {Uint32Array} cell_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function anova_two_way_interaction_wasm(
+  data,
+  a_levels,
+  b_levels,
+  cell_sizes,
+  alpha,
+) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(cell_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.anova_two_way_interaction_wasm(
+    ptr0,
+    len0,
+    a_levels,
+    b_levels,
+    ptr1,
+    len1,
+    alpha,
+  );
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Welch's ANOVA (unequal variances)
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {WelchAnovaTestResult}
+ */
+export function welch_anova_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.welch_anova_wasm(ptr0, len0, ptr1, len1, alpha);
+  return WelchAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM wrapper for Levene's test for equality of variances
+ *
+ * Tests whether groups have equal variances using the Brown-Forsythe
+ * modification (deviations from medians rather than means).
+ *
+ * # Arguments
+ * * `data` - Flattened array of all group data
+ * * `group_sizes` - Array of group sizes
+ * * `alpha` - Significance level
+ *
+ * # Returns
+ * * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
+ *   - p < alpha indicates unequal variances (reject null hypothesis)
+ *   - p >= alpha suggests equal variances (fail to reject null hypothesis)
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {OneWayAnovaTestResult}
+ */
+export function levene_test_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.levene_test_wasm(ptr0, len0, ptr1, len1, alpha);
+  return OneWayAnovaTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Tukey HSD test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {TukeyHsdTestResult}
+ */
+export function tukey_hsd_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.tukey_hsd_wasm(ptr0, len0, ptr1, len1, alpha);
+  return TukeyHsdTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Dunn's test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {DunnTestResult}
+ */
+export function dunn_test_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.dunn_test_wasm(ptr0, len0, ptr1, len1, alpha);
+  return DunnTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for Games-Howell test
+ * @param {Float64Array} data
+ * @param {Uint32Array} group_sizes
+ * @param {number} alpha
+ * @returns {GamesHowellTestResult}
+ */
+export function games_howell_wasm(data, group_sizes, alpha) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(group_sizes, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.games_howell_wasm(ptr0, len0, ptr1, len1, alpha);
+  return GamesHowellTestResult.__wrap(ret);
+}
+
+function _assertClass(instance, klass) {
+  if (!(instance instanceof klass)) {
+    throw new Error(`expected instance of ${klass.name}`);
+  }
+}
+
+function getArrayJsValueFromWasm0(ptr, len) {
+  ptr = ptr >>> 0;
+  const mem = getDataViewMemory0();
+  const result = [];
+  for (let i = ptr; i < ptr + 4 * len; i += 4) {
+    result.push(wasm.__wbindgen_export_2.get(mem.getUint32(i, true)));
+  }
+  wasm.__externref_drop_slice(ptr, len);
+  return result;
+}
+/**
+ * WASM export for Wilcoxon W test (paired)
+ * @param {Float64Array} x
+ * @param {Float64Array} y
+ * @param {number} alpha
+ * @param {string} alternative
+ * @returns {WilcoxonSignedRankTestResult}
+ */
+export function wilcoxon_w_test(x, y, alpha, alternative) {
+  const ptr0 = passArrayF64ToWasm0(x, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(y, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ptr2 = passStringToWasm0(
+    alternative,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len2 = WASM_VECTOR_LEN;
+  const ret = wasm.wilcoxon_w_test(ptr0, len0, ptr1, len1, alpha, ptr2, len2);
+  return WilcoxonSignedRankTestResult.__wrap(ret);
+}
+
+/**
+ * WASM export for median calculation
+ * @param {Float64Array} data
  * @returns {number}
  */
-export function wasm_test() {
-  const ret = wasm.wasm_test();
-  return ret;
+export function median_wasm(data) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.median_wasm(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return ret[0];
+}
+
+/**
+ * WASM export for unique f64 values
+ * @param {Float64Array} values
+ * @returns {Float64Array}
+ */
+export function unique_f64(values) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.unique_f64(ptr0, len0);
+  var v2 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v2;
+}
+
+/**
+ * WASM export for unique string values
+ * @param {string[]} values
+ * @returns {string[]}
+ */
+export function unique_str(values) {
+  const ptr0 = passArrayJsValueToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.unique_str(ptr0, len0);
+  var v2 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v2;
+}
+
+let cachedInt32ArrayMemory0 = null;
+
+function getInt32ArrayMemory0() {
+  if (
+    cachedInt32ArrayMemory0 === null || cachedInt32ArrayMemory0.byteLength === 0
+  ) {
+    cachedInt32ArrayMemory0 = new Int32Array(wasm.memory.buffer);
+  }
+  return cachedInt32ArrayMemory0;
+}
+
+function getArrayI32FromWasm0(ptr, len) {
+  ptr = ptr >>> 0;
+  return getInt32ArrayMemory0().subarray(ptr / 4, ptr / 4 + len);
+}
+/**
+ * WASM export for unique i32 values
+ * @param {Int32Array} values
+ * @returns {Int32Array}
+ */
+export function unique_i32(values) {
+  const ptr0 = passArray32ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.unique_i32(ptr0, len0);
+  var v2 = getArrayI32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v2;
+}
+
+/**
+ * WASM export: fill `indices` with sorted order (u32).
+ * - `flat_cols`: column-major f64 matrix [n_cols * n_rows]
+ * - `dirs`: i8 (+1 = asc, -1 = desc), length = n_cols
+ * @param {Float64Array} flat_cols
+ * @param {number} n_rows
+ * @param {number} n_cols
+ * @param {Int8Array} dirs
+ * @param {Uint32Array} indices
+ */
+export function arrange_multi_f64_wasm(
+  flat_cols,
+  n_rows,
+  n_cols,
+  dirs,
+  indices,
+) {
+  const ptr0 = passArrayF64ToWasm0(flat_cols, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray8ToWasm0(dirs, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  var ptr2 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
+  var len2 = WASM_VECTOR_LEN;
+  const ret = wasm.arrange_multi_f64_wasm(
+    ptr0,
+    len0,
+    n_rows,
+    n_cols,
+    ptr1,
+    len1,
+    ptr2,
+    len2,
+    indices,
+  );
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0]);
+  }
+}
+
+/**
+ * Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
+ * @param {Float64Array} values
+ * @param {Uint32Array} indices
+ * @param {boolean} ascending
+ */
+export function stable_sort_indices_f64_wasm(values, indices, ascending) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  var ptr1 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
+  var len1 = WASM_VECTOR_LEN;
+  const ret = wasm.stable_sort_indices_f64_wasm(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    indices,
+    ascending,
+  );
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0]);
+  }
+}
+
+/**
+ * Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
+ * @param {Uint32Array} ranks
+ * @param {Uint32Array} indices
+ * @param {boolean} ascending
+ * @param {number} na_code
+ */
+export function stable_sort_indices_u32_wasm(
+  ranks,
+  indices,
+  ascending,
+  na_code,
+) {
+  const ptr0 = passArray32ToWasm0(ranks, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  var ptr1 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
+  var len1 = WASM_VECTOR_LEN;
+  const ret = wasm.stable_sort_indices_u32_wasm(
+    ptr0,
+    len0,
+    ptr1,
+    len1,
+    indices,
+    ascending,
+    na_code,
+  );
+  if (ret[1]) {
+    throw takeFromExternrefTable0(ret[0]);
+  }
+}
+
+/**
+ * Ultra-optimized distinct using direct typed arrays - exactly like test_ultra_optimized_distinct.rs
+ * @param {Uint32Array[]} column_data
+ * @param {Uint32Array} view_index
+ * @returns {Uint32Array}
+ */
+export function distinct_rows_generic_typed(column_data, view_index) {
+  const ptr0 = passArrayJsValueToWasm0(column_data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArray32ToWasm0(view_index, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.distinct_rows_generic_typed(ptr0, len0, ptr1, len1);
+  var v3 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v3;
+}
+
+/**
+ * Get number of groups from grouping operation
+ * @param {Uint32Array} keys_codes
+ * @param {number} n_rows
+ * @param {number} n_key_cols
+ * @returns {number}
+ */
+export function get_group_count(keys_codes, n_rows, n_key_cols) {
+  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.get_group_count(ptr0, len0, n_rows, n_key_cols);
+  return ret >>> 0;
+}
+
+/**
+ * @param {Uint32Array} keys_codes
+ * @param {number} n_rows
+ * @param {number} n_key_cols
+ * @returns {Uint32Array}
+ */
+export function group_ids_codes(keys_codes, n_rows, n_key_cols) {
+  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.group_ids_codes(ptr0, len0, n_rows, n_key_cols);
+  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v2;
+}
+
+/**
+ * Perform grouping in a single pass, returning all necessary data
+ * @param {Uint32Array} keys_codes
+ * @param {number} n_rows
+ * @param {number} n_key_cols
+ * @returns {Grouping}
+ */
+export function group_ids_codes_all(keys_codes, n_rows, n_key_cols) {
+  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.group_ids_codes_all(ptr0, len0, n_rows, n_key_cols);
+  return Grouping.__wrap(ret);
+}
+
+/**
+ * Get group information for a specific group
+ *
+ * Args:
+ * - unique_keys: Unique group keys from group_ids_codes
+ * - n_key_cols: Number of key columns
+ * - group_id: Group ID to get information for
+ *
+ * Returns:
+ * - key_values: The group's key values
+ * @param {Uint32Array} unique_keys
+ * @param {number} n_key_cols
+ * @param {number} group_id
+ * @returns {Uint32Array}
+ */
+export function get_group_info(unique_keys, n_key_cols, group_id) {
+  const ptr0 = passArray32ToWasm0(unique_keys, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.get_group_info(ptr0, len0, n_key_cols, group_id);
+  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v2;
+}
+
+/**
+ * Get unique group keys from grouping operation
+ *
+ * This function needs to be called after group_ids_codes to get the unique keys.
+ * The keys are stored in row-major order (group then columns).
+ * @param {Uint32Array} keys_codes
+ * @param {number} n_rows
+ * @param {number} n_key_cols
+ * @returns {Uint32Array}
+ */
+export function get_unique_group_keys(keys_codes, n_rows, n_key_cols) {
+  const ptr0 = passArray32ToWasm0(keys_codes, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.get_unique_group_keys(ptr0, len0, n_rows, n_key_cols);
+  var v2 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+  return v2;
+}
+
+/**
+ * WASM export for general quantile calculation
+ * Uses R's Type 7 algorithm (default)
+ * @param {Float64Array} data
+ * @param {Float64Array} probs
+ * @returns {Float64Array}
+ */
+export function quantile_wasm(data, probs) {
+  const ptr0 = passArrayF64ToWasm0(data, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayF64ToWasm0(probs, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.quantile_wasm(ptr0, len0, ptr1, len1);
+  if (ret[3]) {
+    throw takeFromExternrefTable0(ret[2]);
+  }
+  var v3 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v3;
+}
+
+/**
+ * @param {Uint32Array[]} left_columns
+ * @param {Uint32Array[]} right_columns
+ * @returns {JoinIdxU32}
+ */
+export function left_join_typed_multi_u32(left_columns, right_columns) {
+  const ptr0 = passArrayJsValueToWasm0(left_columns, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passArrayJsValueToWasm0(right_columns, wasm.__wbindgen_malloc);
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.left_join_typed_multi_u32(ptr0, len0, ptr1, len1);
+  return JoinIdxU32.__wrap(ret);
 }
 
 /**
@@ -5813,21 +5813,21 @@ export class JoinIdxU32 {
     wasm.__wbg_joinidxu32_free(ptr, 0);
   }
   /**
-   * Move out the left indices (no clone)
-   * @returns {Uint32Array}
-   */
-  takeLeft() {
-    const ret = wasm.joinidxu32_takeLeft(this.__wbg_ptr);
-    var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
-    return v1;
-  }
-  /**
    * Move out the right indices (no clone)
    * @returns {Uint32Array}
    */
   takeRight() {
     const ret = wasm.joinidxu32_takeRight(this.__wbg_ptr);
+    var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
+    return v1;
+  }
+  /**
+   * Move out the left indices (no clone)
+   * @returns {Uint32Array}
+   */
+  takeLeft() {
+    const ret = wasm.joinidxu32_takeLeft(this.__wbg_ptr);
     var v1 = getArrayU32FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
     return v1;
@@ -6187,6 +6187,21 @@ export class KolmogorovSmirnovTestResult {
     wasm.__wbg_set_anovatestcomponent_meanSquare(this.__wbg_ptr, arg0);
   }
   /**
+   * @returns {string}
+   */
+  get alternative() {
+    let deferred1_0;
+    let deferred1_1;
+    try {
+      const ret = wasm.kolmogorovsmirnovtestresult_alternative(this.__wbg_ptr);
+      deferred1_0 = ret[0];
+      deferred1_1 = ret[1];
+      return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+    }
+  }
+  /**
    * @returns {TestStatistic}
    */
   get testStatistic() {
@@ -6201,21 +6216,6 @@ export class KolmogorovSmirnovTestResult {
     let deferred1_1;
     try {
       const ret = wasm.kolmogorovsmirnovtestresult_testName(this.__wbg_ptr);
-      deferred1_0 = ret[0];
-      deferred1_1 = ret[1];
-      return getStringFromWasm0(ret[0], ret[1]);
-    } finally {
-      wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
-    }
-  }
-  /**
-   * @returns {string}
-   */
-  get alternative() {
-    let deferred1_0;
-    let deferred1_1;
-    try {
-      const ret = wasm.kolmogorovsmirnovtestresult_alternative(this.__wbg_ptr);
       deferred1_0 = ret[0];
       deferred1_1 = ret[1];
       return getStringFromWasm0(ret[0], ret[1]);
@@ -8269,6 +8269,24 @@ export class PivotDenseF64 {
     wasm.__wbg_pivotdensef64_free(ptr, 0);
   }
   /**
+   * @returns {Float64Array}
+   */
+  takeValues() {
+    const ret = wasm.pivotdensef64_takeValues(this.__wbg_ptr);
+    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+    return v1;
+  }
+  /**
+   * @returns {Uint8Array}
+   */
+  takeSeen() {
+    const ret = wasm.pivotdensef64_takeSeen(this.__wbg_ptr);
+    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
+    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
+    return v1;
+  }
+  /**
    * @returns {number}
    */
   get n_groups() {
@@ -8293,24 +8311,6 @@ export class PivotDenseF64 {
    */
   set n_cats(arg0) {
     wasm.__wbg_set_grouping_n_key_cols(this.__wbg_ptr, arg0);
-  }
-  /**
-   * @returns {Float64Array}
-   */
-  takeValues() {
-    const ret = wasm.pivotdensef64_takeValues(this.__wbg_ptr);
-    var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
-    return v1;
-  }
-  /**
-   * @returns {Uint8Array}
-   */
-  takeSeen() {
-    const ret = wasm.pivotdensef64_takeSeen(this.__wbg_ptr);
-    var v1 = getArrayU8FromWasm0(ret[0], ret[1]).slice();
-    wasm.__wbindgen_free(ret[0], ret[1] * 1, 1);
-    return v1;
   }
 }
 
@@ -8344,32 +8344,6 @@ export class PivotLongerResult {
     wasm.__wbg_pivotlongerresult_free(ptr, 0);
   }
   /**
-   * @returns {number}
-   */
-  get n_rows() {
-    const ret = wasm.__wbg_get_pivotlongerresult_n_rows(this.__wbg_ptr);
-    return ret >>> 0;
-  }
-  /**
-   * @param {number} arg0
-   */
-  set n_rows(arg0) {
-    wasm.__wbg_set_pivotlongerresult_n_rows(this.__wbg_ptr, arg0);
-  }
-  /**
-   * @returns {number}
-   */
-  get n_keep_cols() {
-    const ret = wasm.__wbg_get_pivotlongerresult_n_keep_cols(this.__wbg_ptr);
-    return ret >>> 0;
-  }
-  /**
-   * @param {number} arg0
-   */
-  set n_keep_cols(arg0) {
-    wasm.__wbg_set_pivotlongerresult_n_keep_cols(this.__wbg_ptr, arg0);
-  }
-  /**
    * @returns {Uint32Array}
    */
   takeKeepData() {
@@ -8395,6 +8369,32 @@ export class PivotLongerResult {
     var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
     wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
     return v1;
+  }
+  /**
+   * @returns {number}
+   */
+  get n_rows() {
+    const ret = wasm.__wbg_get_pivotlongerresult_n_rows(this.__wbg_ptr);
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set n_rows(arg0) {
+    wasm.__wbg_set_pivotlongerresult_n_rows(this.__wbg_ptr, arg0);
+  }
+  /**
+   * @returns {number}
+   */
+  get n_keep_cols() {
+    const ret = wasm.__wbg_get_pivotlongerresult_n_keep_cols(this.__wbg_ptr);
+    return ret >>> 0;
+  }
+  /**
+   * @param {number} arg0
+   */
+  set n_keep_cols(arg0) {
+    wasm.__wbg_set_pivotlongerresult_n_keep_cols(this.__wbg_ptr, arg0);
   }
 }
 

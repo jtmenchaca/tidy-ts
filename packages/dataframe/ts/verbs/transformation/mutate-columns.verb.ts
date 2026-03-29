@@ -11,6 +11,7 @@ import {
   materializeIndex,
   withGroups,
 } from "../../dataframe/index.ts";
+import { RowView } from "../verb-helpers.ts";
 
 /**
  * Conditional type to map colType to the correct value type.
@@ -264,24 +265,6 @@ export function mutate_columns<
       (outDf as any).__store = newStore;
       (outDf as any).__view = {}; // reset view
 
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of this.names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
       (outDf as any).__rowView = new RowView(newColumns, newColumnNames);
 
       const groupedDf = df as GroupedDataFrame<Row>;

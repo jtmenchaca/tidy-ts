@@ -1,7 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
-import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
+import { collectGroupIndices } from "../verb-helpers.ts";
 import type {
   AggregationFunction,
   DownsampleArgs,
@@ -17,7 +17,7 @@ import {
   isWallClockTemporalWithoutCalendar,
   parseFrequencyForCalendar,
   toEpochMs,
-} from "../../stats/helpers.ts";
+} from "../../stats/temporal-helpers.ts";
 import {
   generateCalendarBuckets,
   getCalendarBucket,
@@ -61,19 +61,15 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
     // Process each group separately
     for (let g = 0; g < size; g++) {
-      // Collect rows for this group, filtering by mask
+      const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
       const groupRows: T[] = [];
-      let rowIdx = head[g];
-      while (rowIdx !== -1) {
-        if (!mask || bitsetGet(mask, rowIdx)) {
-          const physIdx = baseIndex ? baseIndex[rowIdx] : rowIdx;
-          const row: any = {};
-          for (const colName of store.columnNames) {
-            row[colName] = store.columns[colName][physIdx];
-          }
-          groupRows.push(row);
+      for (const idx of groupIndices) {
+        const physIdx = baseIndex ? baseIndex[idx] : idx;
+        const row: any = {};
+        for (const colName of store.columnNames) {
+          row[colName] = store.columns[colName][physIdx];
         }
-        rowIdx = next[rowIdx];
+        groupRows.push(row);
       }
 
       if (groupRows.length === 0) continue;

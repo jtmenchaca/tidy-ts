@@ -8,8 +8,8 @@ import {
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
-import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+import { collectGroupIndices } from "../verb-helpers.ts";
 import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
 
 // API: require at least one column (SQL-like DISTINCT)
@@ -41,16 +41,7 @@ export function distinct<Row extends object>(
         const { head, next, size } = groupedDf.__groups;
 
         for (let g = 0; g < size; g++) {
-          // Collect physical indices for this group, filtering by mask if present
-          const groupIndices: number[] = [];
-          let rowIdx = head[g];
-          while (rowIdx !== -1) {
-            // Only include this row if it passes the mask (or if there's no mask)
-            if (!mask || bitsetGet(mask, rowIdx)) {
-              groupIndices.push(rowIdx);
-            }
-            rowIdx = next[rowIdx];
-          }
+          const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
           // Run distinct on this group
           const typedArrays = convertToTypedArrays(store.columns, keyCols);

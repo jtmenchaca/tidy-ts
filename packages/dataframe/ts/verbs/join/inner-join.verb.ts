@@ -3,7 +3,6 @@ import {
   createColumnarDataFrameFromStore,
   type DataFrame,
   type GroupedDataFrame,
-  materializeIndex,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
@@ -15,56 +14,7 @@ import type {
   ObjectJoinOptions,
   SuffixAwareInnerJoinResult,
 } from "./types/index.ts";
-
-// Simple helper to get store and index from DataFrame
-function getStoreAndIndex<Row extends Record<string, unknown>>(
-  df: DataFrame<Row>,
-) {
-  const anyDf = df as any;
-  const store = anyDf.__store;
-  const view = anyDf.__view;
-  const index = materializeIndex(store.length, view);
-  return { store, index };
-}
-
-// Simple helper to parse join arguments
-function parseJoinKeys(
-  byOrOptions: any,
-  options?: any,
-): {
-  leftKeys: string[];
-  rightKeys: string[];
-  suffixes: { left?: string; right?: string };
-} {
-  // Handle object API: { keys: ["id"], suffixes: {...} }
-  if (
-    byOrOptions && typeof byOrOptions === "object" &&
-    !Array.isArray(byOrOptions) && "keys" in byOrOptions
-  ) {
-    const opts = byOrOptions;
-    if (Array.isArray(opts.keys)) {
-      const keys = opts.keys.map(String);
-      return { leftKeys: keys, rightKeys: keys, suffixes: opts.suffixes || {} };
-    } else {
-      const mapping = opts.keys;
-      return {
-        leftKeys: Array.isArray(mapping.left)
-          ? mapping.left.map(String)
-          : [String(mapping.left)],
-        rightKeys: Array.isArray(mapping.right)
-          ? mapping.right.map(String)
-          : [String(mapping.right)],
-        suffixes: opts.suffixes || {},
-      };
-    }
-  }
-
-  // Handle simple API: by keys, options
-  const keys = Array.isArray(byOrOptions)
-    ? byOrOptions.map(String)
-    : [String(byOrOptions)];
-  return { leftKeys: keys, rightKeys: keys, suffixes: options?.suffixes || {} };
-}
+import { getStoreAndIndex, parseJoinArgs } from "./join-helpers.ts";
 
 // Simple helper to build result columns
 function buildJoinResult(
@@ -188,7 +138,7 @@ export function inner_join<
       }
 
       // Parse arguments
-      const { leftKeys, rightKeys, suffixes } = parseJoinKeys(
+      const { leftKeys, rightKeys, suffixes } = parseJoinArgs(
         byOrOptions,
         options,
       );

@@ -18,3 +18,4 @@ pub mod extensions;
 pub mod helpers;
 pub mod regression;
 pub mod statistical_tests;
+pub mod survival;

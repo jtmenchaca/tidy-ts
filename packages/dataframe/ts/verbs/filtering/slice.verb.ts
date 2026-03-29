@@ -1,14 +1,12 @@
 // deno-lint-ignore-file no-explicit-any
 import {
-  createColumnarDataFrameFromStore,
   createDataFrame,
   materializeIndex,
   withGroupsRebuilt,
   withIndex,
 } from "../../dataframe/index.ts";
-import { isComparable } from "../../stats/helpers.ts";
-import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import { createRandomInt, sampleArray } from "../utility/seedable-random.ts";
+import { buildDataFrameFromIndices, collectGroupIndices, compareValues } from "../verb-helpers.ts";
 
 /**
  * Select rows by range (0-based indexing, like JavaScript's Array.slice).
@@ -59,16 +57,7 @@ export function slice(
 
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         const n = groupIndices.length;
         const s = Math.max(0, start < 0 ? n + start : start);
@@ -147,16 +136,7 @@ export function slice_indices(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Apply slice indices to this group
         for (const idx of indices) {
@@ -197,49 +177,7 @@ export function slice_indices(
         return createDataFrame([]);
       }
 
-      // Create new store from selected physical indices
-      const newStore: any = {
-        columns: {},
-        length: validPhysicalIndices.length,
-        columnNames: [...store.columnNames],
-      };
-
-      for (const colName of store.columnNames) {
-        const sourceCol = store.columns[colName];
-        const newCol = new Array(validPhysicalIndices.length);
-        for (let i = 0; i < validPhysicalIndices.length; i++) {
-          newCol[i] = sourceCol[validPhysicalIndices[i]];
-        }
-        newStore.columns[colName] = newCol;
-      }
-
-      const out = createColumnarDataFrameFromStore(newStore);
-      (out as any).__view = {}; // reset view
-
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
-      (out as any).__rowView = new RowView(
-        newStore.columns,
-        newStore.columnNames,
-      );
-
-      return out;
+      return buildDataFrameFromIndices(store, validPhysicalIndices);
     }
   };
 }
@@ -285,16 +223,7 @@ export function slice_head(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Take first n rows from this group
         const takeCount = Math.min(n, groupIndices.length);
@@ -377,16 +306,7 @@ export function slice_tail(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Take last n rows from this group
         for (
@@ -474,16 +394,7 @@ export function slice_min(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Build rows from indices and sort
         const groupData = groupIndices.map((i: number) => {
@@ -494,23 +405,9 @@ export function slice_min(
           return row;
         });
 
-        const sorted = [...groupData].sort((a, b) => {
-          const aVal = a[column];
-          const bVal = b[column];
-          if (aVal == null && bVal == null) return 0;
-          if (aVal == null) return 1;
-          if (bVal == null) return -1;
-          if (typeof aVal === "number" && typeof bVal === "number") {
-            return aVal - bVal;
-          }
-          if (aVal instanceof Date && bVal instanceof Date) {
-            return aVal.getTime() - bVal.getTime();
-          }
-          if (isComparable(aVal) && isComparable(bVal)) {
-            return aVal.constructor.compare(aVal, bVal);
-          }
-          return String(aVal).localeCompare(String(bVal));
-        });
+        const sorted = [...groupData].sort((a, b) =>
+          compareValues(a[column], b[column])
+        );
         for (let i = 0; i < Math.min(n, sorted.length); ++i) {
           rebuilt.push(sorted[i]);
         }
@@ -537,23 +434,7 @@ export function slice_min(
 
       // Sort physical indices by their column values
       const sortableIndices = Array.from(idx);
-      sortableIndices.sort((a, b) => {
-        const aVal = sortColumn[a];
-        const bVal = sortColumn[b];
-        if (aVal == null && bVal == null) return 0;
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return aVal - bVal;
-        }
-        if (aVal instanceof Date && bVal instanceof Date) {
-          return aVal.getTime() - bVal.getTime();
-        }
-        if (isComparable(aVal) && isComparable(bVal)) {
-          return aVal.constructor.compare(aVal, bVal);
-        }
-        return String(aVal).localeCompare(String(bVal));
-      });
+      sortableIndices.sort((a, b) => compareValues(sortColumn[a], sortColumn[b]));
 
       // Take first n sorted physical indices
       const selectedIndices = sortableIndices.slice(0, n);
@@ -566,48 +447,7 @@ export function slice_min(
         });
       }
 
-      const newStore: any = {
-        columns: {},
-        length: selectedIndices.length,
-        columnNames: [...store.columnNames],
-      };
-
-      for (const colName of store.columnNames) {
-        const sourceCol = store.columns[colName];
-        const newCol = new Array(selectedIndices.length);
-        for (let i = 0; i < selectedIndices.length; i++) {
-          newCol[i] = sourceCol[selectedIndices[i]];
-        }
-        newStore.columns[colName] = newCol;
-      }
-
-      const out = createColumnarDataFrameFromStore(newStore);
-      (out as any).__view = {}; // reset view
-
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
-      (out as any).__rowView = new RowView(
-        newStore.columns,
-        newStore.columnNames,
-      );
-
-      return out;
+      return buildDataFrameFromIndices(store, selectedIndices);
     }
   };
 }
@@ -656,16 +496,7 @@ export function slice_max(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
@@ -676,43 +507,12 @@ export function slice_max(
           return row;
         });
 
-        // Separate defined and undefined values
-        const definedData = groupData.filter((row) => row[column] != null);
-        const undefinedData = groupData.filter((row) => row[column] == null);
-
-        // Sort defined values in descending order for sliceMax
-        const sortedDefined = [...definedData].sort((a, b) => {
-          const aVal = a[column];
-          const bVal = b[column];
-          if (typeof aVal === "number" && typeof bVal === "number") {
-            return bVal - aVal;
-          }
-          if (aVal instanceof Date && bVal instanceof Date) {
-            return bVal.getTime() - aVal.getTime();
-          }
-          if (isComparable(aVal) && isComparable(bVal)) {
-            return aVal.constructor.compare(bVal, aVal);
-          }
-          return String(bVal).localeCompare(String(aVal));
-        });
-
-        // Take first n from defined values, then undefined if needed
-        const toTake = Math.min(n, groupData.length);
-        let taken = 0;
-
-        // First, take from sorted defined values
-        for (let i = 0; i < Math.min(toTake, sortedDefined.length); i++) {
-          rebuilt.push(sortedDefined[i]);
-          taken++;
-        }
-
-        // If we need more and have undefined values, take those
-        for (
-          let i = 0;
-          i < Math.min(toTake - taken, undefinedData.length);
-          i++
-        ) {
-          rebuilt.push(undefinedData[i]);
+        // Sort descending (nulls go to end via compareValues)
+        const sorted = [...groupData].sort((a, b) =>
+          compareValues(a[column], b[column], "desc")
+        );
+        for (let i = 0; i < Math.min(n, sorted.length); ++i) {
+          rebuilt.push(sorted[i]);
         }
       }
       const out = rebuilt.length > 0
@@ -737,23 +537,9 @@ export function slice_max(
 
       // Sort physical indices by their column values (descending for max)
       const sortableIndices = Array.from(idx);
-      sortableIndices.sort((a, b) => {
-        const aVal = sortColumn[a];
-        const bVal = sortColumn[b];
-        if (aVal == null && bVal == null) return 0;
-        if (aVal == null) return 1;
-        if (bVal == null) return -1;
-        if (typeof aVal === "number" && typeof bVal === "number") {
-          return bVal - aVal;
-        }
-        if (aVal instanceof Date && bVal instanceof Date) {
-          return bVal.getTime() - aVal.getTime();
-        }
-        if (isComparable(aVal) && isComparable(bVal)) {
-          return aVal.constructor.compare(bVal, aVal);
-        }
-        return String(bVal).localeCompare(String(aVal));
-      });
+      sortableIndices.sort((a, b) =>
+        compareValues(sortColumn[a], sortColumn[b], "desc")
+      );
 
       // Take first n sorted physical indices
       const selectedIndices = sortableIndices.slice(0, n);
@@ -766,48 +552,7 @@ export function slice_max(
         });
       }
 
-      const newStore: any = {
-        columns: {},
-        length: selectedIndices.length,
-        columnNames: [...store.columnNames],
-      };
-
-      for (const colName of store.columnNames) {
-        const sourceCol = store.columns[colName];
-        const newCol = new Array(selectedIndices.length);
-        for (let i = 0; i < selectedIndices.length; i++) {
-          newCol[i] = sourceCol[selectedIndices[i]];
-        }
-        newStore.columns[colName] = newCol;
-      }
-
-      const out = createColumnarDataFrameFromStore(newStore);
-      (out as any).__view = {}; // reset view
-
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
-      (out as any).__rowView = new RowView(
-        newStore.columns,
-        newStore.columnNames,
-      );
-
-      return out;
+      return buildDataFrameFromIndices(store, selectedIndices);
     }
   };
 }
@@ -856,16 +601,7 @@ export function slice_sample(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          // Only include this row if it passes the mask (or if there's no mask)
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
-        // Adjacency list now maintains original order (no reversal needed)
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
@@ -925,48 +661,7 @@ export function slice_sample(
         });
       }
 
-      const newStore: any = {
-        columns: {},
-        length: selectedIndices.length,
-        columnNames: [...store.columnNames],
-      };
-
-      for (const colName of store.columnNames) {
-        const sourceCol = store.columns[colName];
-        const newCol = new Array(selectedIndices.length);
-        for (let i = 0; i < selectedIndices.length; i++) {
-          newCol[i] = sourceCol[selectedIndices[i]];
-        }
-        newStore.columns[colName] = newCol;
-      }
-
-      const out = createColumnarDataFrameFromStore(newStore);
-      (out as any).__view = {}; // reset view
-
-      // reconstruct a rowView
-      class RowView {
-        private _i = 0;
-        constructor(
-          private cols: Record<string, unknown[]>,
-          private names: (string | symbol)[],
-        ) {
-          for (const name of names) {
-            Object.defineProperty(this, name, {
-              get: () => this.cols[name as string][this._i],
-              enumerable: true,
-            });
-          }
-        }
-        setCursor(i: number) {
-          this._i = i;
-        }
-      }
-      (out as any).__rowView = new RowView(
-        newStore.columns,
-        newStore.columnNames,
-      );
-
-      return out;
+      return buildDataFrameFromIndices(store, selectedIndices);
     }
   };
 }

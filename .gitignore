@@ -51,6 +51,7 @@ z-other/
 vendor/
 sources/
 z-proposal/
+survival-ref/ 
 
 # Browser bundle (generated, ~5MB with inlined WASM)
 packages/testing/runtimes/public/tidy-ts-bundle.js

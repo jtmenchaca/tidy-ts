@@ -1,6 +1,6 @@
 import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
-import { isComparable } from "../../stats/helpers.ts";
+import { compareValues } from "../verb-helpers.ts";
 
 /**
  * Extract the nth value from one column after sorting by another column.
@@ -63,29 +63,9 @@ export function extract_nth_where_sorted<
 
     // Sort physical indices by their column values based on direction
     const sortableIndices = Array.from(idx);
-    sortableIndices.sort((a, b) => {
-      const aVal = sortColumn[a as number];
-      const bVal = sortColumn[b as number];
-      if (aVal == null && bVal == null) return 0;
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        return direction === "desc" ? bVal - aVal : aVal - bVal;
-      }
-      if (aVal instanceof Date && bVal instanceof Date) {
-        return direction === "desc"
-          ? bVal.getTime() - aVal.getTime()
-          : aVal.getTime() - bVal.getTime();
-      }
-      if (isComparable(aVal) && isComparable(bVal)) {
-        return direction === "desc"
-          ? aVal.constructor.compare(bVal, aVal)
-          : aVal.constructor.compare(aVal, bVal);
-      }
-      return direction === "desc"
-        ? String(bVal).localeCompare(String(aVal))
-        : String(aVal).localeCompare(String(bVal));
-    });
+    sortableIndices.sort((a, b) =>
+      compareValues(sortColumn[a as number], sortColumn[b as number], direction)
+    );
 
     // Take the row at the requested rank
     const targetIndex = sortableIndices[rank - 1];

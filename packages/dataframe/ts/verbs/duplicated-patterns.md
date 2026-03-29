@@ -524,29 +524,37 @@ Clean extraction into `extractDatePart(col, extractor)` where extractor is `(d: 
 
 ## Summary
 
-| # | Pattern | True duplication? | Extractable? | Priority |
-|---|---------|-------------------|-------------|----------|
-| 1 | Group adjacency list iteration | Yes (Variant A: 8 identical instances) | Yes, with parameters for variants | High |
-| 2 | Empty DataFrame with schema | Partial (2 distinct approaches) | Yes for Approach A (slice/distinct) | High |
-| 3 | Row from columnar store | Partial (3 files truly share it) | Yes for slice/distinct/append | Medium |
-| 4 | Store rebuild from indices | Yes for Variant A (slice/drop) | Yes — move `copyDataFrameColumns` to shared | High |
-| 5 | RowView cursor class | Yes (5 identical definitions) | Yes — cleanest candidate | High |
-| 6 | parseJoinKeys / hash map | Yes (parseJoinKeys); partial (hash map) | Yes for parseJoinKeys; careful for hash map | High |
-| 7 | Group-aware branching | No — 4 distinct strategies | No — not a real duplication | Low |
-| 8 | Null-safe comparator | Partial (inconsistent null handling) | Yes — unify into direction-parameterized | Medium |
-| 9 | Float64 coercion | Yes (functionally identical) | Yes but low impact (2 sites) | Low |
-| 10 | Date part extraction | Yes (identical except 1 method call) | Yes — zero risk | Low |
+| # | Pattern | Status | Extracted to |
+|---|---------|--------|-------------|
+| 1 | Group adjacency list iteration | **EXTRACTED** | `verb-helpers.ts → collectGroupIndices()` |
+| 2 | Empty DataFrame with schema | Remaining (low priority) | — |
+| 3 | Row from columnar store | Remaining (low priority) | — |
+| 4 | Store rebuild from indices | **EXTRACTED** | `verb-helpers.ts → buildDataFrameFromIndices()` |
+| 5 | RowView cursor class | **EXTRACTED** | `verb-helpers.ts → class RowView` |
+| 6 | parseJoinKeys | **EXTRACTED** | 3 local copies deleted, now import `parseJoinArgs` from `join-helpers.ts` |
+| 7 | Group-aware branching | N/A — not duplicated | — |
+| 8 | Null-safe comparator | **EXTRACTED** | `verb-helpers.ts → compareValues()` |
+| 9 | Float64 coercion | Remaining (low priority) | — |
+| 10 | Date part extraction | Remaining (low priority) | — |
 
-### Recommended extraction order
+### Shared helpers in `verb-helpers.ts`
 
-1. **Pattern 5 (RowView)** — zero-risk, 5 identical definitions
-2. **Pattern 4 (store rebuild)** — move existing `copyDataFrameColumns` to shared location
-3. **Pattern 1 (group iteration)** — parameterized helper covers 8+ identical instances
-4. **Pattern 6 (parseJoinKeys)** — delete 3 local copies, use existing shared helper
-5. **Pattern 8 (comparator)** — unify into direction-parameterized version
-6. **Pattern 2 (empty DataFrame)** — shared helper for the slice/distinct case
-7. **Pattern 10 (date extraction)** — simple internal refactor
-8. **Pattern 3 (row construction)** — medium value, 3 true sites
-9. **Pattern 9 (f64 coercion)** — low value, 2 sites
+| Helper | Replaces | Used by |
+|--------|----------|---------|
+| `class RowView` | 8 local class definitions | slice, drop, mutate-columns, mutate-helpers-sync, mutate-group |
+| `collectGroupIndices()` | 10 inline adjacency-list loops | slice (7), distinct, shuffle, summarise-columns, downsample, upsample |
+| `buildDataFrameFromIndices()` | 4 store-rebuild blocks | slice (4) |
+| `compareValues()` | 4 inline comparator functions | slice_min (2), slice_max (2), extract-nth-where-sorted |
 
-**Deprioritized:** Pattern 7 (group branching) — not actually duplicated, 4 distinct strategies serving different semantic purposes.
+### Also cleaned up
+
+- 3 local `parseJoinKeys` copies deleted from `inner-join.verb.ts`, `left-join.verb.ts`, `left-join-parallel.verb.ts` — now import `parseJoinArgs` from `join-helpers.ts`
+- 3 local `getStoreAndIndex` copies deleted from same files — now import from `join-helpers.ts`
+- `mutate-shared-helpers.ts` deleted (was a single re-export wrapper)
+
+### Remaining (low priority)
+
+- **Pattern 2 (empty DataFrame)** — only 2 approaches, low dedup value
+- **Pattern 3 (row construction)** — 3 true sites, medium value
+- **Pattern 9 (f64 coercion)** — 2 sites, low value
+- **Pattern 10 (date extraction)** — 1 file, internal refactor only

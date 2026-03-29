@@ -7,7 +7,7 @@ import {
 } from "../../../dataframe/index.ts";
 import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
 import type { MutateAssignments } from "./mutate.types.ts";
-import { RowView } from "./mutate-shared-helpers.ts";
+import { RowView } from "../../verb-helpers.ts";
 
 /* =================================================================================
    Synchronous helper functions for mutate operations
@@ -53,11 +53,13 @@ export function createUpdatedDataFrame<Row extends Record<string, unknown>>(
     (out as any).__rowView = new RowView(
       nextStore.columns,
       nextStore.columnNames,
+      true,
     );
   }, { columnCount: nextStore.columnNames.length }) ?? (() => {
     (out as any).__rowView = new RowView(
       nextStore.columns,
       nextStore.columnNames,
+      true,
     );
   })();
 

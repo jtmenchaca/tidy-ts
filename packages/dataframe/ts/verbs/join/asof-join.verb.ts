@@ -13,14 +13,14 @@ import {
 } from "./join-helpers.ts";
 import { withGroupsRebuilt } from "../../dataframe/index.ts";
 import type { StoreAndIndex } from "./types/index.ts";
+import { isComparable } from "../../stats/helpers.ts";
 import {
   calendarTemporalDistance,
   hasEpochMilliseconds,
   isCalendarTemporal,
-  isComparable,
   isWallClockTemporalWithoutCalendar,
   temporalToEpochMs,
-} from "../../stats/helpers.ts";
+} from "../../stats/temporal-helpers.ts";
 
 function projectColumn(
   store: ColumnarStore,
@@ -60,7 +60,7 @@ function ensureOrderable(
 function toScalar(
   x: unknown,
   kind: "number" | "date" | "bigint" | "temporal" | "calendar_temporal",
-  calendarRef?: import("../../stats/helpers.ts").CalendarTemporal,
+  calendarRef?: import("../../stats/temporal-helpers.ts").CalendarTemporal,
 ): number | bigint {
   if (kind === "number") return (x as number) ?? Number.NaN;
   if (kind === "bigint") {
@@ -68,7 +68,7 @@ function toScalar(
   }
   if (kind === "temporal") return temporalToEpochMs(x);
   if (kind === "calendar_temporal") {
-    const ct = x as import("../../stats/helpers.ts").CalendarTemporal;
+    const ct = x as import("../../stats/temporal-helpers.ts").CalendarTemporal;
     if (!calendarRef) return 0;
     return calendarTemporalDistance(calendarRef, ct, "days");
   }
@@ -247,7 +247,7 @@ export function asof_join<
       ? (lKeyRaw.find((v) => v != null) ??
         rKeyRaw.find((v) =>
           v != null
-        )) as import("../../stats/helpers.ts").CalendarTemporal
+        )) as import("../../stats/temporal-helpers.ts").CalendarTemporal
       : undefined;
 
     const kL = new Array<number | bigint>(lKeyRaw.length);

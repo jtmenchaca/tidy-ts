@@ -5,8 +5,8 @@ import type {
   Prettify,
 } from "../../dataframe/index.ts";
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
-import { bitsetGet } from "../../dataframe/implementation/columnar-view.ts";
 import type { ColumnTypeMap } from "./summarise-columns.types.ts";
+import { collectGroupIndices } from "../verb-helpers.ts";
 
 /**
  * Type for summarise_columns specification with better type safety.
@@ -212,15 +212,7 @@ export function summarise_columns<
       };
 
       for (let g = 0; g < size; g++) {
-        // Collect physical indices for this group, filtering by mask
-        const groupIndices: number[] = [];
-        let rowIdx = head[g];
-        while (rowIdx !== -1) {
-          if (!mask || bitsetGet(mask, rowIdx)) {
-            groupIndices.push(rowIdx);
-          }
-          rowIdx = next[rowIdx];
-        }
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
         if (groupIndices.length === 0) continue;
 
