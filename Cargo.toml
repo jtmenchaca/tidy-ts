@@ -18,10 +18,10 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # `wasm-bindgen` only when you compile for wasm
-wasm-bindgen = { version = "=0.2.100", optional = true }
-js-sys = { version = "=0.3", optional = true }
-web-sys = { version = "=0.3.77", optional = true, features = ["console"] }
-# serde-wasm-bindgen = { version = "0.6", optional = true }  # Not used in current code
+wasm-bindgen = { version = "=0.2.106", optional = true }
+js-sys = { version = "=0.3.83", optional = true }
+web-sys = { version = "=0.3.83", optional = true, features = ["console"] }
+serde-wasm-bindgen = { version = "0.6", optional = true }
 
 # Pure Rust linear algebra dependencies (works for both native and WASM)
 faer = "0.22.0"
@@ -29,7 +29,8 @@ faer = "0.22.0"
 # faer-qr = "0.7.0"
 # statrs = "0.17.1"
 serde = { version = "1.0.219", features = ["derive"] }  # Used in stats module
-serde_json = "1.0"  # Used for JSON parsing in WASM bindings
+serde_json = { version = "1.0", features = ["preserve_order"] }  # preserve_order keeps JSON key insertion order
+indexmap = { version = "2", features = ["serde"] }  # Order-preserving map for covariate key order
 rand = "0.8.5"
 statrs = "0.17.1"
 getrandom = { version = "0.2", features = ["js"] }
@@ -50,7 +51,7 @@ hashbrown = "0.14.0"
 # nalgebra = { version = "0.33", default-features = false, features = ["alloc"] }
 
 [features]
-wasm = ["wasm-bindgen", "js-sys", "web-sys"]
+wasm = ["wasm-bindgen", "js-sys", "web-sys", "serde-wasm-bindgen"]
 default = []
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]

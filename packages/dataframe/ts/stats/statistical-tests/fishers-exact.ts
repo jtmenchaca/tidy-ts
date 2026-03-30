@@ -1,8 +1,7 @@
 import {
   fishers_exact_test_wasm,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { FishersExactTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { FishersExactTestResult } from "./types.ts";
 
 /**
  * Fisher's exact test for 2x2 contingency tables.
@@ -49,5 +48,5 @@ export function fishersExactTest({
     oddsRatio,
     alpha,
   );
-  return serializeTestResult(result) as FishersExactTestResult;
+  return result as FishersExactTestResult;
 }

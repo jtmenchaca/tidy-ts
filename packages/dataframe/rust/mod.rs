@@ -9,12 +9,12 @@
 //!
 //! All operations are optimized for WebAssembly and provide TypeScript/JavaScript bindings.
 
-// Keep old structure available for reference (temporarily disabled due to import issues)
-// pub mod old;
-
 // Shared types for WASM exports
 #[path = "dataframe/shared-types.wasm.rs"]
 pub mod shared_types;
+
+#[path = "dataframe/quantile-core.wasm.rs"]
+pub(crate) mod quantile_core;
 
 // Core join helper functions (used by join modules)
 #[path = "dataframe/join-helpers.wasm.rs"]
@@ -65,6 +65,7 @@ pub mod unique;
 pub mod stats;
 
 // Re-export shared types
+#[cfg(feature = "wasm")]
 pub use shared_types::*;
 
 // Re-export WASM functions (only when wasm feature is enabled)

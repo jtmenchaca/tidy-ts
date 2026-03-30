@@ -1,8 +1,7 @@
 import {
   dagostino_pearson_test,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { DAgostinoPearsonTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { DAgostinoPearsonTestResult } from "./types.ts";
 
 /**
  * Test for normality using D'Agostino-Pearson K² test
@@ -62,5 +61,5 @@ export function dagostinoPearsonTest({
     new Float64Array(cleanData),
     alpha,
   );
-  return serializeTestResult(result) as DAgostinoPearsonTestResult;
+  return result as DAgostinoPearsonTestResult;
 }

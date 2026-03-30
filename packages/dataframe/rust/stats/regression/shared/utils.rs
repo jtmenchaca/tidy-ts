@@ -129,7 +129,6 @@ pub struct ModelSummary {
     pub null_deviance: f64,
     pub n_obs: usize,
 }
-
 /// Print model summary
 pub fn print_summary<T: Model>(model: &T) {
     let summary = model_summary(model);

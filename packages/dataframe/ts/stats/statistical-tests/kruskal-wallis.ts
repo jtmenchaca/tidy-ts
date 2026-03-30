@@ -5,10 +5,9 @@
 
 import {
   kruskal_wallis_test_wasm,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
-export type { KruskalWallisTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { KruskalWallisTestResult } from "./types.ts";
+export type { KruskalWallisTestResult } from "./types.ts";
 
 /**
  * Perform Kruskal-Wallis test using Rust WASM implementation
@@ -55,7 +54,7 @@ export function kruskalWallisTest(
     new Uint32Array(groupSizes),
     alpha,
   );
-  return serializeTestResult(result) as KruskalWallisTestResult;
+  return result as KruskalWallisTestResult;
 }
 
 /**

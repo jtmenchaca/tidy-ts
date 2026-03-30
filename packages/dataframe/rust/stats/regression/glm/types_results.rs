@@ -10,6 +10,7 @@ use super::types_control::GlmControl;
 
 /// A design matrix for statistical modeling
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ModelMatrix {
     /// The design matrix (column-major order, n_rows x n_cols)
     pub matrix: Vec<f64>,
@@ -30,6 +31,7 @@ pub struct ModelMatrix {
 /// This struct contains all 50 components from R's GLM output plus additional
 /// derived statistics and diagnostic measures for complete GLM functionality.
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmResult {
     // Core Components (1-7) - Direct R GLM components
     /// Fitted coefficients (1. coefficients)
@@ -516,6 +518,7 @@ impl GlmResult {
 
 /// QR decomposition result - matches R's QR structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct QrDecomposition {
     /// QR matrix (8x2 matrix for n_obs x n_params)
     pub qr: Vec<Vec<f64>>,
@@ -531,6 +534,7 @@ pub struct QrDecomposition {
 
 /// GLM family information - simplified structure for serialization
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmFamilyInfo {
     /// Family name (e.g., "gaussian", "binomial")
     pub family: String,
@@ -587,6 +591,7 @@ impl GlmFamilyInfo {
 
 /// Model frame structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ModelFrame {
     /// Response variable values
     pub y: Vec<f64>,
@@ -598,6 +603,7 @@ pub struct ModelFrame {
 
 /// Terms object structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TermsObject {
     /// Variable names
     pub variables: Vec<String>,
@@ -617,6 +623,7 @@ pub struct TermsObject {
 
 /// GLM summary result - comprehensive summary matching R's summary.glm
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmSummary {
     /// Call information
     pub call: String,
@@ -666,6 +673,7 @@ pub struct GlmSummary {
 
 /// Information about a coefficient
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CoefficientInfo {
     /// Coefficient name
     pub name: String,

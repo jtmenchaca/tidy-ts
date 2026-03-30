@@ -7,6 +7,7 @@ use std::collections::HashMap;
 
 /// GLM control parameters
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmControl {
     /// Convergence tolerance for the IRLS algorithm
     pub epsilon: f64,
@@ -55,6 +56,7 @@ impl GlmControl {
 
 /// GLM fit options
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmOptions {
     /// Whether to include the model frame in the result
     pub model: bool,

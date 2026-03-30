@@ -116,7 +116,6 @@ Deno.test("transpose - comprehensive functionality test", () => {
   console.log("Empty dataframe:");
   // emptyData.print(); // Skip print for empty dataframe
 
-  // @ts-expect-error - empty dataframe
   const emptyTransposed = emptyData.transpose({ numberOfRows: 0 });
   console.log("Transposed empty dataframe:");
   // emptyTransposed.print(); // Skip print for empty dataframe

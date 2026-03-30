@@ -322,7 +322,7 @@ pub fn zph1(
 ///
 /// `Zph1Result` containing u, imat, schoen, used (same struct as zph1).
 #[allow(clippy::too_many_arguments)]
-pub fn zph2(
+pub(crate) fn zph2(
     gt: &[f64],
     start: &[f64],
     tstop: &[f64],

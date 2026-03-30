@@ -1,10 +1,9 @@
 import {
   pearson_correlation_test,
-  serializeTestResult,
 } from "../../../wasm/statistical-tests.ts";
 import type {
   PearsonCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.js";
+} from "../types.ts";
 
 /**
  * Pearson correlation test
@@ -42,5 +41,5 @@ export function pearsonTest({
     wasmAlternative,
     alpha,
   );
-  return serializeTestResult(result) as PearsonCorrelationTestResult;
+  return result as PearsonCorrelationTestResult;
 }

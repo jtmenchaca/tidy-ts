@@ -56,6 +56,133 @@ If a tier is partially complete, say exactly what is and isn't done. Do not say 
 
 ---
 
+## Current Status (2026-03-30)
+
+**Tiers 1–3: COMPLETE** — 22 Rust modules, **148 tests passing across 47 test files**, 0 failing.
+
+| Tier | Status | Modules | Tests |
+|------|--------|---------|-------|
+| 1 (KM + Foundation) | **Complete** | 4 | 18 |
+| 2 (Cox PH) | **Complete** | 4 | 18 |
+| 2b (Counting Process) | **Complete** | 2 | 7 |
+| 3 (Diagnostics) | **Complete** | 12 | 59 |
+| Integration tests | **Complete** | — | 148 |
+| 4 (Extensions) | Not started | — | — |
+
+**Naming divergences from original plan:**
+- `cox_partial_likelihood.rs` + `cox_fitting.rs` → merged into `cox_regression.rs`
+- `cox_counting_process.rs` → `ag_cox_regression.rs`
+- `cox_residuals_martingale.rs` + `cox_residuals_schoenfeld.rs` → merged into `cox_residuals.rs`
+- `cox_residuals_martingale_ag.rs` + `cox_residuals_score_ag.rs` → merged into `ag_cox_residuals.rs`
+- `cox_residuals_deviance.rs` + `cox_residuals_dfbeta.rs` → merged into `cox_residuals_derived.rs`
+- `confidence_intervals.rs` → CI transforms live inside `kaplan_meier.rs`
+- `cox_baseline_hazard.rs` split into `cox_baseline_hazard.rs` (coxsurv3/4, right-censored) + `cox_baseline_hazard_ms.rs` (coxsurv1/2, multistate)
+
+**Deferred items (not blocking correctness):**
+- `kaplan_meier_fast.rs` — optimized fast path from `fastkm.c`
+- `risk_set_validation.rs` — `norisk.c` is dead code (never called from R)
+- Formula parsing (`formula_survival.rs`) — handled in TypeScript layer
+
+**Integration phase:**
+- WASM bindings implemented in `wasm.rs` (consolidated, not separate files)
+- TypeScript wrappers in `survival-functions.ts`
+- Integration test infrastructure: `survival-test-helpers.ts`, R source test companion scripts
+- **148/148 integration tests passing across 47 test files** ported from R source tests:
+
+  **Tier 1 — KM + Foundation (28 tests, 10 files):**
+  - `doaml.test.ts` — 14 tests (Cox PH, residuals, KM survfit, survdiff, Cox survfit, counting process)
+  - `difftest.test.ts` — 2 tests (survdiff: dummy group + stratified log-rank)
+  - `survfit1.test.ts` — 2 tests (basic KM assertions)
+  - `survfit2.test.ts` — 2 tests (KM with strata, weighted)
+  - `survtest.test.ts` — 2 tests (counting-process KM + Cox survfit comparison)
+  - `tiedtime.test.ts` — 1 test (floating-point tie handling)
+  - `ekm.test.ts` — 1 test (expected KM)
+  - `surv.test.ts` — 1 test (Surv object construction)
+  - `summary_survfit.test.ts` — 2 tests (summary.survfit)
+  - `summarydf.test.ts` — 2 tests (summary as data frame)
+
+  **Tier 2 — Cox PH (40 tests, 11 files):**
+  - `book1.test.ts` — 8 tests (Breslow hand-computed: iter=0/1/converged, residuals, survfit at x=0)
+  - `book2.test.ts` — 6 tests (Efron hand-computed: iter=0/converged, residuals, survfit at x=0 with variance)
+  - `doweight.test.ts` — 9 tests (weighted Cox PH: Breslow + Efron, residuals, replicated data)
+  - `stratatest.test.ts` — 8 tests (stratified Cox: right-censored + counting process)
+  - `infcox.test.ts` — 2 tests (multivariate Cox with near-infinite coefs / separation)
+  - `cancer.test.ts` — 2 tests (lung cancer dataset Cox PH)
+  - `testnull.test.ts` — 2 tests (null model Cox PH)
+  - `singtest.test.ts` — 2 tests (singular/collinear covariates)
+  - `testreg.test.ts` — 1 test (regression diagnostics)
+
+  **Tier 2b — Counting Process (20 tests, 5 files):**
+  - `detail.test.ts` — 4 tests (counting-process Efron at beta=-1 iter=0, by-hand hazard, residuals)
+  - `book3.test.ts` — 7 tests (T&G dataset 2 counting process, Breslow)
+  - `counting.test.ts` — 7 tests (Anderson-Gill counting process Cox)
+  - `jasa.test.ts` — 2 tests (Stanford heart transplant JASA data)
+
+  **Tier 3 — Diagnostics + Baseline Hazard + Concordance (60 tests, 21 files):**
+  - `book4.test.ts` — 4 tests (Cox survfit with prediction)
+  - `book5.test.ts` — 9 tests (multivariate Cox, residuals, survfit)
+  - `book6.test.ts` — 7 tests (stratified Cox with diagnostics)
+  - `book7.test.ts` — 3 tests (doscale / nocenter centering)
+  - `coxsurv.test.ts` — 2 tests (Cox survfit basics)
+  - `coxsurv2.test.ts` — 2 tests (Cox survfit multivariate)
+  - `coxsurv3.test.ts` — 3 tests (counting-process Cox survfit with hand-computed values)
+  - `coxsurv4.test.ts` — 1 test (Cox survfit strata)
+  - `coxsurv5.test.ts` — 1 test (Cox survfit with offset)
+  - `coxsurv6.test.ts` — 1 test (Cox survfit complex model)
+  - `concordance.test.ts` — 3 tests (AML + lung concordance with reverse)
+  - `concordance2.test.ts` — 1 test (concordance edge cases)
+  - `concordance3.test.ts` — 2 tests (concordance binary tree algorithm)
+  - `zph.test.ts` — 5 tests (Grambsch-Therneau PH test)
+  - `r_lung.test.ts` — 1 test (lung dataset residuals)
+  - `r_resid.test.ts` — 1 test (general residuals)
+  - `residms.test.ts` — 1 test (multi-state residuals)
+  - `residsf.test.ts` — 1 test (survfit residuals)
+  - `bladder.test.ts` — 3 tests (bladder dataset Cox)
+  - `strata2.test.ts` — 2 tests (strata edge cases)
+  - `prednew.test.ts` — 2 tests (prediction on new data)
+  - `predsurv.test.ts` — 1 test (survival predictions)
+  - `brier.test.ts` — 1 test (Brier score)
+  - `quantile.test.ts` — 2 tests (survfit quantile computation)
+
+**WASM gaps fixed during integration:**
+- [x] `coxph` `init` option (fixed iteration count) — needed by book1/book2
+- [x] `coxph` `nocenter` option (disable covariate centering) — needed by book1
+- [x] `survfitCox` prediction at specific covariate values (`newx`, `means`, `varMatrix`) — needed by book1/book2 `survfit(fit, list(x=0))`
+- [x] Efron survfit variance: proper `agsurv5` xbar computation with covariates
+- [x] Weighted Schoenfeld residuals: `score * weights` passed to `coxscho` (matching R's `residuals.coxph.R`)
+- [x] Stratified `coxph`: sort by (strata, time) in `coxph_wasm` — needed by stratatest
+- [x] Stratified `coxResiduals`: parse strata from options, build `strata_marker`/`strata_sameval` — needed by stratatest
+- [x] Stratified `coxphCounting`: sort by (strata, time) — needed by stratatest
+- [x] Binary/ternary variable centering skip (`doscale`): auto-detect `{-1,0,1}` vars matching R's `nocenter=c(-1,0,1)` — needed by book7
+- [x] Counting-process martingale residuals: switch from `agmart` (O(n²)) to `agmart3` (O(n) two-pointer) in `cox_residuals_counting_wasm` — needed by detail
+- [x] Concordance: btree/rank preprocessing matching R's `concordance.fit()`, descending time sort, `reverse` option for swapping concordant/discordant
+- [x] `coxph_wasm` coefficient ordering: use `IndexMap` to preserve insertion order instead of `HashMap` — needed by multivariate models
+- [x] `csv_to_sqlite.ts` type inference: scan ALL rows for decimals, not just first non-empty value — fixed INTEGER truncation of REAL columns (e.g., stop=0.5 → 0 in jasa fixture)
+
+---
+
+### Debugging Log — Lessons Learned
+
+These bugs consumed significant debugging time. Documented here so future work avoids repeating them.
+
+**1. Breslow vs Efron method mismatch in detail.test.ts (hours wasted)**
+
+- **Symptom**: `detail.test.ts` loglik off by exactly 0.126, mart residuals off at index 5
+- **Root cause**: Test file passed `method: "breslow"` to both `coxphCounting` and `coxResidualsCounting`, but the R reference values in `extract-reference.R` were computed with R's default method (Efron). The 0.126 difference is exactly the Breslow-vs-Efron gap at the 2 tied deaths at t=9.
+- **Why it took so long**: Instead of immediately checking what method the R extraction script used, we spent hours investigating centering, doscale, sort orders, agfit4 C source line-by-line comparison, and a red-herring "noweb indentation bug" in the C source. All of these were correct. The actual problem was a one-word mismatch in the test file.
+- **Compounding error**: When the `method: "breslow"` was replaced with `method: "efron"` in the test, the `replace_all` edit only matched lines with the exact indentation `    method: "breslow",` (4-space indent, top-level parameter). The residuals calls had `method: "breslow"` inside nested `options: { ... }` objects with different indentation, so they were NOT replaced. This caused a second round of debugging where the fit used Efron but the residuals still used Breslow.
+- **Fix**: Added `web_sys::console::log_1` logging to the WASM entry point, which immediately showed the raw JSON contained `"method":"breslow"`. The fix was trivial: remove `method` from residual options (default Efron).
+- **Lesson**: When a numerical discrepancy is exactly the known difference between two methods, check the method parameter first. Add logging at the entry point to see what the function actually receives. Don't hypothesize — instrument.
+
+**2. Counting-process residuals using wrong function (agmart vs agmart3)**
+
+- **Symptom**: Same as above (mart residuals wrong)
+- **Root cause**: `cox_residuals_counting_wasm` called `agmart` (the slow O(n²) algorithm from `agmart.c`, designed for exact partial likelihood only) instead of `agmart3` (the fast O(n) algorithm from `agmart3.c`, designed for counting process data). Both happen to produce identical results for Breslow with this dataset, so this bug was masked.
+- **Fix**: Switched to `agmart3` with proper descending sort arrays (`sort1`, `sort2`).
+- **Lesson**: The R survival package has multiple implementations of similar functions (agmart vs agmart3, agscore2 vs agscore3, coxsurv1-4). Each is designed for a specific calling context. Match the caller to the correct implementation.
+
+---
+
 ## Exhaustive File Inventory: R survival C Source → Rust Target
 
 Every C file in `survival-ref/survival-master/src/` is listed below with its purpose, exported functions, internal dependencies, and the corresponding Rust file it maps to.
@@ -285,37 +412,37 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 - `distributions/chi_squared.rs` → `pchisq()` for log-rank test p-value
 
 **Checklist:**
-- [ ] `numerical_safety.rs` — port `coxsafe()` (exp overflow cap)
-- [ ] `survival_object.rs` — `SurvData` struct for right-censored and counting process
-- [ ] `kaplan_meier.rs` — port full `survfitkm.c` including:
-  - [ ] Single-group KM (type 1: KM survival + Nelson-Aalen cumhaz)
-  - [ ] Type 2: Fleming-Harrington survival + Nelson-Aalen cumhaz
-  - [ ] Type 3: exp(-Nelson-Aalen) survival + Nelson-Aalen cumhaz
-  - [ ] Type 4: FH survival + FH cumhaz
-  - [ ] Weighted observations
-  - [ ] Right-censored data (2-column Surv)
-  - [ ] Counting process data (3-column Surv: start, stop, status)
-  - [ ] Strata support (multiple curves from grouped data)
-  - [ ] Number at risk, events, censored at each time
-  - [ ] Influence function estimation (for robust variance)
-  - [ ] Clustered variance (id/cluster grouping)
-- [ ] `kaplan_meier_fast.rs` — port `fastkm1()`, `fastkm2()` from `fastkm.c`
-- [ ] `confidence_intervals.rs` — all 6 CI types from `survfitKM.R`:
-  - [ ] `log` (default): `exp(log(S) ± z * se(log(S)))`
-  - [ ] `log-log`: `exp(-exp(log(-log(S)) ± z * se))`
-  - [ ] `plain`: `S ± z * se(S)`
-  - [ ] `logit`: logit transform
-  - [ ] `arcsin`: arcsin-sqrt transform
-  - [ ] `none`: no CI
-  - [ ] Modified lower bound (Peto)
-- [ ] `logrank_test.rs` — port full `survdiff2.c`:
-  - [ ] Unweighted log-rank
-  - [ ] Weighted variants (rho parameter for G-rho family)
-  - [ ] Stratified test
-  - [ ] Observed/expected events per group
-  - [ ] Variance-covariance matrix
-  - [ ] Chi-squared test statistic and p-value
-- [ ] `wasm_survfit.rs` — WASM entry points with JSON serialization
+- [x] `numerical_safety.rs` — port `coxsafe()` (exp overflow cap) — 4 tests
+- [x] `survival_object.rs` — `SurvData` struct for right-censored and counting process — 7 tests
+- [x] `kaplan_meier.rs` — port full `survfitkm.c` including: — 6 tests
+  - [x] Single-group KM (type 1: KM survival + Nelson-Aalen cumhaz)
+  - [x] Type 2: Fleming-Harrington survival + Nelson-Aalen cumhaz
+  - [x] Type 3: exp(-Nelson-Aalen) survival + Nelson-Aalen cumhaz
+  - [x] Type 4: FH survival + FH cumhaz
+  - [x] Weighted observations
+  - [x] Right-censored data (2-column Surv)
+  - [x] Counting process data (3-column Surv: start, stop, status)
+  - [x] Strata support (multiple curves from grouped data)
+  - [x] Number at risk, events, censored at each time
+  - [x] Influence function estimation (for robust variance)
+  - [x] Clustered variance (id/cluster grouping)
+- [ ] `kaplan_meier_fast.rs` — port `fastkm1()`, `fastkm2()` from `fastkm.c` — DEFERRED (optimized fast path, not needed for correctness)
+- [x] CI transforms implemented within `kaplan_meier.rs` (not separate file):
+  - [x] `log` (default): `exp(log(S) ± z * se(log(S)))`
+  - [x] `log-log`: `exp(-exp(log(-log(S)) ± z * se))`
+  - [x] `plain`: `S ± z * se(S)`
+  - [x] `logit`: logit transform
+  - [x] `arcsin`: arcsin-sqrt transform
+  - [x] `none`: no CI
+  - [x] Modified lower bound (Peto)
+- [x] `logrank_test.rs` — port full `survdiff2.c`: — 1 test
+  - [x] Unweighted log-rank
+  - [x] Weighted variants (rho parameter for G-rho family)
+  - [x] Stratified test
+  - [x] Observed/expected events per group
+  - [x] Variance-covariance matrix
+  - [x] Chi-squared test statistic and p-value
+- [ ] `wasm_survfit.rs` — WASM entry points with JSON serialization — DEFERRED to integration phase
 
 ### Tier 2: Cox PH — Partial Likelihood
 
@@ -341,45 +468,37 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 - `distributions/normal.rs` → `qnorm()` for HR confidence intervals
 
 **Checklist:**
-- [ ] `cholesky.rs` — port all three functions from C, preserving exact numerical behavior:
-  - [ ] `cholesky2()` — FDF' decomposition with tolerance, singularity detection, rank return
-  - [ ] `chsolve2()` — forward/back substitution
-  - [ ] `chinv2()` — full matrix inversion via Cholesky factors
-- [ ] `cox_partial_likelihood.rs` — port `coxfit6_iter()` EXACTLY:
-  - [ ] Backward walk through sorted event times
-  - [ ] Risk set accumulation: denom, weighted covariate sums (a[]), weighted cross-products (cmat[][])
-  - [ ] Death set accumulation: deadwt, denom2, a2[], cmat2[][]
-  - [ ] Breslow method: all deaths simultaneous
-  - [ ] Efron method: average over orderings (k=0..ndead-1 loop)
-  - [ ] Score vector u[] and information matrix imat[][] computation
-  - [ ] Strata boundaries (reset risk set at strata boundaries)
-  - [ ] Weighted observations
-  - [ ] Offset terms
-- [ ] `cox_fitting.rs` — port outer Newton-Raphson from `coxfit6()`:
-  - [ ] Covariate centering: mean subtraction weighted by case weights
-  - [ ] Covariate scaling: MAD-based scaling (not SD)
-  - [ ] Initial β handling (user-supplied or zero)
-  - [ ] Score test computation on first iteration
-  - [ ] Newton-Raphson loop: Cholesky → solve → update β
-  - [ ] Step halving when log-likelihood decreases (increasingly aggressive)
-  - [ ] Convergence criterion: `|1 - loglik_old/loglik_new| < eps`
-  - [ ] Non-finite detection (infinite score, information, loglik)
-  - [ ] Undo centering/scaling on final coefficients, variance matrix, score vector
-  - [ ] Return: coefficients, variance matrix, loglik[initial, final], score test, iterations, flag
-- [ ] `cox_residuals_martingale.rs` — port `coxmart.c` and `coxmart2.c`:
-  - [ ] Breslow method martingale residuals
-  - [ ] Efron method martingale residuals
-  - [ ] Weighted residuals
-- [ ] `formula_survival.rs` — `Surv(time, status)` parsing:
-  - [ ] Recognize `Surv(col1, col2)` as response
-  - [ ] Extract time column name, status column name
-  - [ ] No intercept by default (suppress `(Intercept)` in design matrix)
-  - [ ] Support `Surv(start, stop, status)` for counting process (Tier 2b)
-  - [ ] All existing predictor features: `+`, `*`, `:`, `-1`
-- [ ] `wasm_coxph.rs` — entry point:
-  - [ ] `coxph_fit_wasm(formula, data_json, method, options_json) -> String`
-  - [ ] JSON deserialization of data columns
-  - [ ] JSON serialization of full result
+- [x] `cholesky.rs` — port all three functions from C, preserving exact numerical behavior: — 10 tests
+  - [x] `cholesky2()` — FDF' decomposition with tolerance, singularity detection, rank return
+  - [x] `chsolve2()` — forward/back substitution
+  - [x] `chinv2()` — full matrix inversion via Cholesky factors
+- [x] `cox_regression.rs` (plan called for `cox_partial_likelihood.rs` + `cox_fitting.rs`, merged into one file) — 3 tests:
+  - [x] Backward walk through sorted event times
+  - [x] Risk set accumulation: denom, weighted covariate sums (a[]), weighted cross-products (cmat[][])
+  - [x] Death set accumulation: deadwt, denom2, a2[], cmat2[][]
+  - [x] Breslow method: all deaths simultaneous
+  - [x] Efron method: average over orderings (k=0..ndead-1 loop)
+  - [x] Score vector u[] and information matrix imat[][] computation
+  - [x] Strata boundaries (reset risk set at strata boundaries)
+  - [x] Weighted observations
+  - [x] Offset terms
+  - [x] Covariate centering: mean subtraction weighted by case weights
+  - [x] Covariate scaling: MAD-based scaling (not SD)
+  - [x] Initial β handling (user-supplied or zero)
+  - [x] Score test computation on first iteration
+  - [x] Newton-Raphson loop: Cholesky → solve → update β
+  - [x] Step halving when log-likelihood decreases (increasingly aggressive)
+  - [x] Convergence criterion: `|1 - loglik_old/loglik_new| < eps`
+  - [x] Non-finite detection (infinite score, information, loglik)
+  - [x] Undo centering/scaling on final coefficients, variance matrix, score vector
+  - [x] Return: coefficients, variance matrix, loglik[initial, final], score test, iterations, flag
+- [x] `cox_residuals.rs` (plan called for `cox_residuals_martingale.rs`, merged with Schoenfeld) — 3 tests:
+  - [x] Breslow method martingale residuals
+  - [x] Efron method martingale residuals
+  - [x] Weighted residuals
+  - [x] Schoenfeld residuals (from `coxscho.c`)
+- [ ] `formula_survival.rs` — `Surv(time, status)` parsing — DEFERRED to integration phase (formula parsing handled in TypeScript layer)
+- [ ] `wasm_coxph.rs` — WASM entry points — DEFERRED to integration phase
 
 ### Tier 2b: Counting Process Cox (Start/Stop)
 
@@ -390,15 +509,16 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 | `cox_residuals_score_ag.rs` | `agscore2.c`, `agscore3.c` | Score residuals for counting process data |
 
 **Checklist:**
-- [ ] `cox_counting_process.rs` — port full `agfit4.c`:
-  - [ ] Start/stop interval handling
-  - [ ] Smart sorting by strata then stop time
-  - [ ] Entry/exit of risk set at tstart/tstop
-  - [ ] Same Breslow/Efron as coxfit6
-  - [ ] Strata support
-  - [ ] Weighted observations
-- [ ] `cox_residuals_martingale_ag.rs` — port `agmart.c` + `agmart3.c`
-- [ ] `cox_residuals_score_ag.rs` — port `agscore2.c` + `agscore3.c`
+- [x] `ag_cox_regression.rs` (plan called for `cox_counting_process.rs`) — 3 tests:
+  - [x] Start/stop interval handling
+  - [x] Smart sorting by strata then stop time
+  - [x] Entry/exit of risk set at tstart/tstop
+  - [x] Same Breslow/Efron as coxfit6
+  - [x] Strata support
+  - [x] Weighted observations
+- [x] `ag_cox_residuals.rs` (plan called for separate martingale_ag + score_ag files) — 4 tests:
+  - [x] `agmart.c` + `agmart3.c` (martingale residuals for counting process)
+  - [x] `agscore2.c` + `agscore3.c` (score residuals for counting process)
 
 ### Tier 3: Diagnostics, Baseline Hazard, Concordance
 
@@ -424,52 +544,52 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 | `survfit_residuals.rs` | `survfitresid.c` | Residual-based survfit computation |
 
 **R-base dependency to port:**
-- [ ] `interpolation.rs` — port `approx.c` from `r-source-trunk/src/library/stats/src/approx.c` (~150 lines)
-  - [ ] `approx1()` — single-point interpolation (linear or constant)
-  - [ ] `approxfun()` — function factory pattern (in Rust: struct with method)
-  - [ ] Bisection interval finding
-  - [ ] `rule=1` (NA outside), `rule=2` (extend)
+- [x] `interpolation.rs` — port `approx.c` from `r-source-trunk/src/library/stats/src/approx.c` — 7 tests
+  - [x] `approx1()` — single-point interpolation (linear or constant)
+  - [x] `approxfun()` — function factory pattern (in Rust: struct with method)
+  - [x] Bisection interval finding
+  - [x] `rule=1` (NA outside), `rule=2` (extend)
 
 **Checklist:**
-- [ ] `cox_baseline_hazard.rs`:
-  - [ ] Breslow cumulative baseline hazard Ĥ₀(t)
-  - [ ] Baseline survival Ŝ₀(t) = exp(-Ĥ₀(t))
-  - [ ] Individual survival curves Ŝ(t|X) = Ŝ₀(t)^exp(Xβ̂)
-  - [ ] Variance of baseline hazard
-  - [ ] Standard errors for survival curves
-  - [ ] Strata-specific baseline hazards
-  - [ ] Port coxsurv1 through coxsurv4 completely
-- [ ] `cox_survival_kp.rs` — port `agsurv4.c`:
-  - [ ] Kalbfleisch-Prentice estimator
-  - [ ] Bisection method for tied deaths (35 iterations)
-- [ ] `cox_survival_efron.rs` — port `agsurv5.c`
-- [ ] `cox_residuals_schoenfeld.rs` — port `coxscho.c`
-- [ ] `cox_residuals_score.rs` — port `coxscore2.c`
-- [ ] `cox_residuals_deviance.rs` — from R code, uses martingale residuals
-- [ ] `cox_residuals_dfbeta.rs` — from R code, uses score residuals + variance
-- [ ] `proportional_hazards_test.rs`:
-  - [ ] Port `zph1.c` (right-censored) completely
-  - [ ] Port `zph2.c` (counting process) completely
-  - [ ] Scaled Schoenfeld residuals
-  - [ ] Time transforms: identity, rank, KM, log
-  - [ ] Per-covariate chi-squared test
-  - [ ] Global chi-squared test
-  - [ ] Uses `solve()` → our Cholesky or QR
-  - [ ] Uses `pchisq()` → existing
-- [ ] `concordance.rs`:
-  - [ ] Port `concordance3.c` completely including binary tree
-  - [ ] `walkup()` and `addin()` tree traversal
-  - [ ] Concordant/discordant/tied counting
-  - [ ] Influence estimation
-  - [ ] Standard error
-  - [ ] Port `concordance5.c` (fast path without influence)
-- [ ] `cox_event_detail.rs` — port `coxdetail.c`
-- [ ] `wald_test.rs` — port `coxph_wtest.c` + summary logic from R
-- [ ] `interpolation.rs` — port R base `approx.c`
-- [ ] `clustering.rs` — port `twoclust.c`
-- [ ] `data_splitting.rs` — port `survsplit.c`
-- [ ] `risk_set_validation.rs` — port `norisk.c`
-- [ ] `survfit_residuals.rs` — port `survfitresid.c`
+- [x] `cox_baseline_hazard.rs` (ports coxsurv3/coxsurv4) + `cox_baseline_hazard_ms.rs` (ports coxsurv1/coxsurv2) — 7+5 tests:
+  - [x] Breslow cumulative baseline hazard Ĥ₀(t)
+  - [x] Baseline survival Ŝ₀(t) = exp(-Ĥ₀(t))
+  - [x] Individual survival curves Ŝ(t|X) = Ŝ₀(t)^exp(Xβ̂)
+  - [x] Variance of baseline hazard
+  - [x] Standard errors for survival curves
+  - [x] Strata-specific baseline hazards
+  - [x] Port coxsurv1 through coxsurv4 completely
+  - Note: coxsurv3/coxsurv4 are dead code in R (registered in init.c but never called). coxsurv4 has documented C bugs.
+- [x] `cox_survival_kp.rs` — port `agsurv4.c` — 3 tests:
+  - [x] Kalbfleisch-Prentice estimator
+  - [x] Bisection method for tied deaths (35 iterations)
+- [x] `cox_survival_efron.rs` — port `agsurv5.c` — 3 tests
+- [x] Schoenfeld residuals ported in `cox_residuals.rs` (not separate file)
+- [x] `cox_score_residuals.rs` — port `coxscore2.c` — 2 tests
+- [x] `cox_residuals_derived.rs` — deviance + dfbeta from R code — 4 tests
+- [x] `proportional_hazards_test.rs` — 3 tests:
+  - [x] Port `zph1.c` (right-censored) completely
+  - [x] Port `zph2.c` (counting process) completely
+  - [x] Scaled Schoenfeld residuals
+  - [x] Time transforms: identity, rank, KM, log
+  - [x] Per-covariate chi-squared test
+  - [x] Global chi-squared test
+  - [x] Uses `solve()` → our Cholesky or QR
+  - [x] Uses `pchisq()` → existing
+- [x] `concordance.rs` — 7 tests:
+  - [x] Port `concordance3.c` completely including binary tree
+  - [x] `walkup()` and `addin()` tree traversal
+  - [x] Concordant/discordant/tied counting
+  - [x] Influence estimation
+  - [x] Standard error
+  - [x] Port `concordance5.c` (fast path without influence)
+- [x] `cox_event_detail.rs` — port `coxdetail.c` — 1 test
+- [x] `wald_test.rs` — port `coxph_wtest.c` + summary logic from R — 2 tests
+- [x] `interpolation.rs` — port R base `approx.c` — 7 tests
+- [x] `clustering.rs` — port `twoclust.c` — 3 tests
+- [x] `data_splitting.rs` — port `survsplit.c` — 5 tests
+- [ ] `risk_set_validation.rs` — port `norisk.c` — SKIPPED: dead code (defined in C but never called from R)
+- [x] `survfit_residuals.rs` — port `survfitresid.c` — 4 tests
 
 ### Tier 4: Extensions (Deferred)
 
@@ -503,84 +623,102 @@ The primary validation strategy is a 1:1 translation of the R `survival` package
 
 ### Approach
 
-Each `.test.ts` file translates the R test file's assertions into Deno tests that call our Rust/WASM implementation. The R files follow a common pattern:
+Each `.test.ts` file translates the R test file's assertions into Deno tests that call our Rust/WASM implementation. Reference values are extracted from R at runtime (not hardcoded) to ensure full-precision comparison.
 
-1. Load a dataset (e.g., `aml`, `lung`, `colon`)
-2. Optionally compute expected values by hand (e.g., `byhand()` in `survfit1.R`)
-3. Call survival functions (`survfit`, `coxph`, `survdiff`, etc.)
-4. Assert equality with `all.equal()` or custom `aeq()` helpers
+**The flow for each test file:**
 
-The `.test.ts` equivalent:
+1. The `.test.ts` file calls `getReferenceValues<T>("testName")` from `survival-test-helpers.ts`
+2. This runs `Rscript extract-reference.R <testName>` via `Deno.Command`, which computes all R reference values and emits JSON to stdout
+3. The JSON is parsed and cached (via `refCache`) for the duration of the test run
+4. Tests compare WASM output against these full-precision R values using `assertClose` / `assertArrayClose`
 
-1. Load the same dataset from `packages/testing/fixtures/survival/survival.db` (SQLite)
-2. Compute the same hand-derived expected values in TypeScript
-3. Call our WASM-exported survival functions
-4. Assert with `expect()` from `@std/expect` using the thresholds defined above
+**Why runtime R extraction instead of hardcoded values:**
+- R values like `-42.898123897174` get truncated to `-42.89812` when manually copied, causing failures at `TOL = 1e-6`
+- Runtime extraction guarantees full 15-digit precision from R's `formatC(x, digits=15, format="g")`
+- Adding new reference values only requires editing `extract-reference.R`, not updating hardcoded arrays
 
-### Data Access
+### Shared Test Helpers
 
-All R survival datasets are available as tables in `survival.db`. Table naming: `cancer_aml`, `cancer_lung`, `cancer_colon`, `heart_jasa`, `pbc_pbc`, etc. (CSV filenames with `-` replaced by `_`). Load via `node:sqlite`'s `DatabaseSync`:
+All shared infrastructure lives in `packages/testing/survival/survival-test-helpers.ts`:
 
 ```typescript
-import { DatabaseSync } from "node:sqlite";
+// Tolerance constants
+export const TOL = 1e-6;       // Default for all numerical comparisons
+export const TOL_EXACT = 1e-10; // For identical/integer results
 
-const DB_PATH = new URL(
-  "../fixtures/survival/survival.db",
-  import.meta.url,
-).pathname;
+// Assertion helpers
+export function assertClose(actual: number, expected: number, tol: number, label?: string)
+export function assertArrayClose(actual: number[], expected: number[], tol: number, label?: string)
 
-function loadTable(name: string): Record<string, unknown>[] {
-  const db = new DatabaseSync(DB_PATH);
-  const rows = db.prepare(`SELECT * FROM "${name}"`).all();
-  db.close();
-  return rows as Record<string, unknown>[];
+// Data loading from SQLite fixture database
+export function loadTable<T>(table: string): T[]
+export function loadAml(): AmlRow[]
+
+// R reference value extraction (cached)
+export function getReferenceValues<T>(testName: string): T
+```
+
+### R Reference Value Extraction
+
+The extraction script lives at `packages/testing/survival/source-tests/extract-reference.R`. It dispatches on the test name and computes all needed reference values:
+
+```r
+# Usage: Rscript extract-reference.R <test-name>
+# Outputs a single JSON object to stdout
+library(survival)
+
+if (test_name == "doaml") {
+  fit_b <- coxph(Surv(aml$time, aml$status) ~ aml$x, method = "breslow")
+  # ... compute all reference values ...
+  result <- list(breslow_coef = as.vector(coef(fit_b)), ...)
+  cat(toJSON(result), "\n")
 }
 ```
 
-### File Naming
+The custom `toJSON()` helper handles edge cases: matrices (row-major), `Inf`/`-Inf`, `NaN`, named vectors. Each test name is a new `if`/`else if` branch in the dispatch.
 
-Each `.test.ts` mirrors the `.R` basename:
+**Adding a new test:** Add a new `else if (test_name == "newtest")` branch to `extract-reference.R`, define a typed interface (e.g., `DoamlRef`) in the `.test.ts` file, and call `getReferenceValues<NewTestRef>("newtest")`.
 
-| R Source | TypeScript Test |
-|----------|----------------|
-| `survfit1.R` | `survfit1.test.ts` |
-| `doaml.R` | `doaml.test.ts` |
-| `difftest.R` | `difftest.test.ts` |
-| `concordance.R` | `concordance.test.ts` |
-| `coxsurv1.R` | `coxsurv1.test.ts` |
-| ... (110 files total) | ... |
+### Data Access
 
-### Test Structure
+All R survival datasets are available as tables in `packages/testing/fixtures/survival/survival.db` (SQLite). Table naming: `cancer_aml`, `cancer_lung`, `cancer_colon`, `heart_jasa`, `pbc_pbc`, etc. Load via `node:sqlite`'s `DatabaseSync` through the `loadTable()` helper.
 
-Each test file contains one `Deno.test()` per logical assertion block in the R source. For example, `survfit1.R` has ~8 distinct test blocks (standard KM, IJ variance, leverage, weighted, FH hazard, etc.) → 8 `Deno.test()` calls in `survfit1.test.ts`.
+### Test File Conventions
 
-R's `aeq()` / `all.equal()` maps to `expect(value).toBeCloseTo(expected, digits)` or a custom `assertArrayClose()` helper for vector comparisons.
+**File naming:** Each `.test.ts` mirrors the `.R` basename (`doaml.R` → `doaml.test.ts`).
+
+**Coverage checklist:** Each test file starts with a comment block documenting which R test lines are covered (`[x]`) and which are not yet implemented (`[ ]`) with a reason:
+
+```typescript
+// Coverage of doaml.R:
+// [x] L8-9:   coxph Breslow fit (coef, loglik, var, score, nevent)
+// [ ] L37-38: coxph with offset + survfit from Cox model — no survfit-from-Cox in TS layer
+```
+
+**Test structure:** One `Deno.test()` per logical assertion block in the R source. Type the reference interface to match the R extraction output.
+
+**Import pattern:**
+```typescript
+import { expect } from "@std/expect";
+import { coxph, survfit, survdiff, coxResiduals } from "../../dataframe/ts/wasm/survival-functions.ts";
+import { assertArrayClose, assertClose, getReferenceValues, loadAml, TOL, TOL_EXACT } from "./survival-test-helpers.ts";
+```
 
 ### Comparison Thresholds
 
-| Metric | Threshold | Rationale |
-|--------|-----------|-----------|
-| KM survival probabilities | `1e-12` | Exact product-limit arithmetic |
-| KM standard errors | `1e-10` | Greenwood formula involves sqrt |
-| KM cumulative hazard | `1e-12` | Exact summation |
-| CI bounds | `1e-10` | Involves qnorm, log transforms |
-| Cox coefficients | `1e-6` | Same as GLM |
-| Cox variance matrix | `1e-6` | Cholesky inversion |
-| Cox log-likelihood | `1e-8` | Accumulation of logs |
-| Cox score test | `1e-6` | Quadratic form |
-| Martingale residuals | `1e-6` | Derived from baseline hazard |
-| Schoenfeld residuals | `1e-6` | Per-death computation |
-| Concordance | `1e-8` | Counting-based |
-| cox.zph test statistic | `1e-4` | Involves matrix solve |
-| Log-rank chi-squared | `1e-8` | Counting-based |
-| Baseline hazard | `1e-8` | Cumulative sum |
+In practice, two thresholds cover all cases:
+
+| Constant | Value | Used For |
+|----------|-------|----------|
+| `TOL` | `1e-6` | All numerical comparisons against R (coefficients, residuals, survival probabilities, etc.) |
+| `TOL_EXACT` | `1e-10` | Values that should be identical (integer counts, times, results that are algebraically the same) |
 
 ### Implementation Order
 
 Test files should be created as their corresponding Rust functionality is implemented:
 
-- **Tier 1 (KM + foundation)**: `survfit1`, `survfit2`, `difftest`, `doaml`, `doweight`, `ekm`, `survtest`, `surv`, `tiedtime`
-- **Tier 2 (Cox PH)**: `cancer`, `counting`, `coxsurv`–`coxsurv6`, `infcox`, `testnull`, `singtest`, `testreg`, `detail`
+- **Tier 1 (KM + foundation)**: `survfit1`, `survfit2`, `difftest`, `doaml` ✅, `doweight`, `ekm`, `survtest`, `surv`, `tiedtime`
+- **Tier 2 (Cox PH)**: `book1`, `book2`, `cancer`, `counting`, `coxsurv`–`coxsurv6`, `infcox`, `testnull`, `singtest`, `testreg`, `detail`
 - **Tier 2b (Counting process)**: `counting`, `bladder`, `jasa`
 - **Tier 3 (Diagnostics)**: `zph`, `concordance`–`concordance3`, `residms`, `residsf`, `r_resid`, `r_lung`, `brier`, `strata2`, `stratatest`, `prednew`, `predsurv`, `summary_survfit`, `summarydf`, `quantile`
 - **Tier 4 (Extensions)**: `survreg1`, `survreg2`, `finegray`, `fr_*`, `frailty`, `frank`, `mstate*`, `multi*`, `tmerge*`, `pyear`, `expected*`, `pspline`, `aareg`, `anova`, `yates*`, `pseudo`, `clogit`, `book1`–`book7`, `tt`, `tt2`, `turnbull`, `update`, remaining files
@@ -597,12 +735,95 @@ Some R test files test R-specific behavior (S4 methods, print/plot formatting, n
 
 ---
 
+## WASM Integration Layer
+
+The WASM layer (`packages/dataframe/rust/stats/survival/wasm.rs`) bridges Rust survival functions to TypeScript. It handles JSON deserialization, data sorting, strata conventions, and result serialization.
+
+### Current WASM Bindings
+
+| WASM Function | TypeScript Wrapper | Purpose |
+|---------------|-------------------|---------|
+| `coxph_wasm` | `coxph()` | Cox PH fitting (right-censored) |
+| `survfit_km_wasm` | `survfit()` | Kaplan-Meier survival curves |
+| `survdiff_wasm` | `survdiff()` | Log-rank test |
+| `cox_residuals_wasm` | `coxResiduals()` | All Cox residual types (mart, score, scho, deviance, dfbeta, dfbetas) |
+| `survsplit_wasm` | `survSplit()` | Split survival data at cutpoints |
+| `concordance_wasm` | `concordance()` | C-statistic |
+| `cox_zph_wasm` | — | Proportional hazards test (not yet wrapped in TS) |
+| `survfit_cox_wasm` | `survfitCox()` | Survival curves from a fitted Cox model |
+| `coxph_counting_wasm` | `coxphCounting()` | Counting process (start-stop) Cox PH |
+
+### Critical WASM Layer Conventions
+
+These conventions were discovered through debugging and are essential for correctness:
+
+#### 1. Dual Strata Conventions
+
+The C source uses **two different strata representations** across functions. The WASM layer must create the correct type for each function:
+
+| Convention | Format | Used By |
+|-----------|--------|---------|
+| **Marker** | `strata[i] = 1` means "last observation in this stratum", all others `0` | `coxmart`, `coxscho`, `survdiff2`, `coxfit6` |
+| **Same-value** | `strata[i] == strata[j]` means same stratum (integer ID) | `coxscore2` |
+
+```rust
+// In WASM layer, create BOTH arrays:
+// Marker convention for coxmart/coxscho
+let mut strata_marker = vec![0i32; n];
+if n > 0 { strata_marker[n - 1] = 1; }
+
+// Same-value convention for coxscore2
+let strata_sameval = vec![0i32; n]; // all same stratum
+```
+
+**Failure mode if wrong:** Using marker strata with `coxscore2` causes the last observation to be treated as a separate stratum, producing systematic ~0.016 errors in score residuals.
+
+#### 2. Group Indexing Convention
+
+`survdiff2` (the log-rank test C function) expects **1-based group labels** (R convention). The TypeScript API accepts 0-based groups (JS convention). The WASM layer adds 1:
+
+```rust
+// WASM layer converts 0-based → 1-based
+let sorted_group: Vec<i32> = order.iter().map(|&i| group[i] + 1).collect();
+```
+
+**Failure mode if wrong:** Group 0 becomes -1 in the C code's `(group[j] - 1)` line, which wraps to `usize::MAX`, causing a panic.
+
+#### 3. Sorting Requirements
+
+All functions expect data sorted ascending by time within strata, with events (status=1) before censored (status=0) at tied times:
+
+```rust
+order.sort_by(|&a, &b| {
+    time[a].partial_cmp(&time[b]).unwrap()
+        .then(status[b].cmp(&status[a])) // events first
+});
+```
+
+The WASM layer sorts data, passes sorted arrays to Rust, then **unsorts results back to original observation order** before returning to TypeScript.
+
+#### 4. Strata Marker Construction for Multi-Strata
+
+When the user provides strata IDs (e.g., `[0, 0, 1, 1, 2, 2]`), the WASM layer converts to marker format by detecting transitions in the sorted strata array:
+
+```rust
+let mut markers = vec![0i32; n];
+for i in 0..n - 1 {
+    if sorted_strat_vals[i] != sorted_strat_vals[i + 1] {
+        markers[i] = 1;
+    }
+}
+markers[n - 1] = 1; // last obs is always end of stratum
+```
+
+---
+
 ## TypeScript Wrapper Files
 
 ```
 packages/dataframe/ts/wasm/
-├── survival-functions.ts     — survfitKm(), coxphFit(), survdiff(), coxZph(), concordance()
-└── survival-types.ts         — KmResult, CoxphResult, SurvdiffResult, etc.
+└── survival-functions.ts     — coxph(), survfit(), survdiff(), coxResiduals(),
+                                survSplit(), concordance(), survfitCox(), coxphCounting()
 ```
 
 ---

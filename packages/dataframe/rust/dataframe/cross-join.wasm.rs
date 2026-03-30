@@ -6,8 +6,7 @@ use super::shared_types::JoinIdxU32;
 use wasm_bindgen::prelude::*;
 
 /// Cross join (Cartesian product) - internal implementation
-#[allow(dead_code)]
-fn cross_join(left_len: usize, right_len: usize) -> (Vec<usize>, Vec<usize>) {
+pub(crate) fn cross_join(left_len: usize, right_len: usize) -> (Vec<usize>, Vec<usize>) {
     let total = left_len * right_len;
     let mut out_left = Vec::<usize>::with_capacity(total);
     let mut out_right = Vec::<usize>::with_capacity(total);

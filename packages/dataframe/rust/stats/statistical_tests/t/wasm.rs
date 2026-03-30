@@ -7,10 +7,6 @@ use super::{
     sample_size::t_sample_size,
     two_sample::{t_test_ind, t_test_paired as t_test_paired_impl},
 };
-use crate::stats::core::types::{
-    ConfidenceInterval, EffectSize, EffectSizeType, OneSampleTTestResult, PairedTTestResult,
-    TestStatistic, TestStatisticName, TwoSampleTTestResult,
-};
 use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 
@@ -21,31 +17,12 @@ pub fn t_test_one_sample(
     mu: f64,
     alpha: f64,
     alternative: &str,
-) -> OneSampleTTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    t_test(x.iter().copied(), mu, alternative_type, alpha).unwrap_or_else(|error| {
-        OneSampleTTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: TestStatisticName::TStatistic.as_str().to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "One-sample t-test".to_string(),
-            alpha,
-            error_message: Some(error),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            degrees_of_freedom: f64::NAN,
-            alternative: alternative.to_string(),
-            effect_size: EffectSize {
-                value: f64::NAN,
-                name: EffectSizeType::CohensD.as_str().to_string(),
-            },
-        }
-    })
+    let result = t_test(x.iter().copied(), mu, alternative_type, alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for independent two-sample t-test
@@ -56,73 +33,33 @@ pub fn t_test_two_sample_independent(
     alpha: f64,
     alternative: &str,
     pooled: bool,
-) -> TwoSampleTTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    t_test_ind(
+    let result = t_test_ind(
         x.iter().copied(),
         y.iter().copied(),
         alternative_type,
         alpha,
         pooled,
     )
-    .unwrap_or_else(|error| TwoSampleTTestResult {
-        test_statistic: TestStatistic {
-            value: f64::NAN,
-            name: "t-statistic".to_string(),
-        },
-        p_value: f64::NAN,
-        test_name: "Independent two-sample t-test".to_string(),
-        alpha,
-        error_message: Some(error),
-        confidence_interval: ConfidenceInterval {
-            lower: f64::NAN,
-            upper: f64::NAN,
-            confidence_level: 1.0 - alpha,
-        },
-        degrees_of_freedom: f64::NAN,
-        alternative: alternative.to_string(),
-        effect_size: EffectSize {
-            value: f64::NAN,
-            name: "Cohen's d".to_string(),
-        },
-        mean_difference: f64::NAN,
-        standard_error: f64::NAN,
-    })
+    .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for paired t-test
 #[wasm_bindgen]
-pub fn t_test_paired(x: &[f64], y: &[f64], alpha: f64, alternative: &str) -> PairedTTestResult {
+pub fn t_test_paired(x: &[f64], y: &[f64], alpha: f64, alternative: &str) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    t_test_paired_impl(
+    let result = t_test_paired_impl(
         x.iter().copied(),
         y.iter().copied(),
         alternative_type,
         alpha,
     )
-    .unwrap_or_else(|error| PairedTTestResult {
-        test_statistic: TestStatistic {
-            value: f64::NAN,
-            name: "t-statistic".to_string(),
-        },
-        p_value: f64::NAN,
-        test_name: "Paired t-test".to_string(),
-        alpha,
-        error_message: Some(error),
-        confidence_interval: ConfidenceInterval {
-            lower: f64::NAN,
-            upper: f64::NAN,
-            confidence_level: 1.0 - alpha,
-        },
-        degrees_of_freedom: f64::NAN,
-        alternative: alternative.to_string(),
-        effect_size: EffectSize {
-            value: f64::NAN,
-            name: "Cohen's d".to_string(),
-        },
-        mean_difference: f64::NAN,
-        standard_error: f64::NAN,
-    })
+    .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for t-test sample size calculation

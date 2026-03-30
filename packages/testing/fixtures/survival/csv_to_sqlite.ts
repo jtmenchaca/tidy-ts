@@ -28,17 +28,24 @@ for (const csvFile of csvFiles) {
   const rows = lines.slice(1).map(parseCSVRow);
 
   // Infer column types from data
+  // Must scan ALL rows: if any numeric value has a decimal, column is REAL
   const colTypes = headers.map((_, colIdx) => {
+    let isNumeric = false;
+    let hasDecimal = false;
+    let isBool = false;
     for (const row of rows) {
       const val = row[colIdx];
       if (val === "NA" || val === "" || val === undefined) continue;
-      if (val === "TRUE" || val === "FALSE") return "INTEGER";
+      if (val === "TRUE" || val === "FALSE") { isBool = true; continue; }
       if (!isNaN(Number(val))) {
-        if (val.includes(".")) return "REAL";
-        return "INTEGER";
+        isNumeric = true;
+        if (val.includes(".")) hasDecimal = true;
+      } else {
+        return "TEXT";
       }
-      return "TEXT";
     }
+    if (isBool && !isNumeric) return "INTEGER";
+    if (isNumeric) return hasDecimal ? "REAL" : "INTEGER";
     return "TEXT";
   });
 

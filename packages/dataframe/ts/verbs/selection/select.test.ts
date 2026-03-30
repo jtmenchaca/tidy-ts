@@ -77,7 +77,6 @@ Deno.test("select all columns explicitly", () => {
 Deno.test("select from empty data", () => {
   const result = createDataFrame([]);
 
-  // @ts-expect-error - correctly has error for selecting columns from empty DataFrame
   result.select("name", "species");
   console.log("Select from empty data result:", result);
 

@@ -49,7 +49,7 @@ impl SurvData {
     /// # Panics
     ///
     /// Panics if `time` and `status` have different lengths.
-    pub fn right_censored(time: &[f64], status: &[i32]) -> Self {
+    pub(crate) fn right_censored(time: &[f64], status: &[i32]) -> Self {
         assert_eq!(
             time.len(),
             status.len(),
@@ -83,7 +83,7 @@ impl SurvData {
     /// # Panics
     ///
     /// Panics if arrays have different lengths.
-    pub fn counting_process(tstart: &[f64], tstop: &[f64], status: &[i32]) -> Self {
+    pub(crate) fn counting_process(tstart: &[f64], tstop: &[f64], status: &[i32]) -> Self {
         assert_eq!(tstart.len(), tstop.len());
         assert_eq!(tstart.len(), status.len());
 
@@ -105,28 +105,28 @@ impl SurvData {
     }
 
     /// Number of observations
-    pub fn n(&self) -> usize {
+    pub(crate) fn n(&self) -> usize {
         self.obs.len()
     }
 
     /// Extract stop times as a slice-compatible vector
-    pub fn times(&self) -> Vec<f64> {
+    pub(crate) fn times(&self) -> Vec<f64> {
         self.obs.iter().map(|o| o.tstop).collect()
     }
 
     /// Extract status values as a slice-compatible vector
-    pub fn statuses(&self) -> Vec<i32> {
+    pub(crate) fn statuses(&self) -> Vec<i32> {
         self.obs.iter().map(|o| o.status).collect()
     }
 
     /// Extract start times (0.0 for right-censored) as a vector
-    pub fn start_times(&self) -> Vec<f64> {
+    pub(crate) fn start_times(&self) -> Vec<f64> {
         self.obs.iter().map(|o| o.tstart).collect()
     }
 
     /// Sort observations by stop time (ascending), breaking ties by status
     /// (events before censored, matching R's convention for survfit).
-    pub fn sort_by_time(&mut self) {
+    pub(crate) fn sort_by_time(&mut self) {
         self.obs.sort_by(|a, b| {
             a.tstop
                 .partial_cmp(&b.tstop)
@@ -139,7 +139,7 @@ impl SurvData {
     }
 
     /// Get sorted unique event/censoring times
-    pub fn unique_times(&self) -> Vec<f64> {
+    pub(crate) fn unique_times(&self) -> Vec<f64> {
         let mut times: Vec<f64> = self.obs.iter().map(|o| o.tstop).collect();
         times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
         times.dedup();
@@ -147,7 +147,7 @@ impl SurvData {
     }
 
     /// Validate the survival data
-    pub fn validate(&self) -> Result<(), String> {
+    pub(crate) fn validate(&self) -> Result<(), String> {
         for (i, obs) in self.obs.iter().enumerate() {
             if obs.tstop.is_nan() {
                 return Err(format!("NaN stop time at observation {i}"));

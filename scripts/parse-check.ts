@@ -1,0 +1,71 @@
+/**
+ * Wraps `deno check` and outputs only errors concisely.
+ * Usage: deno run -A scripts/parse-check.ts [deno check args...]
+ *   e.g. deno run -A scripts/parse-check.ts --unstable-tsgo packages/dataframe
+ *
+ * On success: prints "No type errors" and exits 0.
+ * On failure: prints a compact error summary and exits 1.
+ */
+
+const args = Deno.args;
+const cmd = new Deno.Command("deno", {
+  args: ["check", ...args],
+  stdout: "piped",
+  stderr: "piped",
+});
+
+const { code, stdout, stderr } = await cmd.output();
+const raw = new TextDecoder().decode(stdout) +
+  new TextDecoder().decode(stderr);
+
+// Strip ANSI escape codes
+// deno-lint-ignore no-control-regex
+const text = raw.replace(/\x1b\[[0-9;]*m/g, "");
+
+const cwd = Deno.cwd();
+
+// Extract error blocks: lines starting with TS#### [ERROR]
+const errors: string[] = [];
+let currentError: string[] = [];
+let inError = false;
+
+for (const line of text.split("\n")) {
+  if (/^TS\d+\s+\[ERROR\]/.test(line)) {
+    if (currentError.length) errors.push(currentError.join("\n"));
+    currentError = [line];
+    inError = true;
+  } else if (inError) {
+    const atMatch = line.match(/at file:\/\/\/(.*):(\d+):(\d+)/);
+    if (atMatch && !currentError.some((l) => l.includes("→"))) {
+      const fullPath = "/" + atMatch[1];
+      const relPath = fullPath.startsWith(cwd + "/")
+        ? fullPath.slice(cwd.length + 1)
+        : fullPath;
+      currentError.push(`  → ${relPath}:${atMatch[2]}:${atMatch[3]}`);
+    }
+    if (line.startsWith("TS") || line.startsWith("Found ")) {
+      errors.push(currentError.join("\n"));
+      currentError = /^TS\d+\s+\[ERROR\]/.test(line) ? [line] : [];
+      inError = /^TS\d+\s+\[ERROR\]/.test(line);
+    }
+  }
+}
+if (currentError.length) errors.push(currentError.join("\n"));
+
+const summaryMatch = text.match(/Found (\d+) errors?\./);
+
+if (errors.length === 0 && !summaryMatch) {
+  console.log("✓ No type errors");
+  Deno.exit(0);
+}
+
+for (const err of errors) {
+  console.log(err);
+  console.log();
+}
+
+if (summaryMatch) {
+  console.log(summaryMatch[0]);
+}
+
+Deno.exit(code);

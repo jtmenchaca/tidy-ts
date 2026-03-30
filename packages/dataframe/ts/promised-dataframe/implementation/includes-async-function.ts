@@ -87,7 +87,7 @@ export function makeDataFrameProbe<Row extends object>(
     summarize: () => makeDataFrameProbe(df),
     summariseColumns: () => makeDataFrameProbe(df),
     summarizeColumns: () => makeDataFrameProbe(df),
-    crossTabulate: () => makeDataFrameProbe(df),
+    // crossTabulate: () => makeDataFrameProbe(df),
     count: () => makeDataFrameProbe(df),
     ungroup: () => makeDataFrameProbe(df),
 

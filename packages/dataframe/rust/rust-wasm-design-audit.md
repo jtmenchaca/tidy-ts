@@ -939,3 +939,126 @@ export function example_test(x: Float64Array, alpha: number): ExampleTestResult 
   return wasmInternal.example_test(x, alpha) as ExampleTestResult;
 }
 ```
+
+---
+
+## Audit Round 2: Post-Phase 6 Review (2026-03-29)
+
+Phases 1-8 from the original audit are complete. This second pass reviews the full Rust tree for remaining quality issues, focusing on areas not covered by the original audit (primarily the survival module and residual items elsewhere).
+
+### R2-F1. Survival WASM structs missing `#[serde(rename_all = "camelCase")]`
+
+**Severity: HIGH** (actively shipping snake_case field names to JS)
+
+The survival module's `wasm.rs` uses `serde_wasm_bindgen::to_value()` to return results (same pattern we just migrated stat tests and regression to), but the 4 WASM result structs lack `#[serde(rename_all = "camelCase")]`:
+
+- `CoxphWasmResult` — Cox proportional hazards
+- `SurvfitWasmResult` — Kaplan-Meier survival curves
+- `SurvdiffWasmResult` — log-rank test
+- `SurvfitCoxWasmResult` — survfit on Cox model
+
+Without `rename_all`, serde serializes field names as Rust snake_case (e.g., `log_lik`, `std_err`, `num_events`). The TS consumer (`survival-functions.ts`) must currently access these as snake_case, which is inconsistent with the rest of the codebase (stat tests and regression now use camelCase).
+
+**Solution**: Add `#[serde(rename_all = "camelCase")]` to all 4 structs, then update `ts/wasm/survival-functions.ts` to use camelCase field names. Same pattern applied in Phase 6 for stat tests and regression.
+
+**Files**:
+- `rust/stats/survival/wasm.rs` (4 structs)
+- `ts/wasm/survival-functions.ts` (field access updates)
+
+**Effort**: ~15 min
+
+---
+
+### R2-F2. `serde_special_floats.rs` — likely obsolete after serde-wasm-bindgen migration
+
+**Severity: MEDIUM** (unnecessary complexity)
+
+`regression/glm/serde_special_floats.rs` provides custom serde serializers for `f64` fields that may contain NaN/Infinity. It's used on 7 fields in `types_results.rs` via `#[serde(serialize_with = ..., deserialize_with = ...)]` annotations.
+
+Before serde-wasm-bindgen, this was needed because `serde_json` can't serialize NaN/Infinity (they're not valid JSON). But `serde-wasm-bindgen` serializes f64 values directly to JS numbers — `NaN` becomes JS `NaN`, `Infinity` becomes JS `Infinity`. The custom serializers are now redundant and add maintenance burden.
+
+**Solution**: Remove the `#[serde(serialize_with, deserialize_with)]` annotations from the 7 fields in `types_results.rs`, delete `serde_special_floats.rs`, and remove its `pub mod` from `glm/mod.rs`. Verify with GLM tests that NaN/Infinity values still pass through correctly.
+
+**Risk**: Need to verify that no codepath still uses `serde_json` (not `serde_wasm_bindgen`) on these types. If any JSON serialization path remains, the custom serializers are still needed for that path.
+
+**Files**:
+- `regression/glm/types_results.rs` (remove 14 serde annotations on 7 fields)
+- `regression/glm/serde_special_floats.rs` (delete)
+- `regression/glm/mod.rs` (remove `pub mod serde_special_floats`)
+
+**Effort**: ~20 min (including test verification)
+
+---
+
+### R2-F3. Remaining `#[allow(dead_code)]` in stats modules — ✅ COMPLETED (2026-03-30)
+
+**Severity: LOW** (code clarity)
+
+10 remaining `#[allow(dead_code)]` annotations across the stats tree:
+
+| File | Count | Context | Resolution |
+|------|-------|---------|------------|
+| `extensions/iter_statistics_ext.rs` | 2 | Trait method (`pooled_variance`) + test helper (`round`) | **Kept** — trait method may be used later; test helper is in `#[cfg(test)]` |
+| `regression/glmm/fitting.rs` | 1 | `const TOL` in `#[cfg(test)]` block | **Kept** — test code, acceptable |
+| `regression/glmm/wasm.rs` | 1 | `covariance` field on `RandomEffectSpec` with `#[serde(default)]` | **Kept** — reserved for future use, legitimate |
+| `regression/shared/formula_parser.rs` | 3 | `generate_combinations`, `generate_combination_indices`, `generate_combinations_recursive` | **Kept** — called from test code (line 372) and by each other; `#[allow(dead_code)]` needed because Rust considers them dead in non-test builds |
+| `statistical_tests/kolmogorov_smirnov/kolmogorov_smirnov.rs` | 3 | `ecdf_value`, `kolmogorov_cdf_complement_one_sided`, `k2l_asymptotic` | **Deleted** — truly dead code, defined but never called anywhere |
+
+---
+
+### R2-F4. Survival module: bare `.unwrap()` on `partial_cmp` in sort closures — ✅ COMPLETED (2026-03-30)
+
+**Severity: LOW-MEDIUM** (same class as S2 from round 1, but in survival code)
+
+All bare `.unwrap()` calls on `partial_cmp` in survival `.rs` files replaced with `.unwrap_or(std::cmp::Ordering::Equal)`.
+
+**Files fixed**:
+- `wasm.rs` — 8 calls fixed
+- `cox_baseline_hazard.rs` — 8 calls fixed (including `tstart` and `stime` patterns)
+- `ag_cox_regression.rs` — 2 calls fixed (`start` and `stop` sort closures)
+- `ag_cox_residuals.rs` — 2 calls fixed (`stop` and `event` comparisons)
+- `concordance.rs` — 1 call fixed (`compute_bindex` sort)
+- `survival_object.rs` — already used `unwrap_or`, no change needed
+
+Zero remaining `partial_cmp().unwrap()` in any survival `.rs` file (verified via grep).
+
+---
+
+### R2-F5. Survival module: `pub fn` visibility candidates for `pub(crate)` — ✅ COMPLETED (2026-03-30)
+
+**Severity: LOW** (API surface cleanliness, per Phase 8 ongoing habit)
+
+Audited all `pub fn` in survival module. Verified call sites for each function — only functions called from `wasm.rs` remained `pub`; all others tightened to `pub(crate)`.
+
+**Functions tightened to `pub(crate)` (25 total across 13 files)**:
+- `concordance.rs`: `concordance4`, `concordance6`
+- `cox_baseline_hazard.rs`: `coxsurv4`
+- `cox_baseline_hazard_ms.rs`: `coxsurv1`, `coxsurv2`
+- `cox_event_detail.rs`: `cox_event_detail`
+- `cholesky.rs`: `cholesky2`, `chsolve2`, `chinv2`
+- `ag_cox_residuals.rs`: `agmart3`, `agscore2`
+- `proportional_hazards_test.rs`: `zph2`
+- `survfit_residuals.rs`: `survfitresid`
+- `clustering.rs`: `twoclust`
+- `numerical_safety.rs`: `coxsafe`
+- `cox_residuals.rs`: `coxmart2`
+- `survival_object.rs`: all 9 `SurvData` methods (`right_censored`, `counting_process`, `n`, `times`, `statuses`, `start_times`, `sort_by_time`, `unique_times`, `validate`)
+- `interpolation.rs`: all 3 `Interpolator` methods (`new`, `approx1`, `approx`)
+
+**Functions kept as `pub` (used by `wasm.rs`)**: `survdiff2`, `agsurv4`, `deviance_residuals`, `dfbeta_residuals`, `dfbetas_residuals`, `concordance3`, `concordance5`, `agfit4`, `coxsurv3`, `coxexact`, `coxfit6`, `coxmart`, `coxscho`, `coxscore2`, `survsplit`, `survfit_km`, `zph1`, `agmart`, `agscore3`
+
+**Additional cleanup**:
+- `mod.rs`: Changed `pub use clustering::*` and `pub use numerical_safety::*` to `pub(crate) use` (since all exported items are now `pub(crate)`)
+- `wasm.rs`: Removed 5 unused imports (`concordance5`, `coxsurv3`, `cox_event_detail`, `CoxDetailMethod`, `coxph_wtest`, `Deserialize`)
+
+---
+
+### R2 Implementation Todo List
+
+| # | Finding | Task | Priority | Status |
+|---|---------|------|----------|--------|
+| R2-1 | R2-F1 | Add `#[serde(rename_all = "camelCase")]` to 4 survival WASM structs + update TS | HIGH | TODO |
+| R2-2 | R2-F2 | Investigate and remove `serde_special_floats.rs` if obsolete | MEDIUM | TODO |
+| R2-3 | R2-F3 | Resolve 10 remaining `#[allow(dead_code)]` in stats | LOW | ✅ Done (2026-03-30) |
+| R2-4 | R2-F4 | Fix bare `partial_cmp().unwrap()` in survival sort closures | LOW-MEDIUM | ✅ Done (2026-03-30) |
+| R2-5 | R2-F5 | Tighten `pub fn` → `pub(crate)` in survival module | LOW | ✅ Done (2026-03-30) |

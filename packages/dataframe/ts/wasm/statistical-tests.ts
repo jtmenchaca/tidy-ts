@@ -1,7 +1,6 @@
 // Statistical tests module
 
 import { initWasm, wasmInternal } from "./wasm-init.ts";
-export { serializeTestResult } from "./wasm-serializer.ts";
 import type {
   AndersonDarlingTestResult,
   ChiSquareGoodnessOfFitTestResult,
@@ -30,7 +29,7 @@ import type {
   TwoWayAnovaTestResult,
   WelchAnovaTestResult,
   WilcoxonSignedRankTestResult,
-} from "../../lib/tidy_ts_dataframe.js";
+} from "../stats/statistical-tests/types.ts";
 
 // ANOVA Tests
 export function anova_one_way_wasm(

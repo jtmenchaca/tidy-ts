@@ -3,9 +3,6 @@
 #![cfg(feature = "wasm")]
 
 use super::mann_whitney_u::MannWhitneyConfig;
-use crate::stats::core::types::{
-    EffectSize, EffectSizeType, MannWhitneyTestResult, TestStatistic, TestStatisticName,
-};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for Mann-Whitney U test (automatically chooses exact vs asymptotic)
@@ -15,26 +12,12 @@ pub fn mann_whitney_test(
     y: &[f64],
     alpha: f64,
     alternative: &str,
-) -> MannWhitneyTestResult {
+) -> Result<JsValue, JsValue> {
     use super::mann_whitney_u::MannWhitneyUTest;
-    MannWhitneyUTest::independent(x, y, alpha, alternative).unwrap_or_else(|e| {
-        MannWhitneyTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: TestStatisticName::UStatistic.as_str().to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Mann-Whitney U Test".to_string(),
-            method: "Error".to_string(),
-            alpha,
-            error_message: Some(e),
-            effect_size: EffectSize {
-                value: f64::NAN,
-                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
-            },
-            alternative: alternative.to_string(),
-        }
-    })
+    let result = MannWhitneyUTest::independent(x, y, alpha, alternative)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for Mann-Whitney U test with configuration
@@ -46,28 +29,15 @@ pub fn mann_whitney_test_with_config(
     continuity_correction: bool,
     alpha: f64,
     alternative: &str,
-) -> MannWhitneyTestResult {
+) -> Result<JsValue, JsValue> {
     use super::mann_whitney_u::MannWhitneyUTest;
     let config = MannWhitneyConfig {
         exact,
         continuity_correction,
         alternative: alternative.to_string(),
     };
-    MannWhitneyUTest::independent_with_config(x, y, config, alpha, alternative)
-        .unwrap_or_else(|e| MannWhitneyTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: TestStatisticName::UStatistic.as_str().to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Mann-Whitney U Test".to_string(),
-            method: "Error".to_string(),
-            alpha,
-            error_message: Some(e),
-            effect_size: EffectSize {
-                value: f64::NAN,
-                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
-            },
-            alternative: alternative.to_string(),
-        })
+    let result = MannWhitneyUTest::independent_with_config(x, y, config, alpha, alternative)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }

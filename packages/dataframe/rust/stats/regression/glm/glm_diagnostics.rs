@@ -13,6 +13,7 @@ use serde::{Deserialize, Serialize};
 
 /// Summary of GLM fit with coefficient table
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmSummaryTable {
     /// Coefficient names
     pub names: Vec<String>,
@@ -32,6 +33,7 @@ pub struct GlmSummaryTable {
 
 /// Influence measures for GLM
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmInfluence {
     /// dfbeta: Raw change in coefficients (n x p matrix)
     pub dfbeta: Vec<Vec<f64>>,
@@ -49,6 +51,7 @@ pub struct GlmInfluence {
 
 /// Confidence intervals for GLM coefficients
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmConfint {
     /// Coefficient names
     pub names: Vec<String>,

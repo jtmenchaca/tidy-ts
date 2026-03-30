@@ -89,13 +89,21 @@ export type EmptyGroupingColumn =
 /**
  * Conditional type that returns an error message for empty DataFrames,
  * otherwise returns the expected parameter type.
+ *
+ * NOTE: This is intentionally a simple pass-through that returns ParamType.
+ * Previous versions used `[Row] extends [never] ? ErrorMessage<ErrorMsg> : ParamType`
+ * to show nice error messages for DataFrame<never>. However, conditional types
+ * on generic type parameters ALWAYS defer in TypeScript, which broke the common
+ * pattern of `function foo<T extends SomeRow>(df: DataFrame<T>)`.
+ *
+ * The DataFrame<never> error case is now handled at the DataFrame type level
+ * rather than at individual parameter positions.
  */
 export type RestrictEmptyDataFrame<
   Row extends object,
   ParamType,
-  ErrorMsg extends string,
-> = IsEmptyDataFrame<Row> extends true ? ErrorMessage<ErrorMsg>
-  : ParamType;
+  _ErrorMsg extends string,
+> = ParamType;
 
 /**
  * Helper type for method parameters that should error on empty DataFrames
@@ -120,9 +128,9 @@ export type EmptyDataFrameParam<Row extends object, ErrorMsg extends string> =
  */
 export type RestrictMethodForEmptyDataFrame<
   Row extends object,
-  ErrorMsg extends string,
+  _ErrorMsg extends string,
   NormalMethodType,
-> = IsEmptyDataFrame<Row> extends true ? ErrorMsg : NormalMethodType;
+> = NormalMethodType;
 
 /**
  * Helper types for column validation

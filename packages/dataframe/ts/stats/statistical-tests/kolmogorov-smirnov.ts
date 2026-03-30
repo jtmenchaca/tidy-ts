@@ -1,10 +1,9 @@
 import {
   kolmogorov_smirnov_test_wasm,
   kolmogorov_smirnov_uniform_wasm,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
 
-import type { KolmogorovSmirnovTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { KolmogorovSmirnovTestResult } from "./types.ts";
 
 /**
  * Two-sample Kolmogorov-Smirnov test
@@ -47,7 +46,7 @@ export function kolmogorovSmirnovTest({
     alpha,
   );
 
-  return serializeTestResult(result) as KolmogorovSmirnovTestResult;
+  return result as KolmogorovSmirnovTestResult;
 }
 
 /**
@@ -94,7 +93,7 @@ export function kolmogorovSmirnovUniformTest({
     alpha,
   );
 
-  return serializeTestResult(result) as KolmogorovSmirnovTestResult;
+  return result as KolmogorovSmirnovTestResult;
 }
 
 // Alias for the main two-sample test

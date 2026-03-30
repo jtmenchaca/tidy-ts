@@ -365,7 +365,7 @@ export async function callRobustRust(
   try {
     // Import the GEE functions from WASM bindings
     const { geeglmFit } = await import(
-      "@tidy-ts/dataframe/ts/wasm/stats-functions.js"
+      "@tidy-ts/dataframe/ts/wasm/gee-functions.js"
     );
 
     const data = params.data || {};

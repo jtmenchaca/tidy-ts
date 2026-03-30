@@ -1,8 +1,7 @@
 import {
   mann_whitney_test_with_config,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { MannWhitneyTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { MannWhitneyTestResult } from "./types.ts";
 
 /**
  * Mann-Whitney U test (Wilcoxon rank-sum) for non-parametric comparison
@@ -37,5 +36,5 @@ export function mannWhitneyTest({
     alpha,
     alternative,
   );
-  return serializeTestResult(result) as MannWhitneyTestResult;
+  return result as MannWhitneyTestResult;
 }

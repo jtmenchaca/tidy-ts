@@ -304,7 +304,6 @@ Deno.test("Slice Methods - Edge Cases and Boundary Conditions", () => {
 
   // Test empty group handling
   const emptyData = createDataFrame([]);
-  // @ts-expect-error - empty dataframe
   const emptySliced = emptyData.slice(0, 3);
   expect(emptySliced.nrows()).toBe(0);
   console.log("Empty DataFrame slice handling verified");

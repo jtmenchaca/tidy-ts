@@ -58,7 +58,7 @@ import { asof_join } from "../../verbs/join/asof-join.verb.ts";
 import { groupBy } from "../../verbs/grouping/group-by.verb.ts";
 import { summarise } from "../../verbs/aggregate/summarise.verb.ts";
 import { summarise_columns } from "../../verbs/aggregate/summarise-columns.verb.ts";
-import { cross_tabulate } from "../../verbs/aggregate/cross_tabulate.verb.ts";
+// import { cross_tabulate } from "../../verbs/aggregate/cross_tabulate.verb.ts";
 import { count } from "../../verbs/aggregate/count.verb.ts";
 
 // Pivot
@@ -286,9 +286,9 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (...a: unknown[]) => (summarise_columns as any)(...a)(df);
   }
 
-  if (prop === "crossTabulate") {
-    return (...a: unknown[]) => (cross_tabulate as any)(...a)(df);
-  }
+  // if (prop === "crossTabulate") {
+  //   return (...a: unknown[]) => (cross_tabulate as any)(...a)(df);
+  // }
 
   if (prop === "count") {
     return (...a: unknown[]) => {

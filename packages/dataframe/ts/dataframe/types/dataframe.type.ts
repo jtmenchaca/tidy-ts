@@ -9,7 +9,7 @@ import type { MutateMethod } from "../../verbs/transformation/mutate/mutate.type
 import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-columns.types.ts";
 import type { SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
 import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-columns.types.ts";
-import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
+// import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
 import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
 import type { RenameMethod } from "../../verbs/transformation/rename.types.ts";
 import type { DummyColMethod } from "../../verbs/utility/dummy-col.types.ts";
@@ -210,7 +210,7 @@ export interface DataFrameBase<Row extends object = object>
   summarize: SummariseMethod<Row>;
   summariseColumns: SummariseColumnsMethod<Row>;
   summarizeColumns: SummariseColumnsMethod<Row>;
-  crossTabulate: CrossTabulateMethod<Row>;
+  // crossTabulate: CrossTabulateMethod<Row>;
   count: CountMethod<Row>;
 
   // ---------- Utilities ----------

@@ -21,8 +21,8 @@ pub fn geeglm_fit_wasm(
     corstr: &str,
     std_err: &str,
     options_json: Option<String>,
-) -> String {
-    match geeglm_fit_wasm_inner(
+) -> Result<JsValue, JsValue> {
+    let result_value = geeglm_fit_wasm_inner(
         formula,
         family_name,
         link_name,
@@ -32,10 +32,11 @@ pub fn geeglm_fit_wasm(
         corstr,
         std_err,
         options_json,
-    ) {
-        Ok(v) => v,
-        Err(e) => format!("{{\"error\":\"{}\"}}", e.replace('"', "'")),
-    }
+    )
+    .map_err(|e| JsValue::from_str(&e))?;
+
+    serde_wasm_bindgen::to_value(&result_value)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 fn geeglm_fit_wasm_inner(
@@ -48,7 +49,7 @@ fn geeglm_fit_wasm_inner(
     corstr: &str,
     std_err: &str,
     options_json: Option<String>,
-) -> Result<String, String> {
+) -> Result<serde_json::Value, String> {
     let data: HashMap<String, Vec<f64>> =
         serde_json::from_str(data_json).map_err(|e| format!("invalid data_json: {}", e))?;
     let id: Vec<usize> =
@@ -115,7 +116,7 @@ fn geeglm_fit_wasm_inner(
         Some(std_err.to_string()),
     )?;
 
-    Ok(serde_json::to_string(&serde_json::json!({
+    Ok(serde_json::json!({
         "coefficients": result.glm_result.coefficients,
         "residuals": result.glm_result.residuals,
         "fitted_values": result.glm_result.fitted_values,
@@ -127,7 +128,6 @@ fn geeglm_fit_wasm_inner(
         "std_err": result.std_error_type,
         "vcov": result.gee_info.robust_vcov,
     }))
-    .unwrap())
 }
 
 fn parse_corstr(s: &str) -> Result<CorrelationStructure, String> {

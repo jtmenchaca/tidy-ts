@@ -3,7 +3,6 @@
 #![cfg(feature = "wasm")]
 
 use super::fishers_exact::fishers_exact_test;
-use crate::stats::core::types::{FishersExactTestResult, TestStatistic, ConfidenceInterval, EffectSize, EffectSizeType};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for Fisher's exact test
@@ -16,32 +15,10 @@ pub fn fishers_exact_test_wasm(
     alternative: &str,
     odds_ratio: f64,
     alpha: f64,
-) -> FishersExactTestResult {
+) -> Result<JsValue, JsValue> {
     let table = vec![a, b, c, d];
-    fishers_exact_test(&table, alternative, odds_ratio, alpha).unwrap_or_else(|e| {
-        FishersExactTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: "T-Statistic".to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Fisher's exact test".to_string(),
-            alpha,
-            error_message: Some(e),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            effect_size: EffectSize {
-                value: f64::NAN,
-                name: EffectSizeType::OddsRatio.as_str().to_string(),
-            },
-            method: alternative.to_string(),
-            method_type: "exact".to_string(),
-            mid_p_value: None,
-            alternative: alternative.to_string(),
-        }
-    })
+    let result = fishers_exact_test(&table, alternative, odds_ratio, alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
-

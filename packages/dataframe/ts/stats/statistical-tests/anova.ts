@@ -4,7 +4,6 @@ import {
   anova_two_way_factor_b_wasm,
   anova_two_way_interaction_wasm,
   anova_two_way_wasm,
-  serializeTestResult,
   welch_anova_wasm,
 } from "../../wasm/statistical-tests.ts";
 
@@ -12,7 +11,7 @@ import type {
   OneWayAnovaTestResult,
   TwoWayAnovaTestResult,
   WelchAnovaTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "./types.ts";
 
 /**
  * One-way ANOVA (WASM implementation)
@@ -43,7 +42,7 @@ export function anovaOneWay(
     new Uint32Array(groupSizes),
     alpha,
   );
-  return serializeTestResult(result) as OneWayAnovaTestResult;
+  return result as OneWayAnovaTestResult;
 }
 
 /**
@@ -77,7 +76,7 @@ export function welchAnovaOneWay(
     new Uint32Array(groupSizes),
     alpha,
   );
-  return serializeTestResult(result) as WelchAnovaTestResult;
+  return result as WelchAnovaTestResult;
 }
 
 /**
@@ -139,7 +138,7 @@ export function _twoWayAnovaFactorA({
     new Uint32Array(cellSizes),
     alpha,
   );
-  return serializeTestResult(result) as OneWayAnovaTestResult;
+  return result as OneWayAnovaTestResult;
 }
 
 /**
@@ -201,7 +200,7 @@ export function _twoWayAnovaFactorB({
     new Uint32Array(cellSizes),
     alpha,
   );
-  return serializeTestResult(result) as OneWayAnovaTestResult;
+  return result as OneWayAnovaTestResult;
 }
 
 /**
@@ -263,7 +262,7 @@ export function _twoWayAnovaInteraction({
     new Uint32Array(cellSizes),
     alpha,
   );
-  return serializeTestResult(result) as OneWayAnovaTestResult;
+  return result as OneWayAnovaTestResult;
 }
 
 /**
@@ -325,5 +324,5 @@ export function twoWayAnova({
     new Uint32Array(cellSizes),
     alpha,
   );
-  return serializeTestResult(result) as TwoWayAnovaTestResult;
+  return result as TwoWayAnovaTestResult;
 }

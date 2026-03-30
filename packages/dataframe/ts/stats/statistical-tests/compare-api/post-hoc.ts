@@ -3,7 +3,7 @@ import type {
   DunnTestResult,
   GamesHowellTestResult,
   TukeyHsdTestResult,
-} from "../../../../lib/tidy_ts_dataframe.js";
+} from "../types.ts";
 import {
   cleanNumeric,
   hasBalancedSizes,

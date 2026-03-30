@@ -178,7 +178,6 @@ Deno.test("forEachCol - empty DataFrame", () => {
   const emptyDf = createDataFrame([]);
   let callCount = 0;
 
-  // @ts-expect-error - empty dataframe
   const result = emptyDf.forEachCol(() => {
     callCount++;
   });

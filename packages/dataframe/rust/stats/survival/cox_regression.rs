@@ -14,17 +14,21 @@
 //!
 //! Data must be sorted by ascending time within strata.
 
+use serde::Serialize;
+
 /// Tie-handling method for Cox regression.
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize)]
 pub enum CoxMethod {
     /// Breslow approximation (method=0 in C)
     Breslow = 0,
     /// Efron approximation (method=1 in C)
     Efron = 1,
+    /// Exact partial likelihood (method=2)
+    Exact = 2,
 }
 
 /// Result of the Cox regression fit.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CoxfitResult {
     /// Final coefficient estimates (nvar), on the original covariate scale
     pub coef: Vec<f64>,

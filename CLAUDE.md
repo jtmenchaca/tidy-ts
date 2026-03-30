@@ -1,9 +1,6 @@
 # Tidy-TS Architecture
 
-- **Efficient type checking**: Run checks on relevant packages. Trust the exit code and output - deno check shows green "Check" lines for success and explicit error messages with line numbers for failures. No need to grep/verify output if the command succeeds. For multiple packages, run sequentially:
-  ```bash
-  pnpm check:pkg1 && pnpm check:pkg2 && pnpm check:pkg3
-  ```
+- **Type checking output is already clean**: `pnpm check:dataframe` (and all check scripts) use `scripts/parse-check.ts` which strips verbose output and shows only errors with file locations. **Do NOT pipe through `2>&1`, `tail`, `grep`, or `head`** — just run the command directly and read the output as-is.
 
 ## Quick Reference
 
@@ -32,12 +29,10 @@ pnpm fmt && pnpm lint
 - **Type check before success**: Always type check affected files before reporting success
 - **Efficient type checking**: DO NOT run `pnpm check` - it checks ALL packages and takes too long. Instead, run the package-specific check for the package you modified:
   ```bash
-  # Check only the dataframe package
-  pnpm check:dataframe
-
-  # Check only the shims package
-  pnpm check:shims
+  pnpm check:dataframe   # Check only the dataframe package
+  pnpm check:shims       # Check only the shims package
   ```
+  Output is already parsed to show only errors — never pipe through `2>&1 | tail` or `grep`.
   Only use `pnpm check` (all packages) when explicitly asked or for final CI validation.
 - **Test permissions**: Use `-A` flag for Deno tests: `deno test -A [test-name]`
 - **Bug debugging**: Create test files in `packages/testing/bugs/` using existing test patterns

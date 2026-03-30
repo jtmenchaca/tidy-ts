@@ -28,7 +28,7 @@
 ///
 /// Martingale residuals: status[i] - cumhaz_contribution[i]
 #[allow(clippy::too_many_arguments)]
-pub fn agmart3(
+pub(crate) fn agmart3(
     nused: usize,
     tstart: &[f64],
     tstop: &[f64],
@@ -266,7 +266,7 @@ pub fn agmart(
 /// Direct port of `agscore3()` from `survival-ref/survival-master/src/agscore3.c`.
 /// Fast O(n) algorithm using cumulative sums.
 ///
-/// Data is assumed sorted in descending tstop order within strata.
+/// Data is assumed sorted in ascending tstop order within strata (events last at ties).
 ///
 /// # Arguments
 ///
@@ -464,7 +464,7 @@ pub fn agscore3(
 ///
 /// Score residual matrix resid[j][i] (nvar × n)
 #[allow(clippy::too_many_arguments)]
-pub fn agscore2(
+pub(crate) fn agscore2(
     tstart: &[f64],
     tstop: &[f64],
     event: &[f64],
@@ -713,55 +713,146 @@ mod tests {
         }
     }
 
+    // Sorted data for agmart/agscore2: ascending stop, events first at ties
+    // Sort order (0-based): [1, 7, 0, 4, 8, 2, 9, 3, 10, 5, 11, 6]
+    fn sorted_test_data() -> (Vec<f64>, Vec<f64>, Vec<i32>, Vec<f64>, Vec<f64>) {
+        let ord: Vec<usize> = vec![1, 7, 0, 4, 8, 2, 9, 3, 10, 5, 11, 6];
+        let (start, stop, event_f, x) = test_data();
+        let all_scores = scores();
+        let s_start: Vec<f64> = ord.iter().map(|&i| start[i]).collect();
+        let s_stop: Vec<f64> = ord.iter().map(|&i| stop[i]).collect();
+        let s_event: Vec<i32> = ord.iter().map(|&i| event_f[i] as i32).collect();
+        let s_score: Vec<f64> = ord.iter().map(|&i| all_scores[i]).collect();
+        let s_x: Vec<f64> = ord.iter().map(|&i| x[i]).collect();
+        (s_start, s_stop, s_event, s_score, s_x)
+    }
+
+    fn sorted_ord() -> Vec<usize> {
+        vec![1, 7, 0, 4, 8, 2, 9, 3, 10, 5, 11, 6]
+    }
+
+    // R reference values (original order, same for Efron and Breslow with no ties)
+    fn expected_martingale() -> [f64; 12] {
+        [
+            5.981238657855465e-01,
+            0.000000000000000e+00,
+            -3.101655310630820e-01,
+            6.750748532166053e-01,
+            3.371413486857247e-01,
+            -6.069544989506124e-01,
+            -8.408347931892175e-01,
+            8.190502204788555e-01,
+            6.898344689369180e-01,
+            -1.016006612138733e+00,
+            3.930455010493876e-01,
+            -7.383088228113914e-01,
+        ]
+    }
+
+    fn expected_score() -> [f64; 12] {
+        [
+            2.127414551348435e-01,
+            0.000000000000000e+00,
+            1.643420555187977e-01,
+            -3.086848240219440e-01,
+            2.287967163788241e-01,
+            3.093951574609785e-01,
+            4.885754596664471e-01,
+            2.262223932292799e-01,
+            -1.888059053056597e-01,
+            -4.776727280115179e-01,
+            -2.125698767386643e-01,
+            -4.423399033113836e-01,
+        ]
+    }
+
     #[test]
-    fn test_agscore3_efron() {
-        let (start, stop, event, x) = test_data();
-        let n = start.len();
-        let score = scores();
-        let weight = vec![1.0; n];
-        let strata = vec![0_i32; n];
-        let covar = vec![x];
+    fn test_agmart_efron() {
+        let (s_start, s_stop, s_event, s_score, _) = sorted_test_data();
+        let ord = sorted_ord();
+        let n = s_start.len();
+        let wt = vec![1.0; n];
+        let mut strata = vec![0_i32; n];
 
-        // agscore3 expects data sorted in descending tstop order within strata
-        // and sort1 is ascending start within strata
-        // C code: sort1 is ascending order of start times (person n-1 down to 0)
-        // sort1[n-1] = index of smallest start time
-        // Actually, re-reading C: i1 starts at n-1 and walks DOWN
-        // sort1 must be ascending order by start time
-        let mut sort1_asc: Vec<i32> = (0..n as i32).collect();
-        sort1_asc.sort_by(|&a, &b| {
-            start[a as usize]
-                .partial_cmp(&start[b as usize])
-                .unwrap()
-        });
+        let resid = agmart(&s_start, &s_stop, &s_event, &s_score, &wt, &mut strata, 1);
 
-        // Data must be pre-sorted by descending tstop
-        // Let's create the sorted permutation
-        let mut sort2_desc: Vec<usize> = (0..n).collect();
-        sort2_desc.sort_by(|&a, &b| stop[b].partial_cmp(&stop[a]).unwrap());
-
-        // Reorder all arrays by sort2_desc
-        let mut s_tstart = vec![0.0; n];
-        let mut s_tstop = vec![0.0; n];
-        let mut s_event = vec![0.0; n];
-        let mut s_covar = vec![vec![0.0; n]; 1];
-        let mut s_score = vec![0.0; n];
-        let mut s_weight = vec![0.0; n];
-        let mut s_strata = vec![0_i32; n];
-
-        for (new_idx, &old_idx) in sort2_desc.iter().enumerate() {
-            s_tstart[new_idx] = start[old_idx];
-            s_tstop[new_idx] = stop[old_idx];
-            s_event[new_idx] = event[old_idx];
-            s_covar[0][new_idx] = covar[0][old_idx];
-            s_score[new_idx] = score[old_idx];
-            s_weight[new_idx] = weight[old_idx];
-            s_strata[new_idx] = strata[old_idx];
+        // Map back to original order
+        let mut orig_resid = vec![0.0; n];
+        for (sorted_idx, &orig_idx) in ord.iter().enumerate() {
+            orig_resid[orig_idx] = resid[sorted_idx];
         }
 
-        // Build sort1 for sorted data: ascending start time
-        let mut s_sort1: Vec<i32> = (0..n as i32).collect();
-        s_sort1.sort_by(|&a, &b| {
+        let expected = expected_martingale();
+        for i in 0..n {
+            assert!(
+                (orig_resid[i] - expected[i]).abs() < 1e-6,
+                "agmart[{}]: {:.15e} vs {:.15e}",
+                i, orig_resid[i], expected[i]
+            );
+        }
+    }
+
+    #[test]
+    fn test_agscore2_efron() {
+        let (s_start, s_stop, s_event, s_score, s_x) = sorted_test_data();
+        let ord = sorted_ord();
+        let n = s_start.len();
+        let s_event_f: Vec<f64> = s_event.iter().map(|&e| e as f64).collect();
+        let wt = vec![1.0; n];
+        let strata = vec![0_i32; n];
+        let covar = vec![s_x];
+
+        let resid = agscore2(
+            &s_start, &s_stop, &s_event_f, &covar, &strata, &s_score, &wt, 1,
+        );
+
+        // Map back to original order
+        let mut orig_resid = vec![0.0; n];
+        for (sorted_idx, &orig_idx) in ord.iter().enumerate() {
+            orig_resid[orig_idx] = resid[0][sorted_idx];
+        }
+
+        let expected = expected_score();
+        for i in 0..n {
+            assert!(
+                (orig_resid[i] - expected[i]).abs() < 1e-6,
+                "agscore2[{}]: {:.15e} vs {:.15e}",
+                i, orig_resid[i], expected[i]
+            );
+        }
+    }
+
+    #[test]
+    fn test_agscore3_efron() {
+        // agscore3 expects data PRE-SORTED ascending by (strata, tstop, -event)
+        // R: ord = order(istrat, y[,2], -status)
+        // Original data indices in sorted order (0-based):
+        //   1, 7, 0, 4, 8, 2, 9, 3, 10, 5, 11, 6
+        let (start, stop, event, x) = test_data();
+        let n = start.len();
+        let all_scores = scores();
+
+        // Sort indices: ascending tstop, events last at ties (descending event)
+        let mut ord: Vec<usize> = (0..n).collect();
+        ord.sort_by(|&a, &b| {
+            stop[a]
+                .partial_cmp(&stop[b])
+                .unwrap_or(std::cmp::Ordering::Equal)
+                .then_with(|| event[b].partial_cmp(&event[a]).unwrap_or(std::cmp::Ordering::Equal))
+        });
+
+        // Build sorted arrays
+        let s_tstart: Vec<f64> = ord.iter().map(|&i| start[i]).collect();
+        let s_tstop: Vec<f64> = ord.iter().map(|&i| stop[i]).collect();
+        let s_event: Vec<f64> = ord.iter().map(|&i| event[i]).collect();
+        let s_covar = vec![ord.iter().map(|&i| x[i]).collect::<Vec<f64>>()];
+        let s_score: Vec<f64> = ord.iter().map(|&i| all_scores[i]).collect();
+        let s_weight = vec![1.0; n];
+        let s_strata = vec![0_i32; n];
+
+        // sort1: ascending start time order within sorted data (0-based)
+        let mut sort1: Vec<i32> = (0..n as i32).collect();
+        sort1.sort_by(|&a, &b| {
             s_tstart[a as usize]
                 .partial_cmp(&s_tstart[b as usize])
                 .unwrap()
@@ -769,13 +860,13 @@ mod tests {
 
         let resid = agscore3(
             &s_tstart, &s_tstop, &s_event, &s_covar, &s_strata, &s_score,
-            &s_weight, 1, &s_sort1,
+            &s_weight, 1, &sort1,
         );
 
         // Map back to original order
         let mut orig_resid = vec![0.0; n];
-        for (new_idx, &old_idx) in sort2_desc.iter().enumerate() {
-            orig_resid[old_idx] = resid[0][new_idx];
+        for (sorted_idx, &orig_idx) in ord.iter().enumerate() {
+            orig_resid[orig_idx] = resid[0][sorted_idx];
         }
 
         // R reference (Efron)

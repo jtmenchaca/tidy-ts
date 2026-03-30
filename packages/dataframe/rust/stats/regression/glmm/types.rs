@@ -42,6 +42,7 @@ impl std::fmt::Display for CovarianceType {
 /// - `terms`: ["1", "x"] (intercept and slope)
 /// - `covariance`: Unstructured (intercept-slope correlation estimated)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RandomEffect {
     /// Variable name used for grouping (e.g., "patient", "clinic")
     pub grouping_var: String,
@@ -113,6 +114,7 @@ impl RandomEffect {
 
 /// Control parameters for GLMM fitting
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmmControl {
     /// Maximum iterations for outer optimization (variance components)
     pub max_iter_outer: usize,
@@ -183,6 +185,7 @@ impl GlmmControl {
 
 /// Variance component estimate for a random effect
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct VarianceComponent {
     /// Name of the grouping variable
     pub group_name: String,
@@ -215,6 +218,7 @@ impl VarianceComponent {
 
 /// Random effect estimates (BLUPs - Best Linear Unbiased Predictors)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RandomEffectEstimates {
     /// Name of the grouping variable
     pub group_name: String,
@@ -256,6 +260,7 @@ impl RandomEffectEstimates {
 ///
 /// Extends GlmResult with random effect components
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmmResult {
     /// GLM fixed effects result (reuses all GLM infrastructure)
     pub glm_result: GlmResult,
@@ -312,6 +317,7 @@ pub struct GlmmResult {
 
 /// Summary statistics for GLMM fit
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmmFitSummary {
     /// Number of observations
     pub n_observations: usize,
@@ -379,6 +385,7 @@ impl GlmmResult {
 
 /// Options for GLMM fitting
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmmOptions {
     /// Whether to compute BLUPs
     pub compute_blups: bool,

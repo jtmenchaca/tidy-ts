@@ -15,9 +15,10 @@
 //! - type=4: exp(-cumhaz) survival + Fleming-Harrington hazard
 
 use super::survival_object::SurvData;
+use serde::Serialize;
 
 /// Result of a Kaplan-Meier / survfit computation for a single stratum.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SurvfitKmResult {
     /// Unique event/censoring times
     pub time: Vec<f64>,

@@ -1,8 +1,7 @@
 import {
   dunn_test_wasm,
-  serializeTestResult,
 } from "../../../wasm/statistical-tests.ts";
-import type { DunnTestResult } from "../../../../lib/tidy_ts_dataframe.js";
+import type { DunnTestResult } from "../types.ts";
 
 /**
  * Dunn's test for pairwise comparisons
@@ -39,5 +38,5 @@ export function dunnTest(
     alpha,
   );
 
-  return serializeTestResult(result) as DunnTestResult;
+  return result as DunnTestResult;
 }

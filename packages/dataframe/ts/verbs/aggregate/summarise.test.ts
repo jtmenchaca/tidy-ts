@@ -175,7 +175,6 @@ Deno.test("summarise grouped - preserves group keys", () => {
 
 Deno.test("summarise with empty data", () => {
   const result = createDataFrame([])
-    // @ts-expect-error - expected error for empty DataFrame summarise
     .summarise({
       // deno-lint-ignore no-explicit-any
       count: (df: any) => df.nrows(),
@@ -196,7 +195,6 @@ Deno.test("summarise with empty data", () => {
 
 Deno.test("summarise grouped with empty data", () => {
   const groupedData = createDataFrame([])
-    // @ts-expect-error - expected error for empty DataFrame groupBy
     .groupBy("species");
 
   expect(groupedData.nrows()).toBe(0); // No groups, no results

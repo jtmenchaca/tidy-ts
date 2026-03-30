@@ -21,7 +21,7 @@ use web_sys::console;
 /// * `options_json` - JSON string containing optional parameters
 ///
 /// # Returns
-/// JSON string containing the fitted GLM result
+/// JsValue containing the fitted GLM result
 #[wasm_bindgen]
 pub fn glm_fit_wasm(
     formula: &str,
@@ -29,24 +29,20 @@ pub fn glm_fit_wasm(
     link_name: &str,
     data_json: &str,
     options_json: Option<String>,
-) -> String {
+) -> Result<JsValue, JsValue> {
     // Parse data from JSON
-    let (data, categorical_vars) = match parse_data_json(data_json) {
-        Ok((d, c)) => (d, c),
-        Err(e) => {
+    let (data, categorical_vars) = parse_data_json(data_json)
+        .map_err(|e| {
             console::log_1(&format!("[WASM] Data parsing error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Parse formula using existing parser and handle categorical variables
-    let parsed_formula = match parse_formula(formula) {
-        Ok(pf) => pf,
-        Err(e) => {
+    let parsed_formula = parse_formula(formula)
+        .map_err(|e| {
             console::log_1(&format!("[WASM] Formula parsing error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Update the formula to replace categorical variables with dummy variable names
     let updated_formula = if !categorical_vars.is_empty() {
@@ -67,36 +63,31 @@ pub fn glm_fit_wasm(
     }
 
     // Create family object
-    let family = match create_family(family_name, link_name) {
-        Ok(f) => f,
-        Err(e) => {
+    let family = create_family(family_name, link_name)
+        .map_err(|e| {
             console::log_1(&format!("[WASM] Family creation error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Parse options if provided
     let (weights, na_action, control_params) = if let Some(ref opts) = options_json {
-        match parse_options_json(opts) {
-            Ok(o) => o,
-            Err(e) => return format_error(&e),
-        }
+        parse_options_json(opts).map_err(|e| JsValue::from_str(&e))?
     } else {
         (None, None, None)
     };
 
     // Create control object
     let control = if let Some((epsilon, max_iter, trace)) = control_params {
-        match super::glm_control::glm_control(epsilon, max_iter, trace) {
-            Ok(c) => Some(c),
-            Err(e) => return format_error(&e),
-        }
+        Some(
+            super::glm_control::glm_control(epsilon, max_iter, trace)
+                .map_err(|e| JsValue::from_str(&e))?,
+        )
     } else {
         None
     };
 
     // Fit the model
-    match glm(
+    let result = glm(
         updated_formula,
         Some(family),
         Some(data),
@@ -113,13 +104,14 @@ pub fn glm_fit_wasm(
         Some(true),                  // y
         Some(true),                  // singular_ok
         None,                        // contrasts
-    ) {
-        Ok(result) => format_glm_result(&result),
-        Err(e) => {
-            console::log_1(&format!("[WASM] GLM fit error: {}", e).into());
-            format_error(&e)
-        }
-    }
+    )
+    .map_err(|e| {
+        console::log_1(&format!("[WASM] GLM fit error: {}", e).into());
+        JsValue::from_str(&e)
+    })?;
+
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// Update formula to replace categorical variable names with dummy variable names.
@@ -435,376 +427,104 @@ fn create_family(
     }
 }
 
-/// Format GLM result as JSON string
-fn format_glm_result(result: &GlmResult) -> String {
-    // Use serde_json to properly handle NaN/Infinity
-    match serde_json::to_string(result) {
-        Ok(json) => json,
-        Err(e) => format!(r#"{{"error":"Failed to serialize GLM result: {}"}}"#, e),
-    }
-}
-
-/// Format an error message as JSON
-fn format_error(error: &str) -> String {
-    format!(r#"{{"error":"{}"}}"#, error.replace('"', r#"\""#))
-}
-
-/// Safe JSON number formatting to handle inf/NaN
-fn format_json_number(value: f64) -> String {
-    if value.is_infinite() {
-        if value.is_sign_positive() {
-            "1e308".to_string() // Large positive number instead of inf
-        } else {
-            "-1e308".to_string() // Large negative number instead of -inf
-        }
-    } else if value.is_nan() {
-        "null".to_string()
-    } else {
-        value.to_string()
-    }
-}
-
 /// WASM export for GLM summary
 ///
 /// Returns coefficient table with test statistics and p-values
 #[wasm_bindgen]
-pub fn glm_summary_wasm(result_json: &str) -> String {
-    // Parse GLM result from JSON
-    let result: GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
-    };
+pub fn glm_summary_wasm(result: JsValue) -> Result<JsValue, JsValue> {
+    // Parse GLM result from JsValue
+    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute summary
-    let summary = match result.summary() {
-        Ok(s) => s,
-        Err(e) => return format_error(&e),
-    };
+    let summary = result.summary()
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON
-    format_summary_table(&summary)
+    serde_wasm_bindgen::to_value(&summary)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for standardized residuals
 ///
 /// Returns rstandard() values
 #[wasm_bindgen]
-pub fn glm_rstandard_wasm(result_json: &str, residual_type: &str) -> String {
-    // Parse GLM result from JSON
-    let result: GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
-    };
+pub fn glm_rstandard_wasm(result: JsValue, residual_type: &str) -> Result<JsValue, JsValue> {
+    // Parse GLM result from JsValue
+    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute rstandard
-    let rstandard = match result.rstandard(residual_type) {
-        Ok(r) => r,
-        Err(e) => return format_error(&e),
-    };
+    let rstandard = result.rstandard(residual_type)
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON array
-    format_vector(&rstandard)
+    serde_wasm_bindgen::to_value(&rstandard)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for studentized residuals
 ///
 /// Returns rstudent() values
 #[wasm_bindgen]
-pub fn glm_rstudent_wasm(result_json: &str) -> String {
-    // Parse GLM result from JSON
-    let result: GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
-    };
+pub fn glm_rstudent_wasm(result: JsValue) -> Result<JsValue, JsValue> {
+    // Parse GLM result from JsValue
+    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute rstudent
-    let rstudent = match result.rstudent() {
-        Ok(r) => r,
-        Err(e) => return format_error(&e),
-    };
+    let rstudent = result.rstudent()
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON array
-    format_vector(&rstudent)
+    serde_wasm_bindgen::to_value(&rstudent)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for influence measures
 ///
 /// Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
 #[wasm_bindgen]
-pub fn glm_influence_wasm(result_json: &str) -> String {
-    // Parse GLM result from JSON
-    let result: GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => return format_error(&format!("Failed to parse GLM result: {}", e)),
-    };
+pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
+    // Parse GLM result from JsValue
+    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute influence measures
-    let influence = match result.influence() {
-        Ok(i) => i,
-        Err(e) => return format_error(&e),
-    };
+    let influence = result.influence()
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON
-    format_influence(&influence)
+    serde_wasm_bindgen::to_value(&influence)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// GLM confint() - Compute confidence intervals for coefficients
 #[wasm_bindgen]
-pub fn glm_confint_wasm(result_json: &str, level: f64) -> String {
+pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue> {
     // Parse GLM result
-    let result: super::types_results::GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => {
-            return format!(r#"{{"error":"Failed to parse GLM result: {}"}}"#, e);
-        }
-    };
+    let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute confint
-    let confint = match result.confint(level) {
-        Ok(ci) => ci,
-        Err(e) => {
-            return format!(r#"{{"error":"{}"}}"#, e);
-        }
-    };
+    let confint = result.confint(level)
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON
-    format_confint(&confint)
+    serde_wasm_bindgen::to_value(&confint)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// GLM predict() - Make predictions on new data
 #[wasm_bindgen]
-pub fn glm_predict_wasm(result_json: &str, newdata_json: &str, pred_type: &str) -> String {
+pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> Result<JsValue, JsValue> {
     // Parse GLM result
-    let result: super::types_results::GlmResult = match serde_json::from_str(result_json) {
-        Ok(r) => r,
-        Err(e) => {
-            return format!(r#"{{"error":"Failed to parse GLM result: {}"}}"#, e);
-        }
-    };
+    let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Parse newdata (expecting array of arrays: [[1, 2, 3], [4, 5, 6], ...])
-    let newdata: Vec<Vec<f64>> = match serde_json::from_str(newdata_json) {
-        Ok(d) => d,
-        Err(e) => {
-            return format!(r#"{{"error":"Failed to parse newdata: {}"}}"#, e);
-        }
-    };
+    let newdata: Vec<Vec<f64>> = serde_wasm_bindgen::from_value(newdata)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse newdata: {}", e)))?;
 
     // Make predictions
-    let predictions = match result.predict(&newdata, pred_type) {
-        Ok(pred) => pred,
-        Err(e) => {
-            return format!(r#"{{"error":"{}"}}"#, e);
-        }
-    };
+    let predictions = result.predict(&newdata, pred_type)
+        .map_err(|e| JsValue::from_str(&e))?;
 
-    // Format as JSON array
-    let pred_str = predictions
-        .iter()
-        .map(|x| format_json_number(*x))
-        .collect::<Vec<_>>()
-        .join(",");
-    format!("[{}]", pred_str)
-}
-
-/// Format confint as JSON
-fn format_confint(confint: &super::glm_diagnostics::GlmConfint) -> String {
-    let mut json = String::new();
-    json.push('{');
-
-    // Add names
-    json.push_str(r#""names":["#);
-    for (i, name) in confint.names.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format!(r#""{}""#, name));
-    }
-    json.push(']');
-
-    // Add lower bounds
-    json.push_str(r#","lower":["#);
-    for (i, val) in confint.lower.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add upper bounds
-    json.push_str(r#","upper":["#);
-    for (i, val) in confint.upper.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    json.push('}');
-    json
-}
-
-/// Format summary table as JSON
-fn format_summary_table(summary: &super::glm_diagnostics::GlmSummaryTable) -> String {
-    let mut json = String::new();
-    json.push('{');
-
-    // Add names
-    json.push_str(r#""names":["#);
-    for (i, name) in summary.names.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format!(r#""{}""#, name));
-    }
-    json.push(']');
-
-    // Add estimate
-    json.push_str(r#","estimate":["#);
-    for (i, val) in summary.estimate.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add std_error
-    json.push_str(r#","std_error":["#);
-    for (i, val) in summary.std_error.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add statistic
-    json.push_str(r#","statistic":["#);
-    for (i, val) in summary.statistic.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add p_value
-    json.push_str(r#","p_value":["#);
-    for (i, val) in summary.p_value.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add dispersion
-    json.push_str(&format!(
-        r#","dispersion":{}"#,
-        format_json_number(summary.dispersion)
-    ));
-
-    // Add is_fixed_dispersion
-    json.push_str(&format!(
-        r#","is_fixed_dispersion":{}"#,
-        summary.is_fixed_dispersion
-    ));
-
-    json.push('}');
-    json
-}
-
-/// Format influence measures as JSON
-fn format_influence(influence: &super::glm_diagnostics::GlmInfluence) -> String {
-    let mut json = String::new();
-    json.push('{');
-
-    // Add dfbeta (n x p matrix)
-    json.push_str(r#""dfbeta":[["#);
-    for (i, row) in influence.dfbeta.iter().enumerate() {
-        if i > 0 {
-            json.push_str("],[");
-        }
-        for (j, val) in row.iter().enumerate() {
-            if j > 0 {
-                json.push(',');
-            }
-            json.push_str(&format_json_number(*val));
-        }
-    }
-    json.push_str("]]");
-
-    // Add dfbetas (n x p matrix)
-    json.push_str(r#","dfbetas":[["#);
-    for (i, row) in influence.dfbetas.iter().enumerate() {
-        if i > 0 {
-            json.push_str("],[");
-        }
-        for (j, val) in row.iter().enumerate() {
-            if j > 0 {
-                json.push(',');
-            }
-            json.push_str(&format_json_number(*val));
-        }
-    }
-    json.push_str("]]");
-
-    // Add dffits
-    json.push_str(r#","dffits":["#);
-    for (i, val) in influence.dffits.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add covratio
-    json.push_str(r#","covratio":["#);
-    for (i, val) in influence.covratio.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add cook's distance
-    json.push_str(r#","cooks_distance":["#);
-    for (i, val) in influence.cooks_distance.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    // Add hat values
-    json.push_str(r#","hat":["#);
-    for (i, val) in influence.hat.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-
-    json.push('}');
-    json
-}
-
-/// Format vector as JSON array
-fn format_vector(vec: &[f64]) -> String {
-    let mut json = String::from("[");
-    for (i, val) in vec.iter().enumerate() {
-        if i > 0 {
-            json.push(',');
-        }
-        json.push_str(&format_json_number(*val));
-    }
-    json.push(']');
-    json
+    serde_wasm_bindgen::to_value(&predictions)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }

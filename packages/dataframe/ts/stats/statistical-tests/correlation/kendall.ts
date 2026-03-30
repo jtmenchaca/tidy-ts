@@ -1,10 +1,9 @@
 import {
   kendall_correlation_test,
-  serializeTestResult,
 } from "../../../wasm/statistical-tests.ts";
 import type {
   KendallCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.js";
+} from "../types.ts";
 
 /**
  * Kendall rank correlation test
@@ -45,5 +44,5 @@ export function kendallTest({
     alpha,
     exact,
   );
-  return serializeTestResult(result) as KendallCorrelationTestResult;
+  return result as KendallCorrelationTestResult;
 }

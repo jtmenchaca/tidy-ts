@@ -100,11 +100,16 @@ pub fn agfit4(
     let mut iter_out = 0_i32;
 
     // --- Centering and scaling (lines 130-169) ---
+    // NOTE on C source (agfit4.c): Lines 148-149 are inside the person loop
+    // due to noweb code generation. For single-stratum data this produces
+    // identical results to placing them outside. For multi-stratum data with
+    // doscale=1 it would cause 0/0 at stratum boundaries, but R's default
+    // nocenter=c(-1,0,1) skips centering for binary/ternary vars so the
+    // path is never triggered in practice. We place them outside (correct intent).
     for i in 0..nvar {
         if config.doscale[i] == 0 {
             scale[i] = 1.0;
         } else {
-            // Subtract weighted mean per stratum
             let mut istrat = strata[sort2[0] as usize];
             let mut k = 0_usize;
             let mut temp = 0.0_f64;
@@ -126,7 +131,7 @@ pub fn agfit4(
                     istrat = strata[p];
                 }
             }
-            // Center the last stratum (C lines 148-149, noweb indentation artifact)
+            // Center the last stratum
             temp /= temp2;
             while k < nused {
                 covar[i][sort2[k] as usize] -= temp;
@@ -176,7 +181,6 @@ pub fn agfit4(
             }
             eta[p] = zbeta + offset[p];
         }
-
         // Initialize accumulators (lines 190-206)
         newlk = 0.0;
         for i in 0..nvar {
@@ -200,6 +204,8 @@ pub fn agfit4(
         let mut person: usize = 0;
         let mut indx1: usize = 0;
         let mut istrat = strata[sort2[0] as usize];
+        #[allow(unused_variables)]
+
 
         // --- Inner accumulation loop (lines 210-368) ---
         while person < nused {
@@ -231,7 +237,7 @@ pub fn agfit4(
                 k += 1;
             }
             if !found_death {
-                break; // no more deaths (line 233)
+                break;
             }
 
             // Remove subjects no longer at risk (lines 241-263)
@@ -852,5 +858,62 @@ mod tests {
         );
         // R: iter = 6
         assert_eq!(result.iter, 6, "iter: {}", result.iter);
+    }
+
+    #[test]
+    fn test_agfit4_detail_init_neg1() {
+        // detail.R test data: counting process, init=-1, maxiter=0, breslow
+        let start = vec![1.0, 2.0, 5.0, 2.0, 1.0, 7.0, 3.0, 4.0, 8.0, 8.0];
+        let stop  = vec![2.0, 3.0, 6.0, 7.0, 8.0, 9.0, 9.0, 9.0, 14.0, 17.0];
+        let event = vec![1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0];
+        let x     = vec![1.0, 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0];
+        let n = start.len();
+
+        // R's sort orders: order(strata, -start) - 1 and order(strata, -stop) - 1
+        // strata all 0, so just order(-start) and order(-stop)
+        // -start: [-1,-2,-5,-2,-1,-7,-3,-4,-8,-8]
+        // order(-start): 9,8(tie at -8), 5(-7), 2(-5), 7(-4), 6(-3), 3,1(tie at -2), 4,0(tie at -1)
+        // R's order is stable, 1-based: 9,10,6,3,8,7,4,2,5,1 → 0-based: 8,9,5,2,7,6,3,1,4,0
+        let sort1 = vec![8_i32, 9, 5, 2, 7, 6, 3, 1, 4, 0];
+        // -stop: [-2,-3,-6,-7,-8,-9,-9,-9,-14,-17]
+        // order(-stop): 10,9,8(ties), 6,7,5(ties at -9), 4(-8), 3(-7), 2(-6), 1(-3), 0(-2)
+        // wait, R 1-based: 10,9,6,7,8,5,4,3,2,1 → 0-based: 9,8,5,6,7,4,3,2,1,0
+        let sort2 = vec![9_i32, 8, 5, 6, 7, 4, 3, 2, 1, 0];
+
+        // Compute sort orders the R way: order(-stop) and order(-start), 0-based
+        let mut sort1_computed: Vec<usize> = (0..n).collect();
+        sort1_computed.sort_by(|&a, &b| start[b].partial_cmp(&start[a]).unwrap_or(std::cmp::Ordering::Equal));
+        let sort1: Vec<i32> = sort1_computed.iter().map(|&i| i as i32).collect();
+
+        let mut sort2_computed: Vec<usize> = (0..n).collect();
+        sort2_computed.sort_by(|&a, &b| stop[b].partial_cmp(&stop[a]).unwrap_or(std::cmp::Ordering::Equal));
+        let sort2: Vec<i32> = sort2_computed.iter().map(|&i| i as i32).collect();
+
+        let mut covar = vec![x];
+        let config = AgfitConfig {
+            maxiter: 0,
+            eps: 1e-9,
+            toler: 1e-12,
+            method: 0, // Breslow
+            doscale: vec![0], // binary var, no centering
+        };
+
+        let result = agfit4(
+            &start, &stop, &event, &mut covar,
+            &vec![1.0; n], &vec![0.0; n], &vec![-1.0],
+            &sort1, &sort2, &vec![0_i32; n], &config,
+        );
+
+        // R reference: loglik = -9.93415227300337
+        assert!(
+            (result.loglik[0] - (-9.93415227300337)).abs() < 1e-6,
+            "loglik[0]: got {:.15e}, expected -9.93415227300337e+00",
+            result.loglik[0]
+        );
+        assert!(
+            (result.coef[0] - (-1.0)).abs() < 1e-12,
+            "coef: got {:.15e}, expected -1.0",
+            result.coef[0]
+        );
     }
 }

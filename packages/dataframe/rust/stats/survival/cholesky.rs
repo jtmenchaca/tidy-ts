@@ -55,7 +55,7 @@ pub struct CholeskyResult {
 ///
 /// The rank of the matrix (positive for NND, negative if not SPD/NND).
 /// A redundant column has its diagonal set to zero.
-pub fn cholesky2(matrix: &mut [Vec<f64>], n: usize, toler: f64) -> i32 {
+pub(crate) fn cholesky2(matrix: &mut [Vec<f64>], n: usize, toler: f64) -> i32 {
     let mut nonneg: i32 = 1;
 
     // Find max diagonal and copy upper triangle to lower triangle
@@ -108,7 +108,7 @@ pub fn cholesky2(matrix: &mut [Vec<f64>], n: usize, toler: f64) -> i32 {
 /// * `matrix` - The FDF' Cholesky decomposition (output of `cholesky2`)
 /// * `n` - Matrix dimension
 /// * `y` - Right-hand side vector (length n). Overwritten with the solution b.
-pub fn chsolve2(matrix: &[Vec<f64>], n: usize, y: &mut [f64]) {
+pub(crate) fn chsolve2(matrix: &[Vec<f64>], n: usize, y: &mut [f64]) {
     // Forward solve: Fb = y
     for i in 0..n {
         let mut temp = y[i];
@@ -142,7 +142,7 @@ pub fn chsolve2(matrix: &[Vec<f64>], n: usize, y: &mut [f64]) {
 ///   On output, the upper triangle + diagonal contain (FDF')^{-1},
 ///   and below the diagonal contains F inverse.
 /// * `n` - Matrix dimension
-pub fn chinv2(matrix: &mut [Vec<f64>], n: usize) {
+pub(crate) fn chinv2(matrix: &mut [Vec<f64>], n: usize) {
     // Invert the Cholesky in the lower triangle
     // Take full advantage of the Cholesky's diagonal of 1's
     for i in 0..n {

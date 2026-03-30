@@ -180,7 +180,7 @@ pub fn build_csr_from_keys_u32(keys: &[u32]) -> (FastHashMap<u32, Off, FastState
 
     // Pass 3: fill
     for (i, &k) in keys.iter().enumerate() {
-        let off = map.get_mut(&k).unwrap();
+        let off = map.get_mut(&k).expect("key just inserted");
         let pos = off.next as usize;
         adj[pos] = i as u32;
         off.next = off.next.saturating_add(1);
@@ -225,7 +225,7 @@ pub fn build_csr_from_keys_u64(keys: &[u64]) -> (FastHashMap<u64, Off, FastState
 
     // Pass 3: fill
     for (i, &k) in keys.iter().enumerate() {
-        let off = map.get_mut(&k).unwrap();
+        let off = map.get_mut(&k).expect("key just inserted");
         let pos = off.next as usize;
         adj[pos] = i as u32;
         off.next = off.next.saturating_add(1);

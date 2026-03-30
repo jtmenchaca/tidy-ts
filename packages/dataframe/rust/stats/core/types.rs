@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "wasm")]
-use wasm_bindgen::prelude::*;
 
 /// Represents the type of tail in hypothesis testing.
 #[derive(Debug, Clone, PartialEq)]
@@ -27,7 +25,6 @@ impl TailType {
 
 /// Represents the type of alternative hypothesis for statistical tests.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum AlternativeType {
     /// Two-sided test (default)
     TwoSided,
@@ -75,7 +72,6 @@ impl Default for AlternativeType {
 
 /// Represents the type of statistical test performed.
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum TestType {
     OneWayAnova,
     TwoWayAnovaFactorA,
@@ -131,7 +127,6 @@ impl TestType {
 
 /// Test statistic names that can be returned by statistical tests
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum TestStatisticName {
     TStatistic,
     FStatistic,
@@ -183,7 +178,6 @@ impl TestStatisticName {
 
 /// Effect size types that can be returned by statistical tests
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum EffectSizeType {
     CohensD,
     HedgesG,
@@ -235,7 +229,7 @@ impl EffectSizeType {
 
 /// Effect size with type information
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct EffectSize {
     pub value: f64,
     pub name: String,
@@ -243,17 +237,16 @@ pub struct EffectSize {
 
 /// Confidence interval structure
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct ConfidenceInterval {
     pub lower: f64,
     pub upper: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceLevel"))]
     pub confidence_level: f64,
 }
 
 /// Test statistic with name
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct TestStatistic {
     pub value: f64,
     pub name: String,
@@ -261,222 +254,148 @@ pub struct TestStatistic {
 
 /// One-way ANOVA test result with guaranteed properties
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct OneWayAnovaTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dfBetween"))]
     pub df_between: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dfWithin"))]
     pub df_within: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "rSquared"))]
     pub r_squared: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "adjustedRSquared"))]
     pub adjusted_r_squared: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleMeans"))]
     pub sample_means: Vec<f64>,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleStdDevs"))]
     pub sample_std_devs: Vec<f64>,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sumOfSquares"))]
     pub sum_of_squares: Vec<f64>,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Welch's ANOVA test result with proper two degrees of freedom
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct WelchAnovaTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
     pub df1: f64, // Numerator degrees of freedom
     pub df2: f64, // Denominator degrees of freedom
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "rSquared"))]
     pub r_squared: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "adjustedRSquared"))]
     pub adjusted_r_squared: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleMeans"))]
     pub sample_means: Vec<f64>,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleStdDevs"))]
     pub sample_std_devs: Vec<f64>,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Two-way ANOVA test result with guaranteed properties for all three tests
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct TwoWayAnovaTestResult {
     // Common properties
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
     // Factor A main effect
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "factorA"))]
     pub factor_a: AnovaTestComponent,
     // Factor B main effect
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "factorB"))]
     pub factor_b: AnovaTestComponent,
     // A×B interaction effect
     pub interaction: AnovaTestComponent,
     // Model-level R² (explained variance by the full model)
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "rSquared"))]
     pub r_squared: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleMeans"))]
     pub sample_means: Vec<f64>,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleStdDevs"))]
     pub sample_std_devs: Vec<f64>,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sumOfSquares"))]
     pub sum_of_squares: Vec<f64>, // [ss_a, ss_b, ss_ab, ss_error]
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "grandMean"))]
     pub grand_mean: f64,
     // Complete ANOVA table components
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "anovaTable"))]
     pub anova_table: Vec<AnovaTableComponent>,
     // Error term information for complete ANOVA table
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dfError"))]
     pub df_error: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "msError"))]
     pub ms_error: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dfTotal"))]
     pub df_total: f64,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Complete ANOVA table component (includes Total row)
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct AnovaTableComponent {
     pub component: String, // "A", "B", "AxB", "Error", "Total"
     pub ss: f64,
     pub df: f64,
     pub ms: Option<f64>,                  // None for Total
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "fStatistic"))]
     pub f_statistic: Option<f64>,         // None for Error and Total
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: Option<f64>,             // None for Error and Total
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "etaSquared"))]
     pub eta_squared: Option<f64>,         // Regular eta-squared (SS_effect / SS_total)
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "partialEtaSquared"))]
     pub partial_eta_squared: Option<f64>, // Partial eta-squared (SS_effect / (SS_effect + SS_error))
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "omegaSquared"))]
     pub omega_squared: Option<f64>,       // Unbiased omega-squared estimate
 }
 
 /// Component of a two-way ANOVA test (Factor A, Factor B, or Interaction)
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct AnovaTestComponent {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "meanSquare"))]
     pub mean_square: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sumOfSquares"))]
     pub sum_of_squares: f64,
 }
 
 /// Chi-square test of independence result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct ChiSquareIndependenceTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "phiCoefficient"))]
     pub phi_coefficient: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "chiSquareExpected"))]
     pub chi_square_expected: Vec<f64>,
     pub residuals: Vec<f64>,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Chi-square goodness of fit test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct ChiSquareGoodnessOfFitTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "chiSquareExpected"))]
     pub chi_square_expected: Vec<f64>,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Chi-square test for variance result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct ChiSquareVarianceTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Mann-Whitney test method type
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum MannWhitneyMethod {
     Exact,
     Asymptotic,
@@ -493,164 +412,113 @@ impl MannWhitneyMethod {
 
 /// Mann-Whitney test result with method information
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct MannWhitneyTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
     pub method: String,      // "Exact" or "Asymptotic"
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Pearson correlation test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct PearsonCorrelationTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize, // Pearson's r as effect size
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Spearman correlation test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct SpearmanCorrelationTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize, // Spearman's rho as effect size
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Kendall correlation test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct KendallCorrelationTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize, // Kendall's tau as effect size
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// One-sample t-test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct OneSampleTTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Two-sample independent t-test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct TwoSampleTTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "meanDifference"))]
     pub mean_difference: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "standardError"))]
     pub standard_error: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Paired t-test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct PairedTTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "meanDifference"))]
     pub mean_difference: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "standardError"))]
     pub standard_error: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Wilcoxon signed-rank test method type
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
 pub enum WilcoxonMethod {
     Exact,
     Asymptotic,
@@ -667,247 +535,158 @@ impl WilcoxonMethod {
 
 /// Wilcoxon signed-rank test result with method information
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct WilcoxonSignedRankTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
     pub method: String, // "Exact" or "Asymptotic"
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Kruskal-Wallis test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct KruskalWallisTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "degreesOfFreedom"))]
     pub degrees_of_freedom: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// One-sample Z-test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct OneSampleZTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Two-sample Z-test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct TwoSampleZTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "meanDifference"))]
     pub mean_difference: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "standardError"))]
     pub standard_error: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// One-sample proportion test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct OneSampleProportionTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleProportion"))]
     pub sample_proportion: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Two-sample proportion test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct TwoSampleProportionTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "proportionDifference"))]
     pub proportion_difference: f64,
     pub alternative: String, // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Shapiro-Wilk test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct ShapiroWilkTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Anderson-Darling test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct AndersonDarlingTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// D'Agostino-Pearson K² test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct DAgostinoPearsonTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sampleSize"))]
     pub sample_size: usize,
     pub skewness: f64,
     pub kurtosis: f64,
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
 /// Fisher's exact test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[cfg_attr(feature = "wasm", wasm_bindgen(getter_with_clone))]
+#[serde(rename_all = "camelCase")]
 pub struct FishersExactTestResult {
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testName"))]
     pub test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
     pub p_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "effectSize"))]
     pub effect_size: EffectSize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "testStatistic"))]
     pub test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "confidenceInterval"))]
     pub confidence_interval: ConfidenceInterval,
     pub method: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "methodType"))]
     pub method_type: String,      // "exact" to indicate Fisher's exact method
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "midPValue"))]
     pub mid_p_value: Option<f64>, // Optional mid-p corrected p-value
     pub alternative: String,      // Alternative hypothesis ("two-sided", "less", "greater")
     pub alpha: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "errorMessage"))]
     pub error_message: Option<String>,
 }
 
-#[cfg_attr(feature = "wasm", wasm_bindgen)]
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KolmogorovSmirnovTestResult {
-    #[allow(dead_code)]
-    pub(crate) test_name: String,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "pValue"))]
+    pub test_name: String,
     pub p_value: f64,
-    #[allow(dead_code)]
-    pub(crate) test_statistic: TestStatistic,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sample1Size"))]
+    pub test_statistic: TestStatistic,
     pub sample1_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "sample2Size"))]
     pub sample2_size: usize,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "criticalValue"))]
     pub critical_value: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dStatistic"))]
     pub d_statistic: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dPlus"))]
     pub d_plus: f64,
-    #[cfg_attr(feature = "wasm", wasm_bindgen(js_name = "dMinus"))]
     pub d_minus: f64,
-    #[allow(dead_code)]
-    pub(crate) alternative: String,
+    pub alternative: String,
     pub alpha: f64,
 }
 
-#[cfg(feature = "wasm")]
-#[wasm_bindgen]
-impl KolmogorovSmirnovTestResult {
-    #[wasm_bindgen(getter, js_name = "testStatistic")]
-    pub fn test_statistic(&self) -> TestStatistic {
-        self.test_statistic.clone()
-    }
-
-    #[wasm_bindgen(getter, js_name = "testName")]
-    pub fn test_name(&self) -> String {
-        self.test_name.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn alternative(&self) -> String {
-        self.alternative.clone()
-    }
-}

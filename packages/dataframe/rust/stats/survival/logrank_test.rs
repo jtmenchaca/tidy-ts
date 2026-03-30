@@ -13,8 +13,10 @@
 //! - **Fleming-Harrington** (rho=p): Weighted by S(t)^rho (G-rho family)
 //! - **Stratified**: Separate strata with pooled test statistic
 
+use serde::Serialize;
+
 /// Result of the log-rank (survdiff) test.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SurvdiffResult {
     /// Observed events per group (ngroup elements, or nstrat*ngroup if stratified)
     pub observed: Vec<f64>,

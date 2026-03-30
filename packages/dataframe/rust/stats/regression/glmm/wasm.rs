@@ -4,7 +4,7 @@
 
 use super::fitting::glmm_fit;
 use super::random_effects::{construct_combined_z_matrix, populate_random_effect};
-use super::types::{CovarianceType, GlmmControl, GlmmResult, RandomEffect};
+use super::types::{CovarianceType, GlmmControl, RandomEffect};
 use crate::stats::regression::family::{
     binomial, gamma, gaussian, inverse_gaussian, negative_binomial, poisson, GlmFamily,
 };
@@ -25,7 +25,7 @@ use web_sys::console;
 /// * `options_json` - JSON string containing optional parameters
 ///
 /// # Returns
-/// JSON string containing the fitted GLMM result
+/// JsValue containing the fitted GLMM result
 #[wasm_bindgen]
 pub fn glmm_fit_wasm(
     formula: &str,
@@ -34,50 +34,39 @@ pub fn glmm_fit_wasm(
     link_name: &str,
     data_json: &str,
     options_json: Option<String>,
-) -> String {
+) -> Result<JsValue, JsValue> {
     // Parse data from JSON
-    let data: HashMap<String, Vec<f64>> = match parse_data_json(data_json) {
-        Ok(d) => d,
-        Err(e) => {
+    let data: HashMap<String, Vec<f64>> = parse_data_json(data_json)
+        .map_err(|e| {
             console::log_1(&format!("[WASM GLMM] Data parsing error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Parse random effects specification
-    let random_effects_spec: Vec<RandomEffectSpec> = match serde_json::from_str(random_effects_json)
-    {
-        Ok(r) => r,
-        Err(e) => {
+    let random_effects_spec: Vec<RandomEffectSpec> = serde_json::from_str(random_effects_json)
+        .map_err(|e| {
+            let msg = format!("Failed to parse random effects: {}", e);
             console::log_1(&format!("[WASM GLMM] Random effects parsing error: {}", e).into());
-            return format_error(&format!("Failed to parse random effects: {}", e));
-        }
-    };
+            JsValue::from_str(&msg)
+        })?;
 
     // Parse fixed effects formula
-    let parsed_formula = match parse_fixed_formula(formula) {
-        Ok(pf) => pf,
-        Err(e) => {
+    let parsed_formula = parse_fixed_formula(formula)
+        .map_err(|e| {
             console::log_1(&format!("[WASM GLMM] Formula parsing error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Create family object
-    let family: Box<dyn GlmFamily> = match create_family(family_name, link_name) {
-        Ok(f) => f,
-        Err(e) => {
+    let family: Box<dyn GlmFamily> = create_family(family_name, link_name)
+        .map_err(|e| {
             console::log_1(&format!("[WASM GLMM] Family creation error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Parse options
     let control = if let Some(ref opts) = options_json {
-        match parse_options_json(opts) {
-            Ok(c) => c,
-            Err(e) => return format_error(&e),
-        }
+        parse_options_json(opts).map_err(|e| JsValue::from_str(&e))?
     } else {
         GlmmControl::new()
     };
@@ -86,10 +75,10 @@ pub fn glmm_fit_wasm(
     let n = match data.get(&parsed_formula.response) {
         Some(y) => y.len(),
         None => {
-            return format_error(&format!(
+            return Err(JsValue::from_str(&format!(
                 "Response variable '{}' not found in data",
                 parsed_formula.response
-            ))
+            )))
         }
     };
 
@@ -98,10 +87,8 @@ pub fn glmm_fit_wasm(
 
     // Build X matrix (design matrix for fixed effects)
     let (x_matrix, x_names) =
-        match build_design_matrix(&data, &parsed_formula.predictors, n, parsed_formula.intercept) {
-            Ok((m, names)) => (m, names),
-            Err(e) => return format_error(&e),
-        };
+        build_design_matrix(&data, &parsed_formula.predictors, n, parsed_formula.intercept)
+            .map_err(|e| JsValue::from_str(&e))?;
 
     // Build random effects structures
     let mut random_effects: Vec<RandomEffect> = Vec::new();
@@ -120,10 +107,10 @@ pub fn glmm_fit_wasm(
             Some(vals) => vals.iter().map(|v| v.to_string()).collect(),
             None => {
                 // Try to get it from string data
-                return format_error(&format!(
+                return Err(JsValue::from_str(&format!(
                     "Grouping variable '{}' not found in data",
                     spec.grouping_var
-                ));
+                )));
             }
         };
 
@@ -149,16 +136,14 @@ pub fn glmm_fit_wasm(
         })
         .collect();
 
-    let z = match construct_combined_z_matrix(&random_effects, &term_values_list) {
-        Ok(z) => z,
-        Err(e) => {
+    let z = construct_combined_z_matrix(&random_effects, &term_values_list)
+        .map_err(|e| {
             console::log_1(&format!("[WASM GLMM] Z matrix construction error: {}", e).into());
-            return format_error(&e);
-        }
-    };
+            JsValue::from_str(&e)
+        })?;
 
     // Fit the model
-    match glmm_fit(
+    let result = glmm_fit(
         &y,
         &x_matrix,
         &z,
@@ -167,19 +152,19 @@ pub fn glmm_fit_wasm(
         &control,
         None, // weights
         None, // offset
-    ) {
-        Ok(result) => {
-            // Attach additional metadata
-            let mut result_with_meta = result;
-            result_with_meta.formula = formula.to_string();
-            result_with_meta.glm_result.model_matrix_column_names = x_names;
-            format_glmm_result(&result_with_meta)
-        }
-        Err(e) => {
-            console::log_1(&format!("[WASM GLMM] Fit error: {}", e).into());
-            format_error(&e)
-        }
-    }
+    )
+    .map_err(|e| {
+        console::log_1(&format!("[WASM GLMM] Fit error: {}", e).into());
+        JsValue::from_str(&e)
+    })?;
+
+    // Attach additional metadata
+    let mut result_with_meta = result;
+    result_with_meta.formula = formula.to_string();
+    result_with_meta.glm_result.model_matrix_column_names = x_names;
+
+    serde_wasm_bindgen::to_value(&result_with_meta)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// Specification for a random effect from JSON
@@ -407,17 +392,4 @@ fn create_family(family_name: &str, link_name: &str) -> Result<Box<dyn GlmFamily
         },
         _ => Err(format!("Unknown family '{}'", family_name)),
     }
-}
-
-/// Format GLMM result as JSON string
-fn format_glmm_result(result: &GlmmResult) -> String {
-    match serde_json::to_string(result) {
-        Ok(json) => json,
-        Err(e) => format!(r#"{{"error":"Failed to serialize GLMM result: {}"}}"#, e),
-    }
-}
-
-/// Format an error message as JSON
-fn format_error(error: &str) -> String {
-    format!(r#"{{"error":"{}"}}"#, error.replace('"', r#"\""#))
 }

@@ -4,19 +4,6 @@ import { initWasm, wasmInternal } from "./wasm-init.ts";
 import type { DataFrame } from "../dataframe/index.ts";
 
 /**
- * Deserialize JSON with special float handling for NaN/Infinity
- */
-// deno-lint-ignore no-explicit-any
-function decodeWithSpecialFloats(json: string): any {
-  return JSON.parse(json, (_, value) => {
-    if (value === "NaN") return NaN;
-    if (value === "Infinity") return Infinity;
-    if (value === "-Infinity") return -Infinity;
-    return value;
-  });
-}
-
-/**
  * GLMM family options
  */
 export type GlmmFamily =
@@ -47,7 +34,7 @@ export type GlmmLink =
  */
 export interface RandomEffectSpec {
   /** Grouping variable name (e.g., "patient", "clinic") */
-  grouping_var: string;
+  groupingVar: string;
   /** Terms in the random effect (e.g., ["1"] for intercept, ["1", "time"] for slope) */
   terms: string[];
   /** Covariance structure type (optional) */
@@ -59,7 +46,7 @@ export interface RandomEffectSpec {
  */
 export interface GlmmControl {
   /** Maximum iterations for outer optimization */
-  max_iter?: number;
+  maxIter?: number;
   /** Convergence tolerance */
   tolerance?: number;
   /** Use REML estimation (default: true) */
@@ -73,17 +60,17 @@ export interface GlmmControl {
  */
 export interface VarianceComponent {
   /** Name of the grouping variable */
-  group_name: string;
+  groupName: string;
   /** Names of random effect terms */
-  term_names: string[];
+  termNames: string[];
   /** Variance-covariance matrix */
   vcov: number[][];
   /** Standard deviations */
-  std_dev: number[];
+  stdDev: number[];
   /** Correlation matrix (if applicable) */
   correlation?: number[][];
   /** Standard errors of variance parameters */
-  std_errors?: number[];
+  stdErrors?: number[];
 }
 
 /**
@@ -91,17 +78,17 @@ export interface VarianceComponent {
  */
 export interface RandomEffectEstimates {
   /** Name of the grouping variable */
-  group_name: string;
+  groupName: string;
   /** Term names */
-  term_names: string[];
+  termNames: string[];
   /** Group identifiers */
-  group_ids: string[];
+  groupIds: string[];
   /** BLUP estimates: n_groups x n_terms matrix */
   estimates: number[][];
   /** Conditional standard errors */
-  std_errors?: number[][];
+  stdErrors?: number[][];
   /** Conditional variance-covariance */
-  conditional_vcov?: number[][][];
+  conditionalVcov?: number[][][];
 }
 
 /**
@@ -109,17 +96,17 @@ export interface RandomEffectEstimates {
  */
 export interface GlmmFitSummary {
   /** Number of observations */
-  n_observations: number;
+  nObservations: number;
   /** Number of fixed effect parameters */
-  n_fixed: number;
+  nFixed: number;
   /** Number of random effect parameters */
-  n_random: number;
+  nRandom: number;
   /** Number of variance parameters */
-  n_variance_params: number;
+  nVarianceParams: number;
   /** Residual degrees of freedom */
-  df_residual: number;
+  dfResidual: number;
   /** Number of groups per random effect */
-  n_groups: Record<string, number>;
+  nGroups: Record<string, number>;
   /** Method used (ML or REML) */
   method: string;
 }
@@ -131,19 +118,19 @@ export interface GlmmFitResult {
   /** Fixed effect coefficients */
   coefficients: number[];
   /** Fixed effect standard errors */
-  standard_errors: number[];
+  standardErrors: number[];
   /** Fixed effect names */
-  coefficient_names: string[];
+  coefficientNames: string[];
   /** Variance component estimates */
-  variance_components: VarianceComponent[];
+  varianceComponents: VarianceComponent[];
   /** Random effect estimates (BLUPs) */
   blups: RandomEffectEstimates[];
   /** Residual variance */
-  residual_variance: number;
+  residualVariance: number;
   /** Log-likelihood at convergence */
-  log_likelihood: number;
+  logLikelihood: number;
   /** REML criterion (if REML was used) */
-  reml_criterion?: number;
+  remlCriterion?: number;
   /** AIC */
   aic: number;
   /** BIC */
@@ -151,25 +138,25 @@ export interface GlmmFitResult {
   /** Theta parameters (variance component parameterization) */
   theta: number[];
   /** Standard errors of theta */
-  theta_se?: number[];
+  thetaSe?: number[];
   /** Number of outer iterations */
-  outer_iterations: number;
+  outerIterations: number;
   /** Whether optimization converged */
   converged: boolean;
   /** Convergence message */
-  convergence_message: string;
+  convergenceMessage: string;
   /** Formula used */
   formula: string;
   /** Fit summary statistics */
-  fit_summary: GlmmFitSummary;
+  fitSummary: GlmmFitSummary;
   /** Raw GLM result for fixed effects */
-  glm_result: {
+  glmResult: {
     coefficients: number[];
-    standard_errors: number[];
-    model_matrix_column_names: string[];
+    standardErrors: number[];
+    modelMatrixColumnNames: string[];
     deviance: number;
-    fitted_values: number[];
-    linear_predictors: number[];
+    fittedValues: number[];
+    linearPredictors: number[];
   };
 }
 
@@ -210,22 +197,22 @@ export class GLMM<Row extends Record<string, number | string>> {
   // Getters for result properties
   /** Fixed effect coefficients */
   get coefficients(): number[] {
-    return this.result.glm_result.coefficients;
+    return this.result.glmResult.coefficients;
   }
 
   /** Fixed effect standard errors */
   get std_errors(): number[] {
-    return this.result.glm_result.standard_errors;
+    return this.result.glmResult.standardErrors;
   }
 
   /** Coefficient names */
   get coefficient_names(): string[] {
-    return this.result.glm_result.model_matrix_column_names;
+    return this.result.glmResult.modelMatrixColumnNames;
   }
 
   /** Variance components */
   get variance_components(): VarianceComponent[] {
-    return this.result.variance_components;
+    return this.result.varianceComponents;
   }
 
   /** Random effect BLUPs */
@@ -235,7 +222,7 @@ export class GLMM<Row extends Record<string, number | string>> {
 
   /** Log-likelihood */
   get loglik(): number {
-    return this.result.log_likelihood;
+    return this.result.logLikelihood;
   }
 
   /** AIC */
@@ -255,7 +242,7 @@ export class GLMM<Row extends Record<string, number | string>> {
 
   /** Number of outer iterations */
   get iterations(): number {
-    return this.result.outer_iterations;
+    return this.result.outerIterations;
   }
 
   /** Model formula */
@@ -270,7 +257,7 @@ export class GLMM<Row extends Record<string, number | string>> {
 
   /** Fit summary */
   get summary(): GlmmFitSummary {
-    return this.result.fit_summary;
+    return this.result.fitSummary;
   }
 
   /**
@@ -278,8 +265,8 @@ export class GLMM<Row extends Record<string, number | string>> {
    * @param groupName - Name of the grouping variable
    */
   getVariance(groupName: string): VarianceComponent | undefined {
-    return this.result.variance_components.find(
-      (vc) => vc.group_name === groupName,
+    return this.result.varianceComponents.find(
+      (vc) => vc.groupName === groupName,
     );
   }
 
@@ -288,7 +275,7 @@ export class GLMM<Row extends Record<string, number | string>> {
    * @param groupName - Name of the grouping variable
    */
   getBlups(groupName: string): RandomEffectEstimates | undefined {
-    return this.result.blups.find((b) => b.group_name === groupName);
+    return this.result.blups.find((b) => b.groupName === groupName);
   }
 
   /**
@@ -306,7 +293,7 @@ export class GLMM<Row extends Record<string, number | string>> {
     console.log(`Formula: ${this._formula}`);
     console.log(`Family: ${this.familyName}, Link: ${this.linkName}`);
     console.log(
-      `Method: ${this.result.fit_summary.method}, Converged: ${this.result.converged}\n`,
+      `Method: ${this.result.fitSummary.method}, Converged: ${this.result.converged}\n`,
     );
 
     console.log("Fixed Effects:");
@@ -322,20 +309,20 @@ export class GLMM<Row extends Record<string, number | string>> {
     }
 
     console.log("\nVariance Components:");
-    for (const vc of this.result.variance_components) {
-      console.log(`  ${vc.group_name}:`);
-      for (let i = 0; i < vc.term_names.length; i++) {
+    for (const vc of this.result.varianceComponents) {
+      console.log(`  ${vc.groupName}:`);
+      for (let i = 0; i < vc.termNames.length; i++) {
         console.log(
-          `    ${vc.term_names[i].padEnd(12)} SD: ${vc.std_dev[i].toFixed(4)}`,
+          `    ${vc.termNames[i].padEnd(12)} SD: ${vc.stdDev[i].toFixed(4)}`,
         );
       }
     }
 
-    console.log(`\nLog-Likelihood: ${this.result.log_likelihood.toFixed(4)}`);
+    console.log(`\nLog-Likelihood: ${this.result.logLikelihood.toFixed(4)}`);
     console.log(`AIC: ${this.result.aic.toFixed(4)}`);
     console.log(`BIC: ${this.result.bic.toFixed(4)}`);
-    console.log(`Observations: ${this.result.fit_summary.n_observations}`);
-    console.log(`Groups: ${JSON.stringify(this.result.fit_summary.n_groups)}`);
+    console.log(`Observations: ${this.result.fitSummary.nObservations}`);
+    console.log(`Groups: ${JSON.stringify(this.result.fitSummary.nGroups)}`);
   }
 }
 
@@ -364,7 +351,7 @@ export class GLMM<Row extends Record<string, number | string>> {
  *
  * const model = glmm({
  *   formula: "y ~ x",
- *   randomEffects: [{ grouping_var: "group", terms: ["1"] }],
+ *   randomEffects: [{ groupingVar: "group", terms: ["1"] }],
  *   family: "gaussian",
  *   link: "identity",
  *   data,
@@ -407,16 +394,16 @@ export function glmm<Row extends Record<string, number | string>>({
   // Initialize WASM and call function
   initWasm();
 
-  let resultJson: string;
+  let result: GlmmFitResult;
   try {
-    resultJson = wasmInternal.glmm_fit_wasm(
+    result = wasmInternal.glmm_fit_wasm(
       formula,
       randomEffectsJson,
       family,
       link,
       dataJson,
       optionsJson,
-    );
+    ) as GlmmFitResult;
   } catch (e) {
     console.error(`WASM Error in glmm for ${family}/${link}:`, e);
     console.error(`Formula: ${formula}`);
@@ -424,17 +411,9 @@ export function glmm<Row extends Record<string, number | string>>({
     throw new Error(`[BUG] ${e}`);
   }
 
-  // Parse result with special float handling
-  const result = decodeWithSpecialFloats(resultJson);
-
-  // Check for errors
-  if (result.error) {
-    throw new Error(`GLMM fit failed: ${result.error}`);
-  }
-
   // Return GLMM class instance
   return new GLMM({
-    result: result as GlmmFitResult,
+    result,
     formula,
     randomEffects,
     family,
@@ -468,20 +447,14 @@ export function glmmFit(
 
   initWasm();
 
-  const resultJson = wasmInternal.glmm_fit_wasm(
+  const result = wasmInternal.glmm_fit_wasm(
     formula,
     randomEffectsJson,
     family,
     link,
     dataJson,
     optionsJson,
-  );
+  ) as GlmmFitResult;
 
-  const result = decodeWithSpecialFloats(resultJson);
-
-  if (result.error) {
-    throw new Error(`GLMM fit failed: ${result.error}`);
-  }
-
-  return result as GlmmFitResult;
+  return result;
 }

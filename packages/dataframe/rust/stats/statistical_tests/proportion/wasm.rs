@@ -6,9 +6,6 @@ use super::{
     chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample},
     sample_size::prop_sample_size,
 };
-use crate::stats::core::types::{
-    ConfidenceInterval, OneSampleProportionTestResult, TestStatistic, TwoSampleProportionTestResult,
-};
 use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 
@@ -20,29 +17,12 @@ pub fn proportion_test_one_sample(
     p0: f64,
     alpha: f64,
     alternative: &str,
-) -> OneSampleProportionTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-
-    match chi_square_test_one_sample(x, n, p0, alternative_type, alpha, true) {
-        Ok(result) => result,
-        Err(e) => OneSampleProportionTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: "X-squared".to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "One-sample proportion test".to_string(),
-            alpha,
-            error_message: Some(format!("Test failed: {}", e)),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            sample_proportion: f64::NAN,
-            alternative: alternative.to_string(),
-        },
-    }
+    let result = chi_square_test_one_sample(x, n, p0, alternative_type, alpha, true)
+        .map_err(|e| JsValue::from_str(&format!("Test failed: {}", e)))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for two-sample proportion test (chi-square approach, matches R)
@@ -55,29 +35,12 @@ pub fn proportion_test_two_sample(
     alpha: f64,
     alternative: &str,
     _pooled: bool, // R's prop.test always uses pooled approach
-) -> TwoSampleProportionTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-
-    match chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, true) {
-        Ok(result) => result,
-        Err(e) => TwoSampleProportionTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: "X-squared".to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Two-sample proportion test".to_string(),
-            alpha,
-            error_message: Some(format!("Test failed: {}", e)),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            proportion_difference: f64::NAN,
-            alternative: alternative.to_string(),
-        },
-    }
+    let result = chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, true)
+        .map_err(|e| JsValue::from_str(&format!("Test failed: {}", e)))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for proportion sample size calculation

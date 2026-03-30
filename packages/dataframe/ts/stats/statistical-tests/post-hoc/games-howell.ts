@@ -1,8 +1,7 @@
 import {
   games_howell_wasm,
-  serializeTestResult,
 } from "../../../wasm/statistical-tests.ts";
-import type { GamesHowellTestResult } from "../../../../lib/tidy_ts_dataframe.js";
+import type { GamesHowellTestResult } from "../types.ts";
 
 /**
  * Games-Howell test for pairwise comparisons
@@ -39,5 +38,5 @@ export function gamesHowellTest(
     alpha,
   );
 
-  return serializeTestResult(result) as GamesHowellTestResult;
+  return result as GamesHowellTestResult;
 }

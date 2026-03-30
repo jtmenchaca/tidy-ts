@@ -1,16 +1,15 @@
 // Sorting functions module
-// deno-lint-ignore-file no-explicit-any
 
 import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Sorting functions
 export function arrange_multi_f64_wasm(
-  values: any,
-  nRows: any,
-  nCols: any,
-  dirs: any,
-  outIdx: any,
-) {
+  values: Float64Array,
+  nRows: number,
+  nCols: number,
+  dirs: Int8Array,
+  outIdx: Uint32Array,
+): void {
   initWasm();
   return wasmInternal.arrange_multi_f64_wasm(
     values,
@@ -22,20 +21,20 @@ export function arrange_multi_f64_wasm(
 }
 
 export function stable_sort_indices_f64_wasm(
-  values: any,
-  indices: any,
-  ascending: any,
-) {
+  values: Float64Array,
+  indices: Uint32Array,
+  ascending: boolean,
+): void {
   initWasm();
   return wasmInternal.stable_sort_indices_f64_wasm(values, indices, ascending);
 }
 
 export function stable_sort_indices_u32_wasm(
-  values: any,
-  indices: any,
-  ascending: any,
-  na_code: any,
-) {
+  values: Uint32Array,
+  indices: Uint32Array,
+  ascending: boolean,
+  na_code: number,
+): void {
   initWasm();
   return wasmInternal.stable_sort_indices_u32_wasm(
     values,
@@ -46,11 +45,11 @@ export function stable_sort_indices_u32_wasm(
 }
 
 export function batch_filter_numbers(
-  values: any,
-  threshold: any,
-  operation: any,
-  output: any,
-) {
+  values: Float64Array,
+  threshold: number,
+  operation: number,
+  output: Uint8Array,
+): void {
   initWasm();
   return wasmInternal.batch_filter_numbers(
     values,

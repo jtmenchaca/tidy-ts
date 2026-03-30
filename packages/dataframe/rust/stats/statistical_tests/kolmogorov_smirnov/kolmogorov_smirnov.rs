@@ -13,15 +13,6 @@ fn psmirnov_q_adjust(q: f64, m: i32, n: i32) -> f64 {
     (0.5 + (q * md * nd - 1e-7).floor()) / (md * nd)
 }
 
-/// Calculates the empirical cumulative distribution function (ECDF)
-/// at a given value for a sorted sample
-#[allow(dead_code)]
-fn ecdf_value(sorted_data: &[f64], value: f64) -> f64 {
-    let n = sorted_data.len() as f64;
-    let position = sorted_data.partition_point(|&x| x <= value) as f64;
-    position / n
-}
-
 /// Performs the two-sample Kolmogorov-Smirnov test
 ///
 /// # Arguments
@@ -522,23 +513,6 @@ fn psmirnov_exact_ties_upper(q: f64, m: i32, n: i32, z: &[i32], two_sided: bool)
     u[n as usize]
 }
 
-/// Approximates the one-sided p-value for the Kolmogorov distribution
-#[allow(dead_code)]
-fn kolmogorov_cdf_complement_one_sided(lambda: f64) -> f64 {
-    if lambda < 0.0 {
-        return 1.0;
-    }
-
-    // Special case: when lambda is 0, p-value is 1
-    if lambda == 0.0 || lambda < 1e-10 {
-        return 1.0;
-    }
-
-    // For one-sided test, use exponential approximation
-    // P(D >= d) ≈ exp(-2 * lambda^2)
-    (-2.0 * lambda * lambda).exp().min(1.0).max(0.0)
-}
-
 /// Performs one-sample Kolmogorov-Smirnov test against a theoretical CDF
 ///
 /// # Arguments
@@ -711,55 +685,6 @@ mod tests {
         // Should not reject null hypothesis for uniform sample
         assert!(result.p_value > 0.05);
     }
-}
-
-/// R's K2l function for asymptotic one-sample KS distribution
-/// Computes: ∑_{k=-∞}^∞ (-1)^k e^{-2 k^2 x^2}
-/// This matches R's K2l function exactly
-#[allow(dead_code)]
-fn k2l_asymptotic(x: f64, lower_tail: bool, tol: f64) -> f64 {
-    use std::f64::consts::PI;
-
-    if x <= 0.0 {
-        return if lower_tail { 0.0 } else { 1.0 };
-    }
-
-    let p = if x < 1.0 {
-        // Use alternative series for x < 1
-        let k_max = ((2.0 - tol.ln()).sqrt()) as i32;
-        let w = x.ln();
-        let z = -(PI * PI) / (8.0 * x * x);
-        let mut s = 0.0;
-
-        for k in (1..k_max).step_by(2) {
-            s += ((k * k) as f64 * z - w).exp();
-        }
-
-        let mut p_val = s / (2.0 * PI).sqrt();
-        if !lower_tail {
-            p_val = 1.0 - p_val;
-        }
-        p_val
-    } else {
-        // Use standard series for x >= 1
-        let z = -2.0 * x * x;
-        let mut s = -1.0;
-        let (mut k, mut old, mut new) = if lower_tail {
-            (1, 0.0, 1.0)
-        } else {
-            (2, 0.0, 2.0 * z.exp())
-        };
-
-        while (old - new).abs() > tol {
-            old = new;
-            new += 2.0 * s * (z * (k * k) as f64).exp();
-            s *= -1.0;
-            k += 1;
-        }
-        new
-    };
-
-    p.clamp(0.0, 1.0)
 }
 
 /// R's exact algorithm for one-sample two-sided tests

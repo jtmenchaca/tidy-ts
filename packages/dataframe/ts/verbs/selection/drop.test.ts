@@ -98,7 +98,6 @@ Deno.test("drop all columns (array syntax)", () => {
 });
 
 Deno.test("drop from empty data (sequential arguments)", () => {
-  // @ts-expect-error - empty dataframe
   const result = createDataFrame([]).drop("mass", "name");
   console.log("Drop from empty data result:", result);
 
@@ -106,7 +105,6 @@ Deno.test("drop from empty data (sequential arguments)", () => {
 });
 
 Deno.test("drop from empty data (array syntax)", () => {
-  // @ts-expect-error - empty dataframe
   const result = createDataFrame([]).drop(["mass", "name"]);
   console.log("Drop from empty data (array) result:", result);
 

@@ -32,7 +32,6 @@ Deno.test("pull - with filter", () => {
 Deno.test("pull - empty dataframe", () => {
   const df = createDataFrame([]);
 
-  // @ts-expect-error - name does not exist in empty
   const names = df.extract("name");
 
   expect(names).toEqual([]);
@@ -111,7 +110,6 @@ Deno.test("extractUnique - all same", () => {
 Deno.test("extractUnique - empty dataframe", () => {
   const df = createDataFrame([]);
 
-  // @ts-expect-error - category does not exist in empty
   const uniqueCategories = df.extractUnique("category");
 
   expect(uniqueCategories).toEqual([]);

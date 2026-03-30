@@ -417,7 +417,6 @@ Deno.test("Grouped DataFrame - Performance and Edge Cases", () => {
   console.log("1️⃣ Testing Empty DataFrame Grouping");
 
   const emptyDf = createDataFrame([]);
-  // @ts-expect-error - species column doesn't exist in empty df
   const emptyGrouped = emptyDf.groupBy("species");
 
   expect(emptyGrouped.__groups).toBeDefined();

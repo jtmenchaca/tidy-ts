@@ -3,7 +3,7 @@ import { wilcoxonSignedRankTest } from "../../wilcoxon.ts";
 import type {
   OneSampleTTestResult,
   WilcoxonSignedRankTestResult,
-} from "../../../../../lib/tidy_ts_dataframe.js";
+} from "../../types.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,

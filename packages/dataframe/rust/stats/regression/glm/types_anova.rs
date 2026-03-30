@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// GLM ANOVA result
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GlmAnova {
     /// Table of deviance analysis
     pub table: Vec<AnovaRow>,
@@ -21,6 +22,7 @@ pub struct GlmAnova {
 
 /// Row in ANOVA table
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AnovaRow {
     /// Degrees of freedom
     pub df: Option<f64>,

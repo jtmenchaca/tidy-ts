@@ -59,7 +59,6 @@ console.log("\n--- Test 5: Empty dataframe ---");
 const emptyData = createDataFrame([]);
 try {
   const result = emptyData
-    // @ts-expect-error - empty dataframe
     .select("any_column");
   console.log("✓ Empty dataframe result:", result);
 } catch (error) {

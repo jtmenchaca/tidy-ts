@@ -1,10 +1,9 @@
 import {
-  serializeTestResult,
   spearman_correlation_test,
 } from "../../../wasm/statistical-tests.ts";
 import type {
   SpearmanCorrelationTestResult,
-} from "../../../../lib/tidy_ts_dataframe.js";
+} from "../types.ts";
 
 /**
  * Spearman rank correlation test
@@ -46,5 +45,5 @@ export function spearmanTest({
     wasmAlternative,
     alpha,
   );
-  return serializeTestResult(result) as SpearmanCorrelationTestResult;
+  return result as SpearmanCorrelationTestResult;
 }

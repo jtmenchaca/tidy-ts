@@ -3,7 +3,6 @@
 #![cfg(feature = "wasm")]
 
 use super::{one_sample::z_test, sample_size::z_sample_size, two_sample::z_test_ind};
-use crate::stats::core::types::{OneSampleZTestResult, TwoSampleZTestResult, TestStatistic, ConfidenceInterval};
 use crate::stats::helpers::parse_alternative;
 use wasm_bindgen::prelude::*;
 
@@ -15,30 +14,12 @@ pub fn z_test_one_sample(
     sigma: f64,
     alpha: f64,
     alternative: &str,
-) -> OneSampleZTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    z_test(x.iter().copied(), mu, sigma, alternative_type, alpha).unwrap_or_else(|e| {
-        OneSampleZTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: "Z-Statistic".to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "One-sample Z-test".to_string(),
-            alpha,
-            error_message: Some(e),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            alternative: alternative.to_string(),
-            effect_size: crate::stats::core::types::EffectSize {
-                value: f64::NAN,
-                name: "Cohen's D".to_string(),
-            },
-        }
-    })
+    let result = z_test(x.iter().copied(), mu, sigma, alternative_type, alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for two-sample z-test
@@ -50,39 +31,19 @@ pub fn z_test_two_sample(
     sigma_y: f64,
     alpha: f64,
     alternative: &str,
-) -> TwoSampleZTestResult {
+) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    z_test_ind(
+    let result = z_test_ind(
         x.iter().copied(),
         y.iter().copied(),
         sigma_x,
         sigma_y,
         alternative_type,
         alpha,
-    ).unwrap_or_else(|e| {
-        TwoSampleZTestResult {
-            test_statistic: TestStatistic {
-                value: f64::NAN,
-                name: "Z-Statistic".to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Independent two-sample Z-test".to_string(),
-            alpha,
-            error_message: Some(e),
-            confidence_interval: ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 1.0 - alpha,
-            },
-            alternative: alternative.to_string(),
-            effect_size: crate::stats::core::types::EffectSize {
-                value: f64::NAN,
-                name: "Cohen's D".to_string(),
-            },
-            mean_difference: f64::NAN,
-            standard_error: f64::NAN,
-        }
-    })
+    )
+    .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for z-test sample size calculation

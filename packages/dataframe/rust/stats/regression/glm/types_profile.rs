@@ -22,6 +22,7 @@ pub struct GlmProfile {
 
 /// Profile data for a single parameter
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ParameterProfile {
     /// Profile values (z or tau)
     pub values: Vec<f64>,

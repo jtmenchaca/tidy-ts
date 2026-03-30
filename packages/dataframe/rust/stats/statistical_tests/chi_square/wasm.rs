@@ -7,9 +7,6 @@ use super::{
     sample_size::chi2_sample_size_variance,
     variance::variance,
 };
-use crate::stats::core::types::{
-    ChiSquareGoodnessOfFitTestResult, ChiSquareIndependenceTestResult, ChiSquareVarianceTestResult,
-};
 use wasm_bindgen::prelude::*;
 
 /// WASM export for chi-square test of independence
@@ -19,32 +16,12 @@ pub fn chi_square_independence(
     rows: usize,
     cols: usize,
     alpha: f64,
-) -> ChiSquareIndependenceTestResult {
+) -> Result<JsValue, JsValue> {
     // Convert flattened data to 2D format
     if observed.len() != rows * cols {
-        return ChiSquareIndependenceTestResult {
-            test_statistic: crate::stats::core::types::TestStatistic {
-                value: f64::NAN,
-                name: crate::stats::core::types::TestStatisticName::ChiSquare
-                    .as_str()
-                    .to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Chi-square test of independence".to_string(),
-            alpha,
-            error_message: Some("Observed data length must equal rows * cols".to_string()),
-            degrees_of_freedom: 0.0,
-            effect_size: crate::stats::core::types::EffectSize {
-                value: 0.0,
-                name: crate::stats::core::types::EffectSizeType::CramersV
-                    .as_str()
-                    .to_string(),
-            },
-            sample_size: 0,
-            phi_coefficient: 0.0,
-            chi_square_expected: vec![],
-            residuals: vec![],
-        };
+        return Err(JsValue::from_str(
+            "Observed data length must equal rows * cols",
+        ));
     }
 
     let mut data = Vec::new();
@@ -54,32 +31,10 @@ pub fn chi_square_independence(
         data.push(observed[start..end].to_vec());
     }
 
-    match independence(&data, alpha) {
-        Ok(result) => result,
-        Err(error_msg) => ChiSquareIndependenceTestResult {
-            test_statistic: crate::stats::core::types::TestStatistic {
-                value: f64::NAN,
-                name: crate::stats::core::types::TestStatisticName::ChiSquare
-                    .as_str()
-                    .to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Chi-square test of independence".to_string(),
-            alpha,
-            error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
-            effect_size: crate::stats::core::types::EffectSize {
-                value: 0.0,
-                name: crate::stats::core::types::EffectSizeType::CramersV
-                    .as_str()
-                    .to_string(),
-            },
-            sample_size: 0,
-            phi_coefficient: 0.0,
-            chi_square_expected: vec![],
-            residuals: vec![],
-        },
-    }
+    let result = independence(&data, alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for chi-square goodness of fit test
@@ -88,31 +43,11 @@ pub fn chi_square_goodness_of_fit(
     observed: &[f64],
     expected: &[f64],
     alpha: f64,
-) -> ChiSquareGoodnessOfFitTestResult {
-    match goodness_of_fit(observed.iter().copied(), expected.iter().copied(), alpha) {
-        Ok(result) => result,
-        Err(error_msg) => ChiSquareGoodnessOfFitTestResult {
-            test_statistic: crate::stats::core::types::TestStatistic {
-                value: f64::NAN,
-                name: crate::stats::core::types::TestStatisticName::ChiSquare
-                    .as_str()
-                    .to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Chi-square goodness of fit test".to_string(),
-            alpha,
-            error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
-            effect_size: crate::stats::core::types::EffectSize {
-                value: 0.0,
-                name: crate::stats::core::types::EffectSizeType::CramersV
-                    .as_str()
-                    .to_string(),
-            },
-            sample_size: 0,
-            chi_square_expected: vec![],
-        },
-    }
+) -> Result<JsValue, JsValue> {
+    let result = goodness_of_fit(observed.iter().copied(), expected.iter().copied(), alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for chi-square test for variance
@@ -122,7 +57,7 @@ pub fn chi_square_variance(
     pop_variance: f64,
     tail: &str,
     alpha: f64,
-) -> ChiSquareVarianceTestResult {
+) -> Result<JsValue, JsValue> {
     use crate::stats::core::TailType;
 
     let tail_type = match tail {
@@ -131,34 +66,10 @@ pub fn chi_square_variance(
         _ => TailType::Two,
     };
 
-    match variance(data.iter().copied(), pop_variance, tail_type, alpha) {
-        Ok(result) => result,
-        Err(error_msg) => ChiSquareVarianceTestResult {
-            test_statistic: crate::stats::core::types::TestStatistic {
-                value: f64::NAN,
-                name: crate::stats::core::types::TestStatisticName::ChiSquare
-                    .as_str()
-                    .to_string(),
-            },
-            p_value: f64::NAN,
-            test_name: "Chi-square test for variance".to_string(),
-            alpha,
-            error_message: Some(error_msg),
-            degrees_of_freedom: 0.0,
-            effect_size: crate::stats::core::types::EffectSize {
-                value: 0.0,
-                name: crate::stats::core::types::EffectSizeType::CramersV
-                    .as_str()
-                    .to_string(),
-            },
-            sample_size: 0,
-            confidence_interval: crate::stats::core::types::ConfidenceInterval {
-                lower: f64::NAN,
-                upper: f64::NAN,
-                confidence_level: 0.0,
-            },
-        },
-    }
+    let result = variance(data.iter().copied(), pop_variance, tail_type, alpha)
+        .map_err(|e| JsValue::from_str(&e))?;
+    serde_wasm_bindgen::to_value(&result)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// WASM export for chi-square sample size calculation

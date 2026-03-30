@@ -100,7 +100,6 @@ Deno.test("outerJoin - both dataframes empty", () => {
   const empty1 = createDataFrame([]);
   const empty2 = createDataFrame([]);
 
-  // @ts-expect-error - id does not exist in empty
   const result = empty1.outerJoin(empty2, "id");
 
   expect(result.toArray()).toEqual([]);

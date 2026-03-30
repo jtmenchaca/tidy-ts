@@ -5,8 +5,7 @@ use std::collections::HashSet;
 use wasm_bindgen::prelude::*;
 
 /// Generic unique function for any hashable type
-#[allow(dead_code)]
-fn unique<T: Eq + std::hash::Hash + Clone>(values: &[T]) -> Vec<T> {
+pub(crate) fn unique<T: Eq + std::hash::Hash + Clone>(values: &[T]) -> Vec<T> {
     let mut seen = HashSet::new();
     let mut result = Vec::new();
     

@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 #[cfg(feature = "wasm")]
 use js_sys::Uint32Array;
 #[cfg(feature = "wasm")]

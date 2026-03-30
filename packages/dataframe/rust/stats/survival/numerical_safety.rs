@@ -52,7 +52,7 @@ const SMALL: f64 = -200.0;
 ///
 /// The clamped value, guaranteed to be in `[-200.0, 22.0]`.
 #[inline]
-pub fn coxsafe(x: f64) -> f64 {
+pub(crate) fn coxsafe(x: f64) -> f64 {
     if x < SMALL {
         SMALL
     } else if x > LARGE {

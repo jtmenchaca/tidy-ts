@@ -8,16 +8,15 @@
 import {
   proportion_test_one_sample,
   proportion_test_two_sample,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
 import type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "./types.ts";
 export type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "./types.ts";
 
 /**
  * One-sample proportion test (WASM implementation)
@@ -54,7 +53,7 @@ export function proportionTestOneSample({
     alpha,
     alternative,
   );
-  return serializeTestResult(result) as OneSampleProportionTestResult;
+  return result as OneSampleProportionTestResult;
 }
 
 /**
@@ -94,5 +93,5 @@ export function proportionTestTwoSample({
     alternative,
     pooled,
   );
-  return serializeTestResult(result) as TwoSampleProportionTestResult;
+  return result as TwoSampleProportionTestResult;
 }

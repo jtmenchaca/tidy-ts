@@ -4,34 +4,6 @@ import { initWasm, wasmInternal } from "./wasm-init.ts";
 import type { DataFrame } from "../dataframe/index.ts";
 
 /**
- * Serialize object with special float handling for NaN/Infinity
- */
-// deno-lint-ignore no-explicit-any
-function encodeWithSpecialFloats(obj: any): string {
-  return JSON.stringify(obj, (_, value) => {
-    if (typeof value === "number") {
-      if (Number.isNaN(value)) return "NaN";
-      if (value === Infinity) return "Infinity";
-      if (value === -Infinity) return "-Infinity";
-    }
-    return value;
-  });
-}
-
-/**
- * Deserialize JSON with special float handling for NaN/Infinity
- */
-// deno-lint-ignore no-explicit-any
-function decodeWithSpecialFloats(json: string): any {
-  return JSON.parse(json, (_, value) => {
-    if (value === "NaN") return NaN;
-    if (value === "Infinity") return Infinity;
-    if (value === "-Infinity") return -Infinity;
-    return value;
-  });
-}
-
-/**
  * GLM family information interface
  */
 export interface GlmFamilyInfo {
@@ -40,9 +12,9 @@ export interface GlmFamilyInfo {
   linkfun?: string;
   linkinv?: string;
   variance?: string;
-  dev_resids?: string;
+  devResids?: string;
   aic?: string;
-  mu_eta?: string;
+  muEta?: string;
   initialize?: string;
   validmu?: string;
   valideta?: string;
@@ -61,11 +33,11 @@ export interface QrDecomposition {
 
 export interface ModelMatrix {
   matrix: number[];
-  n_rows: number;
-  n_cols: number;
-  column_names: string[];
-  term_assignments: number[];
-  row_names?: string[] | null;
+  nRows: number;
+  nCols: number;
+  columnNames: string[];
+  termAssignments: number[];
+  rowNames?: string[] | null;
 }
 
 /**
@@ -83,11 +55,11 @@ export interface ModelFrame {
 export interface TermsObject {
   variables: string[];
   factors: string[];
-  term_labels: string[];
+  termLabels: string[];
   order: number[];
   intercept: number;
   response: number;
-  data_classes: Record<string, string>;
+  dataClasses: Record<string, string>;
 }
 
 /**
@@ -95,7 +67,7 @@ export interface TermsObject {
  */
 export interface GlmControl {
   epsilon: number;
-  max_iter: number;
+  maxIter: number;
   trace: boolean;
 }
 
@@ -107,28 +79,28 @@ export interface GlmFitResult {
   // Core Components (1-7) - Direct R GLM components
   coefficients: number[]; // 1. coefficients
   residuals: number[]; // 2. residuals
-  fitted_values: number[]; // 3. fitted.values
+  fittedValues: number[]; // 3. fitted.values
   effects: number[]; // 4. effects
-  working_residuals: number[]; // Additional
-  response_residuals: number[]; // Additional
-  pearson_residuals: number[]; // Additional
+  workingResiduals: number[]; // Additional
+  responseResiduals: number[]; // Additional
+  pearsonResiduals: number[]; // Additional
   r: number[][]; // 5. R
   rank: number; // 6. rank
   qr: QrDecomposition; // 7. qr
 
   // Model Information (8-13)
   family: GlmFamilyInfo; // 8. family
-  linear_predictors: number[]; // 9. linear.predictors
+  linearPredictors: number[]; // 9. linear.predictors
   deviance: number; // 10. deviance
   aic: number; // 11. aic
-  null_deviance: number; // 12. null.deviance
+  nullDeviance: number; // 12. null.deviance
   iter: number; // 13. iter
 
   // Weights and Data (14-18)
   weights: number[]; // 14. weights
-  prior_weights: number[]; // 15. prior.weights
-  df_residual: number; // 16. df.residual
-  df_null: number; // 17. df.null
+  priorWeights: number[]; // 15. prior.weights
+  dfResidual: number; // 16. df.residual
+  dfNull: number; // 17. df.null
   y: number[]; // 18. y
 
   // Convergence and Control (19-21)
@@ -151,35 +123,35 @@ export interface GlmFitResult {
   xlevels: Record<string, string[]>; // 30. xlevels
 
   // Additional Derived Information (31-50)
-  model_matrix: number[][]; // 31. Model design matrix
-  model_matrix_dimensions: [number, number]; // 32. Matrix dimensions
-  model_matrix_column_names: string[]; // 33. Column names
-  residual_standard_error: number; // 34. Residual standard error
-  r_squared: number; // 35. R-squared
-  adjusted_r_squared: number; // 36. Adjusted R-squared
-  deviance_explained_percent: number; // 37. Deviance explained %
-  f_statistic: number; // 38. F-statistic
-  f_p_value: number; // 39. F p-value
-  n_observations: number; // 40. Number of observations
-  response_variable_name: string; // 41. Response variable name
-  predictor_variable_names: string[]; // 42. Predictor names
-  factor_levels: Record<string, string[]>; // 43. Factor levels
-  reference_levels: Record<string, string>; // 44. Reference levels
-  dispersion_parameter: number; // 45. Dispersion parameter
-  deviance_residuals: number[]; // 46. Deviance residuals
-  covariance_matrix: number[][]; // 47. Covariance matrix
-  standard_errors: number[]; // 48. Standard errors
-  t_statistics: number[]; // 48a. T-statistics
-  p_values: number[]; // 48b. P-values
+  modelMatrix: number[][]; // 31. Model design matrix
+  modelMatrixDimensions: [number, number]; // 32. Matrix dimensions
+  modelMatrixColumnNames: string[]; // 33. Column names
+  residualStandardError: number; // 34. Residual standard error
+  rSquared: number; // 35. R-squared
+  adjustedRSquared: number; // 36. Adjusted R-squared
+  devianceExplainedPercent: number; // 37. Deviance explained %
+  fStatistic: number; // 38. F-statistic
+  fPValue: number; // 39. F p-value
+  nObservations: number; // 40. Number of observations
+  responseVariableName: string; // 41. Response variable name
+  predictorVariableNames: string[]; // 42. Predictor names
+  factorLevels: Record<string, string[]>; // 43. Factor levels
+  referenceLevels: Record<string, string>; // 44. Reference levels
+  dispersionParameter: number; // 45. Dispersion parameter
+  devianceResiduals: number[]; // 46. Deviance residuals
+  covarianceMatrix: number[][]; // 47. Covariance matrix
+  standardErrors: number[]; // 48. Standard errors
+  tStatistics: number[]; // 48a. T-statistics
+  pValues: number[]; // 48b. P-values
   leverage: number[]; // 49. Leverage values
-  cooks_distance: number[]; // 50. Cook's distance
+  cooksDistance: number[]; // 50. Cook's distance
 
   // Backward compatibility fields
-  qr_rank: number;
+  qrRank: number;
   pivot: number[];
   tol: number;
   pivoted: boolean;
-  na_action?: string;
+  naAction?: string;
   dispersion: number;
 }
 
@@ -212,9 +184,9 @@ export type GlmLink =
  */
 export interface GlmOptions {
   weights?: number[];
-  na_action?: string;
+  naAction?: string;
   epsilon?: number;
-  max_iter?: number;
+  maxIter?: number;
   trace?: boolean;
 }
 
@@ -247,15 +219,15 @@ export function glmFit(
   // Initialize WASM and call function
   initWasm();
 
-  let resultJson: string;
+  let result: GlmFitResult;
   try {
-    resultJson = wasmInternal.glm_fit_wasm(
+    result = wasmInternal.glm_fit_wasm(
       formula,
       family,
       link,
       dataJson,
       optionsJson,
-    );
+    ) as GlmFitResult;
   } catch (e) {
     // Log more details about the error
     console.error(`WASM Error in glmFit for ${family}/${link}:`, e);
@@ -276,15 +248,7 @@ export function glmFit(
     throw new Error(`[BUG] ${e}`);
   }
 
-  // Parse result with special float handling
-  const result = decodeWithSpecialFloats(resultJson);
-
-  // Check for errors
-  if (result.error) {
-    throw new Error(`GLM fit failed: ${result.error}`);
-  }
-
-  return result as GlmFitResult;
+  return result;
 }
 
 /**
@@ -326,10 +290,10 @@ export class GLM<Row extends Record<string, number>> {
     return this.result.coefficients;
   }
   get fitted_values(): number[] {
-    return this.result.fitted_values;
+    return this.result.fittedValues;
   }
   get linear_predictors(): number[] {
-    return this.result.linear_predictors;
+    return this.result.linearPredictors;
   }
   get deviance(): number {
     return this.result.deviance;
@@ -338,13 +302,13 @@ export class GLM<Row extends Record<string, number>> {
     return this.result.aic;
   }
   get null_deviance(): number {
-    return this.result.null_deviance;
+    return this.result.nullDeviance;
   }
   get df_residual(): number {
-    return this.result.df_residual;
+    return this.result.dfResidual;
   }
   get df_null(): number {
-    return this.result.df_null;
+    return this.result.dfNull;
   }
   get converged(): boolean {
     return this.result.converged;
@@ -359,7 +323,7 @@ export class GLM<Row extends Record<string, number>> {
     return this.result.weights;
   }
   get prior_weights(): number[] | undefined {
-    return this.result.prior_weights;
+    return this.result.priorWeights;
   }
   get rank(): number {
     return this.result.rank;
@@ -368,43 +332,43 @@ export class GLM<Row extends Record<string, number>> {
     return this.result.leverage;
   }
   get cooks_distance(): number[] {
-    return this.result.cooks_distance;
+    return this.result.cooksDistance;
   }
   get standard_errors(): number[] {
-    return this.result.standard_errors;
+    return this.result.standardErrors;
   }
   get std_errors(): number[] {
-    return this.result.standard_errors;
+    return this.result.standardErrors;
   }
   get p_values(): number[] {
-    return this.result.p_values;
+    return this.result.pValues;
   }
   get t_statistics(): number[] {
-    return this.result.t_statistics;
+    return this.result.tStatistics;
   }
   get covariance_matrix(): number[][] {
-    return this.result.covariance_matrix;
+    return this.result.covarianceMatrix;
   }
   get r(): number[][] {
     return this.result.r;
   }
   get residual_standard_error(): number {
-    return this.result.residual_standard_error;
+    return this.result.residualStandardError;
   }
   get r_squared(): number {
-    return this.result.r_squared;
+    return this.result.rSquared;
   }
   get adjusted_r_squared(): number {
-    return this.result.adjusted_r_squared;
+    return this.result.adjustedRSquared;
   }
   get dispersion_parameter(): number {
-    return this.result.dispersion_parameter;
+    return this.result.dispersionParameter;
   }
   get model_matrix_dimensions(): [number, number] {
-    return this.result.model_matrix_dimensions;
+    return this.result.modelMatrixDimensions;
   }
   get model_matrix_column_names(): string[] {
-    return this.result.model_matrix_column_names;
+    return this.result.modelMatrixColumnNames;
   }
 
   /**
@@ -416,7 +380,7 @@ export class GLM<Row extends Record<string, number>> {
    * @returns Variance-covariance matrix as 2D array
    */
   vcov(): number[][] {
-    return this.result.covariance_matrix;
+    return this.result.covarianceMatrix;
   }
 
   /**
@@ -436,13 +400,13 @@ export class GLM<Row extends Record<string, number>> {
   } = {}): number[] {
     switch (type) {
       case "deviance":
-        return this.result.deviance_residuals;
+        return this.result.devianceResiduals;
       case "pearson":
-        return this.result.pearson_residuals;
+        return this.result.pearsonResiduals;
       case "working":
-        return this.result.working_residuals;
+        return this.result.workingResiduals;
       case "response":
-        return this.result.response_residuals;
+        return this.result.responseResiduals;
       default:
         throw new Error(`Unknown residual type: ${type}`);
     }
@@ -472,10 +436,12 @@ export class GLM<Row extends Record<string, number>> {
     family: string;
     link: string;
   } {
-    // Call Rust implementation via WASM
-    const resultJson = JSON.stringify(this.result);
-    const summaryJson = wasmInternal.glm_summary_wasm(resultJson);
-    const summary = JSON.parse(summaryJson);
+    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    const summary = wasmInternal.glm_summary_wasm(this.result) as Record<
+      string,
+      // deno-lint-ignore no-explicit-any
+      any
+    >;
 
     // Debug: check for error
     if (summary.error) {
@@ -491,10 +457,10 @@ export class GLM<Row extends Record<string, number>> {
         names: summary.names,
       },
       dispersion: summary.dispersion,
-      null_deviance: this.result.null_deviance,
+      null_deviance: this.result.nullDeviance,
       residual_deviance: this.result.deviance,
-      df_null: this.result.df_null,
-      df_residual: this.result.df_residual,
+      df_null: this.result.dfNull,
+      df_residual: this.result.dfResidual,
       aic: this.result.aic,
       family: this.result.family.family,
       link: this.result.family.link,
@@ -510,13 +476,18 @@ export class GLM<Row extends Record<string, number>> {
   rstandard(
     { type = "deviance" }: { type?: "deviance" | "pearson" } = {},
   ): number[] {
-    // Call Rust implementation via WASM
-    const resultJson = JSON.stringify(this.result);
-    const rstandJson = wasmInternal.glm_rstandard_wasm(resultJson, type);
-    const result = JSON.parse(rstandJson);
+    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    const result = wasmInternal.glm_rstandard_wasm(
+      this.result,
+      type,
+    ) as number[];
 
-    if (result.error) {
-      throw new Error(`Rust rstandard() failed: ${result.error}`);
+    if ((result as unknown as { error?: string }).error) {
+      throw new Error(
+        `Rust rstandard() failed: ${
+          (result as unknown as { error: string }).error
+        }`,
+      );
     }
 
     return result;
@@ -528,13 +499,15 @@ export class GLM<Row extends Record<string, number>> {
    * @returns Studentized residuals
    */
   rstudent(): number[] {
-    // Call Rust implementation via WASM
-    const resultJson = JSON.stringify(this.result);
-    const rstudJson = wasmInternal.glm_rstudent_wasm(resultJson);
-    const result = JSON.parse(rstudJson);
+    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    const result = wasmInternal.glm_rstudent_wasm(this.result) as number[];
 
-    if (result.error) {
-      throw new Error(`Rust rstudent() failed: ${result.error}`);
+    if ((result as unknown as { error?: string }).error) {
+      throw new Error(
+        `Rust rstudent() failed: ${
+          (result as unknown as { error: string }).error
+        }`,
+      );
     }
 
     return result;
@@ -552,13 +525,18 @@ export class GLM<Row extends Record<string, number>> {
     dfbetas: number[][];
     dffits: number[];
     covratio: number[];
-    cooks_distance: number[];
+    cooksDistance: number[];
     hat: number[];
   } {
-    // Call Rust implementation via WASM
-    const resultJson = JSON.stringify(this.result);
-    const influenceJson = wasmInternal.glm_influence_wasm(resultJson);
-    return JSON.parse(influenceJson);
+    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    return wasmInternal.glm_influence_wasm(this.result) as {
+      dfbeta: number[][];
+      dfbetas: number[][];
+      dffits: number[];
+      covratio: number[];
+      cooksDistance: number[];
+      hat: number[];
+    };
   }
 
   /**
@@ -584,8 +562,8 @@ export class GLM<Row extends Record<string, number>> {
     const terms = ["NULL"];
     const df = [0];
     const deviance = [0];
-    const residual_df = [this.result.df_null, this.result.df_residual];
-    const residual_deviance = [this.result.null_deviance, this.result.deviance];
+    const residual_df = [this.result.dfNull, this.result.dfResidual];
+    const residual_deviance = [this.result.nullDeviance, this.result.deviance];
 
     return {
       terms,
@@ -607,9 +585,13 @@ export class GLM<Row extends Record<string, number>> {
     lower: number[];
     upper: number[];
   } {
-    const resultJson = encodeWithSpecialFloats(this.result);
-    const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-    const confint = decodeWithSpecialFloats(confintJson);
+    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    const confint = wasmInternal.glm_confint_wasm(this.result, level) as {
+      names: string[];
+      lower: number[];
+      upper: number[];
+      error?: string;
+    };
 
     if (confint.error) {
       throw new Error(`Rust confint() failed: ${confint.error}`);
@@ -634,14 +616,14 @@ export class GLM<Row extends Record<string, number>> {
     // If no newdata, return fitted values
     if (!newdata) {
       if (type === "link") {
-        return this.result.linear_predictors;
+        return this.result.linearPredictors;
       } else {
-        return this.result.fitted_values;
+        return this.result.fittedValues;
       }
     }
 
     // Build model matrix for new data
-    const predictorNames = this.result.model_matrix_column_names;
+    const predictorNames = this.result.modelMatrixColumnNames;
     const nRows = newdata.nrows();
     const nCols = predictorNames.length;
 
@@ -665,21 +647,21 @@ export class GLM<Row extends Record<string, number>> {
       newdataMatrix.push(row);
     }
 
-    // Call Rust predict function
-    const resultJson = encodeWithSpecialFloats(this.result);
-    const newdataJson = JSON.stringify(newdataMatrix);
-    const predictionsJson = wasmInternal.glm_predict_wasm(
-      resultJson,
-      newdataJson,
+    // Call Rust predict function (takes JsValue, returns JsValue)
+    const predictions = wasmInternal.glm_predict_wasm(
+      this.result,
+      newdataMatrix,
       type,
-    );
-    const predictions = decodeWithSpecialFloats(predictionsJson);
+    ) as number[] | { error: string };
 
-    if (predictions.error) {
+    if (
+      typeof predictions === "object" && !Array.isArray(predictions) &&
+      predictions.error
+    ) {
       throw new Error(`Rust predict() failed: ${predictions.error}`);
     }
 
-    return predictions;
+    return predictions as number[];
   }
 
   /**
@@ -730,9 +712,9 @@ export function glm<Row extends Record<string, number>>({
   data: DataFrame<Row>;
   options?: {
     weights?: number[];
-    na_action?: string;
+    naAction?: string;
     epsilon?: number;
-    max_iter?: number;
+    maxIter?: number;
     trace?: boolean;
   };
 }): GLM<Row> {
@@ -750,15 +732,15 @@ export function glm<Row extends Record<string, number>>({
   // Initialize WASM and call function
   initWasm();
 
-  let resultJson: string;
+  let result: GlmFitResult;
   try {
-    resultJson = wasmInternal.glm_fit_wasm(
+    result = wasmInternal.glm_fit_wasm(
       formula,
       family,
       link,
       dataJson,
       optionsJson,
-    );
+    ) as GlmFitResult;
   } catch (e) {
     // Log more details about the error
     console.error(`WASM Error in glm for ${family}/${link}:`, e);
@@ -783,17 +765,9 @@ export function glm<Row extends Record<string, number>>({
     throw new Error(`[BUG] ${e}`);
   }
 
-  // Parse result
-  const result = JSON.parse(resultJson);
-
-  // Check for errors
-  if (result.error) {
-    throw new Error(`GLM fit failed: ${result.error}`);
-  }
-
   // Return GLM class instance
   return new GLM({
-    result: result as GlmFitResult,
+    result,
     formula,
     family,
     link,

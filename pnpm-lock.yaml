@@ -15,8 +15,8 @@ importers:
         specifier: jsr:@cliffy/command@^1.0.0-rc.7
         version: '@jsr/cliffy__command@1.0.0-rc.8'
       '@deno/wasmbuild':
-        specifier: jsr:@deno/wasmbuild@^0.19.2
-        version: '@jsr/deno__wasmbuild@0.19.3'
+        specifier: jsr:@deno/wasmbuild@^0.21.1
+        version: '@jsr/deno__wasmbuild@0.21.1'
       '@hookform/resolvers':
         specifier: ^4.1.2
         version: 4.1.3(react-hook-form@7.68.0(react@19.2.3))
@@ -1183,8 +1183,8 @@ packages:
   '@jsr/david__temp@0.1.1':
     resolution: {integrity: sha512-oXu6LJkdj3ux2eLG6pqYeT9i8E6gHRc9hUHrKgpDRErqMFMRUs56OQFPO3w2D6Er6mIuUdDa7zpblyI97vTcrQ==, tarball: https://npm.jsr.io/~/11/@jsr/david__temp/0.1.1.tgz}
 
-  '@jsr/deno__wasmbuild@0.19.3':
-    resolution: {integrity: sha512-+akpKYISxgnezXjRgpbUliFQAQWwtR9QyNetJDDDv/a2O4M+YJjNAK1UZgHEE/3xBr8q6MeQYPGZ94zH6XIbLw==, tarball: https://npm.jsr.io/~/11/@jsr/deno__wasmbuild/0.19.3.tgz}
+  '@jsr/deno__wasmbuild@0.21.1':
+    resolution: {integrity: sha512-Y8VaU+arSJxAR0wJu3aD6PJG+kFc1BRjjIAM38Gb/KBAcB0OaErqouWOKxUwuwiMLSSdxyzGexttkKzbFEB97Q==, tarball: https://npm.jsr.io/~/11/@jsr/deno__wasmbuild/0.21.1.tgz}
 
   '@jsr/std__assert@1.0.16':
     resolution: {integrity: sha512-bX9ih0nR1kQ12/cnQRCQU0ppTCV7MFkP0qjyWxJRoDI8RC5cpTAmLFH/KcFgxmdN4flKkRbub8VtLuyKq+4OxA==, tarball: https://npm.jsr.io/~/11/@jsr/std__assert/1.0.16.tgz}
@@ -5023,7 +5023,7 @@ snapshots:
     dependencies:
       '@jsr/david__path': 0.2.0
 
-  '@jsr/deno__wasmbuild@0.19.3':
+  '@jsr/deno__wasmbuild@0.21.1':
     dependencies:
       '@jsr/david__path': 0.2.0
       '@jsr/david__temp': 0.1.1

@@ -1,8 +1,7 @@
 import {
   anderson_darling_test,
-  serializeTestResult,
 } from "../../wasm/statistical-tests.ts";
-import type { AndersonDarlingTestResult } from "../../../lib/tidy_ts_dataframe.js";
+import type { AndersonDarlingTestResult } from "./types.ts";
 
 /**
  * Test for normality using Anderson-Darling test
@@ -44,5 +43,5 @@ export function andersonDarlingTest({
     new Float64Array(cleanData),
     alpha,
   );
-  return serializeTestResult(result) as AndersonDarlingTestResult;
+  return result as AndersonDarlingTestResult;
 }

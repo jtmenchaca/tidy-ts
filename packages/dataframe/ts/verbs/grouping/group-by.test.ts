@@ -65,7 +65,6 @@ Deno.test("groupBy preserves original data", () => {
 
 Deno.test("groupBy with empty data", () => {
   const result = createDataFrame([])
-    // @ts-expect-error - species is not a valid column
     .groupBy("species");
 
   expect(result.__groups).toBeDefined();

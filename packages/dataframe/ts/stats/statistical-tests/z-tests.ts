@@ -1,16 +1,15 @@
 import {
-  serializeTestResult,
   z_test_one_sample,
   z_test_two_sample,
 } from "../../wasm/statistical-tests.ts";
 import type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "./types.ts";
 export type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
-} from "../../../lib/tidy_ts_dataframe.js";
+} from "./types.ts";
 
 /**
  * One-sample Z-test for means (WASM implementation)
@@ -45,7 +44,7 @@ export function zTestOneSample({
     alpha,
     alternative,
   );
-  return serializeTestResult(result) as OneSampleZTestResult;
+  return result as OneSampleZTestResult;
 }
 
 /**
@@ -87,5 +86,5 @@ export function zTestTwoSample({
     alpha,
     alternative,
   );
-  return serializeTestResult(result) as TwoSampleZTestResult;
+  return result as TwoSampleZTestResult;
 }
