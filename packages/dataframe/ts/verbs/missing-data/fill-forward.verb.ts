@@ -1,4 +1,4 @@
-import { createDataFrame, type DataFrame } from "../../dataframe/index.ts";
+import { createDataFrame } from "../../dataframe/index.ts";
 
 /**
  * Forward fill null/undefined values in specified columns.
@@ -33,11 +33,12 @@ import { createDataFrame, type DataFrame } from "../../dataframe/index.ts";
  * - Values at the start that are null/undefined remain null/undefined
  * - Creates a new DataFrame without modifying the original
  */
-export function fillForward<T extends Record<string, unknown>>(
-  ...columnNames: (keyof T & string)[]
+export function fillForward(
+  ...columnNames: string[]
 ) {
-  return (df: DataFrame<T>): DataFrame<T> => {
-    const result: T[] = [];
+  // deno-lint-ignore no-explicit-any
+  return (df: any): any => {
+    const result: any[] = [];
     const lastValues: Map<string, unknown> = new Map();
 
     for (const row of df) {
@@ -45,13 +46,12 @@ export function fillForward<T extends Record<string, unknown>>(
 
       // Forward fill each specified column
       for (const colName of columnNames) {
-        const col = colName as keyof T;
-        const currentValue = newRow[col];
+        const currentValue = newRow[colName];
 
         if (currentValue === null || currentValue === undefined) {
           // Fill with last non-null value if available
           if (lastValues.has(colName)) {
-            newRow[col] = lastValues.get(colName) as T[keyof T];
+            newRow[colName] = lastValues.get(colName);
           }
           // Otherwise leave as null/undefined
         } else {
@@ -63,6 +63,6 @@ export function fillForward<T extends Record<string, unknown>>(
       result.push(newRow);
     }
 
-    return createDataFrame(result) as unknown as DataFrame<T>;
+    return createDataFrame(result);
   };
 }

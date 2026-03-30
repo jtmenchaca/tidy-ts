@@ -1,33 +1,8 @@
-import type { DataFrame } from "../../dataframe/index.ts";
-
-/**
- * Extract a single column from a dataframe as an array.
- * Similar to R's tidyverse pull() function.
- *
- * @param column - The column name to extract
- * @returns A function that takes a DataFrame and returns an array of values from the specified column
- *
- * @example
- * ```ts
- * // Extract a single column
- * const ages = pipe(df, extract("age"));
- * const names = pipe(df, pull("name")); // pull is an alias for extract
- *
- * // With grouped data - extracts from each group
- * const groupedAges = pipe(df, group_by("species"), extract("age"));
- * ```
- *
- * @remarks
- * - Returns an array of values for the specified column
- * - Works with both regular and grouped dataframes
- * - Preserves the original data types
- * - Throws an error if the column doesn't exist
- */
-export function extract<T extends Record<string, unknown>, K extends keyof T>(
-  column: K,
+export function extract(
+  column: string,
 ) {
-  return (df: DataFrame<T>): T[K][] => {
-    const out: T[K][] = [];
+  return (df: any): any[] => {
+    const out: any[] = [];
     for (const row of df) out.push(row[column]);
     return out;
   };
@@ -47,45 +22,12 @@ export function extract<T extends Record<string, unknown>, K extends keyof T>(
  *   .extract_head("name", 1); // "Alice"
  * ```
  */
-export function extract_head<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
-  n: 1,
-): (df: DataFrame<T>) => T[K] | undefined;
-
-/**
- * Extract the first n values from a column.
- *
- * @param column - The column name to extract
- * @param n - Number of values to extract from the beginning (must be > 1)
- * @returns A function that takes a DataFrame and returns the first n values from the specified column
- *
- * @example
- * ```ts
- * const topNames = df
- *   .arrange({ by: "score", desc: true })
- *   .extract_head("name", 3); // ["Alice", "Bob", "Carol"]
- * ```
- */
-export function extract_head<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
-  n: number,
-): (df: DataFrame<T>) => T[K][];
-
-export function extract_head<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
+export function extract_head(
+  column: string,
   n: number,
 ) {
-  return (df: DataFrame<T>): T[K] | T[K][] | undefined => {
-    const out: T[K][] = [];
+  return (df: any): any => {
+    const out: any[] = [];
     let count = 0;
     for (const row of df) {
       if (count >= n) break;
@@ -102,32 +44,10 @@ export function extract_head<
 }
 
 /**
- * Extract the last value from a column.
- *
- * @param column - The column name to extract
- * @param n - Must be 1 for single value extraction
- * @returns A function that takes a DataFrame and returns the last value from the specified column
- *
- * @example
- * ```ts
- * const lastName = df
- *   .arrange("date")
- *   .extract_tail("name", 1); // "Eve"
- * ```
- */
-export function extract_tail<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
-  n: 1,
-): (df: DataFrame<T>) => T[K] | undefined;
-
-/**
  * Extract the last n values from a column.
  *
  * @param column - The column name to extract
- * @param n - Number of values to extract from the end (must be > 1)
+ * @param n - Number of values to extract from the end
  * @returns A function that takes a DataFrame and returns the last n values from the specified column
  *
  * @example
@@ -137,23 +57,12 @@ export function extract_tail<
  *   .extract_tail("name", 2); // ["David", "Eve"]
  * ```
  */
-export function extract_tail<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
-  n: number,
-): (df: DataFrame<T>) => T[K][];
-
-export function extract_tail<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
+export function extract_tail(
+  column: string,
   n: number,
 ) {
-  return (df: DataFrame<T>): T[K] | T[K][] | undefined => {
-    const all: T[K][] = [];
+  return (df: any): any => {
+    const all: any[] = [];
     for (const row of df) all.push(row[column]);
     const result = all.slice(-n);
 
@@ -179,14 +88,11 @@ export function extract_tail<
  *   .extract_nth("name", 0); // "Alice"
  * ```
  */
-export function extract_nth<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
+export function extract_nth(
+  column: string,
   index: number,
 ) {
-  return (df: DataFrame<T>): T[K] | undefined => {
+  return (df: any): any => {
     let currentIndex = 0;
     for (const row of df) {
       if (currentIndex === index) {
@@ -210,19 +116,16 @@ export function extract_nth<
  * const randomNames = df.extract_sample("name", 3); // ["Bob", "Alice", "David"]
  * ```
  */
-export function extract_sample<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
+export function extract_sample(
+  column: string,
   n: number,
 ) {
-  return (df: DataFrame<T>): T[K][] => {
-    const all: T[K][] = [];
+  return (df: any): any[] => {
+    const all: any[] = [];
     for (const row of df) all.push(row[column]);
 
     // Simple random sampling without replacement
-    const sampled: T[K][] = [];
+    const sampled: any[] = [];
     const available = [...all];
 
     for (let i = 0; i < Math.min(n, available.length); i++) {
@@ -247,14 +150,11 @@ export function extract_sample<
  * const uniqueAges = df.extractUnique("age"); // [25, 30, 35]
  * ```
  */
-export function extract_unique<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(
-  column: K,
+export function extract_unique(
+  column: string,
 ) {
-  return (df: DataFrame<T>): T[K][] => {
-    const values: T[K][] = [];
+  return (df: any): any[] => {
+    const values: any[] = [];
     for (const row of df) values.push(row[column]);
     return [...new Set(values)];
   };

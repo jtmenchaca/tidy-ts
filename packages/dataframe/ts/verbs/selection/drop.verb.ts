@@ -2,10 +2,7 @@
 import {
   type ColumnarStore,
   createDataFrame,
-  type DataFrame,
-  type GroupedDataFrame,
   materializeIndex,
-  type Prettify,
   withGroups,
 } from "../../dataframe/index.ts";
 import { RowView } from "../verb-helpers.ts";
@@ -49,24 +46,7 @@ import { RowView } from "../verb-helpers.ts";
  * - Returns empty objects if all columns are dropped
  */
 
-// Typed overload for precise column removal - sequential arguments
-export function drop<
-  Row extends Record<string, unknown>,
-  const Cols extends readonly (keyof Row & string)[],
->(
-  ...cols: Cols
-): (df: DataFrame<Row>) => DataFrame<Prettify<Omit<Row, Cols[number]>>>;
-
-// Typed overload for array syntax
-export function drop<
-  Row extends Record<string, unknown>,
-  const Cols extends readonly (keyof Row & string)[],
->(
-  cols: Cols,
-): (df: DataFrame<Row>) => DataFrame<Prettify<Omit<Row, Cols[number]>>>;
-
-// Implementation signature (wide for backward compatibility)
-export function drop<Row extends Record<string, unknown>>(
+export function drop(
   columnOrColumns?: string | string[],
   ...additionalColumns: string[]
 ) {
@@ -78,8 +58,7 @@ export function drop<Row extends Record<string, unknown>>(
     : [columnOrColumns, ...additionalColumns];
 
   const set = new Set(cols);
-  // Note the `any` return so it satisfies both overloads
-  return (df: DataFrame<Row>): any => {
+  return (df: any): any => {
     const api: any = df as any;
     const store = api.__store as ColumnarStore | undefined;
 
@@ -140,24 +119,20 @@ export function drop<Row extends Record<string, unknown>>(
       (out as any).__rowView = new RowView(newColumns, keepColumns);
 
       // Preserve groups if they exist (column-only operation)
-      const groupedDf = df as GroupedDataFrame<Row, keyof Row>;
-      return groupedDf.__groups ? withGroups(groupedDf, out) : out;
+      return api.__groups ? withGroups(df, out) : out;
     } else {
       // Fallback for non-columnar DataFrames
       const result: Record<string, unknown>[] = [];
       for (const row of df) {
         const out: Record<string, unknown> = { ...row };
         for (const c of set) delete (out as Record<string, unknown>)[c];
-        result.push(out as Prettify<Row>);
+        result.push(out);
       }
 
-      const out = createDataFrame(result) as unknown as DataFrame<
-        Prettify<Row>
-      >;
+      const out = createDataFrame(result);
 
       // Preserve groups if they exist (column-only operation)
-      const groupedDf = df as GroupedDataFrame<Row, keyof Row>;
-      return groupedDf.__groups ? withGroups(groupedDf, out) : out;
+      return api.__groups ? withGroups(df, out) : out;
     }
   };
 }

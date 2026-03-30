@@ -25,8 +25,8 @@
  * - Add console.log here to see which methods are being called
  */
 
-// Import DataFrame type and verb resolution function
-import { type DataFrame, resolveVerb } from "../../dataframe/index.ts";
+// Import verb resolution function
+import { resolveVerb } from "../../dataframe/index.ts";
 // Import utilities to check DataFrame types
 import {
   isDataFrame,
@@ -49,14 +49,11 @@ import { thenableGroupedDataFrame } from "./grouped-thenable.ts";
 // Import utility to check if something is thenable
 import { isThenable } from "../../utilities/isThenable.ts";
 
-// Import the PromisedDataFrame type
-import type { PromisedDataFrame } from "../types/promised-dataframe.type.ts";
-
 // Create a thenable, chainable wrapper around a DataFrame or a Promise<DataFrame>
 // This function returns a Proxy that acts like both a DataFrame and a Promise
-export function thenableDataFrame<Row extends Record<string, unknown>>(
-  dfOrPromise: DataFrame<Row> | Promise<DataFrame<Row>>, // Can wrap either sync or async DataFrame
-): PromisedDataFrame<Row> {
+export function thenableDataFrame(
+  dfOrPromise: any, // Can wrap either sync or async DataFrame
+): any {
   const p = Promise.resolve(dfOrPromise); // Always wrap in Promise for consistent .then/.catch/.finally behavior
 
   // Create a Proxy that intercepts all property access
@@ -191,5 +188,5 @@ export function thenableDataFrame<Row extends Record<string, unknown>>(
       }
     },
   });
-  return proxy as PromisedDataFrame<Row>; // Return the Proxy, which acts as both DataFrame and Promise
+  return proxy; // Return the Proxy, which acts as both DataFrame and Promise
 }

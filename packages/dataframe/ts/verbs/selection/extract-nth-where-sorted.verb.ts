@@ -1,4 +1,3 @@
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
 import { compareValues } from "../verb-helpers.ts";
 
@@ -37,25 +36,20 @@ import { compareValues } from "../verb-helpers.ts";
  * - Null/undefined values in sortBy column are sorted to the end
  * - For grouped data, applies within each group
  * - Returns undefined if no rows exist or rank is out of bounds
- * - Maintains type safety with proper column name inference
  */
-export function extract_nth_where_sorted<
-  T extends Record<string, unknown>,
-  ColName extends keyof T,
-  SortColName extends keyof T,
->(
-  column: ColName,
-  sortBy: SortColName,
+export function extract_nth_where_sorted(
+  column: string,
+  sortBy: string,
   direction: "asc" | "desc",
   rank: number = 1,
 ) {
-  return (df: DataFrame<T> | GroupedDataFrame<T>) => {
+  return (df: any): any => {
     // deno-lint-ignore no-explicit-any
     const api: any = df as any;
     const store = api.__store;
     const idx = materializeIndex(store.length, api.__view);
 
-    const sortColumn = store.columns[sortBy as string];
+    const sortColumn = store.columns[sortBy];
     if (!sortColumn) {
       // Column doesn't exist, return undefined
       return undefined;
@@ -74,7 +68,6 @@ export function extract_nth_where_sorted<
     }
 
     // Return the value from the specified column
-    return store
-      .columns[column as string][targetIndex as number] as T[ColName];
+    return store.columns[column][targetIndex as number];
   };
 }

@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 
 /**
  * Format a Date in UTC time (ISO 8601 format with Z suffix).
@@ -15,132 +14,21 @@ function formatDateUTC(date: Date): string {
  * Displays a formatted table representation of the DataFrame in the console.
  * Useful for debugging and data inspection. Returns the original DataFrame
  * for chaining. Supports custom formatting options and optional messages.
- *
- * @param messageOrOpts - Optional message to print before the table, or formatting options
- * @param opts - Formatting options (only used if first parameter is a message)
- *   - `maxCols`: Maximum number of columns to display
- *   - `maxWidth`: Maximum width for each column
- *   - `transpose`: Display table transposed (rows as columns)
- *   - `showIndex`: Show row indices
- *   - `colorRows`: Alternate row background colors for better readability
- *
- * @returns The original DataFrame for chaining
- *
- * @example
- * // Simple print
- * df.print()
- *
- * @example
- * // Print with message
- * df.print("User data:")
- *
- * @example
- * // Print with formatting options
- * df.print({ showIndex: true, colorRows: true })
- *
- * @example
- * // Print with message and options
- * df.print("Debug output:", { maxCols: 5, showIndex: true })
- *
- * @example
- * // Chain with other operations
- * df.filter(row => row.age > 18)
- *   .print("Adults only:")
- *   .select("name", "email")
  */
-// Grouped overload: preserve grouping type
-export function print<
-  Row extends Record<string, unknown>,
-  GroupName extends keyof Row,
->(
-  messageOrOpts?: string | {
-    maxCols?: number;
-    maxWidth?: number;
-    transpose?: boolean;
-    showIndex?: boolean;
-    colorRows?: boolean;
-  },
-  opts?: {
-    maxCols?: number;
-    maxWidth?: number;
-    transpose?: boolean;
-    showIndex?: boolean;
-    colorRows?: boolean;
-  },
-): (df: GroupedDataFrame<Row, GroupName>) => GroupedDataFrame<Row, GroupName>;
-
-/**
- * Print DataFrame contents to console with optional formatting.
- *
- * Displays a formatted table representation of the DataFrame in the console.
- * Useful for debugging and data inspection. Returns the original DataFrame
- * for chaining. Supports custom formatting options and optional messages.
- *
- * @param messageOrOpts - Optional message to print before the table, or formatting options
- * @param opts - Formatting options (only used if first parameter is a message)
- *   - `maxCols`: Maximum number of columns to display
- *   - `maxWidth`: Maximum width for each column
- *   - `transpose`: Display table transposed (rows as columns)
- *   - `showIndex`: Show row indices
- *   - `colorRows`: Alternate row background colors for better readability
- *
- * @returns The original DataFrame for chaining
- *
- * @example
- * // Simple print
- * df.print()
- *
- * @example
- * // Print with message
- * df.print("User data:")
- *
- * @example
- * // Print with formatting options
- * df.print({ showIndex: true, colorRows: true })
- *
- * @example
- * // Print with message and options
- * df.print("Debug output:", { maxCols: 5, showIndex: true })
- *
- * @example
- * // Chain with other operations
- * df.filter(row => row.age > 18)
- *   .print("Adults only:")
- *   .select("name", "email")
- */
-// Ungrouped overload
-export function print<Row extends Record<string, unknown>>(
-  messageOrOpts?: string | {
-    maxCols?: number;
-    maxWidth?: number;
-    transpose?: boolean;
-    showIndex?: boolean;
-    colorRows?: boolean;
-  },
-  opts?: {
-    maxCols?: number;
-    maxWidth?: number;
-    transpose?: boolean;
-    showIndex?: boolean;
-    colorRows?: boolean;
-  },
-): (df: DataFrame<Row>) => DataFrame<Row>;
-
-// Implementation
-export function print<Row extends Record<string, unknown>>(
+export function print(
   messageOrOpts?: any,
   opts?: any,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>): any => {
+  return (df: any): any => {
     // Handle both string message and options
     if (typeof messageOrOpts === "string") {
       console.log(messageOrOpts);
-      printTable((df as any).toTable(opts), {
+      printTable(df.toTable(opts), {
         showIndex: opts?.showIndex,
         colorRows: opts?.colorRows,
       });
     } else {
-      printTable((df as any).toTable(messageOrOpts), {
+      printTable(df.toTable(messageOrOpts), {
         showIndex: messageOrOpts?.showIndex,
         colorRows: messageOrOpts?.colorRows,
       });

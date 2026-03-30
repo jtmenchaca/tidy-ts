@@ -1,7 +1,5 @@
 // packages/dataframe/ts/transformation/reorder.ts
 
-import type { DataFrame } from "../../dataframe/index.ts";
-
 /**
  * Reorder columns explicitly.
  *
@@ -23,18 +21,18 @@ import type { DataFrame } from "../../dataframe/index.ts";
  * // Result: city, name, age columns
  * ```
  */
-export function reorder<T extends object>(
-  cols: Array<keyof T>,
+export function reorder(
+  cols: Array<string>,
 ) {
-  return function <U extends T>(df: DataFrame<U>): DataFrame<U> {
+  // deno-lint-ignore no-explicit-any
+  return function (df: any): any {
     const allColumns = df.columns();
     const specified = cols.map(String);
-    const remaining = allColumns.filter((col) => !specified.includes(col));
+    const remaining = allColumns.filter((col: string) => !specified.includes(col));
     const newOrder = [...specified, ...remaining];
 
     // Use select to reorder - it maintains types correctly
     // Handle empty DataFrame case by bypassing the type constraint
-    // deno-lint-ignore no-explicit-any
     return (df as any).select(...newOrder);
   };
 }

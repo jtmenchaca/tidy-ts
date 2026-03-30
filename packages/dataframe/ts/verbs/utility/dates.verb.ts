@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Extract year from date column.
@@ -18,10 +17,10 @@ import type { DataFrame } from "../../dataframe/index.ts";
  * // date column becomes [2023, 2024]
  * ```
  */
-export function year<T extends Record<string, unknown>>(
-  col: keyof T,
+export function year(
+  col: string,
 ) {
-  return function (df: DataFrame<T>): DataFrame<T> {
+  return function (df: any): any {
     const colName = String(col);
     const column = [...df[colName]] as (Date | string | number | null)[];
 
@@ -46,8 +45,8 @@ export function year<T extends Record<string, unknown>>(
     });
 
     return df.mutate(
-      { [colName]: () => yearValues } as Record<keyof T, any>,
-    ) as unknown as DataFrame<T>;
+      { [colName]: () => yearValues } as Record<string, any>,
+    );
   };
 }
 
@@ -68,10 +67,10 @@ export function year<T extends Record<string, unknown>>(
  * // date column becomes [5, 1]
  * ```
  */
-export function month<T extends Record<string, unknown>>(
-  col: keyof T,
+export function month(
+  col: string,
 ) {
-  return function (df: DataFrame<T>): DataFrame<T> {
+  return function (df: any): any {
     const colName = String(col);
     const column = [...df[colName]] as (Date | string | number | null)[];
 
@@ -96,8 +95,8 @@ export function month<T extends Record<string, unknown>>(
     });
 
     return df.mutate(
-      { [colName]: () => monthValues } as Record<keyof T, any>,
-    ) as unknown as DataFrame<T>;
+      { [colName]: () => monthValues } as Record<string, any>,
+    );
   };
 }
 
@@ -118,10 +117,10 @@ export function month<T extends Record<string, unknown>>(
  * // date column becomes [15, 1]
  * ```
  */
-export function day<T extends Record<string, unknown>>(
-  col: keyof T,
+export function day(
+  col: string,
 ) {
-  return function (df: DataFrame<T>): DataFrame<T> {
+  return function (df: any): any {
     const colName = String(col);
     const column = [...df[colName]] as (Date | string | number | null)[];
 
@@ -146,7 +145,7 @@ export function day<T extends Record<string, unknown>>(
     });
 
     return df.mutate(
-      { [colName]: () => dayValues } as Record<keyof T, any>,
-    ) as unknown as DataFrame<T>;
+      { [colName]: () => dayValues } as Record<string, any>,
+    );
   };
 }

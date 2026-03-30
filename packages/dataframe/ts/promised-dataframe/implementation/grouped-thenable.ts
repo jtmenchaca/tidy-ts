@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { resolveVerb } from "../../dataframe/implementation/resolve-verb.ts";
 import {
   isDataFrame,
@@ -23,11 +22,8 @@ import { thenableDataFrame } from "./dataframe-thenable.ts";
 import { isThenable, isThenableDataFrame } from "../../utilities/isThenable.ts";
 
 // Grouped variant (optional: you can reuse the same thenableDataFrame() if resolveVerb keeps grouping)
-export function thenableGroupedDataFrame<
-  Row extends Record<string, unknown>,
-  K extends keyof Row,
->(
-  gdfOrPromise: GroupedDataFrame<Row, K> | Promise<GroupedDataFrame<Row, K>>,
+export function thenableGroupedDataFrame(
+  gdfOrPromise: any,
 ): any /* ChainGrouped<Row, K> */ {
   const p = Promise.resolve(gdfOrPromise);
 
@@ -80,7 +76,7 @@ export function thenableGroupedDataFrame<
               // If the result is a Promise (async forEach), wrap it
               if (isThenable(result)) {
                 return thenableGroupedDataFrame(
-                  result as Promise<GroupedDataFrame<Row, K>>,
+                  result as any,
                 );
               }
               // For sync forEach, return the proxy to maintain reference
@@ -163,11 +159,11 @@ export function thenableGroupedDataFrame<
                 }
                 // For DataFrame/GroupedDataFrame, return wrapped thenable for chaining
                 if (isDataFrame(out)) {
-                  return thenableDataFrame(out as unknown as DataFrame<Row>);
+                  return thenableDataFrame(out as any);
                 }
                 if (isGroupedDataFrame(out)) {
                   return thenableGroupedDataFrame(
-                    out as unknown as GroupedDataFrame<Row, K>,
+                    out as any,
                   );
                 }
                 return out;
@@ -200,11 +196,11 @@ export function thenableGroupedDataFrame<
           }
           // For DataFrame/GroupedDataFrame, return wrapped thenable for chaining
           if (isDataFrame(out)) {
-            return thenableDataFrame(out as unknown as DataFrame<Row>);
+            return thenableDataFrame(out as any);
           }
           if (isGroupedDataFrame(out)) {
             return thenableGroupedDataFrame(
-              out as unknown as GroupedDataFrame<Row, K>,
+              out as any,
             );
           }
           return out;
@@ -225,8 +221,8 @@ export function thenableGroupedDataFrame<
                 const out = directProp.bind(gdf)(...args);
                 return processAsyncMethodResult(
                   out,
-                  (x): x is DataFrame<Row> => isDataFrame(x),
-                  (x): x is GroupedDataFrame<Row, K> => isGroupedDataFrame(x),
+                  (x: any) => isDataFrame(x),
+                  (x: any) => isGroupedDataFrame(x),
                   thenableDataFrame,
                   thenableGroupedDataFrame,
                 );
@@ -240,8 +236,8 @@ export function thenableGroupedDataFrame<
           const out = (method as any)(...args);
           return processAsyncMethodResult(
             out,
-            (x): x is DataFrame<Row> => isDataFrame(x),
-            (x): x is GroupedDataFrame<Row, K> => isGroupedDataFrame(x),
+            (x: any) => isDataFrame(x),
+            (x: any) => isGroupedDataFrame(x),
             thenableDataFrame,
             thenableGroupedDataFrame,
           );

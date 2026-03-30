@@ -1,4 +1,4 @@
-import { createDataFrame, type DataFrame } from "../../dataframe/index.ts";
+import { createDataFrame } from "../../dataframe/index.ts";
 
 /**
  * Backward fill null/undefined values in specified columns.
@@ -33,16 +33,17 @@ import { createDataFrame, type DataFrame } from "../../dataframe/index.ts";
  * - Values at the end that are null/undefined remain null/undefined
  * - Creates a new DataFrame without modifying the original
  */
-export function fillBackward<T extends Record<string, unknown>>(
-  ...columnNames: (keyof T & string)[]
+export function fillBackward(
+  ...columnNames: string[]
 ) {
-  return (df: DataFrame<T>): DataFrame<T> => {
-    const result: T[] = [];
+  // deno-lint-ignore no-explicit-any
+  return (df: any): any => {
+    const result: any[] = [];
     const rows = Array.from(df);
 
     // First pass: collect all rows
     for (const row of rows) {
-      result.push({ ...row });
+      result.push({ ...(row as any) });
     }
 
     // Second pass: backward fill each specified column
@@ -51,12 +52,12 @@ export function fillBackward<T extends Record<string, unknown>>(
 
       // Traverse backwards to find next non-null value
       for (let i = result.length - 1; i >= 0; i--) {
-        const currentValue = result[i][colName as keyof T];
+        const currentValue = result[i][colName];
 
         if (currentValue === null || currentValue === undefined) {
           // Fill with next non-null value if available
           if (nextValue !== undefined) {
-            result[i][colName as keyof T] = nextValue as T[keyof T];
+            result[i][colName] = nextValue;
           }
           // Otherwise leave as null/undefined
         } else {
@@ -66,6 +67,6 @@ export function fillBackward<T extends Record<string, unknown>>(
       }
     }
 
-    return createDataFrame(result) as unknown as DataFrame<T>;
+    return createDataFrame(result);
   };
 }

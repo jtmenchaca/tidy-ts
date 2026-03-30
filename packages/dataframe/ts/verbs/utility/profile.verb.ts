@@ -1,5 +1,4 @@
-import type { DataFrame } from "../../dataframe/types/dataframe.type.ts";
-import type { ColumnProfile } from "./profile.types.ts";
+// deno-lint-ignore-file no-explicit-any
 import { createDataFrame } from "../../dataframe/implementation/create-dataframe.ts";
 import { iqr } from "../../stats/descriptive/spread/iqr.ts";
 import { max } from "../../stats/aggregate/max.ts";
@@ -28,11 +27,10 @@ import { variance } from "../../stats/descriptive/spread/variance.ts";
  * profile.print();
  * ```
  */
-export function profile<T extends object>(
-  df: DataFrame<T>,
-): DataFrame<ColumnProfile> {
-  const columnProfiles: ColumnProfile[] = df.columns().map((col: string) => {
-    // @ts-ignore - dynamic column access for profiling
+export function profile(
+  df: any,
+): any {
+  const columnProfiles: any[] = df.columns().map((col: string) => {
     const values = df.extract(col);
     const nonNull = values.filter(
       (v: unknown) => v !== null && v !== undefined,
@@ -69,16 +67,15 @@ export function profile<T extends object>(
     } else {
       // Categorical column
       const unique = new Set(nonNull);
-      const topValues = Array.from(
-        nonNull.reduce((acc: Map<string, number>, val: unknown) => {
-          const key = String(val);
-          acc.set(key, (acc.get(key) || 0) + 1);
-          return acc;
-        }, new Map<string, number>()),
-      )
-        .sort((a: [string, number], b: [string, number]) => b[1] - a[1])
+      const freqMap = new Map<string, number>();
+      for (const val of nonNull) {
+        const key = String(val);
+        freqMap.set(key, (freqMap.get(key) || 0) + 1);
+      }
+      const topValues = Array.from(freqMap)
+        .sort((a, b) => b[1] - a[1])
         .slice(0, 3)
-        .map(([val, count]: [string, number]) => `${val}(${count})`)
+        .map(([val, count]) => `${val}(${count})`)
         .join(", ");
 
       return {

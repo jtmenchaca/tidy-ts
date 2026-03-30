@@ -2,20 +2,11 @@
 
 import {
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
-  type Prettify,
-  type UnifyUnion,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 import { left_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
-import type {
-  JoinKey,
-  ObjectJoinOptions,
-  SuffixAwareLeftJoinResult,
-} from "./types/index.ts";
 import { getStoreAndIndex, parseJoinArgs } from "./join-helpers.ts";
 
 const RIGHT_NULL: number = 0xFFFFFFFF; // must match the WASM/Rust sentinel (u32::MAX)
@@ -148,50 +139,13 @@ function buildJoinResultOptimized(
 /* Single-threaded WASM + JS fallback (unchanged public API)                   */
 /* -------------------------------------------------------------------------- */
 
-export function left_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  const Keys extends ObjectJoinOptions<LeftRow, RightRow>["keys"],
-  const Suffixes extends ObjectJoinOptions<LeftRow, RightRow>["suffixes"],
->(
-  right: DataFrame<RightRow>,
-  options: { keys: Keys; suffixes?: Suffixes },
-): (left: DataFrame<LeftRow>) => DataFrame<
-  UnifyUnion<
-    SuffixAwareLeftJoinResult<
-      LeftRow,
-      RightRow,
-      { keys: Keys; suffixes: Suffixes }
-    >
-  >
->;
-
-export function left_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  by: JoinKeyName | JoinKeyName[],
-  options?: { suffixes?: { left?: string; right?: string } },
-): (
-  left: DataFrame<LeftRow>,
-) => DataFrame<Prettify<LeftRow & Partial<RightRow>>>;
-
-export function left_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | JoinKeyName
-    | JoinKeyName[]
-    | ObjectJoinOptions<LeftRow, RightRow>,
-  options?: { suffixes?: { left?: string; right?: string } },
-): (left: DataFrame<LeftRow>) => any {
-  return (left: DataFrame<LeftRow>): any => {
-    const span = tracer.startSpan(left as any, "left_join");
+export function left_join(
+  right: any,
+  byOrOptions: any,
+  options?: any,
+): (left: any) => any {
+  return (left: any): any => {
+    const span = tracer.startSpan(left, "left_join");
 
     try {
       // Left join with empty left = empty result, but preserve schema from both sides
@@ -208,43 +162,43 @@ export function left_join<
           columns,
           length: 0,
           columnNames: allCols,
-        }) as unknown as any;
+        });
       }
 
       const { leftKeys, rightKeys, suffixes } = tracer.withSpan(
-        left as any,
+        left,
         "parse-join-keys",
         () => parseJoinArgs(byOrOptions, options),
       );
 
       const L = tracer.withSpan(
-        left as any,
+        left,
         "get-left-store-index",
         () => getStoreAndIndex(left),
       );
       const R = tracer.withSpan(
-        left as any,
+        left,
         "get-right-store-index",
         () => getStoreAndIndex(right),
       );
 
       const { leftIdxTA, rightIdxTA } = tracer.withSpan(
-        left as any,
+        left,
         "join-operation",
         () => {
           const leftTyped = tracer.withSpan(
-            left as any,
+            left,
             "convert-left-to-typed",
             () => getTypedColsCached(L.store, leftKeys),
           );
           const rightTyped = tracer.withSpan(
-            left as any,
+            left,
             "convert-right-to-typed",
             () => getTypedColsCached(R.store, rightKeys),
           );
 
           const { leftColumnData, rightColumnData } = tracer.withSpan(
-            left as any,
+            left,
             "map-key-columns",
             () => {
               // Gather only visible rows through the view index
@@ -288,7 +242,7 @@ export function left_join<
               throw new Error("Empty data, using JS fallback");
             }
 
-            const wasmResult = tracer.withSpan(left as any, "wasm-join", () => {
+            const wasmResult = tracer.withSpan(left, "wasm-join", () => {
               return left_join_typed_multi_u32(leftColumnData, rightColumnData);
             });
 
@@ -353,7 +307,7 @@ export function left_join<
       );
 
       const outStore = tracer.withSpan(
-        left as any,
+        left,
         "build-join-result",
         () => {
           return buildJoinResultOptimized(
@@ -371,35 +325,29 @@ export function left_join<
       );
 
       const outDf = tracer.withSpan(
-        left as any,
+        left,
         "create-dataframe-from-store",
-        () => createColumnarDataFrameFromStore(outStore) as unknown as any,
+        () => createColumnarDataFrameFromStore(outStore) as any,
       );
 
-      if ((left as any).__groups) {
-        const result = tracer.withSpan(left as any, "rebuild-groups", () => {
-          const src = left as unknown as GroupedDataFrame<
-            LeftRow,
-            keyof LeftRow
-          >;
-          const outRows = (outDf as DataFrame<LeftRow>)
-            .toArray() as readonly LeftRow[];
-          // Casts to satisfy generic constraints of withGroupsRebuilt.
+      if (left.__groups) {
+        const result = tracer.withSpan(left, "rebuild-groups", () => {
+          const outRows = outDf.toArray();
           return withGroupsRebuilt(
-            src,
+            left,
             outRows as any,
             outDf as any,
-          ) as unknown as any;
+          ) as any;
         });
 
-        tracer.copyContext(left as any, result as any);
+        tracer.copyContext(left, result);
         return result;
       }
 
-      tracer.copyContext(left as any, outDf as any);
+      tracer.copyContext(left, outDf);
       return outDf;
     } finally {
-      tracer.endSpan(left as any, span);
+      tracer.endSpan(left, span);
     }
   };
 }

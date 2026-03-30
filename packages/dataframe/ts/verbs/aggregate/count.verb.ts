@@ -27,6 +27,6 @@ export function count<T extends object, K extends keyof T>(
   return (df: DataFrame<T>): DataFrame<any> | Promise<DataFrame<any>> => {
     const columns = [column, ...additionalColumns];
     const grouped = groupBy(...(columns as any))(df as any);
-    return summarise({ count: (g) => g.nrows() })(grouped as any);
+    return summarise({ count: (g: any) => g.nrows() })(grouped as any);
   };
 }

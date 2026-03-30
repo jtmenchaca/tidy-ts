@@ -1,48 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 import type { ColumnarStore } from "../../dataframe/implementation/columnar-store.ts";
 import { createColumnarDataFrameFromStore } from "../../dataframe/implementation/create-dataframe.ts";
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
-/**
- * Helper to detect if a property is optional in a type
- */
-type IsOptional<T, K extends keyof T> = undefined extends T[K] ? true : false;
-
-/**
- * Helper type that properly merges two objects by creating unions for shared keys
- * and maintaining optional status for keys that don't exist in both types.
- *
- * This handles the complex case where fields might be optional in one type but required in another.
- */
-type MergeRows<Row1, Row2> =
-  & {
-    // For keys that exist in both:
-    // - If optional in either type, make the result optional
-    // - Create union of the value types
-    [
-      K in keyof Row1 & keyof Row2 as IsOptional<Row1, K> extends true ? K
-        : IsOptional<Row2, K> extends true ? K
-        : never
-    ]?: Row1[K] | Row2[K];
-  }
-  & {
-    // For keys that exist in both and are required in both
-    [
-      K in keyof Row1 & keyof Row2 as IsOptional<Row1, K> extends false
-        ? IsOptional<Row2, K> extends false ? K : never
-        : never
-    ]: Row1[K] | Row2[K];
-  }
-  & {
-    // For keys only in Row1, keep them as-is
-    [K in Exclude<keyof Row1, keyof Row2>]: Row1[K];
-  }
-  & {
-    // For keys only in Row2, make them optional
-    [K in Exclude<keyof Row2, keyof Row1>]?: Row2[K];
-  };
 
 /**
  * Standalone function to concatenate an array of DataFrames by rows (vertical binding).
@@ -71,9 +32,9 @@ type MergeRows<Row1, Row2> =
  * - Maintains type safety with optional properties
  * - Requires at least one DataFrame in the array
  */
-export function concatDataFrames<Row extends Record<string, unknown>>(
-  dataFrames: DataFrame<Row>[],
-): DataFrame<Row> {
+export function concatDataFrames(
+  dataFrames: any[],
+): any {
   if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
     throw new Error(
       "concatDataFrames requires a non-empty array of DataFrames",
@@ -86,7 +47,7 @@ export function concatDataFrames<Row extends Record<string, unknown>>(
 
   // Use the first DataFrame and bind all others to it
   const [first, ...rest] = dataFrames;
-  return first.bindRows(...rest) as unknown as DataFrame<Row>;
+  return first.bindRows(...rest);
 }
 
 /**
@@ -122,13 +83,10 @@ export function concatDataFrames<Row extends Record<string, unknown>>(
  * - Returns empty DataFrame if all inputs are empty
  * - Requires at least one DataFrame argument
  */
-export function bind_rows<
-  Row extends Record<string, unknown>,
-  OtherRow extends Record<string, unknown>,
->(
-  ...dataFrames: DataFrame<OtherRow>[]
-): (df: DataFrame<Row>) => DataFrame<Prettify<MergeRows<Row, OtherRow>>> {
-  return (df: DataFrame<Row>) => {
+export function bind_rows(
+  ...dataFrames: any[]
+) {
+  return (df: any): any => {
     const span = tracer.startSpan(df, "bind_rows", {
       dataFrameCount: dataFrames.length + 1,
       inputRowCount: df.nrows(),
@@ -239,11 +197,7 @@ export function bind_rows<
 
       // Create DataFrame from the new store (most efficient path)
       const result = tracer.withSpan(df, "create-dataframe", () => {
-        return createColumnarDataFrameFromStore<
-          Prettify<MergeRows<Row, OtherRow>>
-        >(
-          newStore,
-        ) as unknown as DataFrame<Prettify<MergeRows<Row, OtherRow>>>;
+        return createColumnarDataFrameFromStore(newStore);
       });
 
       // Copy trace context to new DataFrame

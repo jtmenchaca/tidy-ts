@@ -1,74 +1,26 @@
-import { createDataFrame, type DataFrame } from "../../dataframe/index.ts";
+// deno-lint-ignore-file no-explicit-any
+import { createDataFrame } from "../../dataframe/index.ts";
 
 export type DistributionDataConfig = {
   range?: [number, number];
   points?: number;
 };
 
-// deno-lint-ignore no-explicit-any
-export function createDistributionData<T extends Record<string, any>>({
-  distribution,
-  params,
-  type,
-  config,
-}: {
-  distribution: {
-    density: (params: T & { at: number }) => number;
-    probability: (params: T & { at: number }) => number;
-    quantile: (params: T & { probability: number }) => number;
-  };
-  params: T;
-  type: "pdf";
-  config?: DistributionDataConfig;
-}): DataFrame<{ x: number; density: number }>;
-// deno-lint-ignore no-explicit-any
-export function createDistributionData<T extends Record<string, any>>({
-  distribution,
-  params,
-  type,
-  config,
-}: {
-  distribution: {
-    density: (params: T & { at: number }) => number;
-    probability: (params: T & { at: number }) => number;
-    quantile: (params: T & { probability: number }) => number;
-  };
-  params: T;
-  type: "cdf";
-  config?: DistributionDataConfig;
-}): DataFrame<{ x: number; probability: number }>;
-// deno-lint-ignore no-explicit-any
-export function createDistributionData<T extends Record<string, any>>({
-  distribution,
-  params,
-  type,
-  config,
-}: {
-  distribution: {
-    density: (params: T & { at: number }) => number;
-    probability: (params: T & { at: number }) => number;
-    quantile: (params: T & { probability: number }) => number;
-  };
-  params: T;
-  type: "inverse_cdf";
-  config?: DistributionDataConfig;
-}): DataFrame<{ probability: number; quantile: number }>;
-// deno-lint-ignore no-explicit-any
-export function createDistributionData<T extends Record<string, any>>({
+export function createDistributionData({
   distribution,
   params,
   type,
   config = {},
 }: {
   distribution: {
-    density: (params: T & { at: number }) => number;
-    probability: (params: T & { at: number }) => number;
-    quantile: (params: T & { probability: number }) => number;
+    density: (params: any) => number;
+    probability: (params: any) => number;
+    quantile: (params: any) => number;
   };
-  params: T;
+  params: any;
   type: "pdf" | "cdf" | "inverse_cdf";
   config?: DistributionDataConfig;
-}): DataFrame<{ x: number; density: number }> | DataFrame<{ x: number; probability: number }> | DataFrame<{ probability: number; quantile: number }> {
+}): any {
   const { range, points = 100 } = config;
 
   if (type === "inverse_cdf") {

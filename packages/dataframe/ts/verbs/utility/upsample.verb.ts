@@ -1,8 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
 import { collectGroupIndices } from "../verb-helpers.ts";
-import type { FillMethod, UpsampleArgs } from "./upsample.types.ts";
+import type { FillMethod } from "./upsample.types.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
 import {
@@ -18,15 +17,15 @@ import {
 /**
  * Internal upsample implementation: Generate time sequence and fill missing values.
  */
-function upsampleImpl<T extends Record<string, unknown>>(
-  df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-  timeColumn: keyof T,
+function upsampleImpl(
+  df: any,
+  timeColumn: any,
   _frequency: Frequency,
   frequencyMs: number,
   fillMethod: FillMethod,
   startDate?: Date,
   endDate?: Date,
-): DataFrame<any> {
+): any {
   const timeColName = String(timeColumn);
 
   // Check if this is a grouped DataFrame
@@ -45,7 +44,7 @@ function upsampleImpl<T extends Record<string, unknown>>(
     // Process each group separately
     for (let g = 0; g < size; g++) {
       const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
-      const groupRows: T[] = [];
+      const groupRows: any[] = [];
       for (const idx of groupIndices) {
         const physIdx = baseIndex ? baseIndex[idx] : idx;
         const row: any = {};
@@ -68,8 +67,8 @@ function upsampleImpl<T extends Record<string, unknown>>(
 
       // Get time range for this group
       const timeMs = groupRows
-        .map((row) => toEpochMs(row[timeColumn]))
-        .filter((t) => !isNaN(t));
+        .map((row: any) => toEpochMs(row[timeColumn]))
+        .filter((t: number) => !isNaN(t));
 
       if (timeMs.length === 0) {
         continue; // Skip groups with no valid timestamps
@@ -127,20 +126,20 @@ function upsampleImpl<T extends Record<string, unknown>>(
         for (const key of Object.keys(firstRow)) {
           if (key === timeColName) continue;
           // Skip grouping columns (already included in groupKeys)
-          if (groupingColumns.some((col: keyof T) => String(col) === key)) {
+          if (groupingColumns.some((col: any) => String(col) === key)) {
             continue;
           }
 
-          const colName = key as keyof T;
+          const colName = key;
 
           if (fillMethod === "forward") {
             // Forward fill: use most recent value before or at this time
             const valuesUpToNow = groupRows
-              .filter((r) => {
+              .filter((r: any) => {
                 const rtMs = toEpochMs(r[timeColumn]);
                 return !isNaN(rtMs) && rtMs <= bucketTime;
               })
-              .map((r) => r[colName]);
+              .map((r: any) => r[colName]);
 
             if (valuesUpToNow.length > 0) {
               resultRow[key] = valuesUpToNow[valuesUpToNow.length - 1];
@@ -151,11 +150,11 @@ function upsampleImpl<T extends Record<string, unknown>>(
           } else {
             // Backward fill: use next value after this time
             const valuesFromNow = groupRows
-              .filter((r) => {
+              .filter((r: any) => {
                 const rtMs = toEpochMs(r[timeColumn]);
                 return !isNaN(rtMs) && rtMs >= bucketTime;
               })
-              .map((r) => r[colName]);
+              .map((r: any) => r[colName]);
 
             if (valuesFromNow.length > 0) {
               resultRow[key] = valuesFromNow[0];
@@ -183,23 +182,23 @@ function upsampleImpl<T extends Record<string, unknown>>(
       return a[timeColName].getTime() - b[timeColName].getTime();
     });
 
-    return createDataFrame(allResults) as unknown as DataFrame<any>;
+    return createDataFrame(allResults);
   }
 
   // Ungrouped: Process all rows together
   const rows = Array.from(df);
 
   if (rows.length === 0) {
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   // Get time range
   const timeMs = rows
-    .map((row) => toEpochMs(row[timeColumn]))
-    .filter((t) => !isNaN(t));
+    .map((row: any) => toEpochMs(row[timeColumn]))
+    .filter((t: number) => !isNaN(t));
 
   if (timeMs.length === 0) {
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   // Get min/max times as milliseconds
@@ -247,20 +246,20 @@ function upsampleImpl<T extends Record<string, unknown>>(
     };
 
     // Fill columns based on fillMethod
-    const firstRow = rows[0];
+    const firstRow = rows[0] as any;
     for (const key of Object.keys(firstRow)) {
       if (key === timeColName) continue;
 
-      const colName = key as keyof T;
+      const colName = key;
 
       if (fillMethod === "forward") {
         // Forward fill: use most recent value before or at this time
         const valuesUpToNow = rows
-          .filter((r) => {
+          .filter((r: any) => {
             const rtMs = toEpochMs(r[timeColumn]);
             return !isNaN(rtMs) && rtMs <= bucketTime;
           })
-          .map((r) => r[colName]);
+          .map((r: any) => r[colName]);
 
         if (valuesUpToNow.length > 0) {
           resultRow[key] = valuesUpToNow[valuesUpToNow.length - 1];
@@ -271,17 +270,17 @@ function upsampleImpl<T extends Record<string, unknown>>(
       } else {
         // Backward fill: use next value after this time
         const valuesFromNow = rows
-          .filter((r) => {
+          .filter((r: any) => {
             const rtMs = toEpochMs(r[timeColumn]);
             return !isNaN(rtMs) && rtMs >= bucketTime;
           })
-          .map((r) => r[colName]);
+          .map((r: any) => r[colName]);
 
         if (valuesFromNow.length > 0) {
           resultRow[key] = valuesFromNow[0];
         } else {
           // No values after this time - use last available value
-          resultRow[key] = rows[rows.length - 1][colName];
+          resultRow[key] = (rows[rows.length - 1] as any)[colName];
         }
       }
     }
@@ -289,19 +288,19 @@ function upsampleImpl<T extends Record<string, unknown>>(
     result.push(resultRow);
   }
 
-  return createDataFrame(result) as unknown as DataFrame<any>;
+  return createDataFrame(result);
 }
 
 /**
  * Calendar-path upsample for PlainDate/PlainDateTime.
  * Uses string bucket keys and native Temporal add()/compare().
  */
-function upsampleCalendarTemporal<T extends Record<string, unknown>>(
-  rows: T[],
-  timeColumn: keyof T,
+function upsampleCalendarTemporal(
+  rows: any[],
+  timeColumn: any,
   frequency: Frequency,
   fillMethod: FillMethod,
-): DataFrame<any> {
+): any {
   const timeColName = String(timeColumn);
   const freq = parseFrequencyForCalendar(frequency);
   if (!freq) {
@@ -321,7 +320,7 @@ function upsampleCalendarTemporal<T extends Record<string, unknown>>(
   }
 
   if (!minVal || !maxVal) {
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   const startFloored = floorCalendarTemporal(minVal, freq);
@@ -333,7 +332,7 @@ function upsampleCalendarTemporal<T extends Record<string, unknown>>(
   );
 
   // Build a lookup: ISO string key → row values
-  const rowByKey = new Map<string, T>();
+  const rowByKey = new Map<string, any>();
   for (const row of rows) {
     const ts = row[timeColumn];
     if (!isCalendarTemporal(ts)) continue;
@@ -351,7 +350,7 @@ function upsampleCalendarTemporal<T extends Record<string, unknown>>(
 
     for (const key of Object.keys(firstRow)) {
       if (key === timeColName) continue;
-      const colName = key as keyof T;
+      const colName = key;
 
       if (fillMethod === "forward") {
         // Find most recent value at or before this bucket
@@ -382,7 +381,7 @@ function upsampleCalendarTemporal<T extends Record<string, unknown>>(
     result.push(resultRow);
   }
 
-  return createDataFrame(result) as unknown as DataFrame<any>;
+  return createDataFrame(result);
 }
 
 /**
@@ -390,56 +389,19 @@ function upsampleCalendarTemporal<T extends Record<string, unknown>>(
  *
  * Generates a complete time sequence and fills missing values using a simple fill strategy.
  * Use this when converting from lower frequency to higher frequency (e.g., daily to hourly).
- *
- * @param args - Named arguments object
- * @param args.timeColumn - Name of the Date column to use for upsampling
- * @param args.frequency - Target frequency (e.g., "1H", "15min", "1D")
- * @param args.fillMethod - Fill method: "forward" (carry forward) or "backward" (use next value)
- * @param args.startDate - Optional: Start date for upsampling period
- * @param args.endDate - Optional: End date for upsampling period
- * @returns A function that takes a DataFrame and returns a DataFrame with upsampled data
- *
- * @example
- * // Upsample daily to hourly with forward fill
- * const hourly = df.upsample({
- *   timeColumn: "timestamp",
- *   frequency: "1H",
- *   fillMethod: "forward"
- * });
- *
- * @example
- * // Upsample with backward fill
- * const hourly = df.upsample({
- *   timeColumn: "timestamp",
- *   frequency: "1H",
- *   fillMethod: "backward"
- * });
- *
- * @example
- * // Upsample with date range
- * const hourly = df.upsample({
- *   timeColumn: "timestamp",
- *   frequency: "6H",
- *   fillMethod: "forward",
- *   startDate: new Date("2024-01-01"),
- *   endDate: new Date("2024-01-31")
- * });
  */
-export function upsample<
-  T extends Record<string, unknown>,
-  TimeCol extends keyof T,
->(
-  args: UpsampleArgs<T, TimeCol>,
+export function upsample(
+  args: any,
 ) {
-  return (df: DataFrame<T> | GroupedDataFrame<T, keyof T>): DataFrame<any> => {
-    const rows = Array.from(df);
+  return (df: any): any => {
+    const rows: any[] = Array.from(df);
     if (rows.length === 0) {
-      return createDataFrame([]) as unknown as DataFrame<any>;
+      return createDataFrame([]);
     }
 
     // Detect calendar Temporal types (PlainDate/PlainDateTime)
-    const firstTimestamp = rows.find((r) => r[args.timeColumn] != null)
-      ?.[args.timeColumn];
+    const firstTimestamp = rows.find((r: any) => r[args.timeColumn] != null)
+      ?.[args.timeColumn as string];
     if (isWallClockTemporalWithoutCalendar(firstTimestamp)) {
       throw new Error(
         "PlainTime cannot be used for time-series upsampling (no date component).",

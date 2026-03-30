@@ -1,12 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
 import { collectGroupIndices } from "../verb-helpers.ts";
-import type {
-  AggregationFunction,
-  DownsampleArgs,
-  RowAfterDownsample,
-} from "./downsample.types.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
 import {
@@ -29,15 +23,15 @@ import { applyAggregation } from "./sample-helpers.ts";
 /**
  * Internal downsample implementation: Group by time buckets and apply aggregations.
  */
-function downsampleImpl<T extends Record<string, unknown>>(
-  df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-  timeColumn: keyof T,
+function downsampleImpl(
+  df: any,
+  timeColumn: any,
   frequency: Frequency,
   frequencyMs: number,
   aggregations: Record<string, (...args: any[]) => any>,
   startDate?: Date,
   endDate?: Date,
-): DataFrame<any> {
+): any {
   const timeColName = String(timeColumn);
 
   // Check if we need calendar-aware bucketing
@@ -62,7 +56,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
     // Process each group separately
     for (let g = 0; g < size; g++) {
       const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
-      const groupRows: T[] = [];
+      const groupRows: any[] = [];
       for (const idx of groupIndices) {
         const physIdx = baseIndex ? baseIndex[idx] : idx;
         const row: any = {};
@@ -99,7 +93,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
       // Filter rows based on startDate (truncate if needed)
       const filteredGroupRows = startDate
-        ? groupRows.filter((row) => {
+        ? groupRows.filter((row: any) => {
           const timestamp = row[timeColumn];
           if (timestamp === null || timestamp === undefined) return false;
           const rowTime = toEpochMs(timestamp);
@@ -108,7 +102,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
         : groupRows;
 
       // Group rows by time bucket within this group
-      const buckets = new Map<number, T[]>();
+      const buckets = new Map<number, any[]>();
       for (const row of filteredGroupRows) {
         const timestamp = row[timeColumn];
         if (timestamp === null || timestamp === undefined) {
@@ -147,7 +141,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
       }
 
       // Generate all buckets in the range (including empty ones) for this group
-      const allBuckets = new Map<number, T[]>();
+      const allBuckets = new Map<number, any[]>();
       // Generate buckets from start to end, inclusive
       const startBucket = bucketStartTime;
       const endBucket = bucketEndTime;
@@ -176,9 +170,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
       // Apply aggregations to each bucket in this group
       for (const [bucketTime, bucketRows] of allBuckets.entries()) {
-        const bucketDf = createDataFrame(
-          bucketRows,
-        ) as unknown as GroupedDataFrame<T, keyof T>;
+        const bucketDf = createDataFrame(bucketRows) as any;
         const resultRow: any = {
           ...groupKeys, // Include group keys
           [timeColName]: new Date(bucketTime),
@@ -187,38 +179,38 @@ function downsampleImpl<T extends Record<string, unknown>>(
         for (const [colName, aggregation] of Object.entries(aggregations)) {
           if (colName === timeColName) continue;
 
-          const col = colName as keyof T;
+          const col = colName;
 
           // Check if column exists in data - use it directly
           if (availableColumns.includes(colName)) {
             resultRow[colName] = applyAggregation(
               bucketDf,
               col,
-              aggregation as AggregationFunction<T>,
+              aggregation,
             );
           } else {
             // Column doesn't exist - find appropriate source column
             const numericColumns = availableColumns.filter(
               (c) =>
                 c !== timeColName && !Object.hasOwn(groupKeys, c) &&
-                bucketRows.some((r) => typeof r[c as keyof T] === "number"),
+                bucketRows.some((r: any) => typeof r[c] === "number"),
             );
 
             if (numericColumns.length === 1) {
               // Only one numeric column - use it as the source
-              const sourceCol = numericColumns[0] as keyof T;
+              const sourceCol = numericColumns[0];
               resultRow[colName] = applyAggregation(
                 bucketDf,
                 sourceCol,
-                aggregation as AggregationFunction<T>,
+                aggregation,
               );
             } else if (numericColumns.length > 1) {
               // Multiple numeric columns - ambiguous, use first one
-              const sourceCol = numericColumns[0] as keyof T;
+              const sourceCol = numericColumns[0];
               resultRow[colName] = applyAggregation(
                 bucketDf,
                 sourceCol,
-                aggregation as AggregationFunction<T>,
+                aggregation,
               );
             } else {
               // No numeric columns - try any column
@@ -226,11 +218,11 @@ function downsampleImpl<T extends Record<string, unknown>>(
                 c !== timeColName && !Object.hasOwn(groupKeys, c)
               );
               if (otherColumns.length > 0) {
-                const sourceCol = otherColumns[0] as keyof T;
+                const sourceCol = otherColumns[0];
                 resultRow[colName] = applyAggregation(
                   bucketDf,
                   sourceCol,
-                  aggregation as AggregationFunction<T>,
+                  aggregation,
                 );
               } else {
                 resultRow[colName] = null;
@@ -256,12 +248,12 @@ function downsampleImpl<T extends Record<string, unknown>>(
       return a[timeColName].getTime() - b[timeColName].getTime();
     });
 
-    return createDataFrame(allResults) as unknown as DataFrame<any>;
+    return createDataFrame(allResults);
   }
 
   // Ungrouped: Group rows by time bucket
   const rows = Array.from(df);
-  const buckets = new Map<number, T[]>();
+  const buckets = new Map<number, any[]>();
 
   // Determine effective start and end times
   let effectiveStartTime: number | undefined;
@@ -293,7 +285,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
   // Filter rows based on startDate (truncate if needed)
   const filteredRows = startDate
-    ? rows.filter((row) => {
+    ? rows.filter((row: any) => {
       const timestamp = row[timeColumn];
       if (timestamp === null || timestamp === undefined) return false;
       const rowTime = toEpochMs(timestamp);
@@ -303,7 +295,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
 
   // Group filtered rows by time bucket
   for (const row of filteredRows) {
-    const timestamp = row[timeColumn];
+    const timestamp = (row as any)[timeColumn];
     if (timestamp === null || timestamp === undefined) {
       continue; // Skip rows with null timestamps
     }
@@ -335,7 +327,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
     bucketStartTime = Math.min(...Array.from(buckets.keys()));
   } else {
     // No data and no startDate - return empty
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   if (effectiveEndTime !== undefined) {
@@ -345,11 +337,11 @@ function downsampleImpl<T extends Record<string, unknown>>(
     bucketEndTime = Math.max(...Array.from(buckets.keys()));
   } else {
     // No data and no endDate - return empty
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   // Generate all buckets in the range (including empty ones)
-  const allBuckets = new Map<number, T[]>();
+  const allBuckets = new Map<number, any[]>();
 
   if (useCalendarBucketing && calendarFreq) {
     // Use calendar-aware bucket generation
@@ -366,7 +358,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
     // Use fixed-time bucket generation
     // Safety check: prevent infinite loop if frequencyMs is invalid
     if (frequencyMs <= 0) {
-      return createDataFrame([]) as unknown as DataFrame<any>;
+      return createDataFrame([]);
     }
 
     for (
@@ -393,10 +385,7 @@ function downsampleImpl<T extends Record<string, unknown>>(
     : [];
 
   for (const [bucketTime, bucketRows] of allBuckets.entries()) {
-    const bucketDf = createDataFrame(bucketRows) as unknown as GroupedDataFrame<
-      T,
-      keyof T
-    >;
+    const bucketDf = createDataFrame(bucketRows) as any;
     const resultRow: any = {
       [timeColName]: new Date(bucketTime),
     };
@@ -405,13 +394,13 @@ function downsampleImpl<T extends Record<string, unknown>>(
       if (colName === timeColName) continue; // Skip time column
 
       // Check if colName exists as a column in the data
-      const col = colName as keyof T;
+      const col = colName;
       if (availableColumns.includes(colName)) {
         // Column exists - aggregate it
         resultRow[colName] = applyAggregation(
           bucketDf,
           col,
-          aggregation as AggregationFunction<T>,
+          aggregation,
         );
       } else {
         // Column doesn't exist - try to find a source column to aggregate
@@ -420,24 +409,24 @@ function downsampleImpl<T extends Record<string, unknown>>(
         const numericColumns = availableColumns.filter(
           (c) =>
             c !== timeColName &&
-            bucketRows.some((r) => typeof r[c as keyof T] === "number"),
+            bucketRows.some((r: any) => typeof r[c] === "number"),
         );
 
         if (numericColumns.length === 1) {
           // Single numeric column - use it as source
-          const sourceCol = numericColumns[0] as keyof T;
+          const sourceCol = numericColumns[0];
           resultRow[colName] = applyAggregation(
             bucketDf,
             sourceCol,
-            aggregation as AggregationFunction<T>,
+            aggregation,
           );
         } else if (numericColumns.length > 0) {
           // Multiple numeric columns - use the first one (could be improved)
-          const sourceCol = numericColumns[0] as keyof T;
+          const sourceCol = numericColumns[0];
           resultRow[colName] = applyAggregation(
             bucketDf,
             sourceCol,
-            aggregation as AggregationFunction<T>,
+            aggregation,
           );
         } else {
           // No numeric columns found - try first non-time column
@@ -445,11 +434,11 @@ function downsampleImpl<T extends Record<string, unknown>>(
             c !== timeColName
           );
           if (otherColumns.length > 0) {
-            const sourceCol = otherColumns[0] as keyof T;
+            const sourceCol = otherColumns[0];
             resultRow[colName] = applyAggregation(
               bucketDf,
               sourceCol,
-              aggregation as AggregationFunction<T>,
+              aggregation,
             );
           } else {
             resultRow[colName] = null;
@@ -464,19 +453,19 @@ function downsampleImpl<T extends Record<string, unknown>>(
   // Sort by time
   result.sort((a, b) => a[timeColName].getTime() - b[timeColName].getTime());
 
-  return createDataFrame(result) as unknown as DataFrame<any>;
+  return createDataFrame(result);
 }
 
 /**
  * Calendar-path downsample for PlainDate/PlainDateTime.
  * Uses string bucket keys (ISO strings) and native Temporal operations.
  */
-function downsampleCalendarTemporal<T extends Record<string, unknown>>(
-  rows: T[],
-  timeColumn: keyof T,
+function downsampleCalendarTemporal(
+  rows: any[],
+  timeColumn: any,
   frequency: Frequency,
   aggregations: Record<string, (...args: any[]) => any>,
-): DataFrame<any> {
+): any {
   const timeColName = String(timeColumn);
   const freq = parseFrequencyForCalendar(frequency);
   if (!freq) {
@@ -486,7 +475,7 @@ function downsampleCalendarTemporal<T extends Record<string, unknown>>(
   }
 
   // Group rows by string bucket key
-  const buckets = new Map<string, T[]>();
+  const buckets = new Map<string, any[]>();
   let firstTemporal: CalendarTemporal | null = null;
   let lastTemporal: CalendarTemporal | null = null;
 
@@ -516,7 +505,7 @@ function downsampleCalendarTemporal<T extends Record<string, unknown>>(
   }
 
   if (!firstTemporal || !lastTemporal) {
-    return createDataFrame([]) as unknown as DataFrame<any>;
+    return createDataFrame([]);
   }
 
   // Generate all bucket keys in the range
@@ -534,33 +523,30 @@ function downsampleCalendarTemporal<T extends Record<string, unknown>>(
 
   for (const bucketKey of allKeys) {
     const bucketRows = buckets.get(bucketKey) || [];
-    const bucketDf = createDataFrame(bucketRows) as unknown as GroupedDataFrame<
-      T,
-      keyof T
-    >;
+    const bucketDf = createDataFrame(bucketRows) as any;
     const resultRow: any = { [timeColName]: bucketKey };
 
     for (const [colName, aggregation] of Object.entries(aggregations)) {
       if (colName === timeColName) continue;
-      const col = colName as keyof T;
+      const col = colName;
 
       if (availableColumns.includes(colName)) {
         resultRow[colName] = applyAggregation(
           bucketDf,
           col,
-          aggregation as AggregationFunction<T>,
+          aggregation,
         );
       } else {
         const numericColumns = availableColumns.filter(
           (c) =>
             c !== timeColName &&
-            bucketRows.some((r) => typeof r[c as keyof T] === "number"),
+            bucketRows.some((r: any) => typeof r[c] === "number"),
         );
         if (numericColumns.length > 0) {
           resultRow[colName] = applyAggregation(
             bucketDf,
-            numericColumns[0] as keyof T,
-            aggregation as AggregationFunction<T>,
+            numericColumns[0],
+            aggregation,
           );
         } else {
           resultRow[colName] = null;
@@ -570,7 +556,7 @@ function downsampleCalendarTemporal<T extends Record<string, unknown>>(
     result.push(resultRow);
   }
 
-  return createDataFrame(result) as unknown as DataFrame<any>;
+  return createDataFrame(result);
 }
 
 /**
@@ -578,83 +564,21 @@ function downsampleCalendarTemporal<T extends Record<string, unknown>>(
  *
  * Groups rows by time buckets and applies aggregation functions to each bucket.
  * Use this when converting from higher frequency to lower frequency (e.g., hourly to daily).
- *
- * @param args - Named arguments object
- * @param args.timeColumn - Name of the Date column to use for downsampling
- * @param args.frequency - Target frequency (e.g., "1D", "1H", "15min", "1W", "1M")
- * @param args.aggregations - Object mapping output column names to aggregation functions
- *   - Column name can be new (renamed) or same as source column
- *   - Aggregation functions: stats.mean, stats.sum, stats.min, stats.max, stats.first, stats.last, etc.
- * @param args.startDate - Optional: Start date for downsampling period (hard constraint)
- * @param args.endDate - Optional: End date for downsampling period (hard constraint)
- * @returns A function that takes a DataFrame and returns a DataFrame with downsampled data
- *
- * @example
- * // Downsample hourly to daily
- * const daily = df.downsample({
- *   timeColumn: "timestamp",
- *   frequency: "1D",
- *   aggregations: {
- *     avg_price: stats.mean,
- *     total_volume: stats.sum
- *   }
- * });
- *
- * @example
- * // Downsample with date range (fiscal year)
- * const fiscalQ2 = df.downsample({
- *   timeColumn: "timestamp",
- *   frequency: "1M",
- *   aggregations: {
- *     monthly_revenue: stats.sum
- *   },
- *   startDate: new Date("2024-04-01"),
- *   endDate: new Date("2024-06-30")
- * });
- *
- * @example
- * // OHLC bars from tick data
- * const ohlc = df.downsample({
- *   timeColumn: "timestamp",
- *   frequency: "1H",
- *   aggregations: {
- *     open: stats.first,
- *     high: stats.max,
- *     low: stats.min,
- *     close: stats.last
- *   }
- * });
- *
- * @example
- * // Works with grouped DataFrames
- * const result = df.groupBy("symbol").downsample({
- *   timeColumn: "timestamp",
- *   frequency: "1D",
- *   aggregations: {
- *     daily_avg: stats.mean
- *   }
- * });
  */
-export function downsample<
-  T extends Record<string, unknown>,
-  TimeCol extends keyof T,
-  Aggregations extends Record<string, (...args: any[]) => any>,
->(
-  args: DownsampleArgs<T, TimeCol, Aggregations>,
+export function downsample(
+  args: any,
 ) {
   return (
-    df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-  ): DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>> => {
-    const rows = Array.from(df);
+    df: any,
+  ): any => {
+    const rows: any[] = Array.from(df);
     if (rows.length === 0) {
-      return createDataFrame([]) as unknown as DataFrame<
-        RowAfterDownsample<T, TimeCol, Aggregations>
-      >;
+      return createDataFrame([]);
     }
 
     // Detect if the time column contains calendar Temporal types (PlainDate/PlainDateTime)
-    const firstTimestamp = rows.find((r) => r[args.timeColumn] != null)
-      ?.[args.timeColumn];
+    const firstTimestamp = rows.find((r: any) => r[args.timeColumn] != null)
+      ?.[args.timeColumn as string];
     if (isWallClockTemporalWithoutCalendar(firstTimestamp)) {
       throw new Error(
         "PlainTime cannot be used for time-series downsampling (no date component).",
@@ -666,7 +590,7 @@ export function downsample<
         args.timeColumn,
         args.frequency,
         args.aggregations,
-      ) as unknown as DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>>;
+      );
     }
 
     const frequencyMs = frequencyToMs(args.frequency);
@@ -678,6 +602,6 @@ export function downsample<
       args.aggregations,
       args.startDate,
       args.endDate,
-    ) as unknown as DataFrame<RowAfterDownsample<T, TimeCol, Aggregations>>;
+    );
   };
 }

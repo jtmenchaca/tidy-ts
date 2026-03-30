@@ -1,16 +1,15 @@
 // packages/dataframe/ts/transformation/group-by.ts
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import {
   createColumnarDataFrameFromStore,
   materializeIndex,
 } from "../../dataframe/index.ts";
 import { isComparable } from "../../stats/helpers.ts";
 
-export function groupBy<
-  T extends Record<string, unknown>,
-  K extends keyof T,
->(columnOrColumns?: K | K[], ...additionalColumns: K[]) {
-  return (df: DataFrame<T>): GroupedDataFrame<T, K> => {
+export function groupBy(
+  columnOrColumns?: string | string[],
+  ...additionalColumns: string[]
+) {
+  return (df: any): any => {
     // Normalize inputs - handle both array and rest parameter syntax
     const columns = columnOrColumns === undefined
       ? []
@@ -25,7 +24,7 @@ export function groupBy<
       (out as any).__view = api.__view;
       // deno-lint-ignore no-explicit-any
       (out as any).__groups = undefined;
-      return out as unknown as GroupedDataFrame<T, K>;
+      return out;
     }
 
     const store = api.__store;
@@ -191,6 +190,6 @@ export function groupBy<
       usesRawIndices: view === null,
     };
 
-    return out as unknown as GroupedDataFrame<T, K>;
+    return out;
   };
 }

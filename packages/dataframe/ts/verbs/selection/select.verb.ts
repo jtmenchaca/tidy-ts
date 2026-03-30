@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 import {
   createColumnarDataFrameFromStore,
   preserveDataFrameMetadata,
@@ -45,42 +44,11 @@ import { tracer } from "../../telemetry/tracer.ts";
  * @throws {ReferenceError} When a specified column name is not found in the dataframe
  */
 
-// Sync overloads (current implementation)
-
-// Single column overload
-export function select<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(
-  columnName: ColName,
-): (df: DataFrame<Row>) => DataFrame<Prettify<Pick<Row, ColName>>>;
-
-// Multiple columns overload (rest parameters)
-export function select<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(
-  columnName: ColName,
-  ...columnNames: ColName[]
-): (df: DataFrame<Row>) => DataFrame<Prettify<Pick<Row, ColName>>>;
-
-// Array overload
-export function select<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(
-  columns: ColName[],
-): (df: DataFrame<Row>) => DataFrame<Prettify<Pick<Row, ColName>>>;
-
-// Implementation
-export function select<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(
-  columnNameOrColumns: ColName | ColName[],
-  ...columnNames: ColName[]
-): (df: DataFrame<Row>) => DataFrame<Prettify<Pick<Row, ColName>>> {
-  return (df: DataFrame<Row>) => {
+export function select(
+  columnNameOrColumns: string | string[],
+  ...columnNames: string[]
+): (df: any) => any {
+  return (df: any) => {
     // Normalize inputs - handle both array and rest parameter syntax
     const allColumns = Array.isArray(columnNameOrColumns)
       ? columnNameOrColumns
@@ -145,7 +113,7 @@ export function select<
       // Copy trace context to new DataFrame
       tracer.copyContext(df, out);
 
-      return out as unknown as DataFrame<Prettify<Pick<Row, ColName>>>;
+      return out;
     } finally {
       tracer.endSpan(df, span);
     }

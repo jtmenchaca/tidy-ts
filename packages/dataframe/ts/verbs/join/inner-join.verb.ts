@@ -1,19 +1,11 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 import { inner_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
-import type { Prettify, UnifyUnion } from "../../dataframe/index.ts";
-import type {
-  JoinKey,
-  ObjectJoinOptions,
-  SuffixAwareInnerJoinResult,
-} from "./types/index.ts";
 import { getStoreAndIndex, parseJoinArgs } from "./join-helpers.ts";
 
 // Simple helper to build result columns
@@ -77,47 +69,12 @@ function buildJoinResult(
 }
 
 // API
-export function inner_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  const Keys extends ObjectJoinOptions<LeftRow, RightRow>["keys"],
-  const Suffixes extends ObjectJoinOptions<LeftRow, RightRow>["suffixes"],
->(
-  right: DataFrame<RightRow>,
-  options: { keys: Keys; suffixes?: Suffixes },
-): (left: DataFrame<LeftRow>) => DataFrame<
-  UnifyUnion<
-    SuffixAwareInnerJoinResult<
-      LeftRow,
-      RightRow,
-      { keys: Keys; suffixes: Suffixes }
-    >
-  >
->;
-
-export function inner_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  by: JoinKeyName | JoinKeyName[],
-  options?: { suffixes?: { left?: string; right?: string } },
-): (left: DataFrame<LeftRow>) => DataFrame<Prettify<LeftRow & RightRow>>;
-
-export function inner_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | JoinKeyName
-    | JoinKeyName[]
-    | ObjectJoinOptions<LeftRow, RightRow>,
-  options?: { suffixes?: { left?: string; right?: string } },
-): (left: DataFrame<LeftRow>) => any {
-  return (left: DataFrame<LeftRow>): any => {
+export function inner_join(
+  right: any,
+  byOrOptions: any,
+  options?: any,
+): (left: any) => any {
+  return (left: any): any => {
     const span = tracer.startSpan(left, "inner_join");
 
     try {
@@ -134,7 +91,7 @@ export function inner_join<
           columns,
           length: 0,
           columnNames: allCols,
-        }) as unknown as any;
+        });
       }
 
       // Parse arguments
@@ -227,7 +184,7 @@ export function inner_join<
           columns: {},
           length: 0,
           columnNames: [],
-        }) as unknown as any;
+        });
       }
 
       // Build result
@@ -243,16 +200,12 @@ export function inner_join<
         L.index,
         R.index,
       );
-      const outDf = createColumnarDataFrameFromStore(
-        outStore,
-      ) as unknown as any;
+      const outDf = createColumnarDataFrameFromStore(outStore) as any;
 
       // Handle groups
-      if ((left as any).__groups) {
-        const src = left as unknown as GroupedDataFrame<LeftRow, keyof LeftRow>;
-        const outRows = (outDf as DataFrame<LeftRow>)
-          .toArray() as readonly LeftRow[];
-        return withGroupsRebuilt(src, outRows, outDf) as unknown as any;
+      if (left.__groups) {
+        const outRows = outDf.toArray();
+        return withGroupsRebuilt(left, outRows as any, outDf) as any;
       }
 
       return outDf;

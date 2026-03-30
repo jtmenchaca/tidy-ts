@@ -1,17 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 import {
-  type ColumnarStore,
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
-  type Prettify,
+  withGroupsRebuilt,
 } from "../../dataframe/index.ts";
+import type { ColumnarStore } from "../../dataframe/index.ts";
 import {
   getStoreAndIndex,
   NA_U32,
   processJoinColumns,
 } from "./join-helpers.ts";
-import { withGroupsRebuilt } from "../../dataframe/index.ts";
 import type { StoreAndIndex } from "./types/index.ts";
 import { isComparable } from "../../stats/helpers.ts";
 import {
@@ -155,7 +152,7 @@ function buildOutputStoreAsof(
 
   // Process right columns (exclude join key; handle conflicts with suffixes)
   const leftNameSet = new Set(left.store.columnNames);
-  const rightColumnsToProcess = right.store.columnNames.filter((name) =>
+  const rightColumnsToProcess = right.store.columnNames.filter((name: string) =>
     name !== joinKey
   );
   const rightConflictSet = new Set<string>();
@@ -186,21 +183,17 @@ function buildOutputStoreAsof(
   return { columns, length: n, columnNames };
 }
 
-export function asof_join<
-  L extends Record<string, unknown>,
-  R extends Record<string, unknown>,
-  K extends keyof L & keyof R,
->(
-  right: DataFrame<R>,
-  by: K,
+export function asof_join(
+  right: any,
+  by: any,
   opts?: {
     direction?: "backward" | "forward" | "nearest";
     tolerance?: number; // in key units; NaN/undefined => no limit
-    group_by?: (keyof L & keyof R)[];
+    group_by?: string[];
     suffixes?: { right?: string };
   },
 ) {
-  return (left: DataFrame<L>): DataFrame<Prettify<L & Partial<R>>> => {
+  return (left: any): any => {
     const Ls = getStoreAndIndex(left);
     const Rs = getStoreAndIndex(right);
 
@@ -209,20 +202,17 @@ export function asof_join<
         columns: {},
         length: 0,
         columnNames: [],
-      }) as unknown as DataFrame<Prettify<L & Partial<R>>>;
+      });
     }
     if (right.nrows() === 0) {
       const outDf = createColumnarDataFrameFromStore({
         columns: { ...Ls.store.columns },
         length: Ls.index.length,
         columnNames: [...Ls.store.columnNames],
-      }) as unknown as DataFrame<Prettify<L & Partial<R>>>;
-      if ((left as any).__groups) {
-        const src = left as unknown as GroupedDataFrame<L, keyof L>;
-        const outRows = outDf.toArray() as readonly (L & Partial<R>)[];
-        return withGroupsRebuilt(src, outRows, outDf) as unknown as DataFrame<
-          Prettify<L & Partial<R>>
-        >;
+      });
+      if (left.__groups) {
+        const outRows = outDf.toArray();
+        return withGroupsRebuilt(left, outRows as any, outDf as any) as any;
       }
       return outDf;
     }
@@ -385,17 +375,10 @@ export function asof_join<
       suffixRight,
     );
 
-    const outDf = createColumnarDataFrameFromStore(
-      outStore,
-    ) as unknown as DataFrame<
-      Prettify<L & Partial<R>>
-    >;
-    if ((left as any).__groups) {
-      const src = left as unknown as GroupedDataFrame<L, keyof L>;
-      const outRows = outDf.toArray() as readonly (L & Partial<R>)[];
-      return withGroupsRebuilt(src, outRows, outDf) as unknown as DataFrame<
-        Prettify<L & Partial<R>>
-      >;
+    const outDf = createColumnarDataFrameFromStore(outStore) as any;
+    if (left.__groups) {
+      const outRows = outDf.toArray();
+      return withGroupsRebuilt(left, outRows as any, outDf as any) as any;
     }
     return outDf;
   };

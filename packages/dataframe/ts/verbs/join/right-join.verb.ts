@@ -4,18 +4,9 @@ import { convertToTypedArrays } from "../../dataframe/implementation/column-help
 import {
   type ColumnarStore,
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
-  type Prettify,
-  type UnifyUnion,
+  withGroupsRebuilt,
 } from "../../dataframe/index.ts";
-import type {
-  JoinKey,
-  ObjectJoinOptions,
-  RightJoinResult,
-  StoreAndIndex,
-  SuffixAwareRightJoinResult,
-} from "./types/index.ts";
+import type { StoreAndIndex } from "./types/index.ts";
 import {
   computeColumnConflicts,
   computeSameNamedKeys,
@@ -24,7 +15,6 @@ import {
   processJoinColumns,
   setupJoinOperation,
 } from "./join-helpers.ts";
-import { withGroupsRebuilt } from "../../dataframe/index.ts";
 
 function buildOutputStoreRight(
   left: StoreAndIndex,
@@ -112,61 +102,12 @@ function buildOutputStoreRight(
  * Right join: keep all rows from right; fill left columns with undefined if no matching key.
  * Columnar-first; respects DataFrame views/masks/orders.
  */
-// Overloaded function signatures
-export function right_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  by: JoinKeyName | JoinKeyName[],
-  options?: { suffixes?: { left?: string; right?: string } },
-): (
-  left: DataFrame<LeftRow>,
-) => DataFrame<Prettify<RightJoinResult<LeftRow, RightRow, JoinKeyName>>>;
-
-export function right_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  const Keys extends ObjectJoinOptions<
-    LeftRow,
-    RightRow
-  >["keys"],
-  const Suffixes extends ObjectJoinOptions<
-    LeftRow,
-    RightRow
-  >["suffixes"],
->(
-  right: DataFrame<RightRow>,
-  options: { keys: Keys; suffixes?: Suffixes },
-): (
-  left: DataFrame<LeftRow>,
-) => DataFrame<
-  UnifyUnion<
-    SuffixAwareRightJoinResult<
-      LeftRow,
-      RightRow,
-      { keys: Keys; suffixes: Suffixes }
-    >
-  >
->;
-
-export function right_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | JoinKeyName
-    | JoinKeyName[]
-    | ObjectJoinOptions<
-      LeftRow,
-      RightRow
-    >,
-  options?: { suffixes?: { left?: string; right?: string } },
-): (left: DataFrame<LeftRow>) => any {
-  return (left: DataFrame<LeftRow>): any => {
+export function right_join(
+  right: any,
+  byOrOptions: any,
+  options?: any,
+): (left: any) => any {
+  return (left: any): any => {
     // Early empty fast-path - right join with empty right = empty result
     // But preserve schema from both sides
     if (right.nrows() === 0) {
@@ -181,7 +122,7 @@ export function right_join<
         columns,
         length: 0,
         columnNames: allCols,
-      }) as unknown as any;
+      });
     }
 
     // If left dataframe is empty, return right dataframe with left columns added as undefined
@@ -215,7 +156,7 @@ export function right_join<
         columns: outCols,
         length: R.index.length,
         columnNames: outNames,
-      }) as unknown as any;
+      });
     }
 
     // Setup join operation
@@ -224,7 +165,7 @@ export function right_join<
     // If setup is null, we have an empty DataFrame situation
     if (!setup) {
       // This shouldn't happen for right join since we handle empty cases above
-      return createEmptyJoinResult() as unknown as any;
+      return createEmptyJoinResult();
     }
 
     const { leftStore: L, rightStore: R, leftKeys, rightKeys, suffixes } =
@@ -309,7 +250,7 @@ export function right_join<
     const rIdxView = rightIndices;
 
     if (rIdxView.length === 0) {
-      return createEmptyJoinResult() as unknown as any;
+      return createEmptyJoinResult();
     }
 
     const outStore = buildOutputStoreRight(
@@ -324,15 +265,11 @@ export function right_join<
       right,
     );
 
-    const outDf = createColumnarDataFrameFromStore(
-      outStore,
-    ) as unknown as any;
+    const outDf = createColumnarDataFrameFromStore(outStore) as any;
 
-    if ((left as any).__groups) {
-      const src = left as unknown as GroupedDataFrame<LeftRow, keyof LeftRow>;
-      const outRows = (outDf as DataFrame<LeftRow>)
-        .toArray() as readonly LeftRow[];
-      return withGroupsRebuilt(src, outRows, outDf) as unknown as any;
+    if (left.__groups) {
+      const outRows = outDf.toArray();
+      return withGroupsRebuilt(left, outRows as any, outDf) as any;
     }
 
     return outDf;

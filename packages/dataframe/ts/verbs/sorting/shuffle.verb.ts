@@ -1,4 +1,3 @@
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import {
   createDataFrame,
   materializeIndex,
@@ -39,21 +38,20 @@ import { collectGroupIndices } from "../verb-helpers.ts";
  * - With seed: reproducible shuffling for testing and consistent results
  * - For grouped DataFrames: shuffles rows within each group
  */
-export function shuffle<T extends Record<string, unknown>>(seed?: number) {
-  return (df: DataFrame<T> | GroupedDataFrame<T>): DataFrame<T> => {
-    const api = df as any;
+export function shuffle(seed?: number) {
+  return (df: any): any => {
+    const api = df;
     const store = api.__store;
-    const groupedDf = df as GroupedDataFrame<T>;
 
-    if (groupedDf.__groups) {
+    if (api.__groups) {
       const mask = api.__view?.mask;
-      const rebuilt: T[] = [];
-      const { head, next, size } = groupedDf.__groups;
+      const rebuilt: any[] = [];
+      const { head, next, size } = api.__groups;
 
       for (let g = 0; g < size; g++) {
         const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
 
-        const groupRows: T[] = [];
+        const groupRows: any[] = [];
         for (const physIdx of groupIndices) {
           const row: any = {};
           for (const colName of store.columnNames) {
@@ -72,10 +70,10 @@ export function shuffle<T extends Record<string, unknown>>(seed?: number) {
             store.columnNames.map((col: string) => [col, []]),
           ),
         });
-      return withGroupsRebuilt(groupedDf, rebuilt, out as any);
+      return withGroupsRebuilt(api, rebuilt, out as any);
     } else {
       const idx = materializeIndex(store.length, api.__view);
-      const rows: T[] = [];
+      const rows: any[] = [];
       for (let i = 0; i < idx.length; i++) {
         const row: any = {};
         for (const colName of store.columnNames) {
@@ -84,7 +82,7 @@ export function shuffle<T extends Record<string, unknown>>(seed?: number) {
         rows.push(row);
       }
       const result = shuffleArray(rows, seed);
-      return createDataFrame(result) as unknown as DataFrame<T>;
+      return createDataFrame(result);
     }
   };
 }

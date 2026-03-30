@@ -1,33 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
-import {
-  type DataFrame,
-  type GroupedDataFrame,
-  materializeIndex,
-} from "../../dataframe/index.ts";
+import { materializeIndex } from "../../dataframe/index.ts";
 
 /**
  * Execute a side effect for each row in the DataFrame.
  * Returns the same DataFrame for chaining.
  */
-
-// Grouped overload: preserve grouping type
-export function for_each_row<
-  Row extends Record<string, unknown>,
-  GroupName extends keyof Row,
->(
-  fn: (row: Readonly<Row>, idx: number, df: DataFrame<Row>) => void,
-): (df: GroupedDataFrame<Row, GroupName>) => GroupedDataFrame<Row, GroupName>;
-
-// Ungrouped overload
-export function for_each_row<Row extends Record<string, unknown>>(
-  fn: (row: Readonly<Row>, idx: number, df: DataFrame<Row>) => void,
-): (df: DataFrame<Row>) => DataFrame<Row>;
-
-// Implementation
-export function for_each_row<Row extends Record<string, unknown>>(
+export function for_each_row(
   fn: any,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>): any => {
+  return (df: any): any => {
     if (df.nrows() === 0) return df;
 
     // Simple async detection - only check for declared async functions
@@ -45,26 +26,26 @@ export function for_each_row<Row extends Record<string, unknown>>(
 }
 
 // Sync implementation
-function forEachRowSync<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  fn: (row: Readonly<Row>, idx: number, df: DataFrame<Row>) => void,
+function forEachRowSync(
+  df: any,
+  fn: any,
 ) {
   for (let i = 0; i < df.nrows(); i++) {
-    fn((df as any)[i] as Row, i, df as DataFrame<Row>);
+    fn(df[i], i, df);
   }
 
   return df;
 }
 
 // Async implementation
-async function forEachRowAsync<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  fn: (row: Readonly<Row>, idx: number, df: DataFrame<Row>) => Promise<unknown>,
+async function forEachRowAsync(
+  df: any,
+  fn: any,
 ) {
   const promises: Promise<unknown>[] = [];
 
   for (let i = 0; i < df.nrows(); i++) {
-    const promise = fn((df as any)[i] as Row, i, df as DataFrame<Row>);
+    const promise = fn(df[i], i, df);
     promises.push(promise);
   }
 
@@ -77,31 +58,10 @@ async function forEachRowAsync<Row extends Record<string, unknown>>(
  * Execute a side effect for each column in the DataFrame.
  * Returns the same DataFrame for chaining.
  */
-
-// Grouped overload: preserve grouping type
-export function for_each_col<
-  Row extends Record<string, unknown>,
-  GroupName extends keyof Row,
->(
-  fn: (
-    colName: keyof Row,
-    df: DataFrame<Row>,
-  ) => void,
-): (df: GroupedDataFrame<Row, GroupName>) => GroupedDataFrame<Row, GroupName>;
-
-// Ungrouped overload
-export function for_each_col<Row extends Record<string, unknown>>(
-  fn: (
-    colName: keyof Row,
-    df: DataFrame<Row>,
-  ) => void,
-): (df: DataFrame<Row>) => DataFrame<Row>;
-
-// Implementation
-export function for_each_col<Row extends Record<string, unknown>>(
+export function for_each_col(
   fn: any,
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>): any => {
+  return (df: any): any => {
     if (df.nrows() === 0) return df;
 
     // Simple async detection - only check for declared async functions
@@ -118,35 +78,35 @@ export function for_each_col<Row extends Record<string, unknown>>(
 }
 
 // Sync implementation
-function forEachColSync<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  fn: (colName: keyof Row, df: DataFrame<Row>) => void,
+function forEachColSync(
+  df: any,
+  fn: any,
 ) {
   // Get column names directly from store instead of inferring from rows
-  const store = (df as any).__store;
-  const names = store.columnNames as (keyof Row)[];
+  const store = df.__store;
+  const names = store.columnNames;
 
   for (const name of names) {
     // Pass the original DataFrame reference but with view-aware column access
-    fn(name, createViewAwareProxy(df as DataFrame<Row>));
+    fn(name, createViewAwareProxy(df));
   }
 
   return df;
 }
 
 // Async implementation
-async function forEachColAsync<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  fn: (colName: keyof Row, df: DataFrame<Row>) => Promise<unknown>,
+async function forEachColAsync(
+  df: any,
+  fn: any,
 ) {
   // Get column names directly from store instead of inferring from rows
-  const store = (df as any).__store;
-  const names = store.columnNames as (keyof Row)[];
+  const store = df.__store;
+  const names = store.columnNames;
 
   const promises: Promise<unknown>[] = [];
   for (const name of names) {
     // Pass the original DataFrame reference but with view-aware column access
-    const promise = fn(name, createViewAwareProxy(df as DataFrame<Row>));
+    const promise = fn(name, createViewAwareProxy(df));
     promises.push(promise);
   }
 
@@ -156,10 +116,10 @@ async function forEachColAsync<Row extends Record<string, unknown>>(
 }
 
 // Helper to create a DataFrame proxy that returns filtered columns when accessed
-function createViewAwareProxy<Row extends Record<string, unknown>>(
-  df: DataFrame<Row>,
-): DataFrame<Row> {
-  const api = df as any;
+function createViewAwareProxy(
+  df: any,
+): any {
+  const api = df;
   const store = api.__store;
   const view = api.__view;
 

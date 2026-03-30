@@ -1,26 +1,19 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
   materializeIndex,
-  type Prettify,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { cross_join_u32 } from "../../wasm/wasm-loader.ts";
 
-function getStoreAndIndex<T extends Record<string, unknown>>(df: DataFrame<T>) {
-  const api: any = df as any;
-  const store = api.__store;
-  const view = api.__view;
+function getStoreAndIndex(df: any) {
+  const store = df.__store;
+  const view = df.__view;
   const index = materializeIndex(store.length, view);
   return { store, index };
 }
 
-function buildJoinResult<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
->(
+function buildJoinResult(
   left: { store: any; index: Uint32Array },
   right: { store: any; index: Uint32Array },
   leftIndices: Uint32Array,
@@ -75,23 +68,18 @@ function buildJoinResult<
 /**
  * Cross join: create Cartesian product of all rows.
  */
-export function cross_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
->(
-  right: DataFrame<RightRow>,
+export function cross_join(
+  right: any,
   maxRows?: number,
   suffixes?: { left?: string; right?: string },
 ) {
-  return (
-    left: DataFrame<LeftRow>,
-  ): DataFrame<Prettify<LeftRow & RightRow>> => {
+  return (left: any): any => {
     if (left.nrows() === 0 || right.nrows() === 0) {
       return createColumnarDataFrameFromStore({
         columns: {},
         length: 0,
         columnNames: [],
-      }) as unknown as DataFrame<Prettify<LeftRow & RightRow>>;
+      });
     }
 
     const expectedRows = left.nrows() * right.nrows();
@@ -117,7 +105,7 @@ export function cross_join<
       rightIdxView = rightIdxView.subarray(0, maxRows);
     }
 
-    const outStore = buildJoinResult<LeftRow, RightRow>(
+    const outStore = buildJoinResult(
       L,
       R,
       leftIdxView,
@@ -125,16 +113,11 @@ export function cross_join<
       suffixes,
     );
 
-    const outDf = createColumnarDataFrameFromStore(
-      outStore,
-    ) as unknown as DataFrame<Prettify<LeftRow & RightRow>>;
+    const outDf = createColumnarDataFrameFromStore(outStore) as any;
 
-    if ((left as any).__groups) {
-      const src = left as unknown as GroupedDataFrame<LeftRow, keyof LeftRow>;
-      const outRows = outDf.toArray() as readonly (LeftRow & RightRow)[];
-      return withGroupsRebuilt(src, outRows, outDf) as unknown as DataFrame<
-        Prettify<LeftRow & RightRow>
-      >;
+    if (left.__groups) {
+      const outRows = outDf.toArray();
+      return withGroupsRebuilt(left, outRows as any, outDf) as any;
     }
 
     return outDf;

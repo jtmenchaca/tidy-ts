@@ -1,4 +1,4 @@
-import type { ColumnarStore, DataFrame } from "../../dataframe/index.ts";
+import type { ColumnarStore } from "../../dataframe/index.ts";
 import { createColumnarDataFrameFromStore } from "../../dataframe/index.ts";
 import { getStoreAndIndex } from "../join/join-helpers.ts";
 import { ROW_LABEL, ROW_TYPES } from "./transpose.types.ts";
@@ -13,12 +13,12 @@ import { ROW_LABEL, ROW_TYPES } from "./transpose.types.ts";
  * Always creates a new ROW_LABEL column containing the original column names.
  * This makes transpose truly reversible with zero column name conflicts.
  */
-export function transpose<const ExpectedRows extends number>(
-  { numberOfRows: _numberOfRows }: { numberOfRows?: ExpectedRows },
+export function transpose(
+  { numberOfRows: _numberOfRows }: { numberOfRows?: number },
 ) {
-  return <Row extends Record<string, unknown>>(
-    df: DataFrame<Row>,
-  ) => {
+  return (
+    df: any,
+  ): any => {
     // Handle empty DataFrame
     if (df.nrows() === 0) {
       return createColumnarDataFrameFromStore({

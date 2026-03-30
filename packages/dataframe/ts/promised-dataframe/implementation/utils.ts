@@ -1,15 +1,14 @@
 // deno-lint-ignore-file no-explicit-any
 
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
 import {
   isDataFrame,
   isGroupedDataFrame,
 } from "../../utilities/isDataFrame.ts";
 
-export const wrapOutput = <Row extends Record<string, unknown>>(
+export const wrapOutput = (
   v: unknown,
-  chainFn: (df: DataFrame<Row>) => any,
-  chainGroupedFn: (gdf: GroupedDataFrame<Row, any>) => any,
+  chainFn: (df: any) => any,
+  chainGroupedFn: (gdf: any) => any,
 ) =>
   isGroupedDataFrame(v)
     ? chainGroupedFn(v as any)
@@ -17,10 +16,10 @@ export const wrapOutput = <Row extends Record<string, unknown>>(
     ? chainFn(v as any)
     : v;
 
-export const wrapThenable = <Row extends Record<string, unknown>>(
+export const wrapThenable = (
   promise: Promise<unknown>,
-  chainFn: (df: DataFrame<Row>) => any,
-  _chainGroupedFn: (gdf: GroupedDataFrame<Row, any>) => any,
+  chainFn: (df: any) => any,
+  _chainGroupedFn: (gdf: any) => any,
 ) => {
   // We need to return a thenable wrapper, not just a promise
   // The transformed promise should resolve to an unwrapped DataFrame

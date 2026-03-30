@@ -1,88 +1,10 @@
 // deno-lint-ignore-file no-explicit-any
-import type {
-  ColumnarStore,
-  DataFrame,
-  GroupedDataFrame,
-  Prettify,
-  UnionToIntersection,
-} from "../../dataframe/index.ts";
 import {
   createDataFrame,
   materializeIndex,
   withGroups,
 } from "../../dataframe/index.ts";
 import { RowView } from "../verb-helpers.ts";
-
-/**
- * Conditional type to map colType to the correct value type.
- * Ensures type safety by mapping column type strings to their corresponding TypeScript types.
- */
-type ColumnValueMap = {
-  number: number;
-  string: string;
-  boolean: boolean;
-};
-
-/**
- * Type for mutate_columns specification with better type safety.
- *
- * @template Row - The dataframe type
- * @template ColType - The column type ("number", "string", or "boolean")
- */
-export type MutateColumnsSpec<
-  Row extends Record<string, unknown>,
-  ColType extends keyof ColumnValueMap,
-> = {
-  /** The type of columns to operate on */
-  colType: ColType;
-  /** Array of column names to apply functions to */
-  columns: (keyof Row)[];
-  /** Array of new column specifications */
-  newColumns: Array<{
-    /** Optional prefix for new column names */
-    prefix?: string;
-    /** Optional suffix for new column names */
-    suffix?: string;
-    /** Function to apply to each column value */
-    fn: (col: ColumnValueMap[ColType]) => unknown;
-  }>;
-};
-
-/**
- * Enhanced type that generates columns with their proper return types for mutate_columns
- */
-type GenerateColumnNamesWithTypes<
-  ColNames extends readonly string[],
-  NewColDefs extends readonly {
-    prefix?: string;
-    suffix?: string;
-
-    fn: (...args: any[]) => any;
-  }[],
-> = UnionToIntersection<
-  {
-    [Index in keyof NewColDefs]: NewColDefs[Index] extends {
-      prefix?: infer Prefix;
-      suffix?: infer Suffix;
-
-      fn: (...args: any[]) => infer Result;
-    }
-      ? (Prefix extends string ? Prefix : "") extends infer PrefixType
-        ? (Suffix extends string ? Suffix : "") extends infer SuffixType
-          ? PrefixType extends string ? SuffixType extends string ? {
-                [
-                  ColName in ColNames[
-                    number
-                  ] as `${PrefixType}${ColName}${SuffixType}`
-                ]: Result;
-              }
-            : never
-          : never
-        : never
-      : never
-      : never;
-  }[number]
->;
 
 /**
  * Mutate across multiple columns of the same type.
@@ -133,54 +55,22 @@ type GenerateColumnNamesWithTypes<
  * - Provides type safety based on colType parameter
  * - All specified columns must be of the same type
  */
-
-// Unified overload that handles both DataFrame and GroupedDataFrame
-export function mutate_columns<
-  ColType extends keyof ColumnValueMap,
-  const ColNames extends readonly string[],
-  const NewColDefs extends readonly {
-    prefix?: string;
-    suffix?: string;
-
-    fn: (col: ColumnValueMap[ColType]) => any;
-  }[],
->(
+export function mutate_columns(
   config: {
-    colType: ColType;
-    columns: ColNames;
-    newColumns: NewColDefs;
-  },
-): <Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<
-  Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
->;
-
-// Implementation
-export function mutate_columns<
-  Row extends Record<string, unknown>,
-  ColType extends keyof ColumnValueMap,
-  ColNames extends readonly (keyof Row & string)[],
-  NewColDefs extends readonly {
-    prefix?: string;
-    suffix?: string;
-
-    fn: (col: ColumnValueMap[ColType]) => any;
-  }[],
->(
-  config: {
-    colType: ColType;
-    columns: ColNames;
-    newColumns: NewColDefs;
+    colType: string;
+    columns: readonly string[];
+    newColumns: readonly {
+      prefix?: string;
+      suffix?: string;
+      fn: (col: any) => any;
+    }[];
   },
 ) {
   return (
-    df: DataFrame<Row> | GroupedDataFrame<Row>,
-  ): DataFrame<
-    Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-  > => {
-    const api: any = df as any;
-    const store = api.__store as ColumnarStore | undefined;
+    df: any,
+  ): any => {
+    const api: any = df;
+    const store = api.__store;
 
     // View-aware implementation for columnar storage
     if (store) {
@@ -189,7 +79,7 @@ export function mutate_columns<
 
       // Runtime validation using store columns
       const availableColumns = store.columnNames;
-      const missingColumns = config.columns.filter((col) =>
+      const missingColumns = config.columns.filter((col: string) =>
         !availableColumns.includes(String(col))
       );
       if (missingColumns.length > 0) {
@@ -247,7 +137,7 @@ export function mutate_columns<
               );
             }
 
-            newCol[i] = fn(value as ColumnValueMap[ColType]);
+            newCol[i] = fn(value);
           }
 
           newColumns[newColName] = newCol;
@@ -255,7 +145,7 @@ export function mutate_columns<
         }
       }
 
-      const newStore: ColumnarStore = {
+      const newStore = {
         columns: newColumns,
         columnNames: newColumnNames,
         length: viewLength,
@@ -267,28 +157,16 @@ export function mutate_columns<
 
       (outDf as any).__rowView = new RowView(newColumns, newColumnNames);
 
-      const groupedDf = df as GroupedDataFrame<Row>;
+      const groupedDf = df as any;
       if (groupedDf.__groups) {
-        return withGroups(
-          groupedDf as unknown as GroupedDataFrame<
-            Row,
-            Extract<keyof Row, string | number | symbol>
-          >,
-          outDf as unknown as DataFrame<
-            Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-          >,
-        ) as unknown as DataFrame<
-          Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-        >;
+        return withGroups(groupedDf, outDf);
       } else {
-        return outDf as unknown as DataFrame<
-          Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-        >;
+        return outDf;
       }
     }
 
     // Fallback for non-columnar DataFrames
-    const groupedDf = df as GroupedDataFrame<Row>;
+    const groupedDf = df as any;
     const out: Record<string, unknown>[] = [];
     for (const row of df) {
       out.push({ ...row });
@@ -297,7 +175,7 @@ export function mutate_columns<
     // Runtime validation
     if (df.nrows() > 0) {
       const availableColumns = Object.keys(df[0]);
-      const missingColumns = config.columns.filter((col) =>
+      const missingColumns = config.columns.filter((col: string) =>
         !availableColumns.includes(String(col))
       );
       if (missingColumns.length > 0) {
@@ -314,8 +192,8 @@ export function mutate_columns<
     // Helper function to get properly typed column value
     const getColumnValue = (
       row: Record<string, unknown>,
-      col: keyof Row,
-    ): ColumnValueMap[ColType] => {
+      col: string,
+    ): any => {
       const rawValue = row[col as string];
 
       // Type validation
@@ -341,7 +219,7 @@ export function mutate_columns<
         );
       }
 
-      return rawValue as ColumnValueMap[ColType];
+      return rawValue;
     };
 
     // Apply row-level mutations to all rows (same logic for grouped and ungrouped)
@@ -358,20 +236,10 @@ export function mutate_columns<
       }
     }
 
-    const outDf = createDataFrame(out) as unknown as DataFrame<
-      Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-    >;
+    const outDf = createDataFrame(out);
 
     if (groupedDf.__groups) {
-      return withGroups(
-        groupedDf as GroupedDataFrame<
-          Row,
-          Extract<keyof Row, string | number | symbol>
-        >,
-        outDf,
-      ) as unknown as DataFrame<
-        Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
-      >;
+      return withGroups(groupedDf, outDf);
     }
 
     return outDf;

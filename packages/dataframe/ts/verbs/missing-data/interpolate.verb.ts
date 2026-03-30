@@ -1,8 +1,5 @@
-import {
-  createDataFrame,
-  type DataFrame,
-  type UnifyUnion,
-} from "../../dataframe/index.ts";
+// deno-lint-ignore-file no-explicit-any
+import { createDataFrame } from "../../dataframe/index.ts";
 import { interpolate as statsInterpolate } from "../../stats/window/interpolate.ts";
 import { isComparable } from "../../stats/helpers.ts";
 import {
@@ -46,13 +43,13 @@ import {
  * - For spline: requires at least 4 points, falls back to linear if fewer
  * - Dates are converted to/from timestamps (milliseconds) for interpolation
  */
-export function interpolate<T extends Record<string, unknown>>(
-  valueColumn: keyof T & string,
-  xColumn: keyof T & string,
+export function interpolate(
+  valueColumn: string,
+  xColumn: string,
   method: "linear" | "spline",
 ) {
-  return (df: DataFrame<T>): DataFrame<UnifyUnion<T>> => {
-    const result: T[] = [];
+  return (df: any): any => {
+    const result: any[] = [];
 
     // Extract arrays from DataFrame
     const values: (unknown)[] = [];
@@ -62,8 +59,8 @@ export function interpolate<T extends Record<string, unknown>>(
       | null = null;
 
     for (const row of df) {
-      values.push(row[valueColumn as keyof T]);
-      const xValue = row[xColumn as keyof T];
+      values.push(row[valueColumn]);
+      const xValue = row[xColumn];
       if (xValue instanceof Date) {
         xValues.push(xValue);
       } else if (typeof xValue === "number") {
@@ -109,11 +106,11 @@ export function interpolate<T extends Record<string, unknown>>(
     let idx = 0;
     for (const row of df) {
       const newRow = { ...row };
-      newRow[valueColumn as keyof T] = interpolated[idx] as T[keyof T];
+      newRow[valueColumn] = interpolated[idx];
       result.push(newRow);
       idx++;
     }
 
-    return createDataFrame(result) as unknown as DataFrame<UnifyUnion<T>>;
+    return createDataFrame(result);
   };
 }

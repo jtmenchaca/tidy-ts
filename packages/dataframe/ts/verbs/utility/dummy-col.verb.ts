@@ -1,27 +1,5 @@
-import type {
-  DataFrame,
-  GroupedDataFrame,
-  Prettify,
-} from "../../dataframe/index.ts";
+// deno-lint-ignore-file no-explicit-any
 import { createDataFrame, withGroups } from "../../dataframe/index.ts";
-
-/**
- * Type for the result of dummy_col transformation
- */
-type DummyColResult<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
-  Categories extends readonly string[],
-  Prefix extends string,
-  Suffix extends string,
-  DropOriginal extends boolean,
-> = Prettify<
-  & (DropOriginal extends true ? Omit<Row, ColName> : Row)
-  & {
-    [Category in Categories[number] as `${Prefix}${Category}${Suffix}`]:
-      boolean;
-  }
->;
 
 /**
  * Create boolean dummy columns from a categorical column (one-hot encoding).
@@ -38,65 +16,8 @@ type DummyColResult<
  * - include_na: include "null"/"undefined" columns (default: false)
  *   When true and expected_categories is provided, "null" and "undefined" are automatically
  *   added to the categories list if not already present.
- *
- * @example
- * ```ts
- * // With expected_categories for full type inference
- * const result = df.dummy_col("letter", {
- *   expected_categories: ["A", "B", "C", "D"],
- *   prefix: "letter_"
- * });
- * // Result type: DataFrame<{ id: number; letter_A: boolean; letter_B: boolean; ... }>
- *
- * // Without expected_categories (returns Record<string, boolean>)
- * const result2 = df.dummy_col("letter");
- * // Result type: DataFrame<{ id: number; [x: string]: boolean }>
- * ```
  */
-// Overload with expected_categories for type inference
-export function dummy_col<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
-  const Categories extends readonly string[],
-  const Prefix extends string = "",
-  const Suffix extends string = "",
-  const DropOriginal extends boolean = true,
->(
-  column: ColName,
-  opts: {
-    expected_categories: Categories;
-    prefix?: Prefix;
-    suffix?: Suffix;
-    drop_original?: DropOriginal;
-    include_na?: boolean;
-  },
-): (
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<
-  DummyColResult<Row, ColName, Categories, Prefix, Suffix, DropOriginal>
->;
-
-// Overload without expected_categories (returns Record<string, boolean>)
-export function dummy_col<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(
-  column: ColName,
-  opts?: {
-    prefix?: string;
-    suffix?: string;
-    drop_original?: boolean;
-    include_na?: boolean;
-  },
-): (
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-) => DataFrame<Prettify<Row & Record<string, boolean>>>;
-
-// Implementation
-export function dummy_col<
-  Row extends Record<string, unknown>,
-  ColName extends keyof Row,
->(column: ColName, opts: {
+export function dummy_col(column: any, opts: {
   expected_categories?: readonly string[];
   prefix?: string;
   suffix?: string;
@@ -111,8 +32,8 @@ export function dummy_col<
     include_na = false,
   } = opts;
 
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
-    if (df.nrows() === 0) return createDataFrame([] as Row[]);
+  return (df: any) => {
+    if (df.nrows() === 0) return createDataFrame([]);
 
     // Compute categories once (global, not per-group) unless provided
     const cats: string[] = expected_categories
@@ -134,7 +55,7 @@ export function dummy_col<
         const out: string[] = [];
         for (const row of df) {
           // Map group_by semantics: keep null/undefined distinct if requested; otherwise skip
-          const raw = row[column];
+          const raw = (row as any)[column];
           let key: string | null;
           if (raw === null) key = include_na ? "null" : null;
           else if (raw === undefined) key = include_na ? "undefined" : null;
@@ -150,9 +71,9 @@ export function dummy_col<
     // Build rows
     const out: Record<string, unknown>[] = [];
     for (const row of df) {
-      const r: Record<string, unknown> = { ...row };
+      const r: Record<string, unknown> = { ...(row as any) };
 
-      const raw = row[column];
+      const raw = (row as any)[column];
       const key = raw === null
         ? "null"
         : raw === undefined
@@ -173,7 +94,7 @@ export function dummy_col<
     if (expected_categories) {
       const actualCats = new Set<string>();
       for (const row of df) {
-        const raw = row[column];
+        const raw = (row as any)[column];
         const key = raw === null
           ? (include_na ? "null" : null)
           : raw === undefined
@@ -205,14 +126,10 @@ export function dummy_col<
       }
     }
 
-    const result = createDataFrame(out) as unknown as DataFrame<
-      Prettify<Row & Record<string, boolean>>
-    >;
+    const result = createDataFrame(out) as any;
 
     // Preserve groups if they exist (column-only operation)
-    const groupedDf = df as GroupedDataFrame<Row, keyof Row>;
-    // Return `any` from the function so it lines up with both overloads
-    // deno-lint-ignore no-explicit-any
-    return groupedDf.__groups ? withGroups(groupedDf, result) : (result as any);
+    const groupedDf = df as any;
+    return groupedDf.__groups ? withGroups(groupedDf, result) : result;
   };
 }

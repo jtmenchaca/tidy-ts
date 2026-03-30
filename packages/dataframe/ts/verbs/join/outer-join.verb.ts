@@ -7,17 +7,9 @@ import { convertToTypedArrays } from "../../dataframe/implementation/column-help
 import {
   type ColumnarStore,
   createColumnarDataFrameFromStore,
-  type DataFrame,
-  type GroupedDataFrame,
-  type Prettify,
-  type UnifyUnion,
+  withGroupsRebuilt,
 } from "../../dataframe/index.ts";
-import type {
-  FullJoinResult,
-  JoinKey,
-  ObjectJoinOptions,
-  SuffixAwareOuterJoinResult,
-} from "./types/index.ts";
+import type { StoreAndIndex } from "./types/index.ts";
 
 import {
   applySuffixToColumnName,
@@ -29,13 +21,10 @@ import {
   processJoinColumns,
   setupJoinOperation,
 } from "./join-helpers.ts";
-import { withGroupsRebuilt } from "../../dataframe/index.ts";
 
 // -----------------------------------------------------------------------------
 // Helpers
 // -----------------------------------------------------------------------------
-
-import type { StoreAndIndex } from "./types/index.ts";
 
 // Special outer join output store builder that handles join key merging
 function buildOutputStoreOuter(
@@ -153,61 +142,12 @@ function buildOutputStoreOuter(
  * Outer join: keep all rows from both dataframes; fill missing columns with undefined.
  * Adaptive (WASM for small; JS hash + bitset for large). Columnar-first.
  */
-// Overloaded function signatures
-export function outer_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  by: JoinKeyName | JoinKeyName[],
-  options?: { suffixes?: { left?: string; right?: string } },
-): (
-  left: DataFrame<LeftRow>,
-) => DataFrame<Prettify<FullJoinResult<LeftRow, RightRow, JoinKeyName>>>;
-
-export function outer_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  const Keys extends ObjectJoinOptions<
-    LeftRow,
-    RightRow
-  >["keys"],
-  const Suffixes extends ObjectJoinOptions<
-    LeftRow,
-    RightRow
-  >["suffixes"],
->(
-  right: DataFrame<RightRow>,
-  options: { keys: Keys; suffixes?: Suffixes },
-): (
-  left: DataFrame<LeftRow>,
-) => DataFrame<
-  UnifyUnion<
-    SuffixAwareOuterJoinResult<
-      LeftRow,
-      RightRow,
-      { keys: Keys; suffixes: Suffixes }
-    >
-  >
->;
-
-export function outer_join<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | JoinKeyName
-    | JoinKeyName[]
-    | ObjectJoinOptions<
-      LeftRow,
-      RightRow
-    >,
-  options?: { suffixes?: { left?: string; right?: string } },
-): (left: DataFrame<LeftRow>) => any {
-  return (left: DataFrame<LeftRow>): any => {
+export function outer_join(
+  right: any,
+  byOrOptions: any,
+  options?: any,
+): (left: any) => any {
+  return (left: any): any => {
     // Early empty fast-paths - outer join preserves schema from both sides
     if (left.nrows() === 0 && right.nrows() === 0) {
       const leftCols = left.columns() as string[];
@@ -221,7 +161,7 @@ export function outer_join<
         columns,
         length: 0,
         columnNames: allCols,
-      }) as unknown as any;
+      });
     }
     if (left.nrows() === 0) {
       // Return right DataFrame with left columns added as undefined
@@ -252,7 +192,7 @@ export function outer_join<
         columns: outCols,
         length: R.index.length,
         columnNames: outNames,
-      }) as unknown as any;
+      });
     }
     if (right.nrows() === 0) {
       // Return left DataFrame with right columns added as undefined
@@ -283,7 +223,7 @@ export function outer_join<
         columns: outCols,
         length: L.index.length,
         columnNames: outNames,
-      }) as unknown as any;
+      });
     }
 
     // Setup join operation
@@ -291,7 +231,7 @@ export function outer_join<
 
     // If setup is null, we have an unexpected empty DataFrame situation
     if (!setup) {
-      return createEmptyJoinResult() as unknown as any;
+      return createEmptyJoinResult();
     }
 
     const { leftStore: L, rightStore: R, leftKeys, rightKeys, suffixes } =
@@ -388,7 +328,7 @@ export function outer_join<
     const rIdxView = rightIndices as (number | null)[];
 
     if (lIdxView.length === 0) {
-      return createEmptyJoinResult() as unknown as any;
+      return createEmptyJoinResult();
     }
 
     const outStore = buildOutputStoreOuter(
@@ -403,16 +343,13 @@ export function outer_join<
       right,
     );
 
-    const outDf = createColumnarDataFrameFromStore(outStore) as unknown as any;
+    const outDf = createColumnarDataFrameFromStore(outStore) as any;
 
-    if ((left as any).__groups) {
-      const src = left as unknown as GroupedDataFrame<LeftRow, keyof LeftRow>;
-      const outRows = (outDf as DataFrame<LeftRow>)
-        .toArray() as readonly LeftRow[];
-
-      return withGroupsRebuilt(src, outRows, outDf) as unknown as any;
+    if (left.__groups) {
+      const outRows = outDf.toArray();
+      return withGroupsRebuilt(left, outRows as any, outDf) as any;
     }
 
-    return outDf as unknown as any;
+    return outDf;
   };
 }

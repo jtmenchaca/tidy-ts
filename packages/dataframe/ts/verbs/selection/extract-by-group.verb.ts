@@ -1,5 +1,3 @@
-import type { DataFrame } from "../../dataframe/index.ts";
-
 /**
  * Extract a column's values into arrays grouped by another column's values.
  *
@@ -12,7 +10,7 @@ import type { DataFrame } from "../../dataframe/index.ts";
  *
  * @param groupColumn - Column to group by (becomes keys in result)
  * @param valueColumn - Column whose values to collect (becomes array values in result)
- * @returns A function that takes a DataFrame and returns Record<string, T[ValueCol][]>
+ * @returns A function that takes a DataFrame and returns Record<string, unknown[]>
  *
  * @example
  * ```ts
@@ -28,22 +26,17 @@ import type { DataFrame } from "../../dataframe/index.ts";
  * ```
  *
  * @remarks
- * - Maintains full type safety - return type is inferred from input columns
  * - Null/undefined values in groupColumn are converted to "null"/"undefined" strings
  * - All values from valueColumn are included, including null/undefined
  * - Groups maintain the order of first appearance in the data
  * - Empty dataframes return empty Record
  * - More type-safe alternative to pivot_wider when you need arrays rather than spread columns
  */
-export function extract_column_by_group<
-  T extends Record<string, unknown>,
-  GroupCol extends keyof T,
-  ValueCol extends keyof T,
->(
-  groupColumn: GroupCol,
-  valueColumn: ValueCol,
-): (df: DataFrame<T>) => Record<string, T[ValueCol][]> {
-  return (df: DataFrame<T>) => {
+export function extract_column_by_group(
+  groupColumn: string,
+  valueColumn: string,
+): (df: any) => Record<string, any[]> {
+  return (df: any) => {
     // Validate columns exist
     if (df.nrows() > 0) {
       const firstRow = df[0];
@@ -59,7 +52,7 @@ export function extract_column_by_group<
       }
     }
 
-    const result: Record<string, T[ValueCol][]> = {};
+    const result: Record<string, any[]> = {};
 
     // Process each row and group values
     for (const row of df) {

@@ -2,8 +2,6 @@
 import {
   createColumnarDataFrameFromStore,
   createDataFrame,
-  type DataFrame,
-  type GroupedDataFrame,
   materializeIndex,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
@@ -13,11 +11,11 @@ import { collectGroupIndices } from "../verb-helpers.ts";
 import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
 
 // API: require at least one column (SQL-like DISTINCT)
-export function distinct<Row extends object>(
-  column1: keyof Row,
-  ...moreCols: (keyof Row)[]
+export function distinct(
+  column1: string,
+  ...moreCols: string[]
 ) {
-  return (df: DataFrame<Row> | GroupedDataFrame<Row>) => {
+  return (df: any) => {
     const cols = [column1, ...moreCols];
     const span = tracer.startSpan(df, "distinct", { columns: cols });
 
@@ -34,11 +32,10 @@ export function distinct<Row extends object>(
         : selectedCols;
 
       // If grouped, apply distinct within each group
-      const groupedDf = df as GroupedDataFrame<Row>;
-      if (groupedDf.__groups) {
+      if (api.__groups) {
         const mask = api.__view?.mask;
-        const rebuilt: Row[] = [];
-        const { head, next, size } = groupedDf.__groups;
+        const rebuilt: any[] = [];
+        const { head, next, size } = api.__groups;
 
         for (let g = 0; g < size; g++) {
           const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
@@ -53,9 +50,9 @@ export function distinct<Row extends object>(
 
           // Add distinct rows from this group to output
           for (const physIdx of distinctIndices) {
-            const row = {} as Row;
+            const row: any = {};
             for (const colName of outputCols) {
-              (row as any)[colName] = store.columns[colName][physIdx];
+              row[colName] = store.columns[colName][physIdx];
             }
             rebuilt.push(row);
           }
@@ -67,9 +64,9 @@ export function distinct<Row extends object>(
             columns: Object.fromEntries(
               outputCols.map((col: string) => [col, []]),
             ),
-          }) as unknown as DataFrame<Row>;
+          });
 
-        const result = withGroupsRebuilt(groupedDf, rebuilt, out);
+        const result = withGroupsRebuilt(df, rebuilt, out as any);
         tracer.copyContext(df, result);
         return result;
       }
@@ -136,16 +133,14 @@ export function distinct<Row extends object>(
       // Handle groups
       const result = tracer.withSpan(df, "handle-groups", () => {
         if ((df as any).__groups) {
-          const src = df as GroupedDataFrame<Row>;
-          const outRows = (out as unknown as DataFrame<Row>)
-            .toArray() as readonly Row[];
+          const outRows = (out as any).toArray();
           return withGroupsRebuilt(
-            src,
+            df,
             outRows,
-            out as unknown as DataFrame<Row>,
-          ) as unknown as typeof df;
+            out as any,
+          );
         }
-        return out as unknown as typeof df;
+        return out;
       });
 
       tracer.copyContext(df, result);

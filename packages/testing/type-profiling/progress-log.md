@@ -527,6 +527,66 @@ The next frontier for substantial improvement. 26M type instantiations are drive
 - **MutateMethod overloads: ~24 comparisons at ~900ms** — 14 overloads. Consolidation could reduce comparisons but risks degrading parameter inference quality.
 - **Zod schemas: ~742ms** — Third-party cost. Could reduce by lazy-loading `zDataFrame` or separate entry point.
 
-### Summary
+### Summary (after Changes 1–15)
 
 From 86s to 20.85s (76% reduction). Depth-limit hits from 3,248 to 941 (-71%). Instantiations from 48M to 26.2M (-45%). The verb-generic removal pattern (Changes 12-15) has been exhausted for high-value targets. Remaining verb files would yield diminishing returns (<0.5s each). The next substantial improvement requires reducing the 26M type instantiation count — a fundamentally different approach targeting `.types.ts` definition files and DataFrame type structure rather than `.verb.ts` implementations.
+
+---
+
+## Changes 16–18: Batch de-generify all remaining verb files + proxy files + data-helper (2026-03-30)
+
+### Change 16: Remove generics from all remaining ~30 verb files
+
+**What**: Applied the same verb-generic removal pattern (Changes 12–15) to all remaining `.verb.ts` files across all verb categories:
+- **Join verbs**: left-join, right-join, outer-join, cross-join, inner-join, asof-join
+- **Reshape verbs**: pivot, transpose, unnest, bind-rows
+- **Grouping + selection verbs**: group-by, ungroup, drop, select, extract, extract-by-group, extract-nth-where-sorted, distinct
+- **Utility + aggregate verbs**: for-each, downsample, upsample, dummy-col, print, summarise, summarise-columns
+- **Transform + missing data verbs**: reorder, mutate-columns, dates, fill-forward, fill-backward, replace-na, interpolate, profile
+- **Sorting**: shuffle
+
+**Why**: Same rationale as Changes 12–15. All user-facing type safety comes from companion `.types.ts` files; verb implementations are called via `(verb as any)(...a)(df)` from resolve-verb.ts, so their generics provide zero type safety.
+
+**Files changed**: ~30 `.verb.ts` files + 1 collateral fix (count.verb.ts)
+
+### Change 17: Remove generics from PromisedDataFrame proxy implementation files
+
+**What**: Removed generics from the 4 thenable/proxy implementation files:
+- `grouped-thenable.ts` — removed `<Row, K>` generics, `GroupedDataFrame<Row, K>` and `DataFrame<Row>` casts
+- `dataframe-thenable.ts` — removed `<Row>` generic, `DataFrame<Row>` parameter type, `PromisedDataFrame<Row>` return type
+- `method-forwarding-handler.ts` — removed `<Row>` generic, `DataFrame<Row>` and `GroupedDataFrame<Row>` parameter types
+- `utils.ts` — removed `<Row>` generics from `wrapOutput` and `wrapThenable`
+
+**Why**: Same "typed shell, untyped core" pattern. These files are pure runtime proxy logic — all type safety comes from the `PromisedDataFrame<Row>` and `PromisedGroupedDataFrame<Row, K>` type definitions, not these implementations. The generics forced tsc to instantiate `DataFrame<Row>` and `GroupedDataFrame<Row, K>` at every cast site within the proxy internals.
+
+**Impact**: grouped-thenable.ts dropped from 360ms/#1 own-code file to effectively zero. method-forwarding-handler.ts dropped from 127ms comparison time to gone.
+
+### Change 18: Remove overloads from createDistributionData
+
+**What**: Removed the 3 overload signatures from `createDistributionData` in data-helper.ts, leaving only a single signature with `any` parameter and return types. Also removed the `<T>` generic and `DataFrame` type import.
+
+**Why**: The 11 distribution caller files (normalData, betaData, etc.) already have their own overload signatures providing user-facing types, and their implementation signatures already return `: any` (from Change 11). `createDistributionData`'s overloads forced tsc to instantiate 3 distinct `DataFrame<{...}>` types at each of the 33 call sites (11 files × 3 calls each), triggering full DataFrame structural comparisons. Since callers already bypass the return type, these overloads provided zero value.
+
+**Impact**: data-helper.ts dropped from 465ms / 507 depth hits to 2ms / 0 depth hits.
+
+### Cumulative results after Changes 1–18
+
+| Metric              | Baseline    | After 1-15  | After 1-18  | Total Change |
+|---------------------|-------------|-------------|-------------|--------------|
+| Check time          | 86.32s      | 20.85s      | ~21.5s      | -75%         |
+| Instantiations      | 48,014,546  | 26,223,456  | 26,139,804  | -46%         |
+| Types               | 3,986,451   | 1,792,461   | 1,769,262   | -56%         |
+| Symbols             | 10,018,516  | 4,099,240   | 4,037,592   | -60%         |
+| Assignability cache | 1,304,647   | 660,884     | 658,737     | -50%         |
+
+`deno check packages/dataframe` — 0 errors.
+
+Depth-limit hits dropped from 1,051 to ~544. All verb files, proxy files, and distribution helper are now at effectively zero type-checking cost. The remaining cost is structural:
+- **structuredTypeRelatedTo (~9.2s)**: DataFrame interface comparisons driven by `.types.ts` definition files
+- **findSourceFile (~4.3s)**: I/O, not actionable
+- **checkSourceFile (~3.2s)**: AST walking, long tail of small files
+- **Type instantiations (26.1M)**: Driven by DataFrame/DataFrameBase/ColName in definition files
+
+### Final assessment
+
+The "typed shell, untyped core" pattern has been fully applied to all implementation files. The remaining ~21.5s check time is the structural cost of the type definition surface itself — the ~70-member DataFrameBase interface, MutateMethod's 14 overloads, join suffix types, and the DataFrameColumns mapped type. Further improvement would require changes to the user-facing type API, which carries UX trade-offs.

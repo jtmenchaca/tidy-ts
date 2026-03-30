@@ -1,5 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame } from "../../dataframe/index.ts";
 import type { ColumnarStore } from "../../dataframe/implementation/columnar-store.ts";
 import { createDataFrame } from "../../dataframe/index.ts";
 
@@ -30,15 +29,15 @@ import { createDataFrame } from "../../dataframe/index.ts";
  * // ]
  * ```
  */
-export function unnest<Row extends Record<string, unknown>>(
-  column: keyof Row,
+export function unnest(
+  column: string,
 ) {
-  return (df: DataFrame<Row>): DataFrame<any> => {
+  return (df: any): any => {
     const api = df as any;
     const store = api.__store as ColumnarStore;
 
     // Get the array column
-    const arrayColumn = store.columns[column as string];
+    const arrayColumn = store.columns[column];
     if (!arrayColumn) {
       throw new Error(`Column '${String(column)}' not found in DataFrame`);
     }
@@ -86,8 +85,6 @@ export function unnest<Row extends Record<string, unknown>>(
     }
 
     // Create new DataFrame from columns to preserve order
-    return createDataFrame({ columns: resultColumns }) as unknown as DataFrame<
-      any
-    >;
+    return createDataFrame({ columns: resultColumns });
   };
 }

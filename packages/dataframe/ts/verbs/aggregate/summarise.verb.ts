@@ -2,8 +2,6 @@
 import {
   createColumnarDataFrameFromStore,
   createDataFrame,
-  type DataFrame,
-  type GroupedDataFrame,
   materializeIndex,
 } from "../../dataframe/index.ts";
 import { shouldUseAsyncForSummarise } from "../../promised-dataframe/index.ts";
@@ -14,47 +12,23 @@ import {
 } from "../../promised-dataframe/concurrency-utils.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
-export type SummariseFn<T extends object> = (
-  df: DataFrame<T>,
-) => unknown;
-
-export type SummariseSpecMap<T extends object> = Record<
-  string,
-  SummariseFn<T>
->;
-
-export type SummariseResult<
-  T extends object,
-  S extends SummariseSpecMap<T>,
-> = { [K in keyof S]: ReturnType<S[K]> };
-
-export type GroupedSummariseResult<
-  T extends object,
-  S extends SummariseSpecMap<T>,
-  K extends keyof T,
-> = Pick<T, K> & SummariseResult<T, S>;
-
-export type SummariseSpec<T extends object> =
-  | Record<string, (df: DataFrame<T>) => unknown>
-  | ((df: DataFrame<T>) => object);
-
-export function summarise<T extends object>(
-  spec: SummariseSpec<T>,
+export function summarise(
+  spec: any,
   options?: ConcurrencyOptions,
 ): (
-  df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-) => DataFrame<any> | Promise<DataFrame<any>> {
-  return (df: DataFrame<T> | GroupedDataFrame<T, keyof T>) => {
+  df: any,
+) => any {
+  return (df: any) => {
     const span = tracer.startSpan(df, "summarise", { spec: typeof spec });
 
     try {
       // Check if any formulas are async or if options are provided
-      const isAsync = shouldUseAsyncForSummarise(df as DataFrame<T>, spec) ||
+      const isAsync = shouldUseAsyncForSummarise(df, spec) ||
         (options !== undefined);
 
       if (isAsync) {
         // Get DataFrame's default options if available
-        const dfOptions = (df as any).__options as
+        const dfOptions = df.__options as
           | ConcurrencyOptions
           | undefined;
         // Apply default concurrency if no options provided
@@ -73,12 +47,12 @@ export function summarise<T extends object>(
 }
 
 // Sync implementation (original logic)
-function summariseSync<T extends object>(
-  df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-  spec: SummariseSpec<T>,
-): DataFrame<any> {
-  const gdf = df as GroupedDataFrame<T, keyof T>;
-  const groups = (gdf as any).__groups;
+function summariseSync(
+  df: any,
+  spec: any,
+): any {
+  const gdf = df;
+  const groups = gdf.__groups;
 
   // Ungrouped: same as before
   if (!groups) {
@@ -86,7 +60,7 @@ function summariseSync<T extends object>(
       const out: object = {};
       if (typeof spec === "function") {
         const safe = withErrorHandling(
-          () => spec(df as DataFrame<T>),
+          () => spec(df),
           {},
           "summarise(spec:function) [ungrouped]",
         );
@@ -95,19 +69,19 @@ function summariseSync<T extends object>(
         for (const [k, expr] of Object.entries(spec)) {
           (out as any)[k] = typeof expr === "function"
             ? withErrorHandling(
-              () => expr(df as DataFrame<T>),
+              () => (expr as any)(df),
               undefined,
               `summarise(${String(k)}) [ungrouped]`,
             )
             : expr;
         }
       }
-      return createDataFrame([out]) as unknown as DataFrame<any>;
+      return createDataFrame([out]);
     });
   }
 
   // Grouped: single-pass, zero materialization of arrays/DataFrames
-  const api = gdf as any;
+  const api = gdf;
   const store = api.__store;
 
   const {
@@ -123,7 +97,7 @@ function summariseSync<T extends object>(
       next: Int32Array;
       count: Uint32Array;
       keyRow: Uint32Array;
-      groupingColumns: (keyof T)[];
+      groupingColumns: any[];
       usesRawIndices: boolean;
     };
   });
@@ -182,7 +156,7 @@ function summariseSync<T extends object>(
           const columnCache: Record<string, unknown[]> = {};
 
           // Lazy DataFrame - only create if methods are called
-          let realDataFrame: DataFrame<T> | null = null;
+          let realDataFrame: any = null;
 
           // Symbol to mark arrays as pre-validated (skip expensive type checking in stats functions)
           const VALIDATED_ARRAY = Symbol.for("tidy-ts:validated-array");
@@ -211,7 +185,7 @@ function summariseSync<T extends object>(
             return groupColumn;
           };
 
-          const getRealDataFrame = (): DataFrame<T> => {
+          const getRealDataFrame = (): any => {
             if (realDataFrame) return realDataFrame;
 
             // Extract all columns if not already cached
@@ -227,9 +201,7 @@ function summariseSync<T extends object>(
               columnNames: store.columnNames,
               length: groupSize,
             };
-            realDataFrame = createColumnarDataFrameFromStore(
-              groupStore,
-            ) as DataFrame<T>;
+            realDataFrame = createColumnarDataFrameFromStore(groupStore);
             return realDataFrame;
           };
 
@@ -258,7 +230,7 @@ function summariseSync<T extends object>(
               // This handles filter(), select(), mutate(), etc.
               if (prop !== "then" && prop !== "catch") { // Avoid promise-like behavior
                 const realDF = getRealDataFrame();
-                const value = (realDF as any)[prop];
+                const value = realDF[prop];
                 if (typeof value === "function") {
                   return value.bind(realDF);
                 }
@@ -269,7 +241,7 @@ function summariseSync<T extends object>(
             },
           });
 
-          return proxy as DataFrame<T>;
+          return proxy;
         });
 
         // Apply summarization functions
@@ -294,7 +266,7 @@ function summariseSync<T extends object>(
             tracer.withSpan(df, "compute-all-expressions", () => {
               for (const [k, expr] of Object.entries(spec)) {
                 const value = tracer.withSpan(df, `compute-${k}`, () => {
-                  return typeof expr === "function" ? expr(groupDF) : expr;
+                  return typeof expr === "function" ? (expr as any)(groupDF) : expr;
                 });
                 (row as any)[k] = value;
               }
@@ -327,7 +299,7 @@ function summariseSync<T extends object>(
             columns[colName] = [];
           }
         }
-        return createDataFrame({ columns }) as unknown as DataFrame<any>;
+        return createDataFrame({ columns });
       });
     }
 
@@ -365,30 +337,28 @@ function summariseSync<T extends object>(
     });
 
     return tracer.withSpan(df, "instantiate-result-dataframe", () => {
-      return createColumnarDataFrameFromStore(store) as unknown as DataFrame<
-        any
-      >;
+      return createColumnarDataFrameFromStore(store);
     });
   });
 }
 
 // Async implementation with concurrency control
-async function summariseAsync<T extends object>(
-  df: DataFrame<T> | GroupedDataFrame<T, keyof T>,
-  spec: SummariseSpec<T>,
+async function summariseAsync(
+  df: any,
+  spec: any,
   _options: ConcurrencyOptions = DEFAULT_CONCURRENCY.summarise,
-): Promise<DataFrame<any>> {
-  const gdf = df as GroupedDataFrame<T, keyof T>;
+): Promise<any> {
+  const gdf = df;
   // @ts-ignore internal field
 
-  const groups = (gdf as any).__groups;
+  const groups = gdf.__groups;
 
   // Ungrouped: async version
   if (!groups) {
     const out: object = {};
     if (typeof spec === "function") {
       const asyncResult = withErrorHandling(
-        () => spec(df as DataFrame<T>),
+        () => spec(df),
         {},
         "summarise(spec:function) [ungrouped async]",
       );
@@ -401,7 +371,7 @@ async function summariseAsync<T extends object>(
       const promises = Object.entries(spec).map(async ([k, expr]) => {
         if (typeof expr === "function") {
           const result = withErrorHandling(
-            () => expr(df as DataFrame<T>),
+            () => (expr as any)(df),
             undefined,
             `summarise(${String(k)}) [ungrouped async]`,
           );
@@ -415,13 +385,13 @@ async function summariseAsync<T extends object>(
         (out as any)[k] = value;
       }
     }
-    return createDataFrame([out]) as unknown as DataFrame<any>;
+    return createDataFrame([out]);
   }
 
   // Grouped: async version with parallel processing per group
   // @ts-ignore internal fields
 
-  const api = gdf as any;
+  const api = gdf;
   const store = api.__store;
 
   const {
@@ -436,7 +406,7 @@ async function summariseAsync<T extends object>(
     next: Int32Array;
     count: Uint32Array;
     keyRow: Uint32Array;
-    groupingColumns: (keyof T)[];
+    groupingColumns: any[];
     usesRawIndices: boolean;
   };
 
@@ -483,13 +453,13 @@ async function summariseAsync<T extends object>(
       }
 
       // Create a proper DataFrame with full API access for the group slice
-      const groupRows: T[] = [];
+      const groupRows: any[] = [];
       for (let i = 0; i < groupIndices.length; i++) {
-        const row: object = {};
+        const row: any = {};
         for (const colName of store.columnNames) {
-          (row as any)[colName] = groupColumns[colName][i];
+          row[colName] = groupColumns[colName][i];
         }
-        groupRows.push(row as T);
+        groupRows.push(row);
       }
       const groupDF = createDataFrame(groupRows);
 
@@ -513,7 +483,7 @@ async function summariseAsync<T extends object>(
         const promises = Object.entries(spec).map(async ([k, expr]) => {
           if (typeof expr === "function") {
             const result = withErrorHandling(
-              () => expr(groupDF),
+              () => (expr as any)(groupDF),
               undefined,
               `summarise(${String(k)}) [grouped async]`,
             );
@@ -536,5 +506,5 @@ async function summariseAsync<T extends object>(
 
   // Wait for all groups to complete
   const results = await Promise.all(groupPromises);
-  return createDataFrame(results) as unknown as DataFrame<any>;
+  return createDataFrame(results);
 }

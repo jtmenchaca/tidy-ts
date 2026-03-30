@@ -1,17 +1,16 @@
 // deno-lint-ignore-file no-explicit-any
 
-import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
 import { isThenableDataFrame } from "../../../utilities/isThenable.ts";
 import { createPropertyError } from "./shared-handler-utils.ts";
 import { wrapThenable } from "../utils.ts";
 
 // Handle method forwarding: call the verb after we have the df
-export function handleMethodForwarding<Row extends Record<string, unknown>>(
+export function handleMethodForwarding(
   prop: string | number | symbol,
-  p: Promise<DataFrame<Row>>,
-  resolveVerb: (prop: string | number | symbol, df: DataFrame<Row>) => any,
-  chainFn: (df: DataFrame<Row> | Promise<DataFrame<Row>>) => any,
-  chainGroupedFn: (gdf: GroupedDataFrame<Row, keyof Row>) => any,
+  p: Promise<any>,
+  resolveVerb: (prop: string | number | symbol, df: any) => any,
+  chainFn: (df: any) => any,
+  chainGroupedFn: (gdf: any) => any,
 ) {
   return ((...args: unknown[]) => {
     const promiseOut = p.then((df) => {
@@ -46,12 +45,10 @@ export function handleMethodForwarding<Row extends Record<string, unknown>>(
     });
 
     // Wrap the promise result into a chainable thenable immediately
-    return wrapThenable<Row>(
+    return wrapThenable(
       promiseOut as Promise<unknown>,
-      chainFn as unknown as (df: DataFrame<Row>) => any,
-      chainGroupedFn as unknown as (
-        gdf: GroupedDataFrame<Row, keyof Row>,
-      ) => any,
+      chainFn,
+      chainGroupedFn,
     );
   }) as any;
 }
