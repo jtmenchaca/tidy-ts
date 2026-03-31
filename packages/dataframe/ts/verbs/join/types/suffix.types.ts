@@ -1,12 +1,11 @@
 // Suffix-aware join types
-import type { MakeUndefined } from "../../../dataframe/index.ts";
+import type { MakeUndefined, Prettify } from "../../../dataframe/index.ts";
 import type {
-  RowAfterAsofJoin,
-  RowAfterInnerJoin,
-  RowAfterLeftJoin,
-  RowAfterOuterJoin,
-  RowAfterRightJoin,
-} from "./core.types.ts";
+  FullJoinResult,
+  InnerJoinResult,
+  LeftJoinResult,
+  RightJoinResult,
+} from "./result.types.ts";
 
 // -----------------------------------------------------------------------------
 // Suffix-aware helpers
@@ -102,12 +101,19 @@ type AsofJoinWithSuffixes<
       }
   >;
 
-// Fallback for when no suffixes provided
+// Fallback for when no suffixes provided — asof join has left-join semantics
+// with `_y` suffix for conflicting non-key columns
 type SimpleAsofJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = RowAfterAsofJoin<L, R, K>;
+> = Prettify<
+  & L
+  & MakeUndefined<Omit<R, keyof L & keyof R>>
+  & MakeUndefined<{
+    [P in Exclude<keyof L & keyof R, K> as `${Extract<P, string>}_y`]: R[P];
+  }>
+>;
 
 // Final dispatcher for asof join
 export type SuffixAwareAsofJoinResult<
@@ -149,11 +155,11 @@ type LeftJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback for when no suffixes provided
+// Fallback: reuse result.types.ts (shared keys inferred as keyof L & keyof R)
 type SimpleLeftJoinResult<
   L extends object,
   R extends object,
-> = RowAfterLeftJoin<L, R>;
+> = Prettify<LeftJoinResult<L, R, keyof L & keyof R>>;
 
 // Final dispatcher
 export type SuffixAwareLeftJoinResult<
@@ -192,11 +198,11 @@ type RightJoinWithSuffixes<
   // 5) left conflicting cols (renamed, optional)
   & MakeUndefined<ApplySuffix<Pick<L, ConflictingColumns<L, R, K>>, S["left"]>>;
 
-// Fallback for when no suffixes provided
+// Fallback: reuse result.types.ts
 type SimpleRightJoinResult<
   L extends object,
   R extends object,
-> = RowAfterRightJoin<L, R>;
+> = Prettify<RightJoinResult<L, R, keyof L & keyof R>>;
 
 // Final dispatcher for right join
 export type SuffixAwareRightJoinResult<
@@ -242,11 +248,11 @@ type OuterJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback for when no suffixes provided
+// Fallback: reuse result.types.ts
 type SimpleOuterJoinResult<
   L extends object,
   R extends object,
-> = RowAfterOuterJoin<L, R>;
+> = Prettify<FullJoinResult<L, R, keyof L & keyof R>>;
 
 // Final dispatcher for outer join
 export type SuffixAwareOuterJoinResult<
@@ -285,11 +291,11 @@ type InnerJoinWithSuffixes<
   // 5) right conflicting cols (renamed, required)
   & ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>;
 
-// Fallback for when no suffixes provided
+// Fallback: reuse result.types.ts
 type SimpleInnerJoinResult<
   L extends object,
   R extends object,
-> = RowAfterInnerJoin<L, R>;
+> = Prettify<InnerJoinResult<L, R, keyof L & keyof R>>;
 
 // Final dispatcher for inner join
 export type SuffixAwareInnerJoinResult<

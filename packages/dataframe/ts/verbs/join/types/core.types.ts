@@ -1,8 +1,6 @@
 // Core join types and utilities
 import type {
   ColumnarStore,
-  MakeUndefined,
-  Prettify,
 } from "../../../dataframe/index.ts";
 
 // -----------------------------------------------------------------------------
@@ -34,63 +32,6 @@ export type JoinArgs<
   rightKeys: string[];
   suffixes: { left?: string; right?: string };
 };
-
-// -----------------------------------------------------------------------------
-// Row Result Types (backwards compatibility)
-// -----------------------------------------------------------------------------
-
-// For single key joins (backwards compatibility)
-export type RowAfterInnerJoin<
-  LeftRow extends object,
-  RightRow extends object,
-> = Prettify<LeftRow & Omit<RightRow, keyof LeftRow & keyof RightRow>>;
-
-export type RowAfterLeftJoin<
-  LeftRow extends object,
-  RightRow extends object,
-> = Prettify<
-  LeftRow & MakeUndefined<Omit<RightRow, keyof LeftRow & keyof RightRow>>
->;
-
-export type RowAfterRightJoin<
-  LeftRow extends object,
-  RightRow extends object,
-> = Prettify<
-  MakeUndefined<Omit<LeftRow, keyof LeftRow & keyof RightRow>> & RightRow
->;
-
-export type RowAfterOuterJoin<
-  LeftRow extends object,
-  RightRow extends object,
-> = Prettify<
-  & MakeUndefined<Omit<LeftRow, keyof LeftRow & keyof RightRow>>
-  & MakeUndefined<Omit<RightRow, keyof LeftRow & keyof RightRow>>
-  & Pick<LeftRow, keyof LeftRow & keyof RightRow>
->;
-
-export type RowAfterCrossJoin<
-  LeftRow extends object,
-  RightRow extends object,
-> = Prettify<LeftRow & RightRow>;
-
-export type RowAfterAsofJoin<
-  LeftRow extends object,
-  RightRow extends object,
-  JoinKey extends keyof LeftRow & keyof RightRow = never,
-> = Prettify<
-  & LeftRow
-  & MakeUndefined<Omit<RightRow, keyof LeftRow & keyof RightRow>>
-  & MakeUndefined<
-    {
-      [
-        K in Exclude<keyof LeftRow & keyof RightRow, JoinKey> as `${Extract<
-          K,
-          string
-        >}_y`
-      ]: RightRow[K];
-    }
-  >
->;
 
 // -----------------------------------------------------------------------------
 // Join Options

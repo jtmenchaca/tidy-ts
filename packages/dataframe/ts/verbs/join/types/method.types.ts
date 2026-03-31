@@ -2,7 +2,6 @@
 import type {
   DataFrame,
   Prettify,
-  UnifyUnion,
 } from "../../../dataframe/index.ts";
 import type {
   EmptyDataFrameJoin,
@@ -126,7 +125,7 @@ export type InnerJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    UnifyUnion<
+    Prettify<
       SuffixAwareInnerJoinResult<
         Row,
         OtherRow,
@@ -258,7 +257,7 @@ export type LeftJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    UnifyUnion<
+    Prettify<
       SuffixAwareLeftJoinResult<
         Row,
         OtherRow,
@@ -339,7 +338,7 @@ export type LeftJoinParallelMethod<Row extends object> = {
     >,
   ): Promise<
     DataFrame<
-      UnifyUnion<
+      Prettify<
         SuffixAwareLeftJoinResult<
           Row,
           OtherRow,
@@ -440,7 +439,7 @@ export type RightJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    UnifyUnion<
+    Prettify<
       SuffixAwareRightJoinResult<
         Row,
         OtherRow,
@@ -540,7 +539,7 @@ export type OuterJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    UnifyUnion<
+    Prettify<
       SuffixAwareOuterJoinResult<
         Row,
         OtherRow,
@@ -699,7 +698,7 @@ export type AsofJoinMethod<Row extends object> = {
       suffixes: Suffixes;
     },
   ): DataFrame<
-    UnifyUnion<
+    Prettify<
       SuffixAwareAsofJoinResult<
         Row,
         OtherRow,
