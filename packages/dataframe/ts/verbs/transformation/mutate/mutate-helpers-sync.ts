@@ -95,16 +95,16 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
 
     if (typeof expr === "function") {
       const { head, next, size } = g;
-      // Iterate through each group using adjacency list
+
       for (let groupIdx = 0; groupIdx < size; groupIdx++) {
-        // Create group-specific DataFrame for this group
         const groupRows: Record<string, unknown>[] = [];
         let tempRowIdx = head[groupIdx];
 
-        // First pass: collect all rows in this group
         while (tempRowIdx !== -1) {
           const groupRow: Record<string, unknown> = {};
-          const physicalIndex = usesRaw ? tempRowIdx : materialized[tempRowIdx];
+          const physicalIndex = usesRaw
+            ? tempRowIdx
+            : materialized[tempRowIdx];
           for (const colName of store.columnNames) {
             groupRow[colName] = store.columns[colName][physicalIndex];
           }
@@ -114,8 +114,7 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
 
         const groupDF = createDataFrame(groupRows);
 
-        // Second pass: apply the function with group DataFrame
-        let k = 0; // index within group
+        let k = 0;
         let rowIdx = head[groupIdx];
         while (rowIdx !== -1) {
           const physicalIndex = usesRaw ? rowIdx : materialized[rowIdx];
@@ -168,7 +167,6 @@ export function processUngroupedMutations<Row extends Record<string, unknown>>(
       continue;
     }
     if (typeof expr === "function") {
-      // Only process visible rows using the materialized index
       for (let i = 0; i < materializedIndex.length; i++) {
         const physicalIndex = materializedIndex[i];
         row.setCursor(physicalIndex);

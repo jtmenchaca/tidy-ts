@@ -193,61 +193,88 @@ SEQuential(data, opts)
 
 ---
 
+## Current Status (2026-03-31)
+
+**11 passed, 8 failed** across all target trial test suites.
+
+### coefficients.test.ts — 10/10 ✓
+
+All outcome model coefficient tests pass at tolerance 1e-2:
+
+| Test | Status |
+|------|--------|
+| ITT | ✓ |
+| Dose-Response Pre-Expansion | ✓ |
+| Dose-Response Post-Expansion | ✓ |
+| Censoring Pre-Expansion | ✓ |
+| Censoring Post-Expansion | ✓ |
+| Excused Censoring Pre-Expansion | ✓ |
+| Excused Censoring Post-Expansion | ✓ |
+| ITT with LTFU Pre-Expansion | ✓ |
+| ITT with LTFU Post-Expansion | ✓ |
+| ITT Multinomial (treat.level = [1,2]) | ✓ |
+
+### multinomial.test.ts — 1/3
+
+| Test | Status | Notes |
+|------|--------|-------|
+| ITT Multinomial coefficients | ✓ | |
+| Multinomial Censoring Pre-Expansion | ✗ | diff ~3 on intercept |
+| Multinomial Censoring Post-Expansion | ✗ | diff ~8 on intercept |
+
+### hazard.test.ts — 0/3
+
+| Test | Status | Notes |
+|------|--------|-------|
+| ITT hazard ratio matches R | ✗ | Not yet audited |
+| Hazard ratio reproducibility | ✗ | Not yet audited |
+| Hazard ratio bootstrap CIs | ✗ | Not yet audited |
+
+### survival.test.ts — 0/3
+
+| Test | Status | Notes |
+|------|--------|-------|
+| ITT survival curves match R | ✗ | Not yet audited |
+| ITT risk data matches R | ✗ | Not yet audited |
+| ITT risk comparison matches R | ✗ | Not yet audited |
+
+### What's been audited and fixed (line-by-line vs R source)
+
+1. **pipeline.rs** — Sort by (id, time) matching R line 69. Removed incorrect row pruning (R line 165 prunes local `data`, not `params@data` used by SEQexpand). Multinomial eligible filter matching R line 169.
+2. **expand.rs** — Trial numbering uses row position (`rowid(id) - 1`). Trial-time lookup maps ALL positions (not just eligible). Excused columns included in time-varying join (R SEQexpand.R line 40). Excused switch forgiveness with `isExcused` column preserved for weights. Eligible_bas filtering after baseline join.
+3. **weights.rs** — `tx_lag` creation for pre/post expansion matching R's `internal_weights.R` lines 21-48. `prepare.data_cached` row filtering (lag_condition, excused numerator, denominator followup!=0, excused_col==0). Response variable selection (censored for post-expansion excused). `isExcused` cumsum (R line 42). Excused prediction paths (denominator and numerator). Excused cumulative weight path with guards (denominator < 1e-15, is.na(outcome), isExcused cumsum → wt=1).
+4. **factorize.rs** — Matches R's `internal_misc.R::factorize()`.
+
+### What has NOT been audited yet
+
+- **hazard.rs** — Event simulation, Cox PH / Fine-Gray fitting
+- **survival_curves.rs** — KM curve generation, counterfactual prediction
+- **risk_comparison.rs** — Paired RD/RR computation
+- **bootstrap.rs** — ID-level resampling (basic structure exists, used by coefficient tests)
+- **Multinomial + Censoring interaction** — Weight model behavior when both multinomial and censoring are active
+
+---
+
 ## Tiered Implementation Plan
 
-### Tier 0: Rust Primitives (Prerequisites)
-
-New Rust modules that must be built before any TypeScript orchestration.
+### Tier 0: Rust Primitives (Prerequisites) — DONE
 
 **Tier 0a: B-Spline Basis Engine** (`packages/dataframe/rust/stats/splines/`)
 
-Port R's `splines.c` de Boor algorithm faithfully:
-
-- [ ] `spline_design.rs` — Core B-spline basis evaluation
-  - [ ] `spl_struct` equivalent (order, knots, cursor, scratch arrays)
-  - [ ] `set_cursor()` — knot interval location with boundary handling
-  - [ ] `diff_table()` — left/right knot differences
-  - [ ] `basis_funcs()` — fast evaluation (de Boor recursion)
-  - [ ] `evaluate()` — slow evaluation with derivative support
-  - [ ] `spline_basis()` — full basis matrix (multiple x values, per-x derivatives)
-  - [ ] `spline_value()` — evaluate spline at points given coefficients
-  - [ ] Unit tests against R's `splineDesign()` output
+- [x] `spline_design.rs` — Core B-spline basis evaluation
+- [x] Unit tests against R's `splineDesign()` output
 
 **Tier 0b: Natural Splines** (`packages/dataframe/rust/stats/splines/`)
 
-Port R's `ns()` and `bs()` from `splines.R`:
-
-- [ ] `natural_splines.rs` — `ns()` implementation
-  - [ ] Knot placement from df (quantile-based inner knots)
-  - [ ] Boundary knot handling (sort, default to range)
-  - [ ] Interior knot deduplication (shoving knots inside boundary)
-  - [ ] B-spline basis via `spline_design.rs`
-  - [ ] QR constraint: `const = splineDesign(Aknots, Boundary.knots, ord=4, derivs=c(2,2))`, then `qr.qty` projection to enforce linearity beyond boundaries
-  - [ ] Outside-boundary linear extrapolation
-  - [ ] NA handling (pass-through with NaN rows)
-  - [ ] Intercept column removal option
-  - [ ] Unit tests against R's `ns()` output
-- [ ] `b_splines.rs` — `bs()` implementation
-  - [ ] Same knot placement as `ns()` but with configurable degree
-  - [ ] Outside-boundary polynomial extrapolation (degree-dependent)
-  - [ ] Unit tests against R's `bs()` output
-- [ ] QR decomposition — verify existing Rust QR is sufficient for `ns()` constraint, or port minimal Householder QR
+- [x] `natural_splines.rs` — `ns()` implementation
+- [x] `b_splines.rs` — `bs()` implementation
+- [x] QR decomposition for `ns()` constraint
 
 **Tier 0c: Multinomial Logistic Regression** (`packages/dataframe/rust/stats/regression/glm/multinomial.rs`)
 
-Port SEQTaRget's K-1 binary logistic approach:
-
-- [ ] `multinomial.rs`
-  - [ ] K-1 one-vs-rest binary GLM fits via existing quasibinomial GLM
-  - [ ] Softmax normalization of predictions across K classes
-  - [ ] Coefficient extraction with SE and p-values
-  - [ ] Separation detection (|coef| > 25 threshold)
-  - [ ] Summary output (coefficients table per class)
-  - [ ] Unit tests against R's SEQTaRget `internal_multinomial.R` output
+- [x] `multinomial.rs` — K-1 binary GLM + softmax
 
 **Tier 0 WASM Bindings:**
-
-Spline and multinomial primitives get individual WASM exports for standalone use. The full pipeline gets a single WASM entry point.
 
 | WASM Function | Rust Function | Purpose |
 |--------------|---------------|---------|
@@ -256,119 +283,90 @@ Spline and multinomial primitives get individual WASM exports for standalone use
 | `bs_wasm` | `bs()` | B-spline basis matrix |
 | `multinomial_wasm` | `multinomial_fit()` | K-1 binary GLM + softmax |
 | `multinomial_predict_wasm` | `multinomial_predict()` | Softmax class probabilities |
-| `target_trial_wasm` | `target_trial_emulation()` | Full pipeline (expand → weights → model → survival → hazard → bootstrap) |
+| `target_trial_wasm` | `target_trial_emulation()` | Full pipeline |
 
 ---
 
-### Tier 1: Data Expansion + Types (Rust)
+### Tier 1: Data Expansion + Types (Rust) — DONE
 
-Columnar data representation and trial structure expansion, all in Rust.
-
-- [ ] `rust/stats/target_trial/types.rs` — Config + result structs
-  - [ ] `TargetTrialConfig` struct (equivalent to SEQopts: id/period/treatment/outcome columns, analysis type, formula strings, bootstrap params, etc.)
-  - [ ] `TargetTrialResult` struct (survival curves, HRs, CIs, weight diagnostics)
-  - [ ] `ColumnarData` struct (column-oriented data: `HashMap<String, Vec<f64>>` for numeric, `HashMap<String, Vec<String>>` for categorical)
-  - [ ] Analysis type enum: `ITT | DoseResponse | Censoring`
-- [ ] `rust/stats/target_trial/expand.rs` — Core data expansion (`SEQexpand`)
-  - [ ] Trial generation: for each period where treatment starts, create a trial
-  - [ ] Follow-up sequence: for each trial, create rows for followup 0..maxfollow
-  - [ ] Covariate joins: merge time-varying covariates at each trial's baseline
-  - [ ] Baseline indicators: flag baseline period within each trial
-  - [ ] Squared terms: auto-generate `followup^2` if configured
-  - [ ] ITT path: no censoring at treatment switch
-  - [ ] Dose-response path: cumulative treatment sum, censoring at max dose
-  - [ ] Censoring path: detect treatment switch, create artificial censoring
-  - [ ] LTFU integration: mark loss-to-followup events
-- [ ] `rust/stats/target_trial/covariates.rs` — Default formula builders
-  - [ ] Outcome model formula: `outcome ~ treatment + covariates + ns(followup)`
-  - [ ] Denominator weight formula: `treatment ~ covariates + ns(followup)`
-  - [ ] Numerator weight formula: `treatment ~ baseline_covariates`
-  - [ ] LTFU/visit formulas
-
-**Tier 1 Tests:**
-- [ ] 7 covariate formula tests
-- [ ] Data expansion correctness (row counts, trial structure)
-- [ ] ITT vs dose-response vs censoring expansion differences
+- [x] `rust/stats/target_trial/types.rs` — Config + result structs
+- [x] `rust/stats/target_trial/expand.rs` — Core data expansion
+  - [x] Trial generation with positional trial numbering (`rowid(id) - 1`)
+  - [x] Follow-up sequence with configurable min/max
+  - [x] Time-varying covariate joins (including excused cols, deviation excused cols)
+  - [x] Baseline indicator joins via trial-time lookup
+  - [x] Squared terms (followup_sq, trial_sq, time_sq)
+  - [x] ITT path
+  - [x] Dose-response path (cumulative dose, dose_sq)
+  - [x] Censoring path (switch detection, truncation at firstSwitch)
+  - [x] Excused censoring (switch forgiveness via isExcused cumsum, column preserved)
+  - [x] Eligible_bas filtering after baseline join
+- [x] `rust/stats/target_trial/covariates.rs` — Default formula builders
+- [x] `rust/stats/target_trial/factorize.rs` — Factor encoding matching R
 
 ---
 
-### Tier 2: Weight Computation (Rust)
+### Tier 2: Weight Computation (Rust) — DONE
 
-- [ ] `rust/stats/target_trial/weights.rs` — Inverse probability of censoring weights
-  - [ ] Denominator model: fit quasibinomial GLM per treatment level, predict P(A=a|L)
-  - [ ] Numerator model: fit quasibinomial GLM per treatment level, predict P(A=a|L_baseline) — stabilization
-  - [ ] Weight ratio: numerator / denominator per observation
-  - [ ] Cumulative product: weight at time t = product of weight ratios from 0..t
-  - [ ] LTFU weight model (optional): P(not LTFU | covariates), multiplicative
-  - [ ] Visit weight model (optional): P(visit | covariates), multiplicative
-  - [ ] Multi-treatment weights: use multinomial regression for >2 treatment levels
-  - [ ] Weight diagnostics: mean, percentiles, truncation
-  - [ ] Lag conditioning: condition on previous period's treatment
-
-**Tier 2 Tests:**
-- [ ] 6 denominator weight tests
-- [ ] 5 numerator weight tests
-- [ ] Weight cumulative product correctness
-- [ ] Multi-treatment weight computation
-
----
-
-### Tier 3: Outcome Models + Survival Curves (Rust)
-
-- [ ] `rust/stats/target_trial/outcome_models.rs` — Weighted outcome modeling
-  - [ ] Fit weighted quasibinomial GLM: outcome ~ treatment + covariates + ns(followup)
-  - [ ] Optional: factor(followup) instead of ns(followup)
-  - [ ] Optional: subgroup stratification (fit separate models per subgroup)
-  - [ ] Counterfactual prediction: predict under treatment=0 and treatment=1
-- [ ] `rust/stats/target_trial/survival_curves.rs` — KM-style survival curves
-  - [ ] Predict P(event | treatment, followup_t) at each followup time
-  - [ ] S(t) = cumprod(1 - P(event | treatment, followup_t)) — vectorized per treatment arm
-  - [ ] Competing event cumulative incidence
-  - [ ] Risk ratio and risk difference at each time
-- [ ] `rust/stats/target_trial/glm_helpers.rs` — Optimized GLM utilities
-  - [ ] Design matrix construction from formula + columnar data
-  - [ ] Separation check (|coef| > 25)
-
-**Tier 3 Tests:**
-- [ ] 4 survival curve tests
-- [ ] Coefficient validation (ITT, dose-response, censoring at tolerance 1e-2)
-- [ ] Risk ratio / risk difference correctness
+- [x] `rust/stats/target_trial/weights.rs` — IPCW weights
+  - [x] tx_lag creation (pre-expansion: shift by id; post-expansion: shift by id+trial, merge baseline lag)
+  - [x] Denominator model fitting per treatment level
+  - [x] Numerator model fitting per treatment level
+  - [x] prepare.data_cached row filtering (lag_condition, excused, denominator followup!=0)
+  - [x] Response variable selection (censored vs treatment)
+  - [x] model.passer multinomial flag logic
+  - [x] Prediction with treatment-based flip (1-p)
+  - [x] Excused prediction paths (denominator + numerator)
+  - [x] isExcused cumsum in weight data (R line 42)
+  - [x] Cumulative product by (id, trial) — standard and excused paths
+  - [x] Excused cumulative weight guards (denominator < 1e-15, is.na(outcome), isExcused → wt=1)
+  - [x] LTFU weight component
+  - [x] Weight truncation (upper/lower bounds)
+  - [x] Weight diagnostics (percentiles, SD)
 
 ---
 
-### Tier 4: Bootstrap + Hazard Ratios + Full Pipeline (Rust)
+### Tier 3: Outcome Models + Survival Curves (Rust) — PARTIAL
 
-- [ ] `rust/stats/target_trial/hazard.rs` — Hazard ratio estimation
-  - [ ] Simulate first-event times from predicted probabilities (Bernoulli draws per followup)
-  - [ ] Cox PH on simulated events → HR with CI
-  - [ ] Fine-Gray on simulated events (competing risks) → subdistribution HR
-- [ ] `rust/stats/target_trial/bootstrap.rs` — Bootstrap loop (NOT a standalone primitive)
-  - [ ] ID-level resampling with replacement (sample IDs, not rows)
-  - [ ] Configurable sample fraction and seed-based RNG
-  - [ ] Per iteration: resample → expand → weights → model → survival → hazard
-  - [ ] Aggregate: collect per-iteration estimates
-  - [ ] SE-based CIs: point ± z * sd(bootstrap estimates)
-  - [ ] Percentile CIs: quantile-based
-  - [ ] Paired bootstrap CIs for risk ratio/difference (log-scale for RR)
-- [ ] `rust/stats/target_trial/risk_comparison.rs` — Risk ratio/difference
-  - [ ] Paired bootstrap RD/RR from survival curve estimates
-  - [ ] Log-scale SE for RR CIs
-- [ ] `rust/stats/target_trial/pipeline.rs` — Main entry point
-  - [ ] Input validation
-  - [ ] Single pass: expand → weights → model → survival → hazard
-  - [ ] Bootstrap wrapper: run N passes, aggregate
-  - [ ] Result assembly into `TargetTrialResult`
-- [ ] WASM binding: `target_trial_wasm()` — single entry point, JSON in/out
+- [x] `rust/stats/target_trial/outcome_models.rs` — Weighted outcome modeling
+  - [x] Weighted quasibinomial GLM fitting
+  - [x] Design matrix from formula terms
+  - [ ] Optional: factor(followup) instead of polynomial
+  - [ ] Optional: subgroup stratification
+- [x] `rust/stats/target_trial/glm_helpers.rs` — GLM utilities
+  - [x] Formula parsing and caching
+  - [x] Design matrix construction with factor dummy variables
+- [ ] `rust/stats/target_trial/survival_curves.rs` — **Not yet audited**
+  - [x] Basic implementation exists
+  - [ ] Audit against R's `internal_survival.R`
+- [ ] `rust/stats/target_trial/risk_comparison.rs` — **Not yet audited**
+  - [x] Basic implementation exists
+  - [ ] Audit against R's `internal_misc.R`
 
-**Tier 4 TypeScript (thin wrapper):**
-- [ ] `targetTrial/types.ts` — User-facing TypeScript interfaces matching Rust result
-- [ ] `targetTrial/index.ts` — `targetTrialEmulation()`: serialize DataFrame → WASM → deserialize result
+---
+
+### Tier 4: Bootstrap + Hazard Ratios + Full Pipeline (Rust) — PARTIAL
+
+- [ ] `rust/stats/target_trial/hazard.rs` — **Not yet audited**
+  - [x] Basic implementation exists
+  - [ ] Audit event simulation against R's `internal_hazard.R`
+  - [ ] Audit Cox PH / Fine-Gray integration
+- [x] `rust/stats/target_trial/bootstrap.rs` — ID-level resampling
+  - [x] Basic structure works (used by coefficient tests with bootstrap)
+  - [ ] Audit against R's `internal_analysis.R` bootstrap loop
+- [x] `rust/stats/target_trial/pipeline.rs` — Main entry point
+  - [x] Sort by (id, time)
+  - [x] Multinomial eligible filter
+  - [x] Expand → factorize → weights → outcome model
+  - [x] Bootstrap loop
+  - [x] Result assembly
+- [x] WASM binding + TypeScript wrapper
 
 **Tier 4 Tests:**
-- [ ] 4 hazard ratio tests (reproducibility with seeds)
-- [ ] 11 coefficient tests across ITT, dose-response, censoring, LTFU, multinomial
-- [ ] 5 multinomial analysis tests
-- [ ] 39 coverage tests (validation, edge cases)
+- [ ] 3 hazard ratio tests — 0/3 passing (not yet audited)
+- [x] 10 coefficient tests — 10/10 passing
+- [ ] 3 multinomial tests — 1/3 passing (multinomial + censoring interaction needs work)
+- [ ] 3 survival tests — 0/3 passing (not yet audited)
 
 ---
 

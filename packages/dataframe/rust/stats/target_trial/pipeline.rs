@@ -63,9 +63,31 @@ pub fn target_trial_emulation(
         .ok_or("Outcome covariates formula is required")?
         .clone();
 
+    // 3a. Sort data by (id, time) — R line 69: setorderv(data, c(id.col, time.col))
+    let mut source_data = data.clone();
+    {
+        let id_col = source_data.get_numeric(&config.id)
+            .ok_or_else(|| format!("ID column '{}' not found", config.id))?
+            .clone();
+        let time_col = source_data.get_numeric(&config.time)
+            .ok_or_else(|| format!("Time column '{}' not found", config.time))?
+            .clone();
+
+        let mut order: Vec<usize> = (0..source_data.nrows).collect();
+        order.sort_by(|&a, &b| {
+            id_col[a].partial_cmp(&id_col[b]).unwrap()
+                .then(time_col[a].partial_cmp(&time_col[b]).unwrap())
+        });
+
+        // Check if already sorted
+        let already_sorted = order.iter().enumerate().all(|(i, &v)| i == v);
+        if !already_sorted {
+            source_data = subset_columnar_data(&source_data, &order);
+        }
+    }
+
     // 3b. Multinomial: set eligible=0 for rows where treatment not in treat_levels
     // R: if (params@multinomial) params@data[!get(params@treatment) %in% params@treat.level, eval(params@eligible) := 0]
-    let mut source_data = data.clone();
     if config.multinomial {
         if let Some(treatment_col) = source_data.numeric.get(&config.treatment).cloned() {
             if let Some(eligible_col) = source_data.numeric.get_mut(&config.eligible) {
@@ -79,47 +101,11 @@ pub fn target_trial_emulation(
         }
     }
 
-    // 3c. Prune rows after last eligible time per ID
-    // R line 165: data <- data[data[, .I[seq_len(max(which(eligible == 1), 0))], by = id]$V1]
-    {
-        let id_col = source_data.get_numeric(&config.id)
-            .ok_or_else(|| format!("ID column '{}' not found", config.id))?
-            .clone();
-        let elig_col = source_data.get_numeric(&config.eligible)
-            .ok_or_else(|| format!("Eligible column '{}' not found", config.eligible))?
-            .clone();
+    // NOTE: R line 165 prunes `data` (local var) but NOT `params@data` which is used by SEQexpand.
+    // The pruning only affects switch diagnostics later, not expansion or modeling.
+    // So we do NOT prune source_data here.
 
-        // Find rows to keep: for each ID, keep rows up to (and including) last eligible row
-        let mut keep_rows: Vec<bool> = vec![false; source_data.nrows];
-        let mut i = 0;
-        while i < source_data.nrows {
-            let cur_id = id_col[i];
-            let group_start = i;
-            i += 1;
-            while i < source_data.nrows && (id_col[i] - cur_id).abs() < 1e-10 {
-                i += 1;
-            }
-            // Find last eligible row in this group
-            let mut last_eligible = None;
-            for j in group_start..i {
-                if (elig_col[j] - 1.0).abs() < 1e-10 {
-                    last_eligible = Some(j);
-                }
-            }
-            if let Some(le) = last_eligible {
-                for j in group_start..=le {
-                    keep_rows[j] = true;
-                }
-            }
-        }
-
-        let kept_indices: Vec<usize> = (0..source_data.nrows).filter(|&i| keep_rows[i]).collect();
-        if kept_indices.len() < source_data.nrows {
-            source_data = subset_columnar_data(&source_data, &kept_indices);
-        }
-    }
-
-    // 3d. Augment source data with squared time column (needed for pre-expansion weights)
+    // 3c. Augment source data with squared time column (needed for pre-expansion weights)
     let mut augmented_data = source_data;
     let time_sq_name = format!("{}{}", config.time, config.indicator_squared);
     if !augmented_data.has_column(&time_sq_name) {
@@ -129,7 +115,7 @@ pub fn target_trial_emulation(
         }
     }
 
-    // 3d. Factorize pre-expansion data (R: params@data <- factorize(params@data, params))
+    // 3c-ii. Factorize pre-expansion data (R: params@data <- factorize(params@data, params))
     factorize_data(&mut augmented_data, &config);
 
     // 4. Expand data (create trial structure) — use modified source_data via augmented_data

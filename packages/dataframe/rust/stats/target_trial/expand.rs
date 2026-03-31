@@ -104,18 +104,18 @@ pub fn expand(
     }
 
     // Build trial-time lookup: (id, trial) → source_time (the time at trial start)
+    // trial values use row position (pos), matching R's rowid(id) - 1
     let mut trial_time_lookup: HashMap<(u64, u64), f64> = HashMap::new();
     for (&_id_bits, rows) in &id_rows {
         let id_val = id_col[rows[0]];
-        let mut trial_idx = 0u64;
-        for &src_row in rows {
-            if eligible_col[src_row] == 1.0 {
-                trial_time_lookup.insert(
-                    (id_val.to_bits(), trial_idx),
-                    time_col[src_row],
-                );
-                trial_idx += 1;
-            }
+        for (pos, &src_row) in rows.iter().enumerate() {
+            // Map ALL rows' positions to their time, not just eligible ones.
+            // The expansion only creates trials for eligible positions,
+            // but the baseline join needs to look up the time for any trial number.
+            trial_time_lookup.insert(
+                (id_val.to_bits(), pos as u64),
+                time_col[src_row],
+            );
         }
     }
 
@@ -142,6 +142,13 @@ pub fn expand(
     if let Some(ref c) = config.compevent { tv_names.push(c.clone()); }
     if let Some(ref c) = config.visit { tv_names.push(c.clone()); }
     if let Some(ref c) = config.subgroup { tv_names.push(c.clone()); }
+    // R line 40: vars.time includes excused.cols and deviation.excused_cols
+    for opt in &config.excused_cols {
+        if let Some(c) = opt { tv_names.push(c.clone()); }
+    }
+    for opt in &config.deviation.excused_cols {
+        if let Some(c) = opt { tv_names.push(c.clone()); }
+    }
     tv_names.sort();
     tv_names.dedup();
 
@@ -330,6 +337,8 @@ fn compute_dose_columns(
 /// Compute censoring indicators for per-protocol analysis.
 ///
 /// Detects treatment switches and truncates follow-up at the first switch.
+/// For excused censoring, switches where the excused column is 1 are forgiven
+/// and the isExcused column is preserved for downstream weight calculations.
 fn compute_censoring(
     data: &mut ColumnarData,
     config: &TargetTrialConfig,
@@ -340,52 +349,115 @@ fn compute_censoring(
     let outcome = data.get_numeric(&config.outcome).ok_or("missing outcome column")?.clone();
 
     let n = data.nrows;
-    let mut switch = vec![0.0; n];
-    let mut censored = vec![0.0; n];
-    let mut keep = vec![true; n];
+    let mut switch_flag = vec![false; n];
+    // isExcused: NAN = not a switch row, 0 = switch not excused, 1 = switch excused
+    let mut is_excused = vec![f64::NAN; n];
 
-    // Detect switches: treatment != lag(treatment) within (id, trial)
+    // Step 1: Detect all switches: treatment != lag(treatment) within (id, trial)
+    // R: out[, lag := shift(treatment, fill = treatment[1]), by = c(id, "trial")]
+    // R: out[, switch := (treatment != lag)]
     let mut i = 0;
+    while i < n {
+        let cur_id = id[i];
+        let cur_trial = trial[i];
+        let mut prev_tx = treatment[i]; // fill = first value
+
+        let mut j = i + 1;
+        while j < n && id[j] == cur_id && trial[j] == cur_trial {
+            if (treatment[j] - prev_tx).abs() > 1e-10 {
+                switch_flag[j] = true;
+            }
+            prev_tx = treatment[j];
+            j += 1;
+        }
+        i = j;
+    }
+
+    // Step 2: For excused censoring, mark excused switches and un-switch them
+    if config.excused {
+        // R: for each treat_level[i], where excused_cols[i] is not NA:
+        //   out[(switch) & treatment == treat_level[i], isExcused := ifelse(excused_cols[i] == 1, 1, 0)]
+        for (level_idx, &level) in config.treat_levels.iter().enumerate() {
+            if let Some(Some(col_name)) = config.excused_cols.get(level_idx) {
+                if let Some(exc_col) = data.get_numeric(col_name) {
+                    for row in 0..n {
+                        if switch_flag[row] && (treatment[row] - level).abs() < 1e-10 {
+                            is_excused[row] = if (exc_col[row] - 1.0).abs() < 1e-10 { 1.0 } else { 0.0 };
+                        }
+                    }
+                }
+            }
+        }
+
+        // R: out[!is.na(isExcused), excused_tmp := cumsum(isExcused), by = c(id, "trial")]
+        // R: out[(excused_tmp) > 0, switch := FALSE]
+        let mut idx = 0;
+        while idx < n {
+            let cur_id = id[idx];
+            let cur_trial = trial[idx];
+            let group_start = idx;
+            idx += 1;
+            while idx < n && id[idx] == cur_id && trial[idx] == cur_trial {
+                idx += 1;
+            }
+            // Cumsum isExcused within this group, then set switch=false where cumsum > 0
+            let mut exc_cumsum = 0.0;
+            for row in group_start..idx {
+                if !is_excused[row].is_nan() {
+                    exc_cumsum += is_excused[row];
+                }
+                if exc_cumsum > 0.0 {
+                    switch_flag[row] = false;
+                }
+            }
+        }
+    }
+
+    // Step 3: Find first (remaining) switch per group and truncate
+    let mut keep = vec![true; n];
+    let mut censored = vec![0.0; n];
+
+    i = 0;
     while i < n {
         let cur_id = id[i];
         let cur_trial = trial[i];
         let mut j = i;
         let mut first_switch: Option<usize> = None;
-        let mut prev_tx = treatment[i]; // fill = first value, matching R
 
         while j < n && id[j] == cur_id && trial[j] == cur_trial {
-            if j > i && treatment[j] != prev_tx {
-                switch[j] = 1.0;
-                if first_switch.is_none() {
-                    first_switch = Some(j - i); // relative position
-                }
+            if switch_flag[j] && first_switch.is_none() {
+                first_switch = Some(j - i);
             }
-            prev_tx = treatment[j];
             j += 1;
         }
 
-        // Truncate at first switch (keep rows up to and including the switch row)
+        // Truncate: keep rows up to and including the first switch row
         if let Some(fs_pos) = first_switch {
             for k in (i + fs_pos + 1)..j {
                 keep[k] = false;
             }
         }
-
         i = j;
     }
 
     // Set outcome to NAN where switch occurred, set censored indicator
     let mut new_outcome = outcome.clone();
     for idx in 0..n {
-        if switch[idx] == 1.0 {
+        if switch_flag[idx] {
             new_outcome[idx] = f64::NAN;
             censored[idx] = 1.0;
         }
     }
 
-    // Replace outcome column
+    // Replace/add columns
     data.numeric.insert(config.outcome.clone(), new_outcome);
     data.add_numeric("censored".to_string(), censored);
+
+    // For excused censoring, keep the isExcused column (needed by weights)
+    // R does NOT remove isExcused for params@excused path (only for deviation.excused)
+    if config.excused {
+        data.add_numeric("isExcused".to_string(), is_excused);
+    }
 
     // Filter to kept rows
     filter_columnar_data(data, &keep);

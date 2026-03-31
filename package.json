@@ -42,7 +42,8 @@
     "check-versions": "deno run --allow-net scripts/check-jsr-versions.ts",
     "docs:prerender": "cd packages/docs && bun run prerender && cd ../..",
     "joss:local-render": "devkit md2pdf joss/paper.md",
-    "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara"
+    "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
+    "intellisense": "npx tsx scripts/intellisense.ts"
   },
   "dependencies": {
     "@tidy-ts/dataframe": "workspace:*",

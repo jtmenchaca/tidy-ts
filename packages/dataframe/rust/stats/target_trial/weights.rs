@@ -549,6 +549,35 @@ pub fn compute_weights(
         wd
     };
 
+    // R line 42: if (excused | deviation.excused) weight[, isExcused := cumsum(ifelse(is.na(isExcused), 0, isExcused)), by = c(id, "trial")]
+    if (config.excused || config.deviation.excused) && !config.weights.preexpansion {
+        if let Some(exc_col) = weight_data.get_numeric("isExcused").cloned() {
+            let id_col = weight_data.get_numeric(&config.id).ok_or("ID missing")?.clone();
+            let trial_col = weight_data.get_numeric("trial").ok_or("trial missing")?.clone();
+            let mut new_exc = vec![f64::NAN; weight_data.nrows];
+            let mut idx = 0;
+            while idx < weight_data.nrows {
+                let cur_id = id_col[idx];
+                let cur_trial = trial_col[idx];
+                let group_start = idx;
+                idx += 1;
+                while idx < weight_data.nrows
+                    && (id_col[idx] - cur_id).abs() < 1e-10
+                    && (trial_col[idx] - cur_trial).abs() < 1e-10
+                {
+                    idx += 1;
+                }
+                let mut cumsum = 0.0;
+                for row in group_start..idx {
+                    let v = if exc_col[row].is_nan() { 0.0 } else { exc_col[row] };
+                    cumsum += v;
+                    new_exc[row] = cumsum;
+                }
+            }
+            weight_data.add_numeric("isExcused".to_string(), new_exc);
+        }
+    }
+
     // ── Non-ITT model fitting (R lines 85-117) ──
     let num_formula = config
         .numerator
@@ -1139,47 +1168,151 @@ pub fn apply_cumulative_weights(
     let followup_col = data
         .get_numeric("followup")
         .ok_or("followup column not found")?;
+    let outcome_col_ref = data.get_numeric(&config.outcome);
+    let is_excused_path = config.excused || config.deviation.excused;
+    let is_excused_col = if is_excused_path {
+        data.get_numeric("isExcused")
+    } else {
+        None
+    };
 
-    // Compute per-row weight ratio
-    let mut wt = vec![1.0; n];
-    for i in 0..n {
-        // At followup == 0, weight is 1
-        if followup_col[i].abs() < 1e-10 {
-            wt[i] = 1.0;
-        } else {
-            let d = weight_output.denominator[i];
-            let ratio = if d.abs() < 1e-15 {
-                1.0
+    let weights = if is_excused_path {
+        // ── Excused path (R internal_analysis.R lines 72-85 / 98-112) ──
+        // Step 1: Compute wt = numerator / denominator with guards
+        let mut wt = vec![f64::NAN; n];
+        for i in 0..n {
+            let num = weight_output.numerator[i];
+            let den = weight_output.denominator[i];
+
+            // R: [followup == 0, `:=`(numerator = 1, denominator = 1)]
+            if followup_col[i].abs() < 1e-10 {
+                wt[i] = 1.0;
+                continue;
+            }
+
+            // R: [denominator < 1e-15, denominator := 1]
+            let den = if den.abs() < 1e-15 || den.is_nan() { 1.0 } else { den };
+            // R: [numerator < 1e-15, numerator := 1] (post-expansion only)
+            let num = if !config.weights.preexpansion && (num.abs() < 1e-15 || num.is_nan()) { 1.0 } else { num };
+
+            // R: [is.na(outcome), denominator := 1]
+            let den = if let Some(oc) = outcome_col_ref {
+                if oc[i].is_nan() { 1.0 } else { den }
             } else {
-                weight_output.numerator[i] / d
+                den
             };
+
+            let ratio = num / den;
+            // R: [is.na(wt), wt := 1]
             wt[i] = if ratio.is_nan() { 1.0 } else { ratio };
         }
-    }
 
-    // Apply cumulative product by (id, trial)
-    // First, sort rows into groups by (id, trial)
-    let mut weights = vec![1.0; n];
-
-    // Track current group and running product
-    let mut i = 0;
-    while i < n {
-        let cur_id = id_col[i];
-        let cur_trial = trial_col[i];
-        let mut cum_prod = 1.0;
-
-        // Process all rows in this (id, trial) group
-        while i < n
-            && (id_col[i] - cur_id).abs() < 1e-10
-            && (trial_col[i] - cur_trial).abs() < 1e-10
-        {
-            cum_prod *= wt[i];
-            weights[i] = cum_prod;
-            i += 1;
+        // R: [followup == 0, wt := 1] (again, redundant but matching R)
+        for i in 0..n {
+            if followup_col[i].abs() < 1e-10 {
+                wt[i] = 1.0;
+            }
         }
-    }
+
+        // R: [, tmp := cumsum(ifelse(is.na(isExcused), 0, isExcused)), by = c(id, "trial")]
+        // R: [tmp > 0, wt := 1]
+        if let Some(exc_col) = is_excused_col {
+            let mut idx = 0;
+            while idx < n {
+                let cur_id = id_col[idx];
+                let cur_trial = trial_col[idx];
+                let group_start = idx;
+                idx += 1;
+                while idx < n
+                    && (id_col[idx] - cur_id).abs() < 1e-10
+                    && (trial_col[idx] - cur_trial).abs() < 1e-10
+                {
+                    idx += 1;
+                }
+                let mut exc_cumsum = 0.0;
+                for row in group_start..idx {
+                    let exc_val = exc_col[row];
+                    if !exc_val.is_nan() {
+                        exc_cumsum += exc_val;
+                    }
+                    if exc_cumsum > 0.0 {
+                        wt[row] = 1.0;
+                    }
+                }
+            }
+        }
+
+        // R: [, weight := cumprod(ifelse(is.na(wt), 1, wt)), by = c(id, "trial")]
+        let mut weights = vec![1.0; n];
+        let mut idx = 0;
+        while idx < n {
+            let cur_id = id_col[idx];
+            let cur_trial = trial_col[idx];
+            let mut cum_prod = 1.0;
+            while idx < n
+                && (id_col[idx] - cur_id).abs() < 1e-10
+                && (trial_col[idx] - cur_trial).abs() < 1e-10
+            {
+                let w = if wt[idx].is_nan() { 1.0 } else { wt[idx] };
+                cum_prod *= w;
+                weights[idx] = cum_prod;
+                idx += 1;
+            }
+        }
+
+        // R: [, weight := weight[1], list(cumsum(!is.na(weight)))]
+        // This is a forward-fill: groups defined by cumsum of non-NA weight.
+        // Since all our weights are non-NAN at this point (we replaced NAN with 1.0),
+        // each row is its own group and weight[1] = itself. So this is a no-op.
+        // But if we had NAN weights, it would forward-fill from the last non-NAN.
+
+        weights
+    } else {
+        // ── Non-excused path ──
+        let mut wt = vec![1.0; n];
+        for i in 0..n {
+            if followup_col[i].abs() < 1e-10 {
+                wt[i] = 1.0;
+            } else {
+                let d = weight_output.denominator[i];
+                let ratio = if d.abs() < 1e-15 {
+                    1.0
+                } else {
+                    weight_output.numerator[i] / d
+                };
+                wt[i] = if ratio.is_nan() { 1.0 } else { ratio };
+            }
+        }
+
+        // R: [followup == 0, wt := 1]
+        for i in 0..n {
+            if followup_col[i].abs() < 1e-10 {
+                wt[i] = 1.0;
+            }
+        }
+
+        // Cumulative product by (id, trial)
+        let mut weights = vec![1.0; n];
+        let mut i = 0;
+        while i < n {
+            let cur_id = id_col[i];
+            let cur_trial = trial_col[i];
+            let mut cum_prod = 1.0;
+            while i < n
+                && (id_col[i] - cur_id).abs() < 1e-10
+                && (trial_col[i] - cur_trial).abs() < 1e-10
+            {
+                cum_prod *= wt[i];
+                weights[i] = cum_prod;
+                i += 1;
+            }
+        }
+
+        weights
+    };
 
     // Multiply by LTFU and visit components
+    let mut weights = weights;
     if let Some(ref cense) = weight_output.cense {
         for i in 0..n {
             weights[i] *= cense[i];
@@ -1204,8 +1337,7 @@ pub fn apply_cumulative_weights(
     }
 
     // Compute diagnostics (only on rows where outcome is not NaN)
-    let outcome_col = data.get_numeric(&config.outcome);
-    let valid_weights: Vec<f64> = if let Some(oc) = outcome_col {
+    let valid_weights: Vec<f64> = if let Some(oc) = outcome_col_ref {
         weights
             .iter()
             .zip(oc.iter())
