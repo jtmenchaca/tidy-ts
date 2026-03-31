@@ -257,7 +257,7 @@ pub fn glm_fit(
     // Clone coef before moving it into the struct so we can use it for calculations
     let coef_for_stats = coef.clone();
 
-    Ok(GlmResult {
+    let mut glm_result = GlmResult {
         coefficients: coef,
         residuals: residuals.clone(),
         fitted_values: mu.clone(),
@@ -325,7 +325,7 @@ pub fn glm_fit(
         qr_rank: rank,
         pivot: (0..p as i32).collect(),
         tol: control.epsilon,
-        pivoted: false,
+        pivoted: 0,
         family: GlmFamilyInfo::from_glm_family(family.as_ref()),
         deviance: devold,
         aic: aic_model,
@@ -336,8 +336,8 @@ pub fn glm_fit(
         df_residual: resdf,
         df_null: nulldf,
         y: y.clone(),
-        converged: conv,
-        boundary,
+        converged: conv as u8,
+        boundary: boundary as u8,
         model: ModelFrame {
             y: y.clone(),
             predictors: (0..p)
@@ -798,6 +798,17 @@ pub fn glm_fit(
                 cooks_d.push(cooks_di);
             }
             cooks_d
-        }
-    })
+        },
+        confint_lower: Vec::new(),
+        confint_upper: Vec::new(),
+    };
+
+    // Pre-compute 95% confidence intervals at fit time to avoid serde_wasm_bindgen round-trip issues
+    // (serde_wasm_bindgen corrupts Option<String> fields, making from_value() fail on GlmResult)
+    if let Ok(ci) = glm_result.confint(0.95) {
+        glm_result.confint_lower = ci.lower;
+        glm_result.confint_upper = ci.upper;
+    }
+
+    Ok(glm_result)
 }

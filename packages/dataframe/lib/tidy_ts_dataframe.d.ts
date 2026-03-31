@@ -296,6 +296,32 @@ export function dunn_test_wasm(
 ): any;
 
 /**
+ * Fine-Gray competing risks data transformation.
+ *
+ * Ports the full R `finegray()` function including:
+ * - Censoring distribution G(t) via Kaplan-Meier
+ * - Truncation distribution H(t) for delayed entry (Geskus 2011)
+ * - Per-stratum processing
+ * - Interval expansion via the core C algorithm
+ *
+ * # Input JSON format
+ *
+ * ```json
+ * {
+ *   "tstart": [0, 0, ...],       // entry times (all 0 for right-censored)
+ *   "tstop": [1, 2, 3, ...],     // exit times
+ *   "status": [1, 2, 0, ...],    // 0=censor, 1..k=event types
+ *   "etype": 1,                   // event type of interest (1-based, default 1)
+ *   "strata": [0, 0, 1, ...],    // optional stratum indicators
+ *   "id": [1, 1, 2, 2, ...],     // optional subject IDs (required for counting process)
+ *   "weights": [1, 1, ...],      // optional case weights
+ *   "counting": false             // true if (start, stop] data
+ * }
+ * ```
+ */
+export function finegray_wasm(input_json: string): any;
+
+/**
  * WASM export for Fisher's exact test
  */
 export function fishers_exact_test_wasm(
@@ -393,6 +419,20 @@ export function glm_rstudent_wasm(result: any): any;
  * Returns coefficient table with test statistics and p-values
  */
 export function glm_summary_wasm(result: any): any;
+
+/**
+ * WASM export for clustered robust covariance matrix (sandwich::vcovCL)
+ *
+ * Accepts a JSON string with the specific fields needed by the sandwich
+ * estimator, avoiding circular reference issues in the full GlmResult.
+ */
+export function glm_vcov_cl_wasm(
+  sandwich_input_json: string,
+  cluster: any,
+  hc_type: string,
+  cadjust: boolean,
+  fix: boolean,
+): any;
 
 /**
  * WASM export for GLMM fitting
@@ -894,6 +934,20 @@ export function t_test_two_sample_independent(
   alternative: string,
   pooled: boolean,
 ): any;
+
+/**
+ * WASM export for target trial emulation.
+ *
+ * Runs the full pipeline in Rust: expand → weights → model → survival → hazard → bootstrap.
+ *
+ * # Arguments
+ * * `config_json` - JSON string containing `TargetTrialConfig`
+ * * `data_json` - JSON string containing `ColumnarData` (numeric + categorical columns)
+ *
+ * # Returns
+ * JsValue containing the `TargetTrialResult`
+ */
+export function target_trial_wasm(config_json: string, data_json: string): any;
 
 /**
  * WASM export for Tukey HSD test

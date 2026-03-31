@@ -24,7 +24,7 @@ const R_SOURCE_TEST = new URL(
 interface SummarySurvfitRef {
   time: number[];
   surv: number[];
-  nRisk: number[];
+  n_risk: number[];
   strata: number[];
 }
 

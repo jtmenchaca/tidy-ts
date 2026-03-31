@@ -56,6 +56,7 @@ Deno.test("nested: coxph fit matches R", () => {
       age: complete.map((r) => r.age),
       "factor(sex)2": complete.map((r) => (r.sex === 2 ? 1 : 0)),
     },
+    method: "efron",
   });
   assertArrayClose(fit.coefficients, ref.fit_coef, TOL, "coef");
   assertArrayClose(fit.loglik, ref.fit_loglik, TOL, "loglik");
@@ -69,6 +70,7 @@ Deno.test("nested: survfitCox at newdata[1] matches R", () => {
       age: complete.map((r) => r.age),
       "factor(sex)2": complete.map((r) => (r.sex === 2 ? 1 : 0)),
     },
+    method: "efron",
   });
 
   // Predict at first newdata row: age=74, sex=1 -> factor(sex)2=0
@@ -102,6 +104,7 @@ Deno.test("nested: survfitCox at newdata[5] matches R", () => {
       age: complete.map((r) => r.age),
       "factor(sex)2": complete.map((r) => (r.sex === 2 ? 1 : 0)),
     },
+    method: "efron",
   });
 
   // Predict at fifth newdata row: age=60, sex=1 -> factor(sex)2=0

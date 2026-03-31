@@ -40,7 +40,8 @@ Deno.test("infcox: multivariate Cox converges with near-infinite coefs", () => {
     time: test3.futime,
     status: test3.fustat,
     covariates: { x1: test3.x1, x2: test3.x2 },
-    options: { maxiter: 25 },
+    method: "efron",
+    maxiter: 25,
   });
 
   // Both coefficients should be strongly negative (< -22)
@@ -70,7 +71,8 @@ Deno.test("infcox: loglik at converged coef matches analytical formula", () => {
     time: test3.futime,
     status: test3.fustat,
     covariates: { x1: test3.x1, x2: test3.x2 },
-    options: { maxiter: 25 },
+    method: "efron",
+    maxiter: 25,
   });
 
   // Analytical loglik formula from infcox.R lines 27-33

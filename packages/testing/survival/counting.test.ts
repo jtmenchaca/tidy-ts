@@ -86,7 +86,8 @@ Deno.test("counting: coefficients match at iter=0", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
-    options: { maxiter: 0 },
+    method: "efron",
+    maxiter: 0,
   });
 
   const fit0b = coxphCounting({
@@ -112,6 +113,7 @@ Deno.test("counting: converged coefficients match", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
+    method: "efron",
   });
 
   const fitb = coxphCounting({

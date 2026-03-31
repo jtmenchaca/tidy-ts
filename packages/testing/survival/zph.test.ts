@@ -58,7 +58,7 @@ Deno.test("zph: coxph Breslow fit matches R", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   assertClose(fit.coefficients[0], ref.coef, TOL, "coef");

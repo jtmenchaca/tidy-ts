@@ -3,7 +3,7 @@
 // Tests the quantile routine for survfit objects
 //
 // Coverage of quantile.R:
-// [x] survfit on inline test1 data — time, surv, nRisk, nEvent
+// [x] survfit on inline test1 data — time, surv, n_risk, n_event
 // [x] R reference extraction for quantile values
 // [ ] quantile(survfit, probs) — needs TS quantile wrapper
 // [ ] Quantile with confidence intervals — needs TS wrapper
@@ -32,8 +32,8 @@ const R_SOURCE_TEST = new URL("./quantile-source-test.R", import.meta.url)
 interface QuantileRef {
   surv: number[];
   time: number[];
-  nRisk: number[];
-  nEvent: number[];
+  n_risk: number[];
+  n_event: number[];
   quantiles: (number | null)[];
   qq: number[];
   probs: number[];
@@ -58,8 +58,8 @@ Deno.test("quantile: survfit on inline test1 data", () => {
   // Verify survival curve matches R
   assertArrayClose(fit.time, ref.time, TOL_EXACT, "time");
   assertArrayClose(fit.surv, ref.surv, TOL, "surv");
-  assertArrayClose(fit.nRisk, ref.nRisk, TOL_EXACT, "nRisk");
-  assertArrayClose(fit.nEvent, ref.nEvent, TOL_EXACT, "nEvent");
+  assertArrayClose(fit.nRisk, ref.n_risk, TOL_EXACT, "n_risk");
+  assertArrayClose(fit.nEvent, ref.n_event, TOL_EXACT, "n_event");
 });
 
 Deno.test("quantile: quantile computation (stub)", () => {

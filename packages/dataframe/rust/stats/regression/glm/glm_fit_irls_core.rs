@@ -290,7 +290,7 @@ pub fn run_irls_iteration(
 
         // Deviance calculated
 
-        if control.trace {
+        if control.trace != 0 {
             println!("Deviance = {} Iterations - {}", dev, iter_count);
         }
 
@@ -347,7 +347,7 @@ pub fn run_irls_iteration(
             *eta = current_eta;
             *mu = current_mu;
 
-            if control.trace {
+            if control.trace != 0 {
                 println!("Step halved: new deviance = {}", current_dev);
             }
         }
@@ -403,14 +403,96 @@ pub fn run_irls_iteration(
             *mu = current_mu;
             let current_dev = dev_resids(y, mu, weights).iter().sum::<f64>();
 
-            if control.trace {
+            if control.trace != 0 {
                 println!("Step halved: new deviance = {}", current_dev);
             }
         }
 
+        // Recalculate deviance after any step-halving adjustments
+        let dev = deviance_fn
+            .deviance(y, mu, weights)
+            .map_err(|e| format!("Failed to calculate deviance after step halving: {}", e))?;
+
+        // Check for increasing deviance - step halving (inner loop 3)
+        // This is the Marschner (2011) "glm2" approach: if deviance increased,
+        // halve the step until it decreases or we hit the iteration limit.
+        if iter_count > 1 && (dev - *devold) / (0.1 + dev.abs()) >= control.epsilon {
+            if coefold.is_none() {
+                return Err(
+                    "no valid set of coefficients has been found: please supply starting values"
+                        .to_string(),
+                );
+            }
+
+            let mut ii = 1;
+            let mut current_coef = coef.clone();
+            let mut current_eta = eta.clone();
+            let mut current_mu = mu.clone();
+            let mut current_dev = dev;
+
+            while (current_dev - *devold) / (0.1 + current_dev.abs()) >= -control.epsilon {
+                if ii > control.maxit {
+                    return Err("inner loop 3; cannot correct step size".to_string());
+                }
+                ii += 1;
+
+                // Halve the step size
+                current_coef = coefold
+                    .as_ref()
+                    .unwrap()
+                    .iter()
+                    .zip(current_coef.iter())
+                    .map(|(old, new)| {
+                        let old_val = if old.is_nan() { 0.0 } else { *old };
+                        let new_val = if new.is_nan() { 0.0 } else { *new };
+                        (old_val + new_val) / 2.0
+                    })
+                    .collect();
+
+                // Recalculate eta and mu
+                current_eta = offset
+                    .iter()
+                    .enumerate()
+                    .map(|(i, &o)| {
+                        o + x[i]
+                            .iter()
+                            .zip(current_coef.iter())
+                            .map(|(x_ij, &c_j)| {
+                                if c_j.is_nan() {
+                                    0.0
+                                } else {
+                                    x_ij * c_j
+                                }
+                            })
+                            .sum::<f64>()
+                    })
+                    .collect();
+                current_mu = linkinv(&current_eta);
+                current_dev = deviance_fn.deviance(y, &current_mu, weights).unwrap_or(f64::INFINITY);
+            }
+
+            *boundary = true;
+            *coef = current_coef;
+            *eta = current_eta;
+            *mu = current_mu;
+
+            if control.trace != 0 {
+                println!(
+                    "Step halved (increasing deviance): new deviance = {}",
+                    current_dev
+                );
+            }
+        }
+
         // Check for convergence
+        // Recalculate final deviance after all step-halving
+        let dev = deviance_fn
+            .deviance(y, mu, weights)
+            .map_err(|e| format!("Failed to calculate final deviance: {}", e))?;
+
         if (dev - *devold).abs() / (0.1 + dev.abs()) < control.epsilon {
             *conv = true;
+            *devold = dev;
             break;
         } else {
             *devold = dev;

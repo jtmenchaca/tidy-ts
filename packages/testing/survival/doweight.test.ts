@@ -91,7 +91,7 @@ Deno.test("doweight: weighted coxph Breslow iter=0", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", maxiter: 0, weights: testw1.wt },
+    method: "breslow", maxiter: 0, weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.b0_coef, TOL_EXACT, "coef");
@@ -104,7 +104,7 @@ Deno.test("doweight: weighted Breslow iter=0 residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", maxiter: 0, weights: testw1.wt },
+    method: "breslow", maxiter: 0, weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -142,7 +142,7 @@ Deno.test("doweight: weighted Breslow converged", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.b_coef, TOL, "coef");
@@ -156,7 +156,7 @@ Deno.test("doweight: weighted Breslow converged residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -195,7 +195,7 @@ Deno.test("doweight: weighted Breslow matches replicated data", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   // Replicated data fit
@@ -203,7 +203,7 @@ Deno.test("doweight: weighted Breslow matches replicated data", () => {
     time: testw2.time,
     status: testw2.status,
     covariates: { x: testw2.x },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   assertClose(fitW.coefficients[0], fitR.coefficients[0], TOL, "coef");
@@ -218,7 +218,7 @@ Deno.test("doweight: weighted Efron iter=0", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "efron", maxiter: 0, weights: testw1.wt },
+    method: "efron", maxiter: 0, weights: testw1.wt,
   });
 
   assertClose(fit.loglik[0], ref.e0_loglik, TOL, "loglik");
@@ -230,7 +230,7 @@ Deno.test("doweight: weighted Efron converged", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "efron", weights: testw1.wt },
+    method: "efron", weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.e_coef, TOL, "coef");
@@ -244,13 +244,13 @@ Deno.test("doweight: Efron loglik matches analytical formula", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "efron", maxiter: 0, weights: testw1.wt },
+    method: "efron", maxiter: 0, weights: testw1.wt,
   });
   const fit = coxph({
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "efron", weights: testw1.wt },
+    method: "efron", weights: testw1.wt,
   });
 
   // lfun(0) should match iter=0 loglik
@@ -264,7 +264,7 @@ Deno.test("doweight: weighted Efron converged residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "efron", weights: testw1.wt },
+    method: "efron", weights: testw1.wt,
   });
 
   const mart = coxResiduals({

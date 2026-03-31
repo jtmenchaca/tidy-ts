@@ -68,7 +68,6 @@ Deno.test("outerJoin - empty left dataframe", () => {
     { id: 2, homeworld: "Kashyyyk" },
   ]);
 
-  // @ts-expect-error - id does not exist in empty
   const result = empty.outerJoin(planets, "id");
 
   expect(result.toArray()).toEqual([

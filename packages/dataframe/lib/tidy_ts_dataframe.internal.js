@@ -1389,6 +1389,46 @@ export function dunn_test_wasm(data, group_sizes, alpha) {
 }
 
 /**
+ * Fine-Gray competing risks data transformation.
+ *
+ * Ports the full R `finegray()` function including:
+ * - Censoring distribution G(t) via Kaplan-Meier
+ * - Truncation distribution H(t) for delayed entry (Geskus 2011)
+ * - Per-stratum processing
+ * - Interval expansion via the core C algorithm
+ *
+ * # Input JSON format
+ *
+ * ```json
+ * {
+ *   "tstart": [0, 0, ...],       // entry times (all 0 for right-censored)
+ *   "tstop": [1, 2, 3, ...],     // exit times
+ *   "status": [1, 2, 0, ...],    // 0=censor, 1..k=event types
+ *   "etype": 1,                   // event type of interest (1-based, default 1)
+ *   "strata": [0, 0, 1, ...],    // optional stratum indicators
+ *   "id": [1, 1, 2, 2, ...],     // optional subject IDs (required for counting process)
+ *   "weights": [1, 1, ...],      // optional case weights
+ *   "counting": false             // true if (start, stop] data
+ * }
+ * ```
+ * @param {string} input_json
+ * @returns {any}
+ */
+export function finegray_wasm(input_json) {
+  const ptr0 = passStringToWasm0(
+    input_json,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.finegray_wasm(ptr0, len0);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
+}
+
+/**
  * WASM export for Fisher's exact test
  * @param {number} a
  * @param {number} b
@@ -1730,6 +1770,52 @@ export function glm_rstudent_wasm(result) {
  */
 export function glm_summary_wasm(result) {
   const ret = wasm.glm_summary_wasm(result);
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * WASM export for clustered robust covariance matrix (sandwich::vcovCL)
+ *
+ * Accepts a JSON string with the specific fields needed by the sandwich
+ * estimator, avoiding circular reference issues in the full GlmResult.
+ * @param {string} sandwich_input_json
+ * @param {any} cluster
+ * @param {string} hc_type
+ * @param {boolean} cadjust
+ * @param {boolean} fix
+ * @returns {any}
+ */
+export function glm_vcov_cl_wasm(
+  sandwich_input_json,
+  cluster,
+  hc_type,
+  cadjust,
+  fix,
+) {
+  const ptr0 = passStringToWasm0(
+    sandwich_input_json,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    hc_type,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_vcov_cl_wasm(
+    ptr0,
+    len0,
+    cluster,
+    ptr1,
+    len1,
+    cadjust,
+    fix,
+  );
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -3096,6 +3182,41 @@ export function t_test_two_sample_independent(
     len2,
     pooled,
   );
+  if (ret[2]) {
+    throw takeFromExternrefTable0(ret[1]);
+  }
+  return takeFromExternrefTable0(ret[0]);
+}
+
+/**
+ * WASM export for target trial emulation.
+ *
+ * Runs the full pipeline in Rust: expand → weights → model → survival → hazard → bootstrap.
+ *
+ * # Arguments
+ * * `config_json` - JSON string containing `TargetTrialConfig`
+ * * `data_json` - JSON string containing `ColumnarData` (numeric + categorical columns)
+ *
+ * # Returns
+ * JsValue containing the `TargetTrialResult`
+ * @param {string} config_json
+ * @param {string} data_json
+ * @returns {any}
+ */
+export function target_trial_wasm(config_json, data_json) {
+  const ptr0 = passStringToWasm0(
+    config_json,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    data_json,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.target_trial_wasm(ptr0, len0, ptr1, len1);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }

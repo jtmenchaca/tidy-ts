@@ -3,7 +3,7 @@
 // Tests modified Dory-Korn confidence interval
 //
 // Coverage of survfit2.R:
-// [x] L5-9:  basic survfit on synthetic data — verify surv, stdErr, cumhaz
+// [x] L5-9:  basic survfit on synthetic data — verify surv, std_err, cumhaz
 // [ ] L8:    conf.lower='modified' — not exposed in WASM survfit options
 // [ ] L11-13: modified lower CI formula — needs conf.lower option in WASM
 
@@ -21,14 +21,14 @@ const R_SOURCE_TEST = new URL("./survfit2-source-test.R", import.meta.url)
 interface Survfit2Ref {
   time: number[];
   surv: number[];
-  stdErr: number[];
+  std_err: number[];
   cumhaz: number[];
   modified_lower: number[];
   expected_lower: number[];
   regular_lower: number[];
   regular_upper: number[];
-  nRisk: number[];
-  nEvent: number[];
+  n_risk: number[];
+  n_event: number[];
 }
 
 const ref = getReferenceFromRScript<Survfit2Ref>(R_SOURCE_TEST);
@@ -41,13 +41,13 @@ Deno.test("survfit2: basic survfit on synthetic data", () => {
 
   assertArrayClose(fit.time, ref.time, TOL_EXACT, "time");
   assertArrayClose(fit.surv, ref.surv, TOL, "surv");
-  assertArrayClose(fit.nRisk, ref.nRisk, TOL_EXACT, "nRisk");
-  assertArrayClose(fit.nEvent, ref.nEvent, TOL_EXACT, "nEvent");
+  assertArrayClose(fit.nRisk, ref.n_risk, TOL_EXACT, "n_risk");
+  assertArrayClose(fit.nEvent, ref.n_event, TOL_EXACT, "n_event");
 });
 
 Deno.test("survfit2: modified Dory-Korn lower CI", () => {
   // TODO: conf.lower='modified' option not yet exposed in WASM survfit
-  // The formula multiplies stdErr by sqrt(nRisk_at_event / nRisk_at_time)
+  // The formula multiplies std_err by sqrt(n_risk_at_event / n_risk_at_time)
   // to get a modified lower bound
   //
   // When implemented, verify:

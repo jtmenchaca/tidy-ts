@@ -54,7 +54,6 @@ Deno.test("innerJoin - empty left dataframe", () => {
     { id: 2, homeworld: "Kashyyyk" },
   ]);
 
-  // @ts-expect-error - id does not exist in empty
   const result = empty.innerJoin(planets, "id");
 
   result.print();

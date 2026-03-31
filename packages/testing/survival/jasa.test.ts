@@ -84,6 +84,7 @@ Deno.test("jasa: simple age model coxph(futime, fustat) ~ age-48", () => {
     covariates: {
       age_centered: jasa.map((r) => r.age - 48),
     },
+    method: "efron",
   });
 
   assertClose(fit.coefficients[0], ref.fit1_coef, TOL, "fit1 coef");

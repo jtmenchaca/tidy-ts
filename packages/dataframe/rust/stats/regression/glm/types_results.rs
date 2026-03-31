@@ -82,10 +82,10 @@ pub struct GlmResult {
     pub y: Vec<f64>,
 
     // Convergence and Control (19-21)
-    /// Whether the algorithm converged (19. converged)
-    pub converged: bool,
-    /// Whether the algorithm stopped at boundary (20. boundary)
-    pub boundary: bool,
+    /// Whether the algorithm converged (19. converged) - u8 to avoid serde_wasm_bindgen bool corruption
+    pub converged: u8,
+    /// Whether the algorithm stopped at boundary (20. boundary) - u8 to avoid serde_wasm_bindgen bool corruption
+    pub boundary: u8,
     /// Model frame (21. model)
     pub model: ModelFrame,
 
@@ -196,14 +196,20 @@ pub struct GlmResult {
     pub pivot: Vec<i32>,
     /// Tolerance used in QR decomposition (for backward compatibility)
     pub tol: f64,
-    /// Whether pivoting was used (for backward compatibility)
-    pub pivoted: bool,
+    /// Whether pivoting was used (for backward compatibility) - u8 to avoid serde_wasm_bindgen bool corruption
+    pub pivoted: u8,
     /// NA action (for backward compatibility)
     pub na_action: Option<String>,
     /// Dispersion parameter (for backward compatibility)
     pub dispersion: f64,
     /// Design matrix (for backward compatibility)
     pub x: Option<ModelMatrix>,
+
+    // Pre-computed confidence intervals (computed at fit time to avoid serde_wasm_bindgen round-trip issues)
+    /// Lower bounds of 95% confidence intervals for coefficients
+    pub confint_lower: Vec<f64>,
+    /// Upper bounds of 95% confidence intervals for coefficients
+    pub confint_upper: Vec<f64>,
 }
 
 // GlmResult now derives Clone automatically via #[derive(Clone)]
@@ -258,8 +264,8 @@ impl GlmResult {
             y: Vec::new(),
 
             // Convergence and Control (19-21)
-            converged: false,
-            boundary: false,
+            converged: 0,
+            boundary: 0,
             model: ModelFrame {
                 y: Vec::new(),
                 predictors: HashMap::new(),
@@ -315,10 +321,12 @@ impl GlmResult {
             qr_rank: 0,
             pivot: Vec::new(),
             tol: 1e-11,
-            pivoted: false,
+            pivoted: 0,
             na_action: None,
             dispersion: 1.0,
             x: None,
+            confint_lower: Vec::new(),
+            confint_upper: Vec::new(),
         }
     }
 
@@ -336,7 +344,7 @@ impl GlmResult {
     }
 
     pub fn is_converged(&self) -> bool {
-        self.converged
+        self.converged != 0
     }
 
     // Derived statistics methods
@@ -464,12 +472,12 @@ impl GlmResult {
 
     /// Check if model has converged
     pub fn converged(&self) -> bool {
-        self.converged
+        self.converged != 0
     }
 
     /// Check if model hit boundary
     pub fn boundary(&self) -> bool {
-        self.boundary
+        self.boundary != 0
     }
 
     /// Get family name
@@ -666,9 +674,9 @@ pub struct GlmSummary {
     /// Symbolic correlation (if requested)
     pub symbolic_cor: Option<bool>,
     /// Whether the algorithm converged
-    pub converged: bool,
+    pub converged: u8,
     /// Whether the algorithm stopped at boundary
-    pub boundary: bool,
+    pub boundary: u8,
 }
 
 /// Information about a coefficient

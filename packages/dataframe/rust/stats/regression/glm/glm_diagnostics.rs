@@ -545,7 +545,7 @@ impl GlmResult {
         let control = GlmControl {
             epsilon: self.control.epsilon,
             maxit: self.control.maxit,
-            trace: false, // Don't trace during profiling
+            trace: 0, // Don't trace during profiling
         };
 
         // Fit the constrained model

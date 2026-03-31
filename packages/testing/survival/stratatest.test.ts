@@ -84,6 +84,7 @@ Deno.test("stratatest: right-censored unstratified fit", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
+    method: "efron",
   });
   assertClose(fit.coefficients[0], ref.fit1_coef, TOL, "coef");
   assertClose(fit.loglik[0], ref.fit1_loglik[0], TOL, "loglik[0]");
@@ -96,6 +97,7 @@ Deno.test("stratatest: right-censored unstratified residuals", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
+    method: "efron",
   });
 
   const mart = coxResiduals({
@@ -142,7 +144,8 @@ Deno.test("stratatest: right-censored stratified fit matches", () => {
     time: dupTime,
     status: dupStatus,
     covariates: { x: dupX },
-    options: { strata },
+    method: "efron",
+    strata,
   });
   assertClose(fit.coefficients[0], ref.fit1_coef, TOL, "coef matches unstratified");
 });
@@ -158,7 +161,8 @@ Deno.test("stratatest: right-censored stratified residuals match", () => {
     time: dupTime,
     status: dupStatus,
     covariates: { x: dupX },
-    options: { strata },
+    method: "efron",
+    strata,
   });
 
   const mart = coxResiduals({

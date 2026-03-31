@@ -63,6 +63,15 @@ export interface ConcordanceResult {
   resid: number[][] | null;
 }
 
+export interface FineGrayResult {
+  row: number[];
+  start: number[];
+  stop: number[];
+  status: number[];
+  wt: number[];
+  add: number[];
+}
+
 export interface SurvfitCoxResult {
   time: number[];
   nRisk: number[];
@@ -385,4 +394,38 @@ export function coxResidualsCounting({
       ...(options ?? {}),
     }),
   );
+}
+
+export function finegray({
+  tstop,
+  status,
+  tstart,
+  etype,
+  strata,
+  id,
+  weights,
+  counting,
+}: {
+  tstop: number[];
+  status: number[];
+  tstart?: number[];
+  etype?: number;
+  strata?: number[];
+  id?: number[];
+  weights?: number[];
+  counting?: boolean;
+}): FineGrayResult {
+  initWasm();
+  return wasmInternal.finegray_wasm(
+    JSON.stringify({
+      tstart: tstart ?? tstop.map(() => 0),
+      tstop,
+      status,
+      etype,
+      strata,
+      id,
+      weights,
+      counting,
+    }),
+  ) as FineGrayResult;
 }

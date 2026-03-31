@@ -8,14 +8,14 @@ test("Transforming Data - Basic Mutate", () => {
     { id: 2, name: "C-3PO", species: "Droid", mass: 75, height: 167 },
   ]);
 
-  const withBmi = people
+  const withBmi = people 
     .mutate({
       bmi: (row) => row.mass / Math.pow(row.height / 100, 2),
       // Arrays can be assigned directly in mutate
       row_id: [1, 2],
       category: ["A", "B"],
     });
-
+ 
   withBmi.print("Basic Mutate with Direct Array Assignment:");
 
   expect(withBmi.ncols()).toBe(8);
@@ -103,7 +103,7 @@ test("Transforming Data - Object Returns", () => {
 
   expect(filtered.nrows()).toBe(2);
 });
-
+ 
 test("Transforming Data - Using Stats Functions", () => {
   const people = createDataFrame([
     { id: 1, name: "Luke", species: "Human", mass: 77, height: 172 },

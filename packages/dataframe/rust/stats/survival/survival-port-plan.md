@@ -58,7 +58,7 @@ If a tier is partially complete, say exactly what is and isn't done. Do not say 
 
 ## Current Status (2026-03-30)
 
-**Tiers 1–3: COMPLETE** — 22 Rust modules, **148 tests passing across 47 test files**, 0 failing.
+**Tiers 1–3: COMPLETE** — 22 Rust modules. **Tier 4 partial** — Fine-Gray competing risks implemented. **152 tests passing across 48 test files**, 0 failing.
 
 | Tier | Status | Modules | Tests |
 |------|--------|---------|-------|
@@ -66,8 +66,8 @@ If a tier is partially complete, say exactly what is and isn't done. Do not say 
 | 2 (Cox PH) | **Complete** | 4 | 18 |
 | 2b (Counting Process) | **Complete** | 2 | 7 |
 | 3 (Diagnostics) | **Complete** | 12 | 59 |
-| Integration tests | **Complete** | — | 148 |
-| 4 (Extensions) | Not started | — | — |
+| 4 (Extensions) | **Partial** — Fine-Gray | 1 | 4 |
+| Integration tests | **Complete** | — | 152 |
 
 **Naming divergences from original plan:**
 - `cox_partial_likelihood.rs` + `cox_fitting.rs` → merged into `cox_regression.rs`
@@ -87,7 +87,7 @@ If a tier is partially complete, say exactly what is and isn't done. Do not say 
 - WASM bindings implemented in `wasm.rs` (consolidated, not separate files)
 - TypeScript wrappers in `survival-functions.ts`
 - Integration test infrastructure: `survival-test-helpers.ts`, R source test companion scripts
-- **148/148 integration tests passing across 47 test files** ported from R source tests:
+- **152/152 integration tests passing across 48 test files** ported from R source tests:
 
   **Tier 1 — KM + Foundation (28 tests, 10 files):**
   - `doaml.test.ts` — 14 tests (Cox PH, residuals, KM survfit, survdiff, Cox survfit, counting process)
@@ -143,6 +143,9 @@ If a tier is partially complete, say exactly what is and isn't done. Do not say 
   - `predsurv.test.ts` — 1 test (survival predictions)
   - `brier.test.ts` — 1 test (Brier score)
   - `quantile.test.ts` — 2 tests (survfit quantile computation)
+
+  **Tier 4 — Fine-Gray Competing Risks (4 tests, 1 file):**
+  - `finegray.test.ts` — 4 tests (right-censored etype=1, etype=2, stratified, left truncation with delayed entry)
 
 **WASM gaps fixed during integration:**
 - [x] `coxph` `init` option (fixed iteration count) — needed by book1/book2
@@ -316,7 +319,7 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 
 | C Source | Functions | Purpose | Dependencies | Rust Target |
 |----------|-----------|---------|-------------|-------------|
-| `finegray.c` | `finegray()` | Data transformation for Fine-Gray subdistribution hazard: creates weighted pseudo-observations with IPCW weights | — | `fine_gray_transform.rs` (Tier 4) |
+| `finegray.c` | `finegray()` | Data transformation for Fine-Gray subdistribution hazard: creates weighted pseudo-observations with IPCW weights | — | `fine_gray_transform.rs` ✅ |
 
 ### Person-Years & Expected Events
 
@@ -604,7 +607,7 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 | `parametric_aft.rs` | `survreg6.c` | Parametric AFT fitting (Weibull, exp, log-normal, log-logistic) |
 | `parametric_aft_likelihood.rs` | `survregc1.c`, `survregc2.c` | Log-likelihood for parametric models |
 | `parametric_aft_penalized.rs` | `survreg7.c`, `survpenal.c` | Penalized parametric models |
-| `fine_gray_transform.rs` | `finegray.c` | Data transformation for competing risks |
+| `fine_gray_transform.rs` | `finegray.c` | Data transformation for competing risks ✅ |
 | `aalen_johansen.rs` | `survfitaj.c` | Multi-state survival curves |
 | `matrix_exponential.rs` | `cdecomp.c` | Eigendecomposition for transition matrices |
 | `person_years.rs` | `pyears1.c`, `pyears2.c`, `pyears3b.c`, `pystep.c` | Person-years tabulation |
@@ -614,6 +617,28 @@ Every C file in `survival-ref/survival-master/src/` is listed below with its pur
 | `logistic_distribution.rs` | R base `dlogis/plogis/qlogis` | Logistic distribution (needed by survreg) |
 | `extreme_value_distribution.rs` | R survreg.distributions | Gumbel/extreme value (needed by survreg Weibull) |
 | `eigendecomposition.rs` | R base `eigen()` | Eigenvalues/vectors (needed by multi-state) |
+
+**Tier 4 Checklist (completed items):**
+- [x] `fine_gray_transform.rs` — port `finegray.c` (core interval expansion algorithm) — 5 Rust unit tests
+  - [x] Row indexing, start/end/wt/add output arrays
+  - [x] Extend logic: competing event subjects extended forward with IPCW weights
+  - [x] Keep filtering (observations outside risk set)
+  - [x] NaN passthrough for censoring probabilities
+- [x] `finegray_wasm` — full R `finegray.R` orchestration in Rust (~300 lines):
+  - [x] Right-censored data (2-column Surv)
+  - [x] Counting process / left truncation (3-column Surv with delayed entry)
+  - [x] Multi-event type selection (etype parameter)
+  - [x] Strata support (per-stratum censoring distributions)
+  - [x] Censoring distribution G(t) via internal `survfit_km` calls
+  - [x] Truncation distribution H(t) via reverse-time `survfit_km` (Geskus 2011, eq. 11)
+  - [x] Combined G(t)*H(t) weighting for delayed entry
+  - [x] `find_interval()` helper (R's `findInterval` with left_open, 1-based indexing)
+- [x] `finegray()` TypeScript wrapper in `survival-functions.ts`
+- [x] `finegray.test.ts` — 4 integration tests validated against R reference values:
+  - [x] Right-censored etype=1 (type1)
+  - [x] Right-censored etype=2 (type2)
+  - [x] Stratified (reprises test1 and test2 in single call)
+  - [x] Left truncation with delayed entry (counting process data)
 
 ---
 
@@ -721,7 +746,7 @@ Test files should be created as their corresponding Rust functionality is implem
 - **Tier 2 (Cox PH)**: `book1`, `book2`, `cancer`, `counting`, `coxsurv`–`coxsurv6`, `infcox`, `testnull`, `singtest`, `testreg`, `detail`
 - **Tier 2b (Counting process)**: `counting`, `bladder`, `jasa`
 - **Tier 3 (Diagnostics)**: `zph`, `concordance`–`concordance3`, `residms`, `residsf`, `r_resid`, `r_lung`, `brier`, `strata2`, `stratatest`, `prednew`, `predsurv`, `summary_survfit`, `summarydf`, `quantile`
-- **Tier 4 (Extensions)**: `survreg1`, `survreg2`, `finegray`, `fr_*`, `frailty`, `frank`, `mstate*`, `multi*`, `tmerge*`, `pyear`, `expected*`, `pspline`, `aareg`, `anova`, `yates*`, `pseudo`, `clogit`, `book1`–`book7`, `tt`, `tt2`, `turnbull`, `update`, remaining files
+- **Tier 4 (Extensions)**: `finegray` ✅, `survreg1`, `survreg2`, `fr_*`, `frailty`, `frank`, `mstate*`, `multi*`, `tmerge*`, `pyear`, `expected*`, `pspline`, `aareg`, `anova`, `yates*`, `pseudo`, `clogit`, `book1`–`book7`, `tt`, `tt2`, `turnbull`, `update`, remaining files
 
 ### Files That May Not Need a TypeScript Equivalent
 
@@ -752,6 +777,7 @@ The WASM layer (`packages/dataframe/rust/stats/survival/wasm.rs`) bridges Rust s
 | `cox_zph_wasm` | — | Proportional hazards test (not yet wrapped in TS) |
 | `survfit_cox_wasm` | `survfitCox()` | Survival curves from a fitted Cox model |
 | `coxph_counting_wasm` | `coxphCounting()` | Counting process (start-stop) Cox PH |
+| `finegray_wasm` | `finegray()` | Fine-Gray competing risks data transformation (IPCW weights) |
 
 ### Critical WASM Layer Conventions
 
@@ -823,7 +849,8 @@ markers[n - 1] = 1; // last obs is always end of stratum
 ```
 packages/dataframe/ts/wasm/
 └── survival-functions.ts     — coxph(), survfit(), survdiff(), coxResiduals(),
-                                survSplit(), concordance(), survfitCox(), coxphCounting()
+                                survSplit(), concordance(), survfitCox(), coxphCounting(),
+                                finegray()
 ```
 
 ---
@@ -836,5 +863,5 @@ packages/dataframe/ts/wasm/
 | 2 | 6 | 4 (coxfit6.c, cholesky2.c, chsolve2.c, chinv2.c, coxmart.c) | ~1500 |
 | 2b | 3 | 4 (agfit4.c, agmart.c, agmart3.c, agscore2/3.c) | ~800 |
 | 3 | 15 | 14 (coxsurv1-4.c, agsurv4/5.c, coxscho.c, zph1/2.c, concordance3/5.c, coxdetail.c, approx.c, etc.) | ~3000 |
-| 4 | 16+ | 20+ | ~4000+ |
+| 4 | 16+ (1 done) | 20+ (1 done) | ~4000+ |
 | **Total** | **47+** | **46+** | **~10500+** |

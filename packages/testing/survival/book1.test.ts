@@ -4,7 +4,7 @@
 //
 // Coverage of book1.R:
 // [x] L73-76:  coxph Breslow iter=0 (loglik, var, mart, scho, score)
-// [x] L80-83:  survfit from Cox iter=0 at x=0 (cumhaz, surv, stdErr^2)
+// [x] L80-83:  survfit from Cox iter=0 at x=0 (cumhaz, surv, std_err^2)
 // [x] L84:     score residuals at iter=0 (exact check)
 // [x] L86-87:  coxph Breslow iter=1 (coef)
 // [x] L93-95:  coxph Breslow converged (coef, loglik)
@@ -83,7 +83,7 @@ Deno.test("book1: coxph Breslow iter=0", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", maxiter: 0 },
+    method: "breslow", maxiter: 0,
   });
 
   assertClose(fit.loglik[0], ref.fit0_loglik, TOL, "loglik");
@@ -96,7 +96,7 @@ Deno.test("book1: residuals at iter=0 Breslow", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", maxiter: 0 },
+    method: "breslow", maxiter: 0,
   });
 
   // Martingale residuals
@@ -137,7 +137,7 @@ Deno.test("book1: survfit from Cox iter=0 at x=0", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", maxiter: 0 },
+    method: "breslow", maxiter: 0,
   });
 
   const sfit = survfitCox({
@@ -158,9 +158,9 @@ Deno.test("book1: survfit from Cox iter=0 at x=0", () => {
   assertArrayClose(sfit.time, ref.sfit0_time, TOL_EXACT, "time");
   assertArrayClose(sfit.cumhaz, ref.sfit0_cumhaz, TOL, "cumhaz");
   assertArrayClose(sfit.surv, ref.sfit0_surv, TOL, "surv");
-  // Check stdErr^2
+  // Check std_err^2
   const stderrSq = sfit.stdErr.map((s) => s * s);
-  assertArrayClose(stderrSq, ref.sfit0_stderr_sq, TOL, "stdErr^2");
+  assertArrayClose(stderrSq, ref.sfit0_stderr_sq, TOL, "std_err^2");
 });
 
 Deno.test("book1: coxph Breslow iter=1", () => {
@@ -168,7 +168,7 @@ Deno.test("book1: coxph Breslow iter=1", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", maxiter: 1 },
+    method: "breslow", maxiter: 1,
   });
 
   assertClose(fit.coefficients[0], ref.fit1_coef, TOL, "coef");
@@ -179,7 +179,7 @@ Deno.test("book1: coxph Breslow converged", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", eps: 1e-8, nocenter: true },
+    method: "breslow", eps: 1e-8, nocenter: true,
   });
 
   assertClose(fit.coefficients[0], ref.fit_coef, TOL, "coef");
@@ -193,7 +193,7 @@ Deno.test("book1: residuals at converged Breslow", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", eps: 1e-8, nocenter: true },
+    method: "breslow", eps: 1e-8, nocenter: true,
   });
 
   const mart = coxResiduals({
@@ -231,7 +231,7 @@ Deno.test("book1: survfit from converged Cox at x=0, censor=FALSE", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", eps: 1e-8, nocenter: true },
+    method: "breslow", eps: 1e-8, nocenter: true,
   });
 
   const sfit = survfitCox({
@@ -252,7 +252,7 @@ Deno.test("book1: survfit from converged Cox at x=0, censor=FALSE", () => {
   assertArrayClose(sfit.time, ref.sfit_nc_time, TOL_EXACT, "time");
   assertArrayClose(sfit.surv, ref.sfit_nc_surv, TOL, "surv");
   const stderrSq = sfit.stdErr.map((s) => s * s);
-  assertArrayClose(stderrSq, ref.sfit_nc_stderr_sq, TOL, "stdErr^2");
+  assertArrayClose(stderrSq, ref.sfit_nc_stderr_sq, TOL, "std_err^2");
 });
 
 Deno.test("book1: survfit from converged Cox at x=0, censor=TRUE", () => {
@@ -260,7 +260,7 @@ Deno.test("book1: survfit from converged Cox at x=0, censor=TRUE", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "breslow", eps: 1e-8, nocenter: true },
+    method: "breslow", eps: 1e-8, nocenter: true,
   });
 
   const sfit = survfitCox({
@@ -282,5 +282,5 @@ Deno.test("book1: survfit from converged Cox at x=0, censor=TRUE", () => {
   assertArrayClose(sfit.surv, ref.sfit_surv, TOL, "surv");
   assertArrayClose(sfit.cumhaz, ref.sfit_cumhaz, TOL, "cumhaz");
   const stderrSq = sfit.stdErr.map((s) => s * s);
-  assertArrayClose(stderrSq, ref.sfit_stderr_sq, TOL, "stdErr^2");
+  assertArrayClose(stderrSq, ref.sfit_stderr_sq, TOL, "std_err^2");
 });

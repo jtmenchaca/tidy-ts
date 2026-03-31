@@ -12,7 +12,6 @@
 
 import {
   coxph,
-  type CoxphResult,
 } from "../../dataframe/ts/wasm/survival-functions.ts";
 import {
   assertArrayClose,
@@ -58,7 +57,8 @@ Deno.test("anova: nested coxph fit3 (ph.ecog + strata(sex))", () => {
     time: lung.map((r) => r.time),
     status: lung.map((r) => r.status - 1),
     covariates: { ph_ecog: lung.map((r) => r.ph_ecog!) },
-    options: { strata },
+    method: "efron",
+    strata,
   });
   assertClose(fit3.coefficients[0], ref.fit3_coef, TOL, "fit3 coef");
   assertArrayClose(fit3.loglik, ref.fit3_loglik, TOL, "fit3 loglik");
@@ -73,8 +73,9 @@ Deno.test("anova: nested coxph fit2 (ph.ecog + wt.loss + strata(sex))", () => {
     covariates: {
       ph_ecog: lung.map((r) => r.ph_ecog!),
       wt_loss: lung.map((r) => r.wt_loss!),
-    },
-    options: { strata },
+  },
+    method: "efron",
+    strata,
   });
   assertArrayClose(fit2.coefficients, ref.fit2_coef, TOL, "fit2 coef");
   assertArrayClose(fit2.loglik, ref.fit2_loglik, TOL, "fit2 loglik");
@@ -88,7 +89,8 @@ Deno.test("anova: loglik chain and chisq = 2 * diff(loglik)", () => {
     time: lung.map((r) => r.time),
     status: lung.map((r) => r.status - 1),
     covariates: { ph_ecog: lung.map((r) => r.ph_ecog!) },
-    options: { strata },
+    method: "efron",
+    strata,
   });
 
   const fit2 = coxph({
@@ -97,8 +99,9 @@ Deno.test("anova: loglik chain and chisq = 2 * diff(loglik)", () => {
     covariates: {
       ph_ecog: lung.map((r) => r.ph_ecog!),
       wt_loss: lung.map((r) => r.wt_loss!),
-    },
-    options: { strata },
+  },
+    method: "efron",
+    strata,
   });
 
   // R's anova loglik chain: [null, fit3, fit2]

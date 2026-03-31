@@ -30,7 +30,7 @@ interface CoxsurvRef {
   simple_time: number[];
   simple_surv: number[];
   simple_cumhaz: number[];
-  simple_stdErr: number[];
+  simple_std_err: number[];
   simple_n: number;
   offset_loglik_match: number;
   offset_loglik: number;
@@ -60,6 +60,7 @@ Deno.test("coxsurv: offset-only model loglik matches full model", () => {
       age: complete.map((r) => r.age),
       ph_ecog: complete.map((r) => r.ph_ecog!),
     },
+    method: "efron",
   });
 
   // Offset-only model should give the same loglik as the full model's final loglik
@@ -92,6 +93,7 @@ Deno.test("coxsurv: survfit from simple Cox model on lung", () => {
       age: complete.map((r) => r.age),
       sex: complete.map((r) => r.sex),
     },
+    method: "efron",
   });
 
   // survfitCox for the baseline (at covariate means)

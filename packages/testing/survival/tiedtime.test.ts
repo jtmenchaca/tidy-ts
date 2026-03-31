@@ -21,8 +21,8 @@ interface TiedtimeRef {
   strata: number[];
   time: number[];
   surv: number[];
-  nRisk: number[];
-  nEvent: number[];
+  n_risk: number[];
+  n_event: number[];
 }
 
 const ref = getReferenceFromRScript<TiedtimeRef>(R_SOURCE_TEST);

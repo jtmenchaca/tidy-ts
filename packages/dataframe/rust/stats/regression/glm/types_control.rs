@@ -13,8 +13,8 @@ pub struct GlmControl {
     pub epsilon: f64,
     /// Maximum number of iterations
     pub maxit: usize,
-    /// Whether to print iteration information
-    pub trace: bool,
+    /// Whether to print iteration information - u8 to avoid serde_wasm_bindgen bool corruption
+    pub trace: u8,
 }
 
 impl Default for GlmControl {
@@ -22,7 +22,7 @@ impl Default for GlmControl {
         Self {
             epsilon: 1e-8,
             maxit: 25,
-            trace: false,
+            trace: 0,
         }
     }
 }
@@ -38,7 +38,7 @@ impl GlmControl {
         Self {
             epsilon,
             maxit,
-            trace,
+            trace: trace as u8,
         }
     }
 

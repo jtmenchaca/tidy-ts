@@ -49,6 +49,7 @@ Deno.test("factor2: coxph with single factor predictor", () => {
       "factor(ph.ecog)2": complete.map((r) => (r.ph_ecog === 2 ? 1 : 0)),
       "factor(ph.ecog)3": complete.map((r) => (r.ph_ecog === 3 ? 1 : 0)),
     },
+    method: "efron",
   });
   assertArrayClose(fit.coefficients, ref.fit_coef, TOL, "coef");
   assertArrayClose(fit.loglik, ref.fit_loglik, TOL, "loglik");
@@ -79,6 +80,7 @@ Deno.test("factor2: coxph with two factor predictors", () => {
       "factor(ph.ecog)3": complete.map((r) => (r.ph_ecog === 3 ? 1 : 0)),
       "factor(sex)2": complete.map((r) => (r.sex === 2 ? 1 : 0)),
     },
+    method: "efron",
   });
   assertArrayClose(fit2.coefficients, ref.fit2_coef, TOL, "coef");
   assertArrayClose(fit2.loglik, ref.fit2_loglik, TOL, "loglik");

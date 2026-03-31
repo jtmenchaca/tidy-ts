@@ -1,0 +1,291 @@
+//! Main target trial emulation pipeline.
+//!
+//! Ported from `SEQTaRget/R/SEQuential.R`.
+//! Single entry point that orchestrates:
+//! expand → weights → outcome model → survival curves → hazard ratios → bootstrap → CIs
+
+use std::collections::HashMap;
+
+use super::bootstrap::bootstrap_resample;
+use super::covariates;
+use super::expand::expand;
+use super::glm_helpers::{init_formula_cache, FormulaCache};
+use super::hazard::{estimate_hazard_ratio, hazard_ratio_with_ci};
+use super::outcome_models::{fit_outcome_model, OutcomeModel};
+use super::risk_comparison::compute_risk_comparisons;
+use super::survival_curves::{
+    apply_survival_cis, generate_survival_curves, ArmSurvivalCurve,
+};
+use super::types::{
+    validate_config, AnalysisMethod, ColumnarData, TargetTrialConfig, TargetTrialResult,
+};
+use super::weights::{apply_cumulative_weights, compute_weights};
+
+/// Run the full target trial emulation pipeline.
+///
+/// This is the main entry point. It takes raw longitudinal data and configuration,
+/// then runs the entire pipeline: expand → weights → model → survival → hazard → bootstrap.
+///
+/// # Arguments
+/// * `data` - Raw longitudinal data (pre-expansion)
+/// * `config` - Full pipeline configuration
+///
+/// # Returns
+/// `TargetTrialResult` with survival curves, hazard ratios, risk comparisons, and diagnostics.
+pub fn target_trial_emulation(
+    data: &ColumnarData,
+    config: &TargetTrialConfig,
+) -> Result<TargetTrialResult, String> {
+    // 1. Validate configuration
+    validate_config(config)?;
+
+    // 2. Generate default formulas if not provided
+    let config = fill_default_formulas(config);
+
+    // 3. Initialize formula cache
+    let pipeline_cache = init_formula_cache(&config);
+    let outcome_cache = pipeline_cache
+        .covariates
+        .as_ref()
+        .ok_or("Outcome covariates formula is required")?
+        .clone();
+
+    // 4. Expand data (create trial structure)
+    let expanded = expand(data, &config)?;
+
+    // 5. Run the single-pass pipeline
+    let (outcome_model, final_weights, weight_diagnostics) =
+        run_single_pass(&expanded.data, data, &config, &outcome_cache)?;
+
+    // 6. Generate survival curves
+    let mut survival_curves = if config.km_curves {
+        generate_survival_curves(
+            &expanded.data,
+            &config,
+            &outcome_model,
+            &outcome_cache,
+            None,
+        )?
+    } else {
+        Vec::new()
+    };
+
+    // 7. Estimate hazard ratio
+    let point_hr = if config.hazard {
+        Some(estimate_hazard_ratio(
+            &expanded.data,
+            &config,
+            &outcome_model,
+            &outcome_cache,
+            config.bootstrap.seed,
+        )?)
+    } else {
+        None
+    };
+
+    // 8. Bootstrap
+    let mut boot_outcome_coefs = Vec::new();
+    let mut boot_hrs = Vec::new();
+    let mut boot_curves: Vec<Vec<ArmSurvivalCurve>> = Vec::new();
+
+    boot_outcome_coefs.push(outcome_model.result.coefficients.clone());
+
+    if config.bootstrap.enabled {
+        for i in 0..config.bootstrap.nboot {
+            let boot_seed = config.bootstrap.seed + (i as u64) + 1;
+
+            // Resample
+            let boot_data = bootstrap_resample(
+                &expanded.data,
+                &config,
+                boot_seed,
+                config.bootstrap.sample_fraction,
+            )?;
+            let boot_pre = bootstrap_resample(
+                data,
+                &config,
+                boot_seed,
+                config.bootstrap.sample_fraction,
+            )?;
+
+            // Run single pass on bootstrap sample
+            let (boot_model, _, _) =
+                run_single_pass(&boot_data, &boot_pre, &config, &outcome_cache)?;
+
+            boot_outcome_coefs.push(boot_model.result.coefficients.clone());
+
+            // Bootstrap survival curves
+            if config.km_curves {
+                if let Ok(bc) = generate_survival_curves(
+                    &boot_data,
+                    &config,
+                    &boot_model,
+                    &outcome_cache,
+                    None,
+                ) {
+                    boot_curves.push(bc);
+                }
+            }
+
+            // Bootstrap hazard ratio
+            if config.hazard {
+                if let Ok(hr) = estimate_hazard_ratio(
+                    &boot_data,
+                    &config,
+                    &boot_model,
+                    &outcome_cache,
+                    boot_seed,
+                ) {
+                    boot_hrs.push(hr);
+                }
+            }
+        }
+    }
+
+    // 9. Apply CIs to survival curves
+    let use_se = config.bootstrap.ci_method == super::types::CIMethod::SE;
+    if !boot_curves.is_empty() {
+        apply_survival_cis(
+            &mut survival_curves,
+            &boot_curves,
+            config.bootstrap.ci_level,
+            use_se,
+        );
+    }
+
+    // 10. Hazard ratio with CIs
+    let hazard_ratio = point_hr.map(|hr| {
+        hazard_ratio_with_ci(hr, &boot_hrs, config.bootstrap.ci_level, use_se)
+    });
+
+    // 11. Risk comparisons
+    let risk_comparisons = if config.km_curves && !survival_curves.is_empty() {
+        compute_risk_comparisons(
+            &survival_curves,
+            &boot_curves,
+            config.bootstrap.ci_level,
+            use_se,
+        )
+    } else {
+        Vec::new()
+    };
+
+    // 12. Build risk data
+    let risk_data: Vec<(String, f64, Option<f64>, Option<f64>)> = survival_curves
+        .iter()
+        .map(|c| {
+            let last = c.survival.last().unwrap();
+            (
+                c.arm.clone(),
+                1.0 - last.value,
+                last.lci.map(|v| 1.0 - v),
+                last.uci.map(|v| 1.0 - v),
+            )
+        })
+        .collect();
+
+    // 13. Assemble result
+    let mut survival_map = HashMap::new();
+    for curve in survival_curves {
+        survival_map.insert(curve.arm.clone(), curve.survival);
+    }
+
+    Ok(TargetTrialResult {
+        survival: survival_map,
+        hazard_ratio,
+        risk_comparisons,
+        risk_data,
+        weight_diagnostics: weight_diagnostics,
+        outcome_coefficients: boot_outcome_coefs,
+        outcome_coef_names: outcome_model.coef_names,
+        ce_coefficients: Vec::new(),
+        outcome_formula: config.covariates.unwrap_or_default(),
+        numerator_formula: config.numerator.unwrap_or_default(),
+        denominator_formula: config.denominator.unwrap_or_default(),
+    })
+}
+
+/// Run a single pass of the pipeline: weights → outcome model.
+fn run_single_pass(
+    expanded: &ColumnarData,
+    pre_data: &ColumnarData,
+    config: &TargetTrialConfig,
+    outcome_cache: &FormulaCache,
+) -> Result<(OutcomeModel, Option<Vec<f64>>, Option<super::types::WeightDiagnostics>), String> {
+    let (weights, diagnostics) = if config.weights.weighted {
+        let weight_output = compute_weights(expanded, pre_data, config)?;
+        let (w, d) = apply_cumulative_weights(&weight_output, expanded, config)?;
+        (Some(w), Some(d))
+    } else {
+        (None, None)
+    };
+
+    let outcome_model = fit_outcome_model(
+        expanded,
+        config,
+        outcome_cache,
+        weights.as_deref(),
+    )?;
+
+    Ok((outcome_model, weights, diagnostics))
+}
+
+/// Fill in default formula strings if not provided.
+fn fill_default_formulas(config: &TargetTrialConfig) -> TargetTrialConfig {
+    let mut config = config.clone();
+
+    if config.covariates.is_none() {
+        config.covariates = Some(covariates::default_outcome_covariates(&config));
+    }
+    if config.numerator.is_none() && config.method != AnalysisMethod::ITT {
+        config.numerator = Some(covariates::default_weight_covariates(
+            &config, "numerator",
+        ));
+    }
+    if config.denominator.is_none() && config.method != AnalysisMethod::ITT {
+        config.denominator = Some(covariates::default_weight_covariates(
+            &config, "denominator",
+        ));
+    }
+
+    config
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fill_default_formulas() {
+        let mut config = TargetTrialConfig::default();
+        config.id = "id".to_string();
+        config.time = "period".to_string();
+        config.treatment = "treatment".to_string();
+        config.outcome = "outcome".to_string();
+        config.eligible = "eligible".to_string();
+        config.time_varying = vec!["x1".to_string()];
+        config.fixed = vec!["age".to_string()];
+
+        let filled = fill_default_formulas(&config);
+        assert!(filled.covariates.is_some());
+        // ITT doesn't need weight formulas
+        assert!(filled.numerator.is_none());
+    }
+
+    #[test]
+    fn test_fill_default_formulas_censoring() {
+        let mut config = TargetTrialConfig::default();
+        config.id = "id".to_string();
+        config.time = "period".to_string();
+        config.treatment = "treatment".to_string();
+        config.outcome = "outcome".to_string();
+        config.eligible = "eligible".to_string();
+        config.method = AnalysisMethod::Censoring;
+        config.time_varying = vec!["x1".to_string()];
+
+        let filled = fill_default_formulas(&config);
+        assert!(filled.covariates.is_some());
+        assert!(filled.numerator.is_some());
+        assert!(filled.denominator.is_some());
+    }
+}

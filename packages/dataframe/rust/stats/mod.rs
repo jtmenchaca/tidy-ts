@@ -17,5 +17,7 @@ pub mod distributions;
 pub mod extensions;
 pub mod helpers;
 pub mod regression;
+pub mod splines;
 pub mod statistical_tests;
 pub mod survival;
+pub mod target_trial;

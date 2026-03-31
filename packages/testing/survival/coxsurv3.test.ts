@@ -30,7 +30,7 @@ interface Coxsurv3Ref {
   surv1_time: number[];
   surv1_surv: number[];
   surv1_cumhaz: number[];
-  surv1_stdErr: number[];
+  surv1_std_err: number[];
   true_lambda: number[];
   true_time: number[];
   true_cumhaz: number[];

@@ -53,7 +53,6 @@ Deno.test("rightJoin - empty left dataframe", () => {
   ]);
 
   const result = empty
-    // @ts-expect-error - empty dataframe
     .rightJoin(planets, "id");
 
   expect(result.toArray()).toEqual([

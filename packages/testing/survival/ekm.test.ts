@@ -21,10 +21,10 @@ interface EkmRef {
   n_id: number;
   n: number[];
   time: number[];
-  nRisk: number[];
+  n_risk: number[];
   n_enter: number[];
-  nEvent: number[];
-  nCensor: number[];
+  n_event: number[];
+  n_censor: number[];
   surv: number[];
   strata: number[];
 }

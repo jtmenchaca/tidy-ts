@@ -62,6 +62,7 @@ Deno.test("ovarian: full model coxph (4 predictors)", () => {
       rx: ovarian.map((r) => r.rx),
       ecog_ps: ovarian.map((r) => r.ecog_ps),
     },
+    method: "efron",
   });
   assertArrayClose(fit.coefficients, ref.fit_coef, TOL, "coef");
   assertArrayClose(fit.loglik, ref.fit_loglik, TOL, "loglik");
@@ -78,6 +79,7 @@ Deno.test("ovarian: martingale residuals", () => {
       rx: ovarian.map((r) => r.rx),
       ecog_ps: ovarian.map((r) => r.ecog_ps),
     },
+    method: "efron",
   });
   assertArrayClose(fit.residuals, ref.fit_mart, TOL, "mart resid");
 });
@@ -92,6 +94,7 @@ Deno.test("ovarian: deviance and score residuals", () => {
       rx: ovarian.map((r) => r.rx),
       ecog_ps: ovarian.map((r) => r.ecog_ps),
     },
+    method: "efron",
   });
 
   const dev = coxResiduals({
@@ -135,6 +138,7 @@ Deno.test("ovarian: schoenfeld residuals", () => {
       rx: ovarian.map((r) => r.rx),
       ecog_ps: ovarian.map((r) => r.ecog_ps),
     },
+    method: "efron",
   });
 
   const scho = coxResiduals({
@@ -170,8 +174,9 @@ Deno.test("ovarian: stratified coxph (strata(rx))", () => {
     covariates: {
       age: ovarian.map((r) => r.age),
       ecog_ps: ovarian.map((r) => r.ecog_ps),
-    },
-    options: { strata: ovarian.map((r) => r.rx - 1) },
+  },
+    method: "efron",
+    strata: ovarian.map((r) => r.rx - 1),
   });
   assertArrayClose(fit.coefficients, ref.fit_strat_coef, TOL, "strat coef");
   assertArrayClose(fit.loglik, ref.fit_strat_loglik, TOL, "strat loglik");
@@ -185,8 +190,9 @@ Deno.test("ovarian: offset model (age coef matches)", () => {
     covariates: {
       age: ovarian.map((r) => r.age),
       rx: ovarian.map((r) => r.rx),
-    },
-    options: { eps: 1e-8 },
+  },
+    method: "efron",
+    eps: 1e-8,
   });
   assertArrayClose(fit1.coefficients, ref.fit1_coef, TOL, "fit1 coef");
 
@@ -197,11 +203,10 @@ Deno.test("ovarian: offset model (age coef matches)", () => {
     status: ovarian.map((r) => r.fustat),
     covariates: {
       age: ovarian.map((r) => r.age),
-    },
-    options: {
-      eps: 1e-8,
+  },
+    method: "efron",
+    eps: 1e-8,
       offset: ovarian.map((r) => r.rx * rxCoef),
-    },
   });
   // age coefficient should be the same in both models
   assertClose(fit2.coefficients[0], ref.fit1_age_coef, TOL, "fit2 age coef == fit1 age coef");

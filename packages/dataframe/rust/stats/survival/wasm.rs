@@ -10,6 +10,7 @@ use super::cox_residuals::{coxmart, coxscho};
 use super::cox_residuals_derived::{deviance_residuals, dfbeta_residuals, dfbetas_residuals};
 use super::cox_score_residuals::coxscore2;
 use super::data_splitting::survsplit;
+use super::fine_gray_transform::finegray_transform;
 use super::kaplan_meier::{survfit_km, SurvfitConfig};
 use super::logrank_test::survdiff2;
 use super::proportional_hazards_test::zph1;
@@ -2218,4 +2219,471 @@ pub fn cox_residuals_counting_wasm(input_json: &str) -> Result<JsValue, JsValue>
             resid_type
         ))),
     }
+}
+
+// ── finegray ──────────────────────────────────────────────────────────────
+
+/// R's `findInterval(x, vec)`: for each x[i], find the index j such that
+/// vec[j] <= x[i] < vec[j+1]. Returns 1-based indices matching R convention
+/// (0 means before vec[0]).
+/// `vec` must be sorted ascending.
+/// When `left_open` is true, uses vec[j] < x[i] <= vec[j+1] (left-open intervals).
+fn find_interval(x: &[f64], vec: &[f64], left_open: bool) -> Vec<usize> {
+    x.iter()
+        .map(|&xi| {
+            if left_open {
+                // left-open: find largest j such that vec[j] < xi
+                // R returns 0 for xi <= vec[0]
+                match vec.iter().rposition(|&v| v < xi) {
+                    Some(j) => j + 1, // 1-based like R
+                    None => 0,
+                }
+            } else {
+                // Default: find largest j such that vec[j] <= xi
+                match vec.iter().rposition(|&v| v <= xi) {
+                    Some(j) => j + 1, // 1-based like R
+                    None => 0,
+                }
+            }
+        })
+        .collect()
+}
+
+/// Fine-Gray competing risks data transformation.
+///
+/// Ports the full R `finegray()` function including:
+/// - Censoring distribution G(t) via Kaplan-Meier
+/// - Truncation distribution H(t) for delayed entry (Geskus 2011)
+/// - Per-stratum processing
+/// - Interval expansion via the core C algorithm
+///
+/// # Input JSON format
+///
+/// ```json
+/// {
+///   "tstart": [0, 0, ...],       // entry times (all 0 for right-censored)
+///   "tstop": [1, 2, 3, ...],     // exit times
+///   "status": [1, 2, 0, ...],    // 0=censor, 1..k=event types
+///   "etype": 1,                   // event type of interest (1-based, default 1)
+///   "strata": [0, 0, 1, ...],    // optional stratum indicators
+///   "id": [1, 1, 2, 2, ...],     // optional subject IDs (required for counting process)
+///   "weights": [1, 1, ...],      // optional case weights
+///   "counting": false             // true if (start, stop] data
+/// }
+/// ```
+#[wasm_bindgen]
+pub fn finegray_wasm(input_json: &str) -> Result<JsValue, JsValue> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(input_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    // Parse required fields
+    let tstart_orig: Vec<f64> = serde_json::from_value(
+        parsed.get("tstart").cloned().unwrap_or(serde_json::Value::Array(vec![])),
+    ).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let tstop_orig: Vec<f64> = serde_json::from_value(
+        parsed.get("tstop").cloned().ok_or_else(|| JsValue::from_str("missing tstop"))?,
+    ).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let status_orig: Vec<i32> = serde_json::from_value(
+        parsed.get("status").cloned().ok_or_else(|| JsValue::from_str("missing status"))?,
+    ).map_err(|e| JsValue::from_str(&e.to_string()))?;
+
+    let n = tstop_orig.len();
+    if tstart_orig.len() != n || status_orig.len() != n {
+        return Err(JsValue::from_str("tstart, tstop, status must have same length"));
+    }
+
+    let enum_val = parsed.get("etype").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
+
+    let is_counting = parsed.get("counting").and_then(|v| v.as_bool()).unwrap_or(false);
+
+    let strata: Vec<i32> = if let Some(s) = parsed.get("strata") {
+        serde_json::from_value(s.clone()).map_err(|e| JsValue::from_str(&e.to_string()))?
+    } else {
+        vec![0i32; n]
+    };
+
+    let id: Option<Vec<i32>> = parsed.get("id").map(|v| {
+        serde_json::from_value::<Vec<i32>>(v.clone()).unwrap_or_default()
+    });
+
+    let user_weights: Vec<f64> = if let Some(w) = parsed.get("weights") {
+        serde_json::from_value(w.clone()).map_err(|e| JsValue::from_str(&e.to_string()))?
+    } else {
+        vec![1.0; n]
+    };
+
+    // For right-censored data (2-column Surv), add a start column
+    // R: if (ncol(Y)==2) { zero <- 0 or 2*min-1; Y <- cbind(zero, Y) }
+    let (tstart, tstop, status) = if !is_counting {
+        let min_time = tstop_orig.iter().copied().filter(|t| !t.is_nan()).fold(f64::INFINITY, f64::min);
+        let zero = if min_time > 0.0 { 0.0 } else { 2.0 * min_time - 1.0 };
+        let tstart_new = vec![zero; n];
+        (tstart_new, tstop_orig.clone(), status_orig.clone())
+    } else {
+        (tstart_orig.clone(), tstop_orig.clone(), status_orig.clone())
+    };
+
+    // Determine first/last observation per subject (needed for counting process)
+    let mut first_obs = vec![false; n];
+    let mut last_obs = vec![true; n]; // default: all are "last" for right-censored
+    let mut delay = false;
+
+    if is_counting {
+        let id_vec = id.as_ref().ok_or_else(|| {
+            JsValue::from_str("(start, stop] data requires a subject id")
+        })?;
+
+        // Sort by (id, tstop) to find first/last per subject
+        let mut index: Vec<usize> = (0..n).collect();
+        index.sort_by(|&a, &b| {
+            id_vec[a].cmp(&id_vec[b])
+                .then(tstop[a].partial_cmp(&tstop[b]).unwrap_or(std::cmp::Ordering::Equal))
+        });
+
+        // Find first occurrence of each id in sorted order
+        let mut first_indices = Vec::new();
+        let mut prev_id = i32::MIN;
+        for (pos, &orig_idx) in index.iter().enumerate() {
+            if id_vec[orig_idx] != prev_id {
+                first_indices.push(pos);
+                prev_id = id_vec[orig_idx];
+            }
+        }
+        let mut last_indices: Vec<usize> = first_indices[1..].iter().map(|&f| f - 1).collect();
+        last_indices.push(n - 1);
+
+        // Validate: no transitions before last time point
+        let last_set: std::collections::HashSet<usize> = last_indices.iter().copied().collect();
+        for pos in 0..n {
+            if !last_set.contains(&pos) {
+                let orig = index[pos];
+                if status[orig] != 0 {
+                    return Err(JsValue::from_str(
+                        "a subject has a transition before their last time point",
+                    ));
+                }
+            }
+        }
+
+        // Validate: no gaps in time
+        for pos in 0..n - 1 {
+            if !last_set.contains(&pos) {
+                let curr_orig = index[pos];
+                let next_orig = index[pos + 1];
+                if (tstart[next_orig] - tstop[curr_orig]).abs() > 1e-10 {
+                    return Err(JsValue::from_str("a subject has gaps in time"));
+                }
+            }
+        }
+
+        // Check for delayed entry
+        let min_tstop = tstop.iter().copied().filter(|t| !t.is_nan()).fold(f64::INFINITY, f64::min);
+        for &fi in &first_indices {
+            let orig = index[fi];
+            if tstart[orig] > min_tstop {
+                delay = true;
+                break;
+            }
+        }
+
+        // Map back to original indices
+        first_obs = vec![false; n];
+        last_obs = vec![false; n];
+        for &fi in &first_indices {
+            first_obs[index[fi]] = true;
+        }
+        for &li in &last_indices {
+            last_obs[index[li]] = true;
+        }
+    }
+
+    // Build unique time grid: utime = sort(unique(c(tstart, tstop)))
+    let mut utime: Vec<f64> = Vec::with_capacity(2 * n);
+    for i in 0..n {
+        if !tstart[i].is_nan() {
+            utime.push(tstart[i]);
+        }
+        if !tstop[i].is_nan() {
+            utime.push(tstop[i]);
+        }
+    }
+    utime.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    utime.dedup();
+
+    // Map times to integer grid indices: newtime = findInterval(Y[,1:2], utime)
+    // R's findInterval is 1-based
+    let newtime_start = find_interval(&tstart, &utime, false);
+    let newtime_stop = find_interval(&tstop, &utime, false);
+
+    // newtime[status != 0, 2] -= 0.2 (shift events so they precede censors at same time)
+    let newtime_stop_adj: Vec<f64> = (0..n)
+        .map(|i| {
+            let v = newtime_stop[i] as f64;
+            if status[i] != 0 { v - 0.2 } else { v }
+        })
+        .collect();
+    let newtime_start_f64: Vec<f64> = newtime_start.iter().map(|&v| v as f64).collect();
+
+    // Build censoring distribution G(t):
+    // Gsurv <- survfit(Surv(newtime[,1], newtime[,2], last & status==0) ~ istrat)
+    // Status for G: 1 if last_obs AND status==0 (censored), 0 otherwise
+    let g_status: Vec<i32> = (0..n)
+        .map(|i| if last_obs[i] && status[i] == 0 { 1 } else { 0 })
+        .collect();
+
+    // Compute G per stratum
+    let mut unique_strata: Vec<i32> = strata.clone();
+    unique_strata.sort();
+    unique_strata.dedup();
+    let nstrata = unique_strata.len();
+
+    // For each stratum, compute KM of censoring distribution
+    struct StratumKm {
+        time: Vec<f64>,
+        n_event: Vec<f64>,
+        surv: Vec<f64>,
+    }
+
+    let compute_km = |sub_start: &[f64], sub_stop: &[f64], sub_status: &[i32], sub_weights: &[f64]| -> StratumKm {
+        let data = SurvData::counting_process(sub_start, sub_stop, sub_status);
+        let config = SurvfitConfig {
+            surv_type: 1,
+            robust: false,
+            id: None,
+            nid: 0,
+            influence: 0,
+        };
+        let km = survfit_km(&data, sub_weights, &config);
+        StratumKm {
+            time: km.time,
+            n_event: km.n_event,
+            surv: km.surv,
+        }
+    };
+
+    // Compute G per stratum
+    let mut g_by_stratum: Vec<StratumKm> = Vec::with_capacity(nstrata);
+    for &s in &unique_strata {
+        let mask: Vec<bool> = strata.iter().map(|&si| si == s).collect();
+        let sub_start: Vec<f64> = mask.iter().zip(newtime_start_f64.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_stop: Vec<f64> = mask.iter().zip(newtime_stop_adj.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_status: Vec<i32> = mask.iter().zip(g_status.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_weights: Vec<f64> = vec![1.0; sub_start.len()];
+        g_by_stratum.push(compute_km(&sub_start, &sub_stop, &sub_status, &sub_weights));
+    }
+
+    // Compute H per stratum if delayed entry
+    // Hsurv <- survfit(Surv(-newtime[,2], -newtime[,1], first) ~ istrat)
+    let mut h_by_stratum: Vec<StratumKm> = Vec::new();
+    if delay {
+        for &s in &unique_strata {
+            let mask: Vec<bool> = strata.iter().map(|&si| si == s).collect();
+            let sub_start: Vec<f64> = mask.iter().zip(newtime_stop_adj.iter()).filter(|(m, _)| **m).map(|(_, &v)| -v).collect();
+            let sub_stop: Vec<f64> = mask.iter().zip(newtime_start_f64.iter()).filter(|(m, _)| **m).map(|(_, &v)| -v).collect();
+            let sub_status: Vec<i32> = mask.iter().zip(first_obs.iter()).filter(|(m, _)| **m).map(|(_, &v)| if v { 1 } else { 0 }).collect();
+            let sub_weights: Vec<f64> = vec![1.0; sub_start.len()];
+            h_by_stratum.push(compute_km(&sub_start, &sub_stop, &sub_status, &sub_weights));
+        }
+    }
+
+    // Per-stratum processing (R's stratfun)
+    let mut out_row: Vec<usize> = Vec::new();
+    let mut out_start: Vec<f64> = Vec::new();
+    let mut out_stop: Vec<f64> = Vec::new();
+    let mut out_status: Vec<i32> = Vec::new();
+    let mut out_wt: Vec<f64> = Vec::new();
+    let mut out_add: Vec<i32> = Vec::new();
+
+    for (si, &s) in unique_strata.iter().enumerate() {
+        let mask: Vec<bool> = strata.iter().map(|&si2| si2 == s).collect();
+        let indices: Vec<usize> = (0..n).filter(|&i| mask[i]).collect();
+
+        // Unique event times of interest in this stratum
+        let mut event_times: Vec<f64> = indices
+            .iter()
+            .filter(|&&i| status[i] == enum_val)
+            .map(|&i| tstop[i])
+            .collect();
+        event_times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        event_times.dedup();
+
+        if event_times.is_empty() {
+            continue; // no events of interest in this stratum
+        }
+
+        let maxtime = indices.iter().map(|&i| tstop[i]).fold(f64::NEG_INFINITY, f64::max);
+
+        let g = &g_by_stratum[si];
+
+        // Build ctime and cprob
+        let (ctime, cprob) = if delay {
+            let h = &h_by_stratum[si];
+
+            // dtime <- rev(-Htemp$time[Htemp$n.event > 0])
+            let dtime: Vec<f64> = h.time.iter().zip(h.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| -t)
+                .collect::<Vec<_>>()
+                .into_iter().rev().collect();
+
+            // dprob <- c(rev(Htemp$surv[Htemp$n.event > 0])[-1], 1)
+            let h_surv_events: Vec<f64> = h.time.iter().zip(h.n_event.iter()).zip(h.surv.iter())
+                .filter(|&((_, ne), _)| *ne > 0.0)
+                .map(|((_, _), &sv)| sv)
+                .collect();
+            let mut dprob: Vec<f64> = h_surv_events.iter().rev().skip(1).copied().collect();
+            dprob.push(1.0);
+
+            // ctime_g <- Gtemp$time[Gtemp$n.event > 0]
+            let g_ctime: Vec<f64> = g.time.iter().zip(g.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| t)
+                .collect();
+
+            // cprob_g <- c(1, Gtemp$surv[Gtemp$n.event > 0])
+            let mut g_cprob = vec![1.0];
+            g_cprob.extend(
+                g.time.iter().zip(g.n_event.iter()).zip(g.surv.iter())
+                    .filter(|&((_, ne), _)| *ne > 0.0)
+                    .map(|((_, _), &sv)| sv),
+            );
+
+            // temp <- sort(unique(c(dtime, ctime)))
+            let mut combined: Vec<f64> = Vec::new();
+            combined.extend(&dtime);
+            combined.extend(&g_ctime);
+            combined.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            combined.dedup();
+
+            // index1 <- findInterval(temp, dtime)
+            let index1 = find_interval(&combined, &dtime, false);
+            // index2 <- findInterval(temp, ctime)
+            let index2 = find_interval(&combined, &g_ctime, false);
+
+            // ctime <- utime[temp] (temp are integer indices into utime)
+            let final_ctime: Vec<f64> = combined.iter().map(|&t| {
+                let idx = t as usize;
+                if idx > 0 && idx <= utime.len() { utime[idx - 1] } else if idx == 0 { utime[0] } else { utime[utime.len() - 1] }
+            }).collect();
+
+            // cprob <- dprob[index1] * cprob[index2+1]
+            // R indexing: index1 and index2 are 1-based, dprob is 1-based in R, g_cprob has leading 1
+            let final_cprob: Vec<f64> = (0..combined.len()).map(|i| {
+                let d_idx = if index1[i] > 0 { index1[i] - 1 } else { 0 };
+                let g_idx = index2[i]; // index2 is 1-based, g_cprob[0] = 1.0, so index2+1 in R → index2 in 0-based
+                let d = if d_idx < dprob.len() { dprob[d_idx] } else { *dprob.last().unwrap_or(&1.0) };
+                let g = if g_idx < g_cprob.len() { g_cprob[g_idx] } else { *g_cprob.last().unwrap_or(&1.0) };
+                d * g
+            }).collect();
+
+            (final_ctime, final_cprob)
+        } else {
+            // ctime <- utime[Gtemp$time[Gtemp$n.event > 0]]
+            // The KM times are on the integer grid; map back to original times via utime
+            let ctime: Vec<f64> = g.time.iter().zip(g.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| {
+                    // t is on the integer grid (1-based findInterval output)
+                    let idx = t as usize;
+                    if idx > 0 && idx <= utime.len() { utime[idx - 1] } else { utime[0] }
+                })
+                .collect();
+
+            // cprob <- Gtemp$surv[Gtemp$n.event > 0]
+            let cprob: Vec<f64> = g.time.iter().zip(g.n_event.iter()).zip(g.surv.iter())
+                .filter(|&((_, ne), _)| *ne > 0.0)
+                .map(|((_, _), &sv)| sv)
+                .collect();
+
+            (ctime, cprob)
+        };
+
+        // ct2 <- c(ctime, maxtime)
+        let mut ct2 = ctime.clone();
+        ct2.push(maxtime);
+
+        // cp2 <- c(1.0, cprob)
+        let mut cp2 = vec![1.0];
+        cp2.extend(&cprob);
+
+        // index <- findInterval(times, ct2, left.open=TRUE)
+        let fi_indices = find_interval(&event_times, &ct2, true);
+        // index <- sort(unique(index))
+        let mut unique_indices: Vec<usize> = fi_indices.clone();
+        unique_indices.sort();
+        unique_indices.dedup();
+
+        // ckeep <- rep(FALSE, length(ct2)); ckeep[index] <- TRUE
+        // R uses 1-based indexing from findInterval, but ckeep is 0-based array
+        // In R: ckeep[index] where index is 1-based → ckeep is length(ct2) and index values 0..length(ct2)
+        // Index 0 from findInterval means "before first element" — R treats ckeep[0] as no-op
+        let mut ckeep = vec![false; ct2.len()];
+        for &idx in &unique_indices {
+            // findInterval returns 1-based; convert to 0-based for ckeep
+            if idx > 0 && idx <= ckeep.len() {
+                ckeep[idx - 1] = true;
+            }
+            // idx == 0 means before first ctime — R ignores this (ckeep[0] in R is valid but
+            // the C code's keep[0] is always TRUE via the c(TRUE, ckeep) prepend)
+        }
+
+        // expand <- (Y[keep, 3] != 0 & Y[keep, 3] != enum & last[keep])
+        let expand: Vec<bool> = indices
+            .iter()
+            .map(|&i| status[i] != 0 && status[i] != enum_val && last_obs[i])
+            .collect();
+
+        // keep_arg = c(TRUE, ckeep) — R prepends TRUE
+        let mut keep_arg = vec![true];
+        keep_arg.extend(&ckeep);
+
+        // Call the core C transform
+        let sub_tstart: Vec<f64> = indices.iter().map(|&i| tstart[i]).collect();
+        let sub_tstop: Vec<f64> = indices.iter().map(|&i| tstop[i]).collect();
+
+        let split = finegray_transform(
+            &sub_tstart,
+            &sub_tstop,
+            &ct2,
+            &cp2,
+            &expand,
+            &keep_arg,
+        );
+
+        // Map results back to original row indices and compute output status
+        for k in 0..split.row.len() {
+            let orig_idx = indices[split.row[k]];
+            out_row.push(orig_idx);
+            out_start.push(split.start[k]);
+            out_stop.push(split.end[k]);
+            // fgstatus: 1 if the original status == etype, 0 otherwise
+            let fgstatus = if status[orig_idx] == enum_val { 1 } else { 0 };
+            out_status.push(fgstatus);
+            out_wt.push(split.wt[k] * user_weights[orig_idx]);
+            out_add.push(split.add[k]);
+        }
+    }
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct FineGrayWasmResult {
+        row: Vec<usize>,
+        start: Vec<f64>,
+        stop: Vec<f64>,
+        status: Vec<i32>,
+        wt: Vec<f64>,
+        add: Vec<i32>,
+    }
+
+    serde_wasm_bindgen::to_value(&FineGrayWasmResult {
+        row: out_row,
+        start: out_start,
+        stop: out_stop,
+        status: out_status,
+        wt: out_wt,
+        add: out_add,
+    })
+    .map_err(|e| JsValue::from_str(&e.to_string()))
 }

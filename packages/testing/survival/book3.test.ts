@@ -5,7 +5,7 @@
 //
 // Coverage of book3.R:
 // [x] L69-73:   coxph Breslow iter=0, loglik, var, mart, score, scho
-// [x] L76-78:   survfit from iter=0 at x=0 (surv, stdErr^2)
+// [x] L76-78:   survfit from iter=0 at x=0 (surv, std_err^2)
 // [x] L79:      score test = u^2/imat
 // [x] L81-83:   iter=1 coef
 // [x] L86-92:   converged Breslow, loglik, var, mart, score, scho

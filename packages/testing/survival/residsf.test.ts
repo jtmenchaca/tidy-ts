@@ -19,7 +19,7 @@ const R_SOURCE_TEST = new URL("./residsf-source-test.R", import.meta.url)
 interface ResidsfRef {
   surv: number[];
   time: number[];
-  nRisk: number[];
+  n_risk: number[];
   note: string;
 }
 

@@ -26,16 +26,16 @@ const R_SOURCE_TEST = new URL("./survtest-source-test.R", import.meta.url)
 interface SurvtestRef {
   rc_time: number[];
   rc_n: number;
-  rc_nRisk: number[];
-  rc_nEvent: number[];
+  rc_n_risk: number[];
+  rc_n_event: number[];
   rc_surv: number[];
-  rc_stdErr: number[];
+  rc_std_err: number[];
   cp_n: number;
   cp_time: number[];
-  cp_nRisk: number[];
-  cp_nEvent: number[];
+  cp_n_risk: number[];
+  cp_n_event: number[];
   cp_surv_at_events: number[];
-  cp_stdErr: number[];
+  cp_std_err: number[];
 }
 
 const ref = getReferenceFromRScript<SurvtestRef>(R_SOURCE_TEST);
@@ -49,17 +49,17 @@ Deno.test("survtest: right-censored KM on test1", () => {
 
   assertClose(fit.time.length, ref.rc_time.length, 0, "n_times");
   assertArrayClose(fit.time, ref.rc_time, TOL_EXACT, "time");
-  assertArrayClose(fit.nRisk, ref.rc_nRisk, TOL_EXACT, "nRisk");
-  assertArrayClose(fit.nEvent, ref.rc_nEvent, TOL_EXACT, "nEvent");
+  assertArrayClose(fit.nRisk, ref.rc_n_risk, TOL_EXACT, "n_risk");
+  assertArrayClose(fit.nEvent, ref.rc_n_event, TOL_EXACT, "n_event");
   assertArrayClose(fit.surv, ref.rc_surv, TOL, "surv");
-  // stdErr: last value is Inf in R (S=0 → log(S)=-Inf → se=Inf)
+  // std_err: last value is Inf in R (S=0 → log(S)=-Inf → se=Inf)
   // Compare only finite values
-  const finiteIdx = ref.rc_stdErr.filter((v) => isFinite(v));
+  const finiteIdx = ref.rc_std_err.filter((v) => isFinite(v));
   assertArrayClose(
     fit.stdErr.slice(0, finiteIdx.length),
     finiteIdx,
     TOL,
-    "stdErr",
+    "std_err",
   );
 });
 
@@ -73,9 +73,9 @@ Deno.test("survtest: right-censored KM assertions from summary", () => {
   const fit = survfit({ time, status });
 
   // Verify n.risk at event times matches R
-  assertArrayClose(fit.nRisk, [6, 4, 2, 1], TOL_EXACT, "nRisk at events");
+  assertArrayClose(fit.nRisk, [6, 4, 2, 1], TOL_EXACT, "n_risk at events");
   // Verify n.event
-  assertArrayClose(fit.nEvent, [1, 2, 0, 1], TOL_EXACT, "nEvent");
+  assertArrayClose(fit.nEvent, [1, 2, 0, 1], TOL_EXACT, "n_event");
   // Verify survival
   assertClose(fit.surv[0], 5 / 6, TOL, "surv at t=1");
   assertClose(fit.surv[1], 5 / 12, TOL, "surv at t=6");

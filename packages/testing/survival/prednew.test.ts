@@ -12,13 +12,12 @@
 // [ ] predict with newdata — needs TS predict(newdata=...) wrapper
 //
 // NOTE: R's predict.coxph returns lp/risk/expected/terms predictions.
-// Our WASM coxph returns linear_predictors in the fit result, but
+// Our WASM coxph returns linearPredictors in the fit result, but
 // newdata prediction and type='expected'/'terms' need a dedicated
 // predict wrapper in TypeScript.
 
 import {
   coxph,
-  type CoxphResult,
 } from "../../dataframe/ts/wasm/survival-functions.ts";
 import {
   assertArrayClose,
@@ -73,6 +72,7 @@ Deno.test("prednew: simple coxph(age + factor(sex)) on lung", () => {
       age: complete.map((r) => r.age),
       sex: complete.map((r) => r.sex),
     },
+    method: "efron",
   });
 
   assertArrayClose(fit.coefficients, ref.simple_coef, TOL, "simple coef");
@@ -112,9 +112,8 @@ Deno.test("prednew: stratified coxph(age + factor(ph.ecog) + strata(sex)) on lun
     time: complete.map((r) => r.time),
     status: complete.map((r) => r.status - 1),
     covariates,
-    options: {
-      strata: complete.map((r) => r.sex),
-    },
+    method: "efron",
+    strata: complete.map((r) => r.sex),
   });
 
   assertArrayClose(fit.coefficients, ref.coef, TOL, "coef");

@@ -71,6 +71,7 @@ Deno.test("factor: coxph with age + factor(ph.ecog)", () => {
       "factor(ph.ecog)2": ph_ecog_2,
       "factor(ph.ecog)3": ph_ecog_3,
     },
+    method: "efron",
   });
 
   assertArrayClose(fit.coefficients, ref.fit_coef, TOL, "coef");
@@ -91,15 +92,16 @@ Deno.test("factor: risk predictions match R", () => {
       "factor(ph.ecog)2": ph_ecog_2,
       "factor(ph.ecog)3": ph_ecog_3,
     },
+    method: "efron",
   });
 
   // Compare linear predictors for complete cases
   // R's na.exclude returns null for NA rows; filter those out of reference
   const refLpComplete = ref.fit_lp.filter((v) => v !== null) as number[];
-  assertArrayClose(fit.linear_predictors, refLpComplete, TOL, "lp");
+  assertArrayClose(fit.linearPredictors, refLpComplete, TOL, "lp");
 
   // Risk = exp(lp)
-  const risk = fit.linear_predictors.map(Math.exp);
+  const risk = fit.linearPredictors.map(Math.exp);
   const refRiskComplete = ref.fit_risk.filter((v) => v !== null) as number[];
   assertArrayClose(risk, refRiskComplete, TOL, "risk");
 });

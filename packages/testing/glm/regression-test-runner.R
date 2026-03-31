@@ -140,6 +140,43 @@ result <- switch(test_type,
     )
   },
   
+  "glm.quasibinomial" = {
+    formula_str <- if (is.null(data$formula)) "y ~ x" else data$formula
+    df <- create_dataframe_from_json(data, formula_str)
+
+    # Fit GLM with quasibinomial and capture warnings
+    warn_msgs <- character(0)
+    model <- withCallingHandlers(
+      glm(as.formula(formula_str), data = df, family = quasibinomial()),
+      warning = function(w) {
+        warn_msgs <<- c(warn_msgs, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
+    )
+    all_warnings <- warn_msgs
+
+    # Compute confidence intervals
+    conf_int <- tryCatch(
+      suppressMessages(confint(model, level = 1 - alpha)),
+      error = function(e) matrix(NA, nrow = length(coef(model)), ncol = 2)
+    )
+
+    list(
+      coefficients = ifelse(is.na(coef(model)), 0, as.numeric(coef(model))),
+      conf_lower = as.numeric(conf_int[, 1]),
+      conf_upper = as.numeric(conf_int[, 2]),
+      residuals = as.numeric(residuals(model)),
+      fitted_values = as.numeric(fitted(model)),
+      deviance = deviance(model),
+      aic = AIC(model),
+      method = "glm.quasibinomial",
+      family = "quasibinomial",
+      call = deparse(model$call),
+      formula = formula_str,
+      warnings = if (length(all_warnings) > 0) paste(all_warnings, collapse = "; ") else NA_character_
+    )
+  },
+
   "glm.poisson" = {
     formula_str <- if (is.null(data$formula)) "y ~ x" else data$formula
     df <- create_dataframe_from_json(data, formula_str)

@@ -14,6 +14,7 @@ pub mod links;
 pub mod negative_binomial;
 pub mod poisson;
 pub mod quasi;
+pub mod quasibinomial;
 pub mod variance;
 
 // Re-export main types and functions for easy access
@@ -27,6 +28,7 @@ pub use negative_binomial::{
 };
 pub use poisson::PoissonFamily;
 pub use quasi::QuasiFamily;
+pub use quasibinomial::QuasiBinomialFamily;
 
 // Re-export traits
 pub use deviance::{

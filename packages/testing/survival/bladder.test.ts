@@ -110,8 +110,8 @@ Deno.test("bladder: Prentice model (enum==1) coefs", () => {
       rx: subset.map((r) => r.rx),
       size: subset.map((r) => r.size),
       number: subset.map((r) => r.number),
-    },
-    options: { method: "breslow" },
+  },
+    method: "breslow",
   });
 
   assertArrayClose(fit.coefficients, ref.prentice1_coef, TOL, "prentice1 coef");
@@ -168,10 +168,8 @@ Deno.test("bladder: Wei model with strata-by-covariate interactions", () => {
     time: bladder.map((r) => r.stop),
     status: bladder.map((r) => r.event),
     covariates,
-    options: {
-      method: "breslow",
+    method: "breslow",
       strata: bladder.map((r) => r.enum),
-    },
   });
 
   // Wei model has 12 coefficients: 3 main effects + 3 covariates * 3 contrast levels

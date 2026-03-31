@@ -27,21 +27,21 @@ const R_SOURCE_TEST = new URL("./survfit1-source-test.R", import.meta.url)
 
 interface Survfit1Ref {
   time: number[];
-  nRisk: number[];
-  nEvent: number[];
-  nCensor: number[];
+  n_risk: number[];
+  n_event: number[];
+  n_censor: number[];
   surv: number[];
   cumhaz: number[];
-  stdErr: number[];
-  stdChaz: number[];
+  std_err: number[];
+  std_chaz: number[];
   strata: number[];
   logse: boolean;
   surv_s2: number[];
   cumhaz_s2: number[];
-  stdErr_s2: number[];
-  stdChaz_s2: number[];
-  nRisk_s2: number[];
-  nEvent_s2: number[];
+  std_err_s2: number[];
+  std_chaz_s2: number[];
+  n_risk_s2: number[];
+  n_event_s2: number[];
 }
 
 const ref = getReferenceFromRScript<Survfit1Ref>(R_SOURCE_TEST);
@@ -55,14 +55,14 @@ Deno.test("survfit1: basic KM on aml with groups", () => {
   const fit = survfit({ time, status, options: { groups } });
 
   assertArrayClose(fit.time, ref.time, TOL_EXACT, "time");
-  assertArrayClose(fit.nRisk, ref.nRisk, TOL_EXACT, "nRisk");
-  assertArrayClose(fit.nEvent, ref.nEvent, TOL_EXACT, "nEvent");
-  assertArrayClose(fit.nCensor, ref.nCensor, TOL_EXACT, "nCensor");
+  assertArrayClose(fit.nRisk, ref.n_risk, TOL_EXACT, "n_risk");
+  assertArrayClose(fit.nEvent, ref.n_event, TOL_EXACT, "n_event");
+  assertArrayClose(fit.nCensor, ref.n_censor, TOL_EXACT, "n_censor");
   assertArrayClose(fit.surv, ref.surv, TOL, "surv");
   assertArrayClose(fit.cumhaz, ref.cumhaz, TOL, "cumhaz");
-  // R's std.err with logse=TRUE is se(log(S)) = stdErr, not se(S)
-  assertArrayClose(fit.stdErr, ref.stdErr, TOL, "stdErr");
-  assertArrayClose(fit.stdChaz, ref.stdChaz, TOL, "stdChaz");
+  // R's std.err with logse=TRUE is se(log(S)) = std_err, not se(S)
+  assertArrayClose(fit.stdErr, ref.std_err, TOL, "std_err");
+  assertArrayClose(fit.stdChaz, ref.std_chaz, TOL, "std_chaz");
 });
 
 Deno.test("survfit1: stype=2 (exp(-cumhaz) survival)", () => {
@@ -78,8 +78,8 @@ Deno.test("survfit1: stype=2 (exp(-cumhaz) survival)", () => {
 
   assertArrayClose(fit.surv, ref.surv_s2, TOL, "surv_s2");
   assertArrayClose(fit.cumhaz, ref.cumhaz_s2, TOL, "cumhaz_s2");
-  assertArrayClose(fit.stdErr, ref.stdErr_s2, TOL, "stdErr_s2");
-  assertArrayClose(fit.stdChaz, ref.stdChaz_s2, TOL, "stdChaz_s2");
-  assertArrayClose(fit.nRisk, ref.nRisk_s2, TOL_EXACT, "nRisk_s2");
-  assertArrayClose(fit.nEvent, ref.nEvent_s2, TOL_EXACT, "nEvent_s2");
+  assertArrayClose(fit.stdErr, ref.std_err_s2, TOL, "std_err_s2");
+  assertArrayClose(fit.stdChaz, ref.std_chaz_s2, TOL, "std_chaz_s2");
+  assertArrayClose(fit.nRisk, ref.n_risk_s2, TOL_EXACT, "n_risk_s2");
+  assertArrayClose(fit.nEvent, ref.n_event_s2, TOL_EXACT, "n_event_s2");
 });

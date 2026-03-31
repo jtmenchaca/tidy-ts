@@ -15,7 +15,6 @@
 
 import {
   coxph,
-  type CoxphResult,
 } from "../../dataframe/ts/wasm/survival-functions.ts";
 import {
   assertArrayClose,
@@ -74,6 +73,7 @@ Deno.test("cancer: simple coxph(age + sex) on lung", () => {
       age: complete.map((r) => r.age),
       sex: complete.map((r) => r.sex),
     },
+    method: "efron",
   });
 
   assertArrayClose(fit.coefficients, ref.simple_coef, TOL, "simple coef");
@@ -109,10 +109,9 @@ Deno.test("cancer: coxph with 6 covariates + strata(inst) on lung", () => {
       wt_loss: complete.map((r) => r.wt_loss!),
       sex: complete.map((r) => r.sex),
       age: complete.map((r) => r.age),
-    },
-    options: {
-      strata: complete.map((r) => r.inst!),
-    },
+  },
+    method: "efron",
+    strata: complete.map((r) => r.inst!),
   });
 
   assertArrayClose(fit.coefficients, ref.coef, TOL, "coef");

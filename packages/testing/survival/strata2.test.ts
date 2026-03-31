@@ -11,7 +11,6 @@
 
 import {
   coxph,
-  type CoxphResult,
 } from "../../dataframe/ts/wasm/survival-functions.ts";
 import {
   assertArrayClose,
@@ -75,16 +74,15 @@ Deno.test("strata2: simple coxph(age + sex + strata(ph.ecog))", () => {
       r.ph_ecog != null,
   );
 
-  const fit: CoxphResult = coxph({
+  const fit = coxph({
     time: complete.map((r) => r.time),
     status: complete.map((r) => r.status - 1),
     covariates: {
       age: complete.map((r) => r.age),
       sex: complete.map((r) => r.sex),
-    },
-    options: {
-      strata: complete.map((r) => r.ph_ecog!),
-    },
+  },
+    method: "efron",
+    strata: complete.map((r) => r.ph_ecog!),
   });
 
   assertArrayClose(fit.coefficients, ref.simple_coef, TOL, "simple coef");

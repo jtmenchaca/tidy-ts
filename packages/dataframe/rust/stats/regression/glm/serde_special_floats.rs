@@ -5,6 +5,20 @@
 
 use serde::{Deserialize, Deserializer, Serializer};
 
+/// Deserialize bool that may have been corrupted to a number by serde_wasm_bindgen.
+/// Accepts: true/false, 0/1, or any number (nonzero = true).
+pub fn deserialize_lenient_bool<'de, D>(d: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val = serde_json::Value::deserialize(d)?;
+    match val {
+        serde_json::Value::Bool(b) => Ok(b),
+        serde_json::Value::Number(n) => Ok(n.as_f64().map_or(false, |v| v != 0.0)),
+        _ => Err(serde::de::Error::custom("expected bool or number")),
+    }
+}
+
 /// Serialize f64 with special handling for NaN and Infinity
 pub fn serialize_f64<S>(x: &f64, s: S) -> Result<S::Ok, S::Error>
 where

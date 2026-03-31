@@ -447,7 +447,7 @@ export type GroupedDataFrame<
   Row extends object,
   GroupKeys extends keyof Row = keyof Row,
 > = DataFrame<Row> & {
-  __groups?: {
+  __groups: {
     // Core grouping info
     groupingColumns: GroupKeys[];
 

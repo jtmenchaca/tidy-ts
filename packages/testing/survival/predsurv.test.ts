@@ -16,7 +16,6 @@
 
 import {
   coxph,
-  type CoxphResult,
 } from "../../dataframe/ts/wasm/survival-functions.ts";
 import {
   assertArrayClose,
@@ -73,6 +72,7 @@ Deno.test("predsurv: coxph(age + ph.ecog) on lung", () => {
       age: complete.map((r) => r.age),
       ph_ecog: complete.map((r) => r.ph_ecog!),
     },
+    method: "efron",
   });
 
   assertArrayClose(fit.coefficients, ref.coef, TOL, "coef");

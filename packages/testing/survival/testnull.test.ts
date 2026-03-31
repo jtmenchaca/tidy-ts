@@ -67,11 +67,10 @@ Deno.test("testnull: right-censored coxph iter=0 matches null loglik", () => {
     status: bladder.map((r) => r.event),
     covariates: {
       rx: bladder.map((r) => r.rx),
-    },
-    options: {
-      strata: bladder.map((r) => r.number),
+  },
+    method: "efron",
+    strata: bladder.map((r) => r.number),
       maxiter: 0,
-    },
   });
 
   // At iter=0 (beta=0), loglik should equal the null model's loglik

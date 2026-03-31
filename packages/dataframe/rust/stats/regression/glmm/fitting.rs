@@ -864,14 +864,14 @@ fn build_glm_result(
     result.df_null = n.saturating_sub(1);
     result.df_residual = n.saturating_sub(p);
     result.rank = p;
-    result.converged = converged;
+    result.converged = converged as u8;
     result.iter = iterations;
     result.weights = weights.to_vec();
     result.prior_weights = weights.to_vec();
     result.y = y.to_vec();
     result.model_matrix_column_names = column_names;
     result.n_observations = n;
-    result.boundary = false;
+    result.boundary = 0;
 
     // Update family info
     result.family.family = family.name().to_string();

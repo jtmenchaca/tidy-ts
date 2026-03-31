@@ -4,7 +4,7 @@
 //
 // Coverage of book6.R:
 // [x] L74-82:   weighted Efron iter=0, loglik, var, mart, scho, score
-// [x] L83-85:   survfit from iter=0 at x=pi (surv, stdErr^2)
+// [x] L83-85:   survfit from iter=0 at x=pi (surv, std_err^2)
 // [x] L87-92:   converged Efron, loglik, var, mart, scho, score
 // [x] L94-96:   survfit from converged at x=0.3
 // [x] L107-113: weighted residuals ratio = weights
@@ -67,7 +67,8 @@ Deno.test("book6: weighted coxph Efron iter=0", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, weights: testw1.wt },
+    method: "efron",
+    maxiter: 0, weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.fit0_coef, TOL_EXACT, "coef");
@@ -80,7 +81,8 @@ Deno.test("book6: weighted Efron iter=0 residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, weights: testw1.wt },
+    method: "efron",
+    maxiter: 0, weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -118,7 +120,8 @@ Deno.test("book6: survfit from weighted Efron iter=0 at x=pi", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, weights: testw1.wt },
+    method: "efron",
+    maxiter: 0, weights: testw1.wt,
   });
 
   const sfit = survfitCox({
@@ -146,7 +149,8 @@ Deno.test("book6: weighted coxph Efron converged", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { weights: testw1.wt },
+    method: "efron",
+    weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.fit_coef, TOL, "coef");
@@ -160,7 +164,8 @@ Deno.test("book6: weighted Efron converged residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { weights: testw1.wt },
+    method: "efron",
+    weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -198,7 +203,8 @@ Deno.test("book6: survfit from weighted Efron converged at x=0.3", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { weights: testw1.wt },
+    method: "efron",
+    weights: testw1.wt,
   });
 
   const sfit = survfitCox({

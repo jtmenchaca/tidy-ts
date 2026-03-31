@@ -72,11 +72,11 @@ impl Model for GeeglmResult {
     }
 
     fn converged(&self) -> bool {
-        self.glm_result.converged
+        self.glm_result.converged != 0
     }
 
     fn boundary(&self) -> bool {
-        self.glm_result.boundary
+        self.glm_result.boundary != 0
     }
 
     fn iterations(&self) -> usize {

@@ -146,10 +146,7 @@ export async function callRobustRust(
     // GLM Tests - Using WASM
     case "glm.gaussian": {
       const { glmFit } = await import(
-        "@tidy-ts/dataframe/ts/wasm/glm-functions.js"
-      );
-      const { initWasm, wasmInternal } = await import(
-        "@tidy-ts/dataframe/ts/wasm/wasm-init.js"
+        "../../dataframe/ts/wasm/glm-functions.ts"
       );
 
       // Create data object with all predictor variables
@@ -174,19 +171,12 @@ export async function callRobustRust(
         data,
       );
 
-      // Compute profile likelihood confidence intervals via WASM
-      initWasm();
-      const resultJson = JSON.stringify(result);
-      const level = 1 - (params.options?.alpha || 0.05);
-      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-      const confint = JSON.parse(confintJson);
-
       return {
         coefficients: result.coefficients,
-        conf_lower: confint.lower,
-        conf_upper: confint.upper,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
         residuals: result.residuals,
-        fitted_values: result.fitted_values,
+        fitted_values: result.fittedValues,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.gaussian",
@@ -198,7 +188,7 @@ export async function callRobustRust(
 
     case "glm.binomial": {
       const { glmFit } = await import(
-        "@tidy-ts/dataframe/ts/wasm/glm-functions.js"
+        "../../dataframe/ts/wasm/glm-functions.ts"
       );
 
       // Create data object with all predictor variables
@@ -223,22 +213,12 @@ export async function callRobustRust(
         data,
       );
 
-      // Compute profile likelihood confidence intervals via WASM
-      const { initWasm, wasmInternal } = await import(
-        "@tidy-ts/dataframe/ts/wasm/wasm-init.js"
-      );
-      initWasm();
-      const resultJson = JSON.stringify(result);
-      const level = 1 - (params.options?.alpha || 0.05);
-      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-      const confint = JSON.parse(confintJson);
-
       return {
         coefficients: result.coefficients,
-        conf_lower: confint.lower,
-        conf_upper: confint.upper,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
         residuals: result.residuals,
-        fitted_values: result.fitted_values,
+        fitted_values: result.fittedValues,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.binomial",
@@ -250,7 +230,7 @@ export async function callRobustRust(
 
     case "glm.poisson": {
       const { glmFit } = await import(
-        "@tidy-ts/dataframe/ts/wasm/glm-functions.js"
+        "../../dataframe/ts/wasm/glm-functions.ts"
       );
 
       // Create data object with all predictor variables
@@ -275,22 +255,12 @@ export async function callRobustRust(
         data,
       );
 
-      // Compute profile likelihood confidence intervals via WASM
-      const { initWasm, wasmInternal } = await import(
-        "@tidy-ts/dataframe/ts/wasm/wasm-init.js"
-      );
-      initWasm();
-      const resultJson = JSON.stringify(result);
-      const level = 1 - (params.options?.alpha || 0.05);
-      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-      const confint = JSON.parse(confintJson);
-
       return {
         coefficients: result.coefficients,
-        conf_lower: confint.lower,
-        conf_upper: confint.upper,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
         residuals: result.residuals,
-        fitted_values: result.fitted_values,
+        fitted_values: result.fittedValues,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.poisson",
@@ -302,7 +272,7 @@ export async function callRobustRust(
 
     case "glm.gamma": {
       const { glmFit } = await import(
-        "@tidy-ts/dataframe/ts/wasm/glm-functions.js"
+        "../../dataframe/ts/wasm/glm-functions.ts"
       );
 
       // Create data object with all predictor variables
@@ -327,22 +297,12 @@ export async function callRobustRust(
         data,
       );
 
-      // Compute profile likelihood confidence intervals via WASM
-      const { initWasm, wasmInternal } = await import(
-        "@tidy-ts/dataframe/ts/wasm/wasm-init.js"
-      );
-      initWasm();
-      const resultJson = JSON.stringify(result);
-      const level = 1 - (params.options?.alpha || 0.05);
-      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-      const confint = JSON.parse(confintJson);
-
       return {
         coefficients: result.coefficients,
-        conf_lower: confint.lower,
-        conf_upper: confint.upper,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
         residuals: result.residuals,
-        fitted_values: result.fitted_values,
+        fitted_values: result.fittedValues,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.gamma",
@@ -352,9 +312,51 @@ export async function callRobustRust(
       };
     }
 
+    case "glm.quasibinomial": {
+      const { glmFit } = await import(
+        "../../dataframe/ts/wasm/glm-functions.ts"
+      );
+
+      // Create data object with all predictor variables
+      const data: { [key: string]: any } = {
+        y: params.data!.y!,
+      };
+
+      // Add all predictor variables (including categorical as strings)
+      Object.keys(params.data!).forEach((key) => {
+        if (
+          key !== "y" && key !== "formula" && key !== "weights" &&
+          key !== "offset"
+        ) {
+          data[key] = (params.data as any)[key];
+        }
+      });
+
+      const result = glmFit(
+        params.data!.formula!,
+        "quasibinomial",
+        "logit",
+        data,
+      );
+
+      return {
+        coefficients: result.coefficients,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
+        residuals: result.residuals,
+        fitted_values: result.fittedValues,
+        deviance: result.deviance,
+        aic: result.aic,
+        method: "glm.quasibinomial",
+        family: "quasibinomial",
+        call: result.call,
+        formula: result.formula,
+      };
+    }
+
     case "glm.inverse.gaussian": {
       const { glmFit } = await import(
-        "@tidy-ts/dataframe/ts/wasm/glm-functions.js"
+        "../../dataframe/ts/wasm/glm-functions.ts"
       );
 
       // Create data object with all predictor variables
@@ -379,22 +381,12 @@ export async function callRobustRust(
         data,
       );
 
-      // Compute profile likelihood confidence intervals via WASM
-      const { initWasm, wasmInternal } = await import(
-        "@tidy-ts/dataframe/ts/wasm/wasm-init.js"
-      );
-      initWasm();
-      const resultJson = JSON.stringify(result);
-      const level = 1 - (params.options?.alpha || 0.05);
-      const confintJson = wasmInternal.glm_confint_wasm(resultJson, level);
-      const confint = JSON.parse(confintJson);
-
       return {
         coefficients: result.coefficients,
-        conf_lower: confint.lower,
-        conf_upper: confint.upper,
+        conf_lower: result.confintLower,
+        conf_upper: result.confintUpper,
         residuals: result.residuals,
-        fitted_values: result.fitted_values,
+        fitted_values: result.fittedValues,
         deviance: result.deviance,
         aic: result.aic,
         method: "glm.inverse.gaussian",
@@ -1074,6 +1066,39 @@ export function generateRegressionTestCase(
         options: {
           family: "gamma",
           link: "log",
+          alpha,
+        },
+      };
+    }
+
+    case "glm.quasibinomial": {
+      const { predictors, formula } = generateMultiPredictorData(
+        sampleSize,
+        numPredictors,
+      );
+      // Separation-aware y generation: ensure both classes are present
+      let y = generateBinomialData(sampleSize, 0.3);
+      let tries = 0;
+      while (tries < 5) {
+        const ones = y.reduce((a, b) => a + b, 0);
+        const zeros = y.length - ones;
+        if (
+          ones >= Math.ceil(0.15 * sampleSize) &&
+          zeros >= Math.ceil(0.15 * sampleSize)
+        ) break;
+        y = generateBinomialData(sampleSize, 0.3 + (random() - 0.5) * 0.2);
+        tries++;
+      }
+
+      return {
+        testType,
+        data: {
+          ...predictors,
+          y,
+          formula,
+        },
+        options: {
+          family: "quasibinomial",
           alpha,
         },
       };

@@ -15,14 +15,12 @@ export type AnyPredicateIsAsync<Preds extends readonly unknown[]> = [
   >,
 ] extends [never] ? false : true;
 
-// Check if any value in an object is an async function or returns a Promise
-export type AnyPropertyIsAsync<T extends Record<string, any>> = [
-  Extract<
-    T[keyof T] extends (...args: any[]) => any ? ReturnType<T[keyof T]>
-      : never,
-    Promise<any>
-  >,
-] extends [never] ? false : true;
+// Check if any value in an object is an async function or returns a Promise.
+// Uses a per-key mapped check so that generic type parameters don't cause
+// the entire conditional to defer (which would produce a PromisedDataFrame |
+// DataFrame union that breaks chaining).
+export type AnyPropertyIsAsync<T extends Record<string, any>> =
+  true extends { [K in keyof T]: IsAsyncFunction<T[K]> }[keyof T] ? true : false;
 
 // Legacy types kept for backward compatibility
 

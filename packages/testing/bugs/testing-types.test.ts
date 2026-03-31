@@ -1,69 +1,98 @@
 /**
- * Exploring how Prettify and related utility types behave
- * with concrete vs generic type parameters in tooltips.
+ * Type-level tests for mutate + chaining with generic Row types.
+ *
+ * Two requirements that must both hold:
+ *   1. df.mutate({ x: async () => ... }) returns PromisedDataFrame (concrete async)
+ *   2. df.mutate({ x: (r) => r.foo }).select("x") works when df is DataFrame<T> (generic row)
  */
 
-import type { DataFrame } from "@tidy-ts/dataframe";
+import type { DataFrame, PromisedDataFrame } from "@tidy-ts/dataframe";
 
-type Row = { id: string; value: number };
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-// ─── Prettify<T> = { [Key in keyof T]: T[Key] } & {} ───
+type HasId = { id: string };
+type HasIdAndValue = { id: string; value: number };
+type HasIdAndDate<K extends string> = { id: string } & Record<K, Temporal.PlainDateTime>;
 
-// 1. Prettify on concrete Pick — does Pick alone already flatten?
-type A_Pick = Pick<Row, "id">;
-type A_Prettify = { [K in keyof Pick<Row, "id">]: Pick<Row, "id">[K] } & {};
-const _a1: A_Pick = null!;
-const _a2: A_Prettify = null!;
+// Use this to assert a type is assignable
+declare function assertType<T>(value: T): void;
 
-// 2. Prettify on concrete Omit & intersection (the mutate case)
-type B_Raw = Omit<Row, "doubled" & keyof Row> & { doubled: number };
-type B_Prettify = { [K in keyof B_Raw]: B_Raw[K] } & {};
-const _b1: B_Raw = null!;
-const _b2: B_Prettify = null!;
+// ═══════════════════════════════════════════════════════════════════════════
+// Requirement 1: Async mutate → PromisedDataFrame (concrete types)
+// ═══════════════════════════════════════════════════════════════════════════
 
-// 3. Generic T — how does each form look?
-function generic_pick<T extends Row>(df: DataFrame<T>) {
-  const pick: Pick<T, "id"> = null!;
-  const prettify_pick: { [K in keyof Pick<T, "id">]: Pick<T, "id">[K] } & {} = null!;
-  return { pick, prettify_pick };
+function test_async_mutate_returns_promised(df: DataFrame<HasIdAndValue>) {
+  const result = df.mutate({
+    doubled: async (row) => {
+      await new Promise((r) => setTimeout(r, 1));
+      return row.value * 2;
+    },
+  });
+  // Should be PromisedDataFrame, not DataFrame
+  assertType<PromisedDataFrame<{ id: string; value: number; doubled: number }>>(result);
 }
 
-function generic_omit_intersect<T extends Row>() {
-  const raw: Omit<T, "doubled" & keyof T> & { doubled: number } = null!;
-  const prettified: { [K in keyof (Omit<T, "doubled" & keyof T> & { doubled: number })]: (Omit<T, "doubled" & keyof T> & { doubled: number })[K] } & {} = null!;
-  return { raw, prettified };
+// ═══════════════════════════════════════════════════════════════════════════
+// Requirement 2: Sync mutate + chain with generic Row
+// ═══════════════════════════════════════════════════════════════════════════
+
+// 2a: Generic Row, mutate then select
+function test_generic_mutate_select<T extends HasId>(df: DataFrame<T>) {
+  const result = df.mutate({ flag: () => true }).select("id", "flag");
+  return result; // ✅ should compile
 }
 
-// 4. What about just T itself?
-function generic_passthrough<T extends Row>() {
-  const plain: T = null!;
-  const prettified: { [K in keyof T]: T[K] } & {} = null!;
-  return { plain, prettified };
+// 2b: Generic Row with Record intersection (the test-join pattern)
+function test_generic_mutate_select_complex<
+  K extends string,
+  T extends HasIdAndDate<K>,
+>(opts: {
+  df: DataFrame<T>;
+  fieldName: K & keyof T;
+}) {
+  const result = opts.df
+    .mutate({ _refDate: (r) => r[opts.fieldName] })
+    .select("id", "_refDate");
+  return result; // ✅ should compile
 }
 
-// 5. What about T & {} (simpler "prettify")?
-function generic_ampersand_empty<T extends Row>() {
-  // deno-lint-ignore ban-types
-  const result: T & {} = null!;
-  return result;
+// 2c: Generic Row, mutate then filter
+function test_generic_mutate_filter<T extends HasIdAndValue>(df: DataFrame<T>) {
+  const result = df.mutate({ doubled: (r) => r.value * 2 }).filter((r) => r.doubled > 10);
+  return result; // ✅ should compile
 }
 
-// 6. Does Omit<T, never> simplify to T?
-function generic_omit_never<T extends Row>() {
-  const result: Omit<T, never> = null!;
-  return result;
+// 2d: Generic Row, mutate then groupBy
+function test_generic_mutate_groupBy<T extends HasIdAndValue>(df: DataFrame<T>) {
+  const result = df.mutate({ category: (r) => (r.value > 10 ? "high" : "low") }).groupBy("category");
+  return result; // ✅ should compile
 }
 
-// 7. Single mapped type for mutate (no intersection, no Prettify)
-function generic_single_mapped<T extends Row>() {
-  const result: {
-    [K in keyof T | "doubled"]: K extends "doubled" ? number : K extends keyof T ? T[K] : never;
-  } = null!;
-  return result;
+// ═══════════════════════════════════════════════════════════════════════════
+// Requirement 3: Concrete sync mutate still returns DataFrame
+// ═══════════════════════════════════════════════════════════════════════════
+
+function test_concrete_sync_mutate(df: DataFrame<HasIdAndValue>) {
+  const result = df.mutate({ doubled: (r) => r.value * 2 });
+  assertType<DataFrame<{ id: string; value: number; doubled: number }>>(result);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// Requirement 4: Concrete types still chain fine
+// ═══════════════════════════════════════════════════════════════════════════
+
+function test_concrete_mutate_select(df: DataFrame<HasIdAndValue>) {
+  const result = df.mutate({ doubled: (r) => r.value * 2 }).select("id", "doubled");
+  return result; // ✅ should compile
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Suppress unused
-void _a1; void _a2; void _b1; void _b2;
-void generic_pick; void generic_omit_intersect;
-void generic_passthrough; void generic_ampersand_empty;
-void generic_omit_never; void generic_single_mapped;
+// ═══════════════════════════════════════════════════════════════════════════
+void test_async_mutate_returns_promised;
+void test_generic_mutate_select;
+void test_generic_mutate_select_complex;
+void test_generic_mutate_filter;
+void test_generic_mutate_groupBy;
+void test_concrete_sync_mutate;
+void test_concrete_mutate_select;

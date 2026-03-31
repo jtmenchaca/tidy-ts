@@ -40,7 +40,7 @@ pub fn glm_control(
 ) -> Result<GlmControl, String> {
     let epsilon = epsilon.unwrap_or(1e-8);
     let maxit = maxit.unwrap_or(25);
-    let trace = trace.unwrap_or(false);
+    let trace = trace.unwrap_or(false) as u8;
 
     // Validate parameters
     if !epsilon.is_finite() || epsilon <= 0.0 {
@@ -66,7 +66,7 @@ mod tests {
         let control = glm_control(None, None, None).unwrap();
         assert_eq!(control.epsilon, 1e-8);
         assert_eq!(control.maxit, 25);
-        assert_eq!(control.trace, false);
+        assert_eq!(control.trace, 0);
     }
 
     #[test]
@@ -74,7 +74,7 @@ mod tests {
         let control = glm_control(Some(1e-6), Some(50), Some(true)).unwrap();
         assert_eq!(control.epsilon, 1e-6);
         assert_eq!(control.maxit, 50);
-        assert_eq!(control.trace, true);
+        assert_eq!(control.trace, 1);
     }
 
     #[test]

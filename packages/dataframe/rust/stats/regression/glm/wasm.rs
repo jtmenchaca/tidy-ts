@@ -382,7 +382,7 @@ fn create_family(
     family_name: &str,
     link_name: &str,
 ) -> Result<Box<dyn crate::stats::regression::family::GlmFamily>, String> {
-    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson};
+    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson, quasibinomial};
 
     match family_name {
         "gaussian" => match link_name {
@@ -398,6 +398,14 @@ fn create_family(
             "log" => Ok(Box::new(binomial::BinomialFamily::log())),
             "cloglog" => Ok(Box::new(binomial::BinomialFamily::cloglog())),
             _ => Err(format!("Unknown link '{}' for binomial family", link_name)),
+        },
+        "quasibinomial" => match link_name {
+            "logit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::logit())),
+            "probit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::probit())),
+            "cauchit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::cauchit())),
+            "log" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::log())),
+            "cloglog" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::cloglog())),
+            _ => Err(format!("Unknown link '{}' for quasibinomial family", link_name)),
         },
         "poisson" => match link_name {
             "log" => Ok(Box::new(poisson::PoissonFamily::log())),
@@ -498,11 +506,9 @@ pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// GLM confint() - Compute confidence intervals for coefficients
 #[wasm_bindgen]
 pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue> {
-    // Parse GLM result
     let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
-    // Compute confint
     let confint = result.confint(level)
         .map_err(|e| JsValue::from_str(&e))?;
 
@@ -513,7 +519,6 @@ pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue>
 /// GLM predict() - Make predictions on new data
 #[wasm_bindgen]
 pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> Result<JsValue, JsValue> {
-    // Parse GLM result
     let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
@@ -526,5 +531,31 @@ pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> R
         .map_err(|e| JsValue::from_str(&e))?;
 
     serde_wasm_bindgen::to_value(&predictions)
+        .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+/// WASM export for clustered robust covariance matrix (sandwich::vcovCL)
+///
+/// Accepts a JSON string with the specific fields needed by the sandwich
+/// estimator, avoiding circular reference issues in the full GlmResult.
+#[wasm_bindgen]
+pub fn glm_vcov_cl_wasm(
+    sandwich_input_json: &str,
+    cluster: JsValue,
+    hc_type: &str,
+    cadjust: bool,
+    fix: bool,
+) -> Result<JsValue, JsValue> {
+    let input: super::sandwich::SandwichInput =
+        serde_json::from_str(sandwich_input_json)
+            .map_err(|e| JsValue::from_str(&format!("Failed to parse sandwich input: {}", e)))?;
+
+    let cluster: Vec<i32> = serde_wasm_bindgen::from_value(cluster)
+        .map_err(|e| JsValue::from_str(&format!("Failed to parse cluster: {}", e)))?;
+
+    let hc = super::sandwich::HCType::from_str(hc_type);
+    let vcov = super::sandwich::vcov_cl_from_input(&input, &cluster, hc, cadjust, fix);
+
+    serde_wasm_bindgen::to_value(&vcov)
         .map_err(|e| JsValue::from_str(&e.to_string()))
 }

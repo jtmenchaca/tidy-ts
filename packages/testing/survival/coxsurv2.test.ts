@@ -24,14 +24,14 @@ interface Coxsurv2Ref {
   km_time: number[];
   km_surv: number[];
   km_cumhaz: number[];
-  km_stdErr: number[];
+  km_std_err: number[];
   km_strata: number[];
-  km_nRisk: number[];
-  km_nEvent: number[];
+  km_n_risk: number[];
+  km_n_event: number[];
   aalen_time: number[];
   aalen_surv: number[];
   aalen_cumhaz: number[];
-  aalen_stdErr: number[];
+  aalen_std_err: number[];
   aalen_strata: number[];
 }
 
@@ -57,8 +57,8 @@ Deno.test("coxsurv2: KM survfit by sex on lung", () => {
   assertArrayClose(fit.time, ref.km_time, TOL_EXACT, "km_time");
   assertArrayClose(fit.surv, ref.km_surv, TOL, "km_surv");
   assertArrayClose(fit.cumhaz, ref.km_cumhaz, TOL, "km_cumhaz");
-  assertArrayClose(fit.nRisk, ref.km_nRisk, TOL_EXACT, "km_nRisk");
-  assertArrayClose(fit.nEvent, ref.km_nEvent, TOL_EXACT, "km_nEvent");
+  assertArrayClose(fit.nRisk, ref.km_n_risk, TOL_EXACT, "km_n_risk");
+  assertArrayClose(fit.nEvent, ref.km_n_event, TOL_EXACT, "km_n_event");
 });
 
 Deno.test("coxsurv2: Aalen (stype=2) survfit by sex on lung", () => {

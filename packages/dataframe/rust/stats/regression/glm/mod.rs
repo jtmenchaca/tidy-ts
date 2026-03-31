@@ -31,6 +31,8 @@ pub mod types_anova;
 pub mod types_control;
 pub mod types_profile;
 pub mod types_results;
+pub mod multinomial;
+pub mod sandwich;
 
 // WASM bindings - ONLY export
 #[cfg(feature = "wasm")]

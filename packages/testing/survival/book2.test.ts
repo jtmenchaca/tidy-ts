@@ -4,9 +4,9 @@
 //
 // Coverage of book2.R:
 // [x] L63-70:  coxph Efron iter=0 (loglik, var, mart, scho, score)
-// [x] L71-73:  survfit from Cox iter=0 at x=0 (surv, stdErr^2)
+// [x] L71-73:  survfit from Cox iter=0 at x=0 (surv, std_err^2)
 // [x] L75-83:  coxph Efron converged (coef, loglik, var, mart, scho, score)
-// [x] L94-96:  survfit from converged Cox at x=0 (surv, stdErr^2)
+// [x] L94-96:  survfit from converged Cox at x=0 (surv, std_err^2)
 
 import {
   coxph,
@@ -69,7 +69,7 @@ Deno.test("book2: coxph Efron iter=0", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", maxiter: 0 },
+    method: "efron", maxiter: 0,
   });
 
   assertClose(fit.loglik[0], ref.fit0_loglik, TOL, "loglik");
@@ -82,7 +82,7 @@ Deno.test("book2: residuals at iter=0 Efron", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", maxiter: 0 },
+    method: "efron", maxiter: 0,
   });
 
   const mart = coxResiduals({
@@ -120,7 +120,7 @@ Deno.test("book2: survfit from Cox iter=0 at x=0", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", maxiter: 0 },
+    method: "efron", maxiter: 0,
   });
 
   const sfit = survfitCox({
@@ -141,7 +141,7 @@ Deno.test("book2: survfit from Cox iter=0 at x=0", () => {
   assertArrayClose(sfit.time, ref.sfit0_time, TOL_EXACT, "time");
   assertArrayClose(sfit.surv, ref.sfit0_surv, TOL, "surv");
   const stderrSq = sfit.stdErr.map((s) => s * s);
-  assertArrayClose(stderrSq, ref.sfit0_stderr_sq, TOL, "stdErr^2");
+  assertArrayClose(stderrSq, ref.sfit0_stderr_sq, TOL, "std_err^2");
 });
 
 Deno.test("book2: coxph Efron converged", () => {
@@ -149,7 +149,7 @@ Deno.test("book2: coxph Efron converged", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", eps: 1e-8, nocenter: true },
+    method: "efron", eps: 1e-8, nocenter: true,
   });
 
   assertClose(fit.coefficients[0], ref.fit_coef, TOL, "coef");
@@ -163,7 +163,7 @@ Deno.test("book2: residuals at converged Efron", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", eps: 1e-8, nocenter: true },
+    method: "efron", eps: 1e-8, nocenter: true,
   });
 
   const mart = coxResiduals({
@@ -201,7 +201,7 @@ Deno.test("book2: survfit from converged Cox at x=0", () => {
     time: clean.time,
     status: clean.status,
     covariates: { x: clean.x },
-    options: { method: "efron", eps: 1e-8, nocenter: true },
+    method: "efron", eps: 1e-8, nocenter: true,
   });
 
   const sfit = survfitCox({
@@ -222,5 +222,5 @@ Deno.test("book2: survfit from converged Cox at x=0", () => {
   assertArrayClose(sfit.time, ref.sfit_time, TOL_EXACT, "time");
   assertArrayClose(sfit.surv, ref.sfit_surv, TOL, "surv");
   const stderrSq = sfit.stdErr.map((s) => s * s);
-  assertArrayClose(stderrSq, ref.sfit_stderr_sq, TOL, "stdErr^2");
+  assertArrayClose(stderrSq, ref.sfit_stderr_sq, TOL, "std_err^2");
 });

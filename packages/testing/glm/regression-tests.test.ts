@@ -262,6 +262,9 @@ const testConfig = {
   "glm.binomial.log": false, // Testing if R supports binomial log link
   "glm.binomial.cloglog": false, // ❌ Rust side has NAs error (cloglog link)
 
+  // GLM Tests - Quasibinomial Family
+  "glm.quasibinomial": true, // ✅ Working (logit link)
+
   // GLM Tests - Poisson Family
   "glm.poisson": true, // ✅ Working (log link)
   "glm.poisson.identity": false, // ✅ Working (identity link)
@@ -322,6 +325,22 @@ Deno.test("glm.binomial", async () => {
   const results = await runTestGroup(
     "GLM Binomial Tests",
     "glm.binomial",
+    testCount,
+    generateTestCase,
+    runRobustComparison,
+    [10, 30],
+    INDIVIDUAL_TEST_SUCCESS_THRESHOLD,
+  );
+
+  // Print detailed coefficient and confidence interval comparison
+  printDetailedCoefficientsWithConfint(results);
+});
+
+// GLM Quasibinomial Family Tests
+Deno.test("glm.quasibinomial", async () => {
+  const results = await runTestGroup(
+    "GLM Quasibinomial Tests",
+    "glm.quasibinomial",
     testCount,
     generateTestCase,
     runRobustComparison,

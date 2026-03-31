@@ -5,7 +5,6 @@ import type {
   Prettify,
 } from "../../../dataframe/index.ts";
 import type {
-  AnyPropertyIsAsync,
   PromisedDataFrame,
   PromisedGroupedDataFrame,
 } from "../../../promised-dataframe/index.ts";
@@ -53,19 +52,24 @@ type ColumnValueResult<
  * RowAfterMutation<Row, Assignments>
  * Given original row Row and column assignments (functions | arrays | scalars | null),
  * compute the resulting row type. Existing keys present in Assignments are replaced.
+ *
+ * Uses a single mapped type over `keyof Row | keyof Assignments` instead of
+ * `Omit<Row, ...> & { ... }`. The Omit + intersection pattern produces deferred
+ * `Exclude<keyof T, ...>` types when Row is a generic type parameter, which blocks
+ * key assignability checks (e.g., `.select("id")` after `.mutate(...)` fails because
+ * TS can't prove "id" is in `Exclude<keyof T, ...>`). The single mapped type gives
+ * `keyof Result = keyof Row | keyof Assignments` directly, which TS can resolve.
  */
 export type RowAfterMutation<
   Row extends object,
   // deno-lint-ignore no-explicit-any
   Assignments extends Record<string, any>,
 > = Prettify<
-  & Omit<Row, keyof Assignments & keyof Row>
-  & {
-    [ColName in keyof Assignments]: ColumnValueResult<
-      Row,
-      Assignments[ColName]
-    >;
-  }
+  // Row-only keys: homomorphic over Row via `as` clause, preserves optional modifiers.
+  // The `as` filter avoids `Exclude<keyof Row, keyof Assignments>` which defers on generics.
+  & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+  // New/overwritten keys from Assignments
+  & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
 >;
 
 /** 🔁 Compatibility alias so existing runtime code can keep importing `AddColumns` */
@@ -95,24 +99,34 @@ export type RowAfterAssignments<
   Assignments extends Record<string, ColumnValue<Row>>,
 > = RowAfterMutation<Row, Assignments>;
 
+
 /**
- * WithContextForFunctions<Row, A>
- * Refines an arbitrary assignments object A so that any function-valued
- * properties are contextually typed with the precise `(row: Row, idx, df)` signature.
- * Non-function properties are left unchanged. This enables strong parameter
- * inference for function literals even when mixed with arrays/scalars.
+ * NotAPromise<T> — resolves to `true` when T is definitely not a Promise.
+ *
+ * Uses `[Awaited<T>] extends [T]` instead of `T extends Promise<any>`:
+ * - For `Promise<X>`:  Awaited = X, and [X] does NOT extend [Promise<X>] → false
+ * - For `number`:      Awaited = number, and [number] extends [number] → true
+ * - For generic `T[K]`: Awaited<T[K]> resolves and extends T[K] → true
+ *
+ * The key advantage: `T extends Promise<any>` defers on generic type params
+ * (TS issue #52144), but `[Awaited<T>] extends [T]` resolves even for generics.
  */
-type WithContextForFunctions<
-  Row extends object,
+type NotAPromise<T> = [Awaited<T>] extends [T] ? true : false;
+
+/**
+ * Maps each function property to `never` if it returns a Promise.
+ * Used as `Formulas & AllSync<Formulas>` in tier-2 overload constraints:
+ * sync functions pass through, async functions become `never`.
+ *
+ * Uses NotAPromise (Awaited-based) instead of `extends Promise<any>` so that
+ * generic return types (e.g., `T[K & keyof T]`) resolve correctly instead of
+ * deferring the conditional (TS issue #52144).
+ */
+type AllSync<F> = {
   // deno-lint-ignore no-explicit-any
-  A extends Record<string, any>,
-> = {
-  [K in keyof A]: A[K] extends (...args: unknown[]) => unknown ? (
-      row: Row,
-      idx: number,
-      df: DataFrame<Row>,
-    ) => Awaited<ReturnType<Extract<A[K], (...args: unknown[]) => unknown>>>
-    : A[K];
+  [K in keyof F]: F[K] extends (...args: any[]) => infer R
+    ? NotAPromise<R> extends true ? F[K] : never
+    : F[K];
 };
 
 /**
@@ -178,43 +192,66 @@ type WithContextForFunctions<
  * ```
  */
 export interface MutateMethod<Row extends object> {
-  // ── Async versions (return Promise<DataFrame>) ──────────────────────────────
+  // ══════════════════════════════════════════════════════════════════════════
+  // Async detection — three-tier overload pattern:
+  //
+  //   1. All-async param-split: every value returns Promise → PromisedDataFrame.
+  //   2. All-sync constraint (AllSync<Formulas>): parameter is the mapped type
+  //      directly, rejecting async functions via `never`. Sync-only calls match
+  //      here → DataFrame. Generic Row calls also land here because AllSync uses
+  //      NotAPromise (Awaited-based) which resolves for generic return types.
+  //   3. Mixed-async fallback: catches anything tier 2 rejected (has at least one
+  //      async property). Returns PromisedDataFrame unconditionally — no conditional
+  //      return type, so no deferred union that would break .select() chaining.
+  // ══════════════════════════════════════════════════════════════════════════
 
-  // ── Grouped — async formulas ───────────────────────────────────────────────
-  /**
-   * Add or modify columns using expressions.
-   *
-   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
-   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
-   * within each group. Async functions return a PromisedDataFrame.
-   *
-   * @example
-   * // Add computed columns
-   * df.mutate({
-   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isAdult: (r) => r.age >= 18
-   * })
-   *
-   * @example
-   * // Mix functions, arrays, and scalars
-   * df.mutate({
-   *   computed: (row) => row.a * 2,
-   *   fromArray: [10, 20, 30],
-   *   constant: "fixed_value"
-   * })
-   *
-   * @example
-   * // Async operations with concurrency
-   * await df.mutate({
-   *   data: async (row) => await fetchData(row.id)
-   * }, { concurrency: 10 })
-   *
-   * @example
-   * // Grouped operations
-   * df.groupBy("category").mutate({
-   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
-   * })
-   */
+  // ── Tier 1: Grouped — all-async formulas ──────────────────────────────────
+  <
+    GroupName extends keyof Row,
+    // deno-lint-ignore no-explicit-any
+    Formulas extends Record<string, (row: Row, idx: number, df: DataFrame<Row>) => Promise<any>>,
+  >(
+    this: GroupedDataFrame<Row, GroupName>,
+    formulas: Formulas,
+  ): PromisedGroupedDataFrame<
+    RowAfterMutation<Row, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+  >;
+
+  // ── Tier 1: Ungrouped — all-async formulas ────────────────────────────────
+  <
+    // deno-lint-ignore no-explicit-any
+    Formulas extends Record<string, (row: Row, idx: number, df: DataFrame<Row>) => Promise<any>>,
+  >(
+    formulas: Formulas,
+  ): PromisedDataFrame<RowAfterMutation<Row, Formulas>>;
+
+  // ── Tier 2: Grouped — all-sync formulas ───────────────────────────────────
+  <
+    GroupName extends keyof Row,
+    Formulas extends Record<
+      string,
+      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+    >,
+  >(
+    this: GroupedDataFrame<Row, GroupName>,
+    formulas: Formulas & AllSync<Formulas>,
+  ): GroupedDataFrame<
+    RowAfterMutation<Row, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+  >;
+
+  // ── Tier 2: Ungrouped — all-sync formulas ─────────────────────────────────
+  <
+    Formulas extends Record<
+      string,
+      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+    >,
+  >(
+    formulas: Formulas & AllSync<Formulas>,
+  ): DataFrame<RowAfterMutation<Row, Formulas>>;
+
+  // ── Tier 3: Grouped — mixed-async fallback (unconditional PromisedGroupedDataFrame) ─
   <
     GroupName extends keyof Row,
     Formulas extends Record<
@@ -224,102 +261,12 @@ export interface MutateMethod<Row extends object> {
   >(
     this: GroupedDataFrame<Row, GroupName>,
     formulas: Formulas,
-  ): AnyPropertyIsAsync<Formulas> extends true ? PromisedGroupedDataFrame<
-      RowAfterMutation<Row, Formulas>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
-    >
-    : GroupedDataFrame<
-      RowAfterMutation<Row, Formulas>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
-    >;
+  ): PromisedGroupedDataFrame<
+    RowAfterMutation<Row, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+  >;
 
-  // ── Grouped — async mixed assignments ──────────────────────────────────────
-
-  /**
-   * Add or modify columns using expressions.
-   *
-   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
-   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
-   * within each group. Async functions return a PromisedDataFrame.
-   *
-   * @example
-   * // Add computed columns
-   * df.mutate({
-   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isAdult: (r) => r.age >= 18
-   * })
-   *
-   * @example
-   * // Mix functions, arrays, and scalars
-   * df.mutate({
-   *   computed: (row) => row.a * 2,
-   *   fromArray: [10, 20, 30],
-   *   constant: "fixed_value"
-   * })
-   *
-   * @example
-   * // Async operations with concurrency
-   * await df.mutate({
-   *   data: async (row) => await fetchData(row.id)
-   * }, { concurrency: 10 })
-   *
-   * @example
-   * // Grouped operations
-   * df.groupBy("category").mutate({
-   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
-   * })
-   */
-  <
-    GroupName extends keyof Row,
-    Assignments extends Record<string, ColumnValue<Row>>,
-  >(
-    this: GroupedDataFrame<Row, GroupName>,
-    assignments: Assignments,
-  ): AnyPropertyIsAsync<Assignments> extends true ? PromisedGroupedDataFrame<
-      RowAfterMutation<Row, Assignments>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
-    >
-    : GroupedDataFrame<
-      RowAfterMutation<Row, Assignments>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
-    >;
-
-  // ── Ungrouped — async formulas ──────────────────────────────────────────────
-
-  /**
-   * Add or modify columns using expressions.
-   *
-   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
-   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
-   * within each group. Async functions return a PromisedDataFrame.
-   *
-   * @example
-   * // Add computed columns
-   * df.mutate({
-   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isAdult: (r) => r.age >= 18
-   * })
-   *
-   * @example
-   * // Mix functions, arrays, and scalars
-   * df.mutate({
-   *   computed: (row) => row.a * 2,
-   *   fromArray: [10, 20, 30],
-   *   constant: "fixed_value"
-   * })
-   *
-   * @example
-   * // Async operations with concurrency
-   * await df.mutate({
-   *   data: async (row) => await fetchData(row.id)
-   * }, { concurrency: 10 })
-   *
-   * @example
-   * // Grouped operations
-   * df.groupBy("category").mutate({
-   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
-   * })
-   */
+  // ── Tier 3: Ungrouped — mixed-async fallback (unconditional PromisedDataFrame) ─
   <
     Formulas extends Record<
       string,
@@ -327,51 +274,7 @@ export interface MutateMethod<Row extends object> {
     >,
   >(
     formulas: Formulas,
-  ): AnyPropertyIsAsync<Formulas> extends true
-    ? PromisedDataFrame<RowAfterMutation<Row, Formulas>>
-    : DataFrame<RowAfterMutation<Row, Formulas>>;
-
-  // ── Ungrouped — async mixed assignments ─────────────────────────────────────
-
-  /**
-   * Add or modify columns using expressions.
-   *
-   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
-   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
-   * within each group. Async functions return a PromisedDataFrame.
-   *
-   * @example
-   * // Add computed columns
-   * df.mutate({
-   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isAdult: (r) => r.age >= 18
-   * })
-   *
-   * @example
-   * // Mix functions, arrays, and scalars
-   * df.mutate({
-   *   computed: (row) => row.a * 2,
-   *   fromArray: [10, 20, 30],
-   *   constant: "fixed_value"
-   * })
-   *
-   * @example
-   * // Async operations with concurrency
-   * await df.mutate({
-   *   data: async (row) => await fetchData(row.id)
-   * }, { concurrency: 10 })
-   *
-   * @example
-   * // Grouped operations
-   * df.groupBy("category").mutate({
-   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
-   * })
-   */
-  <Assignments extends Record<string, ColumnValue<Row>>>(
-    assignments: Assignments,
-  ): AnyPropertyIsAsync<Assignments> extends true
-    ? PromisedDataFrame<RowAfterMutation<Row, Assignments>>
-    : DataFrame<RowAfterMutation<Row, Assignments>>;
+  ): PromisedDataFrame<RowAfterMutation<Row, Formulas>>;
 
   // ── Overloads with concurrency options ─────────────────────────────────────
 
@@ -751,47 +654,6 @@ export interface MutateMethod<Row extends object> {
     formulas: Formulas,
   ): DataFrame<RowAfterMutation<Row, Formulas>>;
 
-  // ── Ungrouped — mixed assignments with contextual function typing ─────────
-  /**
-   * Add or modify columns using expressions.
-   *
-   * Creates new columns or modifies existing ones using functions, arrays, scalars, or null.
-   * Functions receive `(row, idx, df)` parameters. For grouped DataFrames, operations apply
-   * within each group. Async functions return a PromisedDataFrame.
-   *
-   * @example
-   * // Add computed columns
-   * df.mutate({
-   *   bmi: (r) => r.mass / Math.pow(r.height / 100, 2),
-   *   isAdult: (r) => r.age >= 18
-   * })
-   *
-   * @example
-   * // Mix functions, arrays, and scalars
-   * df.mutate({
-   *   computed: (row) => row.a * 2,
-   *   fromArray: [10, 20, 30],
-   *   constant: "fixed_value"
-   * })
-   *
-   * @example
-   * // Async operations with concurrency
-   * await df.mutate({
-   *   data: async (row) => await fetchData(row.id)
-   * }, { concurrency: 10 })
-   *
-   * @example
-   * // Grouped operations
-   * df.groupBy("category").mutate({
-   *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
-   * })
-   */
-  <A extends Record<string, unknown>>(
-    assignments: WithContextForFunctions<Row, A>,
-  ): AnyPropertyIsAsync<A> extends true
-    ? PromisedDataFrame<RowAfterMutation<Row, A>>
-    : DataFrame<RowAfterMutation<Row, A>>;
-
   // ── Ungrouped — mixed without scalars (functions | arrays | null) for better inference ─────
   /**
    * Add or modify columns using expressions.
@@ -874,6 +736,12 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <Assignments extends Record<string, ColumnValue<Row>>>(
+    assignments: Assignments,
+  ): DataFrame<RowAfterMutation<Row, Assignments>>;
+
+  // ── Ungrouped — broadest fallback (includes scalars) ────────────────────────
+  // deno-lint-ignore no-explicit-any
+  <Assignments extends Record<string, any>>(
     assignments: Assignments,
   ): DataFrame<RowAfterMutation<Row, Assignments>>;
 }

@@ -132,7 +132,11 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
     // Override select to always return PromisedDataFrame
     select: {
       <ColName extends keyof Row>(
+        columnName: ColName,
         ...columnNames: ColName[]
+      ): PromisedDataFrame<Pick<Row, ColName>>;
+      <ColName extends keyof Row>(
+        columns: ColName[],
       ): PromisedDataFrame<Pick<Row, ColName>>;
     };
 

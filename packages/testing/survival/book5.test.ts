@@ -5,7 +5,7 @@
 // Coverage of book5.R:
 // [x] L75-79:   weighted Breslow iter=0, loglik, var, mart, scho, score
 // [x] L81-83:   replicated data residuals match weighted at iter=0
-// [x] L85-93:   survfit from iter=0 at x=pi (surv, stdErr^2)
+// [x] L85-93:   survfit from iter=0 at x=pi (surv, std_err^2)
 // [x] L96-100:  converged Breslow, loglik, var, mart, scho, score
 // [x] L102-104: survfit from converged at x=0.3
 // [x] L114-116: replicated data residuals match weighted converged
@@ -73,7 +73,7 @@ Deno.test("book5: weighted coxph Breslow iter=0", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, method: "breslow", weights: testw1.wt },
+    maxiter: 0, method: "breslow", weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.fit0_coef, TOL_EXACT, "coef");
@@ -86,7 +86,7 @@ Deno.test("book5: weighted Breslow iter=0 residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, method: "breslow", weights: testw1.wt },
+    maxiter: 0, method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -124,7 +124,7 @@ Deno.test("book5: replicated data residuals match weighted iter=0", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, method: "breslow", weights: testw1.wt },
+    maxiter: 0, method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -151,7 +151,7 @@ Deno.test("book5: survfit from weighted Breslow iter=0 at x=pi", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { maxiter: 0, method: "breslow", weights: testw1.wt },
+    maxiter: 0, method: "breslow", weights: testw1.wt,
   });
 
   const sfit = survfitCox({
@@ -179,7 +179,7 @@ Deno.test("book5: weighted coxph Breslow converged", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   assertClose(fit.coefficients[0], ref.fit_coef, TOL, "coef");
@@ -193,7 +193,7 @@ Deno.test("book5: weighted Breslow converged residuals", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -231,7 +231,7 @@ Deno.test("book5: survfit from weighted Breslow converged at x=0.3", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   const sfit = survfitCox({
@@ -259,7 +259,7 @@ Deno.test("book5: replicated data residuals match weighted converged", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({
@@ -286,7 +286,7 @@ Deno.test("book5: weighted residuals ratio equals weights", () => {
     time: testw1.time,
     status: testw1.status,
     covariates: { x: testw1.x },
-    options: { method: "breslow", weights: testw1.wt },
+    method: "breslow", weights: testw1.wt,
   });
 
   const mart = coxResiduals({

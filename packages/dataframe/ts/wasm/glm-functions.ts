@@ -104,8 +104,8 @@ export interface GlmFitResult {
   y: number[]; // 18. y
 
   // Convergence and Control (19-21)
-  converged: boolean; // 19. converged
-  boundary: boolean; // 20. boundary
+  converged: number; // 19. converged (u8: 0=false, 1=true)
+  boundary: number; // 20. boundary (u8: 0=false, 1=true)
   model: ModelFrame; // 21. model
 
   // Call and Formula (22-25)
@@ -150,9 +150,13 @@ export interface GlmFitResult {
   qrRank: number;
   pivot: number[];
   tol: number;
-  pivoted: boolean;
+  pivoted: number; // u8: 0=false, 1=true
   naAction?: string;
   dispersion: number;
+
+  // Pre-computed confidence intervals (computed at fit time to avoid serde_wasm_bindgen round-trip issues)
+  confintLower: number[];
+  confintUpper: number[];
 }
 
 /**
@@ -161,6 +165,7 @@ export interface GlmFitResult {
 export type GlmFamily =
   | "gaussian"
   | "binomial"
+  | "quasibinomial"
   | "poisson"
   | "gamma"
   | "inverse_gaussian";
@@ -311,7 +316,7 @@ export class GLM<Row extends Record<string, number>> {
     return this.result.dfNull;
   }
   get converged(): boolean {
-    return this.result.converged;
+    return this.result.converged !== 0;
   }
   get iter(): number {
     return this.result.iter;
@@ -585,7 +590,19 @@ export class GLM<Row extends Record<string, number>> {
     lower: number[];
     upper: number[];
   } {
-    // Call Rust implementation via WASM (takes JsValue, returns JsValue)
+    // Use pre-computed 95% CIs from fit time (avoids serde_wasm_bindgen round-trip issues)
+    if (
+      level === 0.95 && this.result.confintLower.length > 0 &&
+      this.result.confintUpper.length > 0
+    ) {
+      return {
+        names: this.result.modelMatrixColumnNames,
+        lower: this.result.confintLower,
+        upper: this.result.confintUpper,
+      };
+    }
+
+    // For non-default levels, fall back to WASM call
     const confint = wasmInternal.glm_confint_wasm(this.result, level) as {
       names: string[];
       lower: number[];
@@ -647,7 +664,6 @@ export class GLM<Row extends Record<string, number>> {
       newdataMatrix.push(row);
     }
 
-    // Call Rust predict function (takes JsValue, returns JsValue)
     const predictions = wasmInternal.glm_predict_wasm(
       this.result,
       newdataMatrix,
@@ -696,6 +712,7 @@ export function glm<Row extends Record<string, number>>({
   family:
     | "gaussian"
     | "binomial"
+    | "quasibinomial"
     | "poisson"
     | "gamma"
     | "inverse_gaussian";
@@ -773,4 +790,76 @@ export function glm<Row extends Record<string, number>>({
     link,
     data,
   });
+}
+
+/**
+ * Result from vcovCL — clustered robust covariance matrix
+ */
+export interface VcovCLResult {
+  /** The robust variance-covariance matrix (p × p) */
+  matrix: number[][];
+  /** Coefficient names */
+  names: string[];
+  /** Type of HC correction applied */
+  type: string;
+  /** Number of clusters */
+  nClusters: number;
+}
+
+/**
+ * Compute clustered robust covariance matrix for a GLM (sandwich::vcovCL).
+ *
+ * Implements the sandwich estimator: vcov = (1/n) × bread × meat × bread
+ * where bread = n × (X'WX)^{-1} × dispersion and meat is the
+ * cluster-aggregated outer product of score contributions.
+ *
+ * @param result - A fitted GlmFitResult (from glmFit or glm().result)
+ * @param cluster - Integer cluster IDs, one per observation
+ * @param type - HC correction type: "HC0" (default) or "HC1"
+ * @param cadjust - Apply cluster adjustment g/(g-1), default true
+ * @param fix - Fix non-positive-definite result, default false
+ * @returns VcovCLResult with the robust covariance matrix
+ */
+export function vcovCL({
+  result,
+  cluster,
+  type = "HC0",
+  cadjust = true,
+  fix = false,
+}: {
+  result: GlmFitResult;
+  cluster: number[];
+  type?: "HC0" | "HC1";
+  cadjust?: boolean;
+  fix?: boolean;
+}): VcovCLResult {
+  initWasm();
+
+  // Extract only the fields needed by the sandwich estimator,
+  // serialized as JSON to avoid circular reference issues in the
+  // full GlmFitResult (family object has circular refs).
+  const sandwichInput = JSON.stringify({
+    workingResiduals: result.workingResiduals,
+    weights: result.weights,
+    fittedValues: result.fittedValues,
+    modelMatrix: result.modelMatrix,
+    r: result.r,
+    rank: result.rank,
+    familyName: result.family.family,
+    dispersionParameter: result.dispersionParameter,
+    modelMatrixColumnNames: result.modelMatrixColumnNames,
+    pivot: result.qr.pivot,
+  });
+
+  try {
+    return wasmInternal.glm_vcov_cl_wasm(
+      sandwichInput,
+      cluster,
+      type,
+      cadjust,
+      fix,
+    ) as VcovCLResult;
+  } catch (e) {
+    throw new Error(`vcovCL error: ${e}`);
+  }
 }

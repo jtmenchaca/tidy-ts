@@ -79,14 +79,11 @@ export type InnerJoinMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
     on: RestrictEmptyDataFrame<
       Row,
-      Extract<keyof Row, keyof OtherRow> | Extract<
-        keyof Row,
-        keyof OtherRow
-      >[],
+      K | K[],
       EmptyDataFrameJoin
     >,
     options?: SimpleJoinOptions,
@@ -162,12 +159,9 @@ export type InnerJoinDuckDBMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
-    on: Extract<keyof Row, keyof OtherRow> | Extract<
-      keyof Row,
-      keyof OtherRow
-    >[],
+    on: K | K[],
     options?: JoinOptions,
   ): Promise<
     DataFrame<InnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
@@ -218,14 +212,11 @@ export type LeftJoinMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
     on: RestrictEmptyDataFrame<
       Row,
-      Extract<keyof Row, keyof OtherRow> | Extract<
-        keyof Row,
-        keyof OtherRow
-      >[],
+      K | K[],
       EmptyDataFrameJoin
     >,
     options?: SimpleJoinOptions,
@@ -300,14 +291,11 @@ export type LeftJoinParallelMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
     on: RestrictEmptyDataFrame<
       Row,
-      Extract<keyof Row, keyof OtherRow> | Extract<
-        keyof Row,
-        keyof OtherRow
-      >[],
+      K | K[],
       EmptyDataFrameJoin
     >,
     options?: {
@@ -406,14 +394,11 @@ export type RightJoinMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
     on: RestrictEmptyDataFrame<
       Row,
-      Extract<keyof Row, keyof OtherRow> | Extract<
-        keyof Row,
-        keyof OtherRow
-      >[],
+      K | K[],
       EmptyDataFrameJoin
     >,
     options?: SimpleJoinOptions,
@@ -509,14 +494,11 @@ export type OuterJoinMethod<Row extends object> = {
    *   suffixes: { left: "_user", right: "_order" }
    * })
    */
-  <OtherRow extends object>(
+  <OtherRow extends object, K extends keyof Row & keyof OtherRow>(
     other: DataFrame<OtherRow>,
     on: RestrictEmptyDataFrame<
       Row,
-      Extract<keyof Row, keyof OtherRow> | Extract<
-        keyof Row,
-        keyof OtherRow
-      >[],
+      K | K[],
       EmptyDataFrameJoin
     >,
     options?: SimpleJoinOptions,

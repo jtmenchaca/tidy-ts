@@ -58,7 +58,7 @@ Deno.test("book7: coxph exact iter=0", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
-    options: { maxiter: 0, method: "exact" },
+    maxiter: 0, method: "exact",
   });
 
   assertClose(fit.coefficients[0], ref.fit0_coef, TOL_EXACT, "coef");
@@ -80,7 +80,7 @@ Deno.test("book7: coxph exact iter=1", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
-    options: { maxiter: 1, method: "exact" },
+    maxiter: 1, method: "exact",
   });
 
   assertClose(fit.coefficients[0], ref.fit1_coef, TOL, "coef");
@@ -102,7 +102,7 @@ Deno.test("book7: coxph exact converged mart residuals", () => {
     time: test1clean.time,
     status: test1clean.status,
     covariates: { x: test1clean.x },
-    options: { method: "exact" },
+    method: "exact",
   });
 
   const mart = coxResiduals({

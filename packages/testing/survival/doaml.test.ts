@@ -55,7 +55,7 @@ interface DoamlRef {
   efron_loglik: [number, number];
   km_time: number[];
   km_surv: number[];
-  km_stdErr: number[];
+  km_std_err: number[];
   km_strat_time: number[];
   km_strat_surv: number[];
   survdiff_chisq: number;
@@ -80,7 +80,7 @@ Deno.test("doaml: Cox PH Breslow on AML data", () => {
     time: aml.map((r) => r.time),
     status: aml.map((r) => r.status),
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   assertClose(fit.coefficients[0], ref.breslow_coef, TOL, "coef");
@@ -101,7 +101,7 @@ Deno.test("doaml: Cox residuals - martingale", () => {
     time,
     status,
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   const mart = coxResiduals({
@@ -125,7 +125,7 @@ Deno.test("doaml: Cox residuals - score", () => {
     time,
     status,
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   const scoreResid = coxResiduals({
@@ -150,7 +150,7 @@ Deno.test("doaml: Cox residuals - schoenfeld", () => {
     time,
     status,
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   const scho = coxResiduals({
@@ -175,13 +175,13 @@ Deno.test("doaml: dropping intercept has no effect on Cox PH", () => {
     time: aml.map((r) => r.time),
     status: aml.map((r) => r.status),
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
   const fit2 = coxph({
     time: aml.map((r) => r.time),
     status: aml.map((r) => r.status),
     covariates: { x: xDummy },
-    options: { method: "breslow" },
+    method: "breslow",
   });
 
   assertClose(fit1.loglik[0], fit2.loglik[0], TOL_EXACT, "loglik[0]");
@@ -200,7 +200,7 @@ Deno.test("doaml: KM survfit overall", () => {
 
   assertArrayClose(km.time, ref.km_time, TOL_EXACT, "time");
   assertArrayClose(km.surv, ref.km_surv, TOL, "surv");
-  assertArrayClose(km.stdErr, ref.km_stdErr, TOL, "stdErr");
+  assertArrayClose(km.stdErr, ref.km_std_err, TOL, "std_err");
 });
 
 Deno.test("doaml: KM survfit stratified by group", () => {
@@ -265,7 +265,7 @@ Deno.test("doaml: Cox PH Efron on AML data", () => {
     time: aml.map((r) => r.time),
     status: aml.map((r) => r.status),
     covariates: { x: xDummy },
-    options: { method: "efron" },
+    method: "efron",
   });
 
   assertClose(fit.coefficients[0], ref.efron_coef, TOL, "efron coef");
