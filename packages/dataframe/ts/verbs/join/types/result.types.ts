@@ -1,5 +1,21 @@
 // Join result types
-import type { ExcludeKeysAndMakeUndefined } from "../../../dataframe/index.ts";
+//
+// These use Partial<T> + RequiredUndefined instead of Omit-based
+// ExcludeKeysAndMakeUndefined<T, K> to preserve generic indexability.
+// When L or R is a generic type parameter, Omit<T, K> defers and creates
+// mapped types that can't be indexed with generic keys like K & keyof T.
+// Partial<T> preserves T's indexability because TS knows keyof Partial<T> = keyof T.
+//
+// RequiredUndefined strips the `?` optionality from Partial while keeping
+// `| undefined` in value types, so the result has `field: T | undefined`
+// (not `field?: T | undefined`). This preserves assignability to concrete
+// type annotations in test code.
+
+/**
+ * Maps optional properties to required-but-undefined.
+ * Converts `{ a?: string | undefined }` to `{ a: string | undefined }`.
+ */
+type RequiredUndefined<T> = { [K in keyof T]-?: T[K] };
 
 // -----------------------------------------------------------------------------
 // Join Result Types
@@ -23,7 +39,7 @@ export type LeftJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = L & ExcludeKeysAndMakeUndefined<R, K>;
+> = RequiredUndefined<L & Partial<R>>;
 
 /**
  * Right join result type: (L\K)? ∪ R
@@ -33,7 +49,7 @@ export type RightJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = ExcludeKeysAndMakeUndefined<L, K> & R;
+> = RequiredUndefined<Partial<L> & R>;
 
 /**
  * Full outer join result type: (L\K)? ∪ (R\K)?
@@ -43,7 +59,4 @@ export type FullJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> =
-  & Pick<L, K>
-  & ExcludeKeysAndMakeUndefined<L, K>
-  & ExcludeKeysAndMakeUndefined<R, K>;
+> = RequiredUndefined<Pick<L, K> & Partial<L> & Partial<R>>;

@@ -1,4 +1,4 @@
-import { type DataFrame, stats as s } from "@tidy-ts/dataframe";
+import { type DataFrame } from "@tidy-ts/dataframe";
 
 type HasIdAndDate<K extends string> = { id: string } & Record<K, Temporal.PlainDateTime>;
 type HasIdDateAndCode<K extends string, C extends string> =
@@ -23,19 +23,19 @@ type HasIdDateAndCode<K extends string, C extends string> =
 //       contextual typing directly.
 // ============================================================================
 
-export async function testMutateSelect<
+export  function testMutateSelect<
   K2 extends string,
   T2 extends HasIdAndDate<K2>,
 >(opts: {
   referenceDates: DataFrame<T2>;
   referenceFieldName: K2 & keyof T2;
 }) {
-  const anchors = await opts.referenceDates
+  const anchors = opts.referenceDates
     .mutate({
       _refDate: (r) => r[opts.referenceFieldName],
     })
 
-  const final = await anchors
+  const final =  anchors
     .select("id", "_refDate");
   return final;
 }
@@ -185,7 +185,7 @@ export  function testMutateSelectAsJoinArg<
     })
     .select("id", "_refDate");
   const eventDates = opts.events
-    .filter((r) => true)
+    .filter((_r) => true)
     .mutate({ _eventDate: (r) => r[opts.fieldName] })
     .select("id", "_eventDate");
   const joined = eventDates
@@ -265,6 +265,7 @@ export  function testJoinedFieldAccess_rightJoin<
   const filtered = joined
     .filter((r) => {
       const wStart = r._refDate.add({ days: -14 });
+      const d = r[opts.fieldName];
       return wStart != null;
     });
   return filtered;
@@ -290,6 +291,7 @@ export  function testJoinedFieldAccess_outerJoin<
   const filtered = joined
     .filter((r) => {
       const wStart = r._refDate?.add({ days: -14 });
+      const d = r[opts.fieldName];
       return wStart != null;
     });
   return filtered;
