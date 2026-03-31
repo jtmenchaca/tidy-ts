@@ -1,6 +1,7 @@
 # Tidy-TS Architecture
 
 - **Temporary scripts**: When you need to write and run a transformation script, write it to `/tmp` using the Write tool and then run it with `deno run -A /tmp/script.ts`. This avoids approval prompts. Never use heredocs in bash to create scripts.
+- **PLEASE** do not type check with pnpm check:dataframe unless it's really needed.  Just check the relevant file(s) you're editing. 
 - **Type checking output is already clean**: `pnpm check:dataframe` or whatever is more targeted and relevant (i.e. do not read whole packages unless necessary) (and all check scripts) use `scripts/parse-check.ts` which strips verbose output and shows only errors with file locations. **Do NOT pipe through `2>&1`, `tail`, `grep`, or `head`** — just run the command directly and read the output as-is.
 
 ## Quick Reference

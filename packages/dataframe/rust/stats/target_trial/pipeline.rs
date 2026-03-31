@@ -44,13 +44,29 @@ pub fn target_trial_emulation(
     validate_config(config)?;
 
     // 2. Generate default formulas if not provided
-    let config = fill_default_formulas(config);
+    let mut config = fill_default_formulas(config);
+
+    // 2b. Resolve Inf values for followup_max and survival_max — R class_setters.R lines 93-98
+    // R: if (is.infinite(params@followup.max)) params@followup.max <- max(params@data[[params@time]])
+    // R: if (params@survival.max > params@followup.max) params@survival.max <- params@followup.max
+    // R: if (is.infinite(params@survival.max)) params@survival.max <- params@followup.max
+    if config.followup_max.is_infinite() {
+        if let Some(time_col) = data.get_numeric(&config.time) {
+            config.followup_max = time_col.iter().cloned().fold(0.0_f64, f64::max);
+        }
+    }
+    if config.survival_max > config.followup_max {
+        config.survival_max = config.followup_max;
+    }
+    if config.survival_max.is_infinite() {
+        config.survival_max = config.followup_max;
+    }
 
     #[cfg(feature = "wasm")]
     {
         let msg = format!(
-            "target_trial: formulas filled. outcome={:?}, nrows={}",
-            config.covariates, data.nrows
+            "target_trial: formulas filled. outcome={:?}, nrows={}, followup_max={}, survival_max={}",
+            config.covariates, data.nrows, config.followup_max, config.survival_max
         );
         console::log_1(&msg.into());
     }

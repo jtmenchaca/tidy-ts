@@ -10,7 +10,7 @@ Deno.test("lag() - basic lag with time series", () => {
   ]);
 
   const result = df.mutate({
-    prev_sales: stats.lag("sales", 1),
+    prev_sales: stats.lag(df.extract("sales"), 1),
   });
 
   expect(result[0].prev_sales).toBeUndefined();
@@ -28,7 +28,7 @@ Deno.test("lead() - basic lead with time series", () => {
   ]);
 
   const result = df.mutate({
-    next_sales: stats.lead("sales", 1),
+    next_sales: stats.lead(df.extract("sales"), 1),
   });
 
   expect(result[0].next_sales).toBe(150);
@@ -45,7 +45,7 @@ Deno.test("lag() - with default value", () => {
   ]);
 
   const result = df.mutate({
-    prev_sales: stats.lag("sales", 1, 0),
+    prev_sales: stats.lag(df.extract("sales"), 1, 0),
   });
 
   expect(result[0].prev_sales).toBe(0);
@@ -62,7 +62,9 @@ Deno.test("lag() - with grouped data", () => {
   ]);
 
   const result = df.groupBy("symbol").mutate({
-    prev_price: stats.lag("price", 1),
+    prev_price: (_row, i, groupDf) => {
+      return stats.lag(groupDf.extract("price"), 1)[i];
+    },
   });
 
   expect(result[0].prev_price).toBeUndefined(); // first AAPL
