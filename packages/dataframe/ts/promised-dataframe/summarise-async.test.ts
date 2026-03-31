@@ -30,7 +30,7 @@ Deno.test("summarise with async function - simplest case", async () => {
   df.print();
 
   // EXPECTED BEHAVIOR: Auto-detection should make this return Promise<DataFrame>
-  const result = await df.summarise({
+  const result = await df.summariseAsync({
     total_sum: async (df) => await asyncSum(df.value),
     avg_value: async (df) => await asyncMean(df.value),
   });
@@ -81,7 +81,7 @@ Deno.test("grouped summarise with async functions", async () => {
   // EXPECTED: Grouped async summarise
   const result = await df
     .groupBy("category")
-    .summarise({
+    .summariseAsync({
       async_sum: async (df) => await asyncSum(df.value),
       async_mean: async (df) => await asyncMean(df.score),
       async_count: async (df) => await asyncCount(df),
@@ -116,7 +116,7 @@ Deno.test("mixed sync/async summarise", async () => {
   df.print();
 
   // EXPECTED: Mixed sync and async aggregation functions
-  const result = await df.summarise({
+  const result = await df.summariseAsync({
     sync_total: (df) => df.amount.reduce((sum, val) => sum + val, 0), // sync
     async_avg: async (df) => await asyncMean(df.quantity), // async
     sync_count: (df) => df.nrows(), // sync
@@ -150,7 +150,7 @@ Deno.test("async summarise with chaining", async () => {
 
   const afterAsyncSummarise = await afterFilter
     .groupBy("region")
-    .summarise({
+    .summariseAsync({
       total_sales: async (df) => await asyncSum(df.sales),
       avg_cost: async (df) => await asyncMean(df.cost),
     });

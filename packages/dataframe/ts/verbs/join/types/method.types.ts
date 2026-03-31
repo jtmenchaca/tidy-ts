@@ -88,7 +88,7 @@ export type InnerJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    Prettify<InnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
+    Prettify<InnerJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -164,7 +164,7 @@ export type InnerJoinDuckDBMethod<Row extends object> = {
     on: K | K[],
     options?: JoinOptions,
   ): Promise<
-    DataFrame<InnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
+    DataFrame<InnerJoinResult<Row, OtherRow, K>>
   >;
 };
 
@@ -221,7 +221,7 @@ export type LeftJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    Prettify<LeftJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
+    Prettify<LeftJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -403,7 +403,7 @@ export type RightJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    Prettify<RightJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
+    Prettify<RightJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -503,7 +503,7 @@ export type OuterJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    Prettify<FullJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>
+    Prettify<FullJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)

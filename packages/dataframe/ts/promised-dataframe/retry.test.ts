@@ -69,7 +69,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
   const flakeyFn1 = createFlakeyApiCall(1); // Fails once
 
   try {
-    await df1.mutate({
+    await df1.mutateAsync({
       doubled: async (row) => await flakeyFn1(row.value),
     });
     throw new Error("Should have failed without retries");
@@ -89,7 +89,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
 
   const df2 = createDataFrame(testData);
 
-  const result2 = await df2.mutate({
+  const result2 = await df2.mutateAsync({
     doubled: async (row) => await flakeyFn2(row.value),
   }, {
     retry: {
@@ -118,7 +118,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
   const flakeyFn3 = createFlakeyApiCall(1); // Fails once
 
   const result3 = await df2
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => await flakeyFn3(row.value),
     }, {
       retry: {
@@ -152,7 +152,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
   const flakeyFn4 = createFlakeyApiCall(4); // Fails 4 times
   const startTime = Date.now();
 
-  const result4 = await df4.mutate({
+  const result4 = await df4.mutateAsync({
     doubled: async (row) => await flakeyFn4(row.value),
   }, {
     retry: {
@@ -220,7 +220,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
 
   const flakeyFn5 = createFlakeyApiCall(3); // Fails 3 times
 
-  const result5 = await df5.mutate({
+  const result5 = await df5.mutateAsync({
     doubled: async (row) => await flakeyFn5(row.value),
   }, {
     retry: {
@@ -256,7 +256,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
   const flakeyFn6 = createFlakeyApiCall(3); // Fails 3 times
 
   try {
-    await df6.mutate({
+    await df6.mutateAsync({
       doubled: async (row) => await flakeyFn6(row.value),
     }, {
       retry: {
@@ -293,7 +293,7 @@ Deno.test("DataFrame Async Retry Mechanism", async () => {
 
   const flakeyFn7 = createFlakeyApiCall(1); // Fails once per call
 
-  const result7 = await df7.mutate({
+  const result7 = await df7.mutateAsync({
     doubled: async (row) => await flakeyFn7(row.value),
   }, {
     concurrency: 2,

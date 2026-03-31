@@ -56,6 +56,26 @@ export function filter(
 ): any {
   return (df: any): any => {
     // Handle both old (...predicates) and new (predicates, options) signatures
+    const predicates: any[] = args;
+
+    // Safety net: if user accidentally passes async to filter(), still handle it
+    const isAsync = shouldUseAsyncForFilter(df, predicates);
+
+    if (isAsync) {
+      const dfOptions = (df as any).__options as ConcurrencyOptions | undefined;
+      const concurrencyOptions = dfOptions || DEFAULT_CONCURRENCY.filter;
+      return filterRowsAsync(df, predicates, concurrencyOptions);
+    } else {
+      return filterRowsSync(df, predicates);
+    }
+  };
+}
+
+// Async filter — always routes to async implementation
+export function filterAsync(
+  ...args: any[]
+): any {
+  return (df: any): any => {
     let predicates: any[];
     let options: ConcurrencyOptions | undefined;
 
@@ -64,34 +84,21 @@ export function filter(
     const isLastArgOptions = lastArg &&
       typeof lastArg === "object" &&
       !Array.isArray(lastArg) &&
-      !("length" in lastArg) && // Not a predicate array
+      !("length" in lastArg) &&
       (lastArg.concurrency !== undefined || lastArg.batchSize !== undefined ||
         lastArg.retry !== undefined);
 
     if (isLastArgOptions) {
-      // Last argument is options, everything else is predicates
       predicates = args.slice(0, -1);
       options = lastArg as ConcurrencyOptions;
     } else {
-      // All arguments are predicates (original behavior)
       predicates = args;
       options = undefined;
     }
 
-    // Check if any predicates are async or if options are provided
-    const isAsync = shouldUseAsyncForFilter(df, predicates) ||
-      (options !== undefined);
-
-    if (isAsync) {
-      // Get DataFrame's default options if available
-      const dfOptions = (df as any).__options as ConcurrencyOptions | undefined;
-      // Apply default concurrency if no options provided
-      const concurrencyOptions = options || dfOptions ||
-        DEFAULT_CONCURRENCY.filter;
-      return filterRowsAsync(df, predicates, concurrencyOptions);
-    } else {
-      return filterRowsSync(df, predicates);
-    }
+    const dfOptions = (df as any).__options as ConcurrencyOptions | undefined;
+    const concurrencyOptions = options || dfOptions || DEFAULT_CONCURRENCY.filter;
+    return filterRowsAsync(df, predicates, concurrencyOptions);
   };
 }
 

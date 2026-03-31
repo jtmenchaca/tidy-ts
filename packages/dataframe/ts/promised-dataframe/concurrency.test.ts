@@ -73,7 +73,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
     testFn.constructor.name === "AsyncFunction",
   );
 
-  const result1 = await df.mutate({
+  const result1 = await df.mutateAsync({
     doubled_value: testFn,
   });
 
@@ -96,7 +96,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   const startTime2 = Date.now();
 
   // Proposed API: Pass concurrency option
-  const result2 = await df.mutate({
+  const result2 = await df.mutateAsync({
     doubled_value: async (row) => await trackingAsyncCall(row.value),
   }, { concurrency: 3 });
 
@@ -121,7 +121,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   // Create DataFrame with concurrency settings
   const dfWithConcurrency = createDataFrame(testData, { concurrency: 2 });
 
-  const result3 = await dfWithConcurrency.mutate({
+  const result3 = await dfWithConcurrency.mutateAsync({
     doubled_value: async (row) => await trackingAsyncCall(row.value),
   });
 
@@ -144,7 +144,7 @@ Deno.test("DataFrame Async Concurrency Control", async () => {
   const startTime4 = Date.now();
 
   // DataFrame has concurrency: 2, but we override with 5
-  const result4 = await dfWithConcurrency.mutate({
+  const result4 = await dfWithConcurrency.mutateAsync({
     doubled_value: async (row) => await trackingAsyncCall(row.value),
   }, { concurrency: 5 });
 

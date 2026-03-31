@@ -58,11 +58,11 @@ Deno.test("Complex async chaining with multiple operations", async () => {
   console.log("=== Complex Async Chaining Test ===");
 
   const result = await complexData
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       console.log(`Validating row ${row.id}...`);
       return await validateData(row);
     })
-    .mutate({
+    .mutateAsync({
       // Sync operation
       category_upper: (row) => row.category.toUpperCase(),
 
@@ -152,7 +152,7 @@ Deno.test("Async operations with grouping and aggregation", async () => {
 
   const result = await complexData
     .groupBy("category")
-    .mutate({
+    .mutateAsync({
       // Async operation within groups
       group_avg: async (row, _idx, df) => {
         console.log(
@@ -215,7 +215,7 @@ Deno.test("Mixed sync/async operations with error handling", async () => {
   ]);
 
   const result = await problematicData
-    .mutate({
+    .mutateAsync({
       // Sync validation
       is_valid: (row) => row.value > 0 && row.type === "valid",
 
@@ -266,7 +266,7 @@ Deno.test("Deep chaining with multiple async operations", async () => {
   console.log("\n=== Deep Chaining Test ===");
 
   const result = await userData
-    .mutate({
+    .mutateAsync({
       // First async operation
       user_info: async (row) => {
         console.log(`Fetching user info for ${row.userId}...`);
@@ -277,7 +277,7 @@ Deno.test("Deep chaining with multiple async operations", async () => {
       console.log(`Filtering by verification status for user ${row.userId}...`);
       return row.user_info.verified;
     })
-    .mutate({
+    .mutateAsync({
       // Second async operation depending on first
       display_name: async (row) => {
         console.log(`Creating display name for user ${row.userId}...`);
@@ -368,7 +368,7 @@ Deno.test("Async operations with complex data transformations", async () => {
   ]);
 
   const result = await salesData
-    .mutate({
+    .mutateAsync({
       // Sync calculations
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
@@ -553,7 +553,7 @@ Deno.test("DEBUG: Isolate and Verify Mutate before GroupBy", async () => {
   ]);
 
   const mutatedStep = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {
@@ -599,7 +599,7 @@ Deno.test("DEBUG: Isolate and Verify Filter after Mutate", async () => {
   ]);
 
   const filteredStep = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {
@@ -643,7 +643,7 @@ Deno.test("DEBUG: Isolate and Verify GroupBy after Filter", async () => {
   ]);
 
   const groupedStep = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {
@@ -697,7 +697,7 @@ Deno.test("DEBUG: Isolate and Verify First Grouped Mutate", async () => {
   ]);
 
   const firstGroupedMutate = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {
@@ -759,7 +759,7 @@ Deno.test("DEBUG: Isolate and Verify Second Mutate (Sync) after Grouped Mutate",
   ]);
 
   const secondMutate = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {
@@ -829,7 +829,7 @@ Deno.test("DEBUG: Isolate and Verify Third Mutate (Sync) after Grouped Mutate", 
   ]);
 
   const thirdMutate = await salesData
-    .mutate({
+    .mutateAsync({
       revenue: (row) => row.quantity * row.price,
       price_category: (row) => row.price > 20 ? "premium" : "standard",
       is_approved: async (row) => {

@@ -67,7 +67,9 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
   & Omit<
     DataFrameBase<Row>,
     | "mutate"
+    | "mutateAsync"
     | "filter"
+    | "filterAsync"
     | "select"
     | "arrange"
     | "sort"
@@ -81,7 +83,9 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
     | "extractNthWhereSorted"
     | "forEach"
     | "forEachRow"
+    | "forEachRowAsync"
     | "forEachCol"
+    | "forEachColAsync"
     | "graph"
     | "getRowLabels"
     | "setRowLabels"
@@ -90,6 +94,10 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
     | "getTrace"
     | "printTrace"
     | "distinct"
+    | "summarise"
+    | "summarize"
+    | "summariseAsync"
+    | "summarizeAsync"
   >
   & DataFrameColumns<Row>
   & PromiseLike<DataFrame<Row>>
@@ -149,6 +157,61 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
       ): PromisedDataFrame<Pick<Row, ColName>>;
     };
 
+    // mutateAsync on PromisedDataFrame — same as mutate, always returns PromisedDataFrame
+    mutateAsync: {
+      <
+        Formulas extends Record<
+          string,
+          (row: Row, idx?: number, df?: DataFrame<Row>) => unknown
+        >,
+      >(
+        formulas: Formulas,
+      ): PromisedDataFrame<
+        Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> }
+      >;
+    };
+
+    // filterAsync on PromisedDataFrame — same as filter
+    filterAsync: {
+      (
+        ...predicates: Array<
+          | ((
+            row: Row,
+            idx: number,
+            df: DataFrame<Row>,
+          ) => boolean | null | undefined)
+          | ((
+            row: Row,
+            idx: number,
+            df: DataFrame<Row>,
+          ) => Promise<boolean | null | undefined>)
+          | ReadonlyArray<boolean | null | undefined>
+        >
+      ): PromisedDataFrame<Row>;
+    };
+
+    // Override summarise/summarize to always return PromisedDataFrame
+    summarise: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<{ [K in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[K]>> }>;
+    };
+    summarize: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<{ [K in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[K]>> }>;
+    };
+    summariseAsync: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<{ [K in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[K]>> }>;
+    };
+    summarizeAsync: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<{ [K in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[K]>> }>;
+    };
+
     // Override arrange to always return PromisedDataFrame
     arrange: {
       (
@@ -198,7 +261,9 @@ export type PromisedGroupedDataFrame<
   & Omit<
     DataFrameBase<Row>,
     | "mutate"
+    | "mutateAsync"
     | "filter"
+    | "filterAsync"
     | "select"
     | "arrange"
     | "sort"
@@ -212,7 +277,9 @@ export type PromisedGroupedDataFrame<
     | "extractNthWhereSorted"
     | "forEach"
     | "forEachRow"
+    | "forEachRowAsync"
     | "forEachCol"
+    | "forEachColAsync"
     | "graph"
     | "getRowLabels"
     | "setRowLabels"
@@ -221,6 +288,10 @@ export type PromisedGroupedDataFrame<
     | "getTrace"
     | "printTrace"
     | "distinct"
+    | "summarise"
+    | "summarize"
+    | "summariseAsync"
+    | "summarizeAsync"
   >
   & DataFrameColumns<Row>
   & PromiseLike<GroupedDataFrame<Row, K>>
@@ -268,5 +339,61 @@ export type PromisedGroupedDataFrame<
           | ReadonlyArray<boolean | null | undefined>
         >
       ): PromisedGroupedDataFrame<Row, K>;
+    };
+
+    mutateAsync: {
+      <
+        Formulas extends Record<
+          string,
+          (row: Row, idx?: number, df?: DataFrame<Row>) => unknown
+        >,
+      >(
+        formulas: Formulas,
+      ): PromisedGroupedDataFrame<
+        Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> },
+        Extract<
+          K,
+          keyof (Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> })
+        >
+      >;
+    };
+
+    filterAsync: {
+      (
+        ...predicates: Array<
+          | ((
+            row: Row,
+            idx: number,
+            df: DataFrame<Row>,
+          ) => boolean | null | undefined)
+          | ((
+            row: Row,
+            idx: number,
+            df: DataFrame<Row>,
+          ) => Promise<boolean | null | undefined>)
+          | ReadonlyArray<boolean | null | undefined>
+        >
+      ): PromisedGroupedDataFrame<Row, K>;
+    };
+
+    summarise: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+    };
+    summarize: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+    };
+    summariseAsync: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+    };
+    summarizeAsync: {
+      <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
+        summaryFormulas: SummaryFormulas,
+      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
     };
   };

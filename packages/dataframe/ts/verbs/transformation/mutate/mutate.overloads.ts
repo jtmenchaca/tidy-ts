@@ -15,25 +15,19 @@ import { mutateAsyncImpl } from "./mutate-async.ts";
 import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency-utils.ts";
 
 /*
- * IMPORTANT: PromisedDataFrame Overloads Removed From Here
- * ========================================================
+ * IMPORTANT: PromisedDataFrame Overloads Not Here
+ * ================================================
  *
- * DISCOVERY: Adding PromisedDataFrame overloads to this file is INEFFECTIVE
- * - The thenable proxy system calls resolveVerb() directly
- * - resolveVerb() bypasses TypeScript's normal overload resolution
- * - Proxy behavior makes these overloads unreachable for PromisedDataFrame
- *
- * SOLUTION: PromisedDataFrame method signatures are now overridden in:
+ * The thenable proxy system calls resolveVerb() directly, bypassing TypeScript's
+ * normal overload resolution. PromisedDataFrame method signatures are overridden in:
  * packages/dataframe/ts/promised-dataframe/types/promised-dataframe.type.ts
  *
  * These overloads below are ONLY for regular DataFrame and GroupedDataFrame.
- * They work normally because they use standard function call resolution.
  */
 
 /* =================================================================================
-  Overloads (pipe style). Function-spec overloads come first and use the
-  "intersection trick" so we keep inferred return types from the arrow
-  functions while enforcing (row, idx, df) parameter types.
+  mutate — synchronous only. Rejects async formulas at the type level via AllSync.
+  At runtime, uses shouldUseAsyncForMutate as a safety net.
   ================================================================================= */
 
 // ---------- GROUPED: object spec of functions (preserve return types) ----------
@@ -116,29 +110,56 @@ export function mutate<
   spec: Assignments,
 ): (df: DataFrame<Row>) => DataFrame<AddColumns<Row, Assignments>>;
 
-// ---------- ASYNC FUNCTION OVERLOADS (when async functions detected) ----------
+/* =================================================================================
+  mutate implementation — sync by default, async as safety net.
+  ================================================================================= */
 
-// GROUPED - async function overload (returns Promise when async functions detected)
-export function mutate<
+export function mutate(
+  spec: Record<string, any>,
+): any {
+  return (df: any): any => {
+    if (typeof spec === "object" && spec !== null) {
+      // Safety net: if user accidentally passes async to mutate(), still handle it
+      const isAsync = shouldUseAsyncForMutate(df, spec);
+      if (isAsync) {
+        return mutateAsyncImpl(
+          df,
+          spec as MutateAssignments<Record<string, unknown>>,
+          { concurrency: 10 },
+        );
+      }
+      return mutateSyncImpl(
+        df,
+        spec as MutateAssignments<Record<string, unknown>>,
+      );
+    } else {
+      throw new TypeError("Invalid arguments to mutate");
+    }
+  };
+}
+
+/* =================================================================================
+  mutateAsync — always async. Returns Promise, wrapped by resolveVerb into
+  thenableDataFrame for PromisedDataFrame chaining.
+  ================================================================================= */
+
+// ---------- GROUPED: async function overload ----------
+
+export function mutateAsync<
   Row extends Record<string, unknown>,
   GroupName extends keyof Row,
-  Formulas extends Record<
-    string,
-    | ((row: Row, idx: number, df: DataFrame<Row>) => Promise<unknown>)
-    | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
-  >,
+  Formulas extends Record<string, (...a: any[]) => any>,
 >(
   spec:
     & Formulas
     & {
-      [K in keyof Formulas]: Formulas[K] extends
-        (row: Row, idx: number, df: DataFrame<Row>) => Promise<infer R>
-        ? (row: Row, idx: number, df: DataFrame<Row>) => Promise<R>
-        : Formulas[K] extends
-          (row: Row, idx: number, df: DataFrame<Row>) => infer R
-          ? (row: Row, idx: number, df: DataFrame<Row>) => R
-        : never;
+      [ColName in keyof Formulas]: (
+        row: Row,
+        idx: number,
+        df: DataFrame<Row>,
+      ) => ReturnType<Formulas[ColName]>;
     },
+  options?: ConcurrencyOptions,
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
@@ -159,26 +180,22 @@ export function mutate<
   >
 >;
 
-// UNGROUPED - async function overload (returns Promise when async functions detected)
-export function mutate<
+// ---------- UNGROUPED: async function overload ----------
+
+export function mutateAsync<
   Row extends Record<string, unknown>,
-  Formulas extends Record<
-    string,
-    | ((row: Row, idx: number, df: DataFrame<Row>) => Promise<unknown>)
-    | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
-  >,
+  Formulas extends Record<string, (...a: any[]) => any>,
 >(
   spec:
     & Formulas
     & {
-      [K in keyof Formulas]: Formulas[K] extends
-        (row: Row, idx: number, df: DataFrame<Row>) => Promise<infer R>
-        ? (row: Row, idx: number, df: DataFrame<Row>) => Promise<R>
-        : Formulas[K] extends
-          (row: Row, idx: number, df: DataFrame<Row>) => infer R
-          ? (row: Row, idx: number, df: DataFrame<Row>) => R
-        : never;
+      [ColName in keyof Formulas]: (
+        row: Row,
+        idx: number,
+        df: DataFrame<Row>,
+      ) => ReturnType<Formulas[ColName]>;
     },
+  options?: ConcurrencyOptions,
 ): (
   df: DataFrame<Row>,
 ) => Promise<
@@ -190,16 +207,15 @@ export function mutate<
   >
 >;
 
-// ---------- OVERLOADS WITH CONCURRENCY OPTIONS ----------
+// ---------- GROUPED: broad assignment fallback ----------
 
-// GROUPED with concurrency options
-export function mutate<
+export function mutateAsync<
   Row extends Record<string, unknown>,
   GroupName extends keyof Row,
   Assignments extends Record<string, ColumnValue<Row>>,
 >(
   spec: Assignments,
-  options: ConcurrencyOptions,
+  options?: ConcurrencyOptions,
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
@@ -209,50 +225,37 @@ export function mutate<
   >
 >;
 
-// UNGROUPED with concurrency options
-export function mutate<
+// ---------- UNGROUPED: broad assignment fallback ----------
+
+export function mutateAsync<
   Row extends Record<string, unknown>,
   Assignments extends Record<string, ColumnValue<Row>>,
 >(
   spec: Assignments,
-  options: ConcurrencyOptions,
+  options?: ConcurrencyOptions,
 ): (
   df: DataFrame<Row>,
 ) => Promise<DataFrame<AddColumns<Row, Assignments>>>;
 
 /* =================================================================================
-  Implementation (broad; overloads give the precise types).
+  mutateAsync implementation
   ================================================================================= */
 
-export function mutate(
+export function mutateAsync(
   spec: Record<string, any>,
   options?: ConcurrencyOptions,
 ): any {
   return (df: any): any => {
     if (typeof spec === "object" && spec !== null) {
-      // Check if any functions are async OR if concurrency options are provided
-      const isAsync = shouldUseAsyncForMutate(df, spec) ||
-        (options !== undefined);
-
-      if (isAsync) {
-        // Apply default concurrency if no options provided
-        // Use DataFrame's options as defaults if available (stored in __options)
-        const dfOptions = (df as any).__options || {};
-        const concurrencyOptions = options || dfOptions ||
-          { concurrency: 10 };
-        return mutateAsyncImpl(
-          df,
-          spec as MutateAssignments<Record<string, unknown>>, // scalar-free
-          concurrencyOptions,
-        );
-      } else {
-        return mutateSyncImpl(
-          df,
-          spec as MutateAssignments<Record<string, unknown>>, // scalar-free
-        );
-      }
+      const dfOptions = (df as any).__options || {};
+      const concurrencyOptions = options || dfOptions || { concurrency: 10 };
+      return mutateAsyncImpl(
+        df,
+        spec as MutateAssignments<Record<string, unknown>>,
+        concurrencyOptions,
+      );
     } else {
-      throw new TypeError("Invalid arguments to mutate");
+      throw new TypeError("Invalid arguments to mutateAsync");
     }
   };
 }

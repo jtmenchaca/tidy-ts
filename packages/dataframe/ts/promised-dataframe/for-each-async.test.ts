@@ -19,7 +19,7 @@ Deno.test("forEachRow with async function - simplest case", async () => {
   const results: string[] = [];
 
   // Test async function in forEachRow
-  const resultDF = await df.forEachRow(async (row, idx) => {
+  const resultDF = await df.forEachRowAsync(async (row, idx) => {
     const processed = await processAsync(row.name);
     results.push(`Row ${idx}: ${processed}`);
     console.log(`Processed row ${idx}: ${row.name} -> ${processed}`);
@@ -66,7 +66,7 @@ Deno.test("forEachCol with async function - simplest case", async () => {
   const results: string[] = [];
 
   // Test async function in forEachCol
-  const resultDF = await df.forEachCol(async (colName, df) => {
+  const resultDF = await df.forEachColAsync(async (colName, df) => {
     const processed = await processAsync(colName);
     // deno-lint-ignore no-explicit-any
     const colValues = (df as any)[colName as string];
@@ -121,7 +121,7 @@ Deno.test("async forEach with chaining", async () => {
   const afterFilter = df.filter((r) => r.value >= 15); // Remove first row
 
   const afterAsyncForEach = await afterFilter
-    .forEachRow(async (row, _idx) => {
+    .forEachRowAsync(async (row, _idx) => {
       const processed = await processAsync(`${row.category}-${row.value}`);
       processedRows.push(processed);
       console.log(`Async processed: ${processed}`);

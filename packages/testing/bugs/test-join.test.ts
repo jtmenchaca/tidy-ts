@@ -5,7 +5,7 @@
  */
 
 import { expect } from "@std/expect";
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, type DataFrame } from "@tidy-ts/dataframe";
 import { testMutateSelect, testInnerJoin } from "./test-join.ts";
 
 // ── Test data ──────────────────────────────────────────────────────────────
@@ -16,14 +16,14 @@ const refDate3 = Temporal.PlainDateTime.from("2024-06-01T00:00");
 
 // ── 1. testMutateSelect ────────────────────────────────────────────────────
 
-Deno.test("testMutateSelect — mutate + select on generic DataFrame", () => {
+Deno.test("testMutateSelect — mutate + select on generic DataFrame", async () => {
   const referenceDates = createDataFrame([
     { id: "A", enrollmentDate: refDate1 },
     { id: "B", enrollmentDate: refDate2 },
     { id: "C", enrollmentDate: refDate3 },
-  ]);
+  ]); 
 
-  const result = testMutateSelect({
+  const result =  await testMutateSelect({
     referenceDates,
     referenceFieldName: "enrollmentDate",
   });

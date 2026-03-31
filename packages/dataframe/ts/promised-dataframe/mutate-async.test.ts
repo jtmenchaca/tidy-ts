@@ -29,13 +29,13 @@ Deno.test("mutate with async function - comprehensive workflow", async () => {
   }
 
   const afterFilter = people
-    .mutate({
+    .mutateAsync({
       bmi: (row) => row.mass / Math.pow(row.height / 100, 2),
       is_heavy: (row) => row.mass > 100,
       bmi_category: async (row) =>
         await enrichBMICategory(row.mass / Math.pow(row.height / 100, 2)),
     })
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.species !== "Droid";
     });
@@ -71,7 +71,7 @@ Deno.test("mutate with async function - simplest case", async () => {
   df.print();
 
   // Test async function in mutate
-  const result = await df.mutate({
+  const result = await df.mutateAsync({
     doubled: async (r) => await doubleAsync(r.value),
   });
 
@@ -94,7 +94,7 @@ Deno.test("mutate with mixed sync/async functions", async () => {
     { id: 2, value: 15 },
   ]);
 
-  const result = await df.mutate({
+  const result = await df.mutateAsync({
     sync_triple: (r) => r.value * 3, // sync function
     async_double: async (r) => await doubleAsync(r.value), // async function
   });
@@ -122,7 +122,7 @@ Deno.test("async mutate with chaining - comprehensive workflow", async () => {
   // Chain operations: filter -> async mutate -> arrange -> select
   const afterFilter = df.filter((r) => r.value >= 15); // Remove Alice (value: 10)
 
-  const afterAsyncMutate = await afterFilter.mutate({
+  const afterAsyncMutate = await afterFilter.mutateAsync({
     // Mixed sync/async functions
     name_upper: (r) => r.name.toUpperCase(),
     async_doubled: async (r) => await doubleAsync(r.value),
@@ -173,7 +173,7 @@ Deno.test("chaining before and after async mutate", async () => {
   console.log("\nAfter sync mutate (baseline):");
   afterSync.print();
 
-  const afterAsync = await afterSync.mutate({
+  const afterAsync = await afterSync.mutateAsync({
     // Async mutate in the middle
     async_bonus: async (r) => {
       console.log(

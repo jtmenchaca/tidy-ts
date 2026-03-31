@@ -10,18 +10,16 @@ export function for_each_row(
 ) {
   return (df: any): any => {
     if (df.nrows() === 0) return df;
+    return forEachRowSync(df, fn);
+  };
+}
 
-    // Simple async detection - only check for declared async functions
-    // For side-effect functions like forEachRow, we avoid calling the function for testing
-    const AsyncFunction =
-      Object.getPrototypeOf(async function () {}).constructor;
-    const isAsync = fn instanceof AsyncFunction;
-
-    if (isAsync) {
-      return forEachRowAsync(df, fn);
-    } else {
-      return forEachRowSync(df, fn);
-    }
+export function for_each_row_async(
+  fn: any,
+) {
+  return (df: any): any => {
+    if (df.nrows() === 0) return df;
+    return forEachRowAsync(df, fn);
   };
 }
 
@@ -63,17 +61,16 @@ export function for_each_col(
 ) {
   return (df: any): any => {
     if (df.nrows() === 0) return df;
+    return forEachColSync(df, fn);
+  };
+}
 
-    // Simple async detection - only check for declared async functions
-    const AsyncFunction =
-      Object.getPrototypeOf(async function () {}).constructor;
-    const isAsync = fn instanceof AsyncFunction;
-
-    if (isAsync) {
-      return forEachColAsync(df, fn);
-    } else {
-      return forEachColSync(df, fn);
-    }
+export function for_each_col_async(
+  fn: any,
+) {
+  return (df: any): any => {
+    if (df.nrows() === 0) return df;
+    return forEachColAsync(df, fn);
   };
 }
 

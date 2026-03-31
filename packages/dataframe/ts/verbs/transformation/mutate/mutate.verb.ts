@@ -9,7 +9,7 @@
    ================================================================================= */
 
 // Re-export main mutate function (overloads + implementation)
-export { mutate } from "./mutate.overloads.ts";
+export { mutate, mutateAsync } from "./mutate.overloads.ts";
 
 // Re-export group-level functionality
 export { mutate_group } from "./mutate-group.ts";
@@ -19,6 +19,7 @@ export type {
   AddColumns,
   ColumnValue,
   MutateAssignments,
+  MutateAsyncMethod,
   MutateMethod,
   RowAfterAssignments,
   RowAfterFormulas,

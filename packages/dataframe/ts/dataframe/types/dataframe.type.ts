@@ -5,9 +5,9 @@ import type { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
 import type { Prettify } from "./utility-types.ts";
 import type { UnifyUnion } from "./utility-types.ts";
 
-import type { MutateMethod } from "../../verbs/transformation/mutate/mutate.types.ts";
+import type { MutateAsyncMethod, MutateMethod } from "../../verbs/transformation/mutate/mutate.types.ts";
 import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-columns.types.ts";
-import type { SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
+import type { SummariseAsyncMethod, SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
 import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-columns.types.ts";
 // import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
 import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
@@ -19,14 +19,16 @@ import type {
 } from "../../verbs/reshape/pivot-types.ts";
 import type { TransposeMethod } from "../../verbs/reshape/transpose.types.ts";
 import type {
+  ForEachColAsyncMethod,
   ForEachColMethod,
+  ForEachRowAsyncMethod,
   ForEachRowMethod,
 } from "../../verbs/utility/for-each.types.ts";
 import type { ProfileMethod } from "../../verbs/utility/profile.types.ts";
 import type { SelectMethod } from "../../verbs/selection/select.types.ts";
 import type { DropMethod } from "../../verbs/selection/drop.types.ts";
 import type { ReorderMethod } from "../../verbs/transformation/reorder.types.ts";
-import type { FilterRowsMethod } from "../../verbs/filtering/filter.types.ts";
+import type { FilterAsyncMethod, FilterRowsMethod } from "../../verbs/filtering/filter.types.ts";
 import type { ArrangeMethod } from "../../verbs/sorting/arrange.types.ts";
 import type { DistinctMethod } from "../../verbs/filtering/distinct.types.ts";
 import type {
@@ -178,8 +180,10 @@ export interface DataFrameBase<Row extends object = object>
 
   // ---------- Transformations ----------
   mutate: MutateMethod<Row>;
+  mutateAsync: MutateAsyncMethod<Row>;
   mutateColumns: MutateColumnsMethod<Row>;
   filter: FilterRowsMethod<Row>;
+  filterAsync: FilterAsyncMethod<Row>;
   select: SelectMethod<Row>;
   extract: ExtractMethod<Row>;
   extractHead: ExtractHeadMethod<Row>;
@@ -208,6 +212,8 @@ export interface DataFrameBase<Row extends object = object>
   groupBy: GroupByMethod<Row>;
   summarise: SummariseMethod<Row>;
   summarize: SummariseMethod<Row>;
+  summariseAsync: SummariseAsyncMethod<Row>;
+  summarizeAsync: SummariseAsyncMethod<Row>;
   summariseColumns: SummariseColumnsMethod<Row>;
   summarizeColumns: SummariseColumnsMethod<Row>;
   // crossTabulate: CrossTabulateMethod<Row>;
@@ -375,7 +381,9 @@ export interface DataFrameBase<Row extends object = object>
   forEach: ForEachRowMethod<Row>;
   /** @deprecated Use forEach instead */
   forEachRow: ForEachRowMethod<Row>;
+  forEachRowAsync: ForEachRowAsyncMethod<Row>;
   forEachCol: ForEachColMethod<Row>;
+  forEachColAsync: ForEachColAsyncMethod<Row>;
 
   // ---------- Grouping ----------
   ungroup: UngroupMethod<Row>;

@@ -5,7 +5,7 @@ Deno.test("Async error in mutate propagates correctly", async () => {
   const data = createDataFrame([{ id: 1 }, { id: 2 }]);
 
   await expect(
-    data.mutate({
+    data.mutateAsync({
       // deno-lint-ignore require-await
       bad: async (row) => {
         if (row.id === 2) {
@@ -22,7 +22,7 @@ Deno.test("Async error in filter propagates correctly", async () => {
 
   await expect(
     // deno-lint-ignore require-await
-    data.filter(async (row) => {
+    data.filterAsync(async (row) => {
       if (row.id === 2) {
         throw new Error("Filter failed");
       }
@@ -34,7 +34,7 @@ Deno.test("Async error in filter propagates correctly", async () => {
 Deno.test("Multiple async mutates with different timing", async () => {
   const data = createDataFrame([{ id: 1 }, { id: 2 }, { id: 3 }]);
 
-  const result = await data.mutate({
+  const result = await data.mutateAsync({
     fast: async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.id * 10;
@@ -55,17 +55,17 @@ Deno.test("Chained async operations maintain order", async () => {
   const data = createDataFrame([{ id: 1 }, { id: 2 }, { id: 3 }]);
 
   const result = await data
-    .mutate({
+    .mutateAsync({
       step1: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 10));
         return row.id * 2;
       },
     })
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 5));
       return row.step1 > 2;
     })
-    .mutate({
+    .mutateAsync({
       step2: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 8));
         return row.step1 + 100;
@@ -84,7 +84,7 @@ Deno.test("Async operation with Promise.reject", async () => {
   const data = createDataFrame([{ id: 1 }]);
 
   await expect(
-    data.mutate({
+    data.mutateAsync({
       // deno-lint-ignore require-await
       rejected: async () => {
         return Promise.reject(new Error("Rejected promise"));

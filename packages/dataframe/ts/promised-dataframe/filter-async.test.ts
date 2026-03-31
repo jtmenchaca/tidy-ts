@@ -22,7 +22,7 @@ Deno.test("filter with async function - simplest case", async () => {
   console.log("Original DataFrame:");
   df.print();
 
-  const result = await df.filter(async (row) => await isValidAsync(row.value));
+  const result = await df.filterAsync(async (row) => await isValidAsync(row.value));
 
   console.log("\nResult with async filter:");
   result.print();
@@ -64,7 +64,7 @@ Deno.test("filter with mixed async predicates", async () => {
   df.print();
 
   // EXPECTED: Multiple async predicates (all must be true)
-  const result = await df.filter(
+  const result = await df.filterAsync(
     async (row) => await checkCategoryAsync(row.category),
     async (row) => await isValidAsync(row.value),
   );
@@ -92,7 +92,7 @@ Deno.test("async filter with chaining", async () => {
   df.print();
 
   // Chain: async filter -> mutate -> arrange
-  const afterAsyncFilter = await df.filter(async (row) => {
+  const afterAsyncFilter = await df.filterAsync(async (row) => {
     console.log(`Checking ${row.name} with score ${row.score}`);
     return await isValidAsync(row.score - 65); // score > 80 (filters out Charlie with 78)
   });
@@ -123,7 +123,7 @@ Deno.test("async filter error handling", async () => {
   ]);
 
   // EXPECTED: Async filter with error handling
-  const result = await df.filter(async (row) => {
+  const result = await df.filterAsync(async (row) => {
     try {
       return await isValidAsync(row.value);
     } catch {

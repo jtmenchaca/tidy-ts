@@ -9,9 +9,13 @@ import type {
   RestrictMethodForEmptyDataFrame,
 } from "../../dataframe/types/error-types.ts";
 import type {
-  AnyPropertyIsAsync,
   PromisedDataFrame,
 } from "../../promised-dataframe/index.ts";
+
+// Sync summary formula type
+type SummaryFormula<Row extends object> = (
+  df: DataFrame<Row>,
+) => unknown;
 
 // Async summary formula type that allows Promise returns
 type AsyncSummaryFormula<Row extends object> = (
@@ -20,7 +24,7 @@ type AsyncSummaryFormula<Row extends object> = (
 
 export type RowAfterSummariseUngrouped<
   Row extends object,
-  SummaryFormulas extends Record<string, AsyncSummaryFormula<Row>>,
+  SummaryFormulas extends Record<string, SummaryFormula<Row> | AsyncSummaryFormula<Row>>,
 > = Prettify<
   {
     [ColName in keyof SummaryFormulas]: Awaited<
@@ -32,7 +36,7 @@ export type RowAfterSummariseUngrouped<
 export type RowAfterSummariseGrouped<
   Row extends object,
   GroupName extends keyof Row,
-  SummaryFormulas extends Record<string, AsyncSummaryFormula<Row>>,
+  SummaryFormulas extends Record<string, SummaryFormula<Row> | AsyncSummaryFormula<Row>>,
 > = Prettify<
   & Pick<Row, GroupName>
   & {
@@ -43,68 +47,42 @@ export type RowAfterSummariseGrouped<
 >;
 
 /**
- * Aggregate data into summary statistics.
- *
- * Collapses rows into summary values using aggregation functions. For grouped DataFrames,
- * creates one row per group with the group columns plus summary columns. For ungrouped
- * DataFrames, returns a single row with summary values.
- *
- * @example
- * // Summarise entire DataFrame
- * df.summarise({
- *   avgAge: (df) => s.mean(df.age),
- *   count: (df) => df.nrows()
- * })
- *
- * @example
- * // Summarise by groups
- * df.groupBy("category").summarise({
- *   avgPrice: (g) => s.mean(g.price),
- *   total: (g) => s.sum(g.amount),
- *   count: (g) => g.nrows()
- * })
- *
- * @example
- * // Async aggregation
- * await df.groupBy("region").summarise({
- *   validated: async (g) => await validateGroup(g)
- * })
+ * Synchronous summarise — always returns DataFrame.
+ * Use `summariseAsync` for async aggregation functions.
  */
 export type SummariseMethod<Row extends object> =
   RestrictMethodForEmptyDataFrame<
     Row,
     EmptyDataFrameSummarise,
     {
-      // ── Grouped DataFrame with async detection ──────────────────────────
-      // R inferred from `this` removes Row from contravariant positions.
-      /**
-       * Aggregate data into summary statistics.
-       *
-       * Collapses rows into summary values using aggregation functions. For grouped DataFrames,
-       * creates one row per group with the group columns plus summary columns. For ungrouped
-       * DataFrames, returns a single row with summary values.
-       *
-       * @example
-       * // Summarise entire DataFrame
-       * df.summarise({
-       *   avgAge: (df) => s.mean(df.age),
-       *   count: (df) => df.nrows()
-       * })
-       *
-       * @example
-       * // Summarise by groups
-       * df.groupBy("category").summarise({
-       *   avgPrice: (g) => s.mean(g.price),
-       *   total: (g) => s.sum(g.amount),
-       *   count: (g) => g.nrows()
-       * })
-       *
-       * @example
-       * // Async aggregation
-       * await df.groupBy("region").summarise({
-       *   validated: async (g) => await validateGroup(g)
-       * })
-       */
+      // ── Grouped DataFrame ─────────────────────────────────────────────
+      <
+        R extends object,
+        SummaryFormulas extends Record<string, SummaryFormula<R>>,
+        GroupName extends keyof R,
+      >(
+        this: GroupedDataFrame<R, GroupName>,
+        summaryFormulas: SummaryFormulas,
+      ): DataFrame<RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>>;
+
+      // ── Regular DataFrame ─────────────────────────────────────────────
+      <R extends object, SummaryFormulas extends Record<string, SummaryFormula<R>>>(
+        this: DataFrame<R>,
+        summaryFormulas: SummaryFormulas,
+      ): DataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
+    }
+  >;
+
+/**
+ * Async summarise — always returns PromisedDataFrame.
+ * Use this when any aggregation function is async.
+ */
+export type SummariseAsyncMethod<Row extends object> =
+  RestrictMethodForEmptyDataFrame<
+    Row,
+    EmptyDataFrameSummarise,
+    {
+      // ── Grouped DataFrame ─────────────────────────────────────────────
       <
         R extends object,
         SummaryFormulas extends Record<string, AsyncSummaryFormula<R>>,
@@ -112,48 +90,12 @@ export type SummariseMethod<Row extends object> =
       >(
         this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
-      ): AnyPropertyIsAsync<SummaryFormulas> extends true ? PromisedDataFrame<
-          RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>
-        >
-        : DataFrame<
-          RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>
-        >;
+      ): PromisedDataFrame<RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>>;
 
-      // ── Regular DataFrame with async detection ──────────────────────────
-      // R inferred from `this` removes Row from contravariant positions.
-      /**
-       * Aggregate data into summary statistics.
-       *
-       * Collapses rows into summary values using aggregation functions. For grouped DataFrames,
-       * creates one row per group with the group columns plus summary columns. For ungrouped
-       * DataFrames, returns a single row with summary values.
-       *
-       * @example
-       * // Summarise entire DataFrame
-       * df.summarise({
-       *   avgAge: (df) => s.mean(df.age),
-       *   count: (df) => df.nrows()
-       * })
-       *
-       * @example
-       * // Summarise by groups
-       * df.groupBy("category").summarise({
-       *   avgPrice: (g) => s.mean(g.price),
-       *   total: (g) => s.sum(g.amount),
-       *   count: (g) => g.nrows()
-       * })
-       *
-       * @example
-       * // Async aggregation
-       * await df.groupBy("region").summarise({
-       *   validated: async (g) => await validateGroup(g)
-       * })
-       */
+      // ── Regular DataFrame ─────────────────────────────────────────────
       <R extends object, SummaryFormulas extends Record<string, AsyncSummaryFormula<R>>>(
         this: DataFrame<R>,
         summaryFormulas: SummaryFormulas,
-      ): AnyPropertyIsAsync<SummaryFormulas> extends true
-        ? PromisedDataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>
-        : DataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
+      ): PromisedDataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
     }
   >;

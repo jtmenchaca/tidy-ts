@@ -1,9 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
 // Wires DataFrame verbs to the current instance through functional modules.
 
-import { mutate } from "../../verbs/transformation/mutate/mutate.verb.ts";
+import { mutate, mutateAsync } from "../../verbs/transformation/mutate/mutate.verb.ts";
 import { mutate_columns } from "../../verbs/transformation/mutate-columns.verb.ts";
-import { filter } from "../../verbs/filtering/filter.verb.ts";
+import { filter, filterAsync } from "../../verbs/filtering/filter.verb.ts";
 import { select } from "../../verbs/selection/select.verb.ts";
 import { arrange } from "../../verbs/sorting/arrange.verb.ts";
 import { dummy_col } from "../../verbs/utility/dummy-col.verb.ts";
@@ -56,7 +56,7 @@ import { cross_join } from "../../verbs/join/cross-join.verb.ts";
 import { asof_join } from "../../verbs/join/asof-join.verb.ts";
 // Aggregation
 import { groupBy } from "../../verbs/grouping/group-by.verb.ts";
-import { summarise } from "../../verbs/aggregate/summarise.verb.ts";
+import { summarise, summariseAsyncExport } from "../../verbs/aggregate/summarise.verb.ts";
 import { summarise_columns } from "../../verbs/aggregate/summarise-columns.verb.ts";
 // import { cross_tabulate } from "../../verbs/aggregate/cross_tabulate.verb.ts";
 import { count } from "../../verbs/aggregate/count.verb.ts";
@@ -82,7 +82,9 @@ import { graph } from "../../graph/graph.ts";
 // Side effects
 import {
   for_each_col,
+  for_each_col_async,
   for_each_row,
+  for_each_row_async,
 } from "../../verbs/utility/for-each.verb.ts";
 import { print } from "../../verbs/utility/print.verb.ts";
 import { profile } from "../../verbs/utility/profile.verb.ts";
@@ -105,6 +107,12 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
+  if (prop === "mutateAsync") {
+    return (spec: object, options?: any) => {
+      const result = (mutateAsync as any)(spec, options)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
   if (prop === "mutateColumns") {
     return (spec: object) => {
       const result = (mutate_columns as any)(spec)(df);
@@ -122,6 +130,12 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
         ? thenableDataFrame(result)
         : result;
       return wrapped;
+    };
+  }
+  if (prop === "filterAsync") {
+    return (...a: unknown[]) => {
+      const result = (filterAsync as any)(...a)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
   if (prop === "select") {
@@ -282,6 +296,12 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     };
   }
 
+  if (prop === "summariseAsync" || prop === "summarizeAsync") {
+    return (...a: unknown[]) => {
+      const result = (summariseAsyncExport as any)(...a)(df);
+      return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
   if (prop === "summariseColumns" || prop === "summarizeColumns") {
     return (...a: unknown[]) => (summarise_columns as any)(...a)(df);
   }
@@ -504,11 +524,19 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       return (for_each_row as any)(...a)(df);
     };
   }
+  if (prop === "forEachRowAsync") {
+    return (...a: unknown[]) => {
+      return (for_each_row_async as any)(...a)(df);
+    };
+  }
   if (prop === "forEachCol") {
     return (...a: unknown[]) => {
-      // for_each_col always returns the same df for reference equality
-      // Even for async, we want to preserve the original df reference
       return (for_each_col as any)(...a)(df);
+    };
+  }
+  if (prop === "forEachColAsync") {
+    return (...a: unknown[]) => {
+      return (for_each_col_async as any)(...a)(df);
     };
   }
   if (prop === "print") {

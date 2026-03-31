@@ -31,7 +31,7 @@ Deno.test("async testing variations", async () => {
   // ══════════════════════════════════════════════════════════════
 
   // Option 1: await the async function call
-  const result1 = await df.filter(async (row) => await isValidAsync(row.value));
+  const result1 = await df.filterAsync(async (row) => await isValidAsync(row.value));
   console.log("Option 1 (with await):", result1.nrows());
   console.log("Option 1 type:", typeof result1, result1.constructor.name);
   // Type check: Async function → DataFrame (awaited)
@@ -42,7 +42,7 @@ Deno.test("async testing variations", async () => {
   }> = result1;
 
   // Option 2: return the promise directly
-  const result2 = df.filter((row) => isValidAsync(row.value));
+  const result2 = df.filterAsync((row) => isValidAsync(row.value));
   console.log(
     "Option 2 (return promise):",
     typeof result2,
@@ -61,7 +61,7 @@ Deno.test("async testing variations", async () => {
   > = result2;
 
   // Option 3: await then return
-  const result3 = df.filter(async (row) => {
+  const result3 = df.filterAsync(async (row) => {
     const result = await isValidAsync(row.value);
     return result;
   });
@@ -93,7 +93,7 @@ Deno.test("async testing variations", async () => {
   // ══════════════════════════════════════════════════════════════
 
   // Option 1: sync function call returning async function
-  const sumResult1 = df.summarise({
+  const sumResult1 = df.summariseAsync({
     total: async (df) => await asyncSum(df.value),
   });
   console.log(
@@ -110,7 +110,7 @@ Deno.test("async testing variations", async () => {
   }> = sumResult1;
 
   // Option 2: sync function returning promise
-  const sumResult2Promise = df.summarise({
+  const sumResult2Promise = df.summariseAsync({
     total: (df) => asyncSum(df.value),
   });
   // Runtime check: sync returning Promise should return thenable
@@ -127,7 +127,7 @@ Deno.test("async testing variations", async () => {
   }> = sumResult2;
 
   // Option 3: await then return
-  const sumResult3 = await df.summarise({
+  const sumResult3 = await df.summariseAsync({
     total: async (df) => {
       const result = await asyncSum(df.value);
       return result;
@@ -150,7 +150,7 @@ Deno.test("async testing variations", async () => {
   console.log("\n=== USAGE PATTERNS ===");
 
   // Pattern A: Sync function returning Promise (auto-detected as async)
-  const patternA = await df.filter((row) => isValidAsync(row.value));
+  const patternA = await df.filterAsync((row) => isValidAsync(row.value));
   const _patternATypeCheck: DataFrame<{
     id: number;
     value: number;
@@ -159,7 +159,7 @@ Deno.test("async testing variations", async () => {
   console.log("Pattern A (sync func → await result):", patternA.nrows());
 
   // Pattern B: Async function (explicitly async)
-  const patternB = await df.filter(async (row) => {
+  const patternB = await df.filterAsync(async (row) => {
     const isValid = await isValidAsync(row.value);
     return isValid;
   });
@@ -171,7 +171,7 @@ Deno.test("async testing variations", async () => {
   console.log("Pattern B (async func → await result):", patternB.nrows());
 
   // Pattern C: Async summarise with proper awaiting
-  const patternC = await df.summarise({
+  const patternC = await df.summariseAsync({
     avgScore: async (df) => {
       const sum = await asyncSum(df.score);
       return sum / df.nrows();
@@ -187,7 +187,7 @@ Deno.test("async testing variations", async () => {
   // Pattern D: Grouped async operations
   const patternD = await df
     .groupBy("id")
-    .summarise({
+    .summariseAsync({
       valueSum: async (group) => await asyncSum(group.value),
       scoreAvg: (group) =>
         group.score.reduce((a, b) => a + b, 0) / group.nrows(),
@@ -206,7 +206,7 @@ Deno.test("async testing variations", async () => {
   console.log("\n=== MUTATE ASYNC PATTERNS ===");
 
   // Mutate Option 1: async function in mutate
-  const mutateResult1 = df.mutate({
+  const mutateResult1 = df.mutateAsync({
     isValid: async (row) => await isValidAsync(row.value),
     doubled: (row) => row.score * 2,
   });
@@ -228,7 +228,7 @@ Deno.test("async testing variations", async () => {
   > = mutateResult1;
 
   // Mutate Option 2: sync function returning Promise
-  const mutateResult2 = df.mutate({
+  const mutateResult2 = df.mutateAsync({
     isValid: (row) => isValidAsync(row.value), // returns Promise<boolean>
     processedScore: (row) => Promise.resolve(row.score + 100),
   });
@@ -250,7 +250,7 @@ Deno.test("async testing variations", async () => {
   > = mutateResult2;
 
   // Mutate Option 3: mixed sync and async
-  const mutateResult3 = await df.mutate({
+  const mutateResult3 = await df.mutateAsync({
     syncCol: (row) => row.id * 10, // pure sync
     asyncCol: async (row) => await isValidAsync(row.value), // async
     promiseCol: (row) => asyncSum([row.score, row.value]), // sync returning Promise
@@ -273,7 +273,7 @@ Deno.test("async testing variations", async () => {
   // Mutate Option 4: chaining with async mutate
   const mutateChain = await df
     .filter((row) => row.id > 0)
-    .mutate({
+    .mutateAsync({
       category: async (row) =>
         await isValidAsync(row.value) ? "valid" : "invalid",
       adjustedScore: async (row) => {
@@ -296,7 +296,7 @@ Deno.test("async testing variations", async () => {
   // Mutate Option 5: grouped mutate with async
   const groupedMutate = await df
     .groupBy("id")
-    .mutate({
+    .mutateAsync({
       groupMean: async (_row, _idx, group) => {
         const values = [];
         for (let i = 0; i < group.nrows(); i++) {
@@ -323,7 +323,7 @@ Deno.test("async testing variations", async () => {
   }, "id"> = groupedMutate;
 
   // Mutate Option 6: Verify sync function returning Promise detection
-  const mutateDetection = df.mutate({
+  const mutateDetection = df.mutateAsync({
     // This is a sync function that returns a Promise
     asyncFromSync: (row) => isValidAsync(row.value),
     // This is an async function
@@ -360,7 +360,7 @@ Deno.test("async testing variations", async () => {
   console.log("\n=== EDGE CASE TESTS ===");
 
   // Test 1: Mixed predicates ⇒ Promise
-  const mixed = df.filter(
+  const mixed = df.filterAsync(
     (row) => row.id > 0, // sync
     (row) => isValidAsync(row.value), // sync-returning-Promise
   );
@@ -382,7 +382,7 @@ Deno.test("async testing variations", async () => {
 
   // Test 3: Grouped filter preserves grouping in types + async
   const g = df.groupBy("id");
-  const gf = g.filter((row) => isValidAsync(row.value));
+  const gf = g.filterAsync((row) => isValidAsync(row.value));
   expect(typeof gf.then).toBe("function");
   const awaitedGf = await gf;
   const _gfTypeCheck: GroupedDataFrame<
@@ -397,7 +397,7 @@ Deno.test("async testing variations", async () => {
   df.print();
   const chained = await df
     .filter((r) => r.value >= 20) // sync mask to rows with values 20, 30
-    .filter((r) => isValidAsync(r.value)); // async gets wrong row data due to bug
+    .filterAsync((r) => isValidAsync(r.value)); // async gets wrong row data due to bug
 
   chained.print();
   expect(chained.nrows()).toBe(2);
@@ -443,7 +443,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
   console.log("\n--- Test 1: Chained Filters ---");
   const chainedFilters = await df
     .filter((row) => row.value >= 20) // Should keep rows 2, 3, 4 (values 20, 30, 40)
-    .filter(async (row) => await isHighValueAsync(row.value)); // Should keep rows 3, 4 (values 30, 40)
+    .filterAsync(async (row) => await isHighValueAsync(row.value)); // Should keep rows 3, 4 (values 30, 40)
 
   console.log("Chained filters result:");
   chainedFilters.print();
@@ -456,7 +456,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
   console.log("\n--- Test 2: Filter → Mutate Chain ---");
   const filterMutateChain = await df
     .filter((row) => row.category === "A") // Should keep rows 1, 3 (ids 1, 3)
-    .mutate({
+    .mutateAsync({
       enhanced_category: async (row) => await enrichCategoryAsync(row.category),
       bonus: async (row) => await computeBonusAsync(row.score),
       sync_check: (row) => `${row.id}-${row.value}`, // Sync column to verify row data
@@ -484,7 +484,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
       high_performer: (row) => row.score > 90,
     });
   const mutateFilterChain = await mutated
-    .filter(async (row) => await isHighValueAsync(row.doubled_value as number));
+    .filterAsync(async (row) => await isHighValueAsync(row.doubled_value as number));
 
   console.log("Mutate → Filter result:");
   mutateFilterChain.print();
@@ -507,7 +507,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
   // Test 4: Complex chaining: Filter → Mutate → Filter
   console.log("\n--- Test 4: Filter → Mutate → Filter Chain ---");
   const filtered = df.filter((row) => row.score >= 80); // Keep rows with score >= 80 (all 4 qualify)
-  const mutatedComplex = await filtered.mutate({
+  const mutatedComplex = await filtered.mutateAsync({
     performance_tier: async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       if (row.score >= 95) return "Excellent";
@@ -516,7 +516,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
     },
     adjusted_value: (row) => row.value + row.score, // Sync calculation
   });
-  const complexChain = await mutatedComplex.filter(async (row) => {
+  const complexChain = await mutatedComplex.filterAsync(async (row) => {
     // Filter for Good or Excellent performers
     await new Promise((resolve) => setTimeout(resolve, 1));
     return row.performance_tier === "Good" ||
@@ -546,7 +546,7 @@ Deno.test("chained async operations row snapshot integrity", async () => {
   const groupedChain = await df
     .filter((row) => row.value >= 20) // Keep values 20, 30, 40
     .groupBy("category")
-    .summarise({
+    .summariseAsync({
       count: (group) => group.nrows(),
       avg_score: async (group) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
@@ -610,7 +610,7 @@ Deno.test("mutate async → arrange seamless chaining", async () => {
   ]);
 
   const result = await df
-    .mutate({ asyncScore: async (row) => await doubleAsync(row.value) })
+    .mutateAsync({ asyncScore: async (row) => await doubleAsync(row.value) })
     .arrange("asyncScore");
 
   expect(result.asyncScore).toEqual([20, 40, 60]);
@@ -620,7 +620,7 @@ Deno.test("mutate async → select seamless chaining", async () => {
   const df = createDataFrame([{ id: 1, value: 10 }]);
 
   const result = await df
-    .mutate({ asyncCol: async (row) => await doubleAsync(row.value) })
+    .mutateAsync({ asyncCol: async (row) => await doubleAsync(row.value) })
     .select("asyncCol");
 
   expect(result.extractNth("asyncCol", 0)).toBe(20);
@@ -631,7 +631,7 @@ Deno.test("mutate async → join seamless chaining", async () => {
   const df2 = createDataFrame([{ joinKey: 20, data: "test" }]);
 
   const result = await df1
-    .mutate({ joinKey: async (row) => await doubleAsync(row.value) })
+    .mutateAsync({ joinKey: async (row) => await doubleAsync(row.value) })
     .innerJoin(df2, "joinKey");
 
   expect(result.nrows()).toBe(1);
@@ -646,8 +646,8 @@ Deno.test("filter async → mutate → arrange seamless chaining", async () => {
   ]);
 
   const result = await df
-    .filter(async (row) => await checkThresholdAsync(row.value))
-    .mutate({ doubled: async (row) => await doubleAsync(row.value) })
+    .filterAsync(async (row) => await checkThresholdAsync(row.value))
+    .mutateAsync({ doubled: async (row) => await doubleAsync(row.value) })
     .arrange("doubled");
 
   expect(result.nrows()).toBe(2);
@@ -662,7 +662,7 @@ Deno.test("mutate async → distinct seamless chaining", async () => {
   ]);
 
   const result = await df
-    .mutate({ category: async (row) => await categorizeAsync(row.value) })
+    .mutateAsync({ category: async (row) => await categorizeAsync(row.value) })
     .distinct("category");
 
   expect(result.nrows()).toBe(2);
@@ -677,8 +677,8 @@ Deno.test("complex async chain", async () => {
   ]);
 
   const result = await df
-    .filter(async (row) => await checkThresholdAsync(row.value))
-    .mutate({
+    .filterAsync(async (row) => await checkThresholdAsync(row.value))
+    .mutateAsync({
       doubled: async (row) => await doubleAsync(row.value),
       category: async (row) => await categorizeAsync(row.value),
     })
@@ -697,9 +697,9 @@ Deno.test("grouped async operations seamless chaining", async () => {
   ]);
 
   const result = await df
-    .mutate({ doubled: async (row) => await doubleAsync(row.value) })
+    .mutateAsync({ doubled: async (row) => await doubleAsync(row.value) })
     .groupBy("group")
-    .summarise({
+    .summariseAsync({
       total: async (g) => await asyncSum(g.doubled),
       count: (g) => g.nrows(),
     });

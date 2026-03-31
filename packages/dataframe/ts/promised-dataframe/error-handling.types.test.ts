@@ -78,7 +78,7 @@ const _syncNullableCheck: DataFrame<{
 // ============================================================================
 
 // Test 5: Async function always resolving
-const asyncValue = testData.mutate({
+const asyncValue = testData.mutateAsync({
   doubled: async (row) => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     return row.value * 2;
@@ -92,7 +92,7 @@ const _asyncValueCheck: PromisedDataFrame<{
 }> = asyncValue;
 
 // Test 6: Async function explicitly returning Error in resolved promise
-const asyncResolvedError = testData.mutate({
+const asyncResolvedError = testData.mutateAsync({
   alwaysError: async () => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     return new Error("Always fails");
@@ -106,7 +106,7 @@ const _asyncResolvedErrorCheck: PromisedDataFrame<{
 }> = asyncResolvedError;
 
 // Test 7: Async function returning union in resolved promise
-const asyncResolvedUnion = testData.mutate({
+const asyncResolvedUnion = testData.mutateAsync({
   maybeDoubled: async (row) => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     if (row.value > 15) {
@@ -199,7 +199,7 @@ type AsyncRejectCurrent = PromisedDataFrame<{
 }>;
 
 // Test 11: Async function with try-catch internally
-const asyncTryCatch = testData.mutate({
+const asyncTryCatch = testData.mutateAsync({
   safeDoubled: async (row) => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     try {
@@ -246,7 +246,7 @@ type PatternExplicitCheck = PromisedDataFrame<{
 // Pattern 2: Result Type Pattern (like Rust)
 type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
 
-const patternResult = testData.mutate({
+const patternResult = testData.mutateAsync({
   maybeDoubled: async (row): Promise<Result<number>> => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     if (row.value > 15) {
@@ -265,7 +265,7 @@ const _patternResultCheck: PromisedDataFrame<{
 // Pattern 3: Special Error-Aware Async Type
 type AsyncMayFail<T> = Promise<T | Error>;
 
-const patternAsyncMayFail = testData.mutate({
+const patternAsyncMayFail = testData.mutateAsync({
   maybeDoubled: (row): AsyncMayFail<number> => {
     if (row.value > 15) {
       return Promise.resolve(row.value * 2);
@@ -285,7 +285,7 @@ const _patternAsyncMayFailCheck: PromisedDataFrame<{
 // ============================================================================
 
 // Test 12: Mixed sync and async operations
-const mixedOperations = testData.mutate({
+const mixedOperations = testData.mutateAsync({
   syncValue: (row) => row.value * 2,
   asyncValue: (row) => row.value * 3,
   syncError: (row) => row.value > 15 ? row.value : new Error("Too small"),

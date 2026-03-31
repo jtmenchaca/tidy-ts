@@ -17,7 +17,7 @@ Deno.test("filter async", async () => {
     { product: "Widget C" },
   ]);
 
-  const result = await data.filter(async (_row) => {
+  const result = await data.filterAsync(async (_row) => {
     await new Promise((resolve) => setTimeout(resolve, 1));
     return true;
   });
@@ -45,7 +45,7 @@ Deno.test("mutate async", async () => {
     { product: "Widget C", value: 20 },
   ]);
 
-  const result = await data.mutate({
+  const result = await data.mutateAsync({
     doubled: async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.value * 2;
@@ -81,7 +81,7 @@ Deno.test("filter async + mutate sync", async () => {
   ]);
 
   const result = await data
-    .filter(async (_row) => {
+    .filterAsync(async (_row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return true;
     })
@@ -101,11 +101,11 @@ Deno.test("filter async + mutate async", async () => {
   ]);
 
   const result = await data
-    .filter(async (_row) => {
+    .filterAsync(async (_row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return true;
     })
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         return row.value * 2;
@@ -147,7 +147,7 @@ Deno.test("groupBy + filter sync + mutate async", async () => {
   const result = await groupedData
     .groupBy("category")
     .filter((row) => row.value > 10)
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         return row.value * 2;
@@ -165,7 +165,7 @@ Deno.test("groupBy + filter sync + mutate async", async () => {
 Deno.test("groupBy + filter async + mutate sync", async () => {
   const result = await groupedData
     .groupBy("category")
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.value > 10;
     })
@@ -182,11 +182,11 @@ Deno.test("groupBy + filter async + mutate sync", async () => {
 Deno.test("groupBy + filter async + mutate async", async () => {
   const result = await groupedData
     .groupBy("category")
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.value > 10;
     })
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         return row.value * 2;
@@ -219,7 +219,7 @@ Deno.test("filter sync + mutate sync + groupBy", () => {
 Deno.test("filter sync + mutate async + groupBy", async () => {
   const result = await groupedData
     .filter((row) => row.value > 10)
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         return row.value * 2;
@@ -237,7 +237,7 @@ Deno.test("filter sync + mutate async + groupBy", async () => {
 
 Deno.test("filter async + mutate sync + groupBy", async () => {
   const result = await groupedData
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.value > 10;
     })
@@ -254,11 +254,11 @@ Deno.test("filter async + mutate sync + groupBy", async () => {
 
 Deno.test("filter async + mutate async + groupBy", async () => {
   const result = await groupedData
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.value > 10;
     })
-    .mutate({
+    .mutateAsync({
       doubled: async (row) => {
         await new Promise((resolve) => setTimeout(resolve, 1));
         return row.value * 2;

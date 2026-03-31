@@ -14,7 +14,6 @@ import { tracer } from "../../telemetry/tracer.ts";
 
 export function summarise(
   spec: any,
-  options?: ConcurrencyOptions,
 ): (
   df: any,
 ) => any {
@@ -22,18 +21,12 @@ export function summarise(
     const span = tracer.startSpan(df, "summarise", { spec: typeof spec });
 
     try {
-      // Check if any formulas are async or if options are provided
-      const isAsync = shouldUseAsyncForSummarise(df, spec) ||
-        (options !== undefined);
+      // Safety net: if user accidentally passes async to summarise(), still handle it
+      const isAsync = shouldUseAsyncForSummarise(df, spec);
 
       if (isAsync) {
-        // Get DataFrame's default options if available
-        const dfOptions = df.__options as
-          | ConcurrencyOptions
-          | undefined;
-        // Apply default concurrency if no options provided
-        const concurrencyOptions = options || dfOptions ||
-          DEFAULT_CONCURRENCY.summarise;
+        const dfOptions = df.__options as ConcurrencyOptions | undefined;
+        const concurrencyOptions = dfOptions || DEFAULT_CONCURRENCY.summarise;
         return summariseAsync(df, spec, concurrencyOptions);
       } else {
         const result = summariseSync(df, spec);
@@ -43,6 +36,18 @@ export function summarise(
     } finally {
       tracer.endSpan(df, span);
     }
+  };
+}
+
+// Async summarise — always routes to async implementation
+export function summariseAsyncExport(
+  spec: any,
+  options?: ConcurrencyOptions,
+): (df: any) => any {
+  return (df: any) => {
+    const dfOptions = df.__options as ConcurrencyOptions | undefined;
+    const concurrencyOptions = options || dfOptions || DEFAULT_CONCURRENCY.summarise;
+    return summariseAsync(df, spec, concurrencyOptions);
   };
 }
 
