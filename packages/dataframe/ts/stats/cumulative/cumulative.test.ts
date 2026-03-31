@@ -244,3 +244,135 @@ Deno.test("cumprod with mixed data types", () => {
   const result = stats.cumprod(values, { removeNull: true });
   expect(result).toEqual([2, 2, 2, 2, 8]); // "3" converted to 3, null treated as 1
 });
+
+// --- Date support for cummin/cummax ---
+
+Deno.test("cummin with Date array", () => {
+  const d1 = new Date("2024-01-03");
+  const d2 = new Date("2024-01-01");
+  const d3 = new Date("2024-01-02");
+  const result = stats.cummin([d1, d2, d3]);
+  expect(result).toEqual([d1, d2, d2]);
+});
+
+Deno.test("cummax with Date array", () => {
+  const d1 = new Date("2024-01-01");
+  const d2 = new Date("2024-01-03");
+  const d3 = new Date("2024-01-02");
+  const result = stats.cummax([d1, d2, d3]);
+  expect(result).toEqual([d1, d2, d2]);
+});
+
+Deno.test("cummin with Date array and nulls", () => {
+  const d1 = new Date("2024-01-03");
+  const d2 = new Date("2024-01-01");
+  const result = stats.cummin([d1, null, d2]);
+  expect(result).toEqual([null, null, null]);
+});
+
+Deno.test("cummin with Date array and removeNull", () => {
+  const d1 = new Date("2024-01-03");
+  const d2 = new Date("2024-01-01");
+  const result = stats.cummin([d1, null, d2], { removeNull: true });
+  expect(result).toEqual([d1, d1, d2]);
+});
+
+Deno.test("cummax with Date array and nulls", () => {
+  const d1 = new Date("2024-01-01");
+  const d2 = new Date("2024-01-03");
+  const result = stats.cummax([d1, null, d2]);
+  expect(result).toEqual([null, null, null]);
+});
+
+Deno.test("cummax with Date array and removeNull", () => {
+  const d1 = new Date("2024-01-01");
+  const d2 = new Date("2024-01-03");
+  const result = stats.cummax([d1, null, d2], { removeNull: true });
+  expect(result).toEqual([d1, d1, d2]);
+});
+
+Deno.test("cummin with single Date", () => {
+  const d = new Date("2024-06-15");
+  const result = stats.cummin(d);
+  expect(result).toEqual(d);
+});
+
+Deno.test("cummax with single Date", () => {
+  const d = new Date("2024-06-15");
+  const result = stats.cummax(d);
+  expect(result).toEqual(d);
+});
+
+// --- Temporal support for cummin/cummax ---
+
+import { Temporal } from "temporal-polyfill";
+
+Deno.test("cummin with Temporal.PlainDate array", () => {
+  const dates = [
+    Temporal.PlainDate.from("2024-03-15"),
+    Temporal.PlainDate.from("2024-01-01"),
+    Temporal.PlainDate.from("2024-06-30"),
+  ];
+  const result = stats.cummin(dates);
+  expect(result.length).toBe(3);
+  expect(Temporal.PlainDate.compare(result[0], dates[0])).toBe(0);
+  expect(Temporal.PlainDate.compare(result[1], dates[1])).toBe(0);
+  expect(Temporal.PlainDate.compare(result[2], dates[1])).toBe(0);
+});
+
+Deno.test("cummax with Temporal.PlainDate array", () => {
+  const dates = [
+    Temporal.PlainDate.from("2024-01-01"),
+    Temporal.PlainDate.from("2024-06-30"),
+    Temporal.PlainDate.from("2024-03-15"),
+  ];
+  const result = stats.cummax(dates);
+  expect(result.length).toBe(3);
+  expect(Temporal.PlainDate.compare(result[0], dates[0])).toBe(0);
+  expect(Temporal.PlainDate.compare(result[1], dates[1])).toBe(0);
+  expect(Temporal.PlainDate.compare(result[2], dates[1])).toBe(0);
+});
+
+Deno.test("cummin with Temporal.PlainDate and nulls", () => {
+  const dates = [
+    Temporal.PlainDate.from("2024-03-15"),
+    null,
+    Temporal.PlainDate.from("2024-01-01"),
+  ];
+  const result = stats.cummin(dates);
+  expect(result).toEqual([null, null, null]);
+});
+
+Deno.test("cummin with Temporal.PlainDate and removeNull", () => {
+  const d1 = Temporal.PlainDate.from("2024-03-15");
+  const d2 = Temporal.PlainDate.from("2024-01-01");
+  const result = stats.cummin([d1, null, d2], { removeNull: true });
+  expect(result.length).toBe(3);
+  const cmp = Temporal.PlainDate.compare;
+  expect(cmp(result[0], d1)).toBe(0);
+  expect(cmp(result[1], d1)).toBe(0);
+  expect(cmp(result[2], d2)).toBe(0);
+});
+
+Deno.test("cummax with Temporal.PlainDate and removeNull", () => {
+  const d1 = Temporal.PlainDate.from("2024-01-01");
+  const d2 = Temporal.PlainDate.from("2024-06-30");
+  const result = stats.cummax([d1, null, d2], { removeNull: true });
+  expect(result.length).toBe(3);
+  const cmp = Temporal.PlainDate.compare;
+  expect(cmp(result[0], d1)).toBe(0);
+  expect(cmp(result[1], d1)).toBe(0);
+  expect(cmp(result[2], d2)).toBe(0);
+});
+
+Deno.test("cummin with single Temporal.PlainDate", () => {
+  const d = Temporal.PlainDate.from("2024-05-01");
+  const result = stats.cummin(d);
+  expect(Temporal.PlainDate.compare(result, d)).toBe(0);
+});
+
+Deno.test("cummax with single Temporal.PlainDate", () => {
+  const d = Temporal.PlainDate.from("2024-05-01");
+  const result = stats.cummax(d);
+  expect(Temporal.PlainDate.compare(result, d)).toBe(0);
+});
