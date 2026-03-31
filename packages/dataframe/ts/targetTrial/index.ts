@@ -45,7 +45,9 @@ export function targetTrialEmulation({
 }): TargetTrialResult {
   initWasm();
 
-  const configJson = JSON.stringify(config);
+  const configJson = JSON.stringify(config, (_key, value) =>
+    value === Infinity ? 1e308 : value === -Infinity ? -1e308 : value,
+  );
   const dataJson = JSON.stringify(data);
 
   const result = wasmInternal.target_trial_wasm(

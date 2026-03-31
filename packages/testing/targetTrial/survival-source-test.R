@@ -8,29 +8,35 @@ source(file.path(.this_dir, "r-json-emit.R"))
 
 # ── ITT with km_curves on SEQdata ──
 data <- data.table::copy(SEQdata)
-model <- SEQuential(data, "ID", "time", "eligible", "tx_init", "outcome",
-  list("N", "L", "P"), list("sex"),
-  method = "ITT",
-  options = SEQopts(km.curves = TRUE),
-  verbose = FALSE)
+invisible(capture.output(
+  model <- SEQuential(data, "ID", "time", "eligible", "tx_init", "outcome",
+    list("N", "L", "P"), list("sex"),
+    method = "ITT",
+    options = SEQopts(km.curves = TRUE),
+    verbose = FALSE)
+))
 
 surv <- km_data(model)
 risk <- risk_data(model)
 risk_comp <- risk_comparison(model)
 
-# Extract survival curves per arm
-arms <- sort(unique(surv$arm))
+# Extract survival curves per arm (variable column has "surv_0", "surv_1")
+surv_0 <- surv[surv$variable == "surv_0", ]
+surv_1 <- surv[surv$variable == "surv_1", ]
 
-result <- list()
-for (arm in arms) {
-  arm_data <- surv[surv$arm == arm, ]
-  result[[paste0("surv_followup_", arm)]] <- arm_data$followup_time
-  result[[paste0("surv_value_", arm)]] <- arm_data$survival
-}
+result <- list(
+  surv_followup_0 = surv_0$followup,
+  surv_value_0 = surv_0$value,
+  surv_followup_1 = surv_1$followup,
+  surv_value_1 = surv_1$value,
 
-result$risk_arms <- as.character(risk$arm)
-result$risk_values <- risk$risk
-result$risk_ratio <- risk_comp$risk_ratio
-result$risk_difference <- risk_comp$risk_difference
+  risk_arms = risk$A,
+  risk_values = risk$Risk,
+
+  risk_comp_ax = as.character(risk_comp$A_x),
+  risk_comp_ay = as.character(risk_comp$A_y),
+  risk_ratio = risk_comp[["Risk Ratio"]],
+  risk_difference = risk_comp[["Risk Difference"]]
+)
 
 emit_reference(result)

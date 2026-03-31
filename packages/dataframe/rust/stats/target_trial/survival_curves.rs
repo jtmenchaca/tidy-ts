@@ -97,6 +97,11 @@ pub fn generate_survival_curves(
             }
         }
 
+        // Copy factor metadata from source data (must use original levels, not rediscovered)
+        for (name, info) in &data.factors {
+            pred_data.factors.insert(name.clone(), info.clone());
+        }
+
         // Set followup values: 0, 1, 2, ..., survival_max for each subject
         let mut followup_vals = Vec::with_capacity(total_rows);
         let mut followup_sq_vals = Vec::with_capacity(total_rows);

@@ -6,9 +6,13 @@
 
 use std::collections::HashMap;
 
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
 use super::bootstrap::bootstrap_resample;
 use super::covariates;
 use super::expand::expand;
+use super::factorize::factorize_data;
 use super::glm_helpers::{init_formula_cache, FormulaCache};
 use super::hazard::{estimate_hazard_ratio, hazard_ratio_with_ci};
 use super::outcome_models::{fit_outcome_model, OutcomeModel};
@@ -42,6 +46,15 @@ pub fn target_trial_emulation(
     // 2. Generate default formulas if not provided
     let config = fill_default_formulas(config);
 
+    #[cfg(feature = "wasm")]
+    {
+        let msg = format!(
+            "target_trial: formulas filled. outcome={:?}, nrows={}",
+            config.covariates, data.nrows
+        );
+        console::log_1(&msg.into());
+    }
+
     // 3. Initialize formula cache
     let pipeline_cache = init_formula_cache(&config);
     let outcome_cache = pipeline_cache
@@ -50,12 +63,104 @@ pub fn target_trial_emulation(
         .ok_or("Outcome covariates formula is required")?
         .clone();
 
-    // 4. Expand data (create trial structure)
-    let expanded = expand(data, &config)?;
+    // 3b. Multinomial: set eligible=0 for rows where treatment not in treat_levels
+    // R: if (params@multinomial) params@data[!get(params@treatment) %in% params@treat.level, eval(params@eligible) := 0]
+    let mut source_data = data.clone();
+    if config.multinomial {
+        if let Some(treatment_col) = source_data.numeric.get(&config.treatment).cloned() {
+            if let Some(eligible_col) = source_data.numeric.get_mut(&config.eligible) {
+                for i in 0..source_data.nrows {
+                    let tx_val = treatment_col[i];
+                    if !config.treat_levels.iter().any(|&lv| (tx_val - lv).abs() < 1e-10) {
+                        eligible_col[i] = 0.0;
+                    }
+                }
+            }
+        }
+    }
+
+    // 3c. Prune rows after last eligible time per ID
+    // R line 165: data <- data[data[, .I[seq_len(max(which(eligible == 1), 0))], by = id]$V1]
+    {
+        let id_col = source_data.get_numeric(&config.id)
+            .ok_or_else(|| format!("ID column '{}' not found", config.id))?
+            .clone();
+        let elig_col = source_data.get_numeric(&config.eligible)
+            .ok_or_else(|| format!("Eligible column '{}' not found", config.eligible))?
+            .clone();
+
+        // Find rows to keep: for each ID, keep rows up to (and including) last eligible row
+        let mut keep_rows: Vec<bool> = vec![false; source_data.nrows];
+        let mut i = 0;
+        while i < source_data.nrows {
+            let cur_id = id_col[i];
+            let group_start = i;
+            i += 1;
+            while i < source_data.nrows && (id_col[i] - cur_id).abs() < 1e-10 {
+                i += 1;
+            }
+            // Find last eligible row in this group
+            let mut last_eligible = None;
+            for j in group_start..i {
+                if (elig_col[j] - 1.0).abs() < 1e-10 {
+                    last_eligible = Some(j);
+                }
+            }
+            if let Some(le) = last_eligible {
+                for j in group_start..=le {
+                    keep_rows[j] = true;
+                }
+            }
+        }
+
+        let kept_indices: Vec<usize> = (0..source_data.nrows).filter(|&i| keep_rows[i]).collect();
+        if kept_indices.len() < source_data.nrows {
+            source_data = subset_columnar_data(&source_data, &kept_indices);
+        }
+    }
+
+    // 3d. Augment source data with squared time column (needed for pre-expansion weights)
+    let mut augmented_data = source_data;
+    let time_sq_name = format!("{}{}", config.time, config.indicator_squared);
+    if !augmented_data.has_column(&time_sq_name) {
+        if let Some(time_col) = augmented_data.get_numeric(&config.time).cloned() {
+            let sq: Vec<f64> = time_col.iter().map(|v| v * v).collect();
+            augmented_data.add_numeric(time_sq_name, sq);
+        }
+    }
+
+    // 3d. Factorize pre-expansion data (R: params@data <- factorize(params@data, params))
+    factorize_data(&mut augmented_data, &config);
+
+    // 4. Expand data (create trial structure) — use modified source_data via augmented_data
+    let mut expanded = expand(&augmented_data, &config)?;
+
+    // 4b. Factorize expanded data (R: params@DT <- factorize(SEQexpand(params), params))
+    factorize_data(&mut expanded.data, &config);
+
+    #[cfg(feature = "wasm")]
+    {
+        let cols: Vec<&str> = expanded.data.column_names();
+        let msg = format!(
+            "target_trial: expanded {} → {} rows, cols: {:?}",
+            data.nrows, expanded.data.nrows, cols
+        );
+        console::log_1(&msg.into());
+    }
 
     // 5. Run the single-pass pipeline
-    let (outcome_model, final_weights, weight_diagnostics) =
-        run_single_pass(&expanded.data, data, &config, &outcome_cache)?;
+    let (outcome_model, _final_weights, weight_diagnostics) =
+        run_single_pass(&expanded.data, &augmented_data, &config, &outcome_cache)?;
+
+    #[cfg(feature = "wasm")]
+    {
+        let msg = format!(
+            "target_trial: model fit. {} coefs, names: {:?}",
+            outcome_model.result.coefficients.len(),
+            outcome_model.coef_names
+        );
+        console::log_1(&msg.into());
+    }
 
     // 6. Generate survival curves
     let mut survival_curves = if config.km_curves {
@@ -94,7 +199,7 @@ pub fn target_trial_emulation(
         for i in 0..config.bootstrap.nboot {
             let boot_seed = config.bootstrap.seed + (i as u64) + 1;
 
-            // Resample
+            // Resample (factor metadata is preserved by bootstrap_resample via clone)
             let boot_data = bootstrap_resample(
                 &expanded.data,
                 &config,
@@ -102,7 +207,7 @@ pub fn target_trial_emulation(
                 config.bootstrap.sample_fraction,
             )?;
             let boot_pre = bootstrap_resample(
-                data,
+                &augmented_data,
                 &config,
                 boot_seed,
                 config.bootstrap.sample_fraction,
@@ -249,6 +354,22 @@ fn fill_default_formulas(config: &TargetTrialConfig) -> TargetTrialConfig {
     }
 
     config
+}
+
+/// Subset a ColumnarData to only the given row indices.
+fn subset_columnar_data(data: &ColumnarData, indices: &[usize]) -> ColumnarData {
+    let mut result = ColumnarData::new();
+    for (name, col) in &data.numeric {
+        let new_col: Vec<f64> = indices.iter().map(|&i| col[i]).collect();
+        result.numeric.insert(name.clone(), new_col);
+    }
+    for (name, col) in &data.categorical {
+        let new_col: Vec<String> = indices.iter().map(|&i| col[i].clone()).collect();
+        result.categorical.insert(name.clone(), new_col);
+    }
+    result.factors = data.factors.clone();
+    result.nrows = indices.len();
+    result
 }
 
 #[cfg(test)]

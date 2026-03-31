@@ -6,6 +6,7 @@
 pub mod bootstrap;
 pub mod covariates;
 pub mod expand;
+pub mod factorize;
 pub mod glm_helpers;
 pub mod hazard;
 pub mod outcome_models;

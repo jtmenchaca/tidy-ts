@@ -82,6 +82,11 @@ fn simulate_events(
             }
         }
 
+        // Copy factor metadata from source data (must use original levels, not rediscovered)
+        for (name, info) in &data.factors {
+            pred_data.factors.insert(name.clone(), info.clone());
+        }
+
         // Set followup and followup_sq
         let mut fup_vals = Vec::with_capacity(total_rows);
         let mut fup_sq_vals = Vec::with_capacity(total_rows);

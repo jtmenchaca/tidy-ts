@@ -272,6 +272,18 @@ impl Default for TargetTrialConfig {
     }
 }
 
+/// Factor metadata for a numeric column that should be treated as categorical
+/// in model.matrix construction (R's `as.factor()` equivalent).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FactorInfo {
+    /// Sorted unique levels as strings (matching R's factor levels).
+    /// e.g., ["0", "1"] for a binary treatment column.
+    pub levels: Vec<String>,
+    /// Index of the reference level (dropped in dummy encoding).
+    /// Default: 0 (first/smallest level, matching R's default for numeric-origin factors).
+    pub reference: usize,
+}
+
 /// Columnar data representation for the pipeline.
 ///
 /// All data is stored column-major. Each column is either f64 (numeric)
@@ -282,6 +294,11 @@ pub struct ColumnarData {
     pub numeric: HashMap<String, Vec<f64>>,
     /// String/categorical columns: column_name → values
     pub categorical: HashMap<String, Vec<String>>,
+    /// Factor metadata for numeric columns that should be treated as factors
+    /// in model.matrix. Key is the column name. The column remains in `numeric`
+    /// but is encoded as dummies when building the design matrix.
+    #[serde(default)]
+    pub factors: HashMap<String, FactorInfo>,
     /// Number of rows
     pub nrows: usize,
 }
@@ -291,8 +308,43 @@ impl ColumnarData {
         Self {
             numeric: HashMap::new(),
             categorical: HashMap::new(),
+            factors: HashMap::new(),
             nrows: 0,
         }
+    }
+
+    /// Mark a numeric column as a factor, discovering levels from the data.
+    /// Levels are sorted numerically (matching R's behavior for numeric-origin factors).
+    /// Reference level is the first (smallest) level.
+    pub fn factorize(&mut self, col_name: &str) -> Result<(), String> {
+        let col = self
+            .numeric
+            .get(col_name)
+            .ok_or_else(|| format!("Column '{}' not found for factorization", col_name))?;
+
+        let mut level_set = std::collections::BTreeSet::new();
+        for v in col {
+            if !v.is_nan() {
+                level_set.insert(format!("{}", *v as i64));
+            }
+        }
+        let mut levels: Vec<String> = level_set.into_iter().collect();
+        // Sort numerically
+        levels.sort_by(|a, b| {
+            a.parse::<f64>()
+                .unwrap_or(0.0)
+                .partial_cmp(&b.parse::<f64>().unwrap_or(0.0))
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        self.factors.insert(
+            col_name.to_string(),
+            FactorInfo {
+                levels,
+                reference: 0,
+            },
+        );
+        Ok(())
     }
 
     /// Get a numeric column, returning None if not found.

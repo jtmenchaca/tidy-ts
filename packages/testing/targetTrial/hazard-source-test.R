@@ -37,9 +37,9 @@ model_repro <- SEQuential(data, "ID", "time", "eligible", "tx_init", "outcome",
 hr_repro <- hazard_ratio(model_repro)
 
 result <- list(
-  hr_value = hr[[1]],
-  hr_repro_value = hr_repro[[1]],
-  hr_boot_value = hr_boot[["HR"]],
+  hr_value = hr[["Hazard ratio"]],
+  hr_repro_value = hr_repro[["Hazard ratio"]],
+  hr_boot_value = hr_boot[["Hazard ratio"]],
   hr_boot_lci = hr_boot[["LCI"]],
   hr_boot_uci = hr_boot[["UCI"]]
 )

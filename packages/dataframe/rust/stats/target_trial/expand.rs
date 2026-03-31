@@ -69,24 +69,26 @@ pub fn expand(
         let id_val = id_col[rows[0]];
         let n_periods = rows.len();
 
-        // Each row in the source where the subject is eligible starts a trial
-        let mut trial_idx = 0;
+        // Each row in the source starts a trial. R uses rowid-1 as trial number
+        // (sequential per ID, regardless of eligibility). Non-eligible trials
+        // get filtered out later by eligible_bas, but trial numbers retain gaps.
         for (pos, &src_row) in rows.iter().enumerate() {
             if eligible_col[src_row] != 1.0 {
                 continue;
             }
             let trial_time = time_col[src_row];
+            // R: trial := rowid(id) - 1, which is just the row position within ID
+            let trial_val = pos as f64;
 
             // Follow-up goes from this period forward
             let max_fu = std::cmp::min(max_followup, n_periods - 1 - pos);
             for fu in min_followup..=max_fu {
                 let period = trial_time + fu as f64;
                 exp_id.push(id_val);
-                exp_trial.push(trial_idx as f64);
+                exp_trial.push(trial_val);
                 exp_period.push(period);
                 exp_followup.push(fu as f64);
             }
-            trial_idx += 1;
         }
     }
 
@@ -160,9 +162,31 @@ pub fn expand(
         }
     }
 
+    // Also join fixed columns as time-varying (they exist in source, needed in expanded)
+    for col_name in &config.fixed {
+        if !result.has_column(col_name) {
+            if let Some(src_col) = source.get_numeric(col_name) {
+                let mut joined: Vec<f64> = Vec::with_capacity(result.nrows);
+                let cur_id = result.get_numeric(&config.id).unwrap();
+                let cur_period = result.get_numeric("period").unwrap();
+                for i in 0..result.nrows {
+                    let key = (cur_id[i].to_bits(), cur_period[i].to_bits());
+                    if let Some(&src_row) = source_lookup.get(&key) {
+                        joined.push(src_col[src_row]);
+                    } else {
+                        joined.push(f64::NAN);
+                    }
+                }
+                result.add_numeric(col_name.clone(), joined);
+            }
+        }
+    }
+
     // Baseline columns: join on (id, trial_time) and suffix with indicator_baseline
     let mut base_source_cols: Vec<String> = config.time_varying.clone();
+    base_source_cols.push(config.treatment.clone());
     base_source_cols.push(config.eligible.clone());
+    base_source_cols.extend(config.fixed.iter().cloned());
     base_source_cols.sort();
     base_source_cols.dedup();
 

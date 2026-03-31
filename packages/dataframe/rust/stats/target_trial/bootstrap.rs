@@ -103,6 +103,9 @@ pub fn bootstrap_resample(
         new_data.categorical.insert(col_name.clone(), new_col);
     }
 
+    // Copy factor metadata
+    new_data.factors = data.factors.clone();
+
     new_data.nrows = total_rows;
     Ok(new_data)
 }

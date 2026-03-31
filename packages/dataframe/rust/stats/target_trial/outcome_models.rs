@@ -3,7 +3,7 @@
 //! Ported from `SEQTaRget/R/internal_models.R`.
 //! Fits weighted quasibinomial GLM for the outcome.
 
-use super::glm_helpers::{build_design_matrix_from_formula, FormulaCache};
+use super::glm_helpers::{build_design_matrix_from_formula, build_design_matrix_with_names, FormulaCache};
 use super::types::{ColumnarData, TargetTrialConfig};
 use crate::stats::regression::family::quasibinomial::QuasiBinomialFamily;
 use crate::stats::regression::glm::glm_control::glm_control;
@@ -52,8 +52,8 @@ pub fn fit_outcome_model(
         return Err("No valid outcome observations".to_string());
     }
 
-    // Build design matrix
-    let x = build_design_matrix_from_formula(data, formula_cache, Some(&valid_rows))?;
+    // Build design matrix (with factor encoding and interaction expansion)
+    let (x, expanded_names) = build_design_matrix_with_names(data, formula_cache, Some(&valid_rows))?;
     let y: Vec<f64> = valid_rows.iter().map(|&i| outcome_col[i]).collect();
 
     // Extract weights for valid rows, with truncation
@@ -93,9 +93,9 @@ pub fn fit_outcome_model(
 
     let separation = super::glm_helpers::check_separation(&result.coefficients);
 
-    // Build coefficient names: intercept + formula columns
+    // Build coefficient names: intercept + expanded column names (with factor dummies)
     let mut coef_names = vec!["(Intercept)".to_string()];
-    coef_names.extend(formula_cache.cols.iter().cloned());
+    coef_names.extend(expanded_names);
 
     Ok(OutcomeModel {
         result,
@@ -141,10 +141,7 @@ mod tests {
         let mut config = TargetTrialConfig::default();
         config.outcome = "outcome".to_string();
 
-        let cache = FormulaCache {
-            cols: vec!["x1".to_string(), "followup".to_string()],
-            is_simple: true,
-        };
+        let cache = super::super::glm_helpers::parse_formula("x1 + followup");
 
         let model = fit_outcome_model(&data, &config, &cache, None).unwrap();
         assert_eq!(model.result.coefficients.len(), 3); // intercept + x1 + followup
@@ -164,10 +161,7 @@ mod tests {
         let mut config = TargetTrialConfig::default();
         config.outcome = "outcome".to_string();
 
-        let cache = FormulaCache {
-            cols: vec!["x1".to_string()],
-            is_simple: true,
-        };
+        let cache = super::super::glm_helpers::parse_formula("x1");
 
         let model = fit_outcome_model(&data, &config, &cache, None).unwrap();
         let preds = predict_outcome(&model, &data, &cache, None).unwrap();

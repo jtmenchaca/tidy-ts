@@ -84,6 +84,172 @@ pub fn parse_simple_formula(formula: &str) -> Vec<String> {
         .collect()
 }
 
+/// Build a design matrix with factor encoding and interaction support.
+///
+/// Implements R's `model.matrix()` behavior:
+/// - Factor columns are expanded to k-1 dummy columns (reference level dropped)
+/// - Interaction terms (`:`) create product columns
+/// - `a*b` is expanded to `a + b + a:b` by the formula parser before reaching here
+///
+/// Returns (X matrix row-major with intercept, expanded_column_names).
+pub fn build_design_matrix_v2(
+    data: &ColumnarData,
+    terms: &[super::glm_helpers::FormulaTerm],
+    rows: Option<&[usize]>,
+) -> Result<(Vec<Vec<f64>>, Vec<String>), String> {
+    use super::glm_helpers::FormulaTerm;
+
+    let n = rows.map_or(data.nrows, |r| r.len());
+    if n == 0 {
+        return Err("No rows to build design matrix from".to_string());
+    }
+
+    let row_indices: Vec<usize> = rows
+        .map(|r| r.to_vec())
+        .unwrap_or_else(|| (0..data.nrows).collect());
+
+    // Expand each term into (column_values, column_names)
+    let mut all_cols: Vec<Vec<f64>> = Vec::new();
+    let mut all_names: Vec<String> = Vec::new();
+
+    for term in terms {
+        match term {
+            FormulaTerm::Main(col) => {
+                let (cols, names) = expand_single_term(data, col, &row_indices)?;
+                // Deduplicate: skip columns already added
+                for (c, name) in cols.into_iter().zip(names.into_iter()) {
+                    if !all_names.contains(&name) {
+                        all_cols.push(c);
+                        all_names.push(name);
+                    }
+                }
+            }
+            FormulaTerm::Interaction(parts) => {
+                let mut part_expansions: Vec<(Vec<Vec<f64>>, Vec<String>)> = Vec::new();
+                for part in parts {
+                    let expansion = expand_single_term(data, part, &row_indices)?;
+                    part_expansions.push(expansion);
+                }
+                let (interaction_cols, interaction_names) =
+                    cross_product_terms(&part_expansions, n);
+                for (c, name) in interaction_cols.into_iter().zip(interaction_names.into_iter()) {
+                    if !all_names.contains(&name) {
+                        all_cols.push(c);
+                        all_names.push(name);
+                    }
+                }
+            }
+        }
+    }
+
+    // Build matrix: intercept + all_cols
+    let n_cols = all_cols.len();
+    let mut x = vec![vec![0.0; n_cols + 1]; n];
+    for i in 0..n {
+        x[i][0] = 1.0; // intercept
+        for j in 0..n_cols {
+            x[i][j + 1] = all_cols[j][i];
+        }
+    }
+
+    Ok((x, all_names))
+}
+
+/// Expand a single column term into one or more columns.
+///
+/// - Factor column with levels ["0", "1"]: returns 1 dummy column (level "1"),
+///   named `{col}1`.
+/// - Factor column with levels ["0", "1", "2"]: returns 2 dummy columns,
+///   named `{col}1`, `{col}2`.
+/// - Numeric column: returns 1 column, named `{col}`.
+fn expand_single_term(
+    data: &ColumnarData,
+    col: &str,
+    row_indices: &[usize],
+) -> Result<(Vec<Vec<f64>>, Vec<String>), String> {
+    let n = row_indices.len();
+
+    if let Some(factor_info) = data.factors.get(col) {
+        // Factor encoding: create dummy for each non-reference level
+        let raw = data
+            .get_numeric(col)
+            .ok_or_else(|| format!("Factor column '{}' not found in numeric data", col))?;
+
+        let mut cols = Vec::new();
+        let mut names = Vec::new();
+
+        for (level_idx, level) in factor_info.levels.iter().enumerate() {
+            if level_idx == factor_info.reference {
+                continue; // Skip reference level
+            }
+            let level_val: f64 = level.parse().unwrap_or(0.0);
+            let dummy: Vec<f64> = row_indices
+                .iter()
+                .map(|&i| {
+                    if (raw[i] - level_val).abs() < 1e-10 {
+                        1.0
+                    } else {
+                        0.0
+                    }
+                })
+                .collect();
+            cols.push(dummy);
+            names.push(format!("{}{}", col, level));
+        }
+
+        if cols.is_empty() {
+            // Single-level factor: just pass through as numeric
+            let vals: Vec<f64> = row_indices.iter().map(|&i| raw[i]).collect();
+            return Ok((vec![vals], vec![col.to_string()]));
+        }
+
+        Ok((cols, names))
+    } else {
+        // Numeric passthrough
+        let raw = data
+            .get_numeric(col)
+            .ok_or_else(|| format!("Column '{}' not found in numeric data", col))?;
+        let vals: Vec<f64> = row_indices.iter().map(|&i| raw[i]).collect();
+        Ok((vec![vals], vec![col.to_string()]))
+    }
+}
+
+/// Compute cross-product of expanded terms for interaction columns.
+///
+/// For [([col_a1, col_a2], ["a1","a2"]), ([col_b], ["b"])]:
+/// Returns ([a1*b, a2*b], ["a1:b", "a2:b"])
+fn cross_product_terms(
+    parts: &[(Vec<Vec<f64>>, Vec<String>)],
+    n: usize,
+) -> (Vec<Vec<f64>>, Vec<String>) {
+    if parts.is_empty() {
+        return (Vec::new(), Vec::new());
+    }
+
+    let mut result_cols = parts[0].0.clone();
+    let mut result_names = parts[0].1.clone();
+
+    for part in parts.iter().skip(1) {
+        let (ref other_cols, ref other_names) = *part;
+        let mut new_cols = Vec::new();
+        let mut new_names = Vec::new();
+
+        for (i, left_col) in result_cols.iter().enumerate() {
+            for (j, right_col) in other_cols.iter().enumerate() {
+                let product: Vec<f64> =
+                    (0..n).map(|k| left_col[k] * right_col[k]).collect();
+                new_cols.push(product);
+                new_names.push(format!("{}:{}", result_names[i], other_names[j]));
+            }
+        }
+
+        result_cols = new_cols;
+        result_names = new_names;
+    }
+
+    (result_cols, result_names)
+}
+
 /// Predict from a fitted weight model.
 ///
 /// For binary models: returns predicted response probabilities.
@@ -177,6 +343,139 @@ fn rows_where_cat_eq(data: &ColumnarData, col: &str, val: &str) -> Vec<usize> {
     }
 }
 
+/// Create tx_lag column on model data.
+///
+/// Mirrors R's `internal.weights()` lines 21-48.
+/// - Pre-expansion: `shift(treatment)` by id, first row filled to `treat_levels[0]`
+/// - Post-expansion: `shift(treatment)` by (id, trial), first row filled from
+///   baseline lag (pre-data's `shift(treatment)` by id)
+fn create_tx_lag(
+    model_data: &mut ColumnarData,
+    pre_data: &ColumnarData,
+    config: &TargetTrialConfig,
+    preexpansion: bool,
+) -> Result<(), String> {
+    let treatment_col = model_data
+        .get_numeric(&config.treatment)
+        .ok_or_else(|| format!("Treatment column '{}' not found", config.treatment))?
+        .clone();
+
+    let n = model_data.nrows;
+    let first_level = config.treat_levels[0];
+
+    if preexpansion {
+        // R lines 44-48: shift(treatment) by id, first row per id = treat_levels[0]
+        let id_col = model_data.get_numeric(&config.id)
+            .ok_or("ID column not found")?;
+        let time_col = model_data.get_numeric(&config.time)
+            .ok_or_else(|| format!("Time column '{}' not found", config.time))?;
+
+        let mut tx_lag = vec![first_level; n];
+        // Data should be sorted by (id, time). Within each id group, shift treatment.
+        let mut i = 0;
+        while i < n {
+            let cur_id = id_col[i];
+            // First row of each id group: tx_lag = treat_levels[0] (already set)
+            // R: [get(params@time) == 0, tx_lag := treat_levels[0]]
+            // But actually R does shift then overwrites time==0 rows. Let's be faithful:
+            let group_start = i;
+            i += 1;
+            while i < n && (id_col[i] - cur_id).abs() < 1e-10 {
+                tx_lag[i] = treatment_col[i - 1];
+                i += 1;
+            }
+            // Overwrite rows where time == 0 with treat_levels[0]
+            for j in group_start..i {
+                if time_col[j].abs() < 1e-10 {
+                    tx_lag[j] = first_level;
+                }
+            }
+        }
+
+        model_data.numeric.insert("tx_lag".to_string(), tx_lag);
+    } else {
+        // R lines 21-39: Post-expansion tx_lag creation
+        // 1. Create baseline.lag from pre_data: shift(treatment) by id
+        let pre_id = pre_data.get_numeric(&config.id).ok_or("ID not found in pre_data")?;
+        let pre_time = pre_data.get_numeric(&config.time)
+            .ok_or_else(|| format!("Time col '{}' not found in pre_data", config.time))?;
+        let pre_treatment = pre_data.get_numeric(&config.treatment)
+            .ok_or("Treatment not found in pre_data")?;
+
+        // Build baseline lag lookup: (id, time) → tx_lag from pre_data
+        // R: baseline.lag = data[, shift(treatment), by=id][first_row_per_id, tx_lag := treat_levels[0]]
+        let mut baseline_lag_lookup: std::collections::HashMap<(u64, u64), f64> =
+            std::collections::HashMap::new();
+        {
+            let mut pi = 0;
+            let pre_n = pre_data.nrows;
+            while pi < pre_n {
+                let cur_id = pre_id[pi];
+                let group_start = pi;
+                pi += 1;
+                while pi < pre_n && (pre_id[pi] - cur_id).abs() < 1e-10 {
+                    pi += 1;
+                }
+                // Within this id group [group_start..pi), compute shift(treatment)
+                for j in group_start..pi {
+                    let lag_val = if j == group_start {
+                        first_level
+                    } else {
+                        pre_treatment[j - 1]
+                    };
+                    // R: setnames(baseline.lag, 2, params@time) → renames time col to "period"
+                    // So the key is (id, time_value) and it maps to period in expanded
+                    baseline_lag_lookup.insert(
+                        (pre_id[j].to_bits(), pre_time[j].to_bits()),
+                        lag_val,
+                    );
+                }
+            }
+        }
+
+        // 2. Create tx_lag on expanded data: shift(treatment) by (id, trial)
+        let id_col = model_data.get_numeric(&config.id).ok_or("ID not found")?;
+        let trial_col = model_data.get_numeric("trial").ok_or("trial not found")?;
+        let followup_col = model_data.get_numeric("followup").ok_or("followup not found")?;
+        let period_col = model_data.get_numeric("period").ok_or("period not found")?;
+
+        let mut tx_lag = vec![first_level; n];
+        {
+            let mut i = 0;
+            while i < n {
+                let cur_id = id_col[i];
+                let cur_trial = trial_col[i];
+                let group_start = i;
+                i += 1;
+                while i < n
+                    && (id_col[i] - cur_id).abs() < 1e-10
+                    && (trial_col[i] - cur_trial).abs() < 1e-10
+                {
+                    tx_lag[i] = treatment_col[i - 1];
+                    i += 1;
+                }
+                // tx_lag[group_start] is already first_level (default), but R sets it via shift
+                // which gives NA for first row, then overwritten below.
+            }
+        }
+
+        // 3. At followup==0, override tx_lag with baseline lag
+        // R: weight[baseline.lag, on=c(id, period), tx_lag := fifelse(followup==0, i.tx_lag, tx_lag)]
+        for i in 0..n {
+            if followup_col[i].abs() < 1e-10 {
+                let key = (id_col[i].to_bits(), period_col[i].to_bits());
+                if let Some(&lag_val) = baseline_lag_lookup.get(&key) {
+                    tx_lag[i] = lag_val;
+                }
+            }
+        }
+
+        model_data.numeric.insert("tx_lag".to_string(), tx_lag);
+    }
+
+    Ok(())
+}
+
 /// Compute IPCW weights for the expanded trial data.
 ///
 /// Mirrors R's `internal.weights()`.
@@ -222,7 +521,35 @@ pub fn compute_weights(
         });
     }
 
-    // Non-ITT: fit numerator/denominator models per treatment level
+    // ── Setting up weight data (R lines 20-48) ──
+    // Create model data with tx_lag column
+    let mut weight_data = if config.weights.preexpansion {
+        let mut wd = pre_data.clone();
+        create_tx_lag(&mut wd, pre_data, config, true)?;
+        // R line 47: add time_sq column
+        let time_sq_name = format!("{}{}", config.time, config.indicator_squared);
+        if !wd.has_column(&time_sq_name) {
+            if let Some(time_col) = wd.get_numeric(&config.time).cloned() {
+                let sq: Vec<f64> = time_col.iter().map(|v| v * v).collect();
+                wd.add_numeric(time_sq_name, sq);
+            }
+        }
+        wd
+    } else {
+        let mut wd = expanded.clone();
+        create_tx_lag(&mut wd, pre_data, config, false)?;
+        // R line 40: add period_sq column
+        let period_sq_name = format!("period{}", config.indicator_squared);
+        if !wd.has_column(&period_sq_name) {
+            if let Some(period_col) = wd.get_numeric("period").cloned() {
+                let sq: Vec<f64> = period_col.iter().map(|v| v * v).collect();
+                wd.add_numeric(period_sq_name, sq);
+            }
+        }
+        wd
+    };
+
+    // ── Non-ITT model fitting (R lines 85-117) ──
     let num_formula = config
         .numerator
         .as_ref()
@@ -232,162 +559,343 @@ pub fn compute_weights(
         .as_ref()
         .ok_or("denominator formula required for non-ITT analysis")?;
 
-    let num_cols = parse_simple_formula(num_formula);
-    let den_cols = parse_simple_formula(den_formula);
+    let num_terms = super::glm_helpers::parse_formula_terms(num_formula);
+    let den_terms = super::glm_helpers::parse_formula_terms(den_formula);
 
-    // Determine which data to use for model fitting
-    let model_data = if config.weights.preexpansion {
-        pre_data
-    } else {
-        expanded
-    };
-
-    // Rows where followup > 0 (for post-expansion denominator)
-    let followup_gt0: Vec<usize> = if !config.weights.preexpansion {
-        model_data
+    // R line 86-87: model.data <- weight
+    // if (!weight.preexpansion & !(excused | deviation.excused)) model.data <- model.data[followup > 0, ]
+    let all_model_rows: Vec<usize> = (0..weight_data.nrows).collect();
+    let base_model_rows: Vec<usize> = if !config.weights.preexpansion
+        && !(config.excused || config.deviation.excused)
+    {
+        weight_data
             .get_numeric("followup")
             .map(|f| {
                 f.iter()
                     .enumerate()
-                    .filter(|&(_, &v)| v > 0.0)
+                    .filter(|&(_, &v)| v > 0.5) // followup > 0
                     .map(|(i, _)| i)
                     .collect()
             })
-            .unwrap_or_default()
+            .unwrap_or_else(|| all_model_rows.clone())
     } else {
-        (0..model_data.nrows).collect()
+        all_model_rows.clone()
     };
 
-    // Get tx_lag column for conditioning
-    let tx_lag = model_data.get_numeric("tx_lag");
+    let tx_lag_col = weight_data.get_numeric("tx_lag").cloned();
+    let treatment_col = weight_data
+        .get_numeric(&config.treatment)
+        .ok_or_else(|| format!("Treatment column '{}' not found", config.treatment))?
+        .clone();
+
+    // Determine multinomial usage
+    // R: model.passer checks: multi = if (multinomial && !preexpansion && (excused || deviation.excused)) FALSE else multinomial
+    let use_multi = config.multinomial
+        && !(config.weights.preexpansion && (config.excused || config.deviation.excused));
+
+    let mut numerator_models: Vec<WeightModel> = Vec::new();
+    let mut denominator_models: Vec<WeightModel> = Vec::new();
 
     for (level_idx, &level) in config.treat_levels.iter().enumerate() {
-        // Filter rows for this treatment level (by tx_lag)
-        let level_rows: Vec<usize> = if config.weights.lag_condition {
-            if let Some(lag) = tx_lag {
-                followup_gt0
-                    .iter()
-                    .filter(|&&i| (lag[i] - level).abs() < 1e-10)
+        // R: eligible_col <- params@weight.eligible_cols[[i]]
+        // level_data <- if (!is.na(eligible_col)) model.data[get(eligible_col) == 1, ] else model.data
+        let eligible_col = config.weights.eligible_cols.get(level_idx).cloned().unwrap_or_default();
+        let level_base_rows: Vec<usize> = if !eligible_col.is_empty() {
+            if let Some(ecol) = weight_data.get_numeric(&eligible_col) {
+                base_model_rows.iter()
+                    .filter(|&&i| (ecol[i] - 1.0).abs() < 1e-10)
                     .cloned()
                     .collect()
             } else {
-                followup_gt0.clone()
+                base_model_rows.clone()
             }
         } else {
-            followup_gt0.clone()
+            base_model_rows.clone()
         };
 
-        if level_rows.is_empty() {
-            numerator_coefs.push(Vec::new());
-            denominator_coefs.push(Vec::new());
-            continue;
+        // ── Numerator model (R lines 96-103) ──
+        // Skip if (excused | deviation.excused) & preexpansion
+        let skip_numerator = (config.excused || config.deviation.excused) && config.weights.preexpansion;
+
+        if !skip_numerator {
+            // R: prepare.data_cached(level_data, params, "numerator", level, "default", cache)
+            // For default+numerator: if lag_condition, filter tx_lag == level
+            // If excused, filter excused_col == 0
+            let num_rows = filter_for_prepare_data(
+                &level_base_rows,
+                &weight_data,
+                config,
+                &tx_lag_col,
+                level,
+                level_idx,
+                "numerator",
+            );
+
+            let y_num: Vec<f64> = get_response_y(&weight_data, config, &num_rows);
+
+            if num_rows.is_empty() || y_unique_count(&y_num) < 2 {
+                numerator_models.push(WeightModel::Skip);
+            } else {
+                let (x_num, _) = build_design_matrix_v2(&weight_data, &num_terms, Some(&num_rows))?;
+                let y_labels: Option<Vec<String>> = if use_multi {
+                    Some(y_num.iter().map(|v| format!("{}", *v as i64)).collect())
+                } else {
+                    None
+                };
+                numerator_models.push(fit_weight_model(x_num, y_num, use_multi, y_labels.as_deref())?);
+            }
+        } else {
+            numerator_models.push(WeightModel::Skip);
         }
 
-        // Get treatment response for these rows
-        let treatment_col = model_data
-            .get_numeric(&config.treatment)
-            .ok_or_else(|| format!("Treatment column '{}' not found", config.treatment))?;
+        // ── Denominator model (R lines 107-113) ──
+        // R: prepare.data_cached(level_data, params, "denominator", level, "default", cache)
+        // For default+denominator: if lag_condition, filter tx_lag == level
+        // if !preexpansion: additionally filter followup != 0
+        // if excused: filter excused_col == 0
+        let den_rows = filter_for_prepare_data(
+            &level_base_rows,
+            &weight_data,
+            config,
+            &tx_lag_col,
+            level,
+            level_idx,
+            "denominator",
+        );
 
-        let y_num: Vec<f64> = level_rows.iter().map(|&i| treatment_col[i]).collect();
+        let y_den: Vec<f64> = get_response_y(&weight_data, config, &den_rows);
 
-        // Build design matrices
-        let x_num = build_design_matrix(model_data, &num_cols, Some(&level_rows))?;
-        let x_den = build_design_matrix(model_data, &den_cols, Some(&level_rows))?;
-
-        // Fit models
-        let use_multi = config.multinomial
-            && !(config.weights.preexpansion
-                && (config.excused || config.deviation.excused));
-
-        let y_labels: Option<Vec<String>> = if use_multi {
-            Some(y_num.iter().map(|v| format!("{}", *v as i64)).collect())
+        if den_rows.is_empty() || y_unique_count(&y_den) < 2 {
+            denominator_models.push(WeightModel::Skip);
         } else {
-            None
-        };
+            let (x_den, _) = build_design_matrix_v2(&weight_data, &den_terms, Some(&den_rows))?;
+            let y_labels: Option<Vec<String>> = if use_multi {
+                Some(y_den.iter().map(|v| format!("{}", *v as i64)).collect())
+            } else {
+                None
+            };
+            denominator_models.push(fit_weight_model(x_den, y_den, use_multi, y_labels.as_deref())?);
+        }
+    }
 
-        let num_model = fit_weight_model(
-            x_num,
-            y_num.clone(),
-            use_multi,
-            y_labels.as_deref(),
-        )?;
-        let den_model = fit_weight_model(
-            x_den,
-            y_num,
-            use_multi,
-            y_labels.as_deref(),
-        )?;
-
-        // Store coefficients
-        match &num_model {
+    // Store coefficients
+    for model in &numerator_models {
+        match model {
             WeightModel::Binary(r) => numerator_coefs.push(r.coefficients.clone()),
             _ => numerator_coefs.push(Vec::new()),
         }
-        match &den_model {
+    }
+    for model in &denominator_models {
+        match model {
             WeightModel::Binary(r) => denominator_coefs.push(r.coefficients.clone()),
             _ => denominator_coefs.push(Vec::new()),
         }
+    }
 
-        // Predict for all rows where tx_lag == level (in the expanded data)
-        let expanded_tx_lag = expanded.get_numeric("tx_lag");
-        let pred_rows: Vec<usize> = if let Some(lag) = expanded_tx_lag {
-            (0..n)
-                .filter(|&i| (lag[i] - level).abs() < 1e-10)
-                .collect()
-        } else {
-            (0..n).collect()
-        };
+    // ── Estimating (R lines 119-181) ──
+    // Predict and assign numerator/denominator per row
+    // R: out[tx_lag == level, numerator := inline.pred(...)]
+    let out_tx_lag = weight_data.get_numeric("tx_lag")
+        .ok_or("tx_lag not found after creation")?;
+    let out_treatment = weight_data.get_numeric(&config.treatment)
+        .ok_or("Treatment not found")?;
 
-        if pred_rows.is_empty() {
-            continue;
-        }
+    if !(config.excused || config.deviation.excused) {
+        // R lines 123-141: non-excused prediction
+        for (level_idx, &level) in config.treat_levels.iter().enumerate() {
+            let target_str = format!("{}", level as i64);
 
-        let target_str = format!("{}", level as i64);
-        let x_pred_num = build_design_matrix(expanded, &num_cols, Some(&pred_rows))?;
-        let x_pred_den = build_design_matrix(expanded, &den_cols, Some(&pred_rows))?;
-
-        let num_preds = predict_weight_model(
-            &num_model,
-            &x_pred_num,
-            if use_multi { Some(&target_str) } else { None },
-        )?;
-        let den_preds = predict_weight_model(
-            &den_model,
-            &x_pred_den,
-            if use_multi { Some(&target_str) } else { None },
-        )?;
-
-        // Apply probability reversal logic from R:
-        // For level_idx == 0 (first/baseline level):
-        //   if treatment == level: prob = 1 - prob
-        // For level_idx > 0:
-        //   if treatment != level: prob = 1 - prob
-        let treatment_expanded = expanded
-            .get_numeric(&config.treatment)
-            .ok_or("Treatment column missing in expanded data")?;
-
-        for (j, &row_idx) in pred_rows.iter().enumerate() {
-            let tx_val = treatment_expanded[row_idx];
-            let mut n_pred = num_preds[j];
-            let mut d_pred = den_preds[j];
-
-            if level_idx == 0 {
-                // First treatment level: reverse when treatment matches
-                if (tx_val - level).abs() < 1e-10 {
-                    n_pred = 1.0 - n_pred;
-                    d_pred = 1.0 - d_pred;
+            if matches!(numerator_models[level_idx], WeightModel::Skip)
+                || matches!(denominator_models[level_idx], WeightModel::Skip)
+            {
+                // R: out[tx_lag == level, `:=`(numerator = 1, denominator = 1)]
+                for i in 0..weight_data.nrows {
+                    if (out_tx_lag[i] - level).abs() < 1e-10 {
+                        numerator[i] = 1.0;
+                        denominator[i] = 1.0;
+                    }
                 }
             } else {
-                // Other levels: reverse when treatment does NOT match
-                if (tx_val - level).abs() >= 1e-10 {
-                    n_pred = 1.0 - n_pred;
-                    d_pred = 1.0 - d_pred;
+                // Predict on rows where tx_lag == level
+                let pred_rows: Vec<usize> = (0..weight_data.nrows)
+                    .filter(|&i| (out_tx_lag[i] - level).abs() < 1e-10)
+                    .collect();
+
+                if !pred_rows.is_empty() {
+                    let (x_num, _) = build_design_matrix_v2(&weight_data, &num_terms, Some(&pred_rows))?;
+                    let (x_den, _) = build_design_matrix_v2(&weight_data, &den_terms, Some(&pred_rows))?;
+
+                    let num_preds = predict_weight_model(
+                        &numerator_models[level_idx], &x_num,
+                        if use_multi { Some(&target_str) } else { None },
+                    )?;
+                    let den_preds = predict_weight_model(
+                        &denominator_models[level_idx], &x_den,
+                        if use_multi { Some(&target_str) } else { None },
+                    )?;
+
+                    for (j, &row_idx) in pred_rows.iter().enumerate() {
+                        numerator[row_idx] = num_preds[j];
+                        denominator[row_idx] = den_preds[j];
+                    }
+
+                    // R lines 133-139: flip (1-p) based on treatment matching
+                    for &row_idx in &pred_rows {
+                        let tx_val = out_treatment[row_idx];
+                        if level_idx == 0 {
+                            if (tx_val - level).abs() < 1e-10 {
+                                numerator[row_idx] = 1.0 - numerator[row_idx];
+                                denominator[row_idx] = 1.0 - denominator[row_idx];
+                            }
+                        } else {
+                            if (tx_val - level).abs() >= 1e-10 {
+                                numerator[row_idx] = 1.0 - numerator[row_idx];
+                                denominator[row_idx] = 1.0 - denominator[row_idx];
+                            }
+                        }
+                    }
                 }
             }
-
-            numerator[row_idx] = n_pred;
-            denominator[row_idx] = d_pred;
         }
+    } else {
+        // R lines 142-179: excused prediction
+        // Denominator prediction
+        let exc_multi = if config.multinomial && !config.weights.preexpansion {
+            false
+        } else {
+            config.multinomial
+        };
+
+        for (level_idx, &level) in config.treat_levels.iter().enumerate() {
+            let target_str = format!("{}", level as i64);
+            let excused_col_name = if config.excused {
+                config.excused_cols.get(level_idx).cloned().flatten()
+            } else {
+                config.deviation.excused_cols.get(level_idx).cloned().flatten()
+            };
+
+            if let Some(ref col_name) = excused_col_name {
+                if let Some(exc_col) = weight_data.get_numeric(col_name) {
+                    // R: out[tx_lag == level & get(col) != 1, denominator := inline.pred(...)]
+                    let pred_rows: Vec<usize> = (0..weight_data.nrows)
+                        .filter(|&i| {
+                            (out_tx_lag[i] - level).abs() < 1e-10
+                                && (exc_col[i] - 1.0).abs() > 1e-10
+                        })
+                        .collect();
+
+                    if !pred_rows.is_empty() && !matches!(denominator_models[level_idx], WeightModel::Skip) {
+                        let (x_den, _) = build_design_matrix_v2(&weight_data, &den_terms, Some(&pred_rows))?;
+                        let den_preds = predict_weight_model(
+                            &denominator_models[level_idx], &x_den,
+                            if exc_multi { Some(&target_str) } else { None },
+                        )?;
+                        for (j, &row_idx) in pred_rows.iter().enumerate() {
+                            denominator[row_idx] = den_preds[j];
+                        }
+                    }
+
+                    // R: flip (1-p) for matching/non-matching treatment, only where excused_col == 0
+                    for i in 0..weight_data.nrows {
+                        if (out_tx_lag[i] - level).abs() < 1e-10 && exc_col[i].abs() < 1e-10 {
+                            if level_idx == 0 {
+                                if (out_treatment[i] - level).abs() < 1e-10 {
+                                    denominator[i] = 1.0 - denominator[i];
+                                }
+                            } else {
+                                if (out_treatment[i] - level).abs() >= 1e-10 {
+                                    denominator[i] = 1.0 - denominator[i];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Numerator prediction for excused
+        if config.weights.preexpansion {
+            // R line 166: out[, numerator := 1]
+            // Already initialized to 1.0
+        } else {
+            let exc_multi2 = if config.multinomial && !config.weights.preexpansion {
+                false
+            } else {
+                config.multinomial
+            };
+
+            for (level_idx, &level) in config.treat_levels.iter().enumerate() {
+                let target_str = format!("{}", level as i64);
+                let excused_col_name = if config.excused {
+                    config.excused_cols.get(level_idx).cloned().flatten()
+                } else {
+                    config.deviation.excused_cols.get(level_idx).cloned().flatten()
+                };
+
+                if let Some(ref col_name) = excused_col_name {
+                    if let Some(exc_col) = weight_data.get_numeric(col_name) {
+                        // R: out[get(treatment) == level & get(col) == 0, numerator := inline.pred(...)]
+                        let pred_rows: Vec<usize> = (0..weight_data.nrows)
+                            .filter(|&i| {
+                                (out_treatment[i] - level).abs() < 1e-10
+                                    && exc_col[i].abs() < 1e-10
+                            })
+                            .collect();
+
+                        if !pred_rows.is_empty() && !matches!(numerator_models[level_idx], WeightModel::Skip) {
+                            let (x_num, _) = build_design_matrix_v2(&weight_data, &num_terms, Some(&pred_rows))?;
+                            let num_preds = predict_weight_model(
+                                &numerator_models[level_idx], &x_num,
+                                if exc_multi2 { Some(&target_str) } else { None },
+                            )?;
+                            for (j, &row_idx) in pred_rows.iter().enumerate() {
+                                numerator[row_idx] = num_preds[j];
+                            }
+                        }
+                    }
+                }
+            }
+            // R line 178: out[get(treatment) == treat_levels[0], numerator := 1 - numerator]
+            let first_level = config.treat_levels[0];
+            for i in 0..weight_data.nrows {
+                if (out_treatment[i] - first_level).abs() < 1e-10 {
+                    numerator[i] = 1.0 - numerator[i];
+                }
+            }
+        }
+    }
+
+    // ── Map predictions back to expanded data if pre-expansion ──
+    // For pre-expansion, we predicted on pre_data (weight_data), but need weights
+    // aligned to expanded data rows. Map via (id, time→period).
+    if config.weights.preexpansion {
+        let pre_id = weight_data.get_numeric(&config.id).ok_or("ID missing in weight_data")?;
+        let pre_time = weight_data.get_numeric(&config.time)
+            .ok_or_else(|| format!("Time col '{}' missing in weight_data", config.time))?;
+
+        // Build lookup: (id, time) → (numerator, denominator)
+        let mut pred_lookup: std::collections::HashMap<(u64, u64), (f64, f64)> =
+            std::collections::HashMap::new();
+        for i in 0..weight_data.nrows {
+            let key = (pre_id[i].to_bits(), pre_time[i].to_bits());
+            pred_lookup.insert(key, (numerator[i], denominator[i]));
+        }
+
+        // Map to expanded rows
+        let exp_id = expanded.get_numeric(&config.id).ok_or("ID missing in expanded")?;
+        let exp_period = expanded.get_numeric("period").ok_or("period missing in expanded")?;
+
+        let mut exp_numerator = vec![1.0; n];
+        let mut exp_denominator = vec![1.0; n];
+        for i in 0..n {
+            let key = (exp_id[i].to_bits(), exp_period[i].to_bits());
+            if let Some(&(np, dp)) = pred_lookup.get(&key) {
+                exp_numerator[i] = np;
+                exp_denominator[i] = dp;
+            }
+        }
+        numerator = exp_numerator;
+        denominator = exp_denominator;
     }
 
     // Compute LTFU and visit weight components
@@ -410,6 +918,82 @@ pub fn compute_weights(
         numerator_coefs,
         denominator_coefs,
     })
+}
+
+/// Filter rows for prepare.data_cached, matching R's row selection logic.
+///
+/// For case="default":
+/// - If lag_condition: filter tx_lag == level (or tx_bas == level for excused numerator)
+/// - If type=="denominator" && !preexpansion: filter followup != 0
+/// - If excused: filter excused_col == 0
+fn filter_for_prepare_data(
+    base_rows: &[usize],
+    data: &ColumnarData,
+    config: &TargetTrialConfig,
+    tx_lag_col: &Option<Vec<f64>>,
+    level: f64,
+    level_idx: usize,
+    model_type: &str,
+) -> Vec<usize> {
+    let tx_bas_name = format!("{}{}", config.treatment, config.indicator_baseline);
+
+    let mut rows: Vec<usize> = base_rows.to_vec();
+
+    // R: if (params@weight.lag_condition)
+    if config.weights.lag_condition {
+        if model_type == "numerator" && config.excused {
+            // R: weight[get(cache$tx_bas) == model] — filter by tx_bas for excused numerator
+            if let Some(tx_bas_col) = data.get_numeric(&tx_bas_name) {
+                rows.retain(|&i| (tx_bas_col[i] - level).abs() < 1e-10);
+            }
+        } else {
+            // R: weight[tx_lag == model]
+            if let Some(lag) = tx_lag_col {
+                rows.retain(|&i| (lag[i] - level).abs() < 1e-10);
+            }
+        }
+    }
+
+    // R: if (type == "denominator" && !params@weight.preexpansion) weight <- weight[followup != 0L]
+    if model_type == "denominator" && !config.weights.preexpansion {
+        if let Some(followup) = data.get_numeric("followup") {
+            rows.retain(|&i| followup[i].abs() > 1e-10);
+        }
+    }
+
+    // R: if (params@excused) { excused_col <- params@excused.cols[[target]]; weight <- weight[get(excused_col) == 0L] }
+    if config.excused {
+        if let Some(Some(excused_col_name)) = config.excused_cols.get(level_idx) {
+            if let Some(exc_col) = data.get_numeric(excused_col_name) {
+                rows.retain(|&i| exc_col[i].abs() < 1e-10);
+            }
+        }
+    }
+
+    rows
+}
+
+/// Get response variable y for weight model fitting.
+///
+/// R: if (!preexpansion && (excused || deviation.excused)) → censored column
+///    else → treatment column
+fn get_response_y(data: &ColumnarData, config: &TargetTrialConfig, rows: &[usize]) -> Vec<f64> {
+    if !config.weights.preexpansion && (config.excused || config.deviation.excused) {
+        if let Some(censored) = data.get_numeric("censored") {
+            return rows.iter().map(|&i| censored[i]).collect();
+        }
+    }
+    if let Some(treatment) = data.get_numeric(&config.treatment) {
+        rows.iter().map(|&i| treatment[i]).collect()
+    } else {
+        vec![0.0; rows.len()]
+    }
+}
+
+/// Count unique values in y
+fn y_unique_count(y: &[f64]) -> usize {
+    let set: std::collections::HashSet<u64> = y.iter().map(|v| v.to_bits()).collect();
+    set.len()
 }
 
 /// Compute LTFU (loss-to-followup) censoring weight component.
@@ -445,8 +1029,8 @@ fn compute_cense_weights(
         .as_ref()
         .ok_or("cense_denominator formula required for LTFU")?;
 
-    let num_cols = parse_simple_formula(num_formula);
-    let den_cols = parse_simple_formula(den_formula);
+    let num_terms = super::glm_helpers::parse_formula_terms(num_formula);
+    let den_terms = super::glm_helpers::parse_formula_terms(den_formula);
 
     // Response: abs(cense - 1) → 1 if not censored, 0 if censored
     let y: Vec<f64> = valid_rows
@@ -454,15 +1038,15 @@ fn compute_cense_weights(
         .map(|&i| (cense_data[i] - 1.0).abs())
         .collect();
 
-    let x_num = build_design_matrix(data, &num_cols, Some(&valid_rows))?;
-    let x_den = build_design_matrix(data, &den_cols, Some(&valid_rows))?;
+    let (x_num, _) = build_design_matrix_v2(data, &num_terms, Some(&valid_rows))?;
+    let (x_den, _) = build_design_matrix_v2(data, &den_terms, Some(&valid_rows))?;
 
     let num_model = fit_weight_model(x_num, y.clone(), false, None)?;
     let den_model = fit_weight_model(x_den, y, false, None)?;
 
     // Predict for all rows
-    let x_all_num = build_design_matrix(data, &num_cols, None)?;
-    let x_all_den = build_design_matrix(data, &den_cols, None)?;
+    let (x_all_num, _) = build_design_matrix_v2(data, &num_terms, None)?;
+    let (x_all_den, _) = build_design_matrix_v2(data, &den_terms, None)?;
 
     let num_preds = predict_weight_model(&num_model, &x_all_num, None)?;
     let den_preds = predict_weight_model(&den_model, &x_all_den, None)?;
@@ -498,8 +1082,8 @@ fn compute_visit_weights(
         .as_ref()
         .ok_or("visit_denominator formula required")?;
 
-    let num_cols = parse_simple_formula(num_formula);
-    let den_cols = parse_simple_formula(den_formula);
+    let num_terms = super::glm_helpers::parse_formula_terms(num_formula);
+    let den_terms = super::glm_helpers::parse_formula_terms(den_formula);
 
     let visit_data = data
         .get_numeric(visit_col)
@@ -507,14 +1091,14 @@ fn compute_visit_weights(
 
     let y: Vec<f64> = visit_data.to_vec();
 
-    let x_num = build_design_matrix(data, &num_cols, None)?;
-    let x_den = build_design_matrix(data, &den_cols, None)?;
+    let (x_num, _) = build_design_matrix_v2(data, &num_terms, None)?;
+    let (x_den, _) = build_design_matrix_v2(data, &den_terms, None)?;
 
     let num_model = fit_weight_model(x_num, y.clone(), false, None)?;
     let den_model = fit_weight_model(x_den, y, false, None)?;
 
-    let x_all_num = build_design_matrix(data, &num_cols, None)?;
-    let x_all_den = build_design_matrix(data, &den_cols, None)?;
+    let (x_all_num, _) = build_design_matrix_v2(data, &num_terms, None)?;
+    let (x_all_den, _) = build_design_matrix_v2(data, &den_terms, None)?;
 
     let num_preds = predict_weight_model(&num_model, &x_all_num, None)?;
     let den_preds = predict_weight_model(&den_model, &x_all_den, None)?;
