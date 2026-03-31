@@ -6,15 +6,11 @@
 import {
   type ColumnarStore,
   createColumnarDataFrameFromStore,
-  type DataFrame,
   materializeIndex,
   toColumnarStorage,
 } from "../../dataframe/index.ts";
 import type {
-  ColumnMapping,
   JoinArgs,
-  JoinKey,
-  ObjectJoinOptions,
   StoreAndIndex,
 } from "./types/index.ts";
 
@@ -22,8 +18,8 @@ import type {
 // Core Helper Functions
 // -----------------------------------------------------------------------------
 
-export function getStoreAndIndex<Row extends Record<string, unknown>>(
-  df: DataFrame<Row>,
+export function getStoreAndIndex(
+  df: any,
 ): StoreAndIndex {
   const anyDf = df as any;
   const store: ColumnarStore | undefined = anyDf.__store;
@@ -32,7 +28,7 @@ export function getStoreAndIndex<Row extends Record<string, unknown>>(
     const index = materializeIndex(store.length, view);
     return { store, index };
   }
-  const rows = Array.from(df);
+  const rows = Array.from(df) as object[];
   const tmp = toColumnarStorage(rows);
   const idx = new Uint32Array(tmp.length);
   for (let i = 0; i < idx.length; i++) idx[i] = i;
@@ -78,39 +74,30 @@ export function projectCompositeKeyColumn(
 // Multi-key Join API Helpers
 // -----------------------------------------------------------------------------
 
-export function normalizeJoinKeys<Row extends Record<string, unknown>>(
-  by: JoinKey<Row> | JoinKey<Row>[],
-): JoinKey<Row>[] {
+export function normalizeJoinKeys(
+  by: any,
+): any[] {
   return Array.isArray(by) ? by : [by];
 }
 
 // Type guards to distinguish API styles
-export function isObjectJoinOptions<
-  L extends Record<string, unknown>,
-  R extends Record<string, unknown>,
->(
+export function isObjectJoinOptions(
   options: any,
-): options is ObjectJoinOptions<
-  L,
-  R
-> {
+): boolean {
   return options && typeof options === "object" && !Array.isArray(options) &&
     "keys" in options;
 }
 
-export function parseJoinArgs<
-  L extends Record<string, unknown>,
-  R extends Record<string, unknown>,
->(
+export function parseJoinArgs(
   arg2: any, // Can be keys or options
   arg3?: any, // Can be options or undefined
-): JoinArgs<L, R> {
+): JoinArgs<any, any> {
   // Advanced API: single argument with options object
-  if (isObjectJoinOptions<L, R>(arg2)) {
+  if (isObjectJoinOptions(arg2)) {
     const opts = arg2;
     if (Array.isArray(opts.keys)) {
       // Same column names: { keys: ["id", "year"] }
-      const keys = opts.keys.map((k) => String(k));
+      const keys = opts.keys.map((k: any) => String(k));
       return {
         leftKeys: keys,
         rightKeys: keys,
@@ -118,7 +105,7 @@ export function parseJoinArgs<
       };
     } else {
       // Different column names: { keys: { left: ["emp_id"], right: ["id"] } }
-      const mapping = opts.keys as ColumnMapping<L, R>;
+      const mapping = opts.keys as any;
       return {
         leftKeys: Array.isArray(mapping.left)
           ? (mapping.left as string[]).map(String)
@@ -132,7 +119,7 @@ export function parseJoinArgs<
   }
 
   // Simple API: separate key and options arguments
-  const keys = normalizeJoinKeys(arg2).map((k) => String(k));
+  const keys = normalizeJoinKeys(arg2).map((k: any) => String(k));
   return {
     leftKeys: keys,
     rightKeys: keys,
@@ -490,21 +477,14 @@ export interface JoinSetupResult {
   suffixes: { left?: string; right?: string };
 }
 
-export function setupJoinOperation<
-  LeftRow extends Record<string, unknown>,
-  RightRow extends Record<string, unknown>,
-  JoinKeyName extends JoinKey<LeftRow> & JoinKey<RightRow>,
->(
-  left: DataFrame<LeftRow>,
-  right: DataFrame<RightRow>,
-  byOrOptions:
-    | JoinKeyName
-    | JoinKeyName[]
-    | ObjectJoinOptions<LeftRow, RightRow>,
+export function setupJoinOperation(
+  left: any,
+  right: any,
+  byOrOptions: any,
   options?: { suffixes?: { left?: string; right?: string } },
 ): JoinSetupResult | null {
   // Parse arguments - works for both API styles
-  const joinArgs = parseJoinArgs<LeftRow, RightRow>(byOrOptions, options);
+  const joinArgs = parseJoinArgs(byOrOptions, options);
   const { leftKeys, rightKeys, suffixes } = joinArgs;
 
   // Check for empty DataFrames (caller handles specific logic)

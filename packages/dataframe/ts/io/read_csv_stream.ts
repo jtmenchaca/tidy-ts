@@ -240,12 +240,11 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
 
 // Implementation
 // deno-lint-ignore no-explicit-any
-export async function readCSVStream<S extends z.ZodObject<any>>(
+export async function readCSVStream(
   path: string,
-  schema: S,
+  schema: any,
   opts: CSVOptions & NAOpts = {},
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
+): Promise<any> {
   // Check file size and estimate memory requirements by sampling actual rows
   const stats = await stat(path);
   const fileSizeBytes = stats.size;
@@ -272,7 +271,7 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
   // Parse first 5 data rows to measure actual memory
   const sampleHeaders = parseCSVLine(sampleLines[0], opts).map((h) => h.trim());
   const sampleHeaderMap = new Map(sampleHeaders.map((h, i) => [h, i]));
-  const sampleRows: z.infer<S>[] = [];
+  const sampleRows: any[] = [];
 
   for (let i = 1; i < sampleLines.length; i++) {
     const cells = parseCSVLine(sampleLines[i], opts);
@@ -296,7 +295,7 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
 
     const parsed = wrappedSchema.safeParse(naProcessed);
     if (parsed.success) {
-      sampleRows.push(parsed.data as z.infer<S>);
+      sampleRows.push(parsed.data as any);
     }
   }
 
@@ -347,7 +346,7 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
   }
 
   // Continue with actual file reading
-  const rows: z.infer<S>[] = [];
+  const rows: any[] = [];
   let headers: string[] = [];
   const headerMap: Map<string, number> = new Map();
   let lineNumber = 0;
@@ -404,7 +403,7 @@ export async function readCSVStream<S extends z.ZodObject<any>>(
     // Validate and add row
     const parsed = wrappedSchema.safeParse(naProcessed);
     if (parsed.success) {
-      rows.push(parsed.data as z.infer<S>);
+      rows.push(parsed.data as any);
     } else {
       throw new Error(
         `Row ${lineNumber} validation failed: ${parsed.error.message}`,

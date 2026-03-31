@@ -342,12 +342,11 @@ const MAX_V8_STRING_LENGTH = 0x1fffffe8; // 536,870,888 characters
 
 // Implementation
 // deno-lint-ignore no-explicit-any
-async function readCSVImpl<S extends z.ZodObject<any>>(
+async function readCSVImpl(
   pathOrContent: string | ArrayBuffer | File | Blob,
-  schemaOrOpts?: S | CsvOptions & NAOpts,
+  schemaOrOpts?: any,
   opts?: CsvOptions & NAOpts,
-  // deno-lint-ignore no-explicit-any
-): Promise<DataFrame<z.infer<S>> | DataFrame<any>> {
+): Promise<any> {
   let rawCsv: string | undefined;
 
   // Determine if second param is schema or options
@@ -360,7 +359,7 @@ async function readCSVImpl<S extends z.ZodObject<any>>(
     !("skipEmptyLines" in schemaOrOpts) &&
     schemaOrOpts instanceof z.ZodObject;
 
-  const schema = isSchema ? schemaOrOpts as S : undefined;
+  const schema = isSchema ? schemaOrOpts as z.ZodObject<any> : undefined;
   const actualOpts = isSchema
     ? (opts || {})
     : ((schemaOrOpts as CsvOptions & NAOpts) || {});

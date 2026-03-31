@@ -182,7 +182,7 @@ export  function testMutateSelectAsJoinArg<
   const anchors = opts.referenceDates
     .mutate({
       _refDate: (r) => r[opts.referenceFieldName],
-    })
+    }) 
     .select("id", "_refDate");
   const eventDates = opts.events
     .filter((_r) => true)

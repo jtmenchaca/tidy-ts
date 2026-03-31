@@ -1,21 +1,13 @@
 // Join result types
 //
-// These use Partial<T> + RequiredUndefined instead of Omit-based
-// ExcludeKeysAndMakeUndefined<T, K> to preserve generic indexability.
-// When L or R is a generic type parameter, Omit<T, K> defers and creates
-// mapped types that can't be indexed with generic keys like K & keyof T.
-// Partial<T> preserves T's indexability because TS knows keyof Partial<T> = keyof T.
+// Uses conditional mapped types to add `| undefined` to non-key fields
+// without Omit (which defers on generics) or Partial + -? (which strips
+// the implicit | undefined that Partial adds).
 //
-// RequiredUndefined strips the `?` optionality from Partial while keeping
-// `| undefined` in value types, so the result has `field: T | undefined`
-// (not `field?: T | undefined`). This preserves assignability to concrete
-// type annotations in test code.
-
-/**
- * Maps optional properties to required-but-undefined.
- * Converts `{ a?: string | undefined }` to `{ a: string | undefined }`.
- */
-type RequiredUndefined<T> = { [K in keyof T]-?: T[K] };
+// Pattern: `L & { [P in keyof R]: P extends keyof L ? R[P] : R[P] | undefined }`
+// - Preserves generic indexability (no Omit deferral)
+// - Correctly produces `T | undefined` for non-key fields
+// - Shared keys come from L via intersection priority
 
 // -----------------------------------------------------------------------------
 // Join Result Types
@@ -38,8 +30,10 @@ export type InnerJoinResult<
 export type LeftJoinResult<
   L extends object,
   R extends object,
-  K extends keyof L & keyof R,
-> = RequiredUndefined<L & Partial<R>>;
+  _K extends keyof L & keyof R,
+> = L & {
+  [P in keyof R]: P extends keyof L ? R[P] : R[P] | undefined;
+};
 
 /**
  * Right join result type: (L\K)? ∪ R
@@ -48,8 +42,10 @@ export type LeftJoinResult<
 export type RightJoinResult<
   L extends object,
   R extends object,
-  K extends keyof L & keyof R,
-> = RequiredUndefined<Partial<L> & R>;
+  _K extends keyof L & keyof R,
+> = {
+  [P in keyof L]: P extends keyof R ? L[P] : L[P] | undefined;
+} & R;
 
 /**
  * Full outer join result type: (L\K)? ∪ (R\K)?
@@ -59,4 +55,8 @@ export type FullJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = RequiredUndefined<Pick<L, K> & Partial<L> & Partial<R>>;
+> = Pick<L, K> & {
+  [P in keyof L]: P extends K ? L[P] : L[P] | undefined;
+} & {
+  [P in keyof R]: P extends K ? R[P] : R[P] | undefined;
+};
