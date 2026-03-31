@@ -849,9 +849,9 @@ Production async operations need concurrency control and retry mechanisms.`,
   console.log("Cumulative mean:", stats.cummean(values));
 
   console.log("\n=== Window Functions ===");
-  console.log("Lag (previous value):", stats.lag(values, 1));
-  console.log("Lead (next value):", stats.lead(values, 1));
-  console.log("Lag with default:", stats.lag(values, 1, 0));
+  console.log("Lag (previous value):", stats.lag(values));
+  console.log("Lead (next value):", stats.lead(values));
+  console.log("Lag with default:", stats.lag(values, { defaultValue: 0 }));
 
   console.log(
     "Covariance between value and score:",

@@ -11,8 +11,8 @@ Deno.test("Window Functions - Basic Integration", () => {
   ]);
 
   const withLagLead = df.mutate({
-    prev_value: stats.lag(df.extract("value"), 1),
-    next_value: stats.lead(df.extract("value"), 1),
+    prev_value: stats.lag(df.extract("value")),
+    next_value: stats.lead(df.extract("value")),
   });
 
   // Verify lag calculations
@@ -36,8 +36,8 @@ Deno.test("Window Functions - Financial Analysis", () => {
   ]);
 
   const withLagLead = stockData.mutate({
-    prev_price: stats.lag(stockData.extract("price"), 1),
-    next_price: stats.lead(stockData.extract("price"), 1),
+    prev_price: stats.lag(stockData.extract("price")),
+    next_price: stats.lead(stockData.extract("price")),
   });
 
   // Verify calculations
@@ -51,8 +51,8 @@ Deno.test("Window Functions - Edge Cases", () => {
   // Single row
   const singleRow = createDataFrame([{ value: 100 }]);
   const singleResult = singleRow.mutate({
-    prev_value: stats.lag(singleRow.extract("value"), 1),
-    next_value: stats.lead(singleRow.extract("value"), 1),
+    prev_value: stats.lag(singleRow.extract("value")),
+    next_value: stats.lead(singleRow.extract("value")),
   });
   expect(singleResult[0].prev_value).toBe(undefined);
   expect(singleResult[0].next_value).toBe(undefined);
@@ -60,8 +60,8 @@ Deno.test("Window Functions - Edge Cases", () => {
   // Large lag/lead
   const largeDf = createDataFrame([{ value: 100 }, { value: 200 }]);
   const largeResult = largeDf.mutate({
-    prev_value: stats.lag(largeDf.extract("value"), 5),
-    next_value: stats.lead(largeDf.extract("value"), 5),
+    prev_value: stats.lag(largeDf.extract("value"), { k: 5 }),
+    next_value: stats.lead(largeDf.extract("value"), { k: 5 }),
   });
   expect(largeResult[0].prev_value).toBe(undefined);
   expect(largeResult[1].next_value).toBe(undefined);
@@ -71,8 +71,8 @@ Deno.test("Window Functions - Error Handling", () => {
   const _df = createDataFrame([{ value: 100 }]);
 
   // Test negative lag/lead
-  expect(() => stats.lag([1, 2, 3], -1)).toThrow("Lag k must be non-negative");
-  expect(() => stats.lead([1, 2, 3], -1)).toThrow(
+  expect(() => stats.lag([1, 2, 3], { k: -1 })).toThrow("Lag k must be non-negative");
+  expect(() => stats.lead([1, 2, 3], { k: -1 })).toThrow(
     "Lead k must be non-negative",
   );
 });
@@ -96,13 +96,13 @@ Deno.test("Window Functions - Grouped Operations", () => {
   ]);
 
   const groupAWithLagLead = groupA.mutate({
-    prev_value: stats.lag(groupA.extract("value"), 1),
-    next_value: stats.lead(groupA.extract("value"), 1),
+    prev_value: stats.lag(groupA.extract("value")),
+    next_value: stats.lead(groupA.extract("value")),
   });
 
   const groupBWithLagLead = groupB.mutate({
-    prev_value: stats.lag(groupB.extract("value"), 1),
-    next_value: stats.lead(groupB.extract("value"), 1),
+    prev_value: stats.lag(groupB.extract("value")),
+    next_value: stats.lead(groupB.extract("value")),
   });
 
   // Combine results

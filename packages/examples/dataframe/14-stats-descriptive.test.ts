@@ -19,15 +19,15 @@ test("Stats - Lag and Lead Functions", () => {
   const salesValues = timeSeries.extract("sales");
 
   // Lag by 1 period
-  const lag1 = s.lag(salesValues, 1);
+  const lag1 = s.lag(salesValues);
   expect(lag1).toEqual([undefined, 100, 150, 200]);
 
   // Lead by 1 period
-  const lead1 = s.lead(salesValues, 1);
+  const lead1 = s.lead(salesValues);
   expect(lead1).toEqual([150, 200, 120, undefined]);
 
   // With default values
-  const lag1Default = s.lag(salesValues, 1, 0);
+  const lag1Default = s.lag(salesValues, { defaultValue: 0 });
   expect(lag1Default).toEqual([0, 100, 150, 200]);
 });
 
@@ -69,8 +69,8 @@ test("Stats - Window Functions with mutate", () => {
   ]);
 
   const enriched = timeSeries.mutate({
-    prev_sales: s.lag(timeSeries.extract("sales"), 1, 0),
-    next_sales: s.lead(timeSeries.extract("sales"), 1, 0),
+    prev_sales: s.lag(timeSeries.extract("sales"), { defaultValue: 0 }),
+    next_sales: s.lead(timeSeries.extract("sales"), { defaultValue: 0 }),
     running_total: s.cumsum(timeSeries.extract("sales")),
     running_max: s.cummax(timeSeries.extract("sales")),
     sales_rank: s.rank(timeSeries.extract("sales"), "average", true),

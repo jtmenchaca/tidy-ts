@@ -26,26 +26,26 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
   const salesValues = timeSeriesData.extract("sales");
 
   // Test 1: Basic lag by 1
-  const lag1 = stats.lag(salesValues, 1);
+  const lag1 = stats.lag(salesValues);
   console.log("Sales lag 1:", lag1);
   expect(lag1).toEqual([undefined, 100, 150, 200, 120]);
 
   // Test 2: Lag by 2
-  const lag2 = stats.lag(salesValues, 2);
+  const lag2 = stats.lag(salesValues, { k: 2 });
   console.log("Sales lag 2:", lag2);
   expect(lag2).toEqual([undefined, undefined, 100, 150, 200]);
 
   // Test 3: Lag with default value
-  const lag1Default = stats.lag(salesValues, 1, 0);
+  const lag1Default = stats.lag(salesValues, { defaultValue: 0 });
   console.log("Sales lag 1 with default 0:", lag1Default);
   expect(lag1Default).toEqual([0, 100, 150, 200, 120]);
 
   // Test 4: Lag by 0 (should return original)
-  const lag0 = stats.lag(salesValues, 0);
+  const lag0 = stats.lag(salesValues, { k: 0 });
   expect(lag0).toEqual(salesValues);
 
   // Test 5: Error on negative lag
-  expect(() => stats.lag(salesValues, -1)).toThrow();
+  expect(() => stats.lag(salesValues, { k: -1 })).toThrow();
 
   // ============================================================================
   // Lead Function Tests
@@ -54,22 +54,22 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
   console.log("\n=== Lead Function Tests ===");
 
   // Test 1: Basic lead by 1
-  const lead1 = stats.lead(salesValues, 1);
+  const lead1 = stats.lead(salesValues);
   console.log("Sales lead 1:", lead1);
   expect(lead1).toEqual([150, 200, 120, 180, undefined]);
 
   // Test 2: Lead by 2
-  const lead2 = stats.lead(salesValues, 2);
+  const lead2 = stats.lead(salesValues, { k: 2 });
   console.log("Sales lead 2:", lead2);
   expect(lead2).toEqual([200, 120, 180, undefined, undefined]);
 
   // Test 3: Lead with default value
-  const lead1Default = stats.lead(salesValues, 1, 999);
+  const lead1Default = stats.lead(salesValues, { defaultValue: 999 });
   console.log("Sales lead 1 with default 999:", lead1Default);
   expect(lead1Default).toEqual([150, 200, 120, 180, 999]);
 
   // Test 4: Error on negative lead
-  expect(() => stats.lead(salesValues, -1)).toThrow();
+  expect(() => stats.lead(salesValues, { k: -1 })).toThrow();
 
   // ============================================================================
   // Cumulative Function Tests
@@ -132,8 +132,8 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
 
   // Pre-calculate arrays for mutate operations
   const salesArray = timeSeriesData.extract("sales");
-  const prevSalesArray = stats.lag(salesArray, 1, 0);
-  const nextSalesArray = stats.lead(salesArray, 1, 0);
+  const prevSalesArray = stats.lag(salesArray, { defaultValue: 0 });
+  const nextSalesArray = stats.lead(salesArray, { defaultValue: 0 });
   const runningTotalArray = stats.cumsum(salesArray);
   const runningMaxArray = stats.cummax(salesArray);
   const salesRankArray = stats.rank(salesArray, "average", true);
@@ -173,23 +173,23 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
   console.log("\n=== Edge Cases ===");
 
   // Empty arrays
-  expect(stats.lag([], 1)).toEqual([]);
-  expect(stats.lead([], 1)).toEqual([]);
+  expect(stats.lag([])).toEqual([]);
+  expect(stats.lead([])).toEqual([]);
   expect(stats.cumprod([])).toEqual([]);
   expect(stats.cummin([])).toEqual([]);
   expect(stats.cummax([])).toEqual([]);
   expect(stats.denseRank([])).toEqual([]);
 
   // Single element arrays
-  expect(stats.lag([42], 1)).toEqual([undefined]);
-  expect(stats.lead([42], 1)).toEqual([undefined]);
+  expect(stats.lag([42])).toEqual([undefined]);
+  expect(stats.lead([42])).toEqual([undefined]);
   expect(stats.cumprod([42])).toEqual([42]);
   expect(stats.denseRank([42])).toEqual([1]);
 
   // Large lag/lead values
   const shortArray = [1, 2, 3];
-  expect(stats.lag(shortArray, 5)).toEqual([undefined, undefined, undefined]);
-  expect(stats.lead(shortArray, 5)).toEqual([undefined, undefined, undefined]);
+  expect(stats.lag(shortArray, { k: 5 })).toEqual([undefined, undefined, undefined]);
+  expect(stats.lead(shortArray, { k: 5 })).toEqual([undefined, undefined, undefined]);
 
   console.log("✅ All stats function tests passed!");
 });

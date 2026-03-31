@@ -529,8 +529,8 @@ Deno.test("Stats API Demo - Advanced Features", () => {
 
   // Window functions
   console.log("\nWindow Functions:");
-  console.log("  Lag (1):", s.lag(data, 1));
-  console.log("  Lead (1):", s.lead(data, 1));
+  console.log("  Lag (1):", s.lag(data));
+  console.log("  Lead (1):", s.lead(data));
 
   // Data transformation
   console.log("\nData Transformation:");

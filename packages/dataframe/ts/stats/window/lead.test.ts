@@ -7,23 +7,23 @@ Deno.test("Lead Function - Basic Functionality", () => {
   const basicArray = [1, 2, 3, 4, 5];
 
   // Test 1: Basic lead by 1
-  const lead1 = lead(basicArray, 1);
+  const lead1 = lead(basicArray, { k: 1 });
   expect(lead1).toEqual([2, 3, 4, 5, undefined]);
   console.log("✓ Basic lead by 1");
 
   // Test 2: Basic lead by 2
-  const lead2 = lead(basicArray, 2);
+  const lead2 = lead(basicArray, { k: 2 });
   expect(lead2).toEqual([3, 4, 5, undefined, undefined]);
   console.log("✓ Basic lead by 2");
 
   // Test 3: Lead by 0 (should return copy)
-  const lead0 = lead(basicArray, 0);
+  const lead0 = lead(basicArray, { k: 0 });
   expect(lead0).toEqual([1, 2, 3, 4, 5]);
   expect(lead0).not.toBe(basicArray); // Should be a copy
   console.log("✓ Lead by 0 returns copy");
 
   // Test 4: Default value
-  const lead1Default = lead(basicArray, 1, 0);
+  const lead1Default = lead(basicArray, { k: 1, defaultValue: 0 });
   expect(lead1Default).toEqual([2, 3, 4, 5, 0]);
   console.log("✓ Lead with default value");
 });
@@ -32,23 +32,23 @@ Deno.test("Lead Function - Edge Cases Array Sizes", () => {
   console.log("=== Edge Cases - Array Sizes ===");
 
   // Test 1: Empty array
-  const emptyLead = lead([], 1);
+  const emptyLead = lead([], { k: 1 });
   expect(emptyLead).toEqual([]);
   console.log("✓ Empty array");
 
   // Test 2: Single element
-  const singleLead = lead([42], 1);
+  const singleLead = lead([42], { k: 1 });
   expect(singleLead).toEqual([undefined]);
   console.log("✓ Single element");
 
   // Test 3: Two elements
-  const twoLead = lead([10, 20], 1);
+  const twoLead = lead([10, 20], { k: 1 });
   expect(twoLead).toEqual([20, undefined]);
   console.log("✓ Two elements");
 
   // Test 4: Lead equal to array length
   const basicArray = [1, 2, 3, 4, 5];
-  const equalLead = lead(basicArray, 5);
+  const equalLead = lead(basicArray, { k: 5 });
   expect(equalLead).toEqual([
     undefined,
     undefined,
@@ -59,7 +59,7 @@ Deno.test("Lead Function - Edge Cases Array Sizes", () => {
   console.log("✓ Lead equal to array length");
 
   // Test 5: Lead greater than array length
-  const greaterLead = lead(basicArray, 10);
+  const greaterLead = lead(basicArray, { k: 10 });
   expect(greaterLead).toEqual([
     undefined,
     undefined,
@@ -75,25 +75,25 @@ Deno.test("Lead Function - Data Types", () => {
 
   // Test 1: String array
   const stringArray = ["a", "b", "c", "d"];
-  const stringLead = lead(stringArray, 1);
+  const stringLead = lead(stringArray, { k: 1 });
   expect(stringLead).toEqual(["b", "c", "d", undefined]);
   console.log("✓ String array");
 
   // Test 2: Mixed types
   const mixedArray = [1, "hello", true, null, undefined];
-  const mixedLead = lead(mixedArray, 1);
+  const mixedLead = lead(mixedArray, { k: 1 });
   expect(mixedLead).toEqual(["hello", true, null, undefined, undefined]);
   console.log("✓ Mixed types");
 
   // Test 3: Object array
   const objectArray = [{ id: 1 }, { id: 2 }, { id: 3 }];
-  const objectLead = lead(objectArray, 1);
+  const objectLead = lead(objectArray, { k: 1 }   );
   expect(objectLead).toEqual([{ id: 2 }, { id: 3 }, undefined]);
   console.log("✓ Object array");
 
   // Test 4: Boolean array
   const boolArray = [true, false, true, false];
-  const boolLead = lead(boolArray, 1);
+  const boolLead = lead(boolArray, { k: 1 });
   expect(boolLead).toEqual([false, true, false, undefined]);
   console.log("✓ Boolean array");
 });
@@ -103,18 +103,18 @@ Deno.test("Lead Function - Null and Undefined Handling", () => {
 
   // Test 1: Array with null values
   const nullArray = [1, null, 3, null, 5];
-  const nullLead = lead(nullArray, 1);
+  const nullLead = lead(nullArray, { k: 1 });
   expect(nullLead).toEqual([null, 3, null, 5, undefined]);
   console.log("✓ Array with null values");
 
   // Test 2: Array with undefined values
   const undefinedArray = [1, undefined, 3, undefined, 5];
-  const undefinedLead = lead(undefinedArray, 1);
+  const undefinedLead = lead(undefinedArray, { k: 1 });
   expect(undefinedLead).toEqual([undefined, 3, undefined, 5, undefined]);
   console.log("✓ Array with undefined values");
 
   // Test 3: Default value with null
-  const nullDefaultLead = lead(nullArray, 1, 0);
+  const nullDefaultLead = lead(nullArray, { k: 1, defaultValue: 0 });
   expect(nullDefaultLead).toEqual([null, 3, null, 5, 0]);
   console.log("✓ Default value with null array");
 });
@@ -125,11 +125,11 @@ Deno.test("Lead Function - Error Handling", () => {
   const basicArray = [1, 2, 3, 4, 5];
 
   // Test 1: Negative lead should throw
-  expect(() => lead(basicArray, -1)).toThrow("Lead k must be non-negative");
+  expect(() => lead(basicArray, { k: -1 })).toThrow("Lead k must be non-negative");
   console.log("✓ Negative lead throws error");
 
   // Test 2: Very negative lead
-  expect(() => lead(basicArray, -100)).toThrow("Lead k must be non-negative");
+  expect(() => lead(basicArray, { k: -100 })).toThrow("Lead k must be non-negative");
   console.log("✓ Very negative lead throws error");
 });
 
@@ -138,7 +138,7 @@ Deno.test("Lead Function - Performance and Large Arrays", () => {
 
   // Test 1: Large array
   const largeArray = Array.from({ length: 1000 }, (_, i) => i);
-  const largeLead = lead(largeArray, 100);
+  const largeLead = lead(largeArray, { k: 100 });
   expect(largeLead[0]).toBe(100);
   expect(largeLead[100]).toBe(200);
   expect(largeLead[899]).toBe(999);
@@ -147,7 +147,7 @@ Deno.test("Lead Function - Performance and Large Arrays", () => {
 
   // Test 2: Very large lead on small array
   const smallArray = [1, 2, 3];
-  const veryLargeLead = lead(smallArray, 1000);
+  const veryLargeLead = lead(smallArray, { k: 1000 });
   expect(veryLargeLead).toEqual([undefined, undefined, undefined]);
   console.log("✓ Very large lead on small array");
 });
@@ -160,13 +160,13 @@ Deno.test("Lead Function - Immutability", () => {
   // Test 1: Original array should not be modified
   const originalArray = [1, 2, 3, 4, 5];
   const originalCopy = [...originalArray];
-  lead(originalArray, 1);
+  lead(originalArray, { k: 1 });
   expect(originalArray).toEqual(originalCopy);
   console.log("✓ Original array not modified");
 
   // Test 2: Result should be independent
-  const result1 = lead(basicArray, 1);
-  const result2 = lead(basicArray, 2);
+  const result1 = lead(basicArray, { k: 1 });
+  const result2 = lead(basicArray, { k: 2 });
   expect(result1).not.toEqual(result2);
   console.log("✓ Results are independent");
 });
@@ -176,7 +176,7 @@ Deno.test("Lead Function - Type Safety", () => {
 
   // Test 1: TypeScript type preservation
   const typedArray: readonly number[] = [1, 2, 3, 4, 5];
-  const typedLead = lead(typedArray, 1);
+  const typedLead = lead(typedArray, { k: 1 });
   // Should be (number | undefined)[]
   expect(typedLead[0]).toBe(2);
   expect(typedLead[4]).toBe(undefined);
@@ -185,7 +185,7 @@ Deno.test("Lead Function - Type Safety", () => {
 
   // Test 2: Generic type handling
   const genericArray = [1, 2, 3] as const;
-  const genericLead = lead(genericArray, 1);
+  const genericLead = lead(genericArray, { k: 1 }   );
   expect(genericLead).toEqual([2, 3, undefined]);
   console.log("✓ Generic type handling");
 });
@@ -202,19 +202,19 @@ Deno.test("Lead Function - Real-world Usage", () => {
     { date: "2023-05", value: 180 },
   ];
   const values = timeSeries.map((d) => d.value);
-  const leadValues = lead(values, 1, 0);
+  const leadValues = lead(values, { k: 1, defaultValue: 0 });
   expect(leadValues).toEqual([150, 200, 120, 180, 0]);
   console.log("✓ Time series scenario");
 
   // Test 2: Financial data with gaps
   const financialData = [100, null, 150, 200, null, 180];
-  const financialLead = lead(financialData, 1, 0);
+  const financialLead = lead(financialData, { k: 1, defaultValue: 0 });
   expect(financialLead).toEqual([null, 150, 200, null, 180, 0]);
   console.log("✓ Financial data with gaps");
 
   // Test 3: Stock price analysis
   const stockPrices = [100, 105, 110, 108, 115, 112];
-  const nextDayPrices = lead(stockPrices, 1, null);
+  const nextDayPrices = lead(stockPrices, { k: 1, defaultValue: null });
   const priceChanges = stockPrices.map((price, i) =>
     nextDayPrices[i] !== null ? nextDayPrices[i]! - price : null
   );
@@ -228,12 +228,12 @@ Deno.test("Lead Function - Boundary Conditions", () => {
   const basicArray = [1, 2, 3, 4, 5];
 
   // Test 1: Lead by array length - 1
-  const boundaryLead = lead(basicArray, 4);
+  const boundaryLead = lead(basicArray, { k: 4 });
   expect(boundaryLead).toEqual([5, undefined, undefined, undefined, undefined]);
   console.log("✓ Lead by array length - 1");
 
   // Test 2: Lead by array length
-  const exactLead = lead(basicArray, 5);
+  const exactLead = lead(basicArray, { k: 5 });
   expect(exactLead).toEqual([
     undefined,
     undefined,
@@ -244,7 +244,7 @@ Deno.test("Lead Function - Boundary Conditions", () => {
   console.log("✓ Lead by exact array length");
 
   // Test 3: Lead by array length + 1
-  const overLead = lead(basicArray, 6);
+  const overLead = lead(basicArray, { k: 6 });
   expect(overLead).toEqual([
     undefined,
     undefined,

@@ -6,6 +6,7 @@ import type { Prettify } from "./utility-types.ts";
 import type { UnifyUnion } from "./utility-types.ts";
 
 import type { MutateAsyncMethod, MutateMethod } from "../../verbs/transformation/mutate/mutate.types.ts";
+import type { MutateOverGroupMethod } from "../../verbs/transformation/mutate/mutate-over-group.types.ts";
 import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-columns.types.ts";
 import type { SummariseAsyncMethod, SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
 import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-columns.types.ts";
@@ -181,6 +182,7 @@ export interface DataFrameBase<Row extends object = object>
   // ---------- Transformations ----------
   mutate: MutateMethod<Row>;
   mutateAsync: MutateAsyncMethod<Row>;
+  mutateOverGroup: MutateOverGroupMethod<Row>;
   mutateColumns: MutateColumnsMethod<Row>;
   filter: FilterRowsMethod<Row>;
   filterAsync: FilterAsyncMethod<Row>;

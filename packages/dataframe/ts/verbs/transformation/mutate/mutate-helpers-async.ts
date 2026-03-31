@@ -1,7 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 import { materializeIndex } from "../../../dataframe/index.ts";
-import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
-import type { MutateAssignments } from "./mutate.types.ts";
 import {
   processGroupedRowsAsync,
   processUngroupedRowsAsync,
@@ -11,16 +9,17 @@ import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency
 
 /* =================================================================================
    Asynchronous helper functions for mutate operations
+
+   NOTE: These are internal implementation functions. Generics removed to avoid
+   expensive tsc structural comparisons — typed API is in mutate.types.ts.
    ================================================================================= */
 
 /**
  * Process grouped data mutations for async operations
  */
-export async function processGroupedMutationsAsync<
-  Row extends Record<string, unknown>,
->(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  spec: MutateAssignments<Row>,
+export async function processGroupedMutationsAsync(
+  df: any,
+  spec: any,
   _updates: Record<string, unknown[]>,
   asyncUpdates: Record<string, Promise<unknown>[]>,
   options: ConcurrencyOptions = {},
@@ -51,7 +50,7 @@ export async function processGroupedMutationsAsync<
           : Promise.resolve(result);
       }
     } else if (Array.isArray(expr)) {
-      const n = (df as DataFrame<Row>).nrows();
+      const n = (df as any).nrows();
       if (expr.length !== n) {
         throw new Error(
           `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
@@ -62,7 +61,7 @@ export async function processGroupedMutationsAsync<
         asyncUpdates[col][i] = Promise.resolve(expr[i]);
       }
     } else {
-      const n = (df as DataFrame<Row>).nrows();
+      const n = (df as any).nrows();
       for (let i = 0; i < n; i++) {
         asyncUpdates[col][i] = Promise.resolve(expr);
       }
@@ -73,18 +72,16 @@ export async function processGroupedMutationsAsync<
 /**
  * Process ungrouped data mutations for async operations
  */
-export async function processUngroupedMutationsAsync<
-  Row extends Record<string, unknown>,
->(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  spec: MutateAssignments<Row>,
+export async function processUngroupedMutationsAsync(
+  df: any,
+  spec: any,
   _updates: Record<string, unknown[]>,
   asyncUpdates: Record<string, Promise<unknown>[]>,
   options: ConcurrencyOptions = {},
 ): Promise<void> {
   const api = df as any;
   const store = api.__store;
-  const n = (df as DataFrame<Row>).nrows();
+  const n = (df as any).nrows();
 
   for (const [col, expr] of Object.entries(spec)) {
     if (expr === null) {

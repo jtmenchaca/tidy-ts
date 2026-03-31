@@ -2,6 +2,7 @@
 // Wires DataFrame verbs to the current instance through functional modules.
 
 import { mutate, mutateAsync } from "../../verbs/transformation/mutate/mutate.verb.ts";
+import { mutateOverGroup } from "../../verbs/transformation/mutate/mutate-over-group.verb.ts";
 import { mutate_columns } from "../../verbs/transformation/mutate-columns.verb.ts";
 import { filter, filterAsync } from "../../verbs/filtering/filter.verb.ts";
 import { select } from "../../verbs/selection/select.verb.ts";
@@ -111,6 +112,11 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (spec: object, options?: any) => {
       const result = (mutateAsync as any)(spec, options)(df);
       return result instanceof Promise ? thenableDataFrame(result) : result;
+    };
+  }
+  if (prop === "mutateOverGroup") {
+    return (spec: object) => {
+      return (mutateOverGroup as any)(spec)(df);
     };
   }
   if (prop === "mutateColumns") {

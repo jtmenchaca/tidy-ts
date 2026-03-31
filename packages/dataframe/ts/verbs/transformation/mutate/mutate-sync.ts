@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
-import type { MutateAssignments } from "./mutate.types.ts";
+// deno-lint-ignore-file no-explicit-any
 import {
   createUpdatedDataFrame,
   processGroupedMutations,
@@ -10,15 +9,19 @@ import { tracer } from "../../../telemetry/tracer.ts";
 
 /**
  * Synchronous mutate implementation using copy-on-write columns
+ *
+ * NOTE: This is an internal implementation file called via `(verb as any)(...a)(df)`
+ * from resolve-verb.ts. Generics here only waste tsc time — the typed API lives
+ * in mutate.types.ts.
  */
-export function mutateSyncImpl<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  spec: MutateAssignments<Row>,
-) {
+export function mutateSyncImpl(
+  df: any,
+  spec: any,
+): any {
   const span = tracer.startSpan(df, "mutate", spec);
 
   try {
-    const n = (df as DataFrame<Row>).nrows();
+    const n = (df as any).nrows();
 
     const updates: Record<string, unknown[]> = {};
 

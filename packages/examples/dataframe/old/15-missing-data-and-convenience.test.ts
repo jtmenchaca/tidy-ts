@@ -234,8 +234,8 @@ test("Missing Data and Convenience Functions - Progressive Examples", async () =
     .mutate({
       // Add lag and lead values for scores
       previous_score: (_row, index, df) =>
-        stats.lag(df.score, 1)[index] || -999,
-      next_score: (_row, index, df) => stats.lead(df.score, 1)[index] || -999,
+        stats.lag(df.score)[index] || -999,
+      next_score: (_row, index, df) => stats.lead(df.score)[index] || -999,
       // Add cumulative statistics
       cumulative_score: (_row, index, df) => stats.cumsum(df.score)[index],
       running_max: (_row, index, df) => stats.cummax(df.score)[index],

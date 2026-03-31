@@ -31,18 +31,20 @@ Deno.test("collapsedDays", () => {
     { id: "B", start: new Date("2024-02-01"), end: new Date("2024-02-10") },
   ]);
 
-  const result = df
+  const df1 = df
     .arrange(["id", "start"], ["asc", "asc"])
     .groupBy("id")
-    .mutate({ maxEndSoFar: (_, i, df) => s.cummax(df.extract("end"))[i] })
-    .mutate({ prevMaxEnd: (_, i, df) => s.lag(df.extract("maxEndSoFar"), 1)[i] })
+    .mutate({ maxEndSoFar: s.cummax(df.extract("end")) })
+  
+  const df2 = df1
+    .mutate({ prevMaxEnd: s.lag(df1.extract("maxEndSoFar")) })
     .mutate({ effectiveStart: (row) => row.prevMaxEnd && row.start < row.prevMaxEnd ? row.prevMaxEnd : row.start })
     .mutate({ contribution: (row) => Math.max(0, (row.end.getTime() - row.effectiveStart.getTime()) / (1000 * 60 * 60 * 24)) })
     .groupBy("id")
     .summarize({ days: (g) => s.sum(g.extract("contribution")) });
 
-  const a = result.filter((row) => row.id === "A").extract("days")[0];
-  const b = result.filter((row) => row.id === "B").extract("days")[0];
+  const a = df2.filter((row) => row.id === "A").extract("days")[0];
+  const b = df2.filter((row) => row.id === "B").extract("days")[0];
   expect(a).toBe(19);
   expect(b).toBe(9);
 });
@@ -80,7 +82,7 @@ Deno.test("consecutiveEventValuesMatch", () => {
     .arrange(["id", "date"], ["asc", "asc"])
     .groupBy("id")
     .mutate({match: (row) => row.value >= ABNORMAL_THRESHOLD ? 1 : 0})
-    .mutate({ prevMatch: (_, i, df) => s.lag(df.extract("match"), 1, 0)[i]})
+    .mutate({ prevMatch: (_, i, df) => s.lag(df.extract("match"), { defaultValue: 0 })[i]})
     .mutate({ streakStart: (row) => row.match === 1 && row.prevMatch === 0 ? 1 : 0 })
     .groupBy("id").mutate({ streakId: (_, i, df) => s.cumsum(df.extract("streakStart"))[i] })
     .filter((row) => row.match === 1)
