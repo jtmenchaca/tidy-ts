@@ -38,7 +38,11 @@ import type { Prettify } from "../../dataframe/types/utility-types.ts";
  * - Equivalent to `groupBy(...columns).summarise({ count: g => g.nrows() })`
  * - Works with grouped DataFrames (counts within each group)
  */
-export type CountMethod<Row extends object> = <K extends keyof Row>(
+export type CountMethod<Row extends object> = <
+  R extends object,
+  K extends keyof R,
+>(
+  this: DataFrame<R>,
   column: K,
   ...additionalColumns: K[]
-) => DataFrame<Prettify<Pick<Row, K> & { count: number }>>;
+) => DataFrame<Prettify<Pick<R, K> & { count: number }>>;

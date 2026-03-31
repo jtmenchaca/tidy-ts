@@ -206,75 +206,90 @@ export interface MutateMethod<Row extends object> {
   // ══════════════════════════════════════════════════════════════════════════
 
   // ── Tier 1: Grouped — all-async formulas ──────────────────────────────────
+  // R inferred from `this` removes Row from contravariant positions.
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     // deno-lint-ignore no-explicit-any
-    Formulas extends Record<string, (row: Row, idx: number, df: DataFrame<Row>) => Promise<any>>,
+    Formulas extends Record<string, (row: R, idx: number, df: DataFrame<R>) => Promise<any>>,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas,
   ): PromisedGroupedDataFrame<
-    RowAfterMutation<Row, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+    RowAfterMutation<R, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
   >;
 
   // ── Tier 1: Ungrouped — all-async formulas ────────────────────────────────
+  // R inferred from `this` removes Row from contravariant positions.
   <
+    R extends object,
     // deno-lint-ignore no-explicit-any
-    Formulas extends Record<string, (row: Row, idx: number, df: DataFrame<Row>) => Promise<any>>,
+    Formulas extends Record<string, (row: R, idx: number, df: DataFrame<R>) => Promise<any>>,
   >(
+    this: DataFrame<R>,
     formulas: Formulas,
-  ): PromisedDataFrame<RowAfterMutation<Row, Formulas>>;
+  ): PromisedDataFrame<RowAfterMutation<R, Formulas>>;
 
   // ── Tier 2: Grouped — all-sync formulas ───────────────────────────────────
+  // R inferred from `this` removes Row from contravariant positions.
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas & AllSync<Formulas>,
   ): GroupedDataFrame<
-    RowAfterMutation<Row, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+    RowAfterMutation<R, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
   >;
 
   // ── Tier 2: Ungrouped — all-sync formulas ─────────────────────────────────
+  // R inferred from `this` removes Row from contravariant positions.
   <
+    R extends object,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
+    this: DataFrame<R>,
     formulas: Formulas & AllSync<Formulas>,
-  ): DataFrame<RowAfterMutation<Row, Formulas>>;
+  ): DataFrame<RowAfterMutation<R, Formulas>>;
 
   // ── Tier 3: Grouped — mixed-async fallback (unconditional PromisedGroupedDataFrame) ─
+  // R inferred from `this` removes Row from contravariant positions.
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas,
   ): PromisedGroupedDataFrame<
-    RowAfterMutation<Row, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+    RowAfterMutation<R, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
   >;
 
   // ── Tier 3: Ungrouped — mixed-async fallback (unconditional PromisedDataFrame) ─
+  // R inferred from `this` removes Row from contravariant positions.
   <
+    R extends object,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
+    this: DataFrame<R>,
     formulas: Formulas,
-  ): PromisedDataFrame<RowAfterMutation<Row, Formulas>>;
+  ): PromisedDataFrame<RowAfterMutation<R, Formulas>>;
 
   // ── Overloads with concurrency options ─────────────────────────────────────
 
@@ -315,19 +330,20 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas,
     options: ConcurrencyOptions,
   ): Promise<
     GroupedDataFrame<
-      RowAfterMutation<Row, Formulas>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+      RowAfterMutation<R, Formulas>,
+      Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
     >
   >;
 
@@ -367,16 +383,17 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
-    GroupName extends keyof Row,
-    Assignments extends Record<string, ColumnValue<Row>>,
+    R extends object,
+    GroupName extends keyof R,
+    Assignments extends Record<string, ColumnValue<R>>,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
     options: ConcurrencyOptions,
   ): Promise<
     GroupedDataFrame<
-      RowAfterMutation<Row, Assignments>,
-      Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
+      RowAfterMutation<R, Assignments>,
+      Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
     >
   >;
 
@@ -416,14 +433,16 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
+    R extends object,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
+    this: DataFrame<R>,
     formulas: Formulas,
     options: ConcurrencyOptions,
-  ): Promise<DataFrame<RowAfterMutation<Row, Formulas>>>;
+  ): Promise<DataFrame<RowAfterMutation<R, Formulas>>>;
 
   // ── Ungrouped — assignments with concurrency options ───────────────────────
   /**
@@ -460,10 +479,11 @@ export interface MutateMethod<Row extends object> {
    *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
    * })
    */
-  <Assignments extends Record<string, ColumnValue<Row>>>(
+  <R extends object, Assignments extends Record<string, ColumnValue<R>>>(
+    this: DataFrame<R>,
     assignments: Assignments,
     options: ConcurrencyOptions,
-  ): Promise<DataFrame<RowAfterMutation<Row, Assignments>>>;
+  ): Promise<DataFrame<RowAfterMutation<R, Assignments>>>;
   // ── Grouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
   /**
    * Add or modify columns using expressions.
@@ -500,17 +520,18 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas,
   ): GroupedDataFrame<
-    RowAfterMutation<Row, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Formulas>>
+    RowAfterMutation<R, Formulas>,
+    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
   >;
 
   // ── Grouped — mixed assignments (functions | arrays | scalars | null) ───────────
@@ -549,14 +570,15 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
-    GroupName extends keyof Row,
-    Assignments extends Record<string, ColumnValue<Row>>,
+    R extends object,
+    GroupName extends keyof R,
+    Assignments extends Record<string, ColumnValue<R>>,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    RowAfterMutation<Row, Assignments>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
+    RowAfterMutation<R, Assignments>,
+    Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
   >;
 
   // ── Grouped — mixed without scalars (functions | arrays | null) for better inference ─
@@ -595,19 +617,20 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Assignments extends {
       [key: string]:
-        | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
+        | ((row: R, idx: number, df: DataFrame<R>) => unknown)
         | readonly unknown[]
         | null;
     },
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    RowAfterMutation<Row, Assignments>,
-    Extract<GroupName, keyof RowAfterMutation<Row, Assignments>>
+    RowAfterMutation<R, Assignments>,
+    Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
   >;
 
   // ── Ungrouped — assignments of ONLY functions (best inference for (row, idx, df)) ─
@@ -646,13 +669,15 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
+    R extends object,
     Formulas extends Record<
       string,
-      (row: Row, idx: number, df: DataFrame<Row>) => unknown
+      (row: R, idx: number, df: DataFrame<R>) => unknown
     >,
   >(
+    this: DataFrame<R>,
     formulas: Formulas,
-  ): DataFrame<RowAfterMutation<Row, Formulas>>;
+  ): DataFrame<RowAfterMutation<R, Formulas>>;
 
   // ── Ungrouped — mixed without scalars (functions | arrays | null) for better inference ─────
   /**
@@ -690,15 +715,17 @@ export interface MutateMethod<Row extends object> {
    * })
    */
   <
+    R extends object,
     Assignments extends {
       [key: string]:
-        | ((row: Row, idx: number, df: DataFrame<Row>) => unknown)
+        | ((row: R, idx: number, df: DataFrame<R>) => unknown)
         | readonly unknown[]
         | null;
     },
   >(
+    this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<Row, Assignments>>;
+  ): DataFrame<RowAfterMutation<R, Assignments>>;
 
   // ── Ungrouped — fallback for mixed assignments (functions | arrays | scalars | null) ─────────
   /**
@@ -735,13 +762,15 @@ export interface MutateMethod<Row extends object> {
    *   groupSize: (_r, _idx, groupDf) => groupDf.nrows()
    * })
    */
-  <Assignments extends Record<string, ColumnValue<Row>>>(
+  <R extends object, Assignments extends Record<string, ColumnValue<R>>>(
+    this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<Row, Assignments>>;
+  ): DataFrame<RowAfterMutation<R, Assignments>>;
 
   // ── Ungrouped — broadest fallback (includes scalars) ────────────────────────
   // deno-lint-ignore no-explicit-any
-  <Assignments extends Record<string, any>>(
+  <R extends object, Assignments extends Record<string, any>>(
+    this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<Row, Assignments>>;
+  ): DataFrame<RowAfterMutation<R, Assignments>>;
 }

@@ -89,10 +89,19 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
     | "iloc"
     | "getTrace"
     | "printTrace"
+    | "distinct"
   >
   & DataFrameColumns<Row>
   & PromiseLike<DataFrame<Row>>
   & {
+    // Override distinct to work without `this: DataFrame<R>` (PromisedDataFrame is not a DataFrame)
+    distinct: {
+      <Cols extends keyof Row>(
+        column1: Cols,
+        ...moreColumns: Cols[]
+      ): PromisedDataFrame<Pick<Row, Cols>>;
+    };
+
     // Override mutate to always return PromisedDataFrame with awaited types
     mutate: {
       <
@@ -131,10 +140,10 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
 
     // Override select to always return PromisedDataFrame
     select: {
-      <ColName extends keyof Row>(
-        columnName: ColName,
-        ...columnNames: ColName[]
-      ): PromisedDataFrame<Pick<Row, ColName>>;
+      <First extends keyof Row, const Rest extends readonly (keyof Row)[]>(
+        columnName: First,
+        ...columnNames: Rest
+      ): PromisedDataFrame<Pick<Row, First | Rest[number]>>;
       <ColName extends keyof Row>(
         columns: ColName[],
       ): PromisedDataFrame<Pick<Row, ColName>>;
@@ -211,10 +220,19 @@ export type PromisedGroupedDataFrame<
     | "iloc"
     | "getTrace"
     | "printTrace"
+    | "distinct"
   >
   & DataFrameColumns<Row>
   & PromiseLike<GroupedDataFrame<Row, K>>
   & {
+    // Override distinct for PromisedGroupedDataFrame
+    distinct: {
+      <Cols extends keyof Row>(
+        column1: Cols,
+        ...moreColumns: Cols[]
+      ): PromisedGroupedDataFrame<Pick<Row, Cols>, Extract<K, keyof Pick<Row, Cols>>>;
+    };
+
     // Override mutate to always return PromisedGroupedDataFrame
     mutate: {
       <

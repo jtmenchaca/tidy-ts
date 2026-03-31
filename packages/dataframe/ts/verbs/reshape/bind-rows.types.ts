@@ -65,9 +65,10 @@ export type BindRowsMethod<Row extends object> = {
    * // Combine multiple DataFrames
    * df1.bindRows(df2, df3, df4)
    */
-  <OtherRow extends object>(
+  <R extends object, OtherRow extends object>(
+    this: DataFrame<R>,
     other: DataFrame<OtherRow>,
-  ): DataFrame<Prettify<MergeRows<Row, OtherRow>>>;
+  ): DataFrame<Prettify<MergeRows<R, OtherRow>>>;
 
   /**
    * Combine DataFrames vertically (stack rows).
@@ -90,12 +91,14 @@ export type BindRowsMethod<Row extends object> = {
    * df1.bindRows(df2, df3, df4)
    */
   <
+    R extends object,
     OtherRow1 extends object,
     OtherRow2 extends object,
   >(
+    this: DataFrame<R>,
     other1: DataFrame<OtherRow1>,
     other2: DataFrame<OtherRow2>,
-  ): DataFrame<Prettify<MergeRows<MergeRows<Row, OtherRow1>, OtherRow2>>>;
+  ): DataFrame<Prettify<MergeRows<MergeRows<R, OtherRow1>, OtherRow2>>>;
 
   /**
    * Combine DataFrames vertically (stack rows).
@@ -118,16 +121,18 @@ export type BindRowsMethod<Row extends object> = {
    * df1.bindRows(df2, df3, df4)
    */
   <
+    R extends object,
     OtherRow1 extends object,
     OtherRow2 extends object,
     OtherRow3 extends object,
   >(
+    this: DataFrame<R>,
     other1: DataFrame<OtherRow1>,
     other2: DataFrame<OtherRow2>,
     other3: DataFrame<OtherRow3>,
   ): DataFrame<
     Prettify<
-      MergeRows<MergeRows<MergeRows<Row, OtherRow1>, OtherRow2>, OtherRow3>
+      MergeRows<MergeRows<MergeRows<R, OtherRow1>, OtherRow2>, OtherRow3>
     >
   >;
 
@@ -151,7 +156,8 @@ export type BindRowsMethod<Row extends object> = {
    * // Combine multiple DataFrames
    * df1.bindRows(df2, df3, df4)
    */
-  <OtherRow extends object>(
+  <R extends object, OtherRow extends object>(
+    this: DataFrame<R>,
     ...others: DataFrame<OtherRow>[]
-  ): DataFrame<Prettify<MergeRows<Row, OtherRow>>>;
+  ): DataFrame<Prettify<MergeRows<R, OtherRow>>>;
 };

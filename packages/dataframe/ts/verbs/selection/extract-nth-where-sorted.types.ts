@@ -32,24 +32,26 @@ export type ExtractNthWhereSortedMethod<Row extends object> = {
  */
 export type ExtractNthWhereSortedGroupedMethod<Row extends object> = {
   <
-    GroupName extends keyof Row,
-    ColName extends keyof Row,
-    SortColName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
+    ColName extends keyof R,
+    SortColName extends keyof R,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
-    sortBy: RestrictEmptyDataFrame<Row, SortColName, EmptyDataFrameExtract>,
+    this: GroupedDataFrame<R, GroupName>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
+    sortBy: RestrictEmptyDataFrame<R, SortColName, EmptyDataFrameExtract>,
     direction: "asc" | "desc",
-  ): Row[ColName] | undefined;
+  ): R[ColName] | undefined;
   <
-    GroupName extends keyof Row,
-    ColName extends keyof Row,
-    SortColName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
+    ColName extends keyof R,
+    SortColName extends keyof R,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
-    sortBy: RestrictEmptyDataFrame<Row, SortColName, EmptyDataFrameExtract>,
+    this: GroupedDataFrame<R, GroupName>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
+    sortBy: RestrictEmptyDataFrame<R, SortColName, EmptyDataFrameExtract>,
     direction: "asc" | "desc",
     rank: number,
-  ): Row[ColName] | undefined;
+  ): R[ColName] | undefined;
 };

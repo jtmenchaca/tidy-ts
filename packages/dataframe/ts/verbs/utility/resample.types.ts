@@ -252,16 +252,17 @@ export type ResampleMethod<Row extends object> = {
    * });
    */
   <
-    GroupName extends keyof Row,
-    TimeCol extends keyof Row,
-    Options extends ResampleOptions<Row>,
+    R extends object,
+    GroupName extends keyof R,
+    TimeCol extends keyof R,
+    Options extends ResampleOptions<R>,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    args: ResampleArgs<Row, TimeCol, Options>,
+    this: GroupedDataFrame<R, GroupName>,
+    args: ResampleArgs<R, TimeCol, Options>,
   ): DataFrame<
     Prettify<
-      & Pick<Row, GroupName> // Include group columns
-      & RowAfterResample<Row, TimeCol, Options> // Include resampled columns
+      & Pick<R, GroupName> // Include group columns
+      & RowAfterResample<R, TimeCol, Options> // Include resampled columns
     >
   >;
 
@@ -324,9 +325,11 @@ export type ResampleMethod<Row extends object> = {
    * });
    */
   <
-    TimeCol extends keyof Row,
-    Options extends ResampleOptions<Row>,
+    R extends object,
+    TimeCol extends keyof R,
+    Options extends ResampleOptions<R>,
   >(
-    args: ResampleArgs<Row, TimeCol, Options>,
-  ): DataFrame<RowAfterResample<Row, TimeCol, Options>>;
+    this: DataFrame<R>,
+    args: ResampleArgs<R, TimeCol, Options>,
+  ): DataFrame<RowAfterResample<R, TimeCol, Options>>;
 };

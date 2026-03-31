@@ -43,45 +43,48 @@ type GenerateColumnNamesWithTypes<
 export type MutateColumnsMethod<Row extends object> = {
   // Grouped
   <
+    R extends object,
     ColType extends keyof ElementColumnTypeMap,
-    const ColNames extends readonly Extract<keyof Row, string>[],
+    const ColNames extends readonly Extract<keyof R, string>[],
     const NewColDefs extends readonly {
       prefix?: string;
       suffix?: string;
       fn: (col: ElementColumnTypeMap[ColType]) => unknown;
     }[],
-    GroupName extends keyof Row,
+    GroupName extends keyof R,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     config: {
       colType: ColType;
       columns: ColNames;
       newColumns: NewColDefs;
     },
   ): GroupedDataFrame<
-    Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>,
+    Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>,
     Extract<
       GroupName,
-      keyof Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
+      keyof Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
     >
   >;
 
   // Ungrouped
   <
+    R extends object,
     ColType extends keyof ElementColumnTypeMap,
-    const ColNames extends readonly Extract<keyof Row, string>[],
+    const ColNames extends readonly Extract<keyof R, string>[],
     const NewColDefs extends readonly {
       prefix?: string;
       suffix?: string;
       fn: (col: ElementColumnTypeMap[ColType]) => unknown;
     }[],
   >(
+    this: DataFrame<R>,
     config: {
       colType: ColType;
       columns: ColNames;
       newColumns: NewColDefs;
     },
   ): DataFrame<
-    Prettify<Row & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
+    Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
   >;
 };

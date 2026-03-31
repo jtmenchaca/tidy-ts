@@ -5,10 +5,10 @@ import type {
 } from "../../dataframe/index.ts";
 
 export type YearMethod<Row extends object> = {
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: keyof Row,
-  ): PreserveGrouping<Row, GroupName, Row>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    column: keyof R,
+  ): PreserveGrouping<R, GroupName, R>;
 
   (
     column: keyof Row,
@@ -16,10 +16,10 @@ export type YearMethod<Row extends object> = {
 };
 
 export type MonthMethod<Row extends object> = {
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: keyof Row,
-  ): PreserveGrouping<Row, GroupName, Row>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    column: keyof R,
+  ): PreserveGrouping<R, GroupName, R>;
 
   (
     column: keyof Row,
@@ -27,10 +27,10 @@ export type MonthMethod<Row extends object> = {
 };
 
 export type DayMethod<Row extends object> = {
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: keyof Row,
-  ): PreserveGrouping<Row, GroupName, Row>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    column: keyof R,
+  ): PreserveGrouping<R, GroupName, R>;
 
   (
     column: keyof Row,

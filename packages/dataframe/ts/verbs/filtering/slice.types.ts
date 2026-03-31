@@ -51,11 +51,11 @@ export type SliceRowsMethod<Row extends object> = {
    * // Slice within groups
    * df.groupBy("category").slice(0, 5)
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    start: RestrictEmptyDataFrame<Row, number, EmptyDataFrameSlice>,
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    start: RestrictEmptyDataFrame<R, number, EmptyDataFrameSlice>,
     end?: number,
-  ): GroupedDataFrame<Row, GroupName>;
+  ): GroupedDataFrame<R, GroupName>;
   /**
    * Extract rows by index range.
    *
@@ -104,10 +104,10 @@ export type SliceIndicesMethod<Row extends object> = {
    * // Within groups
    * df.groupBy("category").sliceIndices(0, 1)
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
     ...indices: number[]
-  ): GroupedDataFrame<Row, GroupName>;
+  ): GroupedDataFrame<R, GroupName>;
   /**
    * Extract specific rows by their indices.
    *
@@ -162,10 +162,10 @@ export type SliceHeadMethod<Row extends object> = {
    * // Get first 3 rows of each group
    * df.groupBy("category").sliceHead(3)
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    count: RestrictEmptyDataFrame<Row, number, EmptyDataFrameSlice>,
-  ): GroupedDataFrame<Row, GroupName>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    count: RestrictEmptyDataFrame<R, number, EmptyDataFrameSlice>,
+  ): GroupedDataFrame<R, GroupName>;
   /**
    * Get the first N rows.
    *
@@ -228,11 +228,11 @@ export type SliceMinMethod<Row extends object> = {
    * // Get 3 cheapest items per category
    * df.groupBy("category").sliceMin("price", 3)
    */
-  <GroupName extends keyof Row, ColName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columnName: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameSlice>,
+  <R extends object, GroupName extends keyof R, ColName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    columnName: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameSlice>,
     count: number,
-  ): GroupedDataFrame<Row, GroupName>;
+  ): GroupedDataFrame<R, GroupName>;
   /**
    * Get rows with the smallest values in a column.
    *
@@ -251,10 +251,11 @@ export type SliceMinMethod<Row extends object> = {
    * // Get 3 cheapest items per category
    * df.groupBy("category").sliceMin("price", 3)
    */
-  <ColName extends keyof Row>(
-    columnName: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameSlice>,
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    columnName: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameSlice>,
     count: number,
-  ): DataFrame<Row>;
+  ): DataFrame<R>;
 };
 
 export type SliceMaxMethod<Row extends object> = SliceMinMethod<Row>;
@@ -298,11 +299,11 @@ export type SliceSampleMethod<Row extends object> = {
    * // Get 3 random rows from each group
    * df.groupBy("category").sample(3)
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    count: RestrictEmptyDataFrame<Row, number, EmptyDataFrameSlice>,
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    count: RestrictEmptyDataFrame<R, number, EmptyDataFrameSlice>,
     seed?: number,
-  ): GroupedDataFrame<Row, GroupName>;
+  ): GroupedDataFrame<R, GroupName>;
   /**
    * Get a random sample of rows.
    *

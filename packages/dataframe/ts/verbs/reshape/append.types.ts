@@ -6,11 +6,11 @@ import type { DataFrame } from "../../dataframe/index.ts";
  */
 export type AppendMethod<Row extends object> = {
   // Another DataFrame - allow any compatible DataFrame
-  <T extends object>(dataframe: DataFrame<T>): DataFrame<Row | T>;
+  <R extends object, T extends object>(this: DataFrame<R>, dataframe: DataFrame<T>): DataFrame<R | T>;
   // Single object
-  (row: Row): DataFrame<Row>;
+  <R extends object>(this: DataFrame<R>, row: R): DataFrame<R>;
   // Array of objects
-  (rows: Row[]): DataFrame<Row>;
+  <R extends object>(this: DataFrame<R>, rows: R[]): DataFrame<R>;
   // Multiple individual objects
-  (...rows: Row[]): DataFrame<Row>;
+  <R extends object>(this: DataFrame<R>, ...rows: R[]): DataFrame<R>;
 };

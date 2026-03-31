@@ -38,11 +38,11 @@ export type SelectMethod<Row extends object> = {
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
-  <GroupName extends keyof Row, ColName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columnName: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameSelect>,
-    ...columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameSelect>
-  ): PreserveGrouping<Row, GroupName, RowAfterSelect<Row, ColName>>;
+  <R extends object, GroupName extends keyof R, First extends keyof R, const Rest extends readonly (keyof R)[]>(
+    this: GroupedDataFrame<R, GroupName>,
+    columnName: First,
+    ...columnNames: Rest
+  ): PreserveGrouping<R, GroupName, RowAfterSelect<R, First | Rest[number]>>;
   /**
    * Select one or more columns from the DataFrame.
    *
@@ -65,10 +65,11 @@ export type SelectMethod<Row extends object> = {
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
-  <ColName extends keyof Row>(
-    columnName: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameSelect>,
-    ...columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameSelect>
-  ): DataFrame<RowAfterSelect<Row, ColName>>;
+  <R extends object, First extends keyof R, const Rest extends readonly (keyof R)[]>(
+    this: DataFrame<R>,
+    columnName: First,
+    ...columnNames: Rest
+  ): DataFrame<RowAfterSelect<R, First | Rest[number]>>;
 
   // Array syntax
   /**
@@ -93,10 +94,10 @@ export type SelectMethod<Row extends object> = {
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
-  <GroupName extends keyof Row, ColName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columns: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameSelect>,
-  ): PreserveGrouping<Row, GroupName, RowAfterSelect<Row, ColName>>;
+  <R extends object, GroupName extends keyof R, ColName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    columns: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameSelect>,
+  ): PreserveGrouping<R, GroupName, RowAfterSelect<R, ColName>>;
 
   /**
    * Select one or more columns from the DataFrame.
@@ -120,7 +121,8 @@ export type SelectMethod<Row extends object> = {
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
-  <ColName extends keyof Row>(
-    columns: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameSelect>,
-  ): DataFrame<RowAfterSelect<Row, ColName>>;
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    columns: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameSelect>,
+  ): DataFrame<RowAfterSelect<R, ColName>>;
 };

@@ -53,7 +53,9 @@ type FillForwardResult<
  * - Works with grouped DataFrames (fills within each group)
  */
 export type FillForwardMethod<Row extends object> = <
-  Col extends keyof Row & string,
+  R extends object,
+  Col extends keyof R & string,
 >(
+  this: DataFrame<R>,
   ...columnNames: Col[]
-) => DataFrame<Prettify<FillForwardResult<Row, [Col]>>>;
+) => DataFrame<Prettify<FillForwardResult<R, [Col]>>>;

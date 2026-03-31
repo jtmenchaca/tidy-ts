@@ -47,21 +47,27 @@ type ReplaceUndefinedResult<
  * @deprecated Use replaceNull and replaceUndefined instead.
  */
 export type ReplaceNaMethod<Row extends object> = <
-  M extends Partial<{ [K in keyof Row]: unknown }>,
+  R extends object,
+  M extends Partial<{ [K in keyof R]: unknown }>,
 >(
+  this: DataFrame<R>,
   mapping: M,
-) => DataFrame<Prettify<ReplaceNaResult<Row, M>>>;
+) => DataFrame<Prettify<ReplaceNaResult<R, M>>>;
 
 /** replaceNull method type for DataFrames */
 export type ReplaceNullMethod<Row extends object> = <
-  M extends Partial<{ [K in keyof Row]: unknown }>,
+  R extends object,
+  M extends Partial<{ [K in keyof R]: unknown }>,
 >(
+  this: DataFrame<R>,
   mapping: M,
-) => DataFrame<Prettify<ReplaceNullResult<Row, M>>>;
+) => DataFrame<Prettify<ReplaceNullResult<R, M>>>;
 
 /** replaceUndefined method type for DataFrames */
 export type ReplaceUndefinedMethod<Row extends object> = <
-  M extends Partial<{ [K in keyof Row]: unknown }>,
+  R extends object,
+  M extends Partial<{ [K in keyof R]: unknown }>,
 >(
+  this: DataFrame<R>,
   mapping: M,
-) => DataFrame<Prettify<ReplaceUndefinedResult<Row, M>>>;
+) => DataFrame<Prettify<ReplaceUndefinedResult<R, M>>>;

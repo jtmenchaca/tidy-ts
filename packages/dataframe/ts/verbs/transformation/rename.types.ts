@@ -119,12 +119,13 @@ export type RenameMethod<Row extends object> = {
    * df.groupBy("category").rename({ value: "val" })
    */
   <
-    GroupName extends keyof Row,
-    const RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
+    R extends object,
+    GroupName extends keyof R,
+    const RenameMap extends Partial<Record<keyof R, PropertyKey>>,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     mapping: RenameMap,
-  ): PreserveGrouping<Row, GroupName, RowAfterRename<Row, RenameMap>>;
+  ): PreserveGrouping<R, GroupName, RowAfterRename<R, RenameMap>>;
 
   /**
    * Rename columns in the DataFrame.
@@ -148,7 +149,8 @@ export type RenameMethod<Row extends object> = {
    * // Works with grouped DataFrames
    * df.groupBy("category").rename({ value: "val" })
    */
-  <const RenameMap extends Partial<Record<keyof Row, PropertyKey>>>(
+  <R extends object, const RenameMap extends Partial<Record<keyof R, PropertyKey>>>(
+    this: DataFrame<R>,
     mapping: RenameMap,
-  ): DataFrame<RowAfterRename<Row, RenameMap>>;
+  ): DataFrame<RowAfterRename<R, RenameMap>>;
 };

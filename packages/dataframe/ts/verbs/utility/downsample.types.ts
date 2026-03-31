@@ -97,21 +97,22 @@ export interface DownsampleMethod<Row extends object> {
    * Downsample grouped DataFrame - preserves group columns in result.
    */
   <
-    GroupName extends keyof Row,
-    TimeCol extends keyof Row & string,
+    R extends object,
+    GroupName extends keyof R,
+    TimeCol extends keyof R & string,
     Aggregations extends Record<
       string,
       // deno-lint-ignore no-explicit-any
       (...args: any[]) => any
     >,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    args: DownsampleArgs<Row & Record<string, unknown>, TimeCol, Aggregations>,
+    this: GroupedDataFrame<R, GroupName>,
+    args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
     Prettify<
-      & Pick<Row, GroupName> // Include group columns
+      & Pick<R, GroupName> // Include group columns
       & RowAfterDownsample<
-        Row & Record<string, unknown>,
+        R & Record<string, unknown>,
         TimeCol,
         Aggregations
       > // Include downsampled columns
@@ -122,15 +123,17 @@ export interface DownsampleMethod<Row extends object> {
    * Downsample regular DataFrame.
    */
   <
-    TimeCol extends keyof Row & string,
+    R extends object,
+    TimeCol extends keyof R & string,
     Aggregations extends Record<
       string,
       // deno-lint-ignore no-explicit-any
       (...args: any[]) => any
     >,
   >(
-    args: DownsampleArgs<Row & Record<string, unknown>, TimeCol, Aggregations>,
+    this: DataFrame<R>,
+    args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
-    RowAfterDownsample<Row & Record<string, unknown>, TimeCol, Aggregations>
+    RowAfterDownsample<R & Record<string, unknown>, TimeCol, Aggregations>
   >;
 }

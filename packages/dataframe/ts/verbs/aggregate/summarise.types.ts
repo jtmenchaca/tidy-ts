@@ -76,6 +76,7 @@ export type SummariseMethod<Row extends object> =
     EmptyDataFrameSummarise,
     {
       // ── Grouped DataFrame with async detection ──────────────────────────
+      // R inferred from `this` removes Row from contravariant positions.
       /**
        * Aggregate data into summary statistics.
        *
@@ -105,19 +106,21 @@ export type SummariseMethod<Row extends object> =
        * })
        */
       <
-        SummaryFormulas extends Record<string, AsyncSummaryFormula<Row>>,
-        GroupName extends keyof Row,
+        R extends object,
+        SummaryFormulas extends Record<string, AsyncSummaryFormula<R>>,
+        GroupName extends keyof R,
       >(
-        this: GroupedDataFrame<Row, GroupName>,
+        this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
       ): AnyPropertyIsAsync<SummaryFormulas> extends true ? PromisedDataFrame<
-          RowAfterSummariseGrouped<Row, GroupName, SummaryFormulas>
+          RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>
         >
         : DataFrame<
-          RowAfterSummariseGrouped<Row, GroupName, SummaryFormulas>
+          RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>
         >;
 
       // ── Regular DataFrame with async detection ──────────────────────────
+      // R inferred from `this` removes Row from contravariant positions.
       /**
        * Aggregate data into summary statistics.
        *
@@ -146,10 +149,11 @@ export type SummariseMethod<Row extends object> =
        *   validated: async (g) => await validateGroup(g)
        * })
        */
-      <SummaryFormulas extends Record<string, AsyncSummaryFormula<Row>>>(
+      <R extends object, SummaryFormulas extends Record<string, AsyncSummaryFormula<R>>>(
+        this: DataFrame<R>,
         summaryFormulas: SummaryFormulas,
       ): AnyPropertyIsAsync<SummaryFormulas> extends true
-        ? PromisedDataFrame<RowAfterSummariseUngrouped<Row, SummaryFormulas>>
-        : DataFrame<RowAfterSummariseUngrouped<Row, SummaryFormulas>>;
+        ? PromisedDataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>
+        : DataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
     }
   >;

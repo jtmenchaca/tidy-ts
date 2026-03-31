@@ -52,11 +52,11 @@ export type DistinctMethod<Row extends object> = {
    * // Distinct within groups
    * df.groupBy("year").distinct("product")
    */
-  <GroupName extends keyof Row, Cols extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
+  <R extends object, GroupName extends keyof R, Cols extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
     column1: Cols,
     ...moreColumns: Cols[]
-  ): PreserveGrouping<Row, GroupName, RowAfterDistinct<Row, Cols>>;
+  ): PreserveGrouping<R, GroupName, RowAfterDistinct<R, Cols>>;
 
   /**
    * Get unique combinations of specified columns (SQL DISTINCT).
@@ -77,8 +77,9 @@ export type DistinctMethod<Row extends object> = {
    * // Distinct within groups
    * df.groupBy("year").distinct("product")
    */
-  <Cols extends keyof Row>(
+  <R extends object, Cols extends keyof R>(
+    this: DataFrame<R>,
     column1: Cols,
     ...moreColumns: Cols[]
-  ): DataFrame<RowAfterDistinct<Row, Cols>>;
+  ): DataFrame<RowAfterDistinct<R, Cols>>;
 };

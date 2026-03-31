@@ -51,10 +51,12 @@ export type InterpolateResult<Row extends object> = UnifyUnion<Row>;
  * - Dates are converted to/from timestamps (milliseconds) for interpolation
  */
 export type InterpolateMethod<Row extends object> = <
-  ValueCol extends keyof Row & string,
-  XCol extends keyof Row & string,
+  R extends object,
+  ValueCol extends keyof R & string,
+  XCol extends keyof R & string,
 >(
+  this: DataFrame<R>,
   valueColumn: ValueCol,
   xColumn: XCol,
   method: "linear" | "spline",
-) => DataFrame<Prettify<InterpolateResult<Row>>>;
+) => DataFrame<Prettify<InterpolateResult<R>>>;

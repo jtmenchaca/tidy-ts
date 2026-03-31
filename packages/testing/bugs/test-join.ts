@@ -78,15 +78,15 @@ export function testSummarize<
 >(opts: {
   events: DataFrame<T>;
   codeField: C & keyof T;
-}): DataFrame<CountResult> {
+}): DataFrame<CountResult> { 
   const df1 = opts.events
     .groupBy("id")
   const df2 = df1
     .summarize({
       value: (g) => g.nrows(),
-    });
+    }); 
   return df2;
-}
+} 
 
 // ============================================================================
 // 3. innerJoin(concrete, "id") on generic DataFrame
@@ -119,7 +119,7 @@ export function testInnerJoin<
   const df2 = df1
     .innerJoin(opts.anchors, "id");
   return df2;
-}
+} 
 
 // ============================================================================
 // 4. select() with dynamic generic key names
@@ -149,13 +149,13 @@ export function testDynamicSelect<
   events: DataFrame<T>;
   fieldName: K & keyof T;
   codeField: C & keyof T;
-}): DataFrame<T> {
+}) {
 
   const df1 = opts.events
     .select("id", opts.fieldName, opts.codeField)
   const df2 = df1
     .groupBy("id")
   const df3 = df2
-    .sliceMax(opts.fieldName, 1);
+    .sliceMax(opts.fieldName, 1)
   return df3;
 }

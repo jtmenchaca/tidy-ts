@@ -91,200 +91,45 @@ export type RowAfterFilter<Row extends object> = Prettify<Row>;
  */
 export type FilterRowsMethod<Row extends object> = {
   // ── Boolean array predicate (always sync) ──────────────────────────────
-  /**
-   * Filter rows based on one or more predicates.
-   *
-   * Returns rows where all predicates evaluate to true. Supports both synchronous and
-   * asynchronous predicates, boolean arrays, and multiple predicates with AND logic.
-   * Null and undefined predicate results are treated as false.
-   *
-   * @param filterPredicates - One or more predicates to filter rows. Can be:
-   *   - A function `(row, index, df) => boolean` that returns true to keep the row
-   *   - An async function for dynamic filtering (e.g., API calls, database lookups)
-   *   - Multiple predicates (combined with AND logic)
-   *
-   * @returns A new DataFrame containing only rows that match all predicates.
-   *   For async predicates, returns a PromisedDataFrame. For grouped DataFrames,
-   *   filtering is applied within each group.
-   *
-   * @example
-   * // Basic filtering with a predicate function
-   * df.filter(row => row.age > 18)
-   *
-   * @example
-   * // Multiple predicates (AND logic)
-   * df.filter(
-   *   row => row.age > 18,
-   *   row => row.status === "active"
-   * )
-   *
-   * @example
-   * // Async filtering with concurrency control
-   * await df.filter(
-   *   async (row) => await validateUser(row.id),
-   *   { concurrency: 10 }
-   * )
-   *
-   * @example
-   * // Type narrowing with type predicates
-   * const filtered = df.filter((row): row is Row & { age: number } =>
-   *   typeof row.age === 'number'
-   * )
-   */
+  // No Row in contravariant position — unchanged.
   (
     pred: readonly (boolean | null | undefined)[],
   ): DataFrame<RowAfterFilter<Row>>;
 
   // ── With concurrency options (forces async) ────────────────────────────
-  /**
-   * Filter rows based on one or more predicates.
-   *
-   * Returns rows where all predicates evaluate to true. Supports both synchronous and
-   * asynchronous predicates, boolean arrays, and multiple predicates with AND logic.
-   * Null and undefined predicate results are treated as false.
-   *
-   * @param filterPredicates - One or more predicates to filter rows. Can be:
-   *   - A function `(row, index, df) => boolean` that returns true to keep the row
-   *   - An async function for dynamic filtering (e.g., API calls, database lookups)
-   *   - A boolean array matching the DataFrame's row count
-   *   - Multiple predicates (combined with AND logic)
-   *
-   * @returns A new DataFrame containing only rows that match all predicates.
-   *   For async predicates, returns a PromisedDataFrame. For grouped DataFrames,
-   *   filtering is applied within each group.
-   *
-   * @example
-   * // Basic filtering with a predicate function
-   * df.filter(row => row.age > 18)
-   *
-   * @example
-   * // Multiple predicates (AND logic)
-   * df.filter(
-   *   row => row.age > 18,
-   *   row => row.status === "active"
-   * )
-   *
-   * @example
-   * // Async filtering with concurrency control
-   * await df.filter(
-   *   async (row) => await validateUser(row.id),
-   *   { concurrency: 10 }
-   * )
-   *
-   * @example
-   * // Type narrowing with type predicates
-   * const filtered = df.filter((row): row is Row & { age: number } =>
-   *   typeof row.age === 'number'
-   * )
-   */
-  (
+  // R inferred from `this` removes Row from contravariant callback position.
+  <R extends object>(
+    this: DataFrame<R>,
     predicate: (
-      row: Row,
+      row: R,
       index: number,
-      df: DataFrame<Row>,
+      df: DataFrame<R>,
     ) => Promise<boolean | null | undefined> | boolean | null | undefined,
     options: ConcurrencyOptions,
-  ): PromisedDataFrame<RowAfterFilter<Row>>;
+  ): PromisedDataFrame<RowAfterFilter<R>>;
 
   // ── Grouped DataFrame with async detection ──────────────────────────────
-  /**
-   * Filter rows based on one or more predicates.
-   *
-   * Returns rows where all predicates evaluate to true. Supports both synchronous and
-   * asynchronous predicates, boolean arrays, and multiple predicates with AND logic.
-   * Null and undefined predicate results are treated as false.
-   *
-   * @param filterPredicates - One or more predicates to filter rows. Can be:
-   *   - A function `(row, index, df) => boolean` that returns true to keep the row
-   *   - An async function for dynamic filtering (e.g., API calls, database lookups)
-   *   - A boolean array matching the DataFrame's row count
-   *   - Multiple predicates (combined with AND logic)
-   *
-   * @returns A new DataFrame containing only rows that match all predicates.
-   *   For async predicates, returns a PromisedDataFrame. For grouped DataFrames,
-   *   filtering is applied within each group.
-   *
-   * @example
-   * // Basic filtering with a predicate function
-   * df.filter(row => row.age > 18)
-   *
-   * @example
-   * // Multiple predicates (AND logic)
-   * df.filter(
-   *   row => row.age > 18,
-   *   row => row.status === "active"
-   * )
-   *
-   * @example
-   * // Async filtering with concurrency control
-   * await df.filter(
-   *   async (row) => await validateUser(row.id),
-   *   { concurrency: 10 }
-   * )
-   *
-   * @example
-   * // Type narrowing with type predicates
-   * const filtered = df.filter((row): row is Row & { age: number } =>
-   *   typeof row.age === 'number'
-   * )
-   */
-  <GroupName extends keyof Row, Preds extends readonly AsyncRowFilter<Row>[]>(
-    this: GroupedDataFrame<Row, GroupName>,
+  // R inferred from `this` replaces Row in AsyncRowFilter callbacks.
+  <R extends object, GroupName extends keyof R, Preds extends readonly AsyncRowFilter<R>[]>(
+    this: GroupedDataFrame<R, GroupName>,
     ...filterPredicates: Preds
   ): AnyPredicateIsAsync<Preds> extends true
-    ? PromisedGroupedDataFrame<RowAfterFilter<Row>, GroupName>
-    : GroupedDataFrame<RowAfterFilter<Row>, GroupName>;
+    ? PromisedGroupedDataFrame<RowAfterFilter<R>, GroupName>
+    : GroupedDataFrame<RowAfterFilter<R>, GroupName>;
 
   // ── Regular DataFrame with async detection ──────────────────────────────
-  /**
-   * Filter rows based on one or more predicates.
-   *
-   * Returns rows where all predicates evaluate to true. Supports both synchronous and
-   * asynchronous predicates, boolean arrays, and multiple predicates with AND logic.
-   * Null and undefined predicate results are treated as false.
-   *
-   * @param filterPredicates - One or more predicates to filter rows. Can be:
-   *   - A function `(row, index, df) => boolean` that returns true to keep the row
-   *   - An async function for dynamic filtering (e.g., API calls, database lookups)
-   *   - A boolean array matching the DataFrame's row count
-   *   - Multiple predicates (combined with AND logic)
-   *
-   * @returns A new DataFrame containing only rows that match all predicates.
-   *   For async predicates, returns a PromisedDataFrame. For grouped DataFrames,
-   *   filtering is applied within each group.
-   *
-   * @example
-   * // Basic filtering with a predicate function
-   * df.filter(row => row.age > 18)
-   *
-   * @example
-   * // Multiple predicates (AND logic)
-   * df.filter(
-   *   row => row.age > 18,
-   *   row => row.status === "active"
-   * )
-   *
-   * @example
-   * // Async filtering with concurrency control
-   * await df.filter(
-   *   async (row) => await validateUser(row.id),
-   *   { concurrency: 10 }
-   * )
-   *
-   * @example
-   * // Type narrowing with type predicates
-   * const filtered = df.filter((row): row is Row & { age: number } =>
-   *   typeof row.age === 'number'
-   * )
-   */
-  <Preds extends readonly AsyncRowFilter<Row>[]>(
+  // R inferred from `this` replaces Row in AsyncRowFilter callbacks.
+  <R extends object, Preds extends readonly AsyncRowFilter<R>[]>(
+    this: DataFrame<R>,
     ...filterPredicates: Preds
   ): AnyPredicateIsAsync<Preds> extends true
-    ? PromisedDataFrame<RowAfterFilter<Row>>
-    : DataFrame<RowAfterFilter<Row>>;
+    ? PromisedDataFrame<RowAfterFilter<R>>
+    : DataFrame<RowAfterFilter<R>>;
 
   // ── Type predicate support (explicit narrowing) ────────────────────────
-  <Narrowed extends Row>(
-    predicate: (row: Row, index: number, df: DataFrame<Row>) => row is Narrowed,
+  // R inferred from `this` removes Row from contravariant callback position.
+  <R extends object, Narrowed extends R>(
+    this: DataFrame<R>,
+    predicate: (row: R, index: number, df: DataFrame<R>) => row is Narrowed,
   ): DataFrame<Narrowed>;
 };

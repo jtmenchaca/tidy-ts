@@ -80,9 +80,10 @@ export type UnnestMethod<Row extends object> = {
    * // ]
    * ```
    */
-  <Col extends ArrayColumns<Row>>(
-    column: RestrictEmptyDataFrame<Row, Col, EmptyDataFrameUnnest>,
-  ): DataFrame<Prettify<UnnestColumn<Row, Col>>>;
+  <R extends object, Col extends ArrayColumns<R>>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, Col, EmptyDataFrameUnnest>,
+  ): DataFrame<Prettify<UnnestColumn<R, Col>>>;
 
   /**
    * Unnest multiple array columns, creating one row per combination of array elements.
@@ -109,9 +110,10 @@ export type UnnestMethod<Row extends object> = {
    * // ]
    * ```
    */
-  <Cols extends readonly ArrayColumns<Row>[]>(
-    columns: RestrictEmptyDataFrame<Row, Cols, EmptyDataFrameUnnest>,
-  ): DataFrame<Prettify<UnnestMultipleColumns<Row, Cols>>>;
+  <R extends object, Cols extends readonly ArrayColumns<R>[]>(
+    this: DataFrame<R>,
+    columns: RestrictEmptyDataFrame<R, Cols, EmptyDataFrameUnnest>,
+  ): DataFrame<Prettify<UnnestMultipleColumns<R, Cols>>>;
 };
 
 /**

@@ -41,9 +41,9 @@ export type UngroupMethod<Row extends object> = {
    *   .ungroup()
    *   .arrange("count", "desc")
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-  ): DataFrame<Row>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+  ): DataFrame<R>;
 
   // Regular DataFrame ungroup is a no-op, returns itself
   /**

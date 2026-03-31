@@ -53,7 +53,9 @@ type FillBackwardResult<
  * - Works with grouped DataFrames (fills within each group)
  */
 export type FillBackwardMethod<Row extends object> = <
-  Col extends keyof Row & string,
+  R extends object,
+  Col extends keyof R & string,
 >(
+  this: DataFrame<R>,
   ...columnNames: Col[]
-) => DataFrame<Prettify<FillBackwardResult<Row, [Col]>>>;
+) => DataFrame<Prettify<FillBackwardResult<R, [Col]>>>;

@@ -95,15 +95,16 @@ export type UpsampleMethod<Row extends object> = {
    * });
    */
   <
-    GroupName extends keyof Row,
-    TimeCol extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
+    TimeCol extends keyof R,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    args: UpsampleArgs<Row & Record<string, unknown>, TimeCol>,
+    this: GroupedDataFrame<R, GroupName>,
+    args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
   ): DataFrame<
     Prettify<
-      & Pick<Row, GroupName> // Include group columns
-      & RowAfterUpsample<Row, TimeCol> // Include upsampled columns
+      & Pick<R, GroupName> // Include group columns
+      & RowAfterUpsample<R, TimeCol> // Include upsampled columns
     >
   >;
 
@@ -151,8 +152,10 @@ export type UpsampleMethod<Row extends object> = {
    * });
    */
   <
-    TimeCol extends keyof Row,
+    R extends object,
+    TimeCol extends keyof R,
   >(
-    args: UpsampleArgs<Row & Record<string, unknown>, TimeCol>,
-  ): DataFrame<RowAfterUpsample<Row, TimeCol>>;
+    this: DataFrame<R>,
+    args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
+  ): DataFrame<RowAfterUpsample<R, TimeCol>>;
 };

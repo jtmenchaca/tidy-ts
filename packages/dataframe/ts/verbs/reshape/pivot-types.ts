@@ -47,13 +47,15 @@ export type RowAfterPivotLonger<
  */
 export type PivotWiderMethod<Row extends object> = {
   <
-    NamesFrom extends keyof Row,
-    ValuesFrom extends keyof Row,
+    R extends object,
+    NamesFrom extends keyof R,
+    ValuesFrom extends keyof R,
     const ExpectedCols extends readonly string[],
-    ValuesFn extends ((values: Row[ValuesFrom][]) => unknown) | undefined =
+    ValuesFn extends ((values: R[ValuesFrom][]) => unknown) | undefined =
       undefined,
     const Prefix extends string = "",
   >(
+    this: DataFrame<R>,
     pivotConfig: {
       namesFrom: NamesFrom;
       valuesFrom: ValuesFrom;
@@ -64,7 +66,7 @@ export type PivotWiderMethod<Row extends object> = {
   ): DataFrame<
     Prettify<
       RowAfterPivotWider<
-        Row,
+        R,
         NamesFrom,
         ValuesFrom,
         ExpectedCols,
@@ -75,19 +77,23 @@ export type PivotWiderMethod<Row extends object> = {
   >;
 
   <
-    NamesFrom extends keyof Row,
-    ValuesFrom extends keyof Row,
-  >(pivotConfig: {
-    namesFrom: NamesFrom;
-    valuesFrom: ValuesFrom;
-    valuesFn?: (values: Row[ValuesFrom][]) => unknown;
-    namesPrefix?: string;
-  }): DataFrame<
+    R extends object,
+    NamesFrom extends keyof R,
+    ValuesFrom extends keyof R,
+  >(
+    this: DataFrame<R>,
+    pivotConfig: {
+      namesFrom: NamesFrom;
+      valuesFrom: ValuesFrom;
+      valuesFn?: (values: R[ValuesFrom][]) => unknown;
+      namesPrefix?: string;
+    },
+  ): DataFrame<
     Prettify<
       & {
         // Keep all columns except names_from and values_from
-        [K in keyof Row as K extends NamesFrom | ValuesFrom ? never : K]:
-          Row[K];
+        [K in keyof R as K extends NamesFrom | ValuesFrom ? never : K]:
+          R[K];
       }
       & {
         // Add dynamic columns as unknown
@@ -105,16 +111,20 @@ export type PivotWiderMethod<Row extends object> = {
  */
 export type PivotLongerMethod<Row extends object> = {
   <
-    const ColNames extends readonly (keyof Row)[],
+    R extends object,
+    const ColNames extends readonly (keyof R)[],
     const NamesTo extends string,
     const ValuesTo extends string,
-  >(pivotConfig: {
-    cols: ColNames;
-    namesTo: NamesTo;
-    valuesTo: ValuesTo;
-    namesPrefix?: string;
-    namesPattern?: RegExp;
-  }): DataFrame<
-    Prettify<RowAfterPivotLonger<Row, ColNames, NamesTo, ValuesTo>>
+  >(
+    this: DataFrame<R>,
+    pivotConfig: {
+      cols: ColNames;
+      namesTo: NamesTo;
+      valuesTo: ValuesTo;
+      namesPrefix?: string;
+      namesPattern?: RegExp;
+    },
+  ): DataFrame<
+    Prettify<RowAfterPivotLonger<R, ColNames, NamesTo, ValuesTo>>
   >;
 };

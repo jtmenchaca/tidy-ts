@@ -92,27 +92,28 @@ import type {
 } from "../../dataframe/types/error-types.ts";
 
 export type TransposeMethod<Row extends object> = {
-  <const ExpectedRows extends number>(
+  <R extends object, const ExpectedRows extends number>(
+    this: DataFrame<R>,
     { numberOfRows }: {
       numberOfRows: RestrictEmptyDataFrame<
-        Row,
+        R,
         ExpectedRows,
         EmptyDataFrameTranspose
       >;
     },
   ): // Case 3: Double transpose — restore exact types
-  Row extends { "__tidy_row_label__": infer Labels extends string }
-    ? Row extends { "__tidy_row_types__": infer RowTypes } ? DataFrame<
+  R extends { "__tidy_row_label__": infer Labels extends string }
+    ? R extends { "__tidy_row_types__": infer RowTypes } ? DataFrame<
         PrettifyDeep<
           & {
-            "__tidy_row_label__": DataKeys<Row>; // ← prints as "first_row" | "second_row"
+            "__tidy_row_label__": DataKeys<R>; // ← prints as "first_row" | "second_row"
           }
           & {
             // Wrap the mapped type so it expands to { first_row: T; second_row: T }
             "__tidy_row_types__": Prettify<
               ColumnsFromUnion<
-                DataKeys<Row>,
-                Row[DataKeys<Row>]
+                DataKeys<R>,
+                R[DataKeys<R>]
               >
             >;
           }
@@ -122,12 +123,12 @@ export type TransposeMethod<Row extends object> = {
       // Case 2: Single transpose with row labels — use labels as columns
     : DataFrame<
       PrettifyDeep<
-        & { "__tidy_row_label__": DataKeys<Row> }
-        & { "__tidy_row_types__": Prettify<DataOnly<Row>> } // ← expands to { name: string; age: number; … }
+        & { "__tidy_row_label__": DataKeys<R> }
+        & { "__tidy_row_types__": Prettify<DataOnly<R>> } // ← expands to { name: string; age: number; … }
         & Prettify<
           ColumnsFromUnion<
             Labels,
-            DataOnly<Row>[DataKeys<Row>]
+            DataOnly<R>[DataKeys<R>]
           >
         >
       >
@@ -135,11 +136,11 @@ export type TransposeMethod<Row extends object> = {
     // Case 1: First transpose — store row types, generate row_* columns
     : DataFrame<
       PrettifyDeep<
-        & { "__tidy_row_label__": keyof Row }
-        & { "__tidy_row_types__": Row }
+        & { "__tidy_row_label__": keyof R }
+        & { "__tidy_row_types__": R }
         & MapRowNumbersWithTypes<
           GenerateNumberTuple<ExpectedRows>,
-          Row[keyof Row]
+          R[keyof R]
         >
       >
     >;

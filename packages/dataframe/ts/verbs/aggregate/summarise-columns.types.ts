@@ -62,23 +62,24 @@ export type MapColsWithPrefixSuffix<
 export type SummariseColumnsMethod<Row extends object> = {
   // Grouped: keep group keys, add generated columns
   <
+    R extends object,
     ColType extends keyof ColumnTypeMap,
-    const ColNames extends readonly Extract<keyof Row, string>[],
+    const ColNames extends readonly Extract<keyof R, string>[],
     const NewColDefs extends readonly {
       prefix: string;
       // deno-lint-ignore no-explicit-any
       fn: (col: ColumnTypeMap[ColType]) => any;
     }[],
-    GroupName extends keyof Row,
+    GroupName extends keyof R,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
+    this: GroupedDataFrame<R, GroupName>,
     config: {
       colType: ColType;
       columns: ColNames;
       newColumns: NewColDefs;
     },
   ): DataFrame<
-    Prettify<Pick<Row, GroupName> & MapColsWithPrefix<ColNames, NewColDefs>>
+    Prettify<Pick<R, GroupName> & MapColsWithPrefix<ColNames, NewColDefs>>
   >;
 
   // Ungrouped: keep all original columns, add generated columns

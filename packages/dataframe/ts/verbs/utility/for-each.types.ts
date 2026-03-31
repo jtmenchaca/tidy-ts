@@ -71,18 +71,19 @@ export type ForEachRowMethod<Row extends object> = {
    *   .filter(row => row.active)
    */
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     Callback extends (
-      row: Readonly<Row>,
+      row: Readonly<R>,
       idx: number,
-      df: DataFrame<Row>,
+      df: DataFrame<R>,
     ) => unknown,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    callback: RestrictEmptyDataFrame<Row, Callback, EmptyDataFrameForEach>,
+    this: GroupedDataFrame<R, GroupName>,
+    callback: RestrictEmptyDataFrame<R, Callback, EmptyDataFrameForEach>,
   ): IsAsyncFunction<Callback> extends true
-    ? Promise<GroupedDataFrame<Row, GroupName>>
-    : GroupedDataFrame<Row, GroupName>;
+    ? Promise<GroupedDataFrame<R, GroupName>>
+    : GroupedDataFrame<R, GroupName>;
 
   /**
    * Execute a function for each row (side effects).
@@ -116,15 +117,17 @@ export type ForEachRowMethod<Row extends object> = {
    *   .filter(row => row.active)
    */
   <
+    R extends object,
     Callback extends (
-      row: Readonly<Row>,
+      row: Readonly<R>,
       idx: number,
-      df: DataFrame<Row>,
+      df: DataFrame<R>,
     ) => unknown,
   >(
-    callback: RestrictEmptyDataFrame<Row, Callback, EmptyDataFrameForEach>,
-  ): IsAsyncFunction<Callback> extends true ? Promise<DataFrame<Row>>
-    : DataFrame<Row>;
+    this: DataFrame<R>,
+    callback: RestrictEmptyDataFrame<R, Callback, EmptyDataFrameForEach>,
+  ): IsAsyncFunction<Callback> extends true ? Promise<DataFrame<R>>
+    : DataFrame<R>;
 };
 
 /**
@@ -194,14 +197,15 @@ export type ForEachColMethod<Row extends object> = {
    * })
    */
   <
-    GroupName extends keyof Row,
-    Callback extends (colName: keyof Row, df: DataFrame<Row>) => unknown,
+    R extends object,
+    GroupName extends keyof R,
+    Callback extends (colName: keyof R, df: DataFrame<R>) => unknown,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    callback: RestrictEmptyDataFrame<Row, Callback, EmptyDataFrameForEach>,
+    this: GroupedDataFrame<R, GroupName>,
+    callback: RestrictEmptyDataFrame<R, Callback, EmptyDataFrameForEach>,
   ): IsAsyncFunction<Callback> extends true
-    ? Promise<GroupedDataFrame<Row, GroupName>>
-    : GroupedDataFrame<Row, GroupName>;
+    ? Promise<GroupedDataFrame<R, GroupName>>
+    : GroupedDataFrame<R, GroupName>;
 
   /**
    * Execute a function for each column (side effects).
@@ -235,8 +239,9 @@ export type ForEachColMethod<Row extends object> = {
    *   await logToDatabase(colName, df[colName])
    * })
    */
-  <Callback extends (colName: keyof Row, df: DataFrame<Row>) => unknown>(
-    callback: RestrictEmptyDataFrame<Row, Callback, EmptyDataFrameForEach>,
-  ): IsAsyncFunction<Callback> extends true ? Promise<DataFrame<Row>>
-    : DataFrame<Row>;
+  <R extends object, Callback extends (colName: keyof R, df: DataFrame<R>) => unknown>(
+    this: DataFrame<R>,
+    callback: RestrictEmptyDataFrame<R, Callback, EmptyDataFrameForEach>,
+  ): IsAsyncFunction<Callback> extends true ? Promise<DataFrame<R>>
+    : DataFrame<R>;
 };

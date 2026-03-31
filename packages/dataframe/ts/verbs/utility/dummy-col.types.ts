@@ -26,15 +26,16 @@ type DummyColResult<
 export type DummyColMethod<Row extends object> = {
   // Grouped overloads (preserve groups)
   <
-    GroupName extends keyof Row,
+    R extends object,
+    GroupName extends keyof R,
     ColName extends string,
     const Categories extends readonly string[],
     const Prefix extends string = "",
     const Suffix extends string = "",
     const DropOriginal extends boolean = true,
   >(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: ValidateColumnExists<Row, ColName, MissingColumnDummyCol>,
+    this: GroupedDataFrame<R, GroupName>,
+    column: ValidateColumnExists<R, ColName, MissingColumnDummyCol>,
     options: {
       expected_categories: Categories;
       prefix?: Prefix;
@@ -43,11 +44,11 @@ export type DummyColMethod<Row extends object> = {
       include_na?: boolean;
     },
   ): GroupedDataFrame<
-    DummyColResult<Row, ColName, Categories, Prefix, Suffix, DropOriginal>,
+    DummyColResult<R, ColName, Categories, Prefix, Suffix, DropOriginal>,
     Extract<
       GroupName,
       keyof DummyColResult<
-        Row,
+        R,
         ColName,
         Categories,
         Prefix,
@@ -57,9 +58,9 @@ export type DummyColMethod<Row extends object> = {
     >
   >;
 
-  <GroupName extends keyof Row, ColName extends string>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: ValidateColumnExists<Row, ColName, MissingColumnDummyCol>,
+  <R extends object, GroupName extends keyof R, ColName extends string>(
+    this: GroupedDataFrame<R, GroupName>,
+    column: ValidateColumnExists<R, ColName, MissingColumnDummyCol>,
     options?: {
       prefix?: string;
       suffix?: string;
@@ -67,19 +68,21 @@ export type DummyColMethod<Row extends object> = {
       include_na?: boolean;
     },
   ): GroupedDataFrame<
-    Prettify<Row & Record<string, boolean>>,
-    Extract<GroupName, keyof Prettify<Row & Record<string, boolean>>>
+    Prettify<R & Record<string, boolean>>,
+    Extract<GroupName, keyof Prettify<R & Record<string, boolean>>>
   >;
 
   // Regular DataFrame overloads
   <
+    R extends object,
     ColName extends string,
     const Categories extends readonly string[],
     const Prefix extends string = "",
     const Suffix extends string = "",
     const DropOriginal extends boolean = true,
   >(
-    column: ValidateColumnExists<Row, ColName, MissingColumnDummyCol>,
+    this: DataFrame<R>,
+    column: ValidateColumnExists<R, ColName, MissingColumnDummyCol>,
     options: {
       expected_categories: Categories;
       prefix?: Prefix;
@@ -88,16 +91,17 @@ export type DummyColMethod<Row extends object> = {
       include_na?: boolean;
     },
   ): DataFrame<
-    DummyColResult<Row, ColName, Categories, Prefix, Suffix, DropOriginal>
+    DummyColResult<R, ColName, Categories, Prefix, Suffix, DropOriginal>
   >;
 
-  <ColName extends string>(
-    column: ValidateColumnExists<Row, ColName, MissingColumnDummyCol>,
+  <R extends object, ColName extends string>(
+    this: DataFrame<R>,
+    column: ValidateColumnExists<R, ColName, MissingColumnDummyCol>,
     options?: {
       prefix?: string;
       suffix?: string;
       drop_original?: boolean;
       include_na?: boolean;
     },
-  ): DataFrame<Prettify<Row & Record<string, boolean>>>;
+  ): DataFrame<Prettify<R & Record<string, boolean>>>;
 };

@@ -60,10 +60,10 @@ export type DropMethod<Row extends object> = {
    * // Drop from grouped DataFrames
    * df.groupBy("category").drop("internalId")
    */
-  <GroupName extends keyof Row, ColName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    ...columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameDrop>
-  ): PreserveGrouping<Row, GroupName, RowAfterDrop<Row, ColName>>;
+  <R extends object, GroupName extends keyof R, ColName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    ...columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>
+  ): PreserveGrouping<R, GroupName, RowAfterDrop<R, ColName>>;
 
   /**
    * Remove one or more columns from the DataFrame.
@@ -87,9 +87,10 @@ export type DropMethod<Row extends object> = {
    * // Drop from grouped DataFrames
    * df.groupBy("category").drop("internalId")
    */
-  <ColName extends keyof Row>(
-    ...columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameDrop>
-  ): DataFrame<RowAfterDrop<Row, ColName>>;
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    ...columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>
+  ): DataFrame<RowAfterDrop<R, ColName>>;
 
   // Array syntax
   /**
@@ -114,10 +115,10 @@ export type DropMethod<Row extends object> = {
    * // Drop from grouped DataFrames
    * df.groupBy("category").drop("internalId")
    */
-  <GroupName extends keyof Row, ColName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameDrop>,
-  ): PreserveGrouping<Row, GroupName, RowAfterDrop<Row, ColName>>;
+  <R extends object, GroupName extends keyof R, ColName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>,
+  ): PreserveGrouping<R, GroupName, RowAfterDrop<R, ColName>>;
 
   /**
    * Remove one or more columns from the DataFrame.
@@ -141,7 +142,8 @@ export type DropMethod<Row extends object> = {
    * // Drop from grouped DataFrames
    * df.groupBy("category").drop("internalId")
    */
-  <ColName extends keyof Row>(
-    columnNames: RestrictEmptyDataFrame<Row, ColName[], EmptyDataFrameDrop>,
-  ): DataFrame<RowAfterDrop<Row, ColName>>;
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>,
+  ): DataFrame<RowAfterDrop<R, ColName>>;
 };

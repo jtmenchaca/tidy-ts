@@ -68,11 +68,11 @@ export type ArrangeMethod<Row extends object> = {
    * // Sort within groups
    * df.groupBy("category").arrange("price", "desc")
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column: keyof Row,
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    column: keyof R,
     direction?: "asc" | "desc",
-  ): PreserveGrouping<Row, GroupName, RowAfterArrange<Row>>;
+  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
   /**
    * Sort rows by one or more columns.
    *
@@ -133,11 +133,11 @@ export type ArrangeMethod<Row extends object> = {
    * // Sort within groups
    * df.groupBy("category").arrange("price", "desc")
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columns: (keyof Row)[],
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    columns: (keyof R)[],
     directions?: ("asc" | "desc")[],
-  ): PreserveGrouping<Row, GroupName, RowAfterArrange<Row>>;
+  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
   /**
    * Sort rows by one or more columns.
    *
@@ -198,11 +198,11 @@ export type ArrangeMethod<Row extends object> = {
    * // Sort within groups
    * df.groupBy("category").arrange("price", "desc")
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    column1: keyof Row,
-    ...columns: (keyof Row)[]
-  ): PreserveGrouping<Row, GroupName, RowAfterArrange<Row>>;
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    column1: keyof R,
+    ...columns: (keyof R)[]
+  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
   /**
    * Sort rows by one or more columns.
    *
@@ -263,11 +263,11 @@ export type ArrangeMethod<Row extends object> = {
    * // Sort within groups
    * df.groupBy("category").arrange("price", "desc")
    */
-  <GroupName extends keyof Row>(
-    this: GroupedDataFrame<Row, GroupName>,
-    columns: (keyof Row)[],
+  <R extends object, GroupName extends keyof R>(
+    this: GroupedDataFrame<R, GroupName>,
+    columns: (keyof R)[],
     directions?: SortDirection | SortDirection[],
-  ): PreserveGrouping<Row, GroupName, RowAfterArrange<Row>>;
+  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
   /**
    * Sort rows by one or more columns.
    *
