@@ -6,7 +6,10 @@
 
 use std::collections::HashMap;
 
-use super::bootstrap::bootstrap_resample;
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
+use super::bootstrap::{bootstrap_sample_ids, resample_with_ids};
 use super::covariates;
 use super::expand::expand;
 use super::factorize::factorize_data;
@@ -130,6 +133,39 @@ pub fn target_trial_emulation(
     // 4b. Factorize expanded data (R: params@DT <- factorize(SEQexpand(params), params))
     factorize_data(&mut expanded.data, &config);
 
+    // DEBUG: Log expanded data stats
+    #[cfg(feature = "wasm")]
+    {
+        let msg = format!(
+            "[TTE DEBUG] After expand+factorize: nrows={}, method={:?}, multinomial={}, weighted={}",
+            expanded.data.nrows, config.method, config.multinomial, config.weights.weighted
+        );
+        console::log_1(&msg.into());
+
+        // Log factor levels
+        for (name, info) in &expanded.data.factors {
+            let msg = format!(
+                "[TTE DEBUG] Factor '{}': levels={:?}, reference={}",
+                name, info.levels, info.reference
+            );
+            console::log_1(&msg.into());
+        }
+
+        // Log column summary
+        let tx_bas = format!("{}{}", config.treatment, config.indicator_baseline);
+        for col_name in &[&config.outcome, &tx_bas, &"followup".to_string(), &"trial".to_string()] {
+            if let Some(col) = expanded.data.get_numeric(col_name) {
+                let non_nan = col.iter().filter(|v| !v.is_nan()).count();
+                let sum: f64 = col.iter().filter(|v| !v.is_nan()).sum();
+                let msg = format!(
+                    "[TTE DEBUG] Column '{}': n={}, non_nan={}, sum={:.4}",
+                    col_name, col.len(), non_nan, sum
+                );
+                console::log_1(&msg.into());
+            }
+        }
+    }
+
     // 5. Run the single-pass pipeline
     let (outcome_model, _final_weights, weight_diagnostics) =
         run_single_pass(&expanded.data, &augmented_data, &config, &outcome_cache)?;
@@ -171,18 +207,25 @@ pub fn target_trial_emulation(
         for i in 0..config.bootstrap.nboot {
             let boot_seed = config.bootstrap.seed + (i as u64) + 1;
 
-            // Resample (factor metadata is preserved by bootstrap_resample via clone)
-            let boot_data = bootstrap_resample(
+            // R samples IDs once from expanded data, then joins on both DT and data
+            // with the same id_lookup (internal_analysis.R lines 172-199)
+            let (sampled_ids, id_mult) = bootstrap_sample_ids(
                 &expanded.data,
                 &config,
                 boot_seed,
                 config.bootstrap.sample_fraction,
             )?;
-            let boot_pre = bootstrap_resample(
+            let boot_data = resample_with_ids(
+                &expanded.data,
+                &config,
+                &sampled_ids,
+                id_mult,
+            )?;
+            let boot_pre = resample_with_ids(
                 &augmented_data,
                 &config,
-                boot_seed,
-                config.bootstrap.sample_fraction,
+                &sampled_ids,
+                id_mult,
             )?;
 
             // Run single pass on bootstrap sample

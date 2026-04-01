@@ -1,6 +1,6 @@
 # Changes Since v1.1.0
 
-**Range**: v1.1.0 → HEAD (v1.3.0) — 95 commits
+**Range**: v1.1.0 → HEAD (v1.3.0) — 103 commits
 
 ---
 
@@ -77,9 +77,24 @@ Sync methods use an `AllSync<Formulas>` type guard with `NotAPromise<T>` to reje
 
 ## Type System Overhaul
 
-### Structural Covariance for `DataFrame<Row>`
+### `DataFrame<Row>` Consolidated into a Single Nominal Interface
 
-The core `DataFrame<Row>` type was split into `DataFrameBase<Row>` (interface, cached by the type checker) plus `DataFrameColumns<Row>`. This makes `DataFrame<Row>` structurally covariant for its generic type parameter. `PromisedDataFrame` now extends `DataFrameBase<Row>` instead of `DataFrame<Row>`.
+Originally the type was split into `DataFrameBase<Row>` (interface) plus `DataFrameColumns<Row>` (intersection). This has been further consolidated: all method signatures now live directly on `DataFrameBase<Row>`, which carries a nominal brand via `unique symbol` (`[__df]: Row`) so tsc can short-circuit structural comparisons. `DataFrameColumns<Row>` remains for the columnar accessor but the intersection is no longer on the critical path for most type checks.
+
+`PromisedDataFrame` now extends `DataFrame<Row>` (the full type) rather than `DataFrameBase<Row>`.
+
+Comprehensive JSDoc was added to every method on `DataFrameBase` (~780 new lines in `dataframe.type.ts`).
+
+### `UnifyUnion` Removed
+
+`UnifyUnion` (previously `MergeUnionAllKeys`) was removed from all type-level code. In practice `Row` is never a union, and the type was expensive for the checker to evaluate on generics. Affected locations: `remove-na.ts` (`NarrowFields`), `interpolate.types.ts` (`InterpolateResult`), and the `DataFrameBase` imports.
+
+### Method Types Extracted to Dedicated Files
+
+Several method type signatures were extracted from inline definitions into their own `.types.ts` files to keep `dataframe.type.ts` focused on the interface shape:
+
+- `remove-na.types.ts` — `RemoveNAMethod`, `RemoveNullMethod`, `RemoveUndefinedMethod` (with proper overloads for single field, variadic fields, and array-of-fields)
+- `set-row-labels.types.ts` — `SetRowLabelsMethod`
 
 ### `RowAfterMutation` Rewrite
 
@@ -88,6 +103,8 @@ Replaced `Omit<Row, keyof Assignments> & { ... }` with a single mapped type. Thi
 ### Generics Removed from Verb Implementations
 
 Generics were stripped from all verb, proxy, and distribution *implementation* files (`.verb.ts`) to improve type-checking performance. Generics remain on public-facing `.types.ts` files. Verb type signatures now use `this: DataFrame<R>` with fresh generic parameters.
+
+This was extended further to internal helpers: `withGroups()`, `withGroupsRebuilt()` (in `with-groups.ts`), and `mutateAsyncImpl()` all had their generic parameters removed and replaced with `any`, since they are internal plumbing that doesn't need compile-time type safety.
 
 ### Prettify + Tracing
 
@@ -232,6 +249,7 @@ New module at `packages/dataframe/rust/stats/splines/`:
 
 - **Join result types**: Fixed generic indexability preservation in join result types.
 - **Join generics**: Fixed right-side fields being incorrectly exposed in join generics.
+- **Join docs**: Corrected left/right/outer join documentation to say non-matching cells are `undefined` (not `null`).
 - **Filter → join/bindRows pipeline**: Fixed tracking of filter indexes when piping filter results into joins or bindRows.
 - **XLSX data descriptor ZIPs**: Fixed reading XLSX files with data descriptor bit set.
 - **XLSX inline strings**: Fixed parsing of `<is><t>...</t></is>` cells.
@@ -289,7 +307,7 @@ New module at `packages/dataframe/rust/stats/splines/`:
 - **JIT benchmarks**: `jit-vs-baseline.ts`, `mutate-jit.ts`
 
 ### New Bug Reproduction Tests
-- `async-detect.test.ts`, `dataframe-as-column-type.test.ts`, `filter-join-bug-report.ts`, `join-suffix-types.test.ts`, `no-types-reassign.test.ts`, `read-xlsx-inline-str.test.ts`, `record-string-unknown.test.ts`, `select-union-generic.test.ts`, `tap-api-exploration.test.ts`, `zod-parse-dataframe.test.ts`
+- `array-grouped-bleed.test.ts`, `async-detect.test.ts`, `dataframe-as-column-type.test.ts`, `filter-join-bug-report.ts`, `join-suffix-types.test.ts`, `no-types-reassign.test.ts`, `read-xlsx-inline-str.test.ts`, `record-string-unknown.test.ts`, `select-union-generic.test.ts`, `tap-api-exploration.test.ts`, `type-test-20260331.ts`, `zod-parse-dataframe.test.ts`
 
 ---
 
@@ -300,3 +318,4 @@ New module at `packages/dataframe/rust/stats/splines/`:
 | v1.1.0 | Baseline |
 | v1.2.0 | XLSX fixes, replaceNull/replaceUndefined, toRows/toColumns, GLMM foundation, camelCase migration |
 | v1.3.0 | Temporal support, sync/async split, type system overhaul, survival analysis, target trial emulation |
+| HEAD | DataFrame nominal branding, UnifyUnion removal, method type extraction, comprehensive JSDoc, further generic removal from internals |

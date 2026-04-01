@@ -11,6 +11,9 @@ use crate::stats::regression::glm::glm_fit_core::glm_fit;
 use crate::stats::regression::glm::multinomial::{multinomial_fit, multinomial_predict};
 use crate::stats::regression::glm::types_results::GlmResult;
 
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
 /// Result of a single binary or multinomial weight model.
 #[derive(Debug, Clone)]
 pub enum WeightModel {
@@ -939,6 +942,36 @@ pub fn compute_weights(
         None
     };
 
+    // DEBUG: Log weight vector stats before returning
+    #[cfg(feature = "wasm")]
+    {
+        let num_non_one = numerator.iter().filter(|&&v| (v - 1.0).abs() > 1e-10).count();
+        let den_non_one = denominator.iter().filter(|&&v| (v - 1.0).abs() > 1e-10).count();
+        let num_sum: f64 = numerator.iter().sum();
+        let den_sum: f64 = denominator.iter().sum();
+        let msg = format!(
+            "[TTE DEBUG] compute_weights: n={}, num_non_one={}, den_non_one={}, num_sum={:.4}, den_sum={:.4}",
+            numerator.len(), num_non_one, den_non_one, num_sum, den_sum
+        );
+        console::log_1(&msg.into());
+
+        // Log a few specific ratios for the first few non-1 rows
+        let mut count = 0;
+        for i in 0..numerator.len() {
+            if (numerator[i] - 1.0).abs() > 1e-10 || (denominator[i] - 1.0).abs() > 1e-10 {
+                if count < 5 {
+                    let msg = format!(
+                        "[TTE DEBUG] weight[{}]: num={:.6}, den={:.6}, ratio={:.6}",
+                        i, numerator[i], denominator[i],
+                        if denominator[i].abs() > 1e-15 { numerator[i] / denominator[i] } else { f64::NAN }
+                    );
+                    console::log_1(&msg.into());
+                    count += 1;
+                }
+            }
+        }
+    }
+
     Ok(WeightOutput {
         numerator,
         denominator,
@@ -1416,6 +1449,19 @@ pub fn apply_cumulative_weights(
     } else {
         weights.clone()
     };
+
+    // DEBUG: Log final cumulative weight stats
+    #[cfg(feature = "wasm")]
+    {
+        let w_sum: f64 = valid_weights.iter().sum();
+        let w_min = valid_weights.iter().cloned().fold(f64::INFINITY, f64::min);
+        let w_max = valid_weights.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let msg = format!(
+            "[TTE DEBUG] apply_cumulative_weights: n_valid={}, sum={:.4}, min={:.6}, max={:.6}, preexp={}",
+            valid_weights.len(), w_sum, w_min, w_max, config.weights.preexpansion
+        );
+        console::log_1(&msg.into());
+    }
 
     let diagnostics = compute_weight_diagnostics(&valid_weights, weight_output);
 

@@ -10,6 +10,9 @@ use crate::stats::regression::glm::glm_control::glm_control;
 use crate::stats::regression::glm::glm_fit_core::glm_fit;
 use crate::stats::regression::glm::types_results::GlmResult;
 
+#[cfg(feature = "wasm")]
+use web_sys::console;
+
 /// Fitted outcome model.
 #[derive(Debug, Clone)]
 pub struct OutcomeModel {
@@ -56,6 +59,53 @@ pub fn fit_outcome_model(
     let (x, expanded_names) = build_design_matrix_with_names(data, formula_cache, Some(&valid_rows))?;
     let y: Vec<f64> = valid_rows.iter().map(|&i| outcome_col[i]).collect();
 
+    // DEBUG: Log outcome model design matrix stats
+    #[cfg(feature = "wasm")]
+    {
+        // x is Vec<Vec<f64>> where x[row][col] — outer = rows, inner = features
+        let n_features = if x.is_empty() { 0 } else { x[0].len() };
+        let msg = format!(
+            "[TTE DEBUG] Outcome model: n_rows={}, n_features={}, col_names={:?}",
+            x.len(), n_features, expanded_names
+        );
+        console::log_1(&msg.into());
+
+        let y_sum: f64 = y.iter().sum();
+        let msg = format!(
+            "[TTE DEBUG] Outcome model: y_sum={:.4}, y_n={}",
+            y_sum, y.len()
+        );
+        console::log_1(&msg.into());
+
+        // Log column sums — col 0 is intercept, col 1+ are expanded_names
+        for col_idx in 0..n_features.min(15) {
+            let col_sum: f64 = x.iter().map(|row| row[col_idx]).sum();
+            let name = if col_idx == 0 {
+                "(Intercept)".to_string()
+            } else {
+                expanded_names.get(col_idx - 1).cloned().unwrap_or("?".to_string())
+            };
+            let msg = format!(
+                "[TTE DEBUG] X col[{}] '{}': sum={:.4}",
+                col_idx, name, col_sum,
+            );
+            console::log_1(&msg.into());
+        }
+
+        // Log weight stats if present
+        if let Some(wts) = weights {
+            let w_valid: Vec<f64> = valid_rows.iter().map(|&i| wts[i]).collect();
+            let w_sum: f64 = w_valid.iter().sum();
+            let w_min = w_valid.iter().cloned().fold(f64::INFINITY, f64::min);
+            let w_max = w_valid.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+            let msg = format!(
+                "[TTE DEBUG] Weights: n={}, sum={:.4}, min={:.6}, max={:.6}",
+                w_valid.len(), w_sum, w_min, w_max
+            );
+            console::log_1(&msg.into());
+        }
+    }
+
     // Extract weights for valid rows, with truncation
     let w: Option<Vec<f64>> = weights.map(|wts| {
         valid_rows
@@ -73,7 +123,8 @@ pub fn fit_outcome_model(
             .collect()
     });
 
-    let control = glm_control(None, None, None)?;
+    // R's fastglm uses maxit=100 by default; near-separation models can need 27+ iterations
+    let control = glm_control(None, Some(100), None)?;
     let family: Box<dyn crate::stats::regression::family::GlmFamily> =
         Box::new(QuasiBinomialFamily::logit());
 
