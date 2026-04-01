@@ -39,7 +39,7 @@ export const joinsDocs: Record<string, DocEntry> = {
     signature:
       "leftJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<T & Partial<U>>\nleftJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<T & Partial<U>>",
     description:
-      "Left join with another DataFrame. Keeps all rows from the left DataFrame, filling nulls for columns from right where no match exists. This is the most common join type for preserving all records from a primary table while enriching with optional data.",
+      "Left join with another DataFrame. Keeps all rows from the left DataFrame; columns from the right are `undefined` where there is no key match. This is the most common join type for preserving all records from a primary table while enriching with optional data.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "other: DataFrame to join with",
@@ -58,9 +58,9 @@ export const joinsDocs: Record<string, DocEntry> = {
       "  }",
     ],
     returns:
-      "DataFrame<T & Partial<U>> - All left rows with matched right columns (null if no match)",
+      "DataFrame<T & Partial<U>> - All left rows with matched right columns (`undefined` if no match)",
     examples: [
-      '// Overload 1: Simple API - single column\nconst users = createDataFrame([\n  { user_id: 1, name: "Alice" },\n  { user_id: 2, name: "Bob" },\n]);\nconst orders = createDataFrame([\n  { user_id: 1, product: "Widget", amount: 100 },\n]);\n\nconst result = users.leftJoin(orders, "user_id");\n// All users kept, Bob has null for product/amount',
+      '// Overload 1: Simple API - single column\nconst users = createDataFrame([\n  { user_id: 1, name: "Alice" },\n  { user_id: 2, name: "Bob" },\n]);\nconst orders = createDataFrame([\n  { user_id: 1, product: "Widget", amount: 100 },\n]);\n\nconst result = users.leftJoin(orders, "user_id");\n// All users kept, Bob has undefined for product/amount',
       '// Overload 1: Simple API - multiple columns\nconst sales = createDataFrame([\n  { region: "North", date: "2023-01", revenue: 1000 },\n]);\nconst targets = createDataFrame([\n  { region: "North", date: "2023-01", target: 1200 },\n]);\n\nsales.leftJoin(targets, ["region", "date"])',
       '// Overload 2: Advanced API - different column names\nconst customers = createDataFrame([\n  { customer_id: 1, name: "Alice" },\n]);\nconst purchases = createDataFrame([\n  { buyer_id: 1, item: "Widget" },\n]);\n\ncustomers.leftJoin(purchases, {\n  keys: { left: "customer_id", right: "buyer_id" },\n})',
       '// Overload 2: Advanced API - multiple different column names\nconst df1 = createDataFrame([\n  { emp_id: 1, dept: "Sales", year: 2023 },\n]);\nconst df2 = createDataFrame([\n  { employee_id: 1, department: "Sales", year: 2023, bonus: 1000 },\n]);\n\ndf1.leftJoin(df2, {\n  keys: {\n    left: ["emp_id", "dept"],\n    right: ["employee_id", "department"],\n  },\n})',
@@ -70,7 +70,7 @@ export const joinsDocs: Record<string, DocEntry> = {
     bestPractices: [
       "✓ GOOD: Use Overload 1 (simple API) when column names match between DataFrames",
       "✓ GOOD: Use Overload 2 (advanced API) when column names differ or you need explicit control",
-      "✓ GOOD: Check for nulls in result columns from the right DataFrame",
+      "✓ GOOD: Check for `undefined` in result columns from the right DataFrame (non-matches)",
       "✓ GOOD: Use suffixes when both DataFrames have overlapping non-key column names",
     ],
   },
@@ -160,7 +160,7 @@ const result = left.leftJoin(right, keyCol);`,
       '✓ Use keys: { left: "a", right: "b" } when the join key has different column names in each DataFrame',
       '✓ Use suffixes when both tables share the same key names but have other columns with the same name (e.g. both have "quarter" or "value")',
       "✓ For large datasets (100K+ rows), use leftJoin; it is WASM-backed and much faster than manual JS loops",
-      "✓ Check for null/undefined in right-side columns after a left join (non-matches are filled with null)",
+      "✓ Check for `undefined` in right-side columns after a left join (non-matches)",
       "✓ Validate key columns with df.columns().includes(key) before joining when keys are dynamic",
     ],
     antiPatterns: [
@@ -176,7 +176,7 @@ const result = left.leftJoin(right, keyCol);`,
     signature:
       "rightJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & U>\nrightJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & U>",
     description:
-      "Right join with another DataFrame. Keeps all rows from right, fills nulls for non-matches.",
+      "Right join with another DataFrame. Keeps all rows from the right; columns from the left are `undefined` where there is no key match.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "other: DataFrame to join with",
@@ -190,7 +190,7 @@ const result = left.leftJoin(right, keyCol);`,
       "  }",
     ],
     returns:
-      "DataFrame<Partial<T> & U> - All right rows with matched left columns (null if no match)",
+      "DataFrame<Partial<T> & U> - All right rows with matched left columns (`undefined` if no match)",
     examples: [
       'df.rightJoin(other, "id")',
       'df.rightJoin(other, ["region", "year"])',
@@ -205,7 +205,7 @@ const result = left.leftJoin(right, keyCol);`,
     signature:
       "outerJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & Partial<U>>\nouterJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & Partial<U>>",
     description:
-      "Full outer join. Keeps all rows from both DataFrames, fills nulls for non-matches.",
+      "Full outer join. Keeps all rows from both DataFrames; cells from the side with no matching row are `undefined`.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "other: DataFrame to join with",
@@ -219,7 +219,7 @@ const result = left.leftJoin(right, keyCol);`,
       "  }",
     ],
     returns:
-      "DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames",
+      "DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames (`undefined` for columns from the side with no match)",
     examples: [
       'df.outerJoin(other, "id")',
       'df.outerJoin(other, ["region", "year"])',

@@ -29,9 +29,9 @@
 | Type | Behavior |
 |------|----------|
 | **Inner** | Only matching rows from both sides |
-| **Left** | All left rows, matching right rows (or null) |
-| **Right** | All right rows, matching left rows (or null) |
-| **Outer** | All rows from both sides |
+| **Left** | All left rows; right-hand columns are `undefined` where there is no key match |
+| **Right** | All right rows; left-hand columns are `undefined` where there is no key match |
+| **Outer** | All rows from both sides; columns from the side with no match are `undefined` |
 | **Cross** | Cartesian product |
 | **Asof** | Temporal matching (nearest match by time) |
 

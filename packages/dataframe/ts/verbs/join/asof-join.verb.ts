@@ -173,7 +173,7 @@ function buildOutputStoreAsof(
     keySet: new Set<string>(),
     dropKeys: new Set([joinKey]), // Join key is already handled by exclusion above
     suffix: suffixRight,
-    useNullable: true, // Right side can have nulls from no matches
+    useNullable: true, // Unmatched right indices; output cells from the right are `undefined`
   });
 
   // Merge results

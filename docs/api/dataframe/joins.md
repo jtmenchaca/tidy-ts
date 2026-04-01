@@ -66,7 +66,7 @@ df.innerJoin(other, { keys: { left: "user_id", right: "id" } })
 
 ## leftJoin
 
-Left join with another DataFrame. Keeps all rows from the left DataFrame, filling nulls for columns from right where no match exists. This is the most common join type for preserving all records from a primary table while enriching with optional data.
+Left join with another DataFrame. Keeps all rows from the left DataFrame; columns from the right are `undefined` where there is no key match. This is the most common join type for preserving all records from a primary table while enriching with optional data.
 
 ### Signature
 
@@ -100,7 +100,7 @@ import { createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-DataFrame<T & Partial<U>> - All left rows with matched right columns (null if no match)
+DataFrame<T & Partial<U>> - All left rows with matched right columns (`undefined` if no match)
 
 ### Examples
 
@@ -115,7 +115,7 @@ const orders = createDataFrame([
 ]);
 
 const result = users.leftJoin(orders, "user_id");
-// All users kept, Bob has null for product/amount
+// All users kept, Bob has undefined for product/amount
 // Overload 1: Simple API - multiple columns
 const sales = createDataFrame([
   { region: "North", date: "2023-01", revenue: 1000 },
@@ -160,7 +160,7 @@ users.leftJoin(orders, "user_id", {
 
 - ✓ GOOD: Use Overload 1 (simple API) when column names match between DataFrames
 - ✓ GOOD: Use Overload 2 (advanced API) when column names differ or you need explicit control
-- ✓ GOOD: Check for nulls in result columns from the right DataFrame
+- ✓ GOOD: Check for `undefined` in result columns from the right DataFrame (non-matches)
 - ✓ GOOD: Use suffixes when both DataFrames have overlapping non-key column names
 
 ### Related
@@ -171,7 +171,7 @@ users.leftJoin(orders, "user_id", {
 
 ## rightJoin
 
-Right join with another DataFrame. Keeps all rows from right, fills nulls for non-matches.
+Right join with another DataFrame. Keeps all rows from the right; columns from the left are `undefined` where there is no key match.
 
 ### Signature
 
@@ -200,7 +200,7 @@ import { createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-DataFrame<Partial<T> & U> - All right rows with matched left columns (null if no match)
+DataFrame<Partial<T> & U> - All right rows with matched left columns (`undefined` if no match)
 
 ### Examples
 
@@ -218,7 +218,7 @@ df.rightJoin(other, { keys: { left: "user_id", right: "id" } })
 
 ## outerJoin
 
-Full outer join. Keeps all rows from both DataFrames, fills nulls for non-matches.
+Full outer join. Keeps all rows from both DataFrames; cells from the side with no matching row are `undefined`.
 
 ### Signature
 
@@ -247,7 +247,7 @@ import { createDataFrame } from "@tidy-ts/dataframe";
 
 ### Returns
 
-DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames
+DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames (`undefined` for columns from the side with no match)
 
 ### Examples
 

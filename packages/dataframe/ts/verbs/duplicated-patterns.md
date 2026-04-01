@@ -330,7 +330,7 @@ Here the differences are more significant:
 | Map key type | `Map<unknown, number[]>` (raw values) | `Map<string, number[]>` (stringified) |
 | Composite key separator | N/A (single-key only) | `"|"` pipe character |
 | Composite key handling | Caller must pre-compose keys | Built-in via `String(col[i]).join("|")` |
-| Sentinel for unmatched | `null` in return arrays | `RIGHT_NULL` (0xFFFFFFFF) in left-join; `null` in right/outer |
+| Sentinel for unmatched | `null` in return arrays | `RIGHT_NULL` (0xFFFFFFFF) in left-join; `null` in right/outer index arrays. Materialized row objects use `undefined` for cells from the unmatched side. |
 
 **Key risk:** The `"|"` separator in local implementations can produce false collisions (e.g., keys `["a|b", "c"]` vs `["a", "b|c"]` would hash identically). The shared helper's `projectCompositeKeyColumn` uses `"\0"` (null byte) separator, which is safer.
 

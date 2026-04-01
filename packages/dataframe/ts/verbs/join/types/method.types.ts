@@ -171,7 +171,7 @@ export type InnerJoinDuckDBMethod<Row extends object> = {
  * Join two DataFrames, keeping all rows from the left DataFrame.
  *
  * Returns all rows from the left DataFrame with matching data from the right DataFrame
- * where available. Non-matching rows from the right become null. All left rows are preserved.
+ * where available. Where there is no key match, cells from the right are `undefined`. Every left row is preserved.
  *
  * @example
  * // Keep all users, add order data where available
@@ -194,7 +194,7 @@ export type LeftJoinMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the left DataFrame.
    *
    * Returns all rows from the left DataFrame with matching data from the right DataFrame
-   * where available. Non-matching rows from the right become null. All left rows are preserved.
+   * where available. Where there is no key match, cells from the right are `undefined`. Every left row is preserved.
    *
    * @example
    * // Keep all users, add order data where available
@@ -228,7 +228,7 @@ export type LeftJoinMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the left DataFrame.
    *
    * Returns all rows from the left DataFrame with matching data from the right DataFrame
-   * where available. Non-matching rows from the right become null. All left rows are preserved.
+   * where available. Where there is no key match, cells from the right are `undefined`. Every left row is preserved.
    *
    * @example
    * // Keep all users, add order data where available
@@ -273,7 +273,7 @@ export type LeftJoinParallelMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the left DataFrame.
    *
    * Returns all rows from the left DataFrame with matching data from the right DataFrame
-   * where available. Non-matching rows from the right become null. All left rows are preserved.
+   * where available. Where there is no key match, cells from the right are `undefined`. Every left row is preserved.
    *
    * @example
    * // Keep all users, add order data where available
@@ -308,7 +308,7 @@ export type LeftJoinParallelMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the left DataFrame.
    *
    * Returns all rows from the left DataFrame with matching data from the right DataFrame
-   * where available. Non-matching rows from the right become null. All left rows are preserved.
+   * where available. Where there is no key match, cells from the right are `undefined`. Every left row is preserved.
    *
    * @example
    * // Keep all users, add order data where available
@@ -353,7 +353,7 @@ export type LeftJoinParallelMethod<Row extends object> = {
  * Join two DataFrames, keeping all rows from the right DataFrame.
  *
  * Returns all rows from the right DataFrame with matching data from the left DataFrame
- * where available. Non-matching rows from the left become null. All right rows are preserved.
+ * where available. Where there is no key match, cells from the left are `undefined`. Every right row is preserved.
  *
  * @example
  * // Keep all orders, add user data where available
@@ -376,7 +376,7 @@ export type RightJoinMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the right DataFrame.
    *
    * Returns all rows from the right DataFrame with matching data from the left DataFrame
-   * where available. Non-matching rows from the left become null. All right rows are preserved.
+   * where available. Where there is no key match, cells from the left are `undefined`. Every right row is preserved.
    *
    * @example
    * // Keep all orders, add user data where available
@@ -410,7 +410,7 @@ export type RightJoinMethod<Row extends object> = {
    * Join two DataFrames, keeping all rows from the right DataFrame.
    *
    * Returns all rows from the right DataFrame with matching data from the left DataFrame
-   * where available. Non-matching rows from the left become null. All right rows are preserved.
+   * where available. Where there is no key match, cells from the left are `undefined`. Every right row is preserved.
    *
    * @example
    * // Keep all orders, add user data where available
@@ -452,8 +452,8 @@ export type RightJoinMethod<Row extends object> = {
 /**
  * Join two DataFrames, keeping all rows from both (full outer join).
  *
- * Returns all rows from both DataFrames. Rows without matches have null values
- * for columns from the other DataFrame. This is the union of left and right joins.
+ * Returns all rows from both DataFrames. Cells from the side with no matching row are
+ * `undefined`. This is the union of left and right joins.
  *
  * @example
  * // Keep all users and all orders
@@ -475,8 +475,8 @@ export type OuterJoinMethod<Row extends object> = {
   /**
    * Join two DataFrames, keeping all rows from both (full outer join).
    *
-   * Returns all rows from both DataFrames. Rows without matches have null values
-   * for columns from the other DataFrame. This is the union of left and right joins.
+   * Returns all rows from both DataFrames. Cells from the side with no matching row are
+   * `undefined`. This is the union of left and right joins.
    *
    * @example
    * // Keep all users and all orders
@@ -509,8 +509,8 @@ export type OuterJoinMethod<Row extends object> = {
   /**
    * Join two DataFrames, keeping all rows from both (full outer join).
    *
-   * Returns all rows from both DataFrames. Rows without matches have null values
-   * for columns from the other DataFrame. This is the union of left and right joins.
+   * Returns all rows from both DataFrames. Cells from the side with no matching row are
+   * `undefined`. This is the union of left and right joins.
    *
    * @example
    * // Keep all users and all orders
