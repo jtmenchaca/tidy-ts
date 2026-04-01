@@ -1,6 +1,4 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame, GroupedDataFrame } from "../../../dataframe/index.ts";
-import type { MutateAssignments } from "./mutate.types.ts";
 import { createUpdatedDataFrame } from "./mutate-helpers-sync.ts";
 import {
   processGroupedMutationsAsync,
@@ -17,15 +15,14 @@ import type {
  * @param spec - Mutation specification (functions/values)
  * @param options - Concurrency control options
  */
-export async function mutateAsyncImpl<Row extends Record<string, unknown>>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
-  spec: MutateAssignments<Row>,
+export async function mutateAsyncImpl(
+  df: any,
+  spec: any,
   options: ConcurrencyOptions = {},
 ) {
-  const n = (df as DataFrame<Row>).nrows();
-  const api = df as any;
-  const _store = api.__store;
-  const _view = api.__view;
+  const n = df.nrows();
+  const _store = df.__store;
+  const _view = df.__view;
 
   const updates: Record<string, unknown[]> = {};
 

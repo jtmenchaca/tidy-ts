@@ -16,5 +16,8 @@
     "vega-embed": "npm:vega-embed@^7.0.2",
     "vega-lite": "npm:vega-lite@^6.4.1",
     "temporal-polyfill": "npm:temporal-polyfill@^0.3.2"
-  }
+  },
+  "include": [
+    "../../packages/testing/bugs/type-test-20260331.ts"
+  ]
 }

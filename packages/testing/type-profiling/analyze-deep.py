@@ -126,34 +126,35 @@ print("\n" + "=" * 60)
 print("3. DEPTH LIMIT HITS — WHICH FILES TRIGGER THEM")
 print("=" * 60)
 
-# Build a timeline: for each depth-limit event, find which checkSourceFile was active
-# by checking the most recent B event for checkSourceFile before this timestamp
-
-check_ranges = []
-cstack = []
-for e in events:
-    if e.get("cat") == "check" and e.get("name") == "checkSourceFile":
-        path = e.get("args", {}).get("path", "")
-        if e["ph"] == "B":
-            cstack.append((path, e["ts"]))
-        elif e["ph"] == "E" and cstack:
-            p, t = cstack.pop()
-            check_ranges.append((t, e["ts"], p))
-
-check_ranges.sort()
-
-import bisect
-starts = [r[0] for r in check_ranges]
+# Replay events chronologically with a stack to find the innermost
+# active checkSourceFile for each event. Previous approach used bisect
+# on a flat range list, which misattributed nested checks to outer files.
 
 depth_by_file = defaultdict(int)
+comp_by_file = defaultdict(lambda: {"count": 0, "time": 0.0})
+check_file_stack = []
+
 for e in events:
-    if e.get("name") == "recursiveTypeRelatedTo_DepthLimit" and e.get("ph") == "I":
-        ts = e["ts"]
-        idx = bisect.bisect_right(starts, ts) - 1
-        if 0 <= idx < len(check_ranges):
-            s, end, path = check_ranges[idx]
-            if s <= ts <= end:
-                depth_by_file[short(path)] += 1
+    name = e.get("name", "")
+    ph = e.get("ph", "")
+
+    if e.get("cat") == "check" and name == "checkSourceFile":
+        path = e.get("args", {}).get("path", "")
+        if ph == "B":
+            check_file_stack.append(path)
+        elif ph == "E" and check_file_stack:
+            check_file_stack.pop()
+
+    elif name == "recursiveTypeRelatedTo_DepthLimit" and ph == "I":
+        if check_file_stack:
+            depth_by_file[short(check_file_stack[-1])] += 1
+
+    elif name == "structuredTypeRelatedTo" and ph == "X":
+        if check_file_stack:
+            f = short(check_file_stack[-1])
+            dur = e.get("dur", 0) / 1000
+            comp_by_file[f]["count"] += 1
+            comp_by_file[f]["time"] += dur
 
 print("\nDepth-limit hits by active file:")
 for path, c in sorted(depth_by_file.items(), key=lambda x: -x[1])[:20]:
@@ -165,19 +166,6 @@ for path, c in sorted(depth_by_file.items(), key=lambda x: -x[1])[:20]:
 print("\n" + "=" * 60)
 print("4. EXPENSIVE COMPARISONS — WHICH FILES TRIGGER THEM")
 print("=" * 60)
-
-comp_by_file = defaultdict(lambda: {"count": 0, "time": 0.0})
-for e in events:
-    if e.get("name") == "structuredTypeRelatedTo" and e.get("ph") == "X":
-        ts = e["ts"]
-        dur = e.get("dur", 0) / 1000
-        idx = bisect.bisect_right(starts, ts) - 1
-        if 0 <= idx < len(check_ranges):
-            s, end, path = check_ranges[idx]
-            if s <= ts <= end:
-                f = short(path)
-                comp_by_file[f]["count"] += 1
-                comp_by_file[f]["time"] += dur
 
 print("\nBy total comparison time:")
 for path, d in sorted(comp_by_file.items(), key=lambda x: -x[1]["time"])[:20]:

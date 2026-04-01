@@ -91,7 +91,7 @@ Deno.test("print() chaining works", () => {
     .print("Original data:")
     .mutate({ doubleAge: (row) => row.age * 2 })
     .print("After mutation:");
-
+ 
   console.log("Result is DataFrame:", result !== null);
   console.log("Final data:", result.toArray());
 });
@@ -221,7 +221,7 @@ Deno.test("print() API patterns comprehensive test", () => {
 
   console.log("Chained result rows:", filtered.nrows());
 });
-
+ 
 Deno.test("print() with colorRows option", () => {
   console.log("\n=== ColorRows Test ===");
   console.log("Note: Colors may not display in all terminals/IDEs");

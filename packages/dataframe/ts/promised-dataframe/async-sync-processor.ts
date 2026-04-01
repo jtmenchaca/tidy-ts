@@ -55,13 +55,15 @@ export type SyncRowProcessor<Row extends object, TResult> = (
 ) => TResult;
 
 /**
- * Row processor function signature for async operations
+ * Row processor function signature for async operations.
+ * Uses `any` for the df parameter to avoid expensive structural comparisons
+ * at call sites — callers already pass `any`-typed DataFrames.
  */
 export type AsyncRowProcessor<Row extends object, TResult> = (
   rowSnapshot: Row,
   logicalIndex: number,
   groupIndex: number,
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
+  df: any,
 ) => TResult | Promise<TResult>;
 
 /**
@@ -100,7 +102,7 @@ export function processGroupedRows<Row extends object, TResult>(
  * Generic grouped data processor for async operations
  */
 export async function processGroupedRowsAsync<Row extends object, TResult>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
+  df: any,
   processor: AsyncRowProcessor<Row, TResult>,
   options: ConcurrencyOptions = {},
 ): Promise<{ physicalIndex: number; result: TResult | Error }[]> {
@@ -210,7 +212,7 @@ export function processUngroupedRows<Row extends object, TResult>(
  * Generic ungrouped data processor for async operations
  */
 export async function processUngroupedRowsAsync<Row extends object, TResult>(
-  df: DataFrame<Row> | GroupedDataFrame<Row>,
+  df: any,
   processor: AsyncRowProcessor<Row, TResult>,
   options: ConcurrencyOptions = {},
 ): Promise<

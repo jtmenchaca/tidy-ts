@@ -1,7 +1,6 @@
 // packages/dataframe/ts/core/thenable.ts
 import type {
   DataFrame,
-  DataFrameBase,
   DataFrameColumns,
   GroupedDataFrame,
 } from "../../dataframe/index.ts";
@@ -65,7 +64,7 @@ import type {
  */
 export type PromisedDataFrame<Row extends Record<string, unknown>> =
   & Omit<
-    DataFrameBase<Row>,
+    DataFrame<Row>,
     | "mutate"
     | "mutateAsync"
     | "filter"
@@ -259,7 +258,7 @@ export type PromisedGroupedDataFrame<
   K extends keyof Row,
 > =
   & Omit<
-    DataFrameBase<Row>,
+    DataFrame<Row>,
     | "mutate"
     | "mutateAsync"
     | "filter"

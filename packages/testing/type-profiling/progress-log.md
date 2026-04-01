@@ -590,3 +590,159 @@ Depth-limit hits dropped from 1,051 to ~544. All verb files, proxy files, and di
 ### Final assessment
 
 The "typed shell, untyped core" pattern has been fully applied to all implementation files. The remaining ~21.5s check time is the structural cost of the type definition surface itself — the ~70-member DataFrameBase interface, MutateMethod's 14 overloads, join suffix types, and the DataFrameColumns mapped type. Further improvement would require changes to the user-facing type API, which carries UX trade-offs.
+
+---
+
+## Consumer benchmark & Change 19: Promote DataFrameBase to primary interface (2026-03-31)
+
+### Context: Consumer benchmark
+
+A consumer repro file (`packages/testing/bugs/type-test-20260331.ts`) was created with 5 generic functions chaining DataFrame operations (filter, groupBy, mutate, summarize, joins). This represents how downstream consumers use `DataFrame<T>` in generic code. A profiling script (`/tmp/profile-consumer.ts`) temporarily adds this file to the dataframe package's `deno.jsonc`, runs `tsc --extendedDiagnostics` and `--generateTrace`, then restores the original config.
+
+**Consumer benchmark baseline (after Changes 1–18):**
+
+| Metric | Value |
+|---|---|
+| Check time | 7.59s |
+| Instantiations | 17,749,605 |
+| Types | 519,655 |
+| Symbols | 540,816 |
+| Depth-limit hits | 2,694 |
+| Structural comparison time | 21.5s |
+
+The consumer benchmark is lighter than the full package check (fewer files parsed) but reveals how expensive generic `DataFrame<T>` usage is for downstream code.
+
+### Change 19: Promote DataFrameBase to primary cached interface
+
+**What**: Restructured the DataFrame type hierarchy so that `DataFrameBase<Row>` is the primary interface (with all ~70 methods, branded with a unique symbol) and `DataFrame<Row>` is a type alias intersection: `DataFrameBase<Row> & DataFrameColumns<Row>`.
+
+Previously (after Change 1), the names were the same but `DataFrame` was exported as the intersection and all verb return types referenced `DataFrame`. The key change here is that `DataFrameBase` now contains the brand and all method signatures, while `DataFrame` is the public-facing type that adds column accessors.
+
+This means:
+- tsc caches the `DataFrameBase` interface for structural comparisons
+- When comparing `DataFrame<A>` vs `DataFrame<B>`, tsc expands to `DataFrameBase<A> & DataFrameColumns<A>` vs `DataFrameBase<B> & DataFrameColumns<B>`, but the `DataFrameBase` part is cached
+- `df.colName` column accessor syntax continues to work everywhere (via the `DataFrameColumns` mapped type in the intersection)
+
+**Files changed**: `packages/dataframe/ts/dataframe/types/dataframe.type.ts`, `packages/dataframe/ts/dataframe/index.ts`
+
+**Consumer benchmark after Change 19:**
+
+| Metric | Before | After | Change |
+|---|---|---|---|
+| Check time | 7.59s | 4.51s | -41% |
+| Instantiations | 17,749,605 | 4,835,120 | -73% |
+| Types | 519,655 | 249,514 | -52% |
+| Depth-limit hits | 2,694 | 1,635 | -39% |
+| Structural comparison time | 21.5s | 12.3s | -43% |
+
+**Remaining hotspots (consumer benchmark):**
+
+| Source | Comparison time | Comparisons | Depth hits |
+|---|---|---|---|
+| mutate-helpers-async.ts | 7,334ms | 158x | 440 |
+| create-dataframe.ts | 1,535ms | 75x | 670 |
+| type-test-20260331.ts | 1,319ms | 56x | — |
+| DataFrame vs DataFrame | 2,697ms | 57x | 530 |
+| DataFrameBase vs DataFrameBase | 2,431ms | 69x | 1,000 |
+| DataFrame vs DataFrameBase | 2,045ms | 46x | — |
+
+**Status**: `pnpm check:dataframe` — 0 errors.
+
+---
+
+### Change 19b: Extract DataFrame-returning methods from DataFrameBase interface
+
+**What**: Methods on `DataFrameBase` that returned `DataFrame<NewRow>` (the intersection type alias) were poisoning the interface cache — tsc couldn't cache the interface because its members referenced an uncacheable intersection. The fix was twofold:
+
+1. **Methods returning same Row type** (`print`, `iloc`) → changed return type to `this` (polymorphic, no DataFrame reference needed)
+2. **Methods returning narrowed Row type** (`removeNA`, `removeNull`, `removeNulls`, `removeUndefined`, `setRowLabels`) → extracted into external `.types.ts` files using the `this: DataFrame<R>` pattern, same as all other verb methods
+
+**Key rule discovered**: `DataFrameBase` must never reference `DataFrame` in its own body. Any method that needs to return `DataFrame` must be an external method type referenced by name (e.g., `removeNull: RemoveNullMethod<Row>`), not an inline signature.
+
+**Files created**:
+- `packages/dataframe/ts/verbs/filtering/remove-na.types.ts` — `RemoveNAMethod`, `RemoveNullMethod`, `RemoveUndefinedMethod`
+- `packages/dataframe/ts/dataframe/types/set-row-labels.types.ts` — `SetRowLabelsMethod`
+
+**Files changed**: `packages/dataframe/ts/dataframe/types/dataframe.type.ts` (replaced inline signatures with method type references, removed unused `Prettify`/`ROW_LABEL` imports)
+
+**Full package diagnostics after Change 19b:**
+
+| Metric | After 1-18 | After 19b | Change |
+|---|---|---|---|
+| Check time | ~21.5s | 2.67s | -88% |
+| Instantiations | 26,139,804 | 1,299,492 | -95% |
+
+`pnpm check:dataframe` — 0 errors. Column accessor API fully preserved.
+
+---
+
+## Changes 20–22: Remove generics from internal async/mutate/withGroups functions (2026-03-31)
+
+### Change 20: Remove generics from async processor functions
+
+**What**: Changed `processGroupedRowsAsync` and `processUngroupedRowsAsync` in `async-sync-processor.ts` to accept `df: any` instead of `df: DataFrame<Row> | GroupedDataFrame<Row>`. Also changed `AsyncRowProcessor` type's `df` parameter from `DataFrame<Row> | GroupedDataFrame<Row>` to `any`.
+
+**Why**: The only callers (`mutate-helpers-async.ts`) already pass `any`-typed DataFrames. The generic `DataFrame<Row>` parameter forced tsc to structurally compare the full ~70-member interface at every call site for no type safety benefit.
+
+**File changed**: `packages/dataframe/ts/promised-dataframe/async-sync-processor.ts`
+
+### Change 21: Remove generics from mutateAsyncImpl
+
+**What**: Changed `mutateAsyncImpl` from `<Row extends Record<string, unknown>>(df: DataFrame<Row> | GroupedDataFrame<Row>, spec: MutateAssignments<Row>)` to `(df: any, spec: any)`. Removed unused `DataFrame`, `GroupedDataFrame`, `MutateAssignments` type imports.
+
+**Why**: Same pattern — all callers in `mutate.overloads.ts` pass `df: any` and cast `spec`. The function body already used `any` casts internally. The generic signature was the trigger for 258ms / 124 depth-limit hits of structural comparisons.
+
+**File changed**: `packages/dataframe/ts/verbs/transformation/mutate/mutate-async.ts`
+
+### Change 22: Remove generics from withGroups and withGroupsRebuilt
+
+**What**: Changed both `withGroups` and `withGroupsRebuilt` in `with-groups.ts` from generic functions (`<T, G, U>` with `GroupedDataFrame<T, G>` / `DataFrame<U>` parameters) to plain `(src: any, out: any): any` functions. Removed unused `DataFrame` and `GroupedDataFrame` type imports.
+
+**Why**: Every caller across ~30 verb files passes `any`-typed arguments. Both functions internally cast everything with `as unknown as` — the generics were purely cosmetic. `mutate-columns.verb.ts` alone triggered 6,131ms / 147 comparisons / 130 depth-limit hits because `withGroups(groupedDf, outDf)` with `any` args forced tsc to resolve the generic `DataFrame<U>` parameter.
+
+**Files changed**: `packages/dataframe/ts/dataframe/implementation/with-groups.ts`
+
+### Change 22b: Fix analyze-deep.py file attribution
+
+**What**: Replaced the `bisect`-based approach for attributing `structuredTypeRelatedTo` events to files with a proper stack-based replay. The old approach used `bisect_right` on a flat list of `checkSourceFile` ranges, which misattributed comparisons to outer (parent) files when `checkSourceFile` events were nested.
+
+**Why**: The previous analysis showed `mutate-helpers-async.ts` at 7,334ms — but 5,800ms of that was actually from `mutate-columns.verb.ts` (misattributed due to nested file checks). The stack-based approach correctly attributes each comparison to the innermost active `checkSourceFile`.
+
+**File changed**: `packages/testing/type-profiling/analyze-deep.py`
+
+### Consumer benchmark after Changes 20–22
+
+| Metric | After 19b | After 20-22 | Change |
+|---|---|---|---|
+| Check time | 2.85s | 2.69s | -6% |
+| Instantiations | 1,299,492 | 1,298,763 | ~0% |
+| Types | 225,751 | 225,558 | ~0% |
+| Depth-limit hits | 629 | 635 | ~0% |
+
+The check time improvement is modest because these changes eliminated *duplicate* structural comparisons that tsc would otherwise trigger at the first file in check order that references `DataFrame<T>`. The total comparison time (~9.3s) is dominated by the one-time cost of comparing the ~70-method `DataFrameBase` interface — this cost is irreducible and happens regardless of which file triggers it first.
+
+### Remaining cost structure
+
+The 9.3s total `structuredTypeRelatedTo` time bounces between files depending on check order — whichever file *first* triggers a `DataFrame` comparison pays the cost, then subsequent files get it cached. Top comparison pairs:
+
+| Pair | Time | Count |
+|---|---|---|
+| DataFrame vs DataFrame | ~1,900ms | ~50x |
+| DataFrameBase vs DataFrameBase | ~1,876ms | ~46x |
+| DataFrame vs DataFrameBase | ~1,769ms | ~45x |
+| FilterRowsMethod vs FilterRowsMethod | ~644ms | ~15x |
+| LeftJoinMethod vs LeftJoinMethod | ~406ms | ~8x |
+
+This is the irreducible baseline cost of a 70-method interface. The check time (2.69s) is much less than the comparison time (9.3s) because tsc caches and short-circuits aggressively via depth-limit hits (635).
+
+### Cumulative results: full journey
+
+| Metric | Baseline (Mar 27) | After 1-18 (Mar 30) | After 19-22 (Mar 31) | Total Change |
+|---|---|---|---|---|
+| Check time | 86.32s | ~21.5s | 2.69s | **-97%** |
+| Instantiations | 48,014,546 | 26,139,804 | 1,298,763 | **-97%** |
+| Types | 3,986,451 | 1,769,262 | 225,558 | **-94%** |
+| Symbols | 10,018,516 | 4,037,592 | 420,991 | **-96%** |
+| Depth-limit hits | 3,248 | ~544 | 635 | -80% |
+
+`pnpm check:dataframe` — 0 errors. All public API preserved including `df.colName` column accessor syntax.

@@ -23,7 +23,7 @@ Deno.test("removeNull removes only null values", () => {
 
   expect(result.nrows()).toBe(2);
   expect(result.toArray()).toEqual([
-    { id: 1, name: "Luke", homeworld: "Tatooine", mass: 77 },
+    { id: 1, name: "Luke", homeworld: "Tatooine", mass: 77 }, 
     { id: 3, name: "Leia", homeworld: "Alderaan", mass: null },
   ]);
 });

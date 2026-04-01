@@ -15,7 +15,7 @@ export type PrintOptions = {
   maxColWidth?: number;
   includeRowIndex?: boolean;
 };
-
+ 
 /**
  * Create a new DataFrame with columnar storage for high performance.
  * Same API as createDataFrame but with internal columnar optimization.

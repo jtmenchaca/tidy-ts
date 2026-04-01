@@ -23,7 +23,6 @@
  *    - Called internally by withGroupsRebuilt, not used directly by verbs
  */
 
-import type { DataFrame, GroupedDataFrame } from "../index.ts";
 
 /**
  * Helper function to preserve DataFrame metadata (__kind, __groups, __rowLabels)
@@ -101,32 +100,28 @@ export function preserveDataFrameMetadata(target: any, source: any): void {
  * // After pivot: columns = [species, year, height, weight] (measurement → new cols)
  * // withGroups filters to: ["species", "year"] ("measurement" no longer exists)
  */
-export function withGroups<
-  T extends object,
-  G extends keyof T,
-  U extends object,
->(
-  src: GroupedDataFrame<T, G>,
-  out: DataFrame<U>,
-): GroupedDataFrame<U, Extract<G, keyof U>> {
+// deno-lint-ignore no-explicit-any
+export function withGroups(
+  src: any,
+  out: any,
+): any {
   if (!src.__groups) {
-    return out as unknown as GroupedDataFrame<U, Extract<G, keyof U>>;
+    return out;
   }
 
   // Filter grouping columns to only those that still exist
   const remainingGroupCols = src.__groups.groupingColumns.filter(
-    (col) => out.nrows() > 0 && String(col) in out[0],
+    (col: string) => out.nrows() > 0 && String(col) in out[0],
   );
 
   if (remainingGroupCols.length > 0) {
-    // deno-lint-ignore no-explicit-any
-    (out as any).__groups = {
+    out.__groups = {
       ...src.__groups,
       groupingColumns: remainingGroupCols,
     };
   }
 
-  return out as unknown as GroupedDataFrame<U, Extract<G, keyof U>>;
+  return out;
 }
 
 /**
@@ -242,30 +237,25 @@ function rebuildGroups<
  * // arrange calls: withGroupsRebuilt(groupedData, sortedRows, sortedDF)
  * // Rebuilds groups because row order changed
  */
-export function withGroupsRebuilt<
-  T extends object,
-  G extends keyof T,
-  U extends object,
->(
-  src: GroupedDataFrame<T, G>,
-  outRows: readonly U[],
-  out: DataFrame<U>,
-): GroupedDataFrame<U, Extract<G, keyof U>> {
+// deno-lint-ignore no-explicit-any
+export function withGroupsRebuilt(
+  src: any,
+  outRows: readonly any[],
+  out: any,
+): any {
   if (!src.__groups) {
-    return out as unknown as GroupedDataFrame<U, Extract<G, keyof U>>;
+    return out;
   }
 
   // Filter grouping columns to only those that still exist
   const remainingGroupCols = src.__groups.groupingColumns.filter(
-    (col) => outRows.length > 0 && String(col) in outRows[0],
-  ) as Extract<G, keyof U>[];
+    (col: string) => outRows.length > 0 && String(col) in outRows[0],
+  );
 
   if (remainingGroupCols.length > 0) {
-    // deno-lint-ignore no-explicit-any
-    (out as any).__groups = rebuildGroups(outRows, remainingGroupCols);
-    // deno-lint-ignore no-explicit-any
-    (out as any).__kind = "GroupedDataFrame";
+    out.__groups = rebuildGroups(outRows, remainingGroupCols);
+    out.__kind = "GroupedDataFrame";
   }
 
-  return out as unknown as GroupedDataFrame<U, Extract<G, keyof U>>;
+  return out;
 }

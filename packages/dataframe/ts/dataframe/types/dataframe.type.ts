@@ -1,8 +1,8 @@
 import type { GraphOptions } from "../../graph/graph.ts";
 import type { TidyGraphWidget } from "../../graph/graph-types.ts";
 import type { RowLabel } from "./row-labels.ts";
-import type { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
-import type { Prettify } from "./utility-types.ts";
+import type { RemoveNAMethod, RemoveNullMethod, RemoveUndefinedMethod } from "../../verbs/filtering/remove-na.types.ts";
+import type { SetRowLabelsMethod } from "./set-row-labels.types.ts";
 // UnifyUnion removed from these signatures — Row is never a union in practice,
 // and MergeUnionAllKeys is expensive for the type checker to evaluate on generics.
 
@@ -133,10 +133,19 @@ export type DataFrameColumns<Row extends object> = {
 /** Nominal brand so tsc can short-circuit structural comparisons of DataFrame. */
 declare const __df: unique symbol;
 
-/** Static members of DataFrame — cached by the type checker as an interface. */
+/**
+ * Core DataFrame interface. Type relationships between interfaces are cached
+ * by tsc (unlike intersection types), so all method signatures use this
+ * interface directly — avoiding the uncacheable intersection that
+ * DataFrameColumns would create.
+ *
+ * @see https://github.com/microsoft/TypeScript/wiki/Performance
+ *      "Type relationships between interfaces are also cached,
+ *       as opposed to intersection types as a whole."
+ */
 export interface DataFrameBase<Row extends object = object>
   extends Forbid<ForbiddenArrayMethods> {
-  /** Phantom brand — never exists at runtime, enables nominal type identity. */ 
+  /** Phantom brand — never exists at runtime, enables nominal type identity. */
   readonly [__df]: Row;
 
   /** read-only random access (so df[0] works in TS) */
@@ -182,7 +191,7 @@ export interface DataFrameBase<Row extends object = object>
       showIndex?: boolean;
       colorRows?: boolean;
     },
-  ): DataFrame<Row>;
+  ): this;
 
   profile: ProfileMethod<Row>;
 
@@ -252,111 +261,13 @@ export interface DataFrameBase<Row extends object = object>
   interpolate: InterpolateMethod;
 
   /** @deprecated Use removeNull and removeUndefined, or filter, instead. */
-  removeNA: {
-    <Field extends keyof Row>(
-      field: Field,
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], null | undefined> }
-      >
-    >;
-    <Field extends keyof Row>(
-      field: Field,
-      ...fields: Field[]
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], null | undefined> }
-      >
-    >;
-    <Field extends keyof Row>(
-      fields: Field[],
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], null | undefined> }
-      >
-    >;
-  };
+  removeNA: RemoveNAMethod<Row>;
 
-  removeNull: {
-    <Field extends keyof Row>(
-      field: Field,
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-    <Field extends keyof Row>(
-      field: Field,
-      ...fields: Field[]
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-    <Field extends keyof Row>(
-      fields: Field[],
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-  };
+  removeNull: RemoveNullMethod<Row>;
 
-  removeNulls: {
-    <Field extends keyof Row>(
-      field: Field,
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-    <Field extends keyof Row>(
-      field: Field,
-      ...fields: Field[]
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-    <Field extends keyof Row>(
-      fields: Field[],
-    ): DataFrame<
-      Prettify<
-        Row & { [K in Field]: Exclude<Row[K], null> }
-      >
-    >;
-  };
+  removeNulls: RemoveNullMethod<Row>;
 
-  removeUndefined: {
-    <Field extends keyof Row>(
-      field: Field,
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], undefined> }
-      >
-    >;
-    <Field extends keyof Row>(
-      field: Field,
-      ...fields: Field[]
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], undefined> }
-      >
-    >;
-    <Field extends keyof Row>(
-      fields: Field[],
-    ): DataFrame<
-      Prettify<
-        & Row
-        & { [K in Field]: Exclude<Row[K], undefined> }
-      >
-    >;
-  };
+  removeUndefined: RemoveUndefinedMethod<Row>;
 
   // ---------- Convenience Verbs ----------
   append: AppendMethod<Row>;
@@ -398,15 +309,13 @@ export interface DataFrameBase<Row extends object = object>
   ungroup: UngroupMethod<Row>;
 
   // ---------- Row Labels ----------
-  setRowLabels<const Labels extends readonly RowLabel[]>(
-    labels: Labels,
-  ): DataFrame<Prettify<Row & { [K in typeof ROW_LABEL]: Labels[number] }>>;
+  setRowLabels: SetRowLabelsMethod<Row>;
 
   getRowLabels(): RowLabel[];
 
   loc(label: RowLabel): Row | undefined;
 
-  iloc(labels: RowLabel[]): DataFrame<Row>;
+  iloc(labels: RowLabel[]): this;
 
   // ---------- Tracing ----------
   getTrace(): unknown[];
@@ -415,10 +324,9 @@ export interface DataFrameBase<Row extends object = object>
 }
 
 /**
- * A DataFrame is a two-dimensional data structure with labeled columns, similar to a table or spreadsheet.
- *
- * Uses an interface (DataFrameBase) for the static method surface so the type checker
- * can cache structural comparisons, combined with DataFrameColumns for dynamic column accessors.
+ * DataFrame with column accessors — used at API boundaries (createDataFrame)
+ * where consumers access df.colName directly. Internal method signatures use
+ * the DataFrame interface (cached) rather than this intersection (uncached).
  */
 export type DataFrame<Row extends object = object> =
   & DataFrameBase<Row>

@@ -16,7 +16,7 @@ Deno.test("mutateOverGroup — cummax per group does not bleed", () => {
   const result = df
     .arrange(["group", "value"], ["asc", "asc"])
     .groupBy("group")
-    .mutateOverGroup({ cm: (gdf) => s.cummax(gdf.extract("value")) });
+    .mutateOverGroup({ cm: (g) => s.cummax(g.extract("value")) });
 
   const rows = result.toArray();
   const groupA = rows.filter((r) => r.group === "A");
@@ -37,7 +37,7 @@ Deno.test("mutateOverGroup — lag per group does not bleed", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ prev: (gdf) => s.lag(gdf.extract("value")) });
+    .mutateOverGroup({ prev: (g) => s.lag(g.extract("value")) });
 
   const rows = result.toArray();
   const a = rows.filter((r) => r.id === "A");
@@ -58,7 +58,7 @@ Deno.test("mutateOverGroup — cumsum per group", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ running: (gdf) => s.cumsum(gdf.extract("value")) });
+    .mutateOverGroup({ running: (g) => s.cumsum(g.extract("value")) });
 
   const rows = result.toArray();
   const a = rows.filter((r) => r.id === "A");
@@ -79,7 +79,7 @@ Deno.test("mutateOverGroup — cummin per group", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ runMin: (gdf) => s.cummin(gdf.extract("value")) });
+    .mutateOverGroup({ runMin: (g) => s.cummin(g.extract("value")) });
 
   const rows = result.toArray();
   expect(rows.filter((r) => r.id === "X").map((r) => r.runMin)).toEqual([5, 3, 3]);
@@ -97,7 +97,7 @@ Deno.test("mutateOverGroup — lead per group", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ next: (gdf) => s.lead(gdf.extract("value")) });
+    .mutateOverGroup({ next: (g) => s.lead(g.extract("value")) });
 
   const rows = result.toArray();
   expect(rows.filter((r) => r.id === "A").map((r) => r.next)).toEqual([2, 3, undefined]);
@@ -117,8 +117,8 @@ Deno.test("mutateOverGroup — chained calls reference prior columns", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ cumMax: (gdf) => s.cummax(gdf.extract("value")) })
-    .mutateOverGroup({ prevCumMax: (gdf) => s.lag(gdf.extract("cumMax")) });
+    .mutateOverGroup({ cumMax: (g) => s.cummax(g.extract("value")) })
+    .mutateOverGroup({ prevCumMax: (g) => s.lag(g.extract("cumMax")) });
 
   const rows = result.toArray();
   const a = rows.filter((r) => r.id === "A");
@@ -139,7 +139,7 @@ Deno.test("mutateOverGroup → mutate — row-level after group-level", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ prev: (gdf) => s.lag(gdf.extract("value"), { defaultValue: 0 }) })
+    .mutateOverGroup({ prev: (g) => s.lag(g.extract("value"), { defaultValue: 0 }) })
     .mutate({ diff: (row) => row.value - row.prev });
 
   const rows = result.toArray();
@@ -163,7 +163,7 @@ Deno.test("mutate → mutateOverGroup — group-level after row-level", () => {
   const result = df
     .mutate({ sum: (r) => r.x + r.y })
     .groupBy("id")
-    .mutateOverGroup({ cumSum: (gdf) => s.cumsum(gdf.extract("sum")) });
+    .mutateOverGroup({ cumSum: (g) => s.cumsum(g.extract("sum")) });
 
   const rows = result.toArray();
   expect(rows.filter((r) => r.id === "A").map((r) => r.cumSum)).toEqual([3, 10]);
@@ -180,7 +180,7 @@ Deno.test("mutateOverGroup — ungrouped treats whole df as one group", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    cm: (gdf) => s.cummax(gdf.extract("value")),
+    cm: (g) => s.cummax(g.extract("value")),
   });
 
   expect(result.extract("cm")).toEqual([10, 20, 30]);
@@ -194,7 +194,7 @@ Deno.test("mutateOverGroup — ungrouped lag", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    prev: (gdf) => s.lag(gdf.extract("value")),
+    prev: (g) => s.lag(g.extract("value")),
   });
 
   expect(result.extract("prev")).toEqual([undefined, 1, 2]);
@@ -208,7 +208,7 @@ Deno.test("mutateOverGroup — ungrouped lead", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    next: (gdf) => s.lead(gdf.extract("value")),
+    next: (g) => s.lead(g.extract("value")),
   });
 
   expect(result.extract("next")).toEqual([20, 30, undefined]);
@@ -222,7 +222,7 @@ Deno.test("mutateOverGroup — ungrouped lag with defaultValue", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    prev: (gdf) => s.lag(gdf.extract("value"), { defaultValue: 0 }),
+    prev: (g) => s.lag(g.extract("value"), { defaultValue: 0 }),
   });
 
   expect(result.extract("prev")).toEqual([0, 10, 20]);
@@ -236,7 +236,7 @@ Deno.test("mutateOverGroup — ungrouped lead with defaultValue", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    next: (gdf) => s.lead(gdf.extract("value"), { defaultValue: 0 }),
+    next: (g) => s.lead(g.extract("value"), { defaultValue: 0 }),
   });
 
   expect(result.extract("next")).toEqual([20, 30, 0]);
@@ -251,9 +251,9 @@ Deno.test("mutateOverGroup — ungrouped multiple columns", () => {
   ]);
 
   const result = df.mutateOverGroup({
-    runMax: (gdf) => s.cummax(gdf.extract("value")),
-    runMin: (gdf) => s.cummin(gdf.extract("value")),
-    runSum: (gdf) => s.cumsum(gdf.extract("value")),
+    runMax: (g) => s.cummax(g.extract("value")),
+    runMin: (g) => s.cummin(g.extract("value")),
+    runSum: (g) => s.cumsum(g.extract("value")),
   });
 
   expect(result.extract("runMax")).toEqual([5, 5, 8, 8]);
@@ -275,7 +275,7 @@ Deno.test("mutateOverGroup — three groups", () => {
 
   const result = df
     .groupBy("g")
-    .mutateOverGroup({ cs: (gdf) => s.cumsum(gdf.extract("v")) });
+    .mutateOverGroup({ cs: (g) => s.cumsum(g.extract("v")) });
 
   const rows = result.toArray();
   expect(rows.filter((r) => r.g === "X").map((r) => r.cs)).toEqual([1, 3]);
@@ -292,7 +292,7 @@ Deno.test("mutateOverGroup — single-row groups", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ prev: (gdf) => s.lag(gdf.extract("value")) });
+    .mutateOverGroup({ prev: (g) => s.lag(g.extract("value")) });
 
   const rows = result.toArray();
   expect(rows.map((r) => r.prev)).toEqual([undefined, undefined, undefined]);
@@ -310,8 +310,8 @@ Deno.test("mutateOverGroup — multiple window functions in one call", () => {
   const result = df
     .groupBy("id")
     .mutateOverGroup({
-      runMax: (gdf) => s.cummax(gdf.extract("value")),
-      runMin: (gdf) => s.cummin(gdf.extract("value")),
+      runMax: (g) => s.cummax(g.extract("value")),
+      runMin: (g) => s.cummin(g.extract("value")),
     });
 
   expect(result.extract("runMax")).toEqual([1, 5, 5]);
@@ -361,7 +361,7 @@ Deno.test("mutateOverGroup → filter → summarize", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ cs: (gdf) => s.cumsum(gdf.extract("value")) })
+    .mutateOverGroup({ cs: (g) => s.cumsum(g.extract("value")) })
     .filter((r) => r.cs > 2)
     .groupBy("id")
     .summarize({ total: (g) => s.sum(g.extract("cs")) });
@@ -387,7 +387,7 @@ Deno.test("mutateOverGroup — preserves grouping for subsequent operations", ()
   // After mutateOverGroup, grouping should be preserved
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ cs: (gdf) => s.cumsum(gdf.extract("value")) })
+    .mutateOverGroup({ cs: (g) => s.cumsum(g.extract("value")) })
     .summarize({ maxCs: (g) => s.max(g.extract("cs")) });
 
   const rows = result.toArray();
@@ -406,7 +406,7 @@ Deno.test("mutateOverGroup — overwrites existing column", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ value: (gdf) => s.cummax(gdf.extract("value")) });
+    .mutateOverGroup({ value: (g) => s.cummax(g.extract("value")) });
 
   expect(result.extract("value")).toEqual([5, 5, 8]);
 });
@@ -424,7 +424,7 @@ Deno.test("mutateOverGroup — works with Date columns", () => {
 
   const result = df
     .groupBy("id")
-    .mutateOverGroup({ maxDate: (gdf) => s.cummax(gdf.extract("date")) });
+    .mutateOverGroup({ maxDate: (g) => s.cummax(g.extract("date")) });
 
   const rows = result.toArray();
   const a = rows.filter((r) => r.id === "A");
