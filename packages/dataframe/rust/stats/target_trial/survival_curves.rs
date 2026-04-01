@@ -50,11 +50,36 @@ pub fn generate_survival_curves(
         .get_numeric("followup")
         .ok_or("followup column not found")?;
 
-    // Get baseline rows (followup == 0)
+    // R line 20: DT <- DT[!is.na(get(params@outcome)), ]
+    let outcome_col = data.get_numeric(&config.outcome);
+
+    // R line 93: baseDT_main <- params@DT[get("followup") == 0, ]
+    // Then handler line 20: remove NAs, line 21-22: multinomial filter
     let baseline_rows: Vec<usize> = followup_col
         .iter()
         .enumerate()
-        .filter(|&(_, &v)| v.abs() < 1e-10)
+        .filter(|&(i, &v)| {
+            // followup == 0
+            if v.abs() >= 1e-10 {
+                return false;
+            }
+            // R line 20: !is.na(outcome)
+            if let Some(oc) = outcome_col {
+                if oc[i].is_nan() {
+                    return false;
+                }
+            }
+            // R line 21-22: multinomial filter
+            if config.multinomial {
+                if let Some(tx) = data.get_numeric(&config.treatment) {
+                    let tx_val = tx[i];
+                    if !config.treat_levels.iter().any(|&lv| (tx_val - lv).abs() < 1e-10) {
+                        return false;
+                    }
+                }
+            }
+            true
+        })
         .map(|(i, _)| i)
         .collect();
 
@@ -76,15 +101,20 @@ pub fn generate_survival_curves(
         let mut pred_data = ColumnarData::new();
         let total_rows = n_base * n_fup;
 
-        // Copy all columns from baseline, replicated n_fup times per subject
-        for (col_name, col_vals) in &data.numeric {
+        // Copy columns from baseline, replicated n_fup times per subject
+        // Use sorted keys for deterministic ordering (HashMap is non-deterministic)
+        let fup_sq_col = format!("followup{}", config.indicator_squared);
+        let mut sorted_keys: Vec<&String> = data.numeric.keys().collect();
+        sorted_keys.sort();
+        for col_name in sorted_keys {
             if col_name == "followup"
-                || col_name == &format!("followup{}", config.indicator_squared)
+                || col_name == &fup_sq_col
                 || col_name == "dose"
                 || col_name == "dose_sq"
             {
                 continue; // These will be set explicitly
             }
+            let col_vals = &data.numeric[col_name];
             let mut new_col = Vec::with_capacity(total_rows);
             for &base_row in &baseline_rows {
                 for _ in 0..n_fup {
@@ -112,10 +142,7 @@ pub fn generate_survival_curves(
             }
         }
         pred_data.numeric.insert("followup".to_string(), followup_vals);
-        pred_data.numeric.insert(
-            format!("followup{}", config.indicator_squared),
-            followup_sq_vals,
-        );
+        pred_data.numeric.insert(fup_sq_col.clone(), followup_sq_vals);
 
         // Set treatment to this arm's level
         if let Some(tx_col) = pred_data.numeric.get_mut(&tx_bas) {

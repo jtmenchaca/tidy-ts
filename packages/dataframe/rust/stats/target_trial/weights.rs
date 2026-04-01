@@ -1267,8 +1267,77 @@ pub fn apply_cumulative_weights(
         // But if we had NAN weights, it would forward-fill from the last non-NAN.
 
         weights
+    } else if config.weights.preexpansion {
+        // ── Non-excused, pre-expansion path ──
+        // R internal_analysis.R lines 87-95:
+        //   [, trial.first := min(trial), by = c(params@id)]
+        //   [followup == 0 & trial == trial.first, `:=`(numerator = 1, denominator = 1)]
+        //   [, wt := numerator / denominator]
+        //   [is.na(wt), wt := 1]
+
+        // Step 1: Compute trial.first = min(trial) per id
+        let mut trial_first: std::collections::HashMap<i64, f64> = std::collections::HashMap::new();
+        for i in 0..n {
+            let id_key = id_col[i] as i64;
+            let trial_val = trial_col[i];
+            trial_first
+                .entry(id_key)
+                .and_modify(|cur| {
+                    if trial_val < *cur {
+                        *cur = trial_val;
+                    }
+                })
+                .or_insert(trial_val);
+        }
+
+        // Step 2: Compute wt, only resetting for followup==0 & trial==trial.first
+        let mut wt = vec![1.0; n];
+        for i in 0..n {
+            let is_fup0 = followup_col[i].abs() < 1e-10;
+            let id_key = id_col[i] as i64;
+            let is_first_trial = (trial_col[i] - trial_first[&id_key]).abs() < 1e-10;
+
+            if is_fup0 && is_first_trial {
+                // R: [followup == 0 & trial == trial.first, `:=`(numerator = 1, denominator = 1)]
+                wt[i] = 1.0;
+            } else {
+                let num = weight_output.numerator[i];
+                let den = weight_output.denominator[i];
+                let ratio = if den.abs() < 1e-15 {
+                    1.0
+                } else {
+                    num / den
+                };
+                wt[i] = if ratio.is_nan() { 1.0 } else { ratio };
+            }
+        }
+
+        // Cumulative product by (id, trial)
+        let mut weights = vec![1.0; n];
+        let mut i = 0;
+        while i < n {
+            let cur_id = id_col[i];
+            let cur_trial = trial_col[i];
+            let mut cum_prod = 1.0;
+            while i < n
+                && (id_col[i] - cur_id).abs() < 1e-10
+                && (trial_col[i] - cur_trial).abs() < 1e-10
+            {
+                cum_prod *= wt[i];
+                weights[i] = cum_prod;
+                i += 1;
+            }
+        }
+
+        weights
     } else {
-        // ── Non-excused path ──
+        // ── Non-excused, post-expansion path ──
+        // R internal_analysis.R lines 113-122:
+        //   [followup == 0, `:=`(numerator = 1, denominator = 1)]
+        //   [, wt := numerator / denominator]
+        //   [is.na(wt), wt := 1]
+        //   [followup == 0, wt := 1]
+        //   [, weight := cumprod(wt), by = c(id, "trial")]
         let mut wt = vec![1.0; n];
         for i in 0..n {
             if followup_col[i].abs() < 1e-10 {

@@ -5,16 +5,14 @@ import type {
   GroupedDataFrame,
   Prettify,
 } from "../../dataframe/index.ts";
-import type { UnifyUnion } from "../../dataframe/types/utility-types.ts";
 import { filter } from "./filter.verb.ts";
 
 // Helper type to narrow multiple fields without Omit to reduce type depth
-// We unify the union first, THEN narrow the specified fields
 type NarrowFields<Row, Fields extends keyof Row, Remove> = Prettify<
   {
-    [K in keyof UnifyUnion<Row>]: K extends Fields
-      ? Exclude<UnifyUnion<Row>[K], Remove>
-      : UnifyUnion<Row>[K];
+    [K in keyof Row]: K extends Fields
+      ? Exclude<Row[K], Remove>
+      : Row[K];
   }
 >;
 

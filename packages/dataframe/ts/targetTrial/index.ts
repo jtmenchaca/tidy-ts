@@ -50,10 +50,19 @@ export function targetTrialEmulation({
   );
   const dataJson = JSON.stringify(data);
 
-  const result = wasmInternal.target_trial_wasm(
+  const raw = wasmInternal.target_trial_wasm(
     configJson,
     dataJson,
   ) as TargetTrialResult;
 
-  return result;
+  // serde_wasm_bindgen serializes HashMap as JS Map; convert to plain object
+  if (raw.survival instanceof Map) {
+    const obj: Record<string, typeof raw.survival[string]> = {};
+    for (const [k, v] of raw.survival as unknown as Map<string, typeof raw.survival[string]>) {
+      obj[k] = v;
+    }
+    raw.survival = obj;
+  }
+
+  return raw;
 }

@@ -6,9 +6,6 @@
 
 use std::collections::HashMap;
 
-#[cfg(feature = "wasm")]
-use web_sys::console;
-
 use super::bootstrap::bootstrap_resample;
 use super::covariates;
 use super::expand::expand;
@@ -50,7 +47,9 @@ pub fn target_trial_emulation(
     // R: if (is.infinite(params@followup.max)) params@followup.max <- max(params@data[[params@time]])
     // R: if (params@survival.max > params@followup.max) params@survival.max <- params@followup.max
     // R: if (is.infinite(params@survival.max)) params@survival.max <- params@followup.max
-    if config.followup_max.is_infinite() {
+    // Note: JS serializes Infinity as 1e308, so we check >= 1e300 rather than is_infinite()
+    let is_inf = |v: f64| v.is_infinite() || v >= 1e300;
+    if is_inf(config.followup_max) {
         if let Some(time_col) = data.get_numeric(&config.time) {
             config.followup_max = time_col.iter().cloned().fold(0.0_f64, f64::max);
         }
@@ -58,17 +57,8 @@ pub fn target_trial_emulation(
     if config.survival_max > config.followup_max {
         config.survival_max = config.followup_max;
     }
-    if config.survival_max.is_infinite() {
+    if is_inf(config.survival_max) {
         config.survival_max = config.followup_max;
-    }
-
-    #[cfg(feature = "wasm")]
-    {
-        let msg = format!(
-            "target_trial: formulas filled. outcome={:?}, nrows={}, followup_max={}, survival_max={}",
-            config.covariates, data.nrows, config.followup_max, config.survival_max
-        );
-        console::log_1(&msg.into());
     }
 
     // 3. Initialize formula cache
@@ -140,29 +130,9 @@ pub fn target_trial_emulation(
     // 4b. Factorize expanded data (R: params@DT <- factorize(SEQexpand(params), params))
     factorize_data(&mut expanded.data, &config);
 
-    #[cfg(feature = "wasm")]
-    {
-        let cols: Vec<&str> = expanded.data.column_names();
-        let msg = format!(
-            "target_trial: expanded {} → {} rows, cols: {:?}",
-            data.nrows, expanded.data.nrows, cols
-        );
-        console::log_1(&msg.into());
-    }
-
     // 5. Run the single-pass pipeline
     let (outcome_model, _final_weights, weight_diagnostics) =
         run_single_pass(&expanded.data, &augmented_data, &config, &outcome_cache)?;
-
-    #[cfg(feature = "wasm")]
-    {
-        let msg = format!(
-            "target_trial: model fit. {} coefs, names: {:?}",
-            outcome_model.result.coefficients.len(),
-            outcome_model.coef_names
-        );
-        console::log_1(&msg.into());
-    }
 
     // 6. Generate survival curves
     let mut survival_curves = if config.km_curves {

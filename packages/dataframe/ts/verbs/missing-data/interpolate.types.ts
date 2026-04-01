@@ -1,12 +1,10 @@
-import type { DataFrame, Prettify, UnifyUnion } from "../../dataframe/index.ts";
+import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 
 /**
- * Transform Row type after interpolate operation
- * Interpolation may replace null values with interpolated values, but the column type
- * remains the same (number | null or Date | null). UnifyUnion consolidates any union
- * types that TypeScript might infer from the operation.
+ * Transform Row type after interpolate operation.
+ * Identity — interpolation doesn't change the column types.
  */
-export type InterpolateResult<Row extends object> = UnifyUnion<Row>;
+export type InterpolateResult<Row extends object> = Row;
 
 /**
  * Interpolate null/undefined values in a column using linear or spline interpolation.
@@ -50,7 +48,7 @@ export type InterpolateResult<Row extends object> = UnifyUnion<Row>;
  * - For spline: requires at least 4 points, falls back to linear if fewer
  * - Dates are converted to/from timestamps (milliseconds) for interpolation
  */
-export type InterpolateMethod<Row extends object> = <
+export type InterpolateMethod = <
   R extends object,
   ValueCol extends keyof R & string,
   XCol extends keyof R & string,

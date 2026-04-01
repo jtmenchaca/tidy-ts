@@ -3,7 +3,8 @@ import type { TidyGraphWidget } from "../../graph/graph-types.ts";
 import type { RowLabel } from "./row-labels.ts";
 import type { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
 import type { Prettify } from "./utility-types.ts";
-import type { UnifyUnion } from "./utility-types.ts";
+// UnifyUnion removed from these signatures — Row is never a union in practice,
+// and MergeUnionAllKeys is expensive for the type checker to evaluate on generics.
 
 import type { MutateAsyncMethod, MutateMethod } from "../../verbs/transformation/mutate/mutate.types.ts";
 import type { MutateOverGroupMethod } from "../../verbs/transformation/mutate/mutate-over-group.types.ts";
@@ -129,9 +130,15 @@ export type DataFrameColumns<Row extends object> = {
  *   .summarize({ avgAge: group => stats.mean(group.age) });
  * ```
  */
+/** Nominal brand so tsc can short-circuit structural comparisons of DataFrame. */
+declare const __df: unique symbol;
+
 /** Static members of DataFrame — cached by the type checker as an interface. */
 export interface DataFrameBase<Row extends object = object>
   extends Forbid<ForbiddenArrayMethods> {
+  /** Phantom brand — never exists at runtime, enables nominal type identity. */ 
+  readonly [__df]: Row;
+
   /** read-only random access (so df[0] works in TS) */
   readonly [index: number]: Row;
 
@@ -242,7 +249,7 @@ export interface DataFrameBase<Row extends object = object>
 
   fillBackward: FillBackwardMethod<Row>;
 
-  interpolate: InterpolateMethod<Row>;
+  interpolate: InterpolateMethod;
 
   /** @deprecated Use removeNull and removeUndefined, or filter, instead. */
   removeNA: {
@@ -250,8 +257,8 @@ export interface DataFrameBase<Row extends object = object>
       field: Field,
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], null | undefined> }
       >
     >;
     <Field extends keyof Row>(
@@ -259,16 +266,16 @@ export interface DataFrameBase<Row extends object = object>
       ...fields: Field[]
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], null | undefined> }
       >
     >;
     <Field extends keyof Row>(
       fields: Field[],
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], null | undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], null | undefined> }
       >
     >;
   };
@@ -278,7 +285,7 @@ export interface DataFrameBase<Row extends object = object>
       field: Field,
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
     <Field extends keyof Row>(
@@ -286,14 +293,14 @@ export interface DataFrameBase<Row extends object = object>
       ...fields: Field[]
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
     <Field extends keyof Row>(
       fields: Field[],
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
   };
@@ -303,7 +310,7 @@ export interface DataFrameBase<Row extends object = object>
       field: Field,
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
     <Field extends keyof Row>(
@@ -311,14 +318,14 @@ export interface DataFrameBase<Row extends object = object>
       ...fields: Field[]
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
     <Field extends keyof Row>(
       fields: Field[],
     ): DataFrame<
       Prettify<
-        UnifyUnion<Row> & { [K in Field]: Exclude<UnifyUnion<Row>[K], null> }
+        Row & { [K in Field]: Exclude<Row[K], null> }
       >
     >;
   };
@@ -328,8 +335,8 @@ export interface DataFrameBase<Row extends object = object>
       field: Field,
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], undefined> }
       >
     >;
     <Field extends keyof Row>(
@@ -337,16 +344,16 @@ export interface DataFrameBase<Row extends object = object>
       ...fields: Field[]
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], undefined> }
       >
     >;
     <Field extends keyof Row>(
       fields: Field[],
     ): DataFrame<
       Prettify<
-        & UnifyUnion<Row>
-        & { [K in Field]: Exclude<UnifyUnion<Row>[K], undefined> }
+        & Row
+        & { [K in Field]: Exclude<Row[K], undefined> }
       >
     >;
   };

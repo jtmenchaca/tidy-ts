@@ -52,10 +52,10 @@ pub fn expand(
     }
 
     // Phase 1: Generate trial structure (id, trial, period, followup)
-    let max_followup = if config.followup_max.is_finite() {
+    let max_followup = if config.followup_max.is_finite() && config.followup_max < 1e300 {
         config.followup_max as usize
     } else {
-        // If no max, use the max number of periods per ID
+        // If no max (Inf or 1e308 from JS), use the max number of periods per ID
         id_rows.values().map(|r| r.len().saturating_sub(1)).max().unwrap_or(0)
     };
     let min_followup = config.followup_min as usize;
