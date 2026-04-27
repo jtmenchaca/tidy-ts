@@ -23,6 +23,10 @@ js-sys = { version = "=0.3.83", optional = true }
 web-sys = { version = "=0.3.83", optional = true, features = ["console"] }
 serde-wasm-bindgen = { version = "0.6", optional = true }
 
+# napi-rs for native Node.js addon
+napi = { version = "3", features = ["serde-json"], optional = true }
+napi-derive = { version = "3", optional = true }
+
 # Pure Rust linear algebra dependencies (works for both native and WASM)
 faer = "0.22.0"
 # faer-core = "0.17.1"
@@ -33,7 +37,7 @@ serde_json = { version = "1.0", features = ["preserve_order"] }  # preserve_orde
 indexmap = { version = "2", features = ["serde"] }  # Order-preserving map for covariate key order
 rand = "0.8.5"
 statrs = "0.17.1"
-getrandom = { version = "0.2", features = ["js"] }
+getrandom = { version = "0.2", default-features = false }
 # regex = "1.11.1"  # Not used in current Rust code
 
 # High-performance data structures for WASM kernels
@@ -51,12 +55,16 @@ hashbrown = "0.14.0"
 # nalgebra = { version = "0.33", default-features = false, features = ["alloc"] }
 
 [features]
-wasm = ["wasm-bindgen", "js-sys", "web-sys", "serde-wasm-bindgen"]
+wasm = ["wasm-bindgen", "js-sys", "web-sys", "serde-wasm-bindgen", "getrandom/js"]
+napi-rs = ["napi", "napi-derive", "napi-build", "getrandom/std"]
 default = []
 
 # [target.'cfg(target_arch = "wasm32")'.dependencies]
 # hashbrown = "0.14.0"  # Already included in main dependencies
 
+
+[build-dependencies]
+napi-build = { version = "2", optional = true }
 
 [profile.release]
 opt-level = 3

@@ -8,15 +8,42 @@ import {
   resolve,
   Runtime,
 } from "@tidy-ts/shims";
-import * as wasmInternal from "../../lib/tidy_ts_dataframe.internal.js";
+import * as _wasmInternalReal from "../../lib/tidy_ts_dataframe.internal.js";
+import { buildNativeProxy, tryLoadNative } from "./native-loader.ts";
 
-// Export wasmInternal for use by other modules
-export { wasmInternal };
+// Backend: either native proxy or real wasmInternal.
+// Starts as the real WASM glue; swapped to native proxy if .node addon loads.
+let _backend: any = _wasmInternalReal;
+let _usingNative = false;
+
+// Try native addon (Node.js, Bun, and Deno all support .node addons)
+if (currentRuntime !== Runtime.Browser) {
+  const native = tryLoadNative();
+  if (native) {
+    _backend = buildNativeProxy(native);
+    _usingNative = true;
+  }
+}
+
+// Export the backend as wasmInternal — all wrapper files use this
+export const wasmInternal: any = new Proxy({} as any, {
+  get(_target, prop) {
+    return (_backend as any)[prop];
+  },
+  has(_target, prop) {
+    return prop in _backend;
+  },
+});
+
+/** Returns true if the native .node addon is being used instead of WASM */
+export function usingNativeBackend(): boolean {
+  return _usingNative;
+}
 
 let wasmModule: any = null;
 let wasmBytesCache: ArrayBuffer | null = null;
 
-// NEW: Browser preloading support
+// Browser preloading support
 let compiledModule: WebAssembly.Module | null = null;
 let preloadPromise: Promise<void> | null = null;
 
@@ -34,14 +61,14 @@ if (isDeno && !isBrowser) {
   const wasmExports = await import(wasmUrl.href);
 
   // Deno 2.1+ returns the instantiated WASM exports directly
-  wasmInternal.__wbg_set_wasm(wasmExports);
+  _wasmInternalReal.__wbg_set_wasm(wasmExports);
   wasmModule = wasmExports;
 }
 
 // Build imports from internal glue (functions only)
 function buildImports() {
   const imports: Record<string, any> = {};
-  for (const [k, v] of Object.entries(wasmInternal)) {
+  for (const [k, v] of Object.entries(_wasmInternalReal)) {
     if (typeof v === "function") imports[k] = v;
   }
   return { "./tidy_ts_dataframe.internal.js": imports };
@@ -101,7 +128,7 @@ export async function setupTidyTS(url?: string | URL): Promise<void> {
           imports,
         );
         compiledModule = module; // cache compiled module
-        wasmInternal.__wbg_set_wasm(instance.exports);
+        _wasmInternalReal.__wbg_set_wasm(instance.exports);
         wasmModule = instance.exports;
         return;
       } catch (_e) {
@@ -127,12 +154,12 @@ export function initWasmFromBytes(bytes: ArrayBuffer): any {
   const mod = new WebAssembly.Module(new Uint8Array(bytes));
   const instance = new WebAssembly.Instance(mod, imports);
 
-  wasmInternal.__wbg_set_wasm(instance.exports);
+  _wasmInternalReal.__wbg_set_wasm(instance.exports);
   wasmModule = instance.exports;
   return wasmModule;
 }
 
-// NEW: expose bytes so the main thread can send them to workers
+// Expose bytes so the main thread can send them to workers
 export function getWasmBytes(): ArrayBuffer {
   if (wasmBytesCache) return wasmBytesCache;
 
@@ -149,6 +176,9 @@ export function getWasmBytes(): ArrayBuffer {
 }
 
 export function initWasm(): any {
+  // Native backend: no WASM initialization needed
+  if (_usingNative) return null;
+
   if (wasmModule) return wasmModule;
 
   // Browser: require prior async preload
@@ -160,7 +190,7 @@ export function initWasm(): any {
     }
     const imports = buildImports();
     const instance = new WebAssembly.Instance(compiledModule, imports);
-    wasmInternal.__wbg_set_wasm(instance.exports);
+    _wasmInternalReal.__wbg_set_wasm(instance.exports);
     wasmModule = instance.exports;
     return wasmModule;
   }
@@ -189,7 +219,7 @@ export function initWasm(): any {
 
   // Filter out non-function exports for WebAssembly imports
   const wasmImports: Record<string, any> = {};
-  for (const [key, value] of Object.entries(wasmInternal)) {
+  for (const [key, value] of Object.entries(_wasmInternalReal)) {
     if (typeof value === "function") {
       wasmImports[key] = value;
     }
@@ -200,7 +230,7 @@ export function initWasm(): any {
   });
 
   // Set the WASM instance in the internal module
-  wasmInternal.__wbg_set_wasm(wasmInstance.exports);
+  _wasmInternalReal.__wbg_set_wasm(wasmInstance.exports);
 
   wasmModule = wasmInstance.exports;
   return wasmModule;

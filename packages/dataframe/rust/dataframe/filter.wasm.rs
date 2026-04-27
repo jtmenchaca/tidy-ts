@@ -4,6 +4,8 @@
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// Comparison operations for numbers and integers.
 #[derive(Debug, Copy, Clone)]
@@ -136,4 +138,29 @@ pub fn batch_filter_numbers(
 
     batch_compare_numbers(values, threshold, op, output)
         .map_err(|e| JsValue::from_str(&format!("Batch filter error: {}", e)))
+}
+
+/// NAPI export for batch numeric filtering
+/// Returns the output mask as a Vec<u8> instead of mutating in place
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn batch_filter_numbers_napi(
+    values: &[f64],
+    threshold: f64,
+    operation: u8,
+) -> Result<Vec<u8>, napi::Error> {
+    let op = match operation {
+        0 => ComparisonOp::Greater,
+        1 => ComparisonOp::GreaterEqual,
+        2 => ComparisonOp::Less,
+        3 => ComparisonOp::LessEqual,
+        4 => ComparisonOp::Equal,
+        5 => ComparisonOp::NotEqual,
+        _ => return Err(napi::Error::from_reason("Invalid comparison operation")),
+    };
+
+    let mut output = vec![0u8; values.len()];
+    batch_compare_numbers(values, threshold, op, &mut output)
+        .map_err(|e| napi::Error::from_reason(format!("Batch filter error: {}", e)))?;
+    Ok(output)
 }

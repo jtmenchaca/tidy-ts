@@ -46,7 +46,7 @@ pub mod sample_size;
 pub mod variance;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use categorical::{goodness_of_fit, independence};

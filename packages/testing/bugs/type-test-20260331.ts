@@ -173,7 +173,7 @@ function ageAtDate(opts: {
   }).select("id", "value");
 }
 
-function collapsedDaysPerPatient(
+function _collapsedDaysPerPatient(
   intervals: DataFrame<{ id: string; _ivStart: Temporal.PlainDateTime; _ivEnd: Temporal.PlainDateTime }>,
 ): DataFrame<{ id: string; value: number }> {
   return intervals
@@ -204,7 +204,7 @@ function collapsedDaysPerPatient(
     });
 }
 
-function consecutiveValues(opts: {
+function _consecutiveValues(opts: {
   roster: DataFrame<Roster>;
   events: DataFrame<{ id: string; effectiveDateTime: Temporal.PlainDateTime; value: number }>;
   threshold: number;

@@ -6,23 +6,24 @@ import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 Deno.test("mutateOverGroup — cummax per group does not bleed", () => {
   const df = createDataFrame([
     { group: "A", value: 10 },
-    { group: "A", value: 20 },
     { group: "A", value: 30 },
+    { group: "A", value: 20 },
     { group: "B", value: 1 },
     { group: "B", value: 2 },
     { group: "B", value: 3 },
   ]);
 
   const result = df
-    .arrange(["group", "value"], ["asc", "asc"])
     .groupBy("group")
     .mutateOverGroup({ cm: (g) => s.cummax(g.extract("value")) });
+
+  result.print();
 
   const rows = result.toArray();
   const groupA = rows.filter((r) => r.group === "A");
   const groupB = rows.filter((r) => r.group === "B");
 
-  expect(groupA.map((r) => r.cm)).toEqual([10, 20, 30]);
+  expect(groupA.map((r) => r.cm)).toEqual([10, 30, 30]);
   expect(groupB.map((r) => r.cm)).toEqual([1, 2, 3]);
 });
 

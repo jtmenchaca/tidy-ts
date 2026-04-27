@@ -1,24 +1,20 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 use core::hash::{BuildHasherDefault, Hasher};
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 use hashbrown::{HashMap as FastHashMap, hash_map::RawEntryMut};
 #[cfg(feature = "wasm")]
 use js_sys::Uint32Array;
-#[cfg(feature = "wasm")]
-use std::collections::HashMap;
-
-#[cfg(not(feature = "wasm"))]
 use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
 //                             WASM-specific utilities
 // ---------------------------------------------------------------------------
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub type IdxSize = u32;
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub const SENTINEL: u32 = u32::MAX;
 
 /// Bulk copy Uint32Array columns to Vec<Vec<u32>> for efficient WASM processing
@@ -53,14 +49,14 @@ pub fn bulk_copy_u8(arr: &js_sys::Uint8Array) -> Vec<u8> {
 }
 
 /// Pack two u32 values into a single u64 for efficient 2-column joins
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[inline]
 pub fn pack2_u64(a: u32, b: u32) -> u64 {
     ((a as u64) << 32) | (b as u64)
 }
 
 /// Check if multiple columns are equal at given row indices
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[inline]
 pub fn rows_equal_multi(left: &[&[u32]], right: &[&[u32]], li: usize, rj: usize) -> bool {
     let cols = left.len().min(right.len());
@@ -73,7 +69,7 @@ pub fn rows_equal_multi(left: &[&[u32]], right: &[&[u32]], li: usize, rj: usize)
 }
 
 // splitmix64-ish mixer for hash functions
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[inline]
 pub fn mix64(mut x: u64) -> u64 {
     x = x.wrapping_add(0x9E3779B97F4A7C15);
@@ -85,7 +81,7 @@ pub fn mix64(mut x: u64) -> u64 {
 }
 
 /// Hash multiple columns into a single u64
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[inline]
 pub fn hash_row_multi(cols: &[&[u32]], i: usize) -> u64 {
     let mut h = 0x9E3779B97F4A7C15u64;
@@ -99,11 +95,11 @@ pub fn hash_row_multi(cols: &[&[u32]], i: usize) -> u64 {
 //                             Identity hasher for u32/u64 keys
 // ---------------------------------------------------------------------------
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[derive(Default)]
 pub struct IdentityHasher(u64);
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 impl Hasher for IdentityHasher {
     #[inline]
     fn write(&mut self, bytes: &[u8]) {
@@ -129,14 +125,14 @@ impl Hasher for IdentityHasher {
     }
 }
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub type FastState = BuildHasherDefault<IdentityHasher>;
 
 // ---------------------------------------------------------------------------
 //                             CSR index structures
 // ---------------------------------------------------------------------------
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 #[derive(Clone, Copy)]
 pub struct Off {
     pub start: u32,
@@ -145,7 +141,7 @@ pub struct Off {
 }
 
 /// Build CSR from precomputed u32 keys
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub fn build_csr_from_keys_u32(keys: &[u32]) -> (FastHashMap<u32, Off, FastState>, Vec<u32>) {
     let mut map: FastHashMap<u32, Off, FastState> =
         FastHashMap::with_capacity_and_hasher(keys.len(), FastState::default());
@@ -190,7 +186,7 @@ pub fn build_csr_from_keys_u32(keys: &[u32]) -> (FastHashMap<u32, Off, FastState
 }
 
 /// Build CSR from precomputed u64 keys
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub fn build_csr_from_keys_u64(keys: &[u64]) -> (FastHashMap<u64, Off, FastState>, Vec<u32>) {
     let mut map: FastHashMap<u64, Off, FastState> =
         FastHashMap::with_capacity_and_hasher(keys.len(), FastState::default());
@@ -243,6 +239,15 @@ pub fn build_index<K: Eq + std::hash::Hash + Copy>(keys: &[K]) -> HashMap<K, Vec
     let mut map: HashMap<K, Vec<usize>> = HashMap::with_capacity(keys.len());
     for (row, &k) in keys.iter().enumerate() {
         map.entry(k).or_default().push(row);
+    }
+    map
+}
+
+/// Build a hash-map from key → Vec<row_idx> (for Clone keys like Vec<u32>).
+pub fn build_index_clone<K: Eq + std::hash::Hash + Clone>(keys: &[K]) -> HashMap<K, Vec<usize>> {
+    let mut map: HashMap<K, Vec<usize>> = HashMap::with_capacity(keys.len());
+    for (row, k) in keys.iter().enumerate() {
+        map.entry(k.clone()).or_default().push(row);
     }
     map
 }

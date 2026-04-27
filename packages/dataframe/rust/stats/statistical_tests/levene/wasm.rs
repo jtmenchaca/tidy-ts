@@ -42,3 +42,36 @@ pub fn levene_test_wasm(data: &[f64], group_sizes: &[usize], alpha: f64) -> Resu
     serde_wasm_bindgen::to_value(&result)
         .map_err(|e| JsValue::from_str(&e.to_string()))
 }
+
+// --- NAPI-RS exports ---
+
+#[cfg(feature = "napi-rs")]
+use super::levene_test as levene_test_core;
+
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn levene_test_napi(data: &[f64], group_sizes: &[u32], alpha: f64) -> Result<String, napi::Error> {
+    if !(0.0..=1.0).contains(&alpha) {
+        return Err(napi::Error::from_reason("Alpha must be between 0 and 1"));
+    }
+
+    let mut groups = Vec::new();
+    let mut start = 0;
+
+    for &size in group_sizes {
+        let size = size as usize;
+        if start + size > data.len() {
+            return Err(napi::Error::from_reason("Group sizes exceed data length"));
+        }
+        groups.push(&data[start..start + size]);
+        start += size;
+    }
+
+    let result = levene_test_core(&groups, alpha)
+        .map_err(|e| napi::Error::from_reason(e))?;
+    serde_json::to_string(&result)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}

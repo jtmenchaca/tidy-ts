@@ -1,6 +1,6 @@
 //! WASM bindings for survival analysis functions
 
-#![cfg(feature = "wasm")]
+#![cfg(any(feature = "wasm", feature = "napi-rs"))]
 
 use super::ag_cox_regression::{agfit4, AgfitConfig};
 use super::ag_cox_residuals::{agmart3, agscore3};
@@ -17,7 +17,11 @@ use super::proportional_hazards_test::zph1;
 use super::survival_object::SurvData;
 use serde::Serialize;
 use indexmap::IndexMap;
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// Comprehensive result from coxph fitting (matches R's coxph object fields)
 #[derive(Debug, Clone, Serialize)]
@@ -76,6 +80,7 @@ pub struct SurvdiffWasmResult {
 /// * `status_json` - JSON array of event indicators (1=event, 0=censored)
 /// * `covariates_json` - JSON object mapping covariate names to arrays
 /// * `options_json` - JSON object with optional params: method, maxiter, eps, weights, offset
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn coxph_wasm(
     time_json: &str,
@@ -365,6 +370,7 @@ struct CoxphParsedOptions {
     nocenter: bool,
 }
 
+#[cfg(feature = "wasm")]
 fn parse_coxph_options(json: &str, n: usize) -> Result<CoxphParsedOptions, JsValue> {
     let parsed: serde_json::Value =
         serde_json::from_str(json).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -431,6 +437,7 @@ fn parse_coxph_options(json: &str, n: usize) -> Result<CoxphParsedOptions, JsVal
 /// * `time_json` - JSON array of event/censoring times
 /// * `status_json` - JSON array of event indicators (1=event, 0=censored)
 /// * `options_json` - JSON with optional: groups (int[]), weights, stype, ctype
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn survfit_km_wasm(
     time_json: &str,
@@ -549,6 +556,7 @@ pub fn survfit_km_wasm(
     }
 }
 
+#[cfg(feature = "wasm")]
 fn parse_survfit_options(
     json: &str,
     n: usize,
@@ -589,6 +597,7 @@ fn parse_survfit_options(
 /// * `status_json` - JSON array of event indicators
 /// * `group_json` - JSON array of group assignments (0-based integers)
 /// * `options_json` - optional: rho, strata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn survdiff_wasm(
     time_json: &str,
@@ -698,6 +707,7 @@ pub fn survdiff_wasm(
 /// * `covariates_json` - JSON object mapping covariate names to arrays
 /// * `options_json` - optional: method, type (mart/score/scho/deviance/dfbeta/dfbetas),
 ///                    weights, offset, var (variance matrix for dfbeta/dfbetas)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn cox_residuals_wasm(
     time_json: &str,
@@ -941,6 +951,7 @@ pub fn cox_residuals_wasm(
 // ── survsplit ──────────────────────────────────────────────────────────────
 
 /// Split survival data at specified cut points.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn survsplit_wasm(
     tstart_json: &str,
@@ -1031,6 +1042,7 @@ fn rank_to_btree_indices(x: &[f64]) -> Vec<i32> {
 }
 
 /// Compute concordance statistic.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn concordance_wasm(
     time_json: &str,
@@ -1084,6 +1096,7 @@ pub fn concordance_wasm(
 // ── cox.zph ────────────────────────────────────────────────────────────────
 
 /// Proportional hazards test (cox.zph).
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn cox_zph_wasm(
     time_json: &str,
@@ -1234,7 +1247,9 @@ pub struct SurvfitCoxWasmResult {
 ///   - newx: covariate values at which to predict (optional, for S(t|newx))
 ///   - means: covariate means from fitted model (optional, for centering)
 ///   - var: variance-covariance matrix from fitted model (fit$var, optional, for variance)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
+#[cfg(feature = "wasm")]
 pub fn survfit_cox_wasm(input_json: &str) -> Result<JsValue, JsValue> {
     let parsed: serde_json::Value =
         serde_json::from_str(input_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -1776,7 +1791,9 @@ pub fn survfit_cox_wasm(input_json: &str) -> Result<JsValue, JsValue> {
 ///   - method: "breslow" or "efron" (default "efron")
 ///   - maxiter: max iterations (default 25)
 ///   - eps: convergence tolerance (default 1e-9)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
+#[cfg(feature = "wasm")]
 pub fn coxph_counting_wasm(input_json: &str) -> Result<JsValue, JsValue> {
     let parsed: serde_json::Value =
         serde_json::from_str(input_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -2018,7 +2035,9 @@ pub fn coxph_counting_wasm(input_json: &str) -> Result<JsValue, JsValue> {
 /// # Arguments
 /// * `input_json` - JSON object with:
 ///   - start, stop, status, coef, covariates, type, method, weights, strata
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
+#[cfg(feature = "wasm")]
 pub fn cox_residuals_counting_wasm(input_json: &str) -> Result<JsValue, JsValue> {
     let parsed: serde_json::Value =
         serde_json::from_str(input_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -2271,7 +2290,9 @@ fn find_interval(x: &[f64], vec: &[f64], left_open: bool) -> Vec<usize> {
 ///   "counting": false             // true if (start, stop] data
 /// }
 /// ```
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
+#[cfg(feature = "wasm")]
 pub fn finegray_wasm(input_json: &str) -> Result<JsValue, JsValue> {
     let parsed: serde_json::Value =
         serde_json::from_str(input_json).map_err(|e| JsValue::from_str(&e.to_string()))?;
@@ -2686,4 +2707,2262 @@ pub fn finegray_wasm(input_json: &str) -> Result<JsValue, JsValue> {
         add: out_add,
     })
     .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// NAPI-RS exports
+// ══════════════════════════════════════════════════════════════════════════
+
+#[cfg(feature = "napi-rs")]
+struct CoxphParsedOptionsNapi {
+    method: CoxMethod,
+    maxiter: i32,
+    eps: f64,
+    weights: Vec<f64>,
+    offset: Vec<f64>,
+    strata: Vec<i32>,
+    init: Option<Vec<f64>>,
+    nocenter: bool,
+}
+
+#[cfg(feature = "napi-rs")]
+fn parse_coxph_options_napi(json: &str, n: usize) -> Result<CoxphParsedOptionsNapi, napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let method = match parsed.get("method").and_then(|v| v.as_str()) {
+        Some("breslow") => CoxMethod::Breslow,
+        Some("exact") => CoxMethod::Exact,
+        _ => CoxMethod::Efron,
+    };
+
+    let maxiter = parsed
+        .get("maxiter")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(25) as i32;
+
+    let eps = parsed.get("eps").and_then(|v| v.as_f64()).unwrap_or(1e-9);
+
+    let weights = if let Some(w) = parsed.get("weights") {
+        serde_json::from_value(w.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![1.0; n]
+    };
+
+    let offset = if let Some(o) = parsed.get("offset") {
+        serde_json::from_value(o.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![0.0; n]
+    };
+
+    let strata: Vec<i32> = if let Some(s) = parsed.get("strata") {
+        serde_json::from_value(s.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![0; n]
+    };
+
+    let init: Option<Vec<f64>> = if let Some(i) = parsed.get("init") {
+        Some(serde_json::from_value(i.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?)
+    } else {
+        None
+    };
+
+    let nocenter = parsed
+        .get("nocenter")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    Ok(CoxphParsedOptionsNapi {
+        method,
+        maxiter,
+        eps,
+        weights,
+        offset,
+        strata,
+        init,
+        nocenter,
+    })
+}
+
+#[cfg(feature = "napi-rs")]
+fn parse_survfit_options_napi(
+    json: &str,
+    n: usize,
+) -> Result<(Option<Vec<i32>>, Vec<f64>, i32, i32), napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let groups: Option<Vec<i32>> = parsed
+        .get("groups")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default());
+
+    let weights = if let Some(w) = parsed.get("weights") {
+        serde_json::from_value(w.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![1.0; n]
+    };
+
+    let stype = parsed
+        .get("stype")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(1) as i32;
+
+    let influence = parsed
+        .get("influence")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(0) as i32;
+
+    Ok((groups, weights, stype, influence))
+}
+
+// ── coxph (napi) ──────────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn coxph_napi(
+    time_json: String,
+    status_json: String,
+    covariates_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let covars: IndexMap<String, Vec<f64>> =
+        serde_json::from_str(&covariates_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let status: Vec<i32> = status_f64.iter().map(|&s| s as i32).collect();
+
+    let opts = if let Some(ref opts) = options_json {
+        parse_coxph_options_napi(opts, n)?
+    } else {
+        CoxphParsedOptionsNapi {
+            method: CoxMethod::Efron,
+            maxiter: 25,
+            eps: 1e-9,
+            weights: vec![1.0; n],
+            offset: vec![0.0; n],
+            strata: vec![0i32; n],
+            init: None,
+            nocenter: false,
+        }
+    };
+    let method = opts.method;
+    let maxiter = opts.maxiter;
+    let eps = opts.eps;
+    let weights = opts.weights;
+    let offset = opts.offset;
+    let strata_vec = opts.strata;
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    if nvar == 0 {
+        return Err(napi::Error::from_reason("No covariates provided"));
+    }
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        strata_vec[a]
+            .cmp(&strata_vec[b])
+            .then(time[a].partial_cmp(&time[b]).unwrap_or(std::cmp::Ordering::Equal))
+            .then(status[b].cmp(&status[a]))
+    });
+
+    let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
+    let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
+    let sorted_weights: Vec<f64> = order.iter().map(|&i| weights[i]).collect();
+    let sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
+
+    let mut covar: Vec<Vec<f64>> = Vec::with_capacity(nvar);
+    for name in &predictor_names {
+        let col = covars
+            .get(name)
+            .ok_or_else(|| napi::Error::from_reason(format!("Missing covariate: {}", name)))?;
+        let sorted_col: Vec<f64> = order.iter().map(|&i| col[i]).collect();
+        covar.push(sorted_col);
+    }
+    let covar_orig = covar.clone();
+
+    let sorted_strata: Vec<i32> = if strata_vec.iter().all(|&s| s == 0) {
+        let mut s = vec![0i32; n];
+        if n > 0 {
+            s[n - 1] = 1;
+        }
+        s
+    } else {
+        let sorted_strat_vals: Vec<i32> = order.iter().map(|&i| strata_vec[i]).collect();
+        let mut markers = vec![0i32; n];
+        for i in 0..n - 1 {
+            if sorted_strat_vals[i] != sorted_strat_vals[i + 1] {
+                markers[i] = 1;
+            }
+        }
+        if n > 0 {
+            markers[n - 1] = 1;
+        }
+        markers
+    };
+
+    let init = opts.init.unwrap_or_else(|| vec![0.0; nvar]);
+    let doscale: Vec<bool> = if opts.nocenter {
+        vec![false; nvar]
+    } else {
+        covar
+            .iter()
+            .map(|col| !col.iter().all(|&v| v == -1.0 || v == 0.0 || v == 1.0))
+            .collect()
+    };
+    let config = CoxfitConfig {
+        maxiter,
+        eps,
+        toler: 1e-12,
+        method,
+        doscale,
+    };
+
+    let result = if method == CoxMethod::Exact {
+        let mut exact_order: Vec<usize> = (0..n).collect();
+        exact_order.sort_by(|&a, &b| {
+            time[b]
+                .partial_cmp(&time[a])
+                .unwrap()
+                .then(status[b].cmp(&status[a]))
+        });
+
+        let exact_time: Vec<f64> = exact_order.iter().map(|&i| time[i]).collect();
+        let exact_status: Vec<i32> = exact_order.iter().map(|&i| status[i]).collect();
+        let exact_offset: Vec<f64> = exact_order.iter().map(|&i| offset[i]).collect();
+
+        let mut exact_covar: Vec<Vec<f64>> = Vec::with_capacity(nvar);
+        for name in &predictor_names {
+            let col = covars.get(name).unwrap();
+            let sorted_col: Vec<f64> = exact_order.iter().map(|&i| col[i]).collect();
+            exact_covar.push(sorted_col);
+        }
+
+        if !opts.nocenter {
+            for j in 0..nvar {
+                let mean = exact_covar[j].iter().sum::<f64>() / n as f64;
+                for v in exact_covar[j].iter_mut() {
+                    *v -= mean;
+                }
+            }
+        }
+
+        let exact_strata: Vec<i32> = if strata_vec.iter().all(|&s| s == 0) {
+            let mut s = vec![0i32; n];
+            if n > 0 {
+                s[0] = 1;
+            }
+            s
+        } else {
+            let exact_strat_vals: Vec<i32> = exact_order.iter().map(|&i| strata_vec[i]).collect();
+            let mut markers = vec![0i32; n];
+            if n > 0 {
+                markers[0] = 1;
+            }
+            for i in 1..n {
+                if exact_strat_vals[i] != exact_strat_vals[i - 1] {
+                    markers[i] = 1;
+                }
+            }
+            markers
+        };
+
+        use super::cox_exact::coxexact;
+        coxexact(
+            &exact_time,
+            &exact_status,
+            &exact_covar,
+            &exact_strata,
+            &exact_offset,
+            &init,
+            &config,
+        )
+    } else {
+        coxfit6(
+            &sorted_time,
+            &sorted_status,
+            &covar,
+            &sorted_strata,
+            &sorted_offset,
+            &sorted_weights,
+            &init,
+            &config,
+        )
+    };
+
+    let nevent = sorted_status.iter().filter(|&&s| s == 1).count();
+    let center: f64 = (0..nvar).map(|j| result.coef[j] * result.means[j]).sum();
+    let mut linear_pred = vec![0.0; n];
+    for i in 0..n {
+        let orig_idx = order[i];
+        let mut eta = sorted_offset[i] - center;
+        for j in 0..nvar {
+            eta += result.coef[j] * covar_orig[j][i];
+        }
+        linear_pred[orig_idx] = eta;
+    }
+
+    let score: Vec<f64> = (0..n).map(|i| {
+        let mut eta = sorted_offset[i];
+        for j in 0..nvar {
+            eta += result.coef[j] * covar_orig[j][i];
+        }
+        eta.exp()
+    }).collect();
+
+    let method_int = match method {
+        CoxMethod::Breslow => 0,
+        CoxMethod::Efron | CoxMethod::Exact => 1,
+    };
+
+    let mart_sorted = coxmart(
+        &sorted_time,
+        &sorted_status,
+        &score,
+        &sorted_strata,
+        &sorted_weights,
+        method_int,
+    );
+
+    let mut mart = vec![0.0; n];
+    for i in 0..n {
+        mart[order[i]] = mart_sorted[i];
+    }
+
+    let status_f64_sorted: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+    let score_resid_sorted = coxscore2(
+        &sorted_time,
+        &status_f64_sorted,
+        &covar,
+        &sorted_strata,
+        &score,
+        &sorted_weights,
+        method_int,
+    );
+
+    let mut score_resid = vec![vec![0.0; n]; nvar];
+    for j in 0..nvar {
+        for i in 0..n {
+            score_resid[j][order[i]] = score_resid_sorted[j][i];
+        }
+    }
+
+    let wasm_result = CoxphWasmResult {
+        coefficients: result.coef,
+        var: result.imat,
+        loglik: result.loglik,
+        score: result.sctest,
+        iter: result.iter,
+        method: match method {
+            CoxMethod::Breslow => "breslow".to_string(),
+            CoxMethod::Efron => "efron".to_string(),
+            CoxMethod::Exact => "exact".to_string(),
+        },
+        means: result.means,
+        n,
+        nevent,
+        linear_predictors: linear_pred,
+        residuals: mart,
+        score_residuals: score_resid,
+        predictor_names,
+    };
+
+    serde_json::to_string(&wasm_result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── survfit_km (napi) ─────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn survfit_km_napi(
+    time_json: String,
+    status_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let status: Vec<i32> = status_f64.iter().map(|&s| s as i32).collect();
+
+    let (groups, weights, stype, influence) = if let Some(ref opts) = options_json {
+        parse_survfit_options_napi(opts, n)?
+    } else {
+        (None, vec![1.0; n], 1i32, 0i32)
+    };
+
+    if let Some(ref grp) = groups {
+        let mut unique_groups: Vec<i32> = grp.clone();
+        unique_groups.sort();
+        unique_groups.dedup();
+
+        let mut all_results = SurvfitWasmResult {
+            time: Vec::new(),
+            n_risk: Vec::new(),
+            n_event: Vec::new(),
+            n_censor: Vec::new(),
+            surv: Vec::new(),
+            cumhaz: Vec::new(),
+            std_err: Vec::new(),
+            std_chaz: Vec::new(),
+            strata: Some(Vec::new()),
+            strata_names: Some(unique_groups.iter().map(|g| g.to_string()).collect()),
+        };
+
+        for &g in &unique_groups {
+            let mask: Vec<bool> = grp.iter().map(|&gi| gi == g).collect();
+            let sub_time: Vec<f64> = mask
+                .iter()
+                .zip(time.iter())
+                .filter(|(m, _)| **m)
+                .map(|(_, &t)| t)
+                .collect();
+            let sub_status: Vec<i32> = mask
+                .iter()
+                .zip(status.iter())
+                .filter(|(m, _)| **m)
+                .map(|(_, &s)| s)
+                .collect();
+            let sub_weights: Vec<f64> = mask
+                .iter()
+                .zip(weights.iter())
+                .filter(|(m, _)| **m)
+                .map(|(_, &w)| w)
+                .collect();
+
+            let data = SurvData::right_censored(&sub_time, &sub_status);
+            let config = SurvfitConfig {
+                surv_type: stype,
+                robust: false,
+                id: None,
+                nid: 0,
+                influence,
+            };
+            let km = survfit_km(&data, &sub_weights, &config);
+
+            let len = km.time.len();
+            all_results
+                .strata
+                .as_mut()
+                .unwrap()
+                .push(len);
+            all_results.time.extend(km.time);
+            all_results.n_risk.extend(km.n_risk);
+            all_results.n_event.extend(km.n_event);
+            all_results.n_censor.extend(km.n_censor);
+            all_results.surv.extend(km.surv);
+            all_results.cumhaz.extend(km.cumhaz);
+            all_results.std_err.extend(km.std_err);
+            all_results.std_chaz.extend(km.std_chaz);
+        }
+
+        serde_json::to_string(&all_results)
+            .map_err(|e| napi::Error::from_reason(e.to_string()))
+    } else {
+        let data = SurvData::right_censored(&time, &status);
+        let config = SurvfitConfig {
+            surv_type: stype,
+            robust: false,
+            id: None,
+            nid: 0,
+            influence,
+        };
+        let km = survfit_km(&data, &weights, &config);
+
+        let result = SurvfitWasmResult {
+            time: km.time,
+            n_risk: km.n_risk,
+            n_event: km.n_event,
+            n_censor: km.n_censor,
+            surv: km.surv,
+            cumhaz: km.cumhaz,
+            std_err: km.std_err,
+            std_chaz: km.std_chaz,
+            strata: None,
+            strata_names: None,
+        };
+
+        serde_json::to_string(&result).map_err(|e| napi::Error::from_reason(e.to_string()))
+    }
+}
+
+// ── survdiff (napi) ───────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn survdiff_napi(
+    time_json: String,
+    status_json: String,
+    group_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let group: Vec<i32> =
+        serde_json::from_str(&group_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let status: Vec<i32> = status_f64.iter().map(|&s| s as i32).collect();
+
+    let (rho, strata_vec) = if let Some(ref opts) = options_json {
+        let parsed: serde_json::Value =
+            serde_json::from_str(opts).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        let rho = parsed.get("rho").and_then(|v| v.as_f64()).unwrap_or(0.0);
+        let strata: Vec<i32> = parsed
+            .get("strata")
+            .map(|v| serde_json::from_value(v.clone()).unwrap_or_else(|_| vec![0; n]))
+            .unwrap_or_else(|| vec![0; n]);
+        (rho, strata)
+    } else {
+        (0.0, vec![0i32; n])
+    };
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        strata_vec[a]
+            .cmp(&strata_vec[b])
+            .then(time[a].partial_cmp(&time[b]).unwrap_or(std::cmp::Ordering::Equal))
+            .then(status[b].cmp(&status[a]))
+    });
+
+    let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
+    let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
+    let sorted_group: Vec<i32> = order.iter().map(|&i| group[i] + 1).collect();
+    let sorted_strata: Vec<i32> = order.iter().map(|&i| strata_vec[i]).collect();
+
+    let ngroup = *sorted_group.iter().max().unwrap_or(&1) as usize;
+
+    let mut unique_strata: Vec<i32> = sorted_strata.clone();
+    unique_strata.sort();
+    unique_strata.dedup();
+    let nstrat = unique_strata.len();
+
+    let mut strata_markers: Vec<i32> = vec![0; n];
+    for i in 0..n {
+        if i == n - 1 || sorted_strata[i] != sorted_strata[i + 1] {
+            strata_markers[i] = 1;
+        }
+    }
+
+    let result = survdiff2(
+        &sorted_time,
+        &sorted_status,
+        &sorted_group,
+        &strata_markers,
+        ngroup,
+        nstrat,
+        rho,
+    );
+
+    let mut group_n = vec![0usize; ngroup];
+    for &g in &group {
+        group_n[g as usize] += 1;
+    }
+
+    let pvalue = if result.df > 0 {
+        crate::stats::distributions::chi_squared::pchisq(result.chisq, result.df as f64, false, false)
+    } else {
+        1.0
+    };
+
+    let wasm_result = SurvdiffWasmResult {
+        n: group_n,
+        obs: result.observed,
+        exp: result.expected,
+        var: result.var,
+        chisq: result.chisq,
+        df: result.df,
+        pvalue,
+    };
+
+    serde_json::to_string(&wasm_result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── cox_residuals (napi) ──────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn cox_residuals_napi(
+    time_json: String,
+    status_json: String,
+    coef_json: String,
+    covariates_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let coef: Vec<f64> =
+        serde_json::from_str(&coef_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let covars: IndexMap<String, Vec<f64>> =
+        serde_json::from_str(&covariates_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let status: Vec<i32> = status_f64.iter().map(|&s| s as i32).collect();
+
+    let (resid_type, method_int, weights, offset, strata_input) = if let Some(ref opts) =
+        options_json
+    {
+        let parsed: serde_json::Value =
+            serde_json::from_str(opts).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        let rtype = parsed
+            .get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("martingale")
+            .to_string();
+        let method = match parsed.get("method").and_then(|v| v.as_str()) {
+            Some("breslow") | Some("exact") => 0i32,
+            _ => 1i32,
+        };
+        let wts: Vec<f64> = parsed
+            .get("weights")
+            .map(|v| serde_json::from_value(v.clone()).unwrap_or_else(|_| vec![1.0; n]))
+            .unwrap_or_else(|| vec![1.0; n]);
+        let off: Vec<f64> = parsed
+            .get("offset")
+            .map(|v| serde_json::from_value(v.clone()).unwrap_or_else(|_| vec![0.0; n]))
+            .unwrap_or_else(|| vec![0.0; n]);
+        let strata: Vec<i32> = parsed
+            .get("strata")
+            .map(|v| serde_json::from_value(v.clone()).unwrap_or_else(|_| vec![0; n]))
+            .unwrap_or_else(|| vec![0; n]);
+        (rtype, method, wts, off, strata)
+    } else {
+        (
+            "martingale".to_string(),
+            1i32,
+            vec![1.0; n],
+            vec![0.0; n],
+            vec![0i32; n],
+        )
+    };
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        strata_input[a]
+            .cmp(&strata_input[b])
+            .then(time[a].partial_cmp(&time[b]).unwrap_or(std::cmp::Ordering::Equal))
+            .then(status[b].cmp(&status[a]))
+    });
+
+    let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
+    let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
+    let sorted_weights: Vec<f64> = order.iter().map(|&i| weights[i]).collect();
+    let sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
+    let sorted_strata: Vec<i32> = order.iter().map(|&i| strata_input[i]).collect();
+
+    let mut covar: Vec<Vec<f64>> = Vec::with_capacity(nvar);
+    for name in &predictor_names {
+        let col = covars.get(name).unwrap();
+        let sorted_col: Vec<f64> = order.iter().map(|&i| col[i]).collect();
+        covar.push(sorted_col);
+    }
+
+    let mut strata_marker = vec![0i32; n];
+    for i in 0..n.saturating_sub(1) {
+        if sorted_strata[i] != sorted_strata[i + 1] {
+            strata_marker[i] = 1;
+        }
+    }
+    if n > 0 {
+        strata_marker[n - 1] = 1;
+    }
+    let strata_sameval = sorted_strata.clone();
+
+    let score: Vec<f64> = (0..n)
+        .map(|i| {
+            let mut eta = sorted_offset[i];
+            for j in 0..nvar {
+                eta += coef[j] * covar[j][i];
+            }
+            eta.exp()
+        })
+        .collect();
+
+    match resid_type.as_str() {
+        "martingale" | "mart" => {
+            let mart_sorted = coxmart(
+                &sorted_time,
+                &sorted_status,
+                &score,
+                &strata_marker,
+                &sorted_weights,
+                method_int,
+            );
+            let mut mart = vec![0.0; n];
+            for i in 0..n {
+                mart[order[i]] = mart_sorted[i];
+            }
+            serde_json::to_string(&mart)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "score" => {
+            let status_f64_s: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+            let sr = coxscore2(
+                &sorted_time,
+                &status_f64_s,
+                &covar,
+                &strata_sameval,
+                &score,
+                &sorted_weights,
+                method_int,
+            );
+            let mut result = vec![vec![0.0; n]; nvar];
+            for j in 0..nvar {
+                for i in 0..n {
+                    result[j][order[i]] = sr[j][i];
+                }
+            }
+            serde_json::to_string(&result)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "schoenfeld" | "scho" => {
+            let start = vec![0.0; n];
+            let stop = sorted_time.clone();
+            let event: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+            let weighted_score: Vec<f64> = score
+                .iter()
+                .zip(sorted_weights.iter())
+                .map(|(&s, &w)| s * w)
+                .collect();
+            let (death_times, scho) = coxscho(
+                &start, &stop, &event, &covar, &weighted_score, &strata_marker, method_int,
+            );
+            #[derive(Serialize)]
+            struct SchoResult {
+                time: Vec<f64>,
+                residuals: Vec<Vec<f64>>,
+            }
+            serde_json::to_string(&SchoResult {
+                time: death_times,
+                residuals: scho,
+            })
+            .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "deviance" => {
+            let mart_sorted = coxmart(
+                &sorted_time,
+                &sorted_status,
+                &score,
+                &strata_marker,
+                &sorted_weights,
+                method_int,
+            );
+            let status_f64_s: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+            let dev_sorted = deviance_residuals(&mart_sorted, &status_f64_s);
+            let mut dev = vec![0.0; n];
+            for i in 0..n {
+                dev[order[i]] = dev_sorted[i];
+            }
+            serde_json::to_string(&dev)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "dfbeta" | "dfbetas" => {
+            let status_f64_s: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+            let sr = coxscore2(
+                &sorted_time,
+                &status_f64_s,
+                &covar,
+                &strata_sameval,
+                &score,
+                &sorted_weights,
+                method_int,
+            );
+
+            let var: Vec<Vec<f64>> = if let Some(ref opts) = options_json {
+                let parsed: serde_json::Value =
+                    serde_json::from_str(opts).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+                parsed
+                    .get("var")
+                    .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
+            };
+
+            if var.is_empty() {
+                return Err(napi::Error::from_reason("dfbeta/dfbetas requires var matrix"));
+            }
+
+            let dfb = dfbeta_residuals(&sr, &var);
+
+            let result = if resid_type == "dfbetas" {
+                dfbetas_residuals(&dfb, &var)
+            } else {
+                dfb
+            };
+
+            let mut unsorted = vec![vec![0.0; n]; nvar];
+            for j in 0..nvar {
+                for i in 0..n {
+                    unsorted[j][order[i]] = result[j][i];
+                }
+            }
+            serde_json::to_string(&unsorted)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        _ => Err(napi::Error::from_reason(format!(
+            "Unknown residual type: {}",
+            resid_type
+        ))),
+    }
+}
+
+// ── survsplit (napi) ──────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn survsplit_napi(
+    tstart_json: String,
+    tstop_json: String,
+    cut_json: String,
+) -> Result<String, napi::Error> {
+    let tstart: Vec<f64> =
+        serde_json::from_str(&tstart_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let tstop: Vec<f64> =
+        serde_json::from_str(&tstop_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let cut: Vec<f64> =
+        serde_json::from_str(&cut_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let result = survsplit(&tstart, &tstop, &cut);
+
+    #[derive(Serialize)]
+    struct SplitResult {
+        row: Vec<usize>,
+        interval: Vec<usize>,
+        start: Vec<f64>,
+        end: Vec<f64>,
+        censor: Vec<bool>,
+    }
+
+    serde_json::to_string(&SplitResult {
+        row: result.row,
+        interval: result.interval,
+        start: result.start,
+        end: result.end,
+        censor: result.censor,
+    })
+    .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── concordance (napi) ────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn concordance_napi(
+    time_json: String,
+    status_json: String,
+    x_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let x_raw: Vec<f64> =
+        serde_json::from_str(&x_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let wt = vec![1.0; n];
+    let timewt = vec![1.0; n];
+
+    let x = rank_to_btree_indices(&x_raw);
+
+    let mut sort_stop: Vec<i32> = (0..n as i32).collect();
+    sort_stop.sort_by(|&a, &b| {
+        let ai = a as usize;
+        let bi = b as usize;
+        time[bi].partial_cmp(&time[ai]).unwrap()
+            .then(status[ai].partial_cmp(&status[bi]).unwrap())
+            .then(x[ai].cmp(&x[bi]))
+    });
+
+    let reverse = options_json
+        .as_deref()
+        .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok())
+        .and_then(|v| v.get("reverse").and_then(|r| r.as_bool()))
+        .unwrap_or(false);
+
+    let doresid = false;
+    let mut result = concordance3(&time, &status, &x, &wt, &timewt, &sort_stop, doresid);
+
+    if reverse {
+        result.count.swap(0, 1);
+    }
+
+    serde_json::to_string(&result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── cox_zph (napi) ────────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn cox_zph_napi(
+    time_json: String,
+    status_json: String,
+    coef_json: String,
+    covariates_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let time: Vec<f64> =
+        serde_json::from_str(&time_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> =
+        serde_json::from_str(&status_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let coef: Vec<f64> =
+        serde_json::from_str(&coef_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let covars: IndexMap<String, Vec<f64>> =
+        serde_json::from_str(&covariates_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+
+    let method_int = if let Some(ref opts) = options_json {
+        let parsed: serde_json::Value =
+            serde_json::from_str(opts).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+        match parsed.get("method").and_then(|v| v.as_str()) {
+            Some("breslow") => 0i32,
+            _ => 1i32,
+        }
+    } else {
+        1i32
+    };
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        time[a]
+            .partial_cmp(&time[b])
+            .unwrap()
+            .then(status_f64[b].partial_cmp(&status_f64[a]).unwrap_or(std::cmp::Ordering::Equal))
+    });
+
+    let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
+    let sorted_status: Vec<f64> = order.iter().map(|&i| status_f64[i]).collect();
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    let mut covar: Vec<Vec<f64>> = Vec::with_capacity(nvar);
+    for name in &predictor_names {
+        let col = covars.get(name).unwrap();
+        let sorted_col: Vec<f64> = order.iter().map(|&i| col[i]).collect();
+        covar.push(sorted_col);
+    }
+
+    let weights = vec![1.0; n];
+    let mut strata = vec![0i32; n];
+    if n > 0 {
+        strata[n - 1] = 1;
+    }
+
+    let eta: Vec<f64> = (0..n)
+        .map(|i| {
+            let mut e = 0.0;
+            for j in 0..nvar {
+                e += coef[j] * covar[j][i];
+            }
+            e
+        })
+        .collect();
+
+    let gt: Vec<f64> = {
+        let mut ranks = vec![0.0; n];
+        let event_times: Vec<f64> = sorted_time
+            .iter()
+            .zip(sorted_status.iter())
+            .filter(|(_, s)| **s > 0.0)
+            .map(|(&t, _)| t)
+            .collect();
+        let nevent = event_times.len();
+        for (rank, &_t) in event_times.iter().enumerate() {
+            ranks[rank] = (rank + 1) as f64 / nevent as f64;
+        }
+        ranks
+    };
+
+    let sort: Vec<i32> = (0..n as i32).collect();
+
+    let result = zph1(
+        &gt,
+        &sorted_time,
+        &sorted_status,
+        &mut covar,
+        &eta,
+        &weights,
+        &strata,
+        method_int,
+        &sort,
+    );
+
+    #[derive(Serialize)]
+    struct ZphResult {
+        table: Vec<Vec<f64>>,
+        schoenfeld: Vec<Vec<f64>>,
+    }
+
+    serde_json::to_string(&ZphResult {
+        table: result.u.iter().map(|v| vec![*v]).collect(),
+        schoenfeld: result.schoen,
+    })
+    .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── survfit_cox (napi) ────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn survfit_cox_napi(input_json: String) -> Result<String, napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(&input_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let time: Vec<f64> = serde_json::from_value(
+        parsed.get("time").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let start: Option<Vec<f64>> = parsed
+        .get("start")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default());
+    let status_f64: Vec<f64> = serde_json::from_value(
+        parsed.get("status").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = time.len();
+    let status: Vec<i32> = status_f64.iter().map(|&s| s as i32).collect();
+
+    let coef: Vec<f64> = parsed
+        .get("coef")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let covars: IndexMap<String, Vec<f64>> = parsed
+        .get("covariates")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let offset: Vec<f64> = parsed
+        .get("offset")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_else(|_| vec![0.0; n]))
+        .unwrap_or_else(|| vec![0.0; n]);
+
+    let stype = parsed
+        .get("stype")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(2) as i32;
+    let ctype = parsed
+        .get("ctype")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(1) as i32;
+    let censor = parsed
+        .get("censor")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+
+    let newx: Vec<f64> = parsed
+        .get("newx")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let means: Vec<f64> = parsed
+        .get("means")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let var_matrix: Vec<Vec<f64>> = parsed
+        .get("var")
+        .map(|v| serde_json::from_value(v.clone()).unwrap_or_default())
+        .unwrap_or_default();
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    let offset_mean = if offset.iter().all(|&o| o == 0.0) {
+        0.0
+    } else {
+        offset.iter().sum::<f64>() / n as f64
+    };
+
+    let xcenter = if !means.is_empty() && !coef.is_empty() {
+        means.iter().zip(coef.iter()).map(|(m, b)| m * b).sum::<f64>() + offset_mean
+    } else {
+        offset_mean
+    };
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        time[a]
+            .partial_cmp(&time[b])
+            .unwrap()
+            .then(status[b].cmp(&status[a]))
+    });
+
+    let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
+    let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
+    let sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
+
+    let risk: Vec<f64> = (0..n)
+        .map(|i| {
+            let orig = order[i];
+            let mut eta = offset[orig] - xcenter;
+            for (j, name) in predictor_names.iter().enumerate() {
+                if let Some(col) = covars.get(name) {
+                    eta += coef[j] * col[orig];
+                }
+            }
+            eta.exp()
+        })
+        .collect();
+
+    let weights: Vec<f64> = parsed
+        .get("weights")
+        .and_then(|v| serde_json::from_value::<Vec<f64>>(v.clone()).ok())
+        .map(|w| order.iter().map(|&i| w[i]).collect())
+        .unwrap_or_else(|| vec![1.0_f64; n]);
+
+    let mut unique_times: Vec<f64> = Vec::new();
+    let mut nevent_at: Vec<f64> = Vec::new();
+    let mut ncensor_at: Vec<f64> = Vec::new();
+    let mut nrisk_at: Vec<f64> = Vec::new();
+
+    {
+        let mut i = 0;
+        while i < n {
+            let t = sorted_time[i];
+            let mut ev = 0.0;
+            let mut cen = 0.0;
+            while i < n && sorted_time[i] == t {
+                if sorted_status[i] == 1 {
+                    ev += weights[i];
+                } else {
+                    cen += weights[i];
+                }
+                i += 1;
+            }
+            unique_times.push(t);
+            nevent_at.push(ev);
+            ncensor_at.push(cen);
+        }
+    }
+
+    let ntime = unique_times.len();
+    let mut wrisk_at = vec![0.0_f64; ntime];
+    let mut irisk_at = vec![0.0_f64; ntime];
+    let mut xsum_at: Vec<Vec<f64>> = vec![vec![0.0; ntime]; nvar];
+    {
+        let mut tidx = 0;
+        let mut i = 0;
+        while i < n {
+            let t = sorted_time[i];
+            while tidx < ntime && unique_times[tidx] < t {
+                tidx += 1;
+            }
+            while i < n && sorted_time[i] == t {
+                let wr = weights[i] * risk[i];
+                wrisk_at[tidx] += wr;
+                irisk_at[tidx] += weights[i];
+                let orig = order[i];
+                for (j, name) in predictor_names.iter().enumerate() {
+                    if let Some(col) = covars.get(name) {
+                        xsum_at[j][tidx] += wr * col[orig];
+                    }
+                }
+                i += 1;
+            }
+        }
+    }
+
+    {
+        let mut cumwr = 0.0;
+        let mut cumir = 0.0;
+        for i in (0..ntime).rev() {
+            cumwr += wrisk_at[i];
+            cumir += irisk_at[i];
+            nrisk_at.push(cumwr);
+            irisk_at[i] = cumir;
+        }
+        nrisk_at.reverse();
+    }
+    for j in 0..nvar {
+        let mut cum = 0.0;
+        for i in (0..ntime).rev() {
+            cum += xsum_at[j][i];
+            xsum_at[j][i] = cum;
+        }
+    }
+
+    if let Some(ref start_times) = start {
+        let sorted_start: Vec<f64> = order.iter().map(|&i| start_times[i]).collect();
+
+        let mut entry_times: Vec<f64> = sorted_start.clone();
+        entry_times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        entry_times.dedup();
+
+        let n_entry = entry_times.len();
+        let mut esum_wr = vec![0.0_f64; n_entry];
+        let mut esum_ir = vec![0.0_f64; n_entry];
+        let mut esum_x: Vec<Vec<f64>> = vec![vec![0.0; n_entry]; nvar];
+        for i in 0..n {
+            let s = sorted_start[i];
+            let eidx = entry_times.iter().position(|&e| e == s).unwrap();
+            let wr = weights[i] * risk[i];
+            esum_wr[eidx] += wr;
+            esum_ir[eidx] += weights[i];
+            let orig = order[i];
+            for (j, name) in predictor_names.iter().enumerate() {
+                if let Some(col) = covars.get(name) {
+                    esum_x[j][eidx] += wr * col[orig];
+                }
+            }
+        }
+        {
+            let mut cum_wr = 0.0;
+            let mut cum_ir = 0.0;
+            for i in (0..n_entry).rev() {
+                cum_wr += esum_wr[i];
+                cum_ir += esum_ir[i];
+                esum_wr[i] = cum_wr;
+                esum_ir[i] = cum_ir;
+            }
+            for j in 0..nvar {
+                let mut cum = 0.0;
+                for i in (0..n_entry).rev() {
+                    cum += esum_x[j][i];
+                    esum_x[j][i] = cum;
+                }
+            }
+        }
+
+        for i in 0..ntime {
+            let t = unique_times[i];
+            let eidx = entry_times.iter().position(|&e| e >= t);
+            if let Some(idx) = eidx {
+                nrisk_at[i] -= esum_wr[idx];
+                irisk_at[i] -= esum_ir[idx];
+                for j in 0..nvar {
+                    xsum_at[j][i] -= esum_x[j][idx];
+                }
+            }
+        }
+    }
+
+    let xbar_at: Vec<Vec<f64>> = (0..nvar)
+        .map(|j| {
+            (0..ntime)
+                .map(|i| {
+                    if nrisk_at[i] > 0.0 {
+                        xsum_at[j][i] / nrisk_at[i]
+                    } else {
+                        0.0
+                    }
+                })
+                .collect()
+        })
+        .collect();
+
+    let mut haz = vec![0.0_f64; ntime];
+    let mut efron_sum2: Option<Vec<f64>> = None;
+    let mut efron_xbar: Option<Vec<Vec<f64>>> = None;
+    if ctype == 1 {
+        for i in 0..ntime {
+            if nevent_at[i] > 0.0 && nrisk_at[i] > 0.0 {
+                haz[i] = nevent_at[i] / nrisk_at[i];
+            }
+        }
+    } else {
+        let mut ndeath = vec![0_i32; ntime];
+        let mut erisk = vec![0.0_f64; ntime];
+        let mut xsum2_death = vec![0.0_f64; ntime * nvar];
+        {
+            let mut tidx = 0;
+            let mut i = 0;
+            while i < n {
+                let t = sorted_time[i];
+                while tidx < ntime && unique_times[tidx] < t {
+                    tidx += 1;
+                }
+                while i < n && sorted_time[i] == t {
+                    if sorted_status[i] == 1 {
+                        ndeath[tidx] += 1;
+                        let wr = weights[i] * risk[i];
+                        erisk[tidx] += wr;
+                        let orig = order[i];
+                        for (j, name) in predictor_names.iter().enumerate() {
+                            if let Some(col) = covars.get(name) {
+                                xsum2_death[tidx + ntime * j] += wr * col[orig];
+                            }
+                        }
+                    }
+                    i += 1;
+                }
+            }
+        }
+        use super::cox_survival_efron::agsurv5;
+        let mut xsum_colmajor = vec![0.0_f64; ntime * nvar];
+        for j in 0..nvar {
+            for i in 0..ntime {
+                xsum_colmajor[i + ntime * j] = xsum_at[j][i];
+            }
+        }
+        let (sum1, sum2, efron_xbar_raw) =
+            agsurv5(&ndeath, &nrisk_at, &erisk, &xsum_colmajor, &xsum2_death, nvar);
+        for i in 0..ntime {
+            haz[i] = nevent_at[i] * sum1[i];
+        }
+        efron_sum2 = Some(sum2);
+        let mut efron_xbar_final = vec![vec![0.0_f64; ntime]; nvar];
+        for j in 0..nvar {
+            for i in 0..ntime {
+                efron_xbar_final[j][i] = nevent_at[i] * efron_xbar_raw[i + ntime * j];
+            }
+        }
+        efron_xbar = Some(efron_xbar_final);
+    }
+
+    let mut cumhaz = vec![0.0_f64; ntime];
+    let mut ch = 0.0;
+    for i in 0..ntime {
+        ch += haz[i];
+        cumhaz[i] = ch;
+    }
+
+    let surv: Vec<f64> = if stype == 1 {
+        use super::cox_survival_kp::agsurv4;
+        let mut ndeath = vec![0_i32; ntime];
+        let mut death_risk: Vec<f64> = Vec::new();
+        let mut death_wt: Vec<f64> = Vec::new();
+        {
+            let mut tidx = 0;
+            let mut i = 0;
+            while i < n {
+                let t = sorted_time[i];
+                while tidx < ntime && unique_times[tidx] < t {
+                    tidx += 1;
+                }
+                while i < n && sorted_time[i] == t {
+                    if sorted_status[i] == 1 {
+                        ndeath[tidx] += 1;
+                        death_risk.push(risk[i]);
+                        death_wt.push(weights[i]);
+                    }
+                    i += 1;
+                }
+            }
+        }
+        let km = agsurv4(&ndeath, &death_risk, &death_wt, &nrisk_at);
+        let mut s = 1.0;
+        km.iter()
+            .map(|&ki| {
+                s *= ki;
+                s
+            })
+            .collect()
+    } else {
+        cumhaz.iter().map(|&ch| (-ch).exp()).collect()
+    };
+
+    let has_newx = !newx.is_empty() && nvar > 0;
+    let newx_eta: f64 = if has_newx {
+        (0..nvar)
+            .map(|j| {
+                let m = if j < means.len() { means[j] } else { 0.0 };
+                coef.get(j).unwrap_or(&0.0) * (newx[j] - m)
+            })
+            .sum()
+    } else {
+        0.0
+    };
+
+    let mut varhaz_g = vec![0.0_f64; ntime];
+    if let Some(ref sum2) = efron_sum2 {
+        for i in 0..ntime {
+            varhaz_g[i] = nevent_at[i] * sum2[i];
+        }
+    } else {
+        for i in 0..ntime {
+            if nrisk_at[i] > 0.0 {
+                varhaz_g[i] = nevent_at[i] / (nrisk_at[i] * nrisk_at[i]);
+            }
+        }
+    }
+
+    let std_err: Vec<f64> = if has_newx && !var_matrix.is_empty() {
+        let mut varhaz_d = vec![vec![0.0_f64; ntime]; nvar];
+        for j in 0..nvar {
+            let nx = newx[j];
+            let mut cum = 0.0;
+            for i in 0..ntime {
+                let xbar_haz = if let Some(ref ex) = efron_xbar {
+                    ex[j][i]
+                } else {
+                    xbar_at[j][i] * haz[i]
+                };
+                cum += haz[i] * nx - xbar_haz;
+                varhaz_d[j][i] = cum;
+            }
+        }
+
+        let mut cum_g = 0.0;
+        let scale = (2.0 * newx_eta).exp();
+        (0..ntime)
+            .map(|i| {
+                cum_g += varhaz_g[i];
+                let mut d_term = 0.0;
+                for j1 in 0..nvar {
+                    for j2 in 0..nvar {
+                        d_term += varhaz_d[j1][i] * var_matrix[j1][j2] * varhaz_d[j2][i];
+                    }
+                }
+                ((cum_g + d_term) * scale).sqrt()
+            })
+            .collect()
+    } else {
+        let mut cumvar = 0.0;
+        varhaz_g
+            .iter()
+            .map(|&v| {
+                cumvar += v;
+                cumvar.sqrt()
+            })
+            .collect()
+    };
+
+    let surv: Vec<f64> = if has_newx {
+        let exp_eta = newx_eta.exp();
+        cumhaz.iter().map(|&ch| (-ch * exp_eta).exp()).collect()
+    } else {
+        surv
+    };
+    let cumhaz: Vec<f64> = if has_newx {
+        let exp_eta = newx_eta.exp();
+        cumhaz.iter().map(|&ch| ch * exp_eta).collect()
+    } else {
+        cumhaz
+    };
+
+    let keep: Vec<bool> = if censor {
+        vec![true; ntime]
+    } else {
+        nevent_at.iter().map(|&e| e > 0.0).collect()
+    };
+
+    let filter = |v: &[f64]| -> Vec<f64> {
+        v.iter()
+            .zip(keep.iter())
+            .filter(|&(_, k)| *k)
+            .map(|(&val, _)| val)
+            .collect()
+    };
+
+    let result = SurvfitCoxWasmResult {
+        time: filter(&unique_times),
+        n_risk: filter(&irisk_at),
+        n_event: filter(&nevent_at),
+        surv: filter(&surv),
+        cumhaz: filter(&cumhaz),
+        std_err: filter(&std_err),
+    };
+
+    serde_json::to_string(&result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── coxph_counting (napi) ─────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn coxph_counting_napi(input_json: String) -> Result<String, napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(&input_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let start: Vec<f64> = serde_json::from_value(
+        parsed.get("start").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let stop: Vec<f64> = serde_json::from_value(
+        parsed.get("stop").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_f64: Vec<f64> = serde_json::from_value(
+        parsed.get("status").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = stop.len();
+
+    let covars: IndexMap<String, Vec<f64>> = serde_json::from_value(
+        parsed.get("covariates").cloned().unwrap_or_default(),
+    )
+    .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let method = match parsed.get("method").and_then(|v| v.as_str()) {
+        Some("breslow") => 0i32,
+        _ => 1i32,
+    };
+    let maxiter = parsed
+        .get("maxiter")
+        .and_then(|v| v.as_i64())
+        .unwrap_or(25) as i32;
+    let eps = parsed
+        .get("eps")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(1e-9);
+    let nocenter = parsed
+        .get("nocenter")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    if nvar == 0 {
+        return Err(napi::Error::from_reason("No covariates provided"));
+    }
+
+    let ibeta: Vec<f64> = if let Some(init_val) = parsed.get("init") {
+        serde_json::from_value(init_val.clone()).unwrap_or_else(|_| vec![0.0; nvar])
+    } else {
+        vec![0.0_f64; nvar]
+    };
+    let weights: Vec<f64> = if let Some(w_val) = parsed.get("weights") {
+        serde_json::from_value(w_val.clone()).unwrap_or_else(|_| vec![1.0; n])
+    } else {
+        vec![1.0_f64; n]
+    };
+    let offset: Vec<f64> = if let Some(o_val) = parsed.get("offset") {
+        serde_json::from_value(o_val.clone()).unwrap_or_else(|_| vec![0.0; n])
+    } else {
+        vec![0.0_f64; n]
+    };
+    let strata: Vec<i32> = if let Some(s_val) = parsed.get("strata") {
+        serde_json::from_value(s_val.clone()).unwrap_or_else(|_| vec![0; n])
+    } else {
+        vec![0_i32; n]
+    };
+
+    let covar_orig: Vec<Vec<f64>> = predictor_names
+        .iter()
+        .map(|name| covars.get(name).unwrap().clone())
+        .collect();
+    let mut covar: Vec<Vec<f64>> = covar_orig.clone();
+
+    let mut sort1: Vec<usize> = (0..n).collect();
+    sort1.sort_by(|&a, &b| {
+        strata[a]
+            .cmp(&strata[b])
+            .then(start[b].partial_cmp(&start[a]).unwrap_or(std::cmp::Ordering::Equal))
+    });
+    let sort1_i32: Vec<i32> = sort1.iter().map(|&i| i as i32).collect();
+
+    let mut sort2: Vec<usize> = (0..n).collect();
+    sort2.sort_by(|&a, &b| {
+        strata[a]
+            .cmp(&strata[b])
+            .then(
+                stop[b]
+                    .partial_cmp(&stop[a])
+                    .unwrap()
+                    .then(
+                        (status_f64[a] as i32).cmp(&(status_f64[b] as i32)),
+                    ),
+            )
+    });
+    let sort2_i32: Vec<i32> = sort2.iter().map(|&i| i as i32).collect();
+
+    let doscale: Vec<i32> = if nocenter {
+        vec![0; nvar]
+    } else {
+        covar
+            .iter()
+            .map(|col| {
+                if col.iter().all(|&v| v == -1.0 || v == 0.0 || v == 1.0) {
+                    0
+                } else {
+                    1
+                }
+            })
+            .collect()
+    };
+    let config = AgfitConfig {
+        maxiter,
+        eps,
+        toler: 1e-12,
+        method,
+        doscale,
+    };
+
+    let result = agfit4(
+        &start,
+        &stop,
+        &status_f64,
+        &mut covar,
+        &weights,
+        &offset,
+        &ibeta,
+        &sort1_i32,
+        &sort2_i32,
+        &strata,
+        &config,
+    );
+
+    let nevent = status_f64.iter().filter(|&&s| s == 1.0).count();
+
+    let mut linear_pred = vec![0.0; n];
+    for i in 0..n {
+        let mut eta = offset[i];
+        for j in 0..nvar {
+            eta += result.coef[j] * covar_orig[j][i];
+        }
+        linear_pred[i] = eta;
+    }
+
+    let mut asc_order: Vec<usize> = (0..n).collect();
+    asc_order.sort_by(|&a, &b| {
+        strata[a].cmp(&strata[b])
+            .then(stop[a].partial_cmp(&stop[b]).unwrap_or(std::cmp::Ordering::Equal))
+            .then((status_f64[b] as i32).cmp(&(status_f64[a] as i32)))
+    });
+
+    let asc_start: Vec<f64> = asc_order.iter().map(|&i| start[i]).collect();
+    let asc_stop: Vec<f64> = asc_order.iter().map(|&i| stop[i]).collect();
+    let asc_status: Vec<f64> = asc_order.iter().map(|&i| status_f64[i]).collect();
+    let asc_weights: Vec<f64> = asc_order.iter().map(|&i| weights[i]).collect();
+    let asc_strata: Vec<i32> = asc_order.iter().map(|&i| strata[i]).collect();
+
+    let asc_score: Vec<f64> = asc_order.iter().map(|&orig_i| {
+        let mut eta = offset[orig_i];
+        for j in 0..nvar {
+            eta += result.coef[j] * covar_orig[j][orig_i];
+        }
+        eta.exp()
+    }).collect();
+
+    let mut ag_sort2: Vec<usize> = (0..n).collect();
+    ag_sort2.sort_by(|&a, &b| {
+        asc_strata[a].cmp(&asc_strata[b])
+            .then(asc_stop[b].partial_cmp(&asc_stop[a]).unwrap_or(std::cmp::Ordering::Equal))
+    });
+    let mut ag_sort1: Vec<usize> = (0..n).collect();
+    ag_sort1.sort_by(|&a, &b| {
+        asc_strata[a].cmp(&asc_strata[b])
+            .then(asc_start[b].partial_cmp(&asc_start[a]).unwrap_or(std::cmp::Ordering::Equal))
+    });
+
+    let ag_sort1_i32: Vec<i32> = ag_sort1.iter().map(|&i| i as i32).collect();
+    let ag_sort2_i32: Vec<i32> = ag_sort2.iter().map(|&i| i as i32).collect();
+
+    let mart_asc = agmart3(
+        n,
+        &asc_start,
+        &asc_stop,
+        &asc_status,
+        &asc_score,
+        &asc_weights,
+        &asc_strata,
+        &ag_sort1_i32,
+        &ag_sort2_i32,
+        method,
+    );
+
+    let mut mart = vec![0.0; n];
+    for i in 0..n {
+        mart[asc_order[i]] = mart_asc[i];
+    }
+
+    let wasm_result = CoxphWasmResult {
+        coefficients: result.coef,
+        var: result.imat,
+        loglik: result.loglik,
+        score: result.sctest,
+        iter: result.iter,
+        method: if method == 0 {
+            "breslow".to_string()
+        } else {
+            "efron".to_string()
+        },
+        means: vec![],
+        n,
+        nevent,
+        linear_predictors: linear_pred,
+        residuals: mart,
+        score_residuals: vec![],
+        predictor_names,
+    };
+
+    serde_json::to_string(&wasm_result).map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+// ── cox_residuals_counting (napi) ─────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn cox_residuals_counting_napi(input_json: String) -> Result<String, napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(&input_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let start: Vec<f64> =
+        serde_json::from_value(parsed.get("start").cloned().unwrap_or_default())
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let stop: Vec<f64> =
+        serde_json::from_value(parsed.get("stop").cloned().unwrap_or_default())
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let status_raw: Vec<f64> =
+        serde_json::from_value(parsed.get("status").cloned().unwrap_or_default())
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let coef: Vec<f64> =
+        serde_json::from_value(parsed.get("coef").cloned().unwrap_or_default())
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+    let covars: IndexMap<String, Vec<f64>> =
+        serde_json::from_value(parsed.get("covariates").cloned().unwrap_or_default())
+            .map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = stop.len();
+    let resid_type = parsed
+        .get("type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("mart")
+        .to_string();
+    let method_int = match parsed.get("method").and_then(|v| v.as_str()) {
+        Some("breslow") => 0i32,
+        _ => 1i32,
+    };
+    let weights: Vec<f64> = if let Some(w_val) = parsed.get("weights") {
+        serde_json::from_value(w_val.clone()).unwrap_or_else(|_| vec![1.0; n])
+    } else {
+        vec![1.0_f64; n]
+    };
+    let strata_input: Vec<i32> = if let Some(s_val) = parsed.get("strata") {
+        serde_json::from_value(s_val.clone()).unwrap_or_else(|_| vec![0; n])
+    } else {
+        vec![0_i32; n]
+    };
+
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| {
+        strata_input[a]
+            .cmp(&strata_input[b])
+            .then(stop[a].partial_cmp(&stop[b]).unwrap_or(std::cmp::Ordering::Equal))
+            .then(
+                (status_raw[b] as i32)
+                    .cmp(&(status_raw[a] as i32)),
+            )
+    });
+
+    let sorted_start: Vec<f64> = order.iter().map(|&i| start[i]).collect();
+    let sorted_stop: Vec<f64> = order.iter().map(|&i| stop[i]).collect();
+    let sorted_status: Vec<i32> = order.iter().map(|&i| status_raw[i] as i32).collect();
+    let sorted_status_f64: Vec<f64> = order.iter().map(|&i| status_raw[i]).collect();
+    let sorted_weights: Vec<f64> = order.iter().map(|&i| weights[i]).collect();
+    let sorted_strata: Vec<i32> = order.iter().map(|&i| strata_input[i]).collect();
+
+    let mut strata_marker = vec![0_i32; n];
+    for i in 0..n - 1 {
+        if sorted_strata[i] != sorted_strata[i + 1] {
+            strata_marker[i] = 1;
+        }
+    }
+    if n > 0 {
+        strata_marker[n - 1] = 1;
+    }
+
+    let predictor_names: Vec<String> = covars.keys().cloned().collect();
+    let nvar = predictor_names.len();
+
+    let covar: Vec<Vec<f64>> = predictor_names
+        .iter()
+        .map(|name| {
+            let col = covars.get(name).unwrap();
+            order.iter().map(|&i| col[i]).collect()
+        })
+        .collect();
+
+    let score: Vec<f64> = (0..n)
+        .map(|i| {
+            let mut eta = 0.0;
+            for j in 0..nvar {
+                eta += coef[j] * covar[j][i];
+            }
+            eta.exp()
+        })
+        .collect();
+
+    match resid_type.as_str() {
+        "martingale" | "mart" => {
+            let mut sort2: Vec<usize> = (0..n).collect();
+            sort2.sort_by(|&a, &b| {
+                sorted_strata[a]
+                    .cmp(&sorted_strata[b])
+                    .then(
+                        sorted_stop[b]
+                            .partial_cmp(&sorted_stop[a])
+                            .unwrap_or(std::cmp::Ordering::Equal),
+                    )
+            });
+            let mut sort1: Vec<usize> = (0..n).collect();
+            sort1.sort_by(|&a, &b| {
+                sorted_strata[a]
+                    .cmp(&sorted_strata[b])
+                    .then(
+                        sorted_start[b]
+                            .partial_cmp(&sorted_start[a])
+                            .unwrap_or(std::cmp::Ordering::Equal),
+                    )
+            });
+            let sort1_i32: Vec<i32> = sort1.iter().map(|&i| i as i32).collect();
+            let sort2_i32: Vec<i32> = sort2.iter().map(|&i| i as i32).collect();
+
+            let mart_sorted = agmart3(
+                n,
+                &sorted_start,
+                &sorted_stop,
+                &sorted_status_f64,
+                &score,
+                &sorted_weights,
+                &sorted_strata,
+                &sort1_i32,
+                &sort2_i32,
+                method_int,
+            );
+            let mut mart = vec![0.0; n];
+            for i in 0..n {
+                mart[order[i]] = mart_sorted[i];
+            }
+            serde_json::to_string(&mart)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "score" => {
+            let mut sort1: Vec<usize> = (0..n).collect();
+            sort1.sort_by(|&a, &b| {
+                sorted_strata[a]
+                    .cmp(&sorted_strata[b])
+                    .then(sorted_start[a].partial_cmp(&sorted_start[b]).unwrap_or(std::cmp::Ordering::Equal))
+            });
+            let sort1_i32: Vec<i32> = sort1.iter().map(|&i| i as i32).collect();
+
+            let sr = agscore3(
+                &sorted_start,
+                &sorted_stop,
+                &sorted_status_f64,
+                &covar,
+                &sorted_strata,
+                &score,
+                &sorted_weights,
+                method_int,
+                &sort1_i32,
+            );
+            let mut result = vec![vec![0.0; n]; nvar];
+            for j in 0..nvar {
+                for i in 0..n {
+                    result[j][order[i]] = sr[j][i];
+                }
+            }
+            serde_json::to_string(&result)
+                .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        "schoenfeld" | "scho" => {
+            let event_f64: Vec<f64> = sorted_status.iter().map(|&s| s as f64).collect();
+            let weighted_score: Vec<f64> = score
+                .iter()
+                .zip(sorted_weights.iter())
+                .map(|(&s, &w)| s * w)
+                .collect();
+            let (death_times, scho) = coxscho(
+                &sorted_start,
+                &sorted_stop,
+                &event_f64,
+                &covar,
+                &weighted_score,
+                &strata_marker,
+                method_int,
+            );
+            #[derive(Serialize)]
+            struct SchoResult {
+                time: Vec<f64>,
+                residuals: Vec<Vec<f64>>,
+            }
+            serde_json::to_string(&SchoResult {
+                time: death_times,
+                residuals: scho,
+            })
+            .map_err(|e| napi::Error::from_reason(e.to_string()))
+        }
+        _ => Err(napi::Error::from_reason(format!(
+            "Unknown residual type: {}",
+            resid_type
+        ))),
+    }
+}
+
+// ── finegray (napi) ──────────────────────────────────────────────────────
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn finegray_napi(input_json: String) -> Result<String, napi::Error> {
+    let parsed: serde_json::Value =
+        serde_json::from_str(&input_json).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let tstart_orig: Vec<f64> = serde_json::from_value(
+        parsed.get("tstart").cloned().unwrap_or(serde_json::Value::Array(vec![])),
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let tstop_orig: Vec<f64> = serde_json::from_value(
+        parsed.get("tstop").cloned().ok_or_else(|| napi::Error::from_reason("missing tstop"))?,
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let status_orig: Vec<i32> = serde_json::from_value(
+        parsed.get("status").cloned().ok_or_else(|| napi::Error::from_reason("missing status"))?,
+    ).map_err(|e| napi::Error::from_reason(e.to_string()))?;
+
+    let n = tstop_orig.len();
+    if tstart_orig.len() != n || status_orig.len() != n {
+        return Err(napi::Error::from_reason("tstart, tstop, status must have same length"));
+    }
+
+    let enum_val = parsed.get("etype").and_then(|v| v.as_i64()).unwrap_or(1) as i32;
+
+    let is_counting = parsed.get("counting").and_then(|v| v.as_bool()).unwrap_or(false);
+
+    let strata: Vec<i32> = if let Some(s) = parsed.get("strata") {
+        serde_json::from_value(s.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![0i32; n]
+    };
+
+    let id: Option<Vec<i32>> = parsed.get("id").map(|v| {
+        serde_json::from_value::<Vec<i32>>(v.clone()).unwrap_or_default()
+    });
+
+    let user_weights: Vec<f64> = if let Some(w) = parsed.get("weights") {
+        serde_json::from_value(w.clone()).map_err(|e| napi::Error::from_reason(e.to_string()))?
+    } else {
+        vec![1.0; n]
+    };
+
+    let (tstart, tstop, status) = if !is_counting {
+        let min_time = tstop_orig.iter().copied().filter(|t| !t.is_nan()).fold(f64::INFINITY, f64::min);
+        let zero = if min_time > 0.0 { 0.0 } else { 2.0 * min_time - 1.0 };
+        let tstart_new = vec![zero; n];
+        (tstart_new, tstop_orig.clone(), status_orig.clone())
+    } else {
+        (tstart_orig.clone(), tstop_orig.clone(), status_orig.clone())
+    };
+
+    let mut first_obs = vec![false; n];
+    let mut last_obs = vec![true; n];
+    let mut delay = false;
+
+    if is_counting {
+        let id_vec = id.as_ref().ok_or_else(|| {
+            napi::Error::from_reason("(start, stop] data requires a subject id")
+        })?;
+
+        let mut index: Vec<usize> = (0..n).collect();
+        index.sort_by(|&a, &b| {
+            id_vec[a].cmp(&id_vec[b])
+                .then(tstop[a].partial_cmp(&tstop[b]).unwrap_or(std::cmp::Ordering::Equal))
+        });
+
+        let mut first_indices = Vec::new();
+        let mut prev_id = i32::MIN;
+        for (pos, &orig_idx) in index.iter().enumerate() {
+            if id_vec[orig_idx] != prev_id {
+                first_indices.push(pos);
+                prev_id = id_vec[orig_idx];
+            }
+        }
+        let mut last_indices: Vec<usize> = first_indices[1..].iter().map(|&f| f - 1).collect();
+        last_indices.push(n - 1);
+
+        let last_set: std::collections::HashSet<usize> = last_indices.iter().copied().collect();
+        for pos in 0..n {
+            if !last_set.contains(&pos) {
+                let orig = index[pos];
+                if status[orig] != 0 {
+                    return Err(napi::Error::from_reason(
+                        "a subject has a transition before their last time point",
+                    ));
+                }
+            }
+        }
+
+        for pos in 0..n - 1 {
+            if !last_set.contains(&pos) {
+                let curr_orig = index[pos];
+                let next_orig = index[pos + 1];
+                if (tstart[next_orig] - tstop[curr_orig]).abs() > 1e-10 {
+                    return Err(napi::Error::from_reason("a subject has gaps in time"));
+                }
+            }
+        }
+
+        let min_tstop = tstop.iter().copied().filter(|t| !t.is_nan()).fold(f64::INFINITY, f64::min);
+        for &fi in &first_indices {
+            let orig = index[fi];
+            if tstart[orig] > min_tstop {
+                delay = true;
+                break;
+            }
+        }
+
+        first_obs = vec![false; n];
+        last_obs = vec![false; n];
+        for &fi in &first_indices {
+            first_obs[index[fi]] = true;
+        }
+        for &li in &last_indices {
+            last_obs[index[li]] = true;
+        }
+    }
+
+    let mut utime: Vec<f64> = Vec::with_capacity(2 * n);
+    for i in 0..n {
+        if !tstart[i].is_nan() {
+            utime.push(tstart[i]);
+        }
+        if !tstop[i].is_nan() {
+            utime.push(tstop[i]);
+        }
+    }
+    utime.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    utime.dedup();
+
+    let newtime_start = find_interval(&tstart, &utime, false);
+    let newtime_stop = find_interval(&tstop, &utime, false);
+
+    let newtime_stop_adj: Vec<f64> = (0..n)
+        .map(|i| {
+            let v = newtime_stop[i] as f64;
+            if status[i] != 0 { v - 0.2 } else { v }
+        })
+        .collect();
+    let newtime_start_f64: Vec<f64> = newtime_start.iter().map(|&v| v as f64).collect();
+
+    let g_status: Vec<i32> = (0..n)
+        .map(|i| if last_obs[i] && status[i] == 0 { 1 } else { 0 })
+        .collect();
+
+    let mut unique_strata: Vec<i32> = strata.clone();
+    unique_strata.sort();
+    unique_strata.dedup();
+    let nstrata = unique_strata.len();
+
+    struct StratumKm {
+        time: Vec<f64>,
+        n_event: Vec<f64>,
+        surv: Vec<f64>,
+    }
+
+    let compute_km = |sub_start: &[f64], sub_stop: &[f64], sub_status: &[i32], sub_weights: &[f64]| -> StratumKm {
+        let data = SurvData::counting_process(sub_start, sub_stop, sub_status);
+        let config = SurvfitConfig {
+            surv_type: 1,
+            robust: false,
+            id: None,
+            nid: 0,
+            influence: 0,
+        };
+        let km = survfit_km(&data, sub_weights, &config);
+        StratumKm {
+            time: km.time,
+            n_event: km.n_event,
+            surv: km.surv,
+        }
+    };
+
+    let mut g_by_stratum: Vec<StratumKm> = Vec::with_capacity(nstrata);
+    for &s in &unique_strata {
+        let mask: Vec<bool> = strata.iter().map(|&si| si == s).collect();
+        let sub_start: Vec<f64> = mask.iter().zip(newtime_start_f64.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_stop: Vec<f64> = mask.iter().zip(newtime_stop_adj.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_status: Vec<i32> = mask.iter().zip(g_status.iter()).filter(|(m, _)| **m).map(|(_, &v)| v).collect();
+        let sub_weights: Vec<f64> = vec![1.0; sub_start.len()];
+        g_by_stratum.push(compute_km(&sub_start, &sub_stop, &sub_status, &sub_weights));
+    }
+
+    let mut h_by_stratum: Vec<StratumKm> = Vec::new();
+    if delay {
+        for &s in &unique_strata {
+            let mask: Vec<bool> = strata.iter().map(|&si| si == s).collect();
+            let sub_start: Vec<f64> = mask.iter().zip(newtime_stop_adj.iter()).filter(|(m, _)| **m).map(|(_, &v)| -v).collect();
+            let sub_stop: Vec<f64> = mask.iter().zip(newtime_start_f64.iter()).filter(|(m, _)| **m).map(|(_, &v)| -v).collect();
+            let sub_status: Vec<i32> = mask.iter().zip(first_obs.iter()).filter(|(m, _)| **m).map(|(_, &v)| if v { 1 } else { 0 }).collect();
+            let sub_weights: Vec<f64> = vec![1.0; sub_start.len()];
+            h_by_stratum.push(compute_km(&sub_start, &sub_stop, &sub_status, &sub_weights));
+        }
+    }
+
+    let mut out_row: Vec<usize> = Vec::new();
+    let mut out_start: Vec<f64> = Vec::new();
+    let mut out_stop: Vec<f64> = Vec::new();
+    let mut out_status: Vec<i32> = Vec::new();
+    let mut out_wt: Vec<f64> = Vec::new();
+    let mut out_add: Vec<i32> = Vec::new();
+
+    for (si, &s) in unique_strata.iter().enumerate() {
+        let mask: Vec<bool> = strata.iter().map(|&si2| si2 == s).collect();
+        let indices: Vec<usize> = (0..n).filter(|&i| mask[i]).collect();
+
+        let mut event_times: Vec<f64> = indices
+            .iter()
+            .filter(|&&i| status[i] == enum_val)
+            .map(|&i| tstop[i])
+            .collect();
+        event_times.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+        event_times.dedup();
+
+        if event_times.is_empty() {
+            continue;
+        }
+
+        let maxtime = indices.iter().map(|&i| tstop[i]).fold(f64::NEG_INFINITY, f64::max);
+
+        let g = &g_by_stratum[si];
+
+        let (ctime, cprob) = if delay {
+            let h = &h_by_stratum[si];
+
+            let dtime: Vec<f64> = h.time.iter().zip(h.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| -t)
+                .collect::<Vec<_>>()
+                .into_iter().rev().collect();
+
+            let h_surv_events: Vec<f64> = h.time.iter().zip(h.n_event.iter()).zip(h.surv.iter())
+                .filter(|&((_, ne), _)| *ne > 0.0)
+                .map(|((_, _), &sv)| sv)
+                .collect();
+            let mut dprob: Vec<f64> = h_surv_events.iter().rev().skip(1).copied().collect();
+            dprob.push(1.0);
+
+            let g_ctime: Vec<f64> = g.time.iter().zip(g.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| t)
+                .collect();
+
+            let mut g_cprob = vec![1.0];
+            g_cprob.extend(
+                g.time.iter().zip(g.n_event.iter()).zip(g.surv.iter())
+                    .filter(|&((_, ne), _)| *ne > 0.0)
+                    .map(|((_, _), &sv)| sv),
+            );
+
+            let mut combined: Vec<f64> = Vec::new();
+            combined.extend(&dtime);
+            combined.extend(&g_ctime);
+            combined.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+            combined.dedup();
+
+            let index1 = find_interval(&combined, &dtime, false);
+            let index2 = find_interval(&combined, &g_ctime, false);
+
+            let final_ctime: Vec<f64> = combined.iter().map(|&t| {
+                let idx = t as usize;
+                if idx > 0 && idx <= utime.len() { utime[idx - 1] } else if idx == 0 { utime[0] } else { utime[utime.len() - 1] }
+            }).collect();
+
+            let final_cprob: Vec<f64> = (0..combined.len()).map(|i| {
+                let d_idx = if index1[i] > 0 { index1[i] - 1 } else { 0 };
+                let g_idx = index2[i];
+                let d = if d_idx < dprob.len() { dprob[d_idx] } else { *dprob.last().unwrap_or(&1.0) };
+                let g = if g_idx < g_cprob.len() { g_cprob[g_idx] } else { *g_cprob.last().unwrap_or(&1.0) };
+                d * g
+            }).collect();
+
+            (final_ctime, final_cprob)
+        } else {
+            let ctime: Vec<f64> = g.time.iter().zip(g.n_event.iter())
+                .filter(|&(_, ne)| *ne > 0.0)
+                .map(|(&t, _)| {
+                    let idx = t as usize;
+                    if idx > 0 && idx <= utime.len() { utime[idx - 1] } else { utime[0] }
+                })
+                .collect();
+
+            let cprob: Vec<f64> = g.time.iter().zip(g.n_event.iter()).zip(g.surv.iter())
+                .filter(|&((_, ne), _)| *ne > 0.0)
+                .map(|((_, _), &sv)| sv)
+                .collect();
+
+            (ctime, cprob)
+        };
+
+        let mut ct2 = ctime.clone();
+        ct2.push(maxtime);
+
+        let mut cp2 = vec![1.0];
+        cp2.extend(&cprob);
+
+        let fi_indices = find_interval(&event_times, &ct2, true);
+        let mut unique_indices: Vec<usize> = fi_indices.clone();
+        unique_indices.sort();
+        unique_indices.dedup();
+
+        let mut ckeep = vec![false; ct2.len()];
+        for &idx in &unique_indices {
+            if idx > 0 && idx <= ckeep.len() {
+                ckeep[idx - 1] = true;
+            }
+        }
+
+        let expand: Vec<bool> = indices
+            .iter()
+            .map(|&i| status[i] != 0 && status[i] != enum_val && last_obs[i])
+            .collect();
+
+        let mut keep_arg = vec![true];
+        keep_arg.extend(&ckeep);
+
+        let sub_tstart: Vec<f64> = indices.iter().map(|&i| tstart[i]).collect();
+        let sub_tstop: Vec<f64> = indices.iter().map(|&i| tstop[i]).collect();
+
+        let split = finegray_transform(
+            &sub_tstart,
+            &sub_tstop,
+            &ct2,
+            &cp2,
+            &expand,
+            &keep_arg,
+        );
+
+        for k in 0..split.row.len() {
+            let orig_idx = indices[split.row[k]];
+            out_row.push(orig_idx);
+            out_start.push(split.start[k]);
+            out_stop.push(split.end[k]);
+            let fgstatus = if status[orig_idx] == enum_val { 1 } else { 0 };
+            out_status.push(fgstatus);
+            out_wt.push(split.wt[k] * user_weights[orig_idx]);
+            out_add.push(split.add[k]);
+        }
+    }
+
+    #[derive(Serialize)]
+    #[serde(rename_all = "camelCase")]
+    struct FineGrayNapiResult {
+        row: Vec<usize>,
+        start: Vec<f64>,
+        stop: Vec<f64>,
+        status: Vec<i32>,
+        wt: Vec<f64>,
+        add: Vec<i32>,
+    }
+
+    serde_json::to_string(&FineGrayNapiResult {
+        row: out_row,
+        start: out_start,
+        stop: out_stop,
+        status: out_status,
+        wt: out_wt,
+        add: out_add,
+    })
+    .map_err(|e| napi::Error::from_reason(e.to_string()))
 }

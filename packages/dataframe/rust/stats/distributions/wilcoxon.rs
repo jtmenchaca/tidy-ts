@@ -431,17 +431,11 @@ mod tests {
         // pwilcox(62.5, 12, 7, lower.tail=TRUE, log.p=FALSE) in R
         let p_r = 0.958442486306263;
         let p_rust = pwilcox(62.5, 12.0, 7.0, true, false);
-        println!("R p-value: {:.15}", p_r);
-        println!("Rust p-value: {:.15}", p_rust);
-        println!("Difference: {:.15}", (p_rust - p_r).abs());
         assert!((p_rust - p_r).abs() < 1e-10);
 
         // pwilcox(55.0, 8, 8, lower.tail=TRUE, log.p=FALSE) in R
         let p_r2 = 0.9947941;
         let p_rust2 = pwilcox(55.0, 8.0, 8.0, true, false);
-        println!("R p-value 2: {:.15}", p_r2);
-        println!("Rust p-value 2: {:.15}", p_rust2);
-        println!("Difference 2: {:.15}", (p_rust2 - p_r2).abs());
         assert!((p_rust2 - p_r2).abs() < 1e-8); // Slightly relaxed for floating-point precision
     }
 }

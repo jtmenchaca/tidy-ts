@@ -32,7 +32,7 @@ pub mod sample_size;
 pub mod two_way;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use one_way::{anova, welch_anova};

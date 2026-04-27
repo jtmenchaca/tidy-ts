@@ -1,6 +1,6 @@
 //! WASM bindings for GEE (geeglm)
 
-#![cfg(feature = "wasm")]
+#![cfg(any(feature = "wasm", feature = "napi-rs"))]
 
 use super::control::GeeControl;
 use super::geeglm::geeglm;
@@ -8,8 +8,13 @@ use super::types::CorrelationStructure;
 use crate::stats::regression::family::{self, GlmFamily};
 use serde::Deserialize;
 use std::collections::HashMap;
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
+
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn geeglm_fit_wasm(
     formula: &str,
@@ -37,6 +42,36 @@ pub fn geeglm_fit_wasm(
 
     serde_wasm_bindgen::to_value(&result_value)
         .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn geeglm_fit_napi(
+    formula: String,
+    family_name: String,
+    link_name: String,
+    data_json: String,
+    id_json: String,
+    waves_json: Option<String>,
+    corstr: String,
+    std_err: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    let result_value = geeglm_fit_wasm_inner(
+        &formula,
+        &family_name,
+        &link_name,
+        &data_json,
+        &id_json,
+        waves_json,
+        &corstr,
+        &std_err,
+        options_json,
+    )
+    .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&result_value)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 fn geeglm_fit_wasm_inner(

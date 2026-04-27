@@ -36,6 +36,8 @@ import { round } from "./transformation/round.ts";
 import { floor } from "./transformation/floor.ts";
 import { ceiling } from "./transformation/ceiling.ts";
 import { percent } from "./transformation/percent.ts";
+import { pmax } from "./transformation/pmax.ts";
+import { pmin } from "./transformation/pmin.ts";
 import { count_value } from "./descriptive/counts/count-value.ts";
 import { percentile_rank } from "./ranking/percentile-rank.ts";
 import { chunk } from "./helpers.ts";
@@ -181,6 +183,10 @@ export const stats: {
   readonly ceiling: typeof ceiling;
   /** Convert values to percentages */
   readonly percent: typeof percent;
+  /** Parallel maximum — elementwise max of array vs scalar or array (R's pmax) */
+  readonly pmax: typeof pmax;
+  /** Parallel minimum — elementwise min of array vs scalar or array (R's pmin) */
+  readonly pmin: typeof pmin;
   /** Count occurrences of a specific value */
   readonly countValue: typeof count_value;
   /** Calculate percentile rank of values */
@@ -613,6 +619,8 @@ export const stats: {
   floor,
   ceiling,
   percent,
+  pmax,
+  pmin,
   countValue: count_value,
   percentileRank: percentile_rank,
   chunk,

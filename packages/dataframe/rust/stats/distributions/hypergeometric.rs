@@ -100,7 +100,6 @@ mod tests {
         // Test with m=10, n=5, k=7, x=3
         let expected = 0.09324009; // dhyper(3, 10, 5, 7) in R
         let actual = dhyper(3.0, 10.0, 5.0, 7.0, false);
-        println!("dhyper(3, 10, 5, 7): expected={}, actual={}", expected, actual);
         assert!((actual - expected).abs() < 1e-6);
 
         // Test log version

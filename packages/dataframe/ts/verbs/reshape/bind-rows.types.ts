@@ -161,3 +161,30 @@ export type BindRowsMethod<Row extends object> = {
     ...others: DataFrame<OtherRow>[]
   ): DataFrame<Prettify<MergeRows<R, OtherRow>>>;
 };
+
+/**
+ * Type for the standalone concatDataFrames function.
+ * Mirrors BindRowsMethod overloads but takes an array/tuple instead of variadic args.
+ */
+export type ConcatDataFramesFunction = {
+  <R1 extends object, R2 extends object>(
+    dataFrames: [DataFrame<R1>, DataFrame<R2>],
+  ): DataFrame<Prettify<MergeRows<R1, R2>>>;
+
+  <R1 extends object, R2 extends object, R3 extends object>(
+    dataFrames: [DataFrame<R1>, DataFrame<R2>, DataFrame<R3>],
+  ): DataFrame<Prettify<MergeRows<MergeRows<R1, R2>, R3>>>;
+
+  <
+    R1 extends object,
+    R2 extends object,
+    R3 extends object,
+    R4 extends object,
+  >(
+    dataFrames: [DataFrame<R1>, DataFrame<R2>, DataFrame<R3>, DataFrame<R4>],
+  ): DataFrame<Prettify<MergeRows<MergeRows<MergeRows<R1, R2>, R3>, R4>>>;
+
+  <R extends object>(
+    dataFrames: DataFrame<R>[],
+  ): DataFrame<R>;
+};

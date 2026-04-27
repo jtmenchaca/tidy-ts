@@ -35,5 +35,5 @@ pub mod multinomial;
 pub mod sandwich;
 
 // WASM bindings - ONLY export
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;

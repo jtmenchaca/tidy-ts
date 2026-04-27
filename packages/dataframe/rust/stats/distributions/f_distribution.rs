@@ -83,7 +83,6 @@ mod tests {
         // Test with df1=3, df2=5
         let expected = 1.0; // qf(0.5351452, 3, 5) in R
         let actual = qf(0.5351452, 3.0, 5.0, true, false);
-        println!("qf(0.5351452, 3, 5) = {}, expected = {}", actual, expected);
         assert!((actual - expected).abs() < 2e-4); // Adjusted tolerance due to qbeta precision
     }
 

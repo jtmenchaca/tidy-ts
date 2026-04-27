@@ -3,7 +3,7 @@
 pub mod dagostino_pearson;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use dagostino_pearson::{DAgostinoPearsonTest, DAgostinoPearsonError};

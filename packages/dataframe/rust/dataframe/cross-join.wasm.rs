@@ -4,6 +4,10 @@
 use super::shared_types::JoinIdxU32;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
+#[cfg(feature = "napi-rs")]
+use super::shared_types::NapiJoinIdxU32;
 
 /// Cross join (Cartesian product) - internal implementation
 pub(crate) fn cross_join(left_len: usize, right_len: usize) -> (Vec<usize>, Vec<usize>) {
@@ -28,6 +32,17 @@ pub fn cross_join_u32(left_len: usize, right_len: usize) -> JoinIdxU32 {
     let (left_indices, right_indices) = cross_join(left_len, right_len);
 
     JoinIdxU32::new(
+        left_indices.into_iter().map(|x| x as u32).collect(),
+        right_indices.into_iter().map(|x| x as u32).collect(),
+    )
+}
+
+/// NAPI export for cross join - returns Uint32Array index pairs
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn cross_join_u32_napi(left_len: u32, right_len: u32) -> NapiJoinIdxU32 {
+    let (left_indices, right_indices) = cross_join(left_len as usize, right_len as usize);
+    NapiJoinIdxU32::from_vecs(
         left_indices.into_iter().map(|x| x as u32).collect(),
         right_indices.into_iter().map(|x| x as u32).collect(),
     )

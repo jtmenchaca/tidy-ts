@@ -88,7 +88,7 @@ pub use weibull::*;
 pub use wilcoxon::*;
 
 // WASM bindings
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod distributions_wasm;
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub use distributions_wasm::*;

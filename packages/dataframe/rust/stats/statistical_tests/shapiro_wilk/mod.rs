@@ -3,7 +3,7 @@
 pub mod shapiro_wilk;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use shapiro_wilk::{ShapiroWilkTest, ShapiroWilkError, ShapiroWilkStatus};

@@ -459,17 +459,11 @@ mod tests {
 
     #[test]
     fn test_qbinom_basic() {
-        // Debug: Check pbinom values first
-        println!("pbinom(0, 1, 0.5) = {}", pbinom(0.0, 1.0, 0.5, true, false));
-        println!("pbinom(1, 1, 0.5) = {}", pbinom(1.0, 1.0, 0.5, true, false));
-
         // Test basic quantiles
         let result1 = qbinom(0.5, 1.0, 0.5, true, false);
-        println!("qbinom(0.5, 1.0, 0.5) = {}, expected = 0.0", result1);
         assert_eq!(result1, 0.0);
 
         let result2 = qbinom(1.0, 1.0, 0.5, true, false);
-        println!("qbinom(1.0, 1.0, 0.5) = {}, expected = 1.0", result2);
         assert_eq!(result2, 1.0);
     }
 
@@ -502,9 +496,6 @@ mod tests {
 
         let mut total_loglik = 0.0;
 
-        println!("=== Rust dbinom calculation ===");
-        println!("Individual calculations:");
-
         for i in 0..y.len() {
             let weight_factor = wt[i] / wt[i]; // Should be 1.0
             let successes = f64::round(wt[i] * y[i]);
@@ -513,17 +504,8 @@ mod tests {
             let log_prob = dbinom(successes, trials, mu[i], true);
             let weighted_log_prob = weight_factor * log_prob;
 
-            println!(
-                "i={}: y={:.1}, mu={:.2}, successes={}, trials={}, loglik={:.6}, weighted={:.6}",
-                i, y[i], mu[i], successes, trials, log_prob, weighted_log_prob
-            );
-
             total_loglik += weighted_log_prob;
         }
-
-        println!("Total log-likelihood: {:.6}", total_loglik);
-        println!("Rust AIC part (-2 * sum): {:.6}", -2.0 * total_loglik);
-        println!("Full AIC (add 2*k): {:.6}", -2.0 * total_loglik + 2.0 * 2.0);
 
         // Expected values from R script (approximate, we'll verify)
         // R's total log-likelihood should be around -12.345678 (we'll check the actual value)
@@ -534,11 +516,9 @@ mod tests {
         // Test specific cases that we can verify
         // dbinom(2, 20, 0.13, log=TRUE) in R
         let r_test1 = dbinom(2.0, 20.0, 0.13, true);
-        println!("dbinom(2, 20, 0.13, log=TRUE) = {:.6}", r_test1);
 
         // dbinom(4, 20, 0.21, log=TRUE) in R
         let r_test2 = dbinom(4.0, 20.0, 0.21, true);
-        println!("dbinom(4, 20, 0.21, log=TRUE) = {:.6}", r_test2);
 
         // These should be finite and reasonable
         assert!(r_test1.is_finite());

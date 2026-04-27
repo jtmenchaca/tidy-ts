@@ -3,7 +3,7 @@ pub mod pearson_correlation_test;
 pub mod spearman_correlation_test;
 pub mod utils;
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use kendall_correlation_test::*;

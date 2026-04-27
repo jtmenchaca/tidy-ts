@@ -373,16 +373,6 @@ mod tests {
             CoxDetailMethod::Efron,
         );
 
-        // Print results for debugging
-        println!("n_death_times: {}", result.n_death_times);
-        println!("nevent: {:?}", result.nevent);
-        println!("nrisk: {:?}", result.nrisk);
-        println!("hazard: {:?}", result.hazard);
-        println!("varhaz: {:?}", result.varhaz);
-        println!("means: {:?}", result.means);
-        println!("u (score): {:?}", result.u);
-        println!("imat: {:?}", result.imat);
-
         // Verify structure
         assert_eq!(result.n_death_times, 5, "Should have 5 unique death times");
 

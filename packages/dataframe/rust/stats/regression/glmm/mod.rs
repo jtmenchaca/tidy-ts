@@ -114,5 +114,5 @@ pub use laplace::{
 pub use fitting::{glmm_fit, glmm_fit_simple, OuterOptimizationResult};
 
 // WASM bindings
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;

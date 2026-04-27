@@ -6,7 +6,7 @@
 
 pub mod kolmogorov_smirnov;
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use kolmogorov_smirnov::{

@@ -36,7 +36,7 @@ pub mod survfit_residuals;
 pub mod survival_object;
 pub mod wald_test;
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use ag_cox_regression::*;

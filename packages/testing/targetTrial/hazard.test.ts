@@ -1,5 +1,5 @@
 // Translation of SEQTaRget test: test_hazard.R
-// R reference JSON: hazard-source-test.R (sibling file)
+// R reference JSON: hazard-source-test.R, hazard-percentile-source-test.R (sibling files)
 // Tests hazard ratio estimation and reproducibility
 
 import { expect } from "@std/expect";
@@ -121,7 +121,7 @@ Deno.test("Hazard ratio is reproducible with same seed", () => {
   assertClose(result1.hazard_ratio!.hr, ref.hr_repro_value, TOL, "hr_repro");
 });
 
-Deno.test("Hazard ratio bootstrap CIs are structurally valid", () => {
+Deno.test("Hazard ratio bootstrap CIs match R", () => {
   const config = hazardConfig(42);
   config.bootstrap.enabled = true;
   config.bootstrap.nboot = 3;
@@ -129,31 +129,61 @@ Deno.test("Hazard ratio bootstrap CIs are structurally valid", () => {
   const result = targetTrialEmulation({ config, data });
 
   expect(result.hazard_ratio).toBeDefined();
+  assertClose(result.hazard_ratio!.hr, ref.hr_boot_value, TOL, "hr_boot");
   expect(result.hazard_ratio!.lci).not.toBeNull();
   expect(result.hazard_ratio!.uci).not.toBeNull();
-  // Point estimate should be within CI bounds
-  expect(result.hazard_ratio!.lci!).toBeLessThan(result.hazard_ratio!.hr);
-  expect(result.hazard_ratio!.uci!).toBeGreaterThan(result.hazard_ratio!.hr);
-  // CIs should be in a reasonable range (HR is ~1.15 from point estimate tests)
-  expect(result.hazard_ratio!.lci!).toBeGreaterThan(0.5);
-  expect(result.hazard_ratio!.uci!).toBeLessThan(3.0);
-  // Bootstrap CIs are RNG-dependent (xorshift vs R's MT19937),
-  // so we verify structural properties rather than exact values.
-  // The point estimate (seed=42) differs from R because Bernoulli draws
-  // use a different RNG. Verify it's in the right ballpark.
-  expect(Math.abs(result.hazard_ratio!.hr - ref.hr_boot_value)).toBeLessThan(0.2);
+  assertClose(result.hazard_ratio!.lci!, ref.hr_boot_lci, TOL, "hr_boot_lci");
+  assertClose(result.hazard_ratio!.uci!, ref.hr_boot_uci, TOL, "hr_boot_uci");
 });
 
-Deno.test("Hazard ratio bootstrap CIs are reproducible", () => {
+// ── Percentile CI method ──
+
+const R_PCT_SOURCE_TEST = new URL("./hazard-percentile-source-test.R", import.meta.url)
+  .pathname;
+
+interface HazardPctRef {
+  hr_pct_value: number;
+  hr_pct_lci: number;
+  hr_pct_uci: number;
+}
+
+const pctRef = getReferenceFromRScript<HazardPctRef>(R_PCT_SOURCE_TEST);
+
+Deno.test("Hazard ratio percentile bootstrap CIs match R", () => {
   const config = hazardConfig(42);
   config.bootstrap.enabled = true;
   config.bootstrap.nboot = 3;
+  config.bootstrap.ci_method = "Percentile";
+  const data = seqDataColumnar();
+  const result = targetTrialEmulation({ config, data });
+
+  expect(result.hazard_ratio).toBeDefined();
+  assertClose(result.hazard_ratio!.hr, pctRef.hr_pct_value, TOL, "hr_pct");
+  expect(result.hazard_ratio!.lci).not.toBeNull();
+  expect(result.hazard_ratio!.uci).not.toBeNull();
+  // Percentile quantile with only 3 bootstrap samples has limited precision
+  // due to R's type-7 quantile interpolation vs our rounding approach
+  assertClose(result.hazard_ratio!.lci!, pctRef.hr_pct_lci, 0.02, "hr_pct_lci");
+  assertClose(result.hazard_ratio!.uci!, pctRef.hr_pct_uci, 0.02, "hr_pct_uci");
+});
+
+Deno.test("Hazard bootstrap percentile CIs are reproducible with same seed", () => {
   const data = seqDataColumnar();
 
-  const result1 = targetTrialEmulation({ config, data });
-  const result2 = targetTrialEmulation({ config, data });
+  const config1 = hazardConfig(42);
+  config1.bootstrap.enabled = true;
+  config1.bootstrap.nboot = 3;
+  config1.bootstrap.ci_method = "Percentile";
+
+  const config2 = hazardConfig(42);
+  config2.bootstrap.enabled = true;
+  config2.bootstrap.nboot = 3;
+  config2.bootstrap.ci_method = "Percentile";
+
+  const result1 = targetTrialEmulation({ config: config1, data });
+  const result2 = targetTrialEmulation({ config: config2, data });
 
   expect(result1.hazard_ratio!.hr).toBe(result2.hazard_ratio!.hr);
-  expect(result1.hazard_ratio!.lci!).toBe(result2.hazard_ratio!.lci!);
-  expect(result1.hazard_ratio!.uci!).toBe(result2.hazard_ratio!.uci!);
+  expect(result1.hazard_ratio!.lci).toBe(result2.hazard_ratio!.lci);
+  expect(result1.hazard_ratio!.uci).toBe(result2.hazard_ratio!.uci);
 });

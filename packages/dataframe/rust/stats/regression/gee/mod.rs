@@ -14,7 +14,7 @@ pub mod correlation;
 pub mod utils;
 pub mod variance;
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 // Re-exports

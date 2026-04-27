@@ -265,7 +265,7 @@ export  function testJoinedFieldAccess_rightJoin<
   const filtered = joined
     .filter((r) => {
       const wStart = r._refDate.add({ days: -14 });
-      const d = r[opts.fieldName];
+      const _d = r[opts.fieldName];
       return wStart != null;
     });
   return filtered;
@@ -291,7 +291,7 @@ export  function testJoinedFieldAccess_outerJoin<
   const filtered = joined
     .filter((r) => {
       const wStart = r._refDate?.add({ days: -14 });
-      const d = r[opts.fieldName];
+      const _d = r[opts.fieldName];
       return wStart != null;
     });
   return filtered;

@@ -66,6 +66,7 @@ export function distinct_rows_generic_typed(
   column_data: Uint32Array[],
   view_index: Uint32Array,
 ): Uint32Array {
+  if (view_index.length === 0) return new Uint32Array(0);
   initWasm();
   return wasmInternal.distinct_rows_generic_typed(column_data, view_index);
 }

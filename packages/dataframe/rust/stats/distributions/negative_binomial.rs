@@ -98,7 +98,6 @@ mod tests {
         // Test with r=5, p=0.3
         let expected = 0.0178605; // dnbinom(2, 5, 0.3) in R
         let actual = dnbinom(2.0, 5.0, 0.3, false);
-        println!("dnbinom(2, 5, 0.3): expected={}, actual={}", expected, actual);
         assert!((actual - expected).abs() < 1e-6);
 
         // Test log version

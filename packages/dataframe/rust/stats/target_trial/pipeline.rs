@@ -14,7 +14,7 @@ use super::covariates;
 use super::expand::expand;
 use super::factorize::factorize_data;
 use super::glm_helpers::{init_formula_cache, FormulaCache};
-use super::hazard::{estimate_hazard_ratio, hazard_ratio_with_ci};
+use super::hazard::{estimate_hazard_ratio, estimate_hazard_ratio_with_rng, hazard_ratio_with_ci};
 use super::outcome_models::{fit_outcome_model, OutcomeModel};
 use super::risk_comparison::compute_risk_comparisons;
 use super::survival_curves::{
@@ -209,7 +209,7 @@ pub fn target_trial_emulation(
 
             // R samples IDs once from expanded data, then joins on both DT and data
             // with the same id_lookup (internal_analysis.R lines 172-199)
-            let (sampled_ids, id_mult) = bootstrap_sample_ids(
+            let (sampled_ids, id_mult, mut boot_rng) = bootstrap_sample_ids(
                 &expanded.data,
                 &config,
                 boot_seed,
@@ -247,14 +247,15 @@ pub fn target_trial_emulation(
                 }
             }
 
-            // Bootstrap hazard ratio
+            // Bootstrap hazard ratio — pass the post-sampling RNG to maintain
+            // R's single continuous stream: set.seed → sample → rbinom
             if config.hazard {
-                if let Ok(hr) = estimate_hazard_ratio(
+                if let Ok(hr) = estimate_hazard_ratio_with_rng(
                     &boot_data,
                     &config,
                     &boot_model,
                     &outcome_cache,
-                    boot_seed,
+                    &mut boot_rng,
                 ) {
                     boot_hrs.push(hr);
                 }

@@ -1,0 +1,25 @@
+{
+  "name": "@tidy-ts/dataframe",
+  "version": "1.3.7",
+  "description": "Type-safe data analytics and statistics framework for TypeScript. Built for modern data science workflows with compile-time safety.",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tidy-ts/tidy-ts"
+  },
+  "keywords": [
+    "dataframe",
+    "data-analysis",
+    "statistics",
+    "typescript",
+    "glm",
+    "regression",
+    "tidy-data"
+  ],
+  "dependencies": {
+    "@jsr/tidy-ts__dataframe": "1.3.7"
+  }
+}

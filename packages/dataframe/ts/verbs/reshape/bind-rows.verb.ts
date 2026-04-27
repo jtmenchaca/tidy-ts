@@ -3,6 +3,7 @@ import type { ColumnarStore } from "../../dataframe/implementation/columnar-stor
 import { createColumnarDataFrameFromStore } from "../../dataframe/implementation/create-dataframe.ts";
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+import type { ConcatDataFramesFunction } from "./bind-rows.types.ts";
 
 
 /**
@@ -32,7 +33,7 @@ import { tracer } from "../../telemetry/tracer.ts";
  * - Maintains type safety with optional properties
  * - Requires at least one DataFrame in the array
  */
-export function concatDataFrames(
+export const concatDataFrames: ConcatDataFramesFunction = function concatDataFrames(
   dataFrames: any[],
 ): any {
   if (!Array.isArray(dataFrames) || dataFrames.length === 0) {
@@ -48,7 +49,7 @@ export function concatDataFrames(
   // Use the first DataFrame and bind all others to it
   const [first, ...rest] = dataFrames;
   return first.bindRows(...rest);
-}
+};
 
 /**
  * Bind multiple DataFrames together by rows (vertical binding).

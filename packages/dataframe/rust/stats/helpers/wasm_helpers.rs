@@ -1,6 +1,6 @@
 //! Helper functions for WASM bindings
 
-#![cfg(feature = "wasm")]
+#![cfg(any(feature = "wasm", feature = "napi-rs"))]
 
 use crate::stats::core::AlternativeType;
 

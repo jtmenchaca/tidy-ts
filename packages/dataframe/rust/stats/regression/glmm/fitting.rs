@@ -3475,10 +3475,6 @@ mod tests {
 
         // Variance components should be correctly ordered (patient first, provider second)
         // This also tests that both are estimated separately
-        println!(
-            "Estimated SDs - Patient: {:.4}, Provider: {:.4}, Total RE SD: {:.4}",
-            vc_patient.std_dev[0], vc_provider.std_dev[0], total_re_sd
-        );
     }
 
     #[test]
@@ -4251,11 +4247,6 @@ mod tests {
             "Total RE SD should be in reasonable range [0.1, 5.0], got {}",
             total_re_sd
         );
-
-        println!(
-            "Estimated SDs - Clinic: {:.4}, Nested (clinic:provider): {:.4}, Total RE SD: {:.4}",
-            vc_clinic.std_dev[0], vc_nested.std_dev[0], total_re_sd
-        );
     }
 
     #[test]
@@ -4300,7 +4291,7 @@ mod tests {
     #[test]
     fn test_glmm_nested_blups() {
         // Test that BLUPs are extracted correctly for nested structure
-        let (y, x, random_effects, z, clinic_effects, provider_effects) =
+        let (y, x, random_effects, z, clinic_effects, _provider_effects) =
             create_nested_random_effects_data();
         let family = GaussianFamily::default();
         let control = GlmmControl::new()
@@ -4369,13 +4360,6 @@ mod tests {
             nested_sd >= 0.0, // Always true, but makes intent clear
             "Nested BLUP SD should be non-negative: {}",
             nested_sd
-        );
-
-        // Log the correlation for debugging (correlation can be low with strong shrinkage)
-        let nested_corr = pearson_correlation(&provider_effects, &estimated_nested);
-        println!(
-            "Nested BLUP correlation with true values: {:.4} (may be low due to shrinkage)",
-            nested_corr
         );
     }
 

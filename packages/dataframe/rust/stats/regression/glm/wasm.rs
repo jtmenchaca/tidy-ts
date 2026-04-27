@@ -1,13 +1,18 @@
 //! WASM bindings for GLM functions
 
-#![cfg(feature = "wasm")]
+#![cfg(any(feature = "wasm", feature = "napi-rs"))]
 
 use super::glm_main_core::glm;
 use super::types::GlmResult;
 use crate::stats::regression::shared::formula_parser::parse_formula;
 use std::collections::HashMap;
+#[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "wasm")]
 use web_sys::console;
+
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// WASM export for GLM fitting
 ///
@@ -22,6 +27,7 @@ use web_sys::console;
 ///
 /// # Returns
 /// JsValue containing the fitted GLM result
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_fit_wasm(
     formula: &str,
@@ -112,6 +118,97 @@ pub fn glm_fit_wasm(
 
     serde_wasm_bindgen::to_value(&result)
         .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+/// NAPI export for GLM fitting
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_fit_napi(
+    formula: String,
+    family_name: String,
+    link_name: String,
+    data_json: String,
+    options_json: Option<String>,
+) -> Result<String, napi::Error> {
+    // Parse data from JSON
+    let (data, categorical_vars) = parse_data_json(&data_json)
+        .map_err(|e| {
+            eprintln!("[NAPI] Data parsing error: {}", e);
+            napi::Error::from_reason(e)
+        })?;
+
+    // Parse formula using existing parser and handle categorical variables
+    let parsed_formula = parse_formula(&formula)
+        .map_err(|e| {
+            eprintln!("[NAPI] Formula parsing error: {}", e);
+            napi::Error::from_reason(e)
+        })?;
+
+    // Update the formula to replace categorical variables with dummy variable names
+    let updated_formula = if !categorical_vars.is_empty() {
+        update_formula_with_dummy_names(&parsed_formula.formula, &categorical_vars)
+    } else {
+        parsed_formula.formula.clone()
+    };
+
+    // Log formula transformation if categorical variables are present
+    if !categorical_vars.is_empty() {
+        eprintln!(
+            "[NAPI] Formula updated for categorical vars: {}",
+            updated_formula
+        );
+    }
+
+    // Create family object
+    let family = create_family(&family_name, &link_name)
+        .map_err(|e| {
+            eprintln!("[NAPI] Family creation error: {}", e);
+            napi::Error::from_reason(e)
+        })?;
+
+    // Parse options if provided
+    let (weights, na_action, control_params) = if let Some(ref opts) = options_json {
+        parse_options_json(opts).map_err(|e| napi::Error::from_reason(e))?
+    } else {
+        (None, None, None)
+    };
+
+    // Create control object
+    let control = if let Some((epsilon, max_iter, trace)) = control_params {
+        Some(
+            super::glm_control::glm_control(epsilon, max_iter, trace)
+                .map_err(|e| napi::Error::from_reason(e))?,
+        )
+    } else {
+        None
+    };
+
+    // Fit the model
+    let result = glm(
+        updated_formula,
+        Some(family),
+        Some(data),
+        weights,
+        na_action,
+        None, // start
+        None, // etastart
+        None, // mustart
+        None, // offset
+        control,
+        Some(true),                  // model
+        Some("glm.fit".to_string()), // method
+        Some(true),                  // x
+        Some(true),                  // y
+        Some(true),                  // singular_ok
+        None,                        // contrasts
+    )
+    .map_err(|e| {
+        eprintln!("[NAPI] GLM fit error: {}", e);
+        napi::Error::from_reason(e)
+    })?;
+
+    serde_json::to_string(&result)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
 /// Update formula to replace categorical variable names with dummy variable names.
@@ -438,6 +535,7 @@ fn create_family(
 /// WASM export for GLM summary
 ///
 /// Returns coefficient table with test statistics and p-values
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_summary_wasm(result: JsValue) -> Result<JsValue, JsValue> {
     // Parse GLM result from JsValue
@@ -455,6 +553,7 @@ pub fn glm_summary_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// WASM export for standardized residuals
 ///
 /// Returns rstandard() values
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_rstandard_wasm(result: JsValue, residual_type: &str) -> Result<JsValue, JsValue> {
     // Parse GLM result from JsValue
@@ -472,6 +571,7 @@ pub fn glm_rstandard_wasm(result: JsValue, residual_type: &str) -> Result<JsValu
 /// WASM export for studentized residuals
 ///
 /// Returns rstudent() values
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_rstudent_wasm(result: JsValue) -> Result<JsValue, JsValue> {
     // Parse GLM result from JsValue
@@ -489,6 +589,7 @@ pub fn glm_rstudent_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// WASM export for influence measures
 ///
 /// Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
     // Parse GLM result from JsValue
@@ -504,6 +605,7 @@ pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 }
 
 /// GLM confint() - Compute confidence intervals for coefficients
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue> {
     let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
@@ -517,6 +619,7 @@ pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue>
 }
 
 /// GLM predict() - Make predictions on new data
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> Result<JsValue, JsValue> {
     let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
@@ -538,6 +641,7 @@ pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> R
 ///
 /// Accepts a JSON string with the specific fields needed by the sandwich
 /// estimator, avoiding circular reference issues in the full GlmResult.
+#[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn glm_vcov_cl_wasm(
     sandwich_input_json: &str,
@@ -558,4 +662,115 @@ pub fn glm_vcov_cl_wasm(
 
     serde_wasm_bindgen::to_value(&vcov)
         .map_err(|e| JsValue::from_str(&e.to_string()))
+}
+
+/// NAPI export for GLM summary
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_summary_napi(result: String) -> Result<String, napi::Error> {
+    let result: GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let summary = result.summary()
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&summary)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for standardized residuals
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_rstandard_napi(result: String, residual_type: String) -> Result<String, napi::Error> {
+    let result: GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let rstandard = result.rstandard(&residual_type)
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&rstandard)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for studentized residuals
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_rstudent_napi(result: String) -> Result<String, napi::Error> {
+    let result: GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let rstudent = result.rstudent()
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&rstudent)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for influence measures
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_influence_napi(result: String) -> Result<String, napi::Error> {
+    let result: GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let influence = result.influence()
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&influence)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for GLM confint
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_confint_napi(result: String, level: f64) -> Result<String, napi::Error> {
+    let result: super::types_results::GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let confint = result.confint(level)
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&confint)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for GLM predict
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_predict_napi(result: String, newdata: String, pred_type: String) -> Result<String, napi::Error> {
+    let result: super::types_results::GlmResult = serde_json::from_str(&result)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse GLM result: {}", e)))?;
+
+    let newdata: Vec<Vec<f64>> = serde_json::from_str(&newdata)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse newdata: {}", e)))?;
+
+    let predictions = result.predict(&newdata, &pred_type)
+        .map_err(|e| napi::Error::from_reason(e))?;
+
+    serde_json::to_string(&predictions)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
+}
+
+/// NAPI export for clustered robust covariance matrix (sandwich::vcovCL)
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn glm_vcov_cl_napi(
+    sandwich_input_json: String,
+    cluster: String,
+    hc_type: String,
+    cadjust: bool,
+    fix: bool,
+) -> Result<String, napi::Error> {
+    let input: super::sandwich::SandwichInput =
+        serde_json::from_str(&sandwich_input_json)
+            .map_err(|e| napi::Error::from_reason(format!("Failed to parse sandwich input: {}", e)))?;
+
+    let cluster: Vec<i32> = serde_json::from_str(&cluster)
+        .map_err(|e| napi::Error::from_reason(format!("Failed to parse cluster: {}", e)))?;
+
+    let hc = super::sandwich::HCType::from_str(&hc_type);
+    let vcov = super::sandwich::vcov_cl_from_input(&input, &cluster, hc, cadjust, fix);
+
+    serde_json::to_string(&vcov)
+        .map_err(|e| napi::Error::from_reason(e.to_string()))
 }

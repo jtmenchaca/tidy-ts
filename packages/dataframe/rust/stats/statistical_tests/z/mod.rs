@@ -3,7 +3,7 @@ pub mod sample_size;
 pub mod two_sample;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use one_sample::z_test;

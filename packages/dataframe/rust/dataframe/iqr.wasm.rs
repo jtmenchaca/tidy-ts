@@ -4,6 +4,8 @@ use super::quantile_core::quantile;
 use super::shared_types::QuantileType;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// Calculate quartiles (Q1, Q2, Q3) using Type 7
 fn quartiles(data: &[f64]) -> Result<(f64, f64, f64), String> {
@@ -22,4 +24,11 @@ fn iqr(data: &[f64]) -> Result<f64, String> {
 #[wasm_bindgen]
 pub fn iqr_wasm(data: &[f64]) -> Result<f64, JsValue> {
     iqr(data).map_err(|e| JsValue::from_str(e.as_str()))
+}
+
+/// NAPI export for IQR calculation
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn iqr_napi(data: &[f64]) -> Result<f64, napi::Error> {
+    iqr(data).map_err(|e| napi::Error::from_reason(e.to_string()))
 }

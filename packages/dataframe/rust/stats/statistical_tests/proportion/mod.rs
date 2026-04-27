@@ -12,7 +12,7 @@ pub mod sample_size;
 pub mod two_sample;
 
 // WASM bindings (when compiled for WASM)
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;
 
 pub use chi_square_test::{chi_square_test_one_sample, chi_square_test_two_sample};

@@ -576,9 +576,6 @@ export function mean_wasm(values: Float64Array): number;
  */
 export function median_wasm(data: Float64Array): number;
 
-/**
- * Ultra-optimized outer join using shared utilities and specialized kernels
- */
 export function outer_join_typed_multi_u32(
   left_columns: Uint32Array[],
   right_columns: Uint32Array[],
@@ -786,9 +783,6 @@ export function reduce_sum_f64(
   n_groups: number,
 ): Float64Array;
 
-/**
- * Ultra-optimized right join using shared utilities and specialized kernels
- */
 export function right_join_typed_multi_u32(
   left_columns: Uint32Array[],
   right_columns: Uint32Array[],

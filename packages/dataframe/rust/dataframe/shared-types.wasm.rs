@@ -46,6 +46,27 @@ impl JoinIdxU32 {
     }
 }
 
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
+
+/// NAPI-compatible join result returning left and right index arrays as Uint32Array
+#[cfg(feature = "napi-rs")]
+#[napi(object)]
+pub struct NapiJoinIdxU32 {
+    pub left: napi::bindgen_prelude::Uint32Array,
+    pub right: napi::bindgen_prelude::Uint32Array,
+}
+
+#[cfg(feature = "napi-rs")]
+impl NapiJoinIdxU32 {
+    pub fn from_vecs(left: Vec<u32>, right: Vec<u32>) -> Self {
+        Self {
+            left: napi::bindgen_prelude::Uint32Array::new(left),
+            right: napi::bindgen_prelude::Uint32Array::new(right),
+        }
+    }
+}
+
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl JoinIdxU32 {

@@ -7,23 +7,10 @@
 use std::collections::BTreeMap;
 
 use super::glm_helpers::FormulaCache;
+use super::mt19937::MersenneTwister;
 use super::outcome_models::{predict_outcome, OutcomeModel};
 use super::types::{ColumnarData, HazardRatioResult, TargetTrialConfig};
 use crate::stats::survival::cox_regression::{coxfit6, CoxfitConfig, CoxMethod};
-
-/// Simple Bernoulli draw: return 1 with probability p, else 0.
-///
-/// Uses xorshift64 PRNG (deterministic given state).
-fn bernoulli(p: f64, rng_state: &mut u64) -> u32 {
-    // xorshift64
-    let mut x = *rng_state;
-    x ^= x << 13;
-    x ^= x >> 7;
-    x ^= x << 17;
-    *rng_state = x;
-    let u = (x as f64) / (u64::MAX as f64);
-    if u < p { 1 } else { 0 }
-}
 
 /// Simulate events and run Cox PH, mirroring R's `internal.hazard()` handler.
 ///
@@ -42,7 +29,7 @@ fn hazard_handler(
     config: &TargetTrialConfig,
     outcome_model: &OutcomeModel,
     formula_cache: &FormulaCache,
-    seed: u64,
+    rng: &mut MersenneTwister,
 ) -> Result<f64, String> {
     let tx_bas = format!("{}{}", config.treatment, config.indicator_baseline);
     let fup_sq_col = format!("followup{}", config.indicator_squared);
@@ -84,7 +71,9 @@ fn hazard_handler(
     let mut all_event: Vec<f64> = Vec::new();
     let mut all_arm: Vec<f64> = Vec::new();
 
-    let mut rng = seed;
+    // R: set.seed(params@seed) before handler — use MT19937 to match R's RNG.
+    // Caller provides the RNG: fresh from seed for point estimate,
+    // or post-sampling state for bootstrap (continuous stream matching R).
 
     for &level in &config.treat_levels {
         let total_rows = n_base * max_fup;
@@ -154,7 +143,7 @@ fn hazard_handler(
         let mut outcomes = vec![0u32; total_rows];
         for idx in 0..total_rows {
             let p = if probs[idx].is_nan() { 0.5 } else { probs[idx].max(0.0).min(1.0) };
-            outcomes[idx] = bernoulli(p, &mut rng);
+            outcomes[idx] = rng.rbinom_1(p);
         }
 
         // R line 39: [, "firstEvent" := { m <- match(TRUE, outcome == 1); if (is.na(m)) .N else m },
@@ -268,10 +257,27 @@ pub fn estimate_hazard_ratio(
     formula_cache: &FormulaCache,
     seed: u64,
 ) -> Result<f64, String> {
-    // R line 59: handler returns log HR (coefficients)
-    let log_hr = hazard_handler(data, config, outcome_model, formula_cache, seed)?;
+    // R line 61: set.seed(params@seed) then run handler
+    let mut rng = MersenneTwister::from_seed(seed as i32);
+    let log_hr = hazard_handler(data, config, outcome_model, formula_cache, &mut rng)?;
 
     // R line 118: exp(full)
+    Ok(log_hr.exp())
+}
+
+/// Estimate hazard ratio using an existing RNG (for bootstrap).
+///
+/// In R's bootstrap flow, set.seed(seed+x) → sample() consumes RNG state →
+/// rbinom() in handler uses the continuing stream. This function accepts the
+/// post-sampling RNG to maintain that single continuous stream.
+pub fn estimate_hazard_ratio_with_rng(
+    data: &ColumnarData,
+    config: &TargetTrialConfig,
+    outcome_model: &OutcomeModel,
+    formula_cache: &FormulaCache,
+    rng: &mut MersenneTwister,
+) -> Result<f64, String> {
+    let log_hr = hazard_handler(data, config, outcome_model, formula_cache, rng)?;
     Ok(log_hr.exp())
 }
 
@@ -365,19 +371,6 @@ pub fn hazard_ratio_with_ci(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_bernoulli() {
-        let mut rng: u64 = 12345;
-        let mut count = 0;
-        let n = 10000;
-        for _ in 0..n {
-            count += bernoulli(0.5, &mut rng);
-        }
-        let proportion = count as f64 / n as f64;
-        // Should be roughly 0.5
-        assert!((proportion - 0.5).abs() < 0.05);
-    }
 
     #[test]
     fn test_run_cox_ph() {

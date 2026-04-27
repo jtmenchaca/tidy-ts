@@ -9,6 +9,7 @@ pub mod expand;
 pub mod factorize;
 pub mod glm_helpers;
 pub mod hazard;
+pub mod mt19937;
 pub mod outcome_models;
 pub mod pipeline;
 pub mod risk_comparison;
@@ -16,5 +17,5 @@ pub mod survival_curves;
 pub mod types;
 pub mod weights;
 
-#[cfg(feature = "wasm")]
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
 pub mod wasm;

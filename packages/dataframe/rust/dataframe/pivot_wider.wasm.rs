@@ -5,6 +5,8 @@
 
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// Combined pivot result with values and seen flags
 #[cfg(feature = "wasm")]
@@ -93,6 +95,68 @@ pub fn pivot_wider_dense_f64(
     out
 }
 
+/// NAPI export for pivot_wider_dense_f64
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_wider_dense_f64_napi(
+    gid_per_row: &[u32],
+    cat_codes: &[u32],
+    values: &[f64],
+    n_groups: u32,
+    n_cats: u32,
+    policy: u8,
+) -> Vec<f64> {
+    let g = n_groups as usize;
+    let c = n_cats as usize;
+    let n = gid_per_row.len();
+
+    let mut out = vec![f64::NAN; g * c];
+    let mut seen = vec![0u8; g * c];
+    let mut cnt = if matches!(policy, 2 | 3) {
+        vec![0u32; g * c]
+    } else {
+        Vec::new()
+    };
+
+    for i in 0..n {
+        let dst = (gid_per_row[i] as usize) * c + (cat_codes[i] as usize);
+        let v = values[i];
+        match policy {
+            0 => {
+                if seen[dst] == 0 {
+                    out[dst] = v;
+                    seen[dst] = 1;
+                }
+            }
+            1 => {
+                out[dst] = v;
+                seen[dst] = 1;
+            }
+            2 => {
+                let k = if seen[dst] == 0 { 0 } else { cnt[dst] };
+                out[dst] = if k == 0 { v } else { out[dst] + v };
+                cnt[dst] = k + 1;
+                seen[dst] = 1;
+            }
+            3 => {
+                let k = if seen[dst] == 0 { 0 } else { cnt[dst] };
+                out[dst] = if k == 0 { v } else { out[dst] + v };
+                cnt[dst] = k + 1;
+                seen[dst] = 1;
+            }
+            _ => {}
+        }
+    }
+    if policy == 3 {
+        for i in 0..out.len() {
+            if seen[i] == 1 && cnt[i] > 0 {
+                out[i] /= cnt[i] as f64;
+            }
+        }
+    }
+    out
+}
+
 /// Get seen flags from dense pivot operation
 ///
 /// This function needs to be called after pivot_wider_dense_f64 to get
@@ -100,6 +164,33 @@ pub fn pivot_wider_dense_f64(
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn pivot_wider_seen_flags(
+    gid_per_row: &[u32],
+    cat_codes: &[u32],
+    _values: &[f64],
+    n_groups: u32,
+    n_cats: u32,
+    _policy: u8,
+) -> Vec<u8> {
+    let g = n_groups as usize;
+    let c = n_cats as usize;
+    let n = gid_per_row.len();
+
+    let mut seen = vec![0u8; g * c];
+
+    for i in 0..n {
+        let gi = gid_per_row[i] as usize;
+        let ci = cat_codes[i] as usize;
+        let dst = gi * c + ci;
+        seen[dst] = 1;
+    }
+
+    seen
+}
+
+/// NAPI export for pivot_wider_seen_flags
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_wider_seen_flags_napi(
     gid_per_row: &[u32],
     cat_codes: &[u32],
     _values: &[f64],
@@ -190,4 +281,72 @@ pub fn pivot_wider_dense_f64_all(
         n_groups,
         n_cats,
     }
+}
+
+/// NAPI export for pivot_wider_dense_f64_all - returns JSON string with values, seen, n_groups, n_cats
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_wider_dense_f64_all_napi(
+    gid_per_row: &[u32],
+    cat_codes: &[u32],
+    values: &[f64],
+    n_groups: u32,
+    n_cats: u32,
+    policy: u8,
+) -> String {
+    let g = n_groups as usize;
+    let c = n_cats as usize;
+    let n = gid_per_row.len();
+
+    let mut out = vec![f64::NAN; g * c];
+    let mut seen = vec![0u8; g * c];
+    let mut cnt = if matches!(policy, 2 | 3) {
+        vec![0u32; g * c]
+    } else {
+        Vec::new()
+    };
+
+    for i in 0..n {
+        let dst = (gid_per_row[i] as usize) * c + (cat_codes[i] as usize);
+        let v = values[i];
+        match policy {
+            0 => {
+                if seen[dst] == 0 {
+                    out[dst] = v;
+                    seen[dst] = 1;
+                }
+            }
+            1 => {
+                out[dst] = v;
+                seen[dst] = 1;
+            }
+            2 => {
+                let k = if seen[dst] == 0 { 0 } else { cnt[dst] };
+                out[dst] = if k == 0 { v } else { out[dst] + v };
+                cnt[dst] = k + 1;
+                seen[dst] = 1;
+            }
+            3 => {
+                let k = if seen[dst] == 0 { 0 } else { cnt[dst] };
+                out[dst] = if k == 0 { v } else { out[dst] + v };
+                cnt[dst] = k + 1;
+                seen[dst] = 1;
+            }
+            _ => {}
+        }
+    }
+    if policy == 3 {
+        for i in 0..out.len() {
+            if seen[i] == 1 && cnt[i] > 0 {
+                out[i] /= cnt[i] as f64;
+            }
+        }
+    }
+
+    serde_json::to_string(&serde_json::json!({
+        "values": out,
+        "seen": seen,
+        "n_groups": n_groups,
+        "n_cats": n_cats,
+    })).unwrap()
 }

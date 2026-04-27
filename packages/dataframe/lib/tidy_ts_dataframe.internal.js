@@ -2225,7 +2225,6 @@ export function median_wasm(data) {
 }
 
 /**
- * Ultra-optimized outer join using shared utilities and specialized kernels
  * @param {Uint32Array[]} left_columns
  * @param {Uint32Array[]} right_columns
  * @returns {JoinIdxU32}
@@ -2779,7 +2778,6 @@ export function reduce_sum_f64(gid_per_row, vals, n_groups) {
 }
 
 /**
- * Ultra-optimized right join using shared utilities and specialized kernels
  * @param {Uint32Array[]} left_columns
  * @param {Uint32Array[]} right_columns
  * @returns {JoinIdxU32}

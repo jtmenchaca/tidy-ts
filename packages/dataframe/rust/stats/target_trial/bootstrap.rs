@@ -3,6 +3,7 @@
 //! Ported from `SEQTaRget/R/internal_analysis.R` (bootstrap logic).
 //! ID-level resampling: resample whole subjects, not individual rows.
 
+use super::mt19937::MersenneTwister;
 use super::types::{ColumnarData, TargetTrialConfig};
 
 /// Sample IDs with replacement from the expanded data.
@@ -10,14 +11,17 @@ use super::types::{ColumnarData, TargetTrialConfig};
 /// Mirrors R's `sample(UIDs, n_sample, replace = TRUE)` where
 /// `UIDs <- unique(params@DT[[params@id]])`.
 ///
-/// Returns (sampled_ids, id_multiplier) — the same list is used to
-/// resample both expanded and pre-expansion data.
+/// Uses MT19937 to match R's RNG exactly.
+/// Returns (sampled_ids, id_multiplier, rng) — the same list is used to
+/// resample both expanded and pre-expansion data. The rng is returned
+/// so the caller can continue using the same RNG state (matching R's
+/// behavior where set.seed seeds both sampling and handler).
 pub fn bootstrap_sample_ids(
     expanded_data: &ColumnarData,
     config: &TargetTrialConfig,
     seed: u64,
     sample_fraction: f64,
-) -> Result<(Vec<f64>, f64), String> {
+) -> Result<(Vec<f64>, f64, MersenneTwister), String> {
     let id_col = expanded_data
         .get_numeric(&config.id)
         .ok_or_else(|| format!("ID column '{}' not found", config.id))?;
@@ -34,16 +38,10 @@ pub fn bootstrap_sample_ids(
         return Err("Bootstrap sample size is 0".to_string());
     }
 
-    // Sample IDs with replacement using xorshift
-    let mut rng = seed;
-    let mut sampled_ids = Vec::with_capacity(n_sample);
-    for _ in 0..n_sample {
-        rng ^= rng << 13;
-        rng ^= rng >> 7;
-        rng ^= rng << 17;
-        let idx = (rng as usize) % n_unique;
-        sampled_ids.push(unique_ids[idx]);
-    }
+    // R: set.seed(params@seed + x) then sample(UIDs, n_sample, replace=TRUE)
+    let mut rng = MersenneTwister::from_seed(seed as i32);
+    let indices = rng.sample_int_replace(n_unique, n_sample);
+    let sampled_ids: Vec<f64> = indices.iter().map(|&idx| unique_ids[idx]).collect();
 
     // ID multiplier for creating unique IDs
     let max_id = unique_ids
@@ -52,7 +50,7 @@ pub fn bootstrap_sample_ids(
         .fold(f64::NEG_INFINITY, f64::max);
     let id_mult = max_id.abs() + 1.0;
 
-    Ok((sampled_ids, id_mult))
+    Ok((sampled_ids, id_mult, rng))
 }
 
 /// Resample a dataset using a pre-computed list of sampled IDs.
@@ -142,7 +140,7 @@ pub fn bootstrap_resample(
     seed: u64,
     sample_fraction: f64,
 ) -> Result<ColumnarData, String> {
-    let (sampled_ids, id_mult) = bootstrap_sample_ids(data, config, seed, sample_fraction)?;
+    let (sampled_ids, id_mult, _rng) = bootstrap_sample_ids(data, config, seed, sample_fraction)?;
     resample_with_ids(data, config, &sampled_ids, id_mult)
 }
 
@@ -221,7 +219,7 @@ mod tests {
         let mut config = TargetTrialConfig::default();
         config.id = "id".to_string();
 
-        let (sampled_ids, id_mult) = bootstrap_sample_ids(&dt, &config, 42, 1.0).unwrap();
+        let (sampled_ids, id_mult, _rng) = bootstrap_sample_ids(&dt, &config, 42, 1.0).unwrap();
 
         let boot_dt = resample_with_ids(&dt, &config, &sampled_ids, id_mult).unwrap();
         let boot_pre = resample_with_ids(&pre, &config, &sampled_ids, id_mult).unwrap();

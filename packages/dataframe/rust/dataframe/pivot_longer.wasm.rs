@@ -7,6 +7,8 @@
 use super::join_helpers::{bulk_copy_f64, bulk_copy_u8};
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 /// Result of pivot_longer operation containing reshaped data
 #[cfg(feature = "wasm")]
@@ -150,6 +152,74 @@ pub fn pivot_longer_typed_strings(
         &keep_data,
         &fold_data,
         &fold_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
+}
+
+/// NAPI export for pivot_longer_typed_arrays
+/// Accepts flat Vecs instead of js_sys typed arrays, returns JSON string
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_typed_arrays_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_dense_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
+}
+
+/// NAPI export for pivot_longer_typed_numeric
+/// Accepts flat Vecs instead of js_sys typed arrays, returns JSON string
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_typed_numeric_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_valid: &[u8],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_numeric_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_valid,
+        fold_cols_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
+}
+
+/// NAPI export for pivot_longer_typed_strings
+/// Accepts flat Vecs instead of js_sys typed arrays, returns JSON string
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_typed_strings_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[u32],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_strings_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_names,
         n_input_rows,
         n_keep_cols,
         n_fold_cols,
@@ -403,4 +473,256 @@ impl PivotLongerStringResult {
     pub fn take_values_data(&mut self) -> Box<[u32]> {
         std::mem::take(&mut self.values_data).into_boxed_slice()
     }
+}
+
+/// Helper: pivot_longer_dense logic returning JSON string for NAPI
+#[cfg(feature = "napi-rs")]
+fn pivot_longer_dense_to_json(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    let input_rows = n_input_rows as usize;
+    let keep_cols = n_keep_cols as usize;
+    let fold_cols = n_fold_cols as usize;
+    let output_rows = input_rows * fold_cols;
+
+    let mut keep_data = vec![0u32; keep_cols * output_rows];
+    let mut names_data = vec![0u32; output_rows];
+    let mut values_data = vec![0f64; output_rows];
+
+    if fold_cols == 1 {
+        let output_rows = input_rows;
+        let keep_data = keep_cols_data.to_vec();
+        let names_data = vec![fold_cols_names[0]; output_rows];
+        let values_data = fold_cols_data.to_vec();
+        return serde_json::to_string(&serde_json::json!({
+            "keep_data": keep_data,
+            "names_data": names_data,
+            "values_data": values_data,
+            "n_rows": output_rows as u32,
+            "n_keep_cols": n_keep_cols,
+        })).unwrap();
+    }
+
+    let mut out_idx = 0;
+    for row_idx in 0..input_rows {
+        for fold_idx in 0..fold_cols {
+            names_data[out_idx] = fold_cols_names[fold_idx];
+            let value_idx = fold_idx * input_rows + row_idx;
+            values_data[out_idx] = fold_cols_data[value_idx];
+            out_idx += 1;
+        }
+    }
+
+    for keep_idx in 0..keep_cols {
+        let src = &keep_cols_data[keep_idx * input_rows..keep_idx * input_rows + input_rows];
+        let mut dst = keep_idx * output_rows;
+        for row_idx in 0..input_rows {
+            let v = unsafe { *src.get_unchecked(row_idx) };
+            let slice = &mut keep_data[dst..dst + fold_cols];
+            for x in slice.iter_mut() {
+                *x = v;
+            }
+            dst += fold_cols;
+        }
+    }
+
+    serde_json::to_string(&serde_json::json!({
+        "keep_data": keep_data,
+        "names_data": names_data,
+        "values_data": values_data,
+        "n_rows": output_rows as u32,
+        "n_keep_cols": n_keep_cols,
+    })).unwrap()
+}
+
+/// NAPI export for pivot_longer_dense
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_dense_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_dense_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
+}
+
+/// Helper: pivot_longer_numeric logic returning JSON string for NAPI
+#[cfg(feature = "napi-rs")]
+fn pivot_longer_numeric_to_json(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_valid: &[u8],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    let input_rows = n_input_rows as usize;
+    let keep_cols = n_keep_cols as usize;
+    let fold_cols = n_fold_cols as usize;
+    let output_rows = input_rows * fold_cols;
+
+    let mut keep_data = vec![0u32; keep_cols * output_rows];
+    let mut names_data = vec![0u32; output_rows];
+    let mut values_data = vec![f64::NAN; output_rows];
+
+    if fold_cols == 1 {
+        let output_rows = input_rows;
+        let keep_data = keep_cols_data.to_vec();
+        let names_data = vec![fold_cols_names[0]; output_rows];
+        let mut values_data = vec![f64::NAN; output_rows];
+
+        for i in 0..input_rows {
+            if fold_cols_valid[i] != 0 {
+                values_data[i] = fold_cols_data[i];
+            }
+        }
+
+        return serde_json::to_string(&serde_json::json!({
+            "keep_data": keep_data,
+            "names_data": names_data,
+            "values_data": values_data,
+            "n_rows": output_rows as u32,
+            "n_keep_cols": n_keep_cols,
+        })).unwrap();
+    }
+
+    let mut out_idx = 0;
+    for row_idx in 0..input_rows {
+        for fold_idx in 0..fold_cols {
+            names_data[out_idx] = fold_cols_names[fold_idx];
+            let value_idx = fold_idx * input_rows + row_idx;
+            if fold_cols_valid[value_idx] != 0 {
+                values_data[out_idx] = fold_cols_data[value_idx];
+            }
+            out_idx += 1;
+        }
+    }
+
+    for keep_idx in 0..keep_cols {
+        let src = &keep_cols_data[keep_idx * input_rows..keep_idx * input_rows + input_rows];
+        let mut dst = keep_idx * output_rows;
+        for row_idx in 0..input_rows {
+            let v = unsafe { *src.get_unchecked(row_idx) };
+            let slice = &mut keep_data[dst..dst + fold_cols];
+            for x in slice.iter_mut() {
+                *x = v;
+            }
+            dst += fold_cols;
+        }
+    }
+
+    serde_json::to_string(&serde_json::json!({
+        "keep_data": keep_data,
+        "names_data": names_data,
+        "values_data": values_data,
+        "n_rows": output_rows as u32,
+        "n_keep_cols": n_keep_cols,
+    })).unwrap()
+}
+
+/// NAPI export for pivot_longer_numeric
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_numeric_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[f64],
+    fold_cols_valid: &[u8],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_numeric_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_valid,
+        fold_cols_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
+}
+
+/// Helper: pivot_longer_strings logic returning JSON string for NAPI
+#[cfg(feature = "napi-rs")]
+fn pivot_longer_strings_to_json(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[u32],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    let input_rows = n_input_rows as usize;
+    let keep_cols = n_keep_cols as usize;
+    let fold_cols = n_fold_cols as usize;
+    let output_rows = input_rows * fold_cols;
+
+    let mut keep_data = vec![0u32; keep_cols * output_rows];
+    let mut names_data = vec![0u32; output_rows];
+    let mut values_data = vec![0u32; output_rows];
+
+    let mut out_idx = 0;
+
+    for row_idx in 0..input_rows {
+        for fold_idx in 0..fold_cols {
+            for keep_idx in 0..keep_cols {
+                let src_idx = keep_idx * input_rows + row_idx;
+                let dst_idx = keep_idx * output_rows + out_idx;
+                keep_data[dst_idx] = keep_cols_data[src_idx];
+            }
+
+            names_data[out_idx] = fold_cols_names[fold_idx];
+
+            let value_idx = fold_idx * input_rows + row_idx;
+            values_data[out_idx] = fold_cols_data[value_idx];
+
+            out_idx += 1;
+        }
+    }
+
+    serde_json::to_string(&serde_json::json!({
+        "keep_data": keep_data,
+        "names_data": names_data,
+        "values_data": values_data,
+        "n_rows": output_rows as u32,
+        "n_keep_cols": n_keep_cols,
+    })).unwrap()
+}
+
+/// NAPI export for pivot_longer_strings
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn pivot_longer_strings_napi(
+    keep_cols_data: &[u32],
+    fold_cols_data: &[u32],
+    fold_cols_names: &[u32],
+    n_input_rows: u32,
+    n_keep_cols: u32,
+    n_fold_cols: u32,
+) -> String {
+    pivot_longer_strings_to_json(
+        keep_cols_data,
+        fold_cols_data,
+        fold_cols_names,
+        n_input_rows,
+        n_keep_cols,
+        n_fold_cols,
+    )
 }

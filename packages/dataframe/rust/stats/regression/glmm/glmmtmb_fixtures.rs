@@ -289,15 +289,6 @@ mod tests {
             "AIC should be ~3901.2, got {} (diff: {:.2})",
             result.aic, aic_diff
         );
-
-        // Print actual values for debugging
-        println!("=== Owls GLMM vs glmmTMB Reference ===");
-        println!("Fixed effects: Intercept = {:.4}, FoodTreatment = {:.4}", intercept, food_effect);
-        println!("glmmTMB ref:   Intercept = 8.1195, FoodTreatment = -3.5477");
-        println!("Nest SD: {:.4} (ref: 2.4025)", nest_sd);
-        println!("Residual SD: {:.4} (ref: 6.0409)", residual_sd);
-        println!("Log-likelihood: {:.2} (ref: -1946.6)", result.log_likelihood);
-        println!("AIC: {:.2} (ref: 3901.2)", result.aic);
     }
 
     /// Salamanders dataset from glmmTMB package
@@ -451,7 +442,7 @@ mod tests {
             .with_max_iter(200)
             .with_ml()
             .with_tolerance(1e-6) // Tighter tolerance
-            .with_verbose(true);  // Enable verbose output
+            .with_verbose(false);
 
         let result = glmm_fit(&y, &x, &z, &random_effects, &family, &control, None, None)
             .expect("Salamanders GLMM should fit");
@@ -510,14 +501,6 @@ mod tests {
             "AIC should be ~2215.7, got {} (diff: {:.2})",
             result.aic, aic_diff
         );
-
-        // Print actual values for debugging
-        println!("=== Salamanders GLMM vs glmmTMB Reference ===");
-        println!("Fixed effects: Intercept = {:.4}, minedyes = {:.4}", intercept, mined_effect);
-        println!("glmmTMB ref:   Intercept = 0.7591, minedyes = -2.2644");
-        println!("Site SD: {:.4} (ref: 0.5759)", site_sd);
-        println!("Log-likelihood: {:.2} (ref: -1104.8)", result.log_likelihood);
-        println!("AIC: {:.2} (ref: 2215.7)", result.aic);
     }
 
     /// Diagnostic test: evaluate our likelihood at glmmTMB's known solution
@@ -569,17 +552,6 @@ mod tests {
             &offset,
             &control,
         );
-
-        println!("=== Likelihood at glmmTMB solution ===");
-        println!("glmmTMB beta: {:?}", glmmtmb_beta);
-        println!("glmmTMB theta (log SD): {:?}", glmmtmb_theta);
-        println!("glmmTMB logLik: {:.4}", glmmtmb_loglik);
-        println!("Our logLik at glmmTMB solution: {:.4}", result.log_marginal_likelihood);
-        println!("Difference: {:.4}", result.log_marginal_likelihood - glmmtmb_loglik);
-
-        if let Some(ref profiled_beta) = result.profiled_beta {
-            println!("Profiled beta at glmmTMB theta: {:?}", profiled_beta);
-        }
 
         // Check if our likelihood matches glmmTMB's within 1.0 unit
         let ll_diff = (result.log_marginal_likelihood - glmmtmb_loglik).abs();
@@ -648,16 +620,6 @@ mod tests {
         let log_2pi = (2.0 * std::f64::consts::PI).ln();
         let laplace_correction = (q as f64 / 2.0) * log_2pi - 0.5 * log_det;
         let our_loglik = joint_ll + laplace_correction;
-
-        println!("=== Likelihood at glmmTMB (theta, beta) - NO profiling ===");
-        println!("glmmTMB beta: {:?}", glmmtmb_beta);
-        println!("glmmTMB theta: {:?}", glmmtmb_theta);
-        println!("glmmTMB logLik: {:.4}", glmmtmb_loglik);
-        println!("Our b_mode found: first 5 = {:?}", &b_mode[..5.min(b_mode.len())]);
-        println!("Joint LL (data + prior): {:.4}", joint_ll);
-        println!("Laplace correction: {:.4}", laplace_correction);
-        println!("Our marginal logLik: {:.4}", our_loglik);
-        println!("Difference from glmmTMB: {:.4}", our_loglik - glmmtmb_loglik);
 
         // Should match very closely if likelihood formula is correct
         let ll_diff = (our_loglik - glmmtmb_loglik).abs();

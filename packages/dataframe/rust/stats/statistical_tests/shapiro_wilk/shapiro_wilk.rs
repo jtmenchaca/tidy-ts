@@ -95,12 +95,6 @@ impl ShapiroWilkTest {
         let complement = (denominator - numerator.powi(2)) / denominator;
         let estimate = 1.0 - complement;
 
-        // Debug output
-        println!(
-            "Debug Shapiro-Wilk: n={}, denominator={}, numerator={}, complement={}, estimate={}",
-            n, denominator, numerator, complement, estimate
-        );
-
         let _status = if n > 5000 {
             ShapiroWilkStatus::TooMany
         } else {
@@ -122,11 +116,6 @@ impl ShapiroWilkTest {
                 complement.ln()
             })
         };
-
-        println!(
-            "Debug TestResult creation: test_statistic={}, p_value={}",
-            estimate, p_value
-        );
 
         Ok(ShapiroWilkTestResult {
             test_statistic: TestStatistic {
@@ -203,12 +192,6 @@ mod tests {
             8.351,
         ];
         let test = ShapiroWilkTest::new(&x, 0.05).unwrap();
-        println!(
-            "Debug test result: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic.value,
-            test.p_value,
-            test.test_statistic.value // Effect size not applicable for normality test
-        );
         assert_eq!(test.test_statistic.value, 0.8346662753181684);
         assert_eq!(test.p_value, 0.0009134904817755807);
         assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
@@ -220,12 +203,6 @@ mod tests {
             134.0, 146.0, 104.0, 119.0, 124.0, 161.0, 107.0, 83.0, 113.0, 129.0, 97.0, 123.0,
         ];
         let test = ShapiroWilkTest::new(&x, 0.05).unwrap();
-        println!(
-            "Debug test result 1: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic.value,
-            test.p_value,
-            test.test_statistic.value // Effect size not applicable for normality test
-        );
         assert_eq!(test.test_statistic.value, 0.9923657326481632);
         assert_eq!(test.p_value, 0.9999699312420669);
         assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test
@@ -235,12 +212,6 @@ mod tests {
     fn shapiro_wilk_2() {
         let x = vec![70.0, 118.0, 101.0, 85.0, 107.0, 132.0, 94.0];
         let test = super::ShapiroWilkTest::new(&x, 0.05).unwrap();
-        println!(
-            "Debug test result 2: test_statistic={}, p_value={}, effect_size={}",
-            test.test_statistic.value,
-            test.p_value,
-            test.test_statistic.value // Effect size not applicable for normality test
-        );
         assert_eq!(test.test_statistic.value, 0.9980061683004456);
         assert_eq!(test.p_value, 0.9999411393249124);
         assert_eq!(test.test_statistic.value, 0.0); // Effect size not applicable for normality test

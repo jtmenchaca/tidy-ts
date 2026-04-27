@@ -11,13 +11,15 @@ export function arrange_multi_f64_wasm(
   outIdx: Uint32Array,
 ): void {
   initWasm();
-  return wasmInternal.arrange_multi_f64_wasm(
+  const result = wasmInternal.arrange_multi_f64_wasm(
     values,
     nRows,
     nCols,
     dirs,
     outIdx,
   );
+  // napi returns a new sorted array; copy back into the original buffer
+  if (result) outIdx.set(result);
 }
 
 export function stable_sort_indices_f64_wasm(
@@ -26,7 +28,9 @@ export function stable_sort_indices_f64_wasm(
   ascending: boolean,
 ): void {
   initWasm();
-  return wasmInternal.stable_sort_indices_f64_wasm(values, indices, ascending);
+  const result = wasmInternal.stable_sort_indices_f64_wasm(values, indices, ascending);
+  // napi returns a new sorted array; copy back into the original buffer
+  if (result) indices.set(result);
 }
 
 export function stable_sort_indices_u32_wasm(
@@ -36,12 +40,14 @@ export function stable_sort_indices_u32_wasm(
   na_code: number,
 ): void {
   initWasm();
-  return wasmInternal.stable_sort_indices_u32_wasm(
+  const result = wasmInternal.stable_sort_indices_u32_wasm(
     values,
     indices,
     ascending,
     na_code,
   );
+  // napi returns a new sorted array; copy back into the original buffer
+  if (result) indices.set(result);
 }
 
 export function batch_filter_numbers(
@@ -51,10 +57,12 @@ export function batch_filter_numbers(
   output: Uint8Array,
 ): void {
   initWasm();
-  return wasmInternal.batch_filter_numbers(
+  const result = wasmInternal.batch_filter_numbers(
     values,
     threshold,
     operation,
     output,
   );
+  // napi returns a new mask array; copy back into the original buffer
+  if (result) output.set(result);
 }

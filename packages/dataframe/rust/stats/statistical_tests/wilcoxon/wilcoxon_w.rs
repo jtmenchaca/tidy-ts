@@ -215,10 +215,6 @@ mod tests {
         let y = vec![151.0, 168.0, 147.0, 164.0, 166.0, 163.0, 176.0, 188.0];
         let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
         // Our implementation returns 0.078125 vs R's 0.0390625 - allow tolerance
-        println!(
-            "Paired test 2: our p-value={}, R p-value=0.0390625",
-            test.p_value
-        );
         assert!((test.p_value - 0.078125).abs() < 1e-10);
         // Effect size is now Cohen's d instead of rank-biserial
     }

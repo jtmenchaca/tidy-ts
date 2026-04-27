@@ -148,12 +148,14 @@ pub fn default_weight_covariates(
     match formula_type {
         "numerator" => {
             if config.weights.preexpansion {
-                // Pre-expansion numerator: fixed + time
-                if let Some(f) = fixed { parts.push(f); }
-                if config.method != AnalysisMethod::Censoring || !config.excused {
+                // Excused + censoring + preexpansion: R returns NA (empty formula)
+                if config.excused && config.method == AnalysisMethod::Censoring {
+                    // Return empty — numerator is skipped entirely
+                } else {
+                    // Pre-expansion numerator: fixed + time
+                    if let Some(f) = fixed { parts.push(f); }
                     parts.push(time_str);
                 }
-                // Excused + censoring + preexpansion: returns NA in R (empty formula)
             } else {
                 // Post-expansion numerator: fixed + tv_bas + followup + trial
                 if let Some(f) = fixed { parts.push(f); }

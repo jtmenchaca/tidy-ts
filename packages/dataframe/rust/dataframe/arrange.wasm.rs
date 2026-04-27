@@ -5,6 +5,8 @@
 use std::cmp::Ordering;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
+#[cfg(feature = "napi-rs")]
+use napi_derive::napi;
 
 #[inline]
 fn cmp_nan_last(a: f64, b: f64) -> Ordering {
@@ -78,6 +80,27 @@ pub fn arrange_multi_f64_wasm(
     Ok(())
 }
 
+/// NAPI export: returns sorted indices as Vec<u32>
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn arrange_multi_f64_napi(
+    flat_cols: &[f64],
+    n_rows: u32,
+    n_cols: u32,
+    dirs: Vec<i8>,
+) -> Result<Vec<u32>, napi::Error> {
+    let n_rows = n_rows as usize;
+    let n_cols = n_cols as usize;
+    if flat_cols.len() != n_rows * n_cols {
+        return Err(napi::Error::from_reason("flat_cols size mismatch"));
+    }
+    if dirs.len() != n_cols {
+        return Err(napi::Error::from_reason("dirs length mismatch"));
+    }
+    let order = arrange_indices_f64(flat_cols, n_rows, n_cols, &dirs);
+    Ok(order.iter().map(|&v| v as u32).collect())
+}
+
 /// Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
@@ -100,6 +123,31 @@ pub fn stable_sort_indices_f64_wasm(
         });
     }
     Ok(())
+}
+
+/// NAPI export: stable sort indices by one f64 key vector
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn stable_sort_indices_f64_napi(
+    values: &[f64],
+    indices: &[u32],
+    ascending: bool,
+) -> Vec<u32> {
+    let mut indices = indices.to_vec();
+    if ascending {
+        indices.sort_by(|&a, &b| {
+            let ua = values[a as usize];
+            let ub = values[b as usize];
+            cmp_nan_last(ua, ub)
+        });
+    } else {
+        indices.sort_by(|&a, &b| {
+            let ua = values[a as usize];
+            let ub = values[b as usize];
+            cmp_nan_last(ub, ua)
+        });
+    }
+    indices
 }
 
 /// Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
@@ -136,4 +184,41 @@ pub fn stable_sort_indices_u32_wasm(
         });
     }
     Ok(())
+}
+
+/// NAPI export: stable sort indices by one u32 rank key vector
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn stable_sort_indices_u32_napi(
+    ranks: &[u32],
+    indices: &[u32],
+    ascending: bool,
+    na_code: u32,
+) -> Vec<u32> {
+    let mut indices = indices.to_vec();
+    let cmp_u32_with_na_last = |ua: u32, ub: u32| {
+        let a_na = ua == na_code;
+        let b_na = ub == na_code;
+        match (a_na, b_na) {
+            (true, true) => Ordering::Equal,
+            (true, false) => Ordering::Greater,
+            (false, true) => Ordering::Less,
+            (false, false) => ua.cmp(&ub),
+        }
+    };
+
+    if ascending {
+        indices.sort_by(|&a, &b| {
+            let ua = ranks[a as usize];
+            let ub = ranks[b as usize];
+            cmp_u32_with_na_last(ua, ub)
+        });
+    } else {
+        indices.sort_by(|&a, &b| {
+            let ua = ranks[a as usize];
+            let ub = ranks[b as usize];
+            cmp_u32_with_na_last(ub, ua)
+        });
+    }
+    indices
 }
