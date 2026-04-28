@@ -4,7 +4,7 @@
 // deno-fmt-ignore-file
 // @ts-self-types="./tidy_ts_dataframe.d.ts"
 
-// source-hash: b2c43ae07505e41fbe1b0a149db28bad50c62540
+// source-hash: af9ba6e63afc3fae875a32181549508930374bed
 import * as wasm from "./tidy_ts_dataframe.wasm";
 export * from "./tidy_ts_dataframe.internal.js";
 import { __wbg_set_wasm } from "./tidy_ts_dataframe.internal.js";
