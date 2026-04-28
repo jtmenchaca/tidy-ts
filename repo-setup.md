@@ -2,6 +2,15 @@
 
 This document explains the monorepo setup, the interplay between pnpm workspaces and Deno, and how to replicate this setup in a new repository.
 
+## Quick Reference: Build + Publish
+
+```bash
+pnpm bump 1.4.1         # Update version in all 12 files
+pnpm build              # Rust → WASM + native addons (skip if unchanged)
+pnpm publish:all:jsr        # JSR (deno publish for dataframe, shims, arrow, parquet, ai)
+pnpm publish:all:npm    # npm (builds JS bundles + publishes shims, native addons, dataframe)
+```
+
 ## Overview
 
 This repository uses a **hybrid monorepo** approach combining:
@@ -539,22 +548,56 @@ pnpm pack:npm
 
 ### Publish Workflow
 
-Run these in order. Each step is a separate `pnpm` script.
+```bash
+pnpm bump 1.4.1        # Update version everywhere
+pnpm build              # Compile Rust → WASM + native addons (skip if unchanged)
+pnpm publish:all:npm    # Build + publish all 4 npm packages
+```
 
-1. `pnpm build` — Compiles all Rust targets (WASM + native addons). Skip if Rust source hasn't changed.
-2. `pnpm publish:shims:npm` — Builds shims JS bundle + publishes to npm
-3. `pnpm publish:dataframe:npm` — Builds dataframe JS bundle (includes WASM) + publishes to npm
-4. `pnpm publish:dataframe:npm:darwin-arm64` — Publishes macOS ARM64 native addon to npm
-5. `pnpm publish:dataframe:npm:win32-x64` — Publishes Windows x64 native addon to npm
+`publish:all:npm` runs these in order, handling the dependency chain automatically:
 
-Step 2 must run before step 3 (dataframe depends on shims).
+1. `publish:shims:npm` — Builds shims JS bundle + publishes to npm (triggers auth prompt)
+2. `publish:dataframe:npm:darwin-arm64` — Publishes macOS ARM64 native addon
+3. `publish:dataframe:npm:win32-x64` — Publishes Windows x64 native addon
+4. `publish:dataframe:npm` — Builds dataframe JS bundle (includes WASM) + publishes to npm
+
+The first publish triggers npm 2FA. After approving, subsequent publishes within 5 minutes skip the prompt.
+
+Individual scripts are also available if you need to publish a single package:
+
+| Script | Package |
+| --- | --- |
+| `pnpm publish:shims:npm` | `@tidy-ts/shims` |
+| `pnpm publish:dataframe:npm` | `@tidy-ts/dataframe` |
+| `pnpm publish:dataframe:npm:darwin-arm64` | `@tidy-ts/dataframe-darwin-arm64` |
+| `pnpm publish:dataframe:npm:win32-x64` | `@tidy-ts/dataframe-win32-x64` |
 
 ### Version Management
 
-- Bump versions in the source `package.json` files (e.g. `packages/shims/package.json`, `packages/dataframe/package.json`)
-- The build scripts read these versions and write them into `dist/package.json`
-- The native addon versions in `packages/npm-darwin-arm64/package.json` and `packages/npm-win32-x64/package.json` should match the dataframe version
-- The dataframe build script hardcodes the shims dependency version — update it in `scripts/build-dataframe-npm.ts` when shims version changes
+Use the bump script to update the version across all locations at once:
+
+```bash
+pnpm bump 1.4.1
+```
+
+This updates all 12 files that contain the version:
+
+| File | What's updated |
+| --- | --- |
+| `package.json` (root) | `"version"` |
+| `deno.jsonc` (root) | `"version"` |
+| `Cargo.toml` | `version` |
+| `packages/dataframe/package.json` | `"version"` |
+| `packages/dataframe/deno.jsonc` | `"version"` + shims import |
+| `packages/shims/package.json` | `"version"` |
+| `packages/shims/deno.jsonc` | `"version"` |
+| `packages/npm-darwin-arm64/package.json` | `"version"` |
+| `packages/npm-win32-x64/package.json` | `"version"` |
+| `packages/arrow/deno.jsonc` | shims import |
+| `packages/parquet/deno.jsonc` | shims import |
+| `scripts/build-dataframe-npm.ts` | shims dependency version |
+
+The build scripts read versions from the source `package.json` files and write them into `dist/package.json` at build time.
 
 ### Consumer Usage
 

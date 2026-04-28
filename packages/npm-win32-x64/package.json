@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/dataframe-win32-x64",
-  "version": "1.4.0",
+  "version": "1.4.2",
   "description": "Native binary for @tidy-ts/dataframe on Windows x64",
   "os": ["win32"],
   "cpu": ["x64"],
@@ -12,6 +12,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/tidy-ts/tidy-ts"
+    "url": "git+https://github.com/jtmenchaca/tidy-ts.git"
+  },
+  "homepage": "https://github.com/jtmenchaca/tidy-ts#readme",
+  "bugs": {
+    "url": "https://github.com/jtmenchaca/tidy-ts/issues"
   }
 }

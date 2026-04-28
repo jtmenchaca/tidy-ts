@@ -49,7 +49,12 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
     "./encryption": "./encryption/mod.js",
   },
   license: "MIT",
-  repository: { type: "git", url: "https://github.com/tidy-ts/tidy-ts" },
+  repository: { type: "git", url: "git+https://github.com/jtmenchaca/tidy-ts.git" },
+  homepage: "https://github.com/jtmenchaca/tidy-ts#readme",
+  bugs: { url: "https://github.com/jtmenchaca/tidy-ts/issues" },
 }, null, 2));
+
+// Copy README into dist so npm publish includes it
+cpSync(join(SHIMS_DIR, "README.md"), join(DIST_DIR, "README.md"));
 
 console.log(`Built shims to ${DIST_DIR}`);

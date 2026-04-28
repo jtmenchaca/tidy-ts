@@ -1,11 +1,11 @@
 [package]
 name         = "tidy-ts-dataframe"
-version      = "1.4.0"
+version      = "1.4.2"
 edition      = "2024"
 description  = "High-performance data frame operations and statistical functions with WebAssembly support"
 authors      = ["Tidy-TS Contributors"]
 license      = "MIT"
-repository   = "https://github.com/tidy-ts/tidy-ts"
+repository   = "https://github.com/jtmenchaca/tidy-ts"
 keywords     = ["dataframe", "data-analysis", "statistics", "webassembly", "rust"]
 categories   = ["data-structures", "science", "web-programming"]
 

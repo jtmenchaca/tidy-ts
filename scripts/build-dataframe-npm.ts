@@ -55,10 +55,12 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
   type: "module",
   main: "./index.js",
   license: "MIT",
-  repository: { type: "git", url: "https://github.com/tidy-ts/tidy-ts" },
+  repository: { type: "git", url: "git+https://github.com/jtmenchaca/tidy-ts.git" },
+  homepage: "https://github.com/jtmenchaca/tidy-ts#readme",
+  bugs: { url: "https://github.com/jtmenchaca/tidy-ts/issues" },
   keywords: ["dataframe", "data-analysis", "statistics", "typescript", "glm", "regression", "tidy-data"],
   dependencies: {
-    "@tidy-ts/shims": "1.4.0",
+    "@tidy-ts/shims": "1.4.2",
     "zod": "^4.1.8",
     "vega": "^6.2.0",
     "vega-embed": "^7.0.2",
@@ -70,5 +72,8 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
     "@tidy-ts/dataframe-win32-x64": pkg.version,
   },
 }, null, 2));
+
+// Copy README into dist so npm publish includes it
+cpSync(join(DF_DIR, "README.md"), join(DIST_DIR, "README.md"));
 
 console.log(`Built dataframe to ${DIST_DIR}`);
