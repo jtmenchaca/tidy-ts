@@ -143,17 +143,30 @@ function wrapGroupingResult(jsonStr: string) {
 
 /**
  * Try to load the native .node addon. Returns null if not available.
+ *
+ * Resolution order:
+ * 1. npm platform package via createRequire: @tidy-ts/dataframe-{platform}-{arch}
+ * 2. npm: specifier via dynamic import (for Deno JSR consumers)
  */
-export function tryLoadNative(): Record<string, any> | null {
-  // Requires createRequire support (Node.js, Bun, and Deno)
+export async function tryLoadNative(): Promise<Record<string, any> | null> {
   if (currentRuntime === Runtime.Browser) {
     return null;
   }
 
+  const suffix = `${process.platform}-${process.arch}`;
+  const req = createRequire(import.meta.url);
+
+  // Try npm platform package (installed via optionalDependencies)
   try {
-    const suffix = `${process.platform}-${process.arch}`;
-    const req = createRequire(import.meta.url);
-    return req(`../../lib/tidy_ts_dataframe.${suffix}.node`);
+    return req(`@tidy-ts/dataframe-${suffix}`);
+  } catch {
+    // Not installed via npm — fall through
+  }
+
+  // Try npm: specifier (Deno JSR consumers)
+  try {
+    const mod = await import(`npm:@tidy-ts/dataframe-${suffix}`);
+    return mod.default ?? mod;
   } catch {
     return null;
   }

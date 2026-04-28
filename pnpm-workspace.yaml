@@ -109,6 +109,9 @@ overrides:
   playwright: $playwright
   "@playwright/test": $@playwright/test
 
+  # Native platform packages
+  "@tidy-ts/dataframe-darwin-arm64": $@tidy-ts/dataframe-darwin-arm64
+
   # JSR packages
   "@std/csv": $@std/csv
   "@std/encoding": $@std/encoding

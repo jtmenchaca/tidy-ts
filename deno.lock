@@ -324,7 +324,7 @@
       "packages/npm": {
         "packageJson": {
           "dependencies": [
-            "npm:@jsr/tidy-ts__dataframe@1.3.7"
+            "npm:@jsr/tidy-ts__dataframe@1.3.8"
           ]
         }
       },

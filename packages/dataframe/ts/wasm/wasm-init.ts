@@ -18,7 +18,7 @@ let _usingNative = false;
 
 // Try native addon (Node.js, Bun, and Deno all support .node addons)
 if (currentRuntime !== Runtime.Browser) {
-  const native = tryLoadNative();
+  const native = await tryLoadNative();
   if (native) {
     _backend = buildNativeProxy(native);
     _usingNative = true;
