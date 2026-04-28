@@ -45,6 +45,7 @@ pub use concordance::*;
 pub use cox_baseline_hazard::*;
 pub use cox_baseline_hazard_ms::*;
 pub use cholesky::*;
+#[allow(unused_imports)]
 pub(crate) use clustering::*;
 pub use cox_event_detail::*;
 pub use cox_exact::*;
@@ -59,6 +60,7 @@ pub use fine_gray_transform::*;
 pub use interpolation::*;
 pub use kaplan_meier::*;
 pub use logrank_test::*;
+#[allow(unused_imports)]
 pub(crate) use numerical_safety::*;
 pub use proportional_hazards_test::*;
 pub use survfit_residuals::*;

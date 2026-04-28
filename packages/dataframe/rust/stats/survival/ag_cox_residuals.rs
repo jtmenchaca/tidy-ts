@@ -463,6 +463,7 @@ pub fn agscore3(
 /// # Returns
 ///
 /// Score residual matrix resid[j][i] (nvar × n)
+#[allow(dead_code)]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn agscore2(
     tstart: &[f64],

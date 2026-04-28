@@ -31,7 +31,7 @@ export {
 } from "./ts/io/index.ts";
 
 // Browser setup function
-export { setupTidyTS } from "./ts/wasm/wasm-init.ts";
+export { setupTidyTS, usingNativeBackend } from "./ts/wasm/wasm-init.ts";
 
 // Note: Parquet and Arrow I/O have been moved to separate packages:
 // - @tidy-ts/parquet for Parquet file support (readParquet, writeParquet)

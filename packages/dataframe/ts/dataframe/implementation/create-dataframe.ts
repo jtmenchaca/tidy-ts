@@ -4,7 +4,12 @@
 import { buildToMarkdown } from "../printing/print.ts";
 import { ARRAY_METHODS, buildColumnarProxyHandlers } from "./columnar-proxy.ts";
 import type { DataFrame } from "../types/dataframe.type.ts";
-import { type ColumnarStore, toColumnarStorage } from "./columnar-store.ts";
+import {
+  type ColumnData,
+  type ColumnarStore,
+  toColumnarStorage,
+  tryPromoteToTyped,
+} from "./columnar-store.ts";
 import { materializeIndex, type View } from "./columnar-view.ts";
 import { detectColumnTypes } from "./column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
@@ -421,7 +426,7 @@ export function createColumnarDataFrameFromStore<
 class RowView<Row extends object> {
   private _i = 0;
   constructor(
-    private cols: Record<string, unknown[]>,
+    private cols: Record<string, ColumnData>,
     private names: string[],
   ) {
     // define getters once, no Proxy traps in hot loops:
@@ -441,7 +446,7 @@ class RowView<Row extends object> {
 function makeRowView<Row extends object>(
   store: ColumnarStore,
 ): RowView<Row> {
-  return new RowView<Row>(store.columns as any, store.columnNames);
+  return new RowView<Row>(store.columns, store.columnNames);
 }
 
 // ============================================================================
@@ -648,10 +653,17 @@ export function createDataFrame<
     }
 
     // Create store directly from columns (avoid row conversion)
-    const columns: Record<string, unknown[]> = {};
+    // Promote numeric columns to Float64Array for zero-copy Rust interop
+    const columns: Record<string, ColumnData> = {};
     for (const colName of columnNames) {
-      // Copy arrays to ensure they're mutable and detached from input
-      columns[colName] = [...columnsData[colName]];
+      const src = columnsData[colName];
+      if (src instanceof Float64Array) {
+        // Already typed — copy to detach from input
+        columns[colName] = new Float64Array(src);
+      } else {
+        // Copy then try to promote numeric columns
+        columns[colName] = tryPromoteToTyped([...src]);
+      }
     }
 
     const store: ColumnarStore = {

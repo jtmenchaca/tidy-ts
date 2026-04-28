@@ -18,6 +18,7 @@
 /// # Returns
 ///
 /// `true` if any id appears in more than one cluster, `false` otherwise.
+#[allow(dead_code)]
 pub(crate) fn twoclust(id: &[i32], cluster: &[i32], idord: &[i32]) -> bool {
     let n = id.len();
     let mut i = 0;

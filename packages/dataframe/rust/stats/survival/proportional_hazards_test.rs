@@ -321,6 +321,7 @@ pub fn zph1(
 /// # Returns
 ///
 /// `Zph1Result` containing u, imat, schoen, used (same struct as zph1).
+#[allow(dead_code)]
 #[allow(clippy::too_many_arguments)]
 pub(crate) fn zph2(
     gt: &[f64],

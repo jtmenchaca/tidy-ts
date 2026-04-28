@@ -146,7 +146,7 @@ pub fn coxsurv3(
 
     // C: for (i= nused -1; i >=0; ) {
     let mut i: isize = nused as isize - 1;
-    let mut i2: usize = 0;
+    let mut i2: usize;
     while i >= 0 {
         i2 = sort2[i as usize] as usize;
         dtime = stime[i2];
@@ -381,6 +381,7 @@ pub fn coxsurv3(
 /// # Returns
 ///
 /// `CoxSurv4Result` with time, strata, counts, xbar1, xbar2.
+#[allow(dead_code)]
 pub(crate) fn coxsurv4(
     tstart: &[f64],
     stime: &[f64],

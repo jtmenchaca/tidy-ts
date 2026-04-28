@@ -20,6 +20,8 @@ use super::join_helpers::{
 use napi_derive::napi;
 #[cfg(feature = "napi-rs")]
 use super::shared_types::NapiJoinIdxU32;
+#[cfg(feature = "napi-rs")]
+use rayon::prelude::*;
 
 // ----------------------------- Inner join kernels -----------------------------
 
@@ -172,7 +174,239 @@ fn inner_join_multi(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, V
     (left_out, right_out)
 }
 
-// ----------------------------- Dispatch helper -----------------------------
+// ----------------------------- Rayon-parallel napi kernels -----------------------------
+
+
+/// Wrapper for raw pointer to allow sending across rayon threads.
+/// SAFETY: The caller must ensure non-overlapping writes via the offset table.
+#[cfg(feature = "napi-rs")]
+pub struct RawSlice { pub ptr: *mut u32, pub len: usize }
+#[cfg(feature = "napi-rs")]
+unsafe impl Send for RawSlice {}
+#[cfg(feature = "napi-rs")]
+unsafe impl Sync for RawSlice {}
+
+#[cfg(feature = "napi-rs")]
+impl RawSlice {
+    pub fn from_vec(v: &mut Vec<u32>) -> Self {
+        RawSlice { ptr: v.as_mut_ptr(), len: v.len() }
+    }
+    /// SAFETY: caller must ensure index < len and no concurrent writes to same index
+    #[inline]
+    pub unsafe fn write(&self, index: usize, val: u32) {
+        debug_assert!(index < self.len);
+        unsafe { *self.ptr.add(index) = val; }
+    }
+}
+
+/// Read-only raw pointer wrapper for sharing across rayon threads.
+#[cfg(feature = "napi-rs")]
+pub struct RawSliceRead { ptr: *const u32 }
+#[cfg(feature = "napi-rs")]
+unsafe impl Send for RawSliceRead {}
+#[cfg(feature = "napi-rs")]
+unsafe impl Sync for RawSliceRead {}
+
+#[cfg(feature = "napi-rs")]
+impl RawSliceRead {
+    pub fn from_slice(s: &[u32]) -> Self {
+        RawSliceRead { ptr: s.as_ptr() }
+    }
+    #[inline]
+    pub unsafe fn read(&self, index: usize) -> u32 {
+        unsafe { *self.ptr.add(index) }
+    }
+    /// Copy count elements from src_offset to dst (RawSlice) at dst_offset
+    #[inline]
+    pub unsafe fn copy_to(&self, src_offset: usize, dst: &RawSlice, dst_offset: usize, count: usize) {
+        unsafe {
+            std::ptr::copy_nonoverlapping(
+                self.ptr.add(src_offset),
+                dst.ptr.add(dst_offset),
+                count,
+            );
+        }
+    }
+}
+
+/// Parallel inner join for 1-column keys (napi only).
+/// Build phase is serial, probe + fill are parallel via rayon.
+#[cfg(feature = "napi-rs")]
+fn inner_join_1col_par(left: &[u32], right: &[u32]) -> (Vec<u32>, Vec<u32>) {
+    let (map, adj) = build_csr_from_keys_u32(right);
+    let n_left = left.len();
+
+    // Parallel sizing
+    let counts: Vec<usize> = left.par_iter()
+        .map(|k| map.get(k).map(|o| o.len as usize).unwrap_or(0))
+        .collect();
+
+    // Serial prefix sum
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+    if total == 0 {
+        return (Vec::new(), Vec::new());
+    }
+
+    // Parallel fill via raw pointers (each left row writes to non-overlapping region)
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![0u32; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+
+    let adj_r = RawSliceRead::from_slice(&adj);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        let k = left[i];
+        if let Some(off) = map.get(&k) {
+            let start = off.start as usize;
+            let count = off.len as usize;
+            let out_start = offsets[i];
+            for j in 0..count {
+                unsafe { lo.write(out_start + j, i as u32); }
+            }
+            unsafe { adj_r.copy_to(start, &ro, out_start, count); }
+        }
+    });
+
+    (left_out, right_out)
+}
+
+/// Parallel inner join for 2-column packed u64 keys (napi only).
+#[cfg(feature = "napi-rs")]
+fn inner_join_2col_par(la: &[u32], lb: &[u32], ra: &[u32], rb: &[u32]) -> (Vec<u32>, Vec<u32>) {
+    let n_left = la.len();
+    let n_right = ra.len();
+
+    let rkeys: Vec<u64> = (0..n_right).map(|j| pack2_u64(ra[j], rb[j])).collect();
+    let (map, adj) = build_csr_from_keys_u64(&rkeys);
+    let lkeys: Vec<u64> = (0..n_left).map(|i| pack2_u64(la[i], lb[i])).collect();
+
+    // Parallel sizing
+    let counts: Vec<usize> = lkeys.par_iter()
+        .map(|k| map.get(k).map(|o| o.len as usize).unwrap_or(0))
+        .collect();
+
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+    if total == 0 {
+        return (Vec::new(), Vec::new());
+    }
+
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![0u32; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+    let adj_r = RawSliceRead::from_slice(&adj);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        if let Some(off) = map.get(&lkeys[i]) {
+            let start = off.start as usize;
+            let count = off.len as usize;
+            let out_start = offsets[i];
+            for j in 0..count {
+                unsafe { lo.write(out_start + j, i as u32); }
+            }
+            unsafe { adj_r.copy_to(start, &ro, out_start, count); }
+        }
+    });
+
+    (left_out, right_out)
+}
+
+/// Parallel inner join for 3+ column keys with verification (napi only).
+#[cfg(feature = "napi-rs")]
+fn inner_join_multi_par(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
+    let n_left = left_cols[0].len();
+    let n_right = right_cols[0].len();
+
+    let rkeys: Vec<u64> = (0..n_right).map(|j| hash_row_multi(right_cols, j)).collect();
+    let (map, adj) = build_csr_from_keys_u64(&rkeys);
+    let lkeys: Vec<u64> = (0..n_left).map(|i| hash_row_multi(left_cols, i)).collect();
+
+    // Parallel sizing with verification
+    let counts: Vec<usize> = (0..n_left).into_par_iter()
+        .map(|i| {
+            map.get(&lkeys[i]).map(|off| {
+                let start = off.start as usize;
+                let end = start + off.len as usize;
+                (start..end).filter(|&pos| {
+                    rows_equal_multi(left_cols, right_cols, i, adj[pos] as usize)
+                }).count()
+            }).unwrap_or(0)
+        })
+        .collect();
+
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+    if total == 0 {
+        return (Vec::new(), Vec::new());
+    }
+
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![0u32; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        if let Some(off) = map.get(&lkeys[i]) {
+            let start = off.start as usize;
+            let end = start + off.len as usize;
+            let mut out_pos = offsets[i];
+            for pos in start..end {
+                let rj = adj[pos] as usize;
+                if rows_equal_multi(left_cols, right_cols, i, rj) {
+                    unsafe {
+                        lo.write(out_pos, i as u32);
+                        ro.write(out_pos, rj as u32);
+                    }
+                    out_pos += 1;
+                }
+            }
+        }
+    });
+
+    (left_out, right_out)
+}
+
+/// Parallel dispatch for napi inner join
+#[cfg(feature = "napi-rs")]
+fn inner_join_dispatch_par(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
+    let left_len = left_cols.iter().map(|c| c.len()).min().unwrap_or(0);
+    let right_len = right_cols.iter().map(|c| c.len()).min().unwrap_or(0);
+    if left_len == 0 || right_len == 0 {
+        return (Vec::new(), Vec::new());
+    }
+
+    let num_cols = left_cols.len().min(right_cols.len()).max(1);
+
+    match num_cols {
+        1 => inner_join_1col_par(&left_cols[0][..left_len], &right_cols[0][..right_len]),
+        2 => {
+            let la = &left_cols[0][..left_len];
+            let lb = &left_cols[1][..left_len.min(left_cols[1].len())];
+            let ra = &right_cols[0][..right_len];
+            let rb = &right_cols[1][..right_len.min(right_cols[1].len())];
+            inner_join_2col_par(la, lb, ra, rb)
+        }
+        _ => {
+            let lrefs: Vec<&[u32]> = left_cols.iter().map(|c| &c[..left_len]).collect();
+            let rrefs: Vec<&[u32]> = right_cols.iter().map(|c| &c[..right_len]).collect();
+            inner_join_multi_par(&lrefs, &rrefs)
+        }
+    }
+}
+
+// ----------------------------- Dispatch helper (serial, for WASM) -----------------------------
 
 #[cfg(any(feature = "wasm", feature = "napi-rs"))]
 fn inner_join_dispatch(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
@@ -235,6 +469,6 @@ pub fn inner_join_typed_multi_u32_napi(
         return NapiJoinIdxU32::from_vecs(Vec::new(), Vec::new());
     }
 
-    let (left_idx, right_idx) = inner_join_dispatch(&left_columns, &right_columns);
+    let (left_idx, right_idx) = inner_join_dispatch_par(&left_columns, &right_columns);
     NapiJoinIdxU32::from_vecs(left_idx, right_idx)
 }

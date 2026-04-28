@@ -5,6 +5,7 @@ This document explains the monorepo setup, the interplay between pnpm workspaces
 ## Overview
 
 This repository uses a **hybrid monorepo** approach combining:
+
 - **pnpm workspaces** for package management and dependency resolution
 - **Deno** for runtime execution, type checking, and tooling
 - **JSR (JavaScript Registry)** for some Deno-native packages
@@ -14,16 +15,19 @@ This repository uses a **hybrid monorepo** approach combining:
 ### 1. Dependency Management Strategy
 
 **Root `package.json`**:
+
 - Contains **all actual dependency versions** with specific version ranges
 - Acts as the single source of truth for dependency versions
 - Includes both `dependencies` and `devDependencies`
 
 **Package `package.json` files**:
+
 - Use **wildcard versions (`*`)** for all dependencies
 - Dependencies are resolved from the root `package.json` via pnpm workspace overrides
 - This ensures version consistency across all packages
 
 **Example**:
+
 ```json
 // Root package.json
 {
@@ -44,17 +48,20 @@ This repository uses a **hybrid monorepo** approach combining:
 
 ### 2. pnpm Workspace Configuration
 
-**`pnpm-workspace.yaml`**:
+`**pnpm-workspace.yaml**`:
+
 - Defines workspace packages: `packages/*`
 - Contains **overrides** section that maps wildcard dependencies to root versions
 - Uses pnpm's `$` syntax to reference root package versions
 
 **Key Features**:
+
 - **Overrides**: Maps every wildcard dependency (`*`) to the root version using `$package-name`
 - **Patched Dependencies**: Can specify patches for specific packages
 - **Workspace Resolution**: All packages share the same `node_modules` at the root
 
 **Example override**:
+
 ```yaml
 overrides:
   react: $react
@@ -65,28 +72,33 @@ overrides:
 ### 3. Deno Integration
 
 **Root `deno.jsonc`**:
+
 - Configures Deno for the entire workspace
 - Defines workspace: `["packages/*"]` (similar to pnpm workspace)
 - Sets compiler options, formatting, linting rules
 - Excludes build artifacts and generated files
 
 **Package-specific `deno.json`** (optional):
+
 - Can override root Deno settings for specific packages
 - Example: `packages/e2e/deno.json` defines imports for Playwright
 
 **Deno + pnpm Interplay**:
+
 - Deno can import npm packages installed by pnpm
 - Deno uses `deno.jsonc` workspace to understand package boundaries
-- Both tools recognize the same `packages/*` structure
+- Both tools recognize the same `packages/`* structure
 - Deno scripts can run packages that use npm dependencies
 
 ### 4. JSR (JavaScript Registry) Packages
 
 Some packages come from JSR instead of npm:
+
 - Format: `jsr:@scope/package@^version`
 - Examples: `jsr:@std/expect@^1.0.17`, `jsr:@tidy-ts/shims@^0.0.16`
 
 **How it works**:
+
 - JSR packages are specified in root `package.json` with `jsr:` prefix
 - pnpm handles them like npm packages
 - Deno natively supports JSR imports
@@ -191,7 +203,8 @@ mkdir -p packages/api packages/frontend
 
 #### 6. Create Package `package.json` Files
 
-**`packages/api/package.json`**:
+`**packages/api/package.json**`:
+
 ```json
 {
   "name": "@project/api",
@@ -210,7 +223,8 @@ mkdir -p packages/api packages/frontend
 }
 ```
 
-**`packages/frontend/package.json`**:
+`**packages/frontend/package.json**`:
+
 ```json
 {
   "name": "@project/frontend",
@@ -239,6 +253,7 @@ pnpm install
 ```
 
 This will:
+
 - Install all dependencies from root `package.json` to root `node_modules`
 - Create symlinks for workspace packages
 - Resolve wildcard dependencies via overrides
@@ -264,48 +279,43 @@ deno lint .
 ### Process
 
 1. **Add to root `package.json`** with specific version:
-   ```json
+  ```json
    "dependencies": {
      "new-package": "^1.2.3"
    }
-   ```
-
+  ```
 2. **Add to `pnpm-workspace.yaml` overrides**:
-   ```yaml
+  ```yaml
    overrides:
      new-package: $new-package
-   ```
-
+  ```
 3. **Add to package `package.json`** with wildcard:
-   ```json
+  ```json
    "dependencies": {
      "new-package": "*"
    }
-   ```
-
+  ```
 4. **Run `pnpm install`** to update lockfile
 
 ### Adding JSR Packages
 
 1. Add to root `package.json` with `jsr:` prefix:
-   ```json
+  ```json
    "dependencies": {
      "@std/expect": "jsr:@std/expect@^1.0.17"
    }
-   ```
-
+  ```
 2. Add to `pnpm-workspace.yaml` overrides:
-   ```yaml
+  ```yaml
    overrides:
      "@std/expect": $@std/expect
-   ```
-
+  ```
 3. Add to package `package.json` with wildcard:
-   ```json
+  ```json
    "dependencies": {
      "@std/expect": "*"
    }
-   ```
+  ```
 
 ## Key Benefits
 
@@ -356,6 +366,7 @@ deno lint .
 ### Issue: Package not found
 
 **Solution**: Ensure the dependency is:
+
 1. Listed in root `package.json` with version
 2. Listed in `pnpm-workspace.yaml` overrides
 3. Listed in package `package.json` with `*`
@@ -364,6 +375,7 @@ deno lint .
 ### Issue: Version conflicts
 
 **Solution**: This shouldn't happen with this setup, but if it does:
+
 1. Check root `package.json` for duplicate entries
 2. Verify `pnpm-workspace.yaml` overrides are correct
 3. Delete `node_modules` and `pnpm-lock.yaml`, then `pnpm install`
@@ -371,6 +383,7 @@ deno lint .
 ### Issue: Deno can't find npm packages
 
 **Solution**: 
+
 1. Ensure `pnpm install` has been run
 2. Deno should find packages in root `node_modules`
 3. Check `deno.jsonc` workspace configuration includes the package
@@ -378,6 +391,7 @@ deno lint .
 ### Issue: Override not working
 
 **Solution**:
+
 1. Verify override syntax: `package-name: $package-name`
 2. Ensure package name matches exactly (case-sensitive)
 3. Run `pnpm install` to regenerate lockfile
@@ -390,14 +404,15 @@ If you need to patch a dependency:
 
 1. Create patch file in `patches/` directory
 2. Add to `pnpm-workspace.yaml`:
-   ```yaml
+  ```yaml
    patchedDependencies:
      "package-name": patches/package-name@version.patch
-   ```
+  ```
 
 ### Package-Specific Deno Config
 
 Create `packages/package-name/deno.json`:
+
 ```json
 {
   "imports": {
@@ -411,14 +426,164 @@ Create `packages/package-name/deno.json`:
 
 This merges with root `deno.jsonc` settings.
 
+## npm Publishing
+
+The primary registry for `@tidy-ts/*` packages is **JSR** (via `deno publish`). For npm consumers who don't want to configure `.npmrc` with JSR registry settings, we also publish pre-built JS bundles to **npm**.
+
+### How It Works
+
+Source packages are written in TypeScript for Deno. The npm build step uses **esbuild** to bundle TS → JS, outputting into a `dist/` directory within each package. A separate npm-specific `package.json` is generated into `dist/` at build time — this avoids conflicting with the Deno workspace `package.json`.
+
+```
+Source (TS)  →  esbuild bundle  →  packages/<name>/dist/  →  npm publish
+```
+
+Key details:
+
+- esbuild resolves all `.ts` imports and strips types automatically (`bundle: true`)
+- `splitting: true` enables code splitting for shared chunks
+- External dependencies (e.g. `zod`, `node:*`) are left as imports, not bundled
+- WASM files are copied alongside the JS output with paths rewritten
+- `dist/` directories are gitignored
+
+### Build Scripts
+
+
+| Script                           | Location                    | Output                     |
+| -------------------------------- | --------------------------- | -------------------------- |
+| `scripts/build-shims-npm.ts`     | Builds `@tidy-ts/shims`     | `packages/shims/dist/`     |
+| `scripts/build-dataframe-npm.ts` | Builds `@tidy-ts/dataframe` | `packages/dataframe/dist/` |
+
+
+Both scripts:
+
+1. Clean the `dist/` directory
+2. Run esbuild with appropriate entry points and externals
+3. Generate an npm-specific `package.json` (reads version from the source `package.json`)
+
+### Platform-Specific Native Addons
+
+The dataframe package uses a Rust native addon (via napi-rs) for performance. Following the standard pattern used by esbuild, swc, and other native packages, platform-specific binaries are published as separate npm packages:
+
+
+| Package                           | Contents                              | Source                       |
+| --------------------------------- | ------------------------------------- | ---------------------------- |
+| `@tidy-ts/dataframe`              | JS bundle + WASM fallback             | `packages/dataframe/dist/`   |
+| `@tidy-ts/dataframe-darwin-arm64` | Native `.node` binary for macOS ARM64 | `packages/npm-darwin-arm64/` |
+| `@tidy-ts/dataframe-win32-x64`    | Native `.node` binary for Windows x64 | `packages/npm-win32-x64/`    |
+
+
+The main package lists platform packages as `optionalDependencies`, so npm only downloads the binary matching the user's platform. At runtime, the code tries the native addon first and falls back to WASM.
+
+Each platform package has its own `package.json` with `"os"` and `"cpu"` fields. The native loader (`ts/wasm/native-loader.ts`) resolves the correct package dynamically using `process.platform` and `process.arch`.
+
+#### Platforms not yet addressed
+
+The following platforms are not yet built or published. Users on these platforms will fall back to the WASM build, which is fully functional but single-threaded.
+
+| Platform | Suffix | Notes |
+| --- | --- | --- |
+| `linux-x64-gnu` | `linux-x64-gnu` | Most CI pipelines, cloud servers, Docker |
+| `linux-arm64-gnu` | `linux-arm64-gnu` | AWS Graviton, Raspberry Pi |
+| `darwin-x64` | `darwin-x64` | macOS Intel (declining) |
+| `win32-arm64` | `win32-arm64` | Windows ARM (niche) |
+| `linux-x64-musl` | `linux-x64-musl` | Alpine Linux / Docker Alpine |
+
+#### Cross-compilation from macOS
+
+The Windows x64 binary is cross-compiled from macOS using `cargo-xwin`, which automatically downloads the MSVC CRT/SDK.
+
+**One-time setup:**
+
+```bash
+rustup target add x86_64-pc-windows-msvc
+cargo install cargo-xwin
+```
+
+**Build:**
+
+```bash
+pnpm napibuild:win32-x64
+```
+
+### Build
+
+Use `pnpm build` to compile all Rust targets (WASM + native addons) in one command:
+
+```bash
+pnpm build    # = pnpm wasmbuild && pnpm napibuild && pnpm napibuild:win32-x64
+```
+
+Or run individual steps:
+
+| Script | What it does |
+| --- | --- |
+| `pnpm wasmbuild` | Compiles Rust → WASM into `packages/dataframe/lib/` |
+| `pnpm napibuild` | Compiles Rust → macOS ARM64 native `.node` binary |
+| `pnpm napibuild:debug` | Same as above but debug build (faster compile, no optimizations) |
+| `pnpm napibuild:win32-x64` | Cross-compiles Rust → Windows x64 native `.node` binary |
+
+### npm Build
+
+Use `pnpm build:npm` to bundle TypeScript → JS for npm distribution:
+
+```bash
+pnpm build:npm    # = build-shims-npm.ts && build-dataframe-npm.ts
+```
+
+Use `pnpm pack:npm` to build + create `.tgz` archives for all npm packages (useful for local testing):
+
+```bash
+pnpm pack:npm
+```
+
+### Publish Workflow
+
+Run these in order. Each step is a separate `pnpm` script.
+
+1. `pnpm build` — Compiles all Rust targets (WASM + native addons). Skip if Rust source hasn't changed.
+2. `pnpm publish:shims:npm` — Builds shims JS bundle + publishes to npm
+3. `pnpm publish:dataframe:npm` — Builds dataframe JS bundle (includes WASM) + publishes to npm
+4. `pnpm publish:dataframe:npm:darwin-arm64` — Publishes macOS ARM64 native addon to npm
+5. `pnpm publish:dataframe:npm:win32-x64` — Publishes Windows x64 native addon to npm
+
+Step 2 must run before step 3 (dataframe depends on shims).
+
+### Version Management
+
+- Bump versions in the source `package.json` files (e.g. `packages/shims/package.json`, `packages/dataframe/package.json`)
+- The build scripts read these versions and write them into `dist/package.json`
+- The native addon versions in `packages/npm-darwin-arm64/package.json` and `packages/npm-win32-x64/package.json` should match the dataframe version
+- The dataframe build script hardcodes the shims dependency version — update it in `scripts/build-dataframe-npm.ts` when shims version changes
+
+### Consumer Usage
+
+npm users can install without any `.npmrc` configuration:
+
+```bash
+npm install @tidy-ts/dataframe
+```
+
+```typescript
+import { createDataFrame } from "@tidy-ts/dataframe";
+
+const df = createDataFrame([
+  { name: "Alice", age: 30 },
+  { name: "Bob", age: 25 },
+]);
+df.print();
+```
+
 ## Summary
 
 This setup provides:
+
 - ✅ Centralized dependency management
 - ✅ Version consistency across packages
 - ✅ Deno runtime with npm ecosystem access
 - ✅ JSR package support
 - ✅ Type safety across workspace
 - ✅ Unified tooling (formatting, linting, type checking)
+- ✅ npm publishing via esbuild bundles (no `.npmrc` needed for consumers)
 
-The key insight is that **root `package.json` owns versions**, **`pnpm-workspace.yaml` maps them**, and **package `package.json` files reference them with wildcards**. Deno provides the runtime and tooling layer that works seamlessly with this structure.
+The key insight is that **root `package.json` owns versions**, `**pnpm-workspace.yaml` maps them**, and **package `package.json` files reference them with wildcards**. Deno provides the runtime and tooling layer that works seamlessly with this structure. For npm distribution, esbuild bundles the TS source into `dist/` with a generated `package.json`, keeping the Deno source and npm output cleanly separated.

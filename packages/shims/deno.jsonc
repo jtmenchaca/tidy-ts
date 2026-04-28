@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/shims",
-  "version": "0.1.0",
+  "version": "1.4.0",
   "exports": {
     ".": "./mod.ts",
     "./detect": "./detect.ts",
@@ -12,7 +12,6 @@
   },
   "license": "MIT",
   "imports": {
-    "@std/encoding": "jsr:@std/encoding@^1.0.10",
     "@std/expect": "jsr:@std/expect@^1.0.15"
   },
   "tasks": {

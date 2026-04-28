@@ -162,25 +162,46 @@ export function bind_rows(
 
       // Create new columnar store with combined data
       const newColumns = tracer.withSpan(df, "copy-data", () => {
-        const columns: Record<string, unknown[]> = {};
+        const columns: Record<string, unknown[] | Float64Array> = {};
 
         // Use array concatenation approach - often faster than manual copying
         for (const colName of columnAnalysis.finalColumns) {
-          const columnSegments: unknown[][] = [];
-
-          // Collect all segments for this column
+          // Check if all existing segments are Float64Array (and no missing segments)
+          let allTyped = true;
+          let totalLen = 0;
           for (const store of allStores) {
-            if (store.columns[colName]) {
-              // Column exists - use the existing array directly
-              columnSegments.push(store.columns[colName]);
-            } else {
-              // Column doesn't exist - create undefined array
-              columnSegments.push(new Array(store.length).fill(undefined));
-            }
+            const seg = store.columns[colName];
+            if (!seg) { allTyped = false; break; }
+            if (!(seg instanceof Float64Array)) { allTyped = false; break; }
+            totalLen += seg.length;
           }
 
-          // Use concat to join all segments (V8 optimized)
-          columns[colName] = ([] as unknown[]).concat(...columnSegments);
+          if (allTyped && totalLen > 0) {
+            // Fast path: concat Float64Arrays
+            const out = new Float64Array(totalLen);
+            let offset = 0;
+            for (const store of allStores) {
+              const seg = store.columns[colName] as Float64Array;
+              out.set(seg, offset);
+              offset += seg.length;
+            }
+            columns[colName] = out;
+          } else {
+            // Fallback: plain array concat
+            const columnSegments: unknown[][] = [];
+            for (const store of allStores) {
+              if (store.columns[colName]) {
+                const seg = store.columns[colName];
+                // Convert Float64Array to plain array for concat
+                columnSegments.push(
+                  seg instanceof Float64Array ? Array.from(seg) : seg as unknown[],
+                );
+              } else {
+                columnSegments.push(new Array(store.length).fill(undefined));
+              }
+            }
+            columns[colName] = ([] as unknown[]).concat(...columnSegments);
+          }
         }
 
         return columns;

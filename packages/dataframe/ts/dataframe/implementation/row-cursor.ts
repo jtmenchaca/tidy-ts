@@ -1,5 +1,5 @@
 import type { DataFrame } from "../types/dataframe.type.ts";
-import type { ColumnarStore } from "./columnar-store.ts";
+import { type ColumnData, type ColumnarStore, gatherColumn } from "./columnar-store.ts";
 import { materializeIndex, type View } from "./columnar-view.ts";
 import { createColumnarDataFrame } from "./create-dataframe.ts";
 
@@ -82,17 +82,17 @@ export function withOrder<Row extends object>(
 // Clone store with copy-on-write columns (unchanged arrays are shared)
 export function cowStore(
   base: ColumnarStore,
-  updates: Partial<Record<string, unknown[]>>,
+  updates: Partial<Record<string, ColumnData>>,
   drops: Set<string> = new Set(),
   renames: Record<string, string> = {},
 ): ColumnarStore {
   const names: string[] = [];
-  const cols: Record<string, unknown[]> = {};
+  const cols: Record<string, ColumnData> = {};
   for (const name of base.columnNames) {
     if (drops.has(name)) continue;
     const newName = renames[name] ?? name;
     names.push(newName);
-    cols[newName] = (updates[name] ?? base.columns[name]) as unknown[];
+    cols[newName] = updates[name] ?? base.columns[name];
   }
   // add any brand new columns not in base
   for (const k of Object.keys(updates)) {
@@ -112,12 +112,9 @@ export function materializeView<Row extends object>(
   const api = df as any;
   const { __store, __view } = api;
   const idx = materializeIndex(__store.length, __view);
-  const cols: Record<string, unknown[]> = {};
+  const cols: Record<string, ColumnData> = {};
   for (const name of __store.columnNames) {
-    const src = __store.columns[name];
-    const out = new Array(idx.length);
-    for (let i = 0; i < idx.length; i++) out[i] = src[idx[i]];
-    cols[name] = out;
+    cols[name] = gatherColumn(__store.columns[name], idx);
   }
   return {
     columnNames: [...__store.columnNames],

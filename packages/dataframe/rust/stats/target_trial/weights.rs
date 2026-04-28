@@ -170,7 +170,7 @@ fn expand_single_term(
     col: &str,
     row_indices: &[usize],
 ) -> Result<(Vec<Vec<f64>>, Vec<String>), String> {
-    let n = row_indices.len();
+    let _n = row_indices.len();
 
     if let Some(factor_info) = data.factors.get(col) {
         // Factor encoding: create dummy for each non-reference level
@@ -319,6 +319,7 @@ fn fit_weight_model(
 }
 
 /// Get row indices where a numeric column equals a given value.
+#[allow(dead_code)]
 fn rows_where_eq(data: &ColumnarData, col: &str, val: f64) -> Vec<usize> {
     if let Some(col_data) = data.get_numeric(col) {
         col_data
@@ -333,6 +334,7 @@ fn rows_where_eq(data: &ColumnarData, col: &str, val: f64) -> Vec<usize> {
 }
 
 /// Get row indices where a categorical column equals a given value.
+#[allow(dead_code)]
 fn rows_where_cat_eq(data: &ColumnarData, col: &str, val: &str) -> Vec<usize> {
     if let Some(col_data) = data.get_categorical(col) {
         col_data
@@ -448,7 +450,7 @@ fn create_tx_lag(
             while i < n {
                 let cur_id = id_col[i];
                 let cur_trial = trial_col[i];
-                let group_start = i;
+                let _group_start = i;
                 i += 1;
                 while i < n
                     && (id_col[i] - cur_id).abs() < 1e-10
@@ -615,7 +617,7 @@ pub fn compute_weights(
     };
 
     let tx_lag_col = weight_data.get_numeric("tx_lag").cloned();
-    let treatment_col = weight_data
+    let _treatment_col = weight_data
         .get_numeric(&config.treatment)
         .ok_or_else(|| format!("Treatment column '{}' not found", config.treatment))?
         .clone();

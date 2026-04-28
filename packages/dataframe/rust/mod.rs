@@ -20,10 +20,15 @@ pub(crate) mod quantile_core;
 #[path = "dataframe/join-helpers.wasm.rs"]
 pub mod join_helpers;
 
+// Full join+gather in Rust (napi fast path)
+#[path = "dataframe/join-gather.wasm.rs"]
+pub mod join_gather;
+
 // New standardized WASM exports
 #[path = "dataframe/aggregates.wasm.rs"]
 pub mod aggregates;
 #[path = "dataframe/arrange.wasm.rs"]
+#[allow(dead_code)]
 pub mod arrange;
 #[path = "dataframe/count.wasm.rs"]
 pub mod count;
@@ -36,10 +41,12 @@ pub mod filter_wasm;
 #[path = "dataframe/grouping.wasm.rs"]
 pub mod grouping;
 #[path = "dataframe/inner-join.wasm.rs"]
+#[allow(dead_code)]
 pub mod inner_join;
 #[path = "dataframe/iqr.wasm.rs"]
 pub mod iqr;
 #[path = "dataframe/left-join.wasm.rs"]
+#[allow(dead_code)]
 pub mod left_join;
 #[path = "dataframe/median.wasm.rs"]
 pub mod median;
@@ -153,6 +160,8 @@ pub use stats::regression::glmm::wasm::*;
 pub use stats::survival::wasm::*;
 #[cfg(feature = "napi-rs")]
 pub use stats::target_trial::wasm::*;
+#[cfg(feature = "napi-rs")]
+pub use join_gather::*;
 #[cfg(feature = "napi-rs")]
 pub use sum::*;
 #[cfg(feature = "napi-rs")]

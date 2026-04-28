@@ -1436,9 +1436,9 @@ checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
 
 [[package]]
 name = "spindle"
-version = "0.2.3"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db4b98218e7f245a72888875d6843432db630d19032f5eeed9e214bd897339e7"
+checksum = "673aaca3d8aa5387a6eba861fbf984af5348d9df5d940c25c6366b19556fdf64"
 dependencies = [
  "atomic-wait",
  "crossbeam",
@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "tidy-ts-dataframe"
-version = "0.1.0"
+version = "1.4.0"
 dependencies = [
  "faer",
  "getrandom",
@@ -1557,6 +1557,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "rand",
+ "rayon",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",

@@ -8,15 +8,62 @@
 
 import type { RowLabelStore } from "../types/row-labels.ts";
 
+/** A column can be a plain JS array or a typed Float64Array for numeric data. */
+export type ColumnData = unknown[] | Float64Array;
+
 export interface ColumnarStore {
-  /** Column data stored as arrays */
-  columns: Record<string, unknown[]>;
+  /** Column data stored as arrays (plain or typed) */
+  columns: Record<string, ColumnData>;
   /** Number of rows */
   length: number;
   /** Column names in order */
   columnNames: string[];
   /** Optional row labels for reversible operations */
   rowLabels?: RowLabelStore;
+}
+
+/** True if column is a Float64Array (numeric typed storage). */
+export function isTypedColumn(col: ColumnData): col is Float64Array {
+  return col instanceof Float64Array;
+}
+
+/**
+ * Gather elements from a source column by index, preserving typed array format.
+ * If src is Float64Array, returns Float64Array; otherwise returns unknown[].
+ */
+export function gatherColumn(
+  src: ColumnData,
+  indices: Uint32Array | number[],
+): ColumnData {
+  const len = indices.length;
+  if (src instanceof Float64Array) {
+    const out = new Float64Array(len);
+    for (let i = 0; i < len; i++) out[i] = src[indices[i]];
+    return out;
+  }
+  const out = new Array(len);
+  for (let i = 0; i < len; i++) out[i] = src[indices[i]];
+  return out;
+}
+
+/**
+ * Try to promote a plain array column to Float64Array.
+ * Returns Float64Array only if ALL values are numbers (no null/undefined).
+ * Columns with any nullish values stay as unknown[] to preserve semantics.
+ */
+export function tryPromoteToTyped(col: unknown[]): ColumnData {
+  const len = col.length;
+  if (len === 0) return col;
+  // Strict scan: every value must be a number (no nullish)
+  for (let i = 0; i < len; i++) {
+    if (typeof col[i] !== "number") return col;
+  }
+  // All numbers — promote to Float64Array
+  const out = new Float64Array(len);
+  for (let i = 0; i < len; i++) {
+    out[i] = col[i] as number;
+  }
+  return out;
 }
 
 /**
@@ -29,7 +76,7 @@ export function toColumnarStorage<T extends object>(
   if (rows.length === 0) {
     // If explicit column names provided, preserve them even for empty DataFrame
     if (explicitColumnNames && explicitColumnNames.length > 0) {
-      const columns: Record<string, unknown[]> = {};
+      const columns: Record<string, ColumnData> = {};
       for (const colName of explicitColumnNames) {
         columns[colName] = [];
       }
@@ -60,13 +107,13 @@ export function toColumnarStorage<T extends object>(
     columnNames = [];
   }
 
-  const columns: Record<string, unknown[]> = {};
+  const tempColumns: Record<string, unknown[]> = {};
   const len = rows.length;
 
   // Pre-allocate arrays and cache references for performance
   const add = (name: string) => {
     const arr = Array(len); // Pre-allocate array
-    columns[name] = arr;
+    tempColumns[name] = arr;
     return arr;
   };
 
@@ -85,6 +132,12 @@ export function toColumnarStorage<T extends object>(
         cols[i][idx] = colName in row ? row[colName] : undefined;
       }
     }
+  }
+
+  // Promote numeric columns to Float64Array for zero-copy Rust interop
+  const columns: Record<string, ColumnData> = {};
+  for (let i = 0; i < numCols; i++) {
+    columns[names[i]] = tryPromoteToTyped(tempColumns[names[i]]);
   }
 
   return {
@@ -118,7 +171,7 @@ export function getRowAt<T extends object>(
 export function getColumn(
   store: ColumnarStore,
   columnName: string,
-): unknown[] | undefined {
+): ColumnData | undefined {
   return store.columns[columnName];
 }
 

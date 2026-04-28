@@ -29,12 +29,14 @@ pub enum ExtrapolationRule {
 }
 
 /// Interpolation configuration, matching R's `approx()` / `approxfun()`.
+#[allow(dead_code)]
 pub struct Interpolator {
     method: InterpolationMethod,
     ylow: f64,
     yhigh: f64,
 }
 
+#[allow(dead_code)]
 impl Interpolator {
     /// Create an interpolator.
     ///

@@ -840,8 +840,6 @@ export function anova_two_way_interaction_wasm(
 
 /**
  * WASM export: fill `indices` with sorted order (u32).
- * - `flat_cols`: column-major f64 matrix [n_cols * n_rows]
- * - `dirs`: i8 (+1 = asc, -1 = desc), length = n_cols
  * @param {Float64Array} flat_cols
  * @param {number} n_rows
  * @param {number} n_cols
@@ -2842,6 +2840,7 @@ export function spearman_correlation_test(x, y, alternative, alpha) {
 
 /**
  * Stable sort `indices` by one f64 key vector (NaN last), asc/desc.
+ * Uses tuple sort with NaN pre-partition.
  * @param {Float64Array} values
  * @param {Uint32Array} indices
  * @param {boolean} ascending
@@ -2866,6 +2865,7 @@ export function stable_sort_indices_f64_wasm(values, indices, ascending) {
 
 /**
  * Stable sort `indices` by one u32 rank key vector, asc/desc, with explicit NA code (last).
+ * Uses tuple sort with NA pre-partition.
  * @param {Uint32Array} ranks
  * @param {Uint32Array} indices
  * @param {boolean} ascending

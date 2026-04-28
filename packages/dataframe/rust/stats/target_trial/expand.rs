@@ -126,7 +126,7 @@ pub fn expand(
     result.add_numeric("followup".to_string(), exp_followup.clone());
 
     // Determine which columns to join
-    let tx_bas = format!("{}{}", config.treatment, config.indicator_baseline);
+    let _tx_bas = format!("{}{}", config.treatment, config.indicator_baseline);
 
     // Collect all referenced column names from formulas
     let mut time_varying_cols: Vec<String> = Vec::new();

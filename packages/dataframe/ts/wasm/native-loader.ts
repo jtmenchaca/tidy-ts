@@ -153,6 +153,11 @@ export async function tryLoadNative(): Promise<Record<string, any> | null> {
     return null;
   }
 
+  // Allow disabling native addon via env var (e.g. for benchmarking WASM)
+  if (process.env.TIDY_TS_NATIVE === "0") {
+    return null;
+  }
+
   const suffix = `${process.platform}-${process.arch}`;
   const req = createRequire(import.meta.url);
 
@@ -204,7 +209,15 @@ export function buildNativeProxy(native: Record<string, any>): Record<string, an
       const isGrouping = GROUPING_FUNCTIONS.has(prop);
 
       return (...args: any[]) => {
-        let convertedArgs = args;
+        // Convert TypedArrays that napi expects as Vec<T> (plain JS arrays).
+        // napi accepts &[f64]/&[u32] from TypedArrays (buffer binding), but
+        // Vec<i8> etc. require a plain JS array.
+        let convertedArgs = args.map((arg: any) => {
+          if (arg instanceof Int8Array || arg instanceof Int16Array || arg instanceof Int32Array) {
+            return Array.from(arg);
+          }
+          return arg;
+        });
 
         // For JsValue input functions, stringify the first object arg
         if (isJsValueInput) {

@@ -1,11 +1,28 @@
-import { decodeBase64, encodeBase64 } from "@std/encoding/base64";
-import { decodeHex, encodeHex } from "@std/encoding/hex";
+import { Buffer } from "node:buffer";
 
 export type PlaintextEncoding = "utf8" | "base64" | "hex" | "binary";
 export type CiphertextEncoding = "base64" | "hex" | "binary";
 export type AnyEncoding = PlaintextEncoding | CiphertextEncoding;
 
-export { decodeBase64, decodeHex, encodeBase64, encodeHex };
+export function encodeBase64(data: Uint8Array): string {
+  return Buffer.from(data).toString("base64");
+}
+
+export function decodeBase64(b64: string): Uint8Array {
+  return new Uint8Array(Buffer.from(b64, "base64"));
+}
+
+export function encodeHex(data: Uint8Array): string {
+  return Buffer.from(data).toString("hex");
+}
+
+export function decodeHex(hex: string): Uint8Array {
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+  }
+  return bytes;
+}
 
 /**
  * Converts standard Base64 to Base64URL format (RFC 4648 §5).

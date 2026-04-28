@@ -131,6 +131,7 @@ pub fn coxmart(
 /// # Returns
 ///
 /// Martingale residuals: status[i] - score[i] * cumhazard
+#[allow(dead_code)]
 pub(crate) fn coxmart2(
     time: &[f64],
     status: &[i32],

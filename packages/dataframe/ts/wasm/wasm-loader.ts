@@ -9,7 +9,12 @@ export type {
 } from "../../lib/tidy_ts_dataframe.js";
 
 // Export initialization functions
-export { getWasmBytes, initWasm, initWasmFromBytes } from "./wasm-init.ts";
+export {
+  getWasmBytes,
+  initWasm,
+  initWasmFromBytes,
+  usingNativeBackend,
+} from "./wasm-init.ts";
 
 // Export join functions
 export * from "./join-functions.ts";

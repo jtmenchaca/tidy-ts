@@ -131,7 +131,7 @@ pub fn coxexact(
 
     // First pass: determine maxdeath per stratum and dsize
     strata[0] = 1; // ensure first obs is marked as stratum start
-    let mut maxdeath_global: usize = 0;
+    let mut _maxdeath_global: usize = 0;
     let mut dsize: usize = 0;
     {
         let mut j = 0;
@@ -173,9 +173,8 @@ pub fn coxexact(
         if maxdeath > 1 {
             strata[j] = maxdeath as i32;
         }
-        maxdeath_global = maxdeath;
+        _maxdeath_global = maxdeath;
     }
-    let _ = maxdeath_global; // used for stack overflow prevention
 
     // Allocate scratch memory
     let dmemtot = dsize * ((nvar * (nvar + 1)) / 2 + nvar + 1);

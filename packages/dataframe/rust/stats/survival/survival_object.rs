@@ -38,6 +38,7 @@ pub struct SurvData {
     pub obs: Vec<SurvObs>,
 }
 
+#[allow(dead_code)]
 impl SurvData {
     /// Create right-censored survival data from parallel arrays.
     ///

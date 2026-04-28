@@ -7,6 +7,8 @@ node_modules/
 */node_modules/*
 **/node_modules/*
 output/
+packages/dataframe/dist
+packages/shims/dist
 
 
 examples/dataframe/output/
@@ -23,7 +25,6 @@ docs/public/coverage/
 
 # Docs dist (built in CI)
 packages/docs/dist/
-
 
 # Temporary files
 /tmp/*

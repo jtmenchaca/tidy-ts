@@ -46,6 +46,11 @@ export { withIndex, withMask, withOrder } from "./implementation/row-cursor.ts";
 export { materializeIndex } from "./implementation/columnar-view.ts";
 export { cowStore } from "./implementation/row-cursor.ts";
 
-export type { ColumnarStore } from "./implementation/columnar-store.ts";
-export { toColumnarStorage } from "./implementation/columnar-store.ts";
+export type { ColumnarStore, ColumnData } from "./implementation/columnar-store.ts";
+export {
+  toColumnarStorage,
+  isTypedColumn,
+  gatherColumn,
+  tryPromoteToTyped,
+} from "./implementation/columnar-store.ts";
 export type { RowLabel, RowLabelStore } from "./types/row-labels.ts";

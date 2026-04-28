@@ -58,6 +58,7 @@ pub enum SurvivalResponse<'a> {
 /// * `starttime` - Starting time for the curve (needed for AUC)
 /// * `doauc` - Whether to compute AUC influence
 /// * `nstate` - Number of states
+#[allow(dead_code)]
 pub(crate) fn survfitresid(
     response: &SurvivalResponse,
     sort1: &[i32],

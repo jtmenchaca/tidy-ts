@@ -18,6 +18,10 @@ use super::join_helpers::{
 use napi_derive::napi;
 #[cfg(feature = "napi-rs")]
 use super::shared_types::NapiJoinIdxU32;
+#[cfg(feature = "napi-rs")]
+use rayon::prelude::*;
+#[cfg(feature = "napi-rs")]
+use super::inner_join::{RawSlice, RawSliceRead};
 
 // ----------------------------- Join kernels -----------------------------
 
@@ -179,7 +183,185 @@ fn left_join_multi(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Ve
     (left_out, right_out)
 }
 
-// ----------------------------- Dispatch helper -----------------------------
+// ----------------------------- Rayon-parallel napi kernels -----------------------------
+
+#[cfg(feature = "napi-rs")]
+fn left_join_1col_par(left: &[u32], right: &[u32]) -> (Vec<u32>, Vec<u32>) {
+    let (map, adj) = build_csr_from_keys_u32(right);
+    let n_left = left.len();
+
+    let counts: Vec<usize> = left.par_iter()
+        .map(|k| map.get(k).map(|o| o.len as usize).unwrap_or(1))
+        .collect();
+
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![SENTINEL; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+
+    let adj_r = RawSliceRead::from_slice(&adj);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        let k = left[i];
+        let out_start = offsets[i];
+        if let Some(off) = map.get(&k) {
+            let start = off.start as usize;
+            let count = off.len as usize;
+            for j in 0..count {
+                unsafe { lo.write(out_start + j, i as u32); }
+            }
+            unsafe { adj_r.copy_to(start, &ro, out_start, count); }
+        } else {
+            unsafe { lo.write(out_start, i as u32); }
+            // right_out already initialized to SENTINEL
+        }
+    });
+
+    (left_out, right_out)
+}
+
+#[cfg(feature = "napi-rs")]
+fn left_join_2col_par(la: &[u32], lb: &[u32], ra: &[u32], rb: &[u32]) -> (Vec<u32>, Vec<u32>) {
+    let n_left = la.len();
+    let n_right = ra.len();
+
+    let rkeys: Vec<u64> = (0..n_right).map(|j| pack2_u64(ra[j], rb[j])).collect();
+    let (map, adj) = build_csr_from_keys_u64(&rkeys);
+    let lkeys: Vec<u64> = (0..n_left).map(|i| pack2_u64(la[i], lb[i])).collect();
+
+    let counts: Vec<usize> = lkeys.par_iter()
+        .map(|k| map.get(k).map(|o| o.len as usize).unwrap_or(1))
+        .collect();
+
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![SENTINEL; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+    let adj_r = RawSliceRead::from_slice(&adj);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        let out_start = offsets[i];
+        if let Some(off) = map.get(&lkeys[i]) {
+            let start = off.start as usize;
+            let count = off.len as usize;
+            for j in 0..count {
+                unsafe { lo.write(out_start + j, i as u32); }
+            }
+            unsafe { adj_r.copy_to(start, &ro, out_start, count); }
+        } else {
+            unsafe { lo.write(out_start, i as u32); }
+        }
+    });
+
+    (left_out, right_out)
+}
+
+#[cfg(feature = "napi-rs")]
+fn left_join_multi_par(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
+    let n_left = left_cols[0].len();
+    let n_right = right_cols[0].len();
+
+    let rkeys: Vec<u64> = (0..n_right).map(|j| hash_row_multi(right_cols, j)).collect();
+    let (map, adj) = build_csr_from_keys_u64(&rkeys);
+    let lkeys: Vec<u64> = (0..n_left).map(|i| hash_row_multi(left_cols, i)).collect();
+
+    let counts: Vec<usize> = (0..n_left).into_par_iter()
+        .map(|i| {
+            map.get(&lkeys[i]).map(|off| {
+                let start = off.start as usize;
+                let end = start + off.len as usize;
+                let m = (start..end).filter(|&pos| {
+                    rows_equal_multi(left_cols, right_cols, i, adj[pos] as usize)
+                }).count();
+                m.max(1)
+            }).unwrap_or(1)
+        })
+        .collect();
+
+    let mut offsets = vec![0usize; n_left + 1];
+    for i in 0..n_left {
+        offsets[i + 1] = offsets[i] + counts[i];
+    }
+    let total = offsets[n_left];
+
+    let mut left_out = vec![0u32; total];
+    let mut right_out = vec![SENTINEL; total];
+    let lo = RawSlice::from_vec(&mut left_out);
+    let ro = RawSlice::from_vec(&mut right_out);
+
+    (0..n_left).into_par_iter().for_each(|i| {
+        let out_start = offsets[i];
+        if let Some(off) = map.get(&lkeys[i]) {
+            let start = off.start as usize;
+            let end = start + off.len as usize;
+            let mut out_pos = out_start;
+            for pos in start..end {
+                let rj = adj[pos] as usize;
+                if rows_equal_multi(left_cols, right_cols, i, rj) {
+                    unsafe {
+                        lo.write(out_pos, i as u32);
+                        ro.write(out_pos, rj as u32);
+                    }
+                    out_pos += 1;
+                }
+            }
+            if out_pos == out_start {
+                // No verified matches — emit unmatched
+                unsafe { lo.write(out_start, i as u32); }
+            }
+        } else {
+            unsafe { lo.write(out_start, i as u32); }
+        }
+    });
+
+    (left_out, right_out)
+}
+
+#[cfg(feature = "napi-rs")]
+fn left_join_dispatch_par(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
+    let left_len = left_cols.iter().map(|c| c.len()).min().unwrap_or(0);
+    let right_len = right_cols.iter().map(|c| c.len()).min().unwrap_or(0);
+    if left_len == 0 {
+        return (Vec::new(), Vec::new());
+    }
+    if right_len == 0 {
+        let left_idx: Vec<u32> = (0..left_len as u32).collect();
+        let right_idx: Vec<u32> = vec![SENTINEL; left_len];
+        return (left_idx, right_idx);
+    }
+
+    let num_cols = left_cols.len().min(right_cols.len()).max(1);
+
+    match num_cols {
+        1 => left_join_1col_par(&left_cols[0][..left_len], &right_cols[0][..right_len]),
+        2 => {
+            let la = &left_cols[0][..left_len];
+            let lb = &left_cols[1][..left_len.min(left_cols[1].len())];
+            let ra = &right_cols[0][..right_len];
+            let rb = &right_cols[1][..right_len.min(right_cols[1].len())];
+            left_join_2col_par(la, lb, ra, rb)
+        }
+        _ => {
+            let lrefs: Vec<&[u32]> = left_cols.iter().map(|c| &c[..left_len]).collect();
+            let rrefs: Vec<&[u32]> = right_cols.iter().map(|c| &c[..right_len]).collect();
+            left_join_multi_par(&lrefs, &rrefs)
+        }
+    }
+}
+
+// ----------------------------- Dispatch helper (serial, for WASM) -----------------------------
 
 #[cfg(any(feature = "wasm", feature = "napi-rs"))]
 fn left_join_dispatch(left_cols: &[&[u32]], right_cols: &[&[u32]]) -> (Vec<u32>, Vec<u32>) {
@@ -251,6 +433,6 @@ pub fn left_join_typed_multi_u32_napi(
         return NapiJoinIdxU32::from_vecs(Vec::new(), Vec::new());
     }
 
-    let (left_idx, right_idx) = left_join_dispatch(&left_columns, &right_columns);
+    let (left_idx, right_idx) = left_join_dispatch_par(&left_columns, &right_columns);
     NapiJoinIdxU32::from_vecs(left_idx, right_idx)
 }

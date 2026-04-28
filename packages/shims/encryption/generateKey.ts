@@ -1,4 +1,4 @@
-import { encodeHex } from "@std/encoding/hex";
+import { encodeHex } from "./encodeAndDecode.ts";
 
 /**
  * Generates a cryptographically secure random key for AES-256-GCM encryption.

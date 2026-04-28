@@ -68,6 +68,7 @@ pub struct CoxDetailResult {
 /// * `weights` - Case weights for each person
 /// * `center` - Centering constants for each covariate (one per nvar)
 /// * `method` - Tie handling method (Breslow or Efron)
+#[allow(dead_code)]
 pub(crate) fn cox_event_detail(
     start: &[f64],
     stop: &[f64],

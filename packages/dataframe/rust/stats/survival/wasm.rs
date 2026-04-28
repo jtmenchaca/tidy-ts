@@ -359,6 +359,7 @@ pub fn coxph_wasm(
     serde_wasm_bindgen::to_value(&wasm_result).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
+#[cfg(feature = "wasm")]
 struct CoxphParsedOptions {
     method: CoxMethod,
     maxiter: i32,
@@ -1344,7 +1345,7 @@ pub fn survfit_cox_wasm(input_json: &str) -> Result<JsValue, JsValue> {
 
     let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
     let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
-    let sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
+    let _sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
 
     // Compute risk scores for each observation (sorted)
     let risk: Vec<f64> = (0..n)
@@ -3809,7 +3810,7 @@ pub fn survfit_cox_napi(input_json: String) -> Result<String, napi::Error> {
 
     let sorted_time: Vec<f64> = order.iter().map(|&i| time[i]).collect();
     let sorted_status: Vec<i32> = order.iter().map(|&i| status[i]).collect();
-    let sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
+    let _sorted_offset: Vec<f64> = order.iter().map(|&i| offset[i]).collect();
 
     let risk: Vec<f64> = (0..n)
         .map(|i| {

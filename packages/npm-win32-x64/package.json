@@ -1,0 +1,17 @@
+{
+  "name": "@tidy-ts/dataframe-win32-x64",
+  "version": "1.4.0",
+  "description": "Native binary for @tidy-ts/dataframe on Windows x64",
+  "os": ["win32"],
+  "cpu": ["x64"],
+  "type": "module",
+  "main": "./tidy_ts_dataframe.win32-x64.node",
+  "files": [
+    "tidy_ts_dataframe.win32-x64.node"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tidy-ts/tidy-ts"
+  }
+}

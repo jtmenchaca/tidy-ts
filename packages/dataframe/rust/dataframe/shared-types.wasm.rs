@@ -67,6 +67,18 @@ impl NapiJoinIdxU32 {
     }
 }
 
+/// NAPI join result with gathered f64 value columns (entire join done in Rust)
+#[cfg(feature = "napi-rs")]
+#[napi(object)]
+pub struct NapiJoinGatherResult {
+    /// Gathered left-side f64 columns (each is a Float64Array)
+    pub left_cols: Vec<napi::bindgen_prelude::Float64Array>,
+    /// Gathered right-side f64 columns (each is a Float64Array, NaN for null)
+    pub right_cols: Vec<napi::bindgen_prelude::Float64Array>,
+    /// Number of output rows
+    pub n_rows: u32,
+}
+
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 impl JoinIdxU32 {

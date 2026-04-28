@@ -117,7 +117,7 @@ impl Hasher for IdentityHasher {
     }
     #[inline]
     fn write_u64(&mut self, i: u64) {
-        self.0 = i;
+        self.0 = mix64(i);
     }
     #[inline]
     fn finish(&self) -> u64 {

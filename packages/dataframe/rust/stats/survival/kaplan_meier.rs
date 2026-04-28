@@ -310,7 +310,6 @@ pub fn survfit_km(
 
         // Reset for forward pass
         km = 1.0;
-        nelson = 0.0;
         v1 = 0.0;
         v2 = 0.0;
         let mut p2: usize = 0; // person2 forward index
@@ -382,7 +381,6 @@ pub fn survfit_km(
                         }
 
                         km *= 1.0 - haz;
-                        nelson += haz;
 
                         v1 = 0.0;
                         v2 = 0.0;
@@ -459,8 +457,6 @@ pub fn survfit_km(
                             dtemp2 *= n_event_wt[i] / n_event[i];
                             dtemp3 *= n_event_wt[i] / n_event[i];
                         }
-                        nelson += n_event_wt[i] * dtemp;
-
                         let haz = n_event_wt[i] / n_risk_wt[i];
                         for k in 0..nid {
                             inf1[k] =
@@ -572,8 +568,6 @@ pub fn survfit_km(
                             p2 += 1;
                         }
 
-                        nelson += haz;
-
                         v2 = 0.0;
                         for k in 0..nid {
                             v2 += inf2[k] * inf2[k];
@@ -641,8 +635,6 @@ pub fn survfit_km(
                             dtemp2 *= n_event_wt[i] / n_event[i];
                             dtemp3 *= n_event_wt[i] / n_event[i];
                         }
-                        nelson += n_event_wt[i] * dtemp;
-
                         for k in 0..nid {
                             if gcount[k] > 0 {
                                 inf2[k] -= gwt[k] * dtemp3;

@@ -5,7 +5,6 @@
 //! Includes R's `model.matrix()` behavior: factor dummy encoding and interactions.
 
 use super::types::ColumnarData;
-use super::weights::parse_simple_formula;
 
 /// A single term in a parsed formula.
 #[derive(Debug, Clone, PartialEq)]

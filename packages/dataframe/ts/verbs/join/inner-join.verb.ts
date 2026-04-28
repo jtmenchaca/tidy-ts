@@ -1,71 +1,38 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  type ColumnData,
+  type ColumnarStore,
   createColumnarDataFrameFromStore,
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
-import { tracer } from "../../telemetry/tracer.ts";
-import { inner_join_typed_multi_u32 } from "../../wasm/wasm-loader.ts";
-import { getStoreAndIndex, parseJoinArgs } from "./join-helpers.ts";
+import {
+  gather_f64_columns,
+  inner_join_typed_multi_u32,
+} from "../../wasm/wasm-loader.ts";
+import { parseJoinArgs } from "./join-helpers.ts";
+import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
+import { toColumnarStorage } from "../../dataframe/implementation/columnar-store.ts";
 
-// Simple helper to build result columns
-function buildJoinResult(
-  leftStore: any,
-  rightStore: any,
-  leftIndices: number[],
-  rightIndices: number[],
-  leftKeys: string[],
-  suffixes: { left?: string; right?: string },
-  leftDataFrame: any,
-  rightDataFrame: any,
-  leftIndex: Uint32Array,
-  rightIndex: Uint32Array,
-) {
-  const n = leftIndices.length;
-  const outCols: Record<string, unknown[]> = {};
-  const outNames: string[] = [];
-
-  const leftSuffix = suffixes.left ?? "";
-  const rightSuffix = suffixes.right ?? "_y";
-  const leftKeySet = new Set(leftKeys);
-
-  // Use DataFrame.columns() to get schema even for empty DataFrames
-  const leftColumnNames = leftDataFrame.columns() as string[];
-  const rightColumnNames = rightDataFrame.columns() as string[];
-  const leftNameSet = new Set(leftColumnNames);
-
-  // Add left columns — map through view index to get physical store positions
-  for (const name of leftColumnNames) {
-    const hasConflict = !leftKeySet.has(name) &&
-      rightColumnNames.includes(name);
-    const outName = hasConflict && leftSuffix ? `${name}${leftSuffix}` : name;
-    outNames.push(outName);
-
-    const src = leftStore.columns[name];
-    const dst = new Array(n);
-    for (let i = 0; i < n; i++) {
-      dst[i] = src?.[leftIndex[leftIndices[i]]];
-    }
-    outCols[outName] = dst;
+function getStoreViewInfo(df: any): {
+  store: ColumnarStore;
+  hasView: boolean;
+  index: Uint32Array;
+} {
+  const store: ColumnarStore | undefined = df.__store;
+  const view = df.__view;
+  if (store) {
+    const hasView = !!(view && (view.index || view.mask));
+    const index = hasView
+      ? materializeIndex(store.length, view)
+      : undefined!; // unused when !hasView
+    return { store, hasView, index };
   }
-
-  // Add right columns (skip keys that match left keys)
-  for (const name of rightColumnNames) {
-    if (leftKeySet.has(name) && leftKeys.includes(name)) continue;
-
-    const hasConflict = leftNameSet.has(name);
-    const outName = hasConflict && rightSuffix ? `${name}${rightSuffix}` : name;
-    outNames.push(outName);
-
-    const src = rightStore.columns[name];
-    const dst = new Array(n);
-    for (let i = 0; i < n; i++) {
-      dst[i] = src?.[rightIndex[rightIndices[i]]];
-    }
-    outCols[outName] = dst;
-  }
-
-  return { columns: outCols, columnNames: outNames, length: n };
+  const rows = Array.from(df) as object[];
+  const tmp = toColumnarStorage(rows);
+  const idx = new Uint32Array(tmp.length);
+  for (let i = 0; i < idx.length; i++) idx[i] = i;
+  return { store: tmp, hasView: false, index: idx };
 }
 
 // API
@@ -75,142 +42,242 @@ export function inner_join(
   options?: any,
 ): (left: any) => any {
   return (left: any): any => {
-    const span = tracer.startSpan(left, "inner_join");
+    // Handle empty DataFrames
+    if (left.nrows() === 0 || right.nrows() === 0) {
+      const leftCols = left.columns() as string[];
+      const rightCols = right.columns() as string[];
+      const allCols = [...new Set([...leftCols, ...rightCols])];
+      const columns: Record<string, unknown[]> = {};
+      for (const col of allCols) columns[col] = [];
+      return createColumnarDataFrameFromStore({
+        columns,
+        length: 0,
+        columnNames: allCols,
+      });
+    }
+
+    const { leftKeys, rightKeys, suffixes } = parseJoinArgs(
+      byOrOptions,
+      options,
+    );
+
+    const L = getStoreViewInfo(left);
+    const R = getStoreViewInfo(right);
+
+    const leftSuffix = suffixes.left ?? "";
+    const rightSuffix = suffixes.right ?? "_y";
+    const leftKeySet = new Set(leftKeys);
+    const leftColumnNames = left.columns() as string[];
+    const rightColumnNames = right.columns() as string[];
+    const leftNameSet = new Set(leftColumnNames);
+
+    // Compute output column names
+    const outNames: string[] = [];
+    for (const name of leftColumnNames) {
+      const hasConflict = !leftKeySet.has(name) &&
+        rightColumnNames.includes(name);
+      outNames.push(
+        hasConflict && leftSuffix ? `${name}${leftSuffix}` : name,
+      );
+    }
+    const rightValueNames: string[] = [];
+    const rightOutNames: string[] = [];
+    for (const name of rightColumnNames) {
+      if (leftKeySet.has(name) && leftKeys.includes(name)) continue;
+      rightValueNames.push(name);
+      const hasConflict = leftNameSet.has(name);
+      const outName = hasConflict && rightSuffix
+        ? `${name}${rightSuffix}`
+        : name;
+      rightOutNames.push(outName);
+      outNames.push(outName);
+    }
+
+    // Convert key columns to typed u32 arrays for hash join
+    const leftTypedRaw = convertToTypedArrays(L.store.columns, leftKeys);
+    const rightTypedRaw = convertToTypedArrays(R.store.columns, rightKeys);
+
+    let leftColumnData: Uint32Array[];
+    let rightColumnData: Uint32Array[];
+
+    if (!L.hasView) {
+      leftColumnData = leftKeys.map((k) => leftTypedRaw[k]);
+    } else {
+      leftColumnData = leftKeys.map((name) => {
+        const raw = leftTypedRaw[name];
+        const out = new Uint32Array(L.index.length);
+        for (let i = 0; i < L.index.length; i++) out[i] = raw[L.index[i]];
+        return out;
+      });
+    }
+    if (!R.hasView) {
+      rightColumnData = rightKeys.map((k) => rightTypedRaw[k]);
+    } else {
+      rightColumnData = rightKeys.map((name) => {
+        const raw = rightTypedRaw[name];
+        const out = new Uint32Array(R.index.length);
+        for (let i = 0; i < R.index.length; i++) out[i] = raw[R.index[i]];
+        return out;
+      });
+    }
+
+    let leftIdx: Uint32Array;
+    let rightIdx: Uint32Array;
 
     try {
-      // Handle empty DataFrames - inner join = empty result, but preserve schema
-      if (left.nrows() === 0 || right.nrows() === 0) {
-        const leftCols = left.columns() as string[];
-        const rightCols = right.columns() as string[];
-        const allCols = [...new Set([...leftCols, ...rightCols])];
-        const columns: Record<string, unknown[]> = {};
-        for (const col of allCols) {
-          columns[col] = [];
+      const wasmResult = inner_join_typed_multi_u32(
+        leftColumnData,
+        rightColumnData,
+      );
+      leftIdx = (wasmResult as any).takeLeft() as Uint32Array;
+      rightIdx = (wasmResult as any).takeRight() as Uint32Array;
+    } catch {
+      const rightMap = new Map<string, number[]>();
+      for (let i = 0; i < rightColumnData[0].length; i++) {
+        const keyParts: string[] = new Array(rightColumnData.length);
+        for (let c = 0; c < rightColumnData.length; c++) {
+          keyParts[c] = String(rightColumnData[c][i]);
         }
-        return createColumnarDataFrameFromStore({
-          columns,
-          length: 0,
-          columnNames: allCols,
-        });
+        const key = keyParts.join("|");
+        if (!rightMap.has(key)) rightMap.set(key, []);
+        rightMap.get(key)!.push(i);
       }
 
-      // Parse arguments
-      const { leftKeys, rightKeys, suffixes } = parseJoinArgs(
-        byOrOptions,
-        options,
-      );
-
-      // Get stores and indices
-      const L = getStoreAndIndex(left);
-      const R = getStoreAndIndex(right);
-
-      // Ultra-optimized typed array join
-      const { leftIndices, rightIndices } = tracer.withSpan(
-        left,
-        "join-operation",
-        () => {
-          // Convert to typed arrays and gather through view index
-          const leftTypedRaw = convertToTypedArrays(
-            L.store.columns,
-            leftKeys,
-          );
-          const rightTypedRaw = convertToTypedArrays(
-            R.store.columns,
-            rightKeys,
-          );
-
-          // Gather only visible rows through the view index
-          const leftColumnData = leftKeys.map((name) => {
-            const raw = leftTypedRaw[name];
-            const out = new Uint32Array(L.index.length);
-            for (let i = 0; i < L.index.length; i++) out[i] = raw[L.index[i]];
-            return out;
-          });
-          const rightColumnData = rightKeys.map((name) => {
-            const raw = rightTypedRaw[name];
-            const out = new Uint32Array(R.index.length);
-            for (let i = 0; i < R.index.length; i++) out[i] = raw[R.index[i]];
-            return out;
-          });
-
-          // Call WASM
-          try {
-            const wasmResult = inner_join_typed_multi_u32(
-              leftColumnData,
-              rightColumnData,
-            );
-            const leftIndices = Array.from((wasmResult as any).takeLeft());
-            const rightIndices = Array.from((wasmResult as any).takeRight());
-            return { leftIndices, rightIndices };
-          } catch {
-            // JavaScript fallback — columnData arrays are already view-gathered
-            const rightMap = new Map<string, number[]>();
-
-            for (let i = 0; i < rightColumnData[0].length; i++) {
-              const keyParts: string[] = new Array(rightColumnData.length);
-              for (let c = 0; c < rightColumnData.length; c++) {
-                keyParts[c] = String(rightColumnData[c][i]);
-              }
-              const key = keyParts.join("|");
-              if (!rightMap.has(key)) rightMap.set(key, []);
-              rightMap.get(key)!.push(i);
-            }
-
-            const leftIndices: number[] = [];
-            const rightIndices: number[] = [];
-
-            for (let i = 0; i < leftColumnData[0].length; i++) {
-              const keyParts: string[] = new Array(leftColumnData.length);
-              for (let c = 0; c < leftColumnData.length; c++) {
-                keyParts[c] = String(leftColumnData[c][i]);
-              }
-              const key = keyParts.join("|");
-              const matches = rightMap.get(key);
-              if (matches) {
-                for (const match of matches) {
-                  leftIndices.push(i);
-                  rightIndices.push(match);
-                }
-              }
-            }
-
-            return { leftIndices, rightIndices };
+      const leftArr: number[] = [];
+      const rightArr: number[] = [];
+      for (let i = 0; i < leftColumnData[0].length; i++) {
+        const keyParts: string[] = new Array(leftColumnData.length);
+        for (let c = 0; c < leftColumnData.length; c++) {
+          keyParts[c] = String(leftColumnData[c][i]);
+        }
+        const key = keyParts.join("|");
+        const matches = rightMap.get(key);
+        if (matches) {
+          for (const match of matches) {
+            leftArr.push(i);
+            rightArr.push(match);
           }
-        },
-      );
-
-      if (leftIndices.length === 0) {
-        return createColumnarDataFrameFromStore({
-          columns: {},
-          length: 0,
-          columnNames: [],
-        });
+        }
       }
 
-      // Build result
-      const outStore = buildJoinResult(
-        L.store,
-        R.store,
-        leftIndices as number[],
-        rightIndices as number[],
-        leftKeys,
-        suffixes,
-        left,
-        right,
-        L.index,
-        R.index,
-      );
-      const outDf = createColumnarDataFrameFromStore(outStore) as any;
-
-      // Handle groups
-      if (left.__groups) {
-        const outRows = outDf.toArray();
-        return withGroupsRebuilt(left, outRows as any, outDf) as any;
-      }
-
-      return outDf;
-    } finally {
-      tracer.endSpan(left, span);
+      leftIdx = new Uint32Array(leftArr);
+      rightIdx = new Uint32Array(rightArr);
     }
+
+    const n = leftIdx.length;
+    if (n === 0) {
+      return createColumnarDataFrameFromStore({
+        columns: {},
+        length: 0,
+        columnNames: [],
+      });
+    }
+
+    const leftPhys = L.hasView ? gatherPhysical(leftIdx, L.index) : leftIdx;
+    const rightPhys = R.hasView ? gatherPhysical(rightIdx, R.index) : rightIdx;
+
+    // Separate Float64Array columns for Rust gather vs plain Array columns for JS gather
+    const leftF64Names: string[] = [];
+    const leftF64Cols: Float64Array[] = [];
+    const leftPlainIndices: number[] = [];
+    for (let ci = 0; ci < leftColumnNames.length; ci++) {
+      const src = L.store.columns[leftColumnNames[ci]];
+      if (src instanceof Float64Array) {
+        leftF64Names.push(outNames[ci]);
+        leftF64Cols.push(L.hasView ? gatherF64View(src, L.index) : src);
+      } else {
+        leftPlainIndices.push(ci);
+      }
+    }
+
+    const rightF64Names: string[] = [];
+    const rightF64Cols: Float64Array[] = [];
+    const rightPlainIndices: number[] = [];
+    for (let ci = 0; ci < rightValueNames.length; ci++) {
+      const src = R.store.columns[rightValueNames[ci]];
+      if (src instanceof Float64Array) {
+        rightF64Names.push(rightOutNames[ci]);
+        rightF64Cols.push(R.hasView ? gatherF64View(src, R.index) : src);
+      } else {
+        rightPlainIndices.push(ci);
+      }
+    }
+
+    const outCols: Record<string, ColumnData> = {};
+
+    // Rust gather for Float64Array columns (fast path)
+    try {
+      if (leftF64Cols.length > 0) {
+        const gathered = gather_f64_columns(leftF64Cols, leftPhys);
+        for (let i = 0; i < leftF64Names.length; i++) {
+          outCols[leftF64Names[i]] = gathered[i];
+        }
+      }
+      if (rightF64Cols.length > 0) {
+        const gathered = gather_f64_columns(rightF64Cols, rightPhys);
+        for (let i = 0; i < rightF64Names.length; i++) {
+          outCols[rightF64Names[i]] = gathered[i];
+        }
+      }
+    } catch {
+      // Fall back to JS gather for all Float64Array columns
+      for (let i = 0; i < leftF64Names.length; i++) {
+        const src = leftF64Cols[i];
+        const dst = new Float64Array(n);
+        for (let j = 0; j < n; j++) dst[j] = src[leftPhys[j]];
+        outCols[leftF64Names[i]] = dst;
+      }
+      for (let i = 0; i < rightF64Names.length; i++) {
+        const src = rightF64Cols[i];
+        const dst = new Float64Array(n);
+        for (let j = 0; j < n; j++) dst[j] = src[rightPhys[j]];
+        outCols[rightF64Names[i]] = dst;
+      }
+    }
+
+    // JS gather for non-Float64Array columns
+    for (const ci of leftPlainIndices) {
+      const src = L.store.columns[leftColumnNames[ci]];
+      const dst = new Array(n);
+      for (let i = 0; i < n; i++) dst[i] = src[leftPhys[i]];
+      outCols[outNames[ci]] = dst;
+    }
+    for (const ci of rightPlainIndices) {
+      const src = R.store.columns[rightValueNames[ci]];
+      const dst = new Array(n);
+      for (let i = 0; i < n; i++) dst[i] = src[rightPhys[i]];
+      outCols[rightOutNames[ci]] = dst;
+    }
+
+    const outStore = {
+      columns: outCols,
+      columnNames: outNames,
+      length: n,
+    };
+    const outDf = createColumnarDataFrameFromStore(outStore) as any;
+
+    if (left.__groups) {
+      const outRows = outDf.toArray();
+      return withGroupsRebuilt(left, outRows as any, outDf) as any;
+    }
+
+    return outDf;
   };
+}
+
+function gatherPhysical(
+  joinIdx: Uint32Array,
+  viewIdx: Uint32Array,
+): Uint32Array {
+  const n = joinIdx.length;
+  const out = new Uint32Array(n);
+  for (let i = 0; i < n; i++) out[i] = viewIdx[joinIdx[i]];
+  return out;
+}
+
+function gatherF64View(src: Float64Array, viewIdx: Uint32Array): Float64Array {
+  const n = viewIdx.length;
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) out[i] = src[viewIdx[i]];
+  return out;
 }

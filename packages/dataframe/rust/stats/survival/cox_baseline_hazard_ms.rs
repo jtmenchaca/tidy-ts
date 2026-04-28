@@ -45,6 +45,7 @@ pub struct CoxSurv1Result {
 /// # Returns
 ///
 /// `CoxSurv1Result` with count matrix (10 cols), xbar, and xsum2.
+#[allow(dead_code)]
 pub(crate) fn coxsurv1(
     otime: &[f64],
     tstop: &[f64],
@@ -226,6 +227,7 @@ pub struct CoxSurv2Result {
 /// # Returns
 ///
 /// `CoxSurv2Result` with count matrix (12 cols), xbar, and xsum2.
+#[allow(dead_code)]
 pub(crate) fn coxsurv2(
     otime: &[f64],
     tstart: &[f64],

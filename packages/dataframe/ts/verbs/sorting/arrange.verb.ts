@@ -18,8 +18,9 @@ const NA_STR_CODE = 0xffffffff;
 // ---------- Helpers ----------
 
 /** A column is numeric-ish if every non-null value is number or Date. */
-function isNumericishCol(col: unknown[]): boolean {
+function isNumericishCol(col: unknown[] | Float64Array): boolean {
   if (!col) return true; // Empty/undefined columns are considered numeric-ish
+  if (col instanceof Float64Array) return true; // Already typed numeric
   for (let i = 0; i < col.length; i++) {
     const v = col[i];
     if (v == null) continue;
@@ -31,7 +32,9 @@ function isNumericishCol(col: unknown[]): boolean {
 }
 
 /** Coerce any value to f64 (numbers & Date supported; null/undefined/other -> NaN). */
-function coerceToF64(col: unknown[], nRows: number): Float64Array {
+function coerceToF64(col: unknown[] | Float64Array, nRows: number): Float64Array {
+  // Short-circuit: already Float64Array with correct length
+  if (col instanceof Float64Array && col.length === nRows) return col;
   const out = new Float64Array(nRows);
   for (let i = 0; i < nRows; i++) {
     const v = col[i];
@@ -134,7 +137,7 @@ function arrangeWasmStable(
   }));
 
   const prepared = colNames.map((name) => {
-    const col = store.columns[name] as unknown[];
+    const col = store.columns[name];
     if (isNumericishCol(col)) {
       return { kind: "f64" as const, values: coerceToF64(col, nRows) };
     } else {
@@ -269,41 +272,106 @@ export function arrange(
       );
     }
 
-    // ---------- Fast path: ungrouped + all numeric/date ----------
-    if (!g.__groups) {
-      const nRows = store.length;
-      const colNames = columns.map(String);
-      const cols: unknown[][] = colNames.map((n) => store.columns[n]);
+    const nRows = store.length;
+    const colNames = columns.map(String);
+    const cols: unknown[][] = colNames.map((n) => store.columns[n]);
+    const allNumeric = cols.every(isNumericishCol);
 
-      if (cols.every(isNumericishCol)) {
-        const flat = new Float64Array(cols.length * nRows);
-        for (let k = 0; k < cols.length; k++) {
-          const base = k * nRows;
-          const col = cols[k];
-          for (let r = 0; r < nRows; r++) {
-            const v = col[r];
-            flat[base + r] = v == null
-              ? Number.NaN
-              : v instanceof Date
-              ? +v
-              : typeof v === "number"
-              ? v
-              : Number.NaN;
+    // ---------- Fast path: all numeric/date (ungrouped or grouped) ----------
+    if (allNumeric) {
+      // For grouped data, prepend group ID as the primary sort key (asc)
+      // so groups stay together. Then sort columns follow.
+      const groups = g.__groups;
+      const totalCols = groups ? cols.length + 1 : cols.length;
+      const flat = new Float64Array(totalCols * nRows);
+
+      let colOffset = 0;
+      if (groups) {
+        // Column 0: group ID per row (ensures groups stay contiguous)
+        // Build gid_per_row from adjacency list
+        const { head, next, size } = groups;
+        for (let gid = 0; gid < size; gid++) {
+          let rowIdx = head[gid];
+          while (rowIdx !== -1) {
+            flat[rowIdx] = gid; // column 0 at offset 0
+            rowIdx = next[rowIdx];
           }
         }
-        const dirs = new Int8Array(
-          directions.length
-            ? directions.map((d) => (d === "desc" ? -1 : +1))
-            : columns.map(() => +1),
-        );
-        const outIdx = new Uint32Array(nRows);
-        try {
-          arrange_multi_f64_wasm(flat, nRows, cols.length, dirs, outIdx);
-          return withIndex(df, outIdx);
-        } catch (_e) {
-          // fall through to general stable path
-          // console.warn("arrange_multi_f64_wasm failed; using stable path:", _e);
+        colOffset = 1;
+      }
+
+      // Fill sort columns
+      for (let k = 0; k < cols.length; k++) {
+        const base = (k + colOffset) * nRows;
+        const col = cols[k];
+        for (let r = 0; r < nRows; r++) {
+          const v = col[r];
+          flat[base + r] = v == null
+            ? Number.NaN
+            : v instanceof Date
+            ? +v
+            : typeof v === "number"
+            ? v
+            : Number.NaN;
         }
+      }
+
+      // Directions: group ID is always asc (+1), then user-specified directions
+      const userDirs = directions.length
+        ? directions.map((d) => (d === "desc" ? -1 : +1))
+        : columns.map(() => +1);
+      const dirs = new Int8Array(
+        groups ? [+1, ...userDirs] : userDirs,
+      );
+
+      const outIdx = new Uint32Array(nRows);
+      try {
+        arrange_multi_f64_wasm(flat, nRows, totalCols, dirs, outIdx);
+
+        if (!groups) {
+          return withIndex(df, outIdx);
+        }
+
+        // Grouped: rebuild adjacency list from sorted order
+        // Rows are now contiguous per group in outIdx
+        const result = withIndex(df, outIdx);
+        const { size, groupingColumns, count } = groups;
+        const newHead = new Int32Array(size);
+        const newNext = new Int32Array(nRows);
+        const newCount = new Uint32Array(count);
+        const newKeyRow = new Uint32Array(size);
+        newNext.fill(-1);
+
+        // Walk sorted indices; group ID is flat[outIdx[i]] (column 0)
+        let currentGid = -1;
+        let prevRow = -1;
+        for (let i = 0; i < nRows; i++) {
+          const row = outIdx[i];
+          const gid = flat[row]; // column 0 = group ID
+          if (gid !== currentGid) {
+            currentGid = gid;
+            newHead[gid] = i;
+            newKeyRow[gid] = row;
+            prevRow = i;
+          } else {
+            newNext[prevRow] = i;
+            prevRow = i;
+          }
+        }
+
+        (result as any).__groups = {
+          groupingColumns: [...groupingColumns],
+          head: newHead,
+          next: newNext,
+          count: newCount,
+          keyRow: newKeyRow,
+          size,
+          usesRawIndices: false,
+        };
+        (result as any).__kind = "GroupedDataFrame";
+        return result;
+      } catch (_e) {
+        // fall through to general stable path
       }
     }
 

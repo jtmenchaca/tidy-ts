@@ -6,7 +6,11 @@ import {
   type BitSet,
   bitsetGet,
 } from "../dataframe/implementation/columnar-view.ts";
-import type { ColumnarStore } from "../dataframe/implementation/columnar-store.ts";
+import {
+  type ColumnData,
+  type ColumnarStore,
+  gatherColumn,
+} from "../dataframe/implementation/columnar-store.ts";
 import { createColumnarDataFrameFromStore } from "../dataframe/index.ts";
 import { isComparable } from "../stats/helpers.ts";
 
@@ -20,7 +24,7 @@ import { isComparable } from "../stats/helpers.ts";
 export class RowView {
   private _i = 0;
   constructor(
-    private cols: Record<string, unknown[]>,
+    private cols: Record<string, ColumnData>,
     names: string[],
     configurable = false,
   ) {
@@ -46,15 +50,10 @@ export function buildDataFrameFromIndices(
   store: ColumnarStore,
   indices: number[],
 ): any {
-  const newColumns: Record<string, unknown[]> = {};
+  const newColumns: Record<string, ColumnData> = {};
   const len = indices.length;
   for (const colName of store.columnNames) {
-    const src = store.columns[colName];
-    const col = new Array(len);
-    for (let i = 0; i < len; i++) {
-      col[i] = src[indices[i]];
-    }
-    newColumns[colName] = col;
+    newColumns[colName] = gatherColumn(store.columns[colName], indices);
   }
   const newStore: ColumnarStore = {
     columns: newColumns,

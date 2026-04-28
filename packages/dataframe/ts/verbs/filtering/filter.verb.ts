@@ -35,6 +35,17 @@ function makeRowSnapshot(
   return snap;
 }
 
+function makePhysicalSnapshot(
+  store: any,
+  physicalIndex: number,
+): object {
+  const snap: any = {};
+  for (const name of store.columnNames) {
+    snap[name] = store.columns[name][physicalIndex];
+  }
+  return snap;
+}
+
 type OptimizedPredicate = (
   rowIndex: number,
   columns: Record<string, unknown[]>,
@@ -237,17 +248,22 @@ function tryWasmFilterPathNumericOnly(
     // Keep string/nullcheck off this path (we bail to JS)
     if (op.kind !== "number" && op.kind !== "date") return null;
 
-    const col = store.columns[op.column] as unknown[];
-    const values = new Float64Array(n);
-    for (let i = 0; i < n; i++) {
-      const v = col[i];
-      values[i] = v == null
-        ? Number.NaN
-        : typeof v === "number"
-        ? v
-        : v instanceof Date
-        ? +v
-        : Number.NaN;
+    const col = store.columns[op.column];
+    let values: Float64Array;
+    if (col instanceof Float64Array && col.length === n) {
+      values = col; // Zero-copy: already Float64Array
+    } else {
+      values = new Float64Array(n);
+      for (let i = 0; i < n; i++) {
+        const v = col[i];
+        values[i] = v == null
+          ? Number.NaN
+          : typeof v === "number"
+          ? v
+          : v instanceof Date
+          ? +v
+          : Number.NaN;
+      }
     }
 
     const code = opToCode(op.operator);
@@ -284,10 +300,10 @@ function detectSimplePredicate(
 
   // null checks
   {
-    const m = /row\.(\w+)\s*([!]?=)\s*null/.exec(s);
+    const m = /row\.(\w+)\s*([!]?={1,2})\s*null/.exec(s);
     if (m) {
       const column = m[1];
-      const op = m[2] === "==" ? "== null" : "!= null";
+      const op = m[2].startsWith("!") ? "!= null" : "== null";
       return {
         kind: "nullcheck",
         column,
@@ -390,11 +406,40 @@ function computeFilterMaskDirectly_AND(
       continue;
     }
 
-    // Fast paths only for plain frames (unchanged)
-    const plain = isPlainFrame(api);
+    // Columnar fast paths work on any frame with a store (including masked frames).
+    // The existing mask is ANDed in by combine-masks in filterRowsSync.
+    const hasStore = !!store;
 
-    const simple = plain ? detectSimplePredicate(pred as any) : null;
-    if (plain && simple?.kind === "string") {
+    const simple = hasStore ? detectSimplePredicate(pred as any) : null;
+
+    // Null-check fast path: scan column directly for !== null / === null
+    if (hasStore && simple?.kind === "nullcheck") {
+      const col = store.columns[simple.column];
+      if (col) {
+        const isNotNull = simple.operator === "!= null";
+        if (first) {
+          for (let p = 0; p < nStore; p++) {
+            const v = col[p];
+            if (isNotNull ? v !== null && v !== undefined : v == null) {
+              bitsetSet(bs, p);
+            }
+          }
+          first = false;
+        } else {
+          for (let p = 0; p < nStore; p++) {
+            if (bitsetGet(bs, p)) {
+              const v = col[p];
+              if (isNotNull ? v === null || v === undefined : v != null) {
+                bitsetClear(bs, p);
+              }
+            }
+          }
+        }
+        continue;
+      }
+    }
+
+    if (hasStore && simple?.kind === "string") {
       const col = store.columns[simple.column] as unknown[];
       const val = simple.value;
       if (simple.operator === "===" || simple.operator === "==") {
@@ -421,7 +466,7 @@ function computeFilterMaskDirectly_AND(
       }
     }
     // Try compound predicate optimization first
-    const compoundOptimized = plain
+    const compoundOptimized = hasStore
       ? tryOptimizeCompoundPredicate(pred as any, Object.keys(store.columns))
       : null;
     if (compoundOptimized) {
@@ -440,7 +485,7 @@ function computeFilterMaskDirectly_AND(
       continue;
     }
 
-    const optimized = plain
+    const optimized = hasStore
       ? tryOptimizeNumericPredicate(pred as any, Object.keys(store.columns))
       : null;
     if (optimized) {
@@ -460,7 +505,31 @@ function computeFilterMaskDirectly_AND(
     }
 
     // ----- Fallback: evaluate on snapshots, AND by physical index -----
-    if (first) {
+    // When we have a store, iterate physical indices directly to avoid
+    // O(n²) logical→physical mapping via getPhysicalIndex.
+    const existingView = api.__view;
+    const existingMask = existingView?.mask;
+    if (hasStore && !existingView?.index) {
+      // No index mapping — iterate physical indices, check existing mask
+      if (first) {
+        for (let p = 0; p < nStore; p++) {
+          if (existingMask && !bitsetGet(existingMask, p)) continue;
+          const snap = makePhysicalSnapshot(store, p);
+          if ((pred as any)(snap, p, df)) bitsetSet(bs, p);
+        }
+        first = false;
+      } else {
+        for (let p = 0; p < nStore; p++) {
+          if (!bitsetGet(bs, p)) continue;
+          if (existingMask && !bitsetGet(existingMask, p)) {
+            bitsetClear(bs, p);
+            continue;
+          }
+          const snap = makePhysicalSnapshot(store, p);
+          if (!(pred as any)(snap, p, df)) bitsetClear(bs, p);
+        }
+      }
+    } else if (first) {
       for (let i = 0; i < m; i++) {
         const phys = getPhysicalIndex(api, i);
         if (phys < 0) continue;

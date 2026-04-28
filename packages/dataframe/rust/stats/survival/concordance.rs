@@ -396,6 +396,7 @@ pub fn concordance3(
 /// * `sort_start` - Sort order by decreasing start time (0-based indices, length n)
 /// * `sort_stop` - Sort order by decreasing stop time, then status, then x (0-based indices, length n)
 /// * `doresid` - Whether to compute residuals
+#[allow(dead_code)]
 pub(crate) fn concordance4(
     time1: &[f64],
     time2: &[f64],
@@ -773,6 +774,7 @@ pub fn concordance5(
 /// * `timewt` - Time weights, already reversed (length = number of unique event times)
 /// * `sort_start` - Sort order by decreasing start time (0-based indices, length n)
 /// * `sort_stop` - Sort order by decreasing stop time, then status, then x (0-based indices, length n)
+#[allow(dead_code)]
 pub(crate) fn concordance6(
     time1: &[f64],
     time2: &[f64],

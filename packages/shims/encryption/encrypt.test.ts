@@ -1,5 +1,5 @@
 // Import the encryption utilities
-import { encodeHex } from "@std/encoding/hex";
+import { encodeHex } from "./encodeAndDecode.ts";
 import { expect } from "@std/expect";
 import { generateKey } from "./generateKey.ts";
 import {

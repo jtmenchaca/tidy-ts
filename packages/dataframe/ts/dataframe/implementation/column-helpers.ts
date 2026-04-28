@@ -48,7 +48,7 @@ export function isNumericColumn(
  * - Mixed columns use flexible runtime type checking
  */
 export function detectColumnTypes(
-  columns: Record<string, unknown[]>,
+  columns: Record<string, unknown[] | Float64Array>,
   columnNames: string[],
 ): Record<string, string> {
   const types: Record<string, string> = {};
@@ -57,6 +57,12 @@ export function detectColumnTypes(
     const column = columns[colName];
     if (!column || column.length === 0) {
       types[colName] = "unknown";
+      continue;
+    }
+
+    // Float64Array columns are always numeric
+    if (column instanceof Float64Array) {
+      types[colName] = "number";
       continue;
     }
 
@@ -108,7 +114,7 @@ export function detectColumnTypes(
  * - Converting all data types to 32-bit unsigned integers via hashing
  * - Null/undefined values map to 0
  * - Booleans map to 0/1
- * - Numbers are scaled by 1000 and rounded (NaN maps to 0xFFFFFFFF)
+ * - Numbers use lossless f64 bit-pattern hash (NaN maps to 0xFFFFFFFF)
  * - Strings/objects use fast 31-bit polynomial hash
  *
  * @param columns - Column data indexed by column name
@@ -116,7 +122,7 @@ export function detectColumnTypes(
  * @returns Record of column names to their Uint32Array representations
  */
 export function convertToTypedArrays(
-  columns: Record<string, unknown[]>,
+  columns: Record<string, unknown[] | Float64Array>,
   keyCols: string[],
 ): Record<string, Uint32Array> {
   const typedArrays: Record<string, Uint32Array> = {};
@@ -127,6 +133,37 @@ export function convertToTypedArrays(
 
     const len = colData.length;
     const out = new Uint32Array(len);
+
+    // Lossless f64 → u32 hash: use the f64 bit pattern (via DataView) to
+    // produce a collision-resistant 32-bit hash. Two f64 values are equal
+    // iff their bit patterns match (except ±0 which we canonicalize, and
+    // NaN). We XOR the high and low 32-bit halves after mixing.
+    // Reserved values: 0=null, 1=undefined, 2=true, 3=false, 0xFFFFFFFF=NaN
+    const hashBuf = new ArrayBuffer(8);
+    const hashF64 = new Float64Array(hashBuf);
+    const hashU32 = new Uint32Array(hashBuf);
+
+    // Fast path: Float64Array columns are all-numeric (NaN = missing)
+    if (colData instanceof Float64Array) {
+      for (let i = 0; i < len; i++) {
+        const num = colData[i];
+        if (Number.isNaN(num)) {
+          out[i] = 0xFFFFFFFF;
+          continue;
+        }
+        // Canonicalize -0 to +0
+        hashF64[0] = num === 0 ? 0 : num;
+        // Mix high 32 bits and XOR with low 32 bits
+        let h = hashU32[1];
+        h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+        h = (h ^ (h >>> 13)) >>> 0;
+        h = (h ^ hashU32[0]) >>> 0;
+        // Avoid reserved values (0-3 and 0xFFFFFFFF)
+        out[i] = h < 4 ? (h + 4) : h === 0xFFFFFFFF ? 0xFFFFFFFE : h;
+      }
+      typedArrays[colName] = out;
+      continue;
+    }
 
     for (let i = 0; i < len; i++) {
       const v = colData[i];
@@ -146,19 +183,26 @@ export function convertToTypedArrays(
         out[i] = v ? 2 : 3;
       } else if (t === "number") {
         const num = v as number;
-        out[i] = Number.isNaN(num)
-          ? 0xFFFFFFFF
-          : ((Math.round(num * 1000) >>> 0) + 4);
+        if (Number.isNaN(num)) {
+          out[i] = 0xFFFFFFFF;
+          continue;
+        }
+        hashF64[0] = num === 0 ? 0 : num;
+        let h = hashU32[1];
+        h = Math.imul(h ^ (h >>> 16), 0x45d9f3b) >>> 0;
+        h = (h ^ (h >>> 13)) >>> 0;
+        h = (h ^ hashU32[0]) >>> 0;
+        out[i] = h < 4 ? (h + 4) : h === 0xFFFFFFFF ? 0xFFFFFFFE : h;
       } else {
-        // Optimized fast string hash - offset to avoid collision with special values
+        // Optimized fast string hash - polynomial hash
         const str = "" + v;
         let hash = 0;
-        for (let j = 0, c = 0; j < str.length; j++) {
-          c = str.charCodeAt(j);
-          hash = (hash * 31 + c) >>> 0;
+        for (let j = 0; j < str.length; j++) {
+          hash = (Math.imul(hash, 31) + str.charCodeAt(j)) >>> 0;
         }
-        // Add offset to avoid collision with null(0), undefined(1), bool(2,3)
-        out[i] = (hash >>> 0) + 4;
+        // Avoid reserved values
+        hash = hash < 4 ? (hash + 4) : hash === 0xFFFFFFFF ? 0xFFFFFFFE : hash;
+        out[i] = hash;
       }
     }
 

@@ -32,9 +32,11 @@
 //! a risk score of exp(-50) or exp(-1000) or 0 all give essentially the
 //! same effect. We only cut these off enough to avoid underflow.
 
+#[allow(dead_code)]
 /// Upper bound for coxsafe: exp(22) ≈ 3.6e9
 const LARGE: f64 = 22.0;
 
+#[allow(dead_code)]
 /// Lower bound for coxsafe: exp(-200) ≈ 1.4e-87
 const SMALL: f64 = -200.0;
 
@@ -51,6 +53,7 @@ const SMALL: f64 = -200.0;
 /// # Returns
 ///
 /// The clamped value, guaranteed to be in `[-200.0, 22.0]`.
+#[allow(dead_code)]
 #[inline]
 pub(crate) fn coxsafe(x: f64) -> f64 {
     if x < SMALL {
