@@ -8,7 +8,8 @@
     "./errors": "./errors.ts",
     "./async": "./async.ts",
     "./fetch": "./fetch.ts",
-    "./encryption": "./encryption/mod.ts"
+    "./encryption": "./encryption/mod.ts",
+    "./spinner": "./spinner/spinner.ts"
   },
   "license": "MIT",
   "imports": {

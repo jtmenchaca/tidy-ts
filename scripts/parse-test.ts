@@ -7,7 +7,13 @@
  * On failure: prints compact failure details and exits 1.
  */
 
+import process from "node:process";
+import { createSpinner } from "@tidy-ts/shims/spinner";
+
 const args = Deno.args;
+const label = `deno test ${args.join(" ")}`;
+const spinner = createSpinner(label);
+
 const cmd = new Deno.Command("deno", {
   args: ["test", ...args],
   stdout: "piped",
@@ -32,13 +38,13 @@ const failuresIdx = text.indexOf(" FAILURES ");
 const summaryMatch = text.match(/(ok|FAILED) \| (\d+ passed(?:\s*\(\d+ steps?\))?) \| (\d+ failed(?:\s*\(\d+ steps?\))?)\s*\([\d.]+[ms]+\)/);
 
 if (code === 0 && !summaryMatch) {
-  console.log("✓ All tests passed");
-  Deno.exit(0);
+  await spinner.stop("✓ All tests passed");
+  process.exit(0);
 }
 
 if (code === 0 && summaryMatch) {
-  console.log(`✓ ${summaryMatch[0]}`);
-  Deno.exit(0);
+  await spinner.stop(`✓ ${summaryMatch[0]}`);
+  process.exit(0);
 }
 
 // --- Failure path ---
@@ -103,6 +109,8 @@ if (errorsIdx !== -1) {
   if (current) failures.push(current);
 }
 
+await spinner.stop(`✗ Tests failed`);
+
 // Print compact output
 if (failures.length > 0) {
   for (const f of failures) {
@@ -127,4 +135,4 @@ if (summaryMatch) {
   console.log(text);
 }
 
-Deno.exit(code);
+process.exit(code);

@@ -7,7 +7,13 @@
  * On failure: prints a compact error summary and exits 1.
  */
 
+import process from "node:process";
+import { createSpinner } from "@tidy-ts/shims/spinner";
+
 const args = Deno.args;
+const label = `deno check ${args.join(" ")}`;
+const spinner = createSpinner(label);
+
 const cmd = new Deno.Command("deno", {
   args: ["check", ...args],
   stdout: "piped",
@@ -55,9 +61,11 @@ if (currentError.length) errors.push(currentError.join("\n"));
 const summaryMatch = text.match(/Found (\d+) errors?\./);
 
 if (errors.length === 0 && !summaryMatch) {
-  console.log("✓ No type errors");
-  Deno.exit(0);
+  await spinner.stop("✓ No type errors");
+  process.exit(0);
 }
+
+await spinner.stop(`✗ Type errors found`);
 
 for (const err of errors) {
   console.log(err);
@@ -68,4 +76,4 @@ if (summaryMatch) {
   console.log(summaryMatch[0]);
 }
 
-Deno.exit(code);
+process.exit(code);

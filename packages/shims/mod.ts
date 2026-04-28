@@ -108,3 +108,11 @@ export {
 
 // Compression stream polyfill (automatically initializes)
 import "./compression.ts";
+
+// Spinner / CLI animations
+export {
+  createSpinner,
+  type Spinner,
+  type SpinnerStyle,
+  withSpinner,
+} from "./spinner/spinner.ts";
