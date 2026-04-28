@@ -61,6 +61,24 @@ export function iqr_wasm(values: Float64Array): number {
   return wasmInternal.iqr_wasm(values);
 }
 
+export function variance_wasm(values: Float64Array): number {
+  initWasm();
+  return wasmInternal.variance_wasm(values);
+}
+
+export function stdev_wasm(values: Float64Array): number {
+  initWasm();
+  return wasmInternal.stdev_wasm(values);
+}
+
+export function batch_stats_wasm(
+  values: Float64Array,
+  ops: string,
+): Float64Array {
+  initWasm();
+  return wasmInternal.batch_stats_wasm(values, ops);
+}
+
 // Distinct functions
 export function distinct_rows_generic_typed(
   column_data: Uint32Array[],

@@ -7,7 +7,13 @@
 
 import process from "node:process";
 import type { Spinner } from "./spinner.ts";
-import { fadeIn, fadeOut } from "./transition.ts";
+import {
+  type AnimationConfig,
+  type BaseState,
+  createAnimationSpinner,
+  createBaseState,
+  SPIN,
+} from "./harness.ts";
 
 // ── Cat sprite (two frames for leg animation) ──────────────────────────────
 
@@ -57,25 +63,16 @@ const STAR_CHARS = ["+", "*", ".", "\u00B7"];
 
 // ── State ───────────────────────────────────────────────────────────────────
 
-interface State {
+interface State extends BaseState {
   catCol: number;
   catRow: number;
   bobOffset: number;
   stars: Star[];
-  frame: number;
-  cols: number;
-  rows: number;
-  message: string;
-  stopped: boolean;
-  interval: ReturnType<typeof setInterval> | null;
-  originalLog: typeof console.log;
-  logBuffer: string[];
 }
 
 function init(msg: string): State {
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-  const rows = termRows - 2;
+  const base = createBaseState(msg, 2);
+  const { cols, rows } = base;
 
   // Center cat vertically
   const catRow = Math.floor((rows - CAT_HEIGHT) / 2);
@@ -91,20 +88,7 @@ function init(msg: string): State {
     });
   }
 
-  return {
-    catCol: -CAT_WIDTH,
-    catRow,
-    bobOffset: 0,
-    stars,
-    frame: 0,
-    cols,
-    rows,
-    message: msg,
-    stopped: false,
-    interval: null,
-    originalLog: console.log,
-    logBuffer: [],
-  };
+  return { ...base, catCol: -CAT_WIDTH, catRow, bobOffset: 0, stars };
 }
 
 // ── Simulation ──────────────────────────────────────────────────────────────
@@ -131,8 +115,6 @@ function step(s: State) {
 
 // ── Rendering ───────────────────────────────────────────────────────────────
 
-const SPIN = ["\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827", "\u2807", "\u280F"];
-
 function render(s: State) {
   const { cols, rows } = s;
   const catFrame = CAT_FRAMES[s.frame % 2];
@@ -152,9 +134,6 @@ function render(s: State) {
   }
 
   // Draw rainbow trail behind the cat with a wave effect.
-  // Each column gets a vertical offset based on a sine wave that's
-  // phase-shifted by distance from the cat — near the cat it matches
-  // the bob, further left it lags behind creating an undulation.
   const rainbowEnd = s.catCol;
   const totalStripes = RAINBOW_COLORS.length;
   const baseRainbowTop = s.catRow + 1;
@@ -202,7 +181,7 @@ function render(s: State) {
       if (isCat && ch !== " ") {
         line += `\x1b[97m${ch}\x1b[0m`; // white cat
       } else if (ch === "\u2588" && c < s.catCol) {
-        // Rainbow block — determine which stripe color based on this column's wave offset
+        // Rainbow block
         const distFromCat = s.catCol - c;
         const waveOff = Math.round(
           Math.sin(s.frame * 0.15 - distFromCat * 0.08) * 1.5,
@@ -230,65 +209,8 @@ function render(s: State) {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
+const config: AnimationConfig<State> = { init, step, render, intervalMs: 100, reserveRows: 2 };
+
 export function createNyanSpinner(initialMessage: string): Spinner | null {
-  const isTTY = process.stdout.isTTY ?? false;
-  if (!isTTY) return null;
-
-  const s = init(initialMessage);
-  s.originalLog = console.log;
-
-  process.stdout.write("\x1b[?25l");
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-
-  fadeIn(cols, termRows).then(() => {
-    if (s.stopped) return;
-    s.interval = setInterval(() => {
-      if (s.stopped) return;
-      step(s);
-      render(s);
-    }, 100);
-  });
-
-  console.log = (...args: unknown[]) => {
-    if (s.stopped) {
-      s.originalLog(...args);
-      return;
-    }
-    s.logBuffer.push(
-      args.map((a) => (typeof a === "string" ? a : String(a))).join(" "),
-    );
-  };
-
-  const onResize = () => {
-    if (s.stopped) return;
-    s.cols = process.stdout.columns || 80;
-    s.rows = (process.stdout.rows || 24) - 2;
-    process.stdout.write("\x1b[2J");
-  };
-  process.stdout.on("resize", onResize);
-
-  return {
-    update(msg: string) {
-      s.message = msg;
-    },
-    log(msg: string) {
-      s.logBuffer.push(msg);
-    },
-    async stop(msg: string) {
-      s.stopped = true;
-      if (s.interval) clearInterval(s.interval);
-      process.stdout.removeListener("resize", onResize);
-      console.log = s.originalLog;
-
-      const c = process.stdout.columns || 80;
-      const r = process.stdout.rows || 24;
-      await fadeOut(c, r);
-      process.stdout.write("\x1b[?25h");
-      for (const line of s.logBuffer) {
-        s.originalLog(line);
-      }
-      s.originalLog(msg);
-    },
-  };
+  return createAnimationSpinner(config, initialMessage);
 }

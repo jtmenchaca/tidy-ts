@@ -1,0 +1,28 @@
+import { BigNano } from './bigNano.ts';
+import { DiffOps } from './calendarOps.ts';
+import { DurationFields, DurationTimeFields } from './durationFields.ts';
+import { RelativeToSlots } from './markerSystem.ts';
+import { DurationRoundingOptions, RelativeToOptions } from './optionsRefine.ts';
+import { DurationSlots } from './slots.ts';
+import { TimeZoneOps } from './timeZoneOps.ts';
+import { DayTimeUnit, TimeUnit, Unit } from './units.ts';
+import { NumberSign } from './utils.ts';
+export declare function addDurations<RA>(refineRelativeTo: (relativeToArg?: RA) => RelativeToSlots | undefined, getCalendarOps: (calendarId: string) => DiffOps, getTimeZoneOps: (timeZoneId: string) => TimeZoneOps, doSubtract: boolean, slots: DurationSlots, otherSlots: DurationSlots, options?: RelativeToOptions<RA>): DurationSlots;
+export declare function roundDuration<RA>(refineRelativeTo: (relativeToArg?: RA) => RelativeToSlots | undefined, getCalendarOps: (calendarId: string) => DiffOps, getTimeZoneOps: (timeZoneId: string) => TimeZoneOps, slots: DurationSlots, options: DurationRoundingOptions<RA>): DurationSlots;
+export declare function absDuration(slots: DurationSlots): DurationSlots;
+export declare function negateDuration(slots: DurationSlots): DurationSlots;
+export declare function negateDurationFields(fields: DurationFields): DurationFields;
+export declare function getDurationBlank(slots: DurationSlots): boolean;
+export declare function computeDurationSign(fields: DurationFields, fieldNames?: import("./durationFields.ts").DurationFieldName[]): NumberSign;
+export declare function checkDurationUnits(fields: DurationFields): DurationFields;
+export declare function checkDurationTimeUnit(n: number): void;
+export declare function durationTimeFieldsToBigNanoStrict(fields: DurationFields): BigNano;
+export declare function durationFieldsToBigNano(fields: DurationFields, largestUnit?: DayTimeUnit): BigNano;
+export declare function nanoToDurationDayTimeFields(largeNano: BigNano): {
+    days: number;
+} & DurationTimeFields;
+export declare function nanoToDurationDayTimeFields(largeNano: BigNano, largestUnit?: DayTimeUnit): Partial<DurationFields>;
+export declare function nanoToDurationTimeFields(nano: number): DurationTimeFields;
+export declare function nanoToDurationTimeFields(nano: number, largestUnit: TimeUnit): Partial<DurationTimeFields>;
+export declare function durationHasDateParts(fields: DurationFields): boolean;
+export declare function getMaxDurationUnit(fields: DurationFields): Unit;

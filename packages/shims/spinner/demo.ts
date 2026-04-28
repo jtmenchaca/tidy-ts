@@ -20,7 +20,7 @@ for (const style of styles) {
     spinner.update(`${style} — ${s}s remaining`);
   }
   await sleep(1000);
-  await spinner.stop(`Done with ${style}`);
+  await spinner.stop('Done');
 }
 
 console.log("\nAll animations demo complete!");

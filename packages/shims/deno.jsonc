@@ -9,12 +9,16 @@
     "./async": "./async.ts",
     "./fetch": "./fetch.ts",
     "./encryption": "./encryption/mod.ts",
-    "./spinner": "./spinner/spinner.ts"
+    "./spinner": "./spinner/spinner.ts",
+    "./temporal-polyfill": "./temporal-polyfill/impl.ts",
+    "./temporal-zod": "./temporal-zod/index.ts",
+    "./temporal-zod/base": "./temporal-zod/base/index.ts"
   },
   "license": "MIT",
   "imports": {
     "@std/expect": "jsr:@std/expect@^1.0.15"
   },
+  "exclude": ["dist/"],
   "tasks": {
     "generateKey": "deno run encryption/generateKey.ts",
     "generateKey:install": "deno install --global -A --config deno.jsonc --name generate-key --force encryption/generateKey.ts"

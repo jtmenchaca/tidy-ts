@@ -1,4 +1,6 @@
 import { variance, type VarianceOptions } from "./variance.ts";
+import { stdev_wasm } from "../../../wasm/wasm-loader.ts";
+import { getTypedArray } from "../../helpers.ts";
 
 // Type definitions for number arrays
 export type CleanNumberArray = readonly number[];
@@ -32,6 +34,9 @@ export type SdOptions = VarianceOptions;
 
 // Single value overloads
 export function sd(values: number, options?: SdOptions): number;
+
+// Float64Array fast path (zero-copy to WASM)
+export function sd(values: Float64Array, options?: SdOptions): number;
 
 // Clean array overloads (no nulls/undefined)
 export function sd(values: CleanNumberArray, options?: SdOptions): number;
@@ -78,6 +83,14 @@ export function sd(
       return options.removeNaN ? 0 : NaN;
     }
     return 0; // Standard deviation of a single value is 0
+  }
+
+  // Float64Array fast path — skip variance delegation, go direct to WASM
+  const typed = getTypedArray(values);
+  if (typed) {
+    if (typed.length === 0) return null;
+    if (typed.length === 1) return null;
+    return stdev_wasm(typed);
   }
 
   // Delegate to variance with same options

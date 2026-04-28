@@ -305,7 +305,7 @@ Deno.test("cummax with single Date", () => {
 
 // --- Temporal support for cummin/cummax ---
 
-import { Temporal } from "temporal-polyfill";
+import { Temporal } from "@tidy-ts/shims/temporal-polyfill";
 
 Deno.test("cummin with Temporal.PlainDate array", () => {
   const dates = [

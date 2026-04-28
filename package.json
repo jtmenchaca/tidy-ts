@@ -32,10 +32,10 @@
     "test:glm": "deno test -A --v8-flags=--max-old-space-size=8192 --parallel packages/testing/glm/regression-tests.test.ts",
     "test:gee": "deno test -A --v8-flags=--max-old-space-size=8192 --parallel packages/testing/gee/",
     "test:runtimes": "cd packages/testing/runtimes && bash test-runner.sh",
-    "wasmbuild": "deno run -A jsr:@deno/wasmbuild@0.21.1 --features wasm --out packages/dataframe/lib",
-    "napibuild": "cargo build --features napi-rs --release && cp target/release/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/release/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node",
-    "napibuild:debug": "cargo build --features napi-rs && cp target/debug/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/debug/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node",
-    "napibuild:win32-x64": "cargo xwin build --features napi-rs --release --target x86_64-pc-windows-msvc && cp target/x86_64-pc-windows-msvc/release/tidy_ts_dataframe.dll packages/npm-win32-x64/tidy_ts_dataframe.win32-x64.node",
+    "wasmbuild": "deno run -A scripts/parse-build.ts Building WASM -- deno run -A jsr:@deno/wasmbuild@0.21.1 --features wasm --out packages/dataframe/lib",
+    "napibuild": "deno run -A scripts/parse-build.ts Building native addon -- sh -c 'cargo build --features napi-rs --release && cp target/release/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/release/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node'",
+    "napibuild:debug": "deno run -A scripts/parse-build.ts Building native addon [debug] -- sh -c 'cargo build --features napi-rs && cp target/debug/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/debug/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node'",
+    "napibuild:win32-x64": "deno run -A scripts/parse-build.ts Building native addon [win32-x64] -- sh -c 'cargo xwin build --features napi-rs --release --target x86_64-pc-windows-msvc && cp target/x86_64-pc-windows-msvc/release/tidy_ts_dataframe.dll packages/npm-win32-x64/tidy_ts_dataframe.win32-x64.node'",
     "build": "deno run -A scripts/build.ts",
     "publish:dataframe": "cd packages/dataframe && deno publish",
     "publish:arrow": "cd packages/arrow && deno publish",
@@ -43,9 +43,9 @@
     "publish:ai": "cd packages/ai && deno publish",
     "publish:shims": "cd packages/shims && deno publish",
     "build:npm": "deno run -A scripts/build-shims-npm.ts && deno run -A scripts/build-dataframe-npm.ts",
-    "pack:npm": "pnpm build:npm && cd packages/shims/dist && npm pack && cd ../../dataframe/dist && npm pack && cd ../../npm-darwin-arm64 && npm pack && cd ../npm-win32-x64 && npm pack",
-    "publish:shims:npm": "deno run -A scripts/build-shims-npm.ts && cd packages/shims/dist && pnpm publish --access public --no-git-checks",
-    "publish:dataframe:npm": "deno run -A scripts/build-dataframe-npm.ts && cd packages/dataframe/dist && pnpm publish --access public --no-git-checks",
+    "pack:npm": "cd packages/shims/dist && npm pack && cd ../../dataframe/dist && npm pack && cd ../../npm-darwin-arm64 && npm pack && cd ../npm-win32-x64 && npm pack",
+    "publish:shims:npm": "cd packages/shims/dist && pnpm publish --access public --no-git-checks",
+    "publish:dataframe:npm": "cd packages/dataframe/dist && pnpm publish --access public --no-git-checks",
     "publish:dataframe:npm:darwin-arm64": "cp packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node packages/npm-darwin-arm64/ && cd packages/npm-darwin-arm64 && pnpm publish --access public --no-git-checks",
     "publish:dataframe:npm:win32-x64": "cd packages/npm-win32-x64 && pnpm publish --access public --no-git-checks",
     "publish:all:npm": "pnpm publish:shims:npm && pnpm publish:dataframe:npm:darwin-arm64 && pnpm publish:dataframe:npm:win32-x64 && pnpm publish:dataframe:npm",
@@ -59,10 +59,6 @@
     "spinner:demo": "deno run -A packages/shims/spinner/demo.ts"
   },
   "dependencies": {
-    "@tidy-ts/dataframe": "workspace:*",
-    "@tidy-ts/dataframe-darwin-arm64": "workspace:*",
-    "@tidy-ts/dataframe-win32-x64": "workspace:*",
-    "@tidy-ts/shims": "workspace:*",
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",
     "@deno/wasmbuild": "jsr:@deno/wasmbuild@^0.21.1",
     "@hookform/resolvers": "^4.1.2",
@@ -110,6 +106,10 @@
     "@tanstack/react-table": "^8.21.2",
     "@tanstack/router-cli": "^1.157.18",
     "@tanstack/router-plugin": "^1.157.18",
+    "@tidy-ts/dataframe": "workspace:*",
+    "@tidy-ts/dataframe-darwin-arm64": "workspace:*",
+    "@tidy-ts/dataframe-win32-x64": "workspace:*",
+    "@tidy-ts/shims": "workspace:*",
     "@tmcp/adapter-valibot": "^0.1.4",
     "@tmcp/transport-stdio": "^0.3.1",
     "@types/react": "^19.1.1",
@@ -153,8 +153,7 @@
     "vega-embed": "^7.0.2",
     "vega-lite": "^6.4.1",
     "vite": "^7.0.4",
-    "zod": "^4.1.8",
-    "temporal-polyfill": "^0.3.2"
+    "zod": "^4.1.8"
   },
   "pnpm": {
     "overrides": {
@@ -169,6 +168,8 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.16",
     "globals": "^15.14.0",
+    "rollup": "^4.60.2",
+    "rollup-plugin-dts": "^6.4.1",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.18.2"
   }

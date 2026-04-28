@@ -7,10 +7,27 @@
 
 import process from "node:process";
 import type { Spinner } from "./spinner.ts";
-import { fadeIn, fadeOut } from "./transition.ts";
+import {
+  type AnimationConfig,
+  type BaseState,
+  createAnimationSpinner,
+  createBaseState,
+  SPIN,
+} from "./harness.ts";
 
 // Half-width katakana + digits + a few latin chars, like the actual movie
 const CHARS = "\uFF66\uFF67\uFF68\uFF69\uFF6A\uFF6B\uFF6C\uFF6D\uFF6E\uFF6F\uFF70\uFF71\uFF72\uFF73\uFF74\uFF75\uFF76\uFF77\uFF78\uFF79\uFF7A\uFF7B\uFF7C\uFF7D\uFF7E\uFF7F\uFF80\uFF81\uFF82\uFF83\uFF84\uFF85\uFF86\uFF87\uFF88\uFF89\uFF8A\uFF8B\uFF8C\uFF8D\uFF8E\uFF8F\uFF90\uFF91\uFF92\uFF93\uFF94\uFF95\uFF96\uFF97\uFF98\uFF99\uFF9A\uFF9B0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Words that occasionally stream down in place of random characters
+const WORDS = [
+  "TIDY", "DATA", "FRAME", "WASM", "RUST", "DENO", "NODE", "ASYNC",
+  "QUERY", "JOIN", "PIVOT", "GROUP", "SORT", "SLICE", "STATS", "MEAN",
+  "SUM", "COUNT", "MERGE", "FILTER", "MUTATE", "SELECT", "GRAPH",
+  "ARROW", "PARQUET", "CSV", "JSON", "COLUMN", "ROWS", "INDEX",
+  "NULL", "TYPE", "BOOL", "INT", "FLOAT", "STRING", "DATE", "ENUM",
+  "HELLO", "WORLD", "FISH", "NYAN", "CAT", "MATRIX", "NEO", "RABBIT",
+  "SPOON", "RED", "BLUE", "PILL", "WAKE", "UP", "FOLLOW",
+];
 
 interface Drop {
   col: number;
@@ -18,18 +35,12 @@ interface Drop {
   speed: number;
   length: number;
   chars: string[];
+  /** Indices in chars[] that belong to a word and shouldn't be flickered. */
+  locked: Set<number>;
 }
 
-interface State {
+interface State extends BaseState {
   drops: Drop[];
-  frame: number;
-  cols: number;
-  rows: number;
-  message: string;
-  stopped: boolean;
-  interval: ReturnType<typeof setInterval> | null;
-  originalLog: typeof console.log;
-  logBuffer: string[];
 }
 
 function randChar(): string {
@@ -40,19 +51,33 @@ function createDrop(cols: number, rows: number, startAtTop: boolean): Drop {
   const length = 4 + Math.floor(Math.random() * (rows * 0.6));
   const chars: string[] = [];
   for (let i = 0; i < length; i++) chars.push(randChar());
+
+  // ~15% chance to embed a word in the drop
+  const locked = new Set<number>();
+  if (Math.random() < 0.15 && length >= 6) {
+    const word = WORDS[Math.floor(Math.random() * WORDS.length)];
+    if (word.length <= length - 2) {
+      const start = 1 + Math.floor(Math.random() * (length - word.length - 1));
+      for (let i = 0; i < word.length; i++) {
+        chars[start + i] = word[i];
+        locked.add(start + i);
+      }
+    }
+  }
+
   return {
     col: Math.floor(Math.random() * cols),
     row: startAtTop ? -length : -Math.floor(Math.random() * rows),
     speed: 0.2 + Math.random() * 1.0,
     length,
     chars,
+    locked,
   };
 }
 
 function init(msg: string): State {
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-  const rows = termRows - 2;
+  const base = createBaseState(msg, 2);
+  const { cols, rows } = base;
 
   const dropCount = Math.max(12, Math.floor(cols / 2));
   const drops: Drop[] = [];
@@ -60,17 +85,7 @@ function init(msg: string): State {
     drops.push(createDrop(cols, rows, false));
   }
 
-  return {
-    drops,
-    frame: 0,
-    cols,
-    rows,
-    message: msg,
-    stopped: false,
-    interval: null,
-    originalLog: console.log,
-    logBuffer: [],
-  };
+  return { ...base, drops };
 }
 
 // ── Simulation ──────────────────────────────────────────────────────────────
@@ -82,10 +97,12 @@ function step(s: State) {
     const d = s.drops[i];
     d.row += d.speed;
 
-    // Mutate a random character occasionally for the "flicker" effect
+    // Mutate a random character occasionally for the "flicker" effect (skip word chars)
     if (Math.random() < 0.1) {
       const idx = Math.floor(Math.random() * d.chars.length);
-      d.chars[idx] = randChar();
+      if (!d.locked.has(idx)) {
+        d.chars[idx] = randChar();
+      }
     }
 
     // Respawn if the whole trail is off-screen
@@ -96,8 +113,6 @@ function step(s: State) {
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
-
-const SPIN = ["\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827", "\u2807", "\u280F"];
 
 function render(s: State) {
   const { cols, rows } = s;
@@ -168,65 +183,8 @@ function render(s: State) {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
+const config: AnimationConfig<State> = { init, step, render, intervalMs: 80, reserveRows: 2 };
+
 export function createMatrixSpinner(initialMessage: string): Spinner | null {
-  const isTTY = process.stdout.isTTY ?? false;
-  if (!isTTY) return null;
-
-  const s = init(initialMessage);
-  s.originalLog = console.log;
-
-  process.stdout.write("\x1b[?25l");
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-
-  fadeIn(cols, termRows).then(() => {
-    if (s.stopped) return;
-    s.interval = setInterval(() => {
-      if (s.stopped) return;
-      step(s);
-      render(s);
-    }, 80);
-  });
-
-  console.log = (...args: unknown[]) => {
-    if (s.stopped) {
-      s.originalLog(...args);
-      return;
-    }
-    s.logBuffer.push(
-      args.map((a) => (typeof a === "string" ? a : String(a))).join(" "),
-    );
-  };
-
-  const onResize = () => {
-    if (s.stopped) return;
-    s.cols = process.stdout.columns || 80;
-    s.rows = (process.stdout.rows || 24) - 2;
-    process.stdout.write("\x1b[2J");
-  };
-  process.stdout.on("resize", onResize);
-
-  return {
-    update(msg: string) {
-      s.message = msg;
-    },
-    log(msg: string) {
-      s.logBuffer.push(msg);
-    },
-    async stop(msg: string) {
-      s.stopped = true;
-      if (s.interval) clearInterval(s.interval);
-      process.stdout.removeListener("resize", onResize);
-      console.log = s.originalLog;
-
-      const c = process.stdout.columns || 80;
-      const r = process.stdout.rows || 24;
-      await fadeOut(c, r);
-      process.stdout.write("\x1b[?25h");
-      for (const line of s.logBuffer) {
-        s.originalLog(line);
-      }
-      s.originalLog(msg);
-    },
-  };
+  return createAnimationSpinner(config, initialMessage);
 }

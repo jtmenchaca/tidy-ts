@@ -5,7 +5,6 @@ overrides:
   # Core libraries
   zod: $zod
   valibot: $valibot
-  temporal-polyfill: $temporal-polyfill
 
   # Data format support
   "@uwdata/flechette": $@uwdata/flechette

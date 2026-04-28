@@ -1,5 +1,95 @@
 // packages/dataframe/ts/utility/create-dataframe/columns.ts
 
+import type { ColumnData, ColumnarStore } from "./columnar-store.ts";
+import { isTypedColumn } from "./columnar-store.ts";
+import type { View } from "./columnar-view.ts";
+import { materializeIndex } from "./columnar-view.ts";
+
+// ---------------------------------------------------------------------------
+// Standardized helpers for verbs interacting with WASM/napi
+// ---------------------------------------------------------------------------
+
+/**
+ * Get a column as Float64Array, gathering through the view if needed.
+ * Returns null if the column contains non-numeric data.
+ *
+ * Use this when you need to pass a column to a Rust WASM/napi function
+ * that expects Float64Array input.
+ */
+export function getColumnAsFloat64(
+  store: ColumnarStore,
+  colName: string,
+  view?: View | null,
+): Float64Array | null {
+  const col = store.columns[colName];
+  if (!col) return null;
+
+  const hasView = view && (view.index || view.mask);
+
+  if (isTypedColumn(col)) {
+    if (!hasView) return col;
+    // Gather through view
+    const idx = materializeIndex(store.length, view);
+    const out = new Float64Array(idx.length);
+    for (let i = 0; i < idx.length; i++) out[i] = col[idx[i]];
+    return out;
+  }
+
+  // Plain array — check if all numeric, convert
+  const idx = hasView ? materializeIndex(store.length, view) : null;
+  const n = idx ? idx.length : col.length;
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const val = idx ? col[idx[i]] : col[i];
+    if (typeof val !== "number") return null;
+    out[i] = val as number;
+  }
+  return out;
+}
+
+/**
+ * Gather a single column through an index array.
+ * Handles both Float64Array and plain array columns.
+ */
+export function gatherColumn(
+  col: ColumnData,
+  indices: Uint32Array,
+): ColumnData {
+  if (isTypedColumn(col)) {
+    const out = new Float64Array(indices.length);
+    for (let i = 0; i < indices.length; i++) out[i] = col[indices[i]];
+    return out;
+  }
+  const out = new Array(indices.length);
+  for (let i = 0; i < indices.length; i++) out[i] = col[indices[i]];
+  return out;
+}
+
+/**
+ * Build a new ColumnarStore by gathering rows at the given physical indices
+ * from a source store. Preserves Float64Array type for numeric columns.
+ *
+ * Use this instead of inline scatter-gather loops in verbs.
+ */
+export function buildStoreFromIndices(
+  source: ColumnarStore,
+  indices: Uint32Array,
+  columnNames?: string[],
+): ColumnarStore {
+  const names = columnNames ?? source.columnNames;
+  const columns: Record<string, ColumnData> = {};
+  for (const name of names) {
+    const col = source.columns[name];
+    if (!col) continue;
+    columns[name] = gatherColumn(col, indices);
+  }
+  return {
+    columns,
+    length: indices.length,
+    columnNames: names.filter((n) => n in columns),
+  };
+}
+
 /** Gather union-of-keys across all rows, first-seen order */
 export function computeColumns(
   store: readonly object[],

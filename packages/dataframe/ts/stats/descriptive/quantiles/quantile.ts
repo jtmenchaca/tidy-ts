@@ -1,5 +1,5 @@
 import { quantile_wasm } from "../../../wasm/wasm-loader.ts";
-import { isAllFiniteNumbers } from "../../helpers.ts";
+import { getTypedArray, isAllFiniteNumbers } from "../../helpers.ts";
 
 // Type definitions for number arrays
 export type CleanNumberArray = readonly number[];
@@ -45,6 +45,18 @@ export function quantile(
 ): number;
 export function quantile(
   data: number,
+  probs: number[],
+  options?: QuantileOptions,
+): number[];
+
+// Float64Array fast path (zero-copy to WASM)
+export function quantile(
+  data: Float64Array,
+  probs: number,
+  options?: QuantileOptions,
+): number;
+export function quantile(
+  data: Float64Array,
   probs: number[],
   options?: QuantileOptions,
 ): number[];
@@ -135,6 +147,19 @@ export function quantile(
     removeUndefined = false,
     removeNaN = false,
   } = options;
+
+  // Float64Array fast path — skip all scanning and copying
+  const typed = getTypedArray(data);
+  if (typed) {
+    if (typed.length === 0) {
+      return Array.isArray(probs) ? probs.map(() => null) : null;
+    }
+    const probsArray = Array.isArray(probs) ? probs : [probs];
+    const result = Array.from(
+      quantile_wasm(typed, new Float64Array(probsArray)),
+    );
+    return Array.isArray(probs) ? result : result[0];
+  }
 
   // Handle single number case
   if (typeof data === "number") {

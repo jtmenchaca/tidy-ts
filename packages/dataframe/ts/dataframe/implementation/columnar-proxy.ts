@@ -1,6 +1,7 @@
 // Columnar-optimized proxy handlers
 import { resolveVerb } from "./resolve-verb.ts";
 import type { ColumnarStore } from "./columnar-store.ts";
+import { isTypedColumn } from "./columnar-store.ts";
 import { materializeIndex } from "./columnar-view.ts";
 
 /** Disabled array APIs to nudge users to tidy verbs */
@@ -53,6 +54,13 @@ export function buildColumnarProxyHandlers(
   // deno-lint-ignore no-unused-vars
   { api, store, unique, arrayMethods }: ColumnarProxyDeps,
 ): ProxyHandler<object> {
+  // Column access cache — keyed by column name, invalidated when store/view changes
+  // deno-lint-ignore no-explicit-any
+  let cachedStore: any = null;
+  // deno-lint-ignore no-explicit-any
+  let cachedView: any = null;
+  const columnCache = new Map<string, readonly unknown[] | Float64Array>();
+
   return {
     get(_target, prop, _recv) {
       // Numeric indices: lazy row reconstruction
@@ -97,8 +105,8 @@ export function buildColumnarProxyHandlers(
       const routed = resolveVerb(prop, _recv);
       if (routed) return routed;
 
-      // Direct column access - returns accessor object with .toArray() method
-      // deno-lint-ignore no-explicit-any
+      // Direct column access - returns cached, read-only column data
+      // deno-lint-invoke no-explicit-any
       const currentStore = (api as any).__store;
       if (typeof prop === "string" && currentStore.columnNames.includes(prop)) {
         const reserved = [
@@ -111,38 +119,103 @@ export function buildColumnarProxyHandlers(
         ];
 
         if (!reserved.includes(prop)) {
-          const col = currentStore.columns[prop];
           // deno-lint-ignore no-explicit-any
           const currentView = (api as any).__view;
 
-          // Get the filtered column data
-          let columnData: unknown[];
-          if (currentView && (currentView.mask || currentView.index)) {
+          // Invalidate cache if store or view changed
+          if (currentStore !== cachedStore || currentView !== cachedView) {
+            columnCache.clear();
+            cachedStore = currentStore;
+            cachedView = currentView;
+          }
+
+          // Return cached result if available
+          const cached = columnCache.get(prop);
+          if (cached !== undefined) return cached;
+
+          const col = currentStore.columns[prop];
+          const hasView = currentView && (currentView.mask || currentView.index);
+
+          if (hasView) {
+            // View case: must gather through index
             const materializedIndex = materializeIndex(
               currentStore.length,
               currentView,
             );
-            columnData = new Array(materializedIndex.length);
-            for (let i = 0; i < materializedIndex.length; i++) {
-              columnData[i] = col[materializedIndex[i]];
+
+            if (isTypedColumn(col)) {
+              // Gather Float64Array through view, attach as __typedArray
+              const gathered = new Float64Array(materializedIndex.length);
+              for (let i = 0; i < materializedIndex.length; i++) {
+                gathered[i] = col[materializedIndex[i]];
+              }
+              const arr = Array.from(gathered) as unknown[];
+              Object.defineProperty(arr, "__typedArray", {
+                value: gathered,
+                enumerable: false,
+                writable: false,
+                configurable: false,
+              });
+              Object.defineProperty(arr, "toArray", {
+                value: () => Array.from(gathered),
+                enumerable: false,
+                writable: false,
+                configurable: false,
+              });
+              const result = Object.freeze(arr) as readonly unknown[];
+              columnCache.set(prop, result);
+              return result;
+            } else {
+              const gathered = new Array(materializedIndex.length);
+              for (let i = 0; i < materializedIndex.length; i++) {
+                gathered[i] = col[materializedIndex[i]];
+              }
+              Object.defineProperty(gathered, "toArray", {
+                value: () => [...gathered],
+                enumerable: false,
+                writable: false,
+                configurable: false,
+              });
+              const result = Object.freeze(gathered) as readonly unknown[];
+              columnCache.set(prop, result);
+              return result;
             }
-          } else {
-            columnData = col; // Use original column if no view
           }
 
-          // Create array with toArray method, then make it read-only
-          const arrayWithToArray = [...columnData] as unknown[];
+          // No view: return column data directly
+          if (isTypedColumn(col)) {
+            // Spread Float64Array into a regular array for API compatibility,
+            // but attach the original Float64Array so stats functions can
+            // use it directly without re-copying
+            const arr = Array.from(col) as unknown[];
+            Object.defineProperty(arr, "__typedArray", {
+              value: col,
+              enumerable: false,
+              writable: false,
+              configurable: false,
+            });
+            Object.defineProperty(arr, "toArray", {
+              value: () => Array.from(col),
+              enumerable: false,
+              writable: false,
+              configurable: false,
+            });
+            const frozen = Object.freeze(arr) as readonly unknown[];
+            columnCache.set(prop, frozen);
+            return frozen;
+          }
 
-          // Add toArray method to get mutable copy
+          // Plain array: freeze a copy (existing behavior)
+          const arrayWithToArray = [...col] as unknown[];
           Object.defineProperty(arrayWithToArray, "toArray", {
-            value: () => [...columnData],
+            value: () => [...col],
             enumerable: false,
             writable: false,
             configurable: false,
           });
-
-          // Now freeze the array to make it read-only
-          return Object.freeze(arrayWithToArray) as readonly unknown[];
+          const frozen = Object.freeze(arrayWithToArray) as readonly unknown[];
+          columnCache.set(prop, frozen);
+          return frozen;
         }
       }
 

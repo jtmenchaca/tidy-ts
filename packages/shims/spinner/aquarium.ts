@@ -8,7 +8,13 @@
 
 import process from "node:process";
 import type { Spinner } from "./spinner.ts";
-import { fadeIn, fadeOut } from "./transition.ts";
+import {
+  type AnimationConfig,
+  type BaseState,
+  createAnimationSpinner,
+  createBaseState,
+  SPIN,
+} from "./harness.ts";
 
 // ── Sprites ─────────────────────────────────────────────────────────────────
 
@@ -44,24 +50,15 @@ const SEAWEED_FRAMES = [
 
 // ── State ───────────────────────────────────────────────────────────────────
 
-interface State {
+interface State extends BaseState {
   fish: Fish[];
   bubbles: Bubble[];
   seaweed: Seaweed[];
-  frame: number;
-  cols: number;
-  rows: number;
-  message: string;
-  stopped: boolean;
-  interval: ReturnType<typeof setInterval> | null;
-  originalLog: typeof console.log;
-  logBuffer: string[];
 }
 
 function init(msg: string): State {
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-  const rows = Math.max(termRows - 4, 8);
+  const base = createBaseState(msg, 4);
+  const { cols, rows } = base;
 
   const fishCount = Math.max(4, Math.min(Math.floor(rows * 0.5), 12));
   const fish: Fish[] = [];
@@ -85,19 +82,7 @@ function init(msg: string): State {
     });
   }
 
-  return {
-    fish,
-    bubbles: [],
-    seaweed,
-    frame: 0,
-    cols,
-    rows,
-    message: msg,
-    stopped: false,
-    interval: null,
-    originalLog: console.log,
-    logBuffer: [],
-  };
+  return { ...base, fish, bubbles: [], seaweed };
 }
 
 // ── Simulation ──────────────────────────────────────────────────────────────
@@ -148,8 +133,6 @@ function step(s: State) {
 }
 
 // ── Rendering ───────────────────────────────────────────────────────────────
-
-const SPIN = ["\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827", "\u2807", "\u280F"];
 
 function render(s: State) {
   const { cols, rows } = s;
@@ -210,67 +193,8 @@ function render(s: State) {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
+const config: AnimationConfig<State> = { init, step, render, intervalMs: 100, reserveRows: 4 };
+
 export function createAquariumSpinner(initialMessage: string): Spinner | null {
-  const isTTY = process.stdout.isTTY ?? false;
-  if (!isTTY) return null;
-
-  const s = init(initialMessage);
-  s.originalLog = console.log;
-
-  // Hide cursor, fade in, then start animation
-  process.stdout.write("\x1b[?25l");
-  const cols = process.stdout.columns || 80;
-  const termRows = process.stdout.rows || 24;
-
-  fadeIn(cols, termRows).then(() => {
-    if (s.stopped) return;
-    s.interval = setInterval(() => {
-      if (s.stopped) return;
-      step(s);
-      render(s);
-    }, 100);
-  });
-
-  // Buffer console.log calls
-  console.log = (...args: unknown[]) => {
-    if (s.stopped) {
-      s.originalLog(...args);
-      return;
-    }
-    s.logBuffer.push(
-      args.map((a) => (typeof a === "string" ? a : String(a))).join(" "),
-    );
-  };
-
-  const onResize = () => {
-    if (s.stopped) return;
-    s.cols = process.stdout.columns || 80;
-    s.rows = Math.max((process.stdout.rows || 24) - 4, 8);
-    process.stdout.write("\x1b[2J");
-  };
-  process.stdout.on("resize", onResize);
-
-  return {
-    update(msg: string) {
-      s.message = msg;
-    },
-    log(msg: string) {
-      s.logBuffer.push(msg);
-    },
-    async stop(msg: string) {
-      s.stopped = true;
-      if (s.interval) clearInterval(s.interval);
-      process.stdout.removeListener("resize", onResize);
-      console.log = s.originalLog;
-
-      const c = process.stdout.columns || 80;
-      const r = process.stdout.rows || 24;
-      await fadeOut(c, r);
-      process.stdout.write("\x1b[?25h");
-      for (const line of s.logBuffer) {
-        s.originalLog(line);
-      }
-      s.originalLog(msg);
-    },
-  };
+  return createAnimationSpinner(config, initialMessage);
 }

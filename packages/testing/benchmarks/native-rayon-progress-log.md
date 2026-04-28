@@ -1,5 +1,17 @@
 # Native + Rayon Sort Optimization Progress Log
 
+## Mistakes to Avoid
+
+1. **Assume napi-rs is the active backend**. Deno, Node, and Bun all load the `.node` addon — WASM is only the browser fallback. Always optimize the napi path first; WASM changes alone won't show up in benchmarks.
+2. **Don't profile by guessing — add logging**. When a function takes 1.4ms but the Rust profiling shows 0.15ms, the gap is in the TS wrapper or napi proxy. Actually instrument rather than hypothesizing.
+3. **Don't use throwaway `deno eval` scripts or `/tmp` files**. Write benchmark/profiling files in `packages/testing/benchmarks/` so they persist and can be re-run.
+4. **Don't set environment variables in the shell command**. Set flags inside the script itself (e.g. `(globalThis as any).__TIDY_PROFILE = true`).
+5. **Don't optimize only WASM when napi-rs + rayon is available**. The napi path should always be the primary optimization target since it's the one actually used in benchmarks.
+6. **Don't assume algorithmic improvements (O(n) vs O(n log n)) dominate**. At 100K elements, the copy + function call overhead can dwarf the algorithm difference. Profile first.
+7. **Use the existing benchmark infrastructure**. Don't create new benchmark scripts when `bench-local-stats.ts` and `bench-npm-tidy.ts` already exist.
+
+---
+
 ## Goal
 Close the gap between tidy-ts `arrange()` and Polars `sort()` at 500K rows.
 
@@ -436,3 +448,358 @@ Based on this audit, ranked by expected impact:
    - Polars partitions probe keys so each thread's lookups hit one partition's table
    - Our approach has all threads hitting the same table → cache contention
    - Requires full architectural change to partitioned join
+
+---
+
+# npm Package Validation (2026-04-28)
+
+## Purpose
+
+Validate that `@tidy-ts/dataframe` on npm works correctly with the native napi-rs backend,
+and compare end-to-end performance against Polars (Python) using identical operations.
+
+## Scripts
+
+- **tidy-ts benchmark**: [`bench-npm-tidy.ts`](bench-npm-tidy.ts) — run via `npx tsx bench-npm-tidy.ts`
+- **Polars benchmark**: [`bench-npm-polars.py`](bench-npm-polars.py) — run via `python3 bench-npm-polars.py`
+
+## Setup
+
+- **tidy-ts**: `npm install @tidy-ts/dataframe`, run via `npx tsx bench-npm-tidy.ts`
+- **Polars**: `python3 bench-npm-polars.py` (Polars 1.38.1, `POLARS_MAX_THREADS=4`)
+- **Machine**: Apple M-series, macOS
+- **Data**: 100K rows, randomly generated, same seed/shape for both
+- **Method**: 20 iterations, 3 warmup, median reported
+
+## Results (100K rows)
+
+| Operation | tidy-ts (npm, native) | Polars (Python) | Ratio (tidy/polars) |
+|---|---|---|---|
+| **sum** | 11.0ms | 0.05ms | 220x |
+| **mean** | 6.9ms | 0.02ms | 345x |
+| **stdev** | 8.2ms | 0.08ms | 103x |
+| **median** | 8.8ms | 0.33ms | 27x |
+| **quantile(0.95)** | 7.9ms | 0.17ms | 46x |
+| **filter (x > 50)** | 6.2ms | 0.16ms | 39x |
+| **mutate (z = x+y)** | 1.6ms | 0.09ms | 18x |
+| **arrange (x asc)** | 1.9ms | 3.7ms | **0.5x (tidy wins)** |
+| **select (x, y)** | 0.007ms | 0.03ms | **0.2x (tidy wins)** |
+| **groupBy+summarize** | 13.4ms | 1.1ms | 12x |
+| **innerJoin (50K×10K)** | 3.4ms | 1.5ms | 2.2x |
+| **leftJoin (50K×10K)** | 5.7ms | 1.6ms | 3.6x |
+
+## Analysis
+
+### Where tidy-ts wins
+- **arrange**: 1.9ms vs 3.7ms. Our Rust+rayon sort with tuple packing and NaN pre-partition is faster than Polars at this scale. Consistent with the 500K results in the sort optimization section above.
+- **select**: 0.007ms vs 0.03ms. Zero-copy view creation — tidy-ts just creates a new column name mapping, no data movement.
+
+### Where tidy-ts is competitive (< 5x)
+- **innerJoin**: 3.4ms vs 1.5ms (2.2x). After hashbrown + rayon parallel probing + Rust column gather, joins are within striking distance.
+- **leftJoin**: 5.7ms vs 1.6ms (3.6x). Same architecture, slight extra cost for null-fill on unmatched left rows.
+- **mutate**: 1.6ms vs 0.09ms (18x). JS callback overhead per row. Polars executes expressions entirely in Rust with SIMD.
+
+### Where the gap is large (stats: 27-345x)
+The stats gap is the dominant issue. Root cause:
+
+1. **Column access overhead**: `s.sum(df.x)` goes through a JS Proxy getter → column extraction → TypedArray creation → WASM/napi call. Polars operates directly on Arrow columnar memory with zero indirection.
+2. **Per-call overhead**: Each stat call (sum, mean, stdev) is a separate WASM/napi round-trip. Polars batches multiple aggregations into a single expression plan executed in Rust.
+3. **No SIMD in WASM**: WASM sum/mean don't use SIMD intrinsics. Polars uses auto-vectorized Rust with AVX2/NEON.
+4. **DataFrame overhead**: The benchmark accesses `df.x` which creates a column view each call. Polars' `pl.col('x').sum()` is a lazy expression compiled to a single Rust call with direct memory access.
+
+### Context: 500K benchmarks tell a different story
+
+The 100K npm benchmark above uses the public DataFrame API (`s.sum(df.x)`) which has significant JS overhead per call. The 500K benchmarks in the earlier sections of this log used lower-level WASM/napi calls directly and showed much better results:
+
+| Operation | 500K benchmark (this log) | Ratio vs Polars |
+|---|---|---|
+| Sort (weighted avg) | 21.1ms | **0.95x (tidy wins)** |
+| Inner join (numeric) | 20ms | 2.2x |
+| Left join (numeric) | 23ms | 1.7x |
+
+The Rust kernels themselves are competitive. The gap in the npm benchmark is dominated by JS-side overhead (proxy getters, column materialization, per-call dispatch).
+
+## Stats Optimization Plan
+
+### The overhead chain: what happens when you call `s.sum(df.x)`
+
+Traced through the actual source code:
+
+1. **`df.x` — Proxy getter** ([columnar-proxy.ts:100-146](../dataframe/ts/dataframe/implementation/columnar-proxy.ts))
+   - Hits `buildColumnarProxyHandlers.get()` trap
+   - Checks if `prop` is a column name via `currentStore.columnNames.includes(prop)` — O(n) string comparison
+   - If no view: `columnData = col` (just a reference, fast)
+   - **Creates a new frozen array**: `[...columnData]` — copies 100K elements every time
+   - Adds a `.toArray()` method via `Object.defineProperty`
+   - Calls `Object.freeze()` on the result
+   - **Cost**: ~5-8ms for 100K rows (spread copy + freeze)
+
+2. **`s.sum(values)` — stat function** ([sum.ts:79-153](../dataframe/ts/stats/aggregate/sum.ts))
+   - Checks `typeof values === "number"` (false for array)
+   - `Array.isArray(values)` check (true — uses processArray directly)
+   - Calls `canUseFastPath(processArray, options)` which calls `isAllFiniteNumbers()` — iterates all 100K elements checking `typeof v !== "number" || !Number.isFinite(v)`
+   - If fast path: checks `processArray.length >= 1 << 15` (32768) — true for 100K
+   - Creates `new Float64Array(processArray)` — **another 100K copy** from frozen array to typed array
+   - Calls `sum_wasm(Float64Array)` — the actual WASM/napi call
+   - **Cost**: ~3-5ms (isAllFiniteNumbers scan + Float64Array copy + WASM call)
+
+**Total per stat call: ~8-13ms**, of which the actual WASM sum is <0.1ms.
+
+For `s.stdev(df.x)`, it's worse: `sd()` → `variance()` → two `.reduce()` passes over the array (no WASM fast path for variance/stdev).
+
+### Where the time goes (estimated breakdown for `s.sum(df.x)` on 100K rows)
+
+| Phase | Time | Notes |
+|-------|------|-------|
+| Proxy getter: `[...columnData]` spread copy | ~3ms | Copies 100K elements into new array |
+| Proxy getter: `Object.freeze()` | ~2ms | Freezes 100K-element array |
+| `isAllFiniteNumbers()` scan | ~1ms | Iterates 100K checking typeof + isFinite |
+| `new Float64Array(processArray)` | ~2ms | Copies 100K from JS array to typed array |
+| Actual WASM/napi `sum_wasm()` | <0.1ms | The actual computation |
+| **Total** | **~8ms** | 99% is JS overhead |
+
+### Optimization tiers
+
+#### Tier 1: Eliminate redundant copies (expected: 8ms → <1ms per stat call)
+
+**1a. Cache column arrays on the Proxy**
+
+The Proxy getter currently creates a fresh `[...columnData]` + `Object.freeze()` on every access. Instead:
+- Cache the frozen array on first access per column
+- Invalidate cache when `__store` changes (mutate, filter, etc.)
+- This alone eliminates ~5ms per stat call
+
+**1b. Skip `isAllFiniteNumbers` for cached clean columns**
+
+Store a `cleanFlags` map on the ColumnarStore. When a column is first validated as all-finite-numbers, mark it. On subsequent stat calls, skip the O(n) scan.
+
+**1c. Store column data as Float64Array internally**
+
+If `ColumnarStore.columns[name]` stored a `Float64Array` (not `number[]`), we could pass it directly to WASM/napi without the `new Float64Array(processArray)` copy. This is the single biggest optimization — it eliminates both the spread copy and the typed array construction.
+
+Combined effect: `s.sum(df.x)` would become: cache hit (0ms) → already-validated flag (0ms) → pass existing Float64Array to WASM (0ms copy) → WASM sum (<0.1ms).
+
+#### Tier 2: Batch multiple stats in one Rust call (expected: further 3-5x for summarize)
+
+Currently `df.groupBy("g").summarize({ sum: g => s.sum(g.x), mean: g => s.mean(g.y) })` makes separate stat calls per group per aggregation. Instead:
+
+- Add a Rust `batch_stats(columns: Float64Array[], ops: string[])` napi function
+- Accepts multiple columns + operation names, returns all results in one call
+- For grouped operations, pass group indices + columns, compute all aggregations in one Rust pass with Rayon parallelism across groups
+
+#### Tier 3: Variance/stdev WASM fast path (expected: stdev from ~8ms to <0.5ms)
+
+Currently `variance()` uses two JS `.reduce()` passes — no WASM acceleration at all. Add:
+- `variance_wasm(Float64Array)` and `stdev_wasm(Float64Array)` Rust functions
+- Use Welford's online algorithm or two-pass with SIMD
+- Wire into the fast path in `variance.ts` and `stdev.ts`
+
+### Expected impact
+
+| Operation | Current | After Tier 1 | After Tier 1+2+3 | Polars |
+|-----------|---------|-------------|------------------|--------|
+| sum | 11.0ms | <0.5ms | <0.5ms | 0.05ms |
+| mean | 6.9ms | <0.5ms | <0.5ms | 0.02ms |
+| stdev | 8.2ms | ~2ms (still JS reduce) | <0.5ms | 0.08ms |
+| median | 8.8ms | <1ms | <0.5ms | 0.33ms |
+| groupBy+summarize | 13.4ms | ~5ms | ~1ms | 1.1ms |
+
+Tier 1 alone should bring stats within 5-10x of Polars. With all three tiers, we should be within 2-5x for individual stats and competitive on grouped summarize.
+
+---
+
+# Stats Optimization Results (2026-04-28)
+
+## Changes
+
+### Rust
+
+- **`quantile-core.wasm.rs`**: Added `tot_cmp` (branchless total-order comparator from arrange), clean-data fast path (skips `filter(is_finite).collect()` when all values are finite), and O(n) quickselect via `select_nth_unstable_by` for single-quantile Type 7 calls.
+- **`quantile.wasm.rs`**: Added `quantile_type7_select()` — standalone quickselect for Type 7. NAPI export uses quickselect for single prob, rayon `par_sort_unstable_by` for multi-prob. Skips NaN filter when data is all-finite.
+- **`median.wasm.rs`**: NAPI export uses `quantile_type7_select(&mut buf, 0.5)` directly instead of going through the generic `quantile()` function.
+- **`variance.wasm.rs`**: Two-pass variance/stdev in Rust (WASM + napi). Batch stats function for summarize.
+- **`sum.wasm.rs`**: Already had WASM/napi exports; unchanged.
+
+### TypeScript
+
+- **`columnar-proxy.ts`**: Column cache with `__typedArray` non-enumerable property. Cache keyed by column name, invalidated when store/view changes. Float64Array columns attach original typed array for zero-copy stats.
+- **`helpers.ts`**: `getTypedArray()` extracts Float64Array from `instanceof` check or `__typedArray` property.
+- **`sum.ts`, `mean.ts`, `variance.ts`, `stdev.ts`, `median.ts`, `quantile.ts`**: All have Float64Array fast path via `getTypedArray()` — skips `isAllFiniteNumbers` scan and `new Float64Array()` copy.
+
+## Results (100K rows, Deno, native napi-rs backend)
+
+| Operation | Before | After | Polars | Before ratio | **After ratio** |
+|-----------|--------|-------|--------|-------------|----------------|
+| **sum** | 11.0ms | **0.107ms** | 0.074ms | 220x | **1.4x** |
+| **mean** | 6.9ms | **0.102ms** | 0.023ms | 345x | **4.4x** |
+| **stdev** | 8.2ms | **0.202ms** | 0.072ms | 103x | **2.8x** |
+| **median** | 8.8ms | **0.364ms** | 0.322ms | 27x | **1.1x** |
+| **quantile(0.95)** | 7.9ms | **0.217ms** | 0.164ms | 46x | **1.3x** |
+| **groupBy+summarize** | 13.4ms | **3.024ms** | 0.676ms | 12x | **4.5x** |
+| filter | 6.2ms | 6.4ms | 0.13ms | 39x | 49x |
+| mutate | 1.6ms | 1.6ms | 0.07ms | 18x | 23x |
+| **arrange** | 1.9ms | 1.3ms | 2.5ms | **0.5x** | **0.5x** |
+| **select** | 0.007ms | 0.007ms | 0.049ms | **0.14x** | **0.14x** |
+| innerJoin | 3.4ms | 1.7ms | 0.6ms | 2.2x | 2.8x |
+| leftJoin | 5.7ms | 1.8ms | 0.9ms | 3.6x | 1.9x |
+
+## Summary
+
+Stats went from **27-345x slower** to **1.1-4.5x slower** than Polars.
+
+- **sum**: 220x → 1.4x (103x improvement)
+- **median**: 27x → 1.1x (near parity with Polars)
+- **quantile**: 46x → 1.3x (near parity with Polars)
+- **stdev**: 103x → 2.8x
+- **groupBy+summarize**: 12x → 4.5x
+
+The optimizations eliminated ~99% of JS overhead via column caching + Float64Array pass-through, and replaced O(n log n) sort with O(n) quickselect for single-quantile/median calls in the napi path.
+
+All 1153 dataframe tests pass.
+
+---
+
+# Anti-Pattern Cleanup & Standardization (2026-04-28)
+
+Prep work before per-operation optimization sprints.
+
+## 1. Consolidated duplicated `quantile_type7_select`
+
+**Problem**: Same quickselect algorithm implemented twice:
+- `quantile-core.wasm.rs`: `quantile_type7_quickselect()` using `tot_cmp` (branchless total-order)
+- `quantile.wasm.rs`: `quantile_type7_select()` using `partial_cmp().unwrap()`
+
+Both are safe (callers always filter non-finite values first), but having two copies meant changes to one didn't propagate.
+
+**Fix**: Single canonical `pub(crate) fn quantile_type7_select()` in `quantile-core.wasm.rs`. Uses `partial_cmp().unwrap()` (safe after NaN filtering, slightly faster than `tot_cmp` since no bit manipulation). Both `quantile.wasm.rs` and `median.wasm.rs` now import from `quantile_core`. Removed `tot_cmp` from quantile-core entirely (it remains in `arrange.wasm.rs` where NaN values are present pre-partition).
+
+## 2. Created standardized verb helpers (`column-helpers.ts`)
+
+**Problem**: Every verb reinvented column access + view handling + scatter-gather differently. No standard pattern for preparing data for WASM or building result stores.
+
+**Fix**: Added three helpers to `packages/dataframe/ts/dataframe/implementation/column-helpers.ts`:
+
+- `getColumnAsFloat64(store, colName, view?)` — Get column as Float64Array ready for WASM, gathering through view if needed. Returns null for non-numeric columns.
+- `gatherColumn(col, indices)` — Gather a single column through Uint32Array index. Preserves Float64Array type.
+- `buildStoreFromIndices(source, indices, columnNames?)` — Build a new ColumnarStore by scatter-gathering all columns at given indices. Replaces inline loops in distinct, joins, bind-rows.
+
+## 3. Fixed `__typedArray` not attached to group column extractions
+
+**Problem**: In `summarise.verb.ts`, group columns were extracted into plain `new Array(groupSize)` with only `VALIDATED_ARRAY` symbol set. Stat functions couldn't use the WASM fast path (`getTypedArray()` returned null), falling back to JS loops for all group sizes.
+
+**Fix**: For Float64Array source columns, group extraction now:
+1. Gathers into `new Float64Array(groupSize)`
+2. Wraps as `Array.from(gathered)` with `__typedArray` property attached
+3. Stat functions now hit WASM/napi fast path for ALL group sizes (not just > 32K)
+
+Expected impact: grouped summarize stats calls go from JS-loop to WASM for every group.
+
+## 4. Verified unused Rust functions ready for integration
+
+Confirmed signatures match what verbs need:
+
+| Function | Signature | Integration path |
+|----------|-----------|-----------------|
+| `reduce_sum_f64` | `(gid_per_row: &[u32], vals: &[f64], n_groups: u32) -> Vec<f64>` | Convert adjacency list to flat `gid_per_row` array, pass column Float64Array |
+| `reduce_mean_f64` | `(gid_per_row: &[u32], vals: &[f64], valid: &[u8], n_groups: u32) -> Vec<f64>` | Same + validity mask for NaN handling |
+| `reduce_count_u32` | `(gid_per_row: &[u32], valid: &[u8], n_groups: u32) -> Vec<u32>` | Count per group |
+| `group_ids_codes_all` | `(keys_codes: &[u32], n_rows: usize, n_key_cols: usize) -> Grouping` | Replace JS Map hashing in group-by.verb.ts |
+| `pivot_longer_dense` | `(keep: &[u32], fold: &[f64], names: &[u32], n_rows, n_keep, n_fold) -> PivotLongerResult` | Dictionary-encode keep cols, pass Float64Array fold cols |
+
+Key prerequisite for `reduce_*`: compute `gid_per_row` from adjacency list:
+```typescript
+const gidPerRow = new Uint32Array(n);
+for (let g = 0; g < G; g++) {
+  let row = head[g];
+  while (row !== -1) { gidPerRow[row] = g; row = next[row]; }
+}
+```
+
+## Validation
+
+- WASM build: passes
+- napi build: passes
+- Type check (`pnpm check:dataframe`): 0 errors
+- All 1153 dataframe tests: pass
+
+---
+
+# Bulk Reduce Descriptors for Grouped Summarize (2026-04-28)
+
+## Problem
+
+Grouped summarize (`df.groupBy("g").summarize({ total: g => s.sum(g.x) })`) iterates G groups and makes G separate WASM/napi calls — one per group per aggregation. At 100K rows with 1000 groups, this means 1000 WASM round-trips for a single sum.
+
+The Rust `reduce_sum_f64`, `reduce_mean_f64`, and `reduce_count_u32` functions already exist and process ALL groups in a single vectorized pass via a flat `gid_per_row` array. They were never wired into summarize.
+
+## Solution
+
+Added **descriptor-based** aggregation API alongside the existing lambda API:
+
+```typescript
+import { createDataFrame, sumOf, meanOf, countOf } from "@tidy-ts/dataframe";
+
+// New descriptor API (bulk path — 1 WASM call per operation):
+const result = df
+  .groupBy("region")
+  .summarize({
+    total: sumOf("revenue"),
+    avg: meanOf("revenue"),
+    n: countOf(),
+  });
+
+// Existing lambda API still works (per-group path — G WASM calls):
+const result2 = df
+  .groupBy("region")
+  .summarize({
+    total: g => s.sum(g.revenue),
+    avg: g => s.mean(g.revenue),
+    n: g => g.nrows(),
+  });
+
+// Mixed mode also works (descriptors use bulk, lambdas use per-group):
+const result3 = df
+  .groupBy("region")
+  .summarize({
+    total: sumOf("revenue"),
+    custom: g => s.median(g.revenue),  // no bulk path for median yet
+  });
+```
+
+## Implementation
+
+### New file: `packages/dataframe/ts/stats/aggregate/reduce-descriptors.ts`
+- `sumOf(column)` → `{ __reduceOp: "sum", column }`
+- `meanOf(column)` → `{ __reduceOp: "mean", column }`
+- `countOf(column?)` → `{ __reduceOp: "count", column }` (null = count all rows)
+- `isReduceDescriptor()` type guard
+
+### Modified: `packages/dataframe/ts/verbs/aggregate/summarise.verb.ts`
+- **Pure descriptor path**: When ALL spec entries are descriptors:
+  1. Build `gid_per_row: Uint32Array[n]` from adjacency list (O(n) single pass)
+  2. Call `reduce_sum_f64` / `reduce_mean_f64` / `reduce_count_u32` once each
+  3. Build result DataFrame directly from bulk outputs — no per-group iteration at all
+- **Mixed mode**: Pre-compute descriptor columns in bulk, inject into per-group loop
+- Falls back to per-group path for non-Float64Array columns
+
+### Modified: `packages/dataframe/ts/verbs/aggregate/summarise.types.ts`
+- `SummaryEntry<Row>` accepts both `(group) => value` and `ReduceDescriptor`
+
+### Exported from package
+- `sumOf`, `meanOf`, `countOf` exported from `mod.ts` and `ts/index.ts`
+
+## Expected Performance Impact
+
+For pure descriptor specs, the bulk path eliminates:
+- G adjacency list walks (replaced by 1 walk to build `gid_per_row`)
+- G proxy DF constructions
+- G × K WASM round-trips (replaced by K total calls, one per aggregation column)
+- G × K column gather + `Array.from()` + `__typedArray` attachment
+
+For 1000 groups with 3 aggregations: 3000 WASM calls → 3 WASM calls.
+
+## Validation
+
+- Type check (`pnpm check:dataframe`): 0 errors
+- All 1163 dataframe tests pass (10 new + 1153 existing)
+- New tests cover: sum/mean/count equivalence with lambda path, NaN handling, all-NaN columns, multiple grouping keys, empty data, mixed descriptor+lambda mode

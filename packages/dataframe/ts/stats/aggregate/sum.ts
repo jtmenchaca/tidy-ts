@@ -1,4 +1,4 @@
-import { canUseFastPath } from "../helpers.ts";
+import { canUseFastPath, getTypedArray } from "../helpers.ts";
 import { sum_wasm } from "../../wasm/wasm-loader.ts";
 
 // Type definitions for number arrays
@@ -45,6 +45,9 @@ export interface SumOptions {
 
 // Single value overloads
 export function sum(values: number, options?: SumOptions): number;
+
+// Float64Array fast path (zero-copy to WASM)
+export function sum(values: Float64Array, options?: SumOptions): number;
 
 // Clean array overloads (no nulls/undefined)
 export function sum(values: CleanNumberArray, options?: SumOptions): number;
@@ -97,6 +100,13 @@ export function sum(
       return removeNaN ? null : NaN;
     }
     return values;
+  }
+
+  // Float64Array fast path — skip all scanning and copying
+  const typed = getTypedArray(values);
+  if (typed) {
+    if (typed.length === 0) return null;
+    return sum_wasm(typed);
   }
 
   // Convert to array

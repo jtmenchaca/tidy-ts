@@ -1,5 +1,5 @@
 import { expect } from "@std/expect";
-import { Temporal as PolyfillTemporal } from "temporal-polyfill";
+import { Temporal as PolyfillTemporal } from "@tidy-ts/shims/temporal-polyfill";
 
 import {
   getCalendarTemporalBucket,

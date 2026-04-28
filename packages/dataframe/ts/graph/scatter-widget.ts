@@ -1,6 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
 import { widget } from "./anywidget-minimal.ts";
-import embed from "vega-embed";
 
 /** Build a Vega-Lite widget from rows + VL spec (with minimal, safe defaults). */
 export function vegaLiteWidget(rows: any[], vlSpec: any) {
@@ -42,6 +41,7 @@ import embed from "https://esm.sh/vega-embed@6";
       spec.data ??= { name: "table" }; // we’ll push data into this named source
 
       // Render (vega-embed compiles VL→Vega and creates the View)
+      const { default: embed } = await import("vega-embed");
       const { view } = await embed(el, spec, { actions: false });
 
       // Push initial data

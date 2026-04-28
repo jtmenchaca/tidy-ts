@@ -1,0 +1,18 @@
+import { NativeMonthDayParseOps } from './calendarNative.ts';
+import { DayOps } from './calendarOps.ts';
+import { RelativeToSlots } from './markerSystem.ts';
+import { ZonedFieldOptions } from './optionsRefine.ts';
+import { DurationSlots, InstantSlots, PlainDateSlots, PlainDateTimeSlots, PlainMonthDaySlots, PlainTimeSlots, PlainYearMonthSlots, ZonedDateTimeSlots } from './slots.ts';
+export declare function parseInstant(s: string): InstantSlots;
+export declare function parseRelativeToSlots(s: string): RelativeToSlots;
+export declare function parseZonedDateTime(s: string, options?: ZonedFieldOptions): ZonedDateTimeSlots;
+export declare function parseOffsetNano(s: string): number;
+export declare function parsePlainDateTime(s: string): PlainDateTimeSlots;
+export declare function parsePlainDate(s: string, isPlainYearMonth?: boolean, isPlainMonthDay?: boolean): PlainDateSlots;
+export declare function parsePlainYearMonth(getCalendarOps: (calendarId: string) => DayOps, s: string): PlainYearMonthSlots;
+export declare function parsePlainMonthDay(getCalendarOps: (calendarId: string) => NativeMonthDayParseOps, s: string): PlainMonthDaySlots;
+export declare function parsePlainTime(s: string): PlainTimeSlots;
+export declare function parseDuration(s: string): DurationSlots;
+export declare function parseCalendarId(s: string): string;
+export declare function parseTimeZoneId(s: string): string;
+export declare function parseOffsetNanoMaybe(s: string, onlyHourMinute?: boolean): number | undefined;

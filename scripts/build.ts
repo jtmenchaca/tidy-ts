@@ -16,8 +16,12 @@ interface Step {
 
 const steps: Step[] = [
   { label: "Building WASM", command: "pnpm wasmbuild" },
-  { label: "Building native addon (darwin-arm64)", command: "pnpm napibuild" },
-  { label: "Building native addon (win32-x64)", command: "pnpm napibuild:win32-x64" },
+  { label: "Building native addon [darwin-arm64]", command: "pnpm napibuild" },
+  { label: "Building native addon [win32-x64]", command: "pnpm napibuild:win32-x64" },
+  { label: "Type checking shims", command: "pnpm check:shims" },
+  { label: "Type checking dataframe", command: "pnpm check:dataframe" },
+  { label: "Testing dataframe", command: "pnpm test:dataframe" },
+  { label: "Building npm packages", command: "pnpm build:npm" },
   { label: "Committing build artifacts", command: "git add -A && git commit -m 'build'" },
 ];
 

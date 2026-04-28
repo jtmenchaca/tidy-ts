@@ -905,6 +905,27 @@ export function batch_filter_numbers(values, threshold, operation, output) {
 }
 
 /**
+ * WASM export for batch stats
+ * @param {Float64Array} values
+ * @param {string} ops
+ * @returns {Float64Array}
+ */
+export function batch_stats_wasm(values, ops) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ptr1 = passStringToWasm0(
+    ops,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.batch_stats_wasm(ptr0, len0, ptr1, len1);
+  var v3 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v3;
+}
+
+/**
  * WASM export for chi-square goodness of fit test
  * @param {Float64Array} observed
  * @param {Float64Array} expected
@@ -2896,6 +2917,18 @@ export function stable_sort_indices_u32_wasm(
 }
 
 /**
+ * WASM export for stdev calculation
+ * @param {Float64Array} values
+ * @returns {number}
+ */
+export function stdev_wasm(values) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.stdev_wasm(ptr0, len0);
+  return ret;
+}
+
+/**
  * WASM export for sum calculation
  * @param {Float64Array} values
  * @returns {number}
@@ -3280,6 +3313,18 @@ export function unique_str(values) {
   var v2 = getArrayJsValueFromWasm0(ret[0], ret[1]).slice();
   wasm.__wbindgen_free(ret[0], ret[1] * 4, 4);
   return v2;
+}
+
+/**
+ * WASM export for variance calculation
+ * @param {Float64Array} values
+ * @returns {number}
+ */
+export function variance_wasm(values) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.variance_wasm(ptr0, len0);
+  return ret;
 }
 
 /**

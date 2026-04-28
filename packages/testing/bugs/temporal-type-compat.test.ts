@@ -1,11 +1,11 @@
 import { stats as s } from "@tidy-ts/dataframe";
-import { Temporal as PolyTemporal } from "temporal-polyfill";
+import { Temporal as PolyTemporal } from "@tidy-ts/shims/temporal-polyfill";
 import { expect } from "@std/expect";
 
 /**
  * Investigating type compatibility between:
  * 1. Deno native Temporal (global `Temporal`)
- * 2. temporal-polyfill's Temporal (`import { Temporal } from "temporal-polyfill"`)
+ * 2. temporal-polyfill's Temporal (`import { Temporal } from "@tidy-ts/shims/temporal-polyfill"`)
  * 3. Our min/max overloads (currently import types from temporal-polyfill)
  *
  * The consumer error shows:

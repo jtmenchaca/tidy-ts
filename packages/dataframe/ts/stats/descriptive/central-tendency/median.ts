@@ -1,4 +1,4 @@
-import { isAllFiniteNumbers } from "../../helpers.ts";
+import { getTypedArray, isAllFiniteNumbers } from "../../helpers.ts";
 import { median_wasm } from "../../../wasm/wasm-loader.ts";
 
 // Type definitions for number arrays
@@ -38,6 +38,9 @@ export interface MedianOptions {
 
 // Single value overloads
 export function median(values: number, options?: MedianOptions): number;
+
+// Float64Array fast path (zero-copy to WASM)
+export function median(values: Float64Array, options?: MedianOptions): number;
 
 // Clean array overloads (no nulls/undefined)
 export function median(
@@ -96,6 +99,13 @@ export function median(
       return removeNaN ? null : NaN;
     }
     return values;
+  }
+
+  // Float64Array fast path — skip all scanning and copying
+  const typed = getTypedArray(values);
+  if (typed) {
+    if (typed.length === 0) return null;
+    return median_wasm(typed);
   }
 
   // Convert to array

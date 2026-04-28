@@ -9,6 +9,9 @@
 		},
 		{
 			"path": "../Downloads/polars-main"
+		},
+		{
+			"path": "../Downloads/temporal-polyfill-main"
 		}
 	],
 	"extensions": {

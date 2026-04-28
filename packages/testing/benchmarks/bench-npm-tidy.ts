@@ -1,0 +1,93 @@
+/**
+ * Head-to-head benchmark: tidy-ts (npm, native napi-rs backend) vs Polars
+ *
+ * Setup:
+ *   cd /tmp && mkdir tidy-ts-test && cd tidy-ts-test
+ *   npm init -y && npm install @tidy-ts/dataframe tsx
+ *   cp <this-file> bench.ts
+ *   npx tsx bench.ts
+ *
+ * Companion file: bench-npm-polars.py (run with python3)
+ *
+ * 100K rows, 20 iterations, 3 warmup, median reported.
+ * Results documented in native-rayon-progress-log.md
+ */
+
+import { createDataFrame, stats as s, usingNativeBackend } from "@tidy-ts/dataframe";
+
+const WARMUP = 3;
+const ITERATIONS = 20;
+
+function bench(name: string, fn: () => void): number {
+  for (let i = 0; i < WARMUP; i++) fn();
+  const times: number[] = [];
+  for (let i = 0; i < ITERATIONS; i++) {
+    const t = performance.now();
+    fn();
+    times.push(performance.now() - t);
+  }
+  times.sort((a, b) => a - b);
+  const median = times[Math.floor(times.length / 2)];
+  const min = times[0];
+  const p95 = times[Math.floor(times.length * 0.95)];
+  console.log(`  ${name}: ${median.toFixed(3)}ms median, ${min.toFixed(3)}ms min, ${p95.toFixed(3)}ms p95`);
+  return median;
+}
+
+const backend = usingNativeBackend() ? "NATIVE (.node)" : "WASM";
+console.log(`\nBackend: ${backend}\n`);
+
+// --- Data generation ---
+const N = 100_000;
+
+const rows = Array.from({ length: N }, (_, i) => ({
+  x: Math.random() * 100,
+  y: Math.random() * 50,
+  group: ["A", "B", "C", "D"][i % 4],
+}));
+const df = createDataFrame(rows);
+
+// --- Basic stats ---
+console.log(`=== Basic Stats (${N.toLocaleString()} rows) ===`);
+bench("s.sum", () => s.sum(df.x));
+bench("s.mean", () => s.mean(df.x));
+bench("s.stdev", () => s.stdev(df.x));
+bench("s.median", () => s.median(df.x));
+bench("s.quantile(0.95)", () => s.quantile(df.x, 0.95));
+
+// --- DataFrame verbs ---
+console.log(`\n=== DataFrame Verbs (${N.toLocaleString()} rows) ===`);
+bench("filter (x > 50)", () => df.filter((r: any) => r.x > 50));
+bench("mutate (z = x + y)", () => df.mutate({ z: (r: any) => r.x + r.y }));
+bench("arrange (x asc)", () => df.arrange("x", "asc"));
+bench("select (x, y)", () => df.select("x", "y"));
+
+// --- GroupBy + Summarize ---
+console.log(`\n=== GroupBy + Summarize (${N.toLocaleString()} rows, 4 groups) ===`);
+bench("groupBy + summarize (sum, mean, n)", () =>
+  df.groupBy("group").summarize({
+    sum_x: (g: any) => s.sum(g.x),
+    mean_y: (g: any) => s.mean(g.y),
+    n: (g: any) => g.nrows(),
+  })
+);
+
+// --- Joins ---
+const leftN = 50_000;
+const rightN = 10_000;
+const leftRows = Array.from({ length: leftN }, () => ({
+  key: Math.floor(Math.random() * 5000),
+  val_left: Math.random(),
+}));
+const rightRows = Array.from({ length: rightN }, () => ({
+  key: Math.floor(Math.random() * 5000),
+  val_right: Math.random(),
+}));
+const leftDf = createDataFrame(leftRows);
+const rightDf = createDataFrame(rightRows);
+
+console.log(`\n=== Joins (left=${leftN.toLocaleString()}, right=${rightN.toLocaleString()}) ===`);
+bench("innerJoin", () => leftDf.innerJoin(rightDf, "key"));
+bench("leftJoin", () => leftDf.leftJoin(rightDf, "key"));
+
+console.log(`\nDone. Backend: ${backend}\n`);

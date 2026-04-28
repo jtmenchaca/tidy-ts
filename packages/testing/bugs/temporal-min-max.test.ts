@@ -1,6 +1,6 @@
 import { stats as s } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
-import { Temporal } from "temporal-polyfill";
+import { Temporal } from "@tidy-ts/shims/temporal-polyfill";
 
 // --- PlainDate ---
 

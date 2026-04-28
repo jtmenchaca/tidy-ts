@@ -1,6 +1,6 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "@tidy-ts/dataframe";
-import { Temporal as PolyfillTemporal } from "temporal-polyfill";
+import { Temporal as PolyfillTemporal } from "@tidy-ts/shims/temporal-polyfill";
 
 const NativeTemporal = Temporal;
 

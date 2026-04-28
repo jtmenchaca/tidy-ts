@@ -1,4 +1,5 @@
-import { isAllFiniteNumbers } from "../../helpers.ts";
+import { getTypedArray, isAllFiniteNumbers } from "../../helpers.ts";
+import { variance_wasm } from "../../../wasm/wasm-loader.ts";
 
 // Type definitions for number arrays
 export type CleanNumberArray = readonly number[];
@@ -36,6 +37,9 @@ export interface VarianceOptions {
 
 // Single value overloads
 export function variance(values: number, options?: VarianceOptions): number;
+
+// Float64Array fast path (zero-copy to WASM)
+export function variance(values: Float64Array, options?: VarianceOptions): number;
 
 // Clean array overloads (no nulls/undefined)
 export function variance(
@@ -94,6 +98,14 @@ export function variance(
       return removeNaN ? 0 : NaN;
     }
     return 0; // Variance of a single value is 0
+  }
+
+  // Float64Array fast path — skip all scanning, delegate to WASM
+  const typed = getTypedArray(values);
+  if (typed) {
+    if (typed.length === 0) return null;
+    if (typed.length === 1) return null;
+    return variance_wasm(typed);
   }
 
   // Convert to array

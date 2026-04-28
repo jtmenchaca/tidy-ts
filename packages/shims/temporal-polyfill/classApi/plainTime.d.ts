@@ -1,0 +1,10 @@
+import { PlainTimeBag } from '../internal/bagRefine.ts';
+import { TimeFields } from '../internal/fields.ts';
+import { IsoTimeFields } from '../internal/isoFields.ts';
+import { OverflowOptions } from '../internal/optionsRefine.ts';
+import { PlainTimeSlots } from '../internal/slots.ts';
+export type PlainTime = any & TimeFields;
+export type PlainTimeArg = PlainTime | PlainTimeBag | string;
+export declare const PlainTime: any, createPlainTime: any;
+export declare function toPlainTimeSlots(arg: PlainTimeArg, options?: OverflowOptions): PlainTimeSlots;
+export declare function optionalToPlainTimeFields(timeArg: PlainTimeArg | undefined): IsoTimeFields | undefined;

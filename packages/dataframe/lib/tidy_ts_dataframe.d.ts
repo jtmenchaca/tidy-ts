@@ -142,6 +142,14 @@ export function batch_filter_numbers(
 ): void;
 
 /**
+ * WASM export for batch stats
+ */
+export function batch_stats_wasm(
+  values: Float64Array,
+  ops: string,
+): Float64Array;
+
+/**
  * WASM export for chi-square goodness of fit test
  */
 export function chi_square_goodness_of_fit(
@@ -820,6 +828,11 @@ export function stable_sort_indices_u32_wasm(
 ): void;
 
 /**
+ * WASM export for stdev calculation
+ */
+export function stdev_wasm(values: Float64Array): number;
+
+/**
  * WASM export for sum calculation
  */
 export function sum_wasm(values: Float64Array): number;
@@ -966,6 +979,11 @@ export function unique_i32(values: Int32Array): Int32Array;
  * WASM export for unique string values
  */
 export function unique_str(values: string[]): string[];
+
+/**
+ * WASM export for variance calculation
+ */
+export function variance_wasm(values: Float64Array): number;
 
 /**
  * WASM export for beta density function

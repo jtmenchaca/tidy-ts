@@ -6,9 +6,9 @@ This document explains the monorepo setup, the interplay between pnpm workspaces
 
 ```bash
 pnpm bump 1.4.1         # Update version in all 12 files
-pnpm build              # Rust → WASM + native addons (skip if unchanged)
-pnpm publish:all:jsr        # JSR (deno publish for dataframe, shims, arrow, parquet, ai)
-pnpm publish:all:npm    # npm (builds JS bundles + publishes shims, native addons, dataframe)
+pnpm build              # Rust → WASM + native addons + npm JS bundles
+pnpm publish:all:jsr    # JSR (deno publish for dataframe, shims, arrow, parquet, ai)
+pnpm publish:all:npm    # npm (publishes shims, native addons, dataframe from pre-built dist/)
 ```
 
 ## Overview
@@ -441,10 +441,12 @@ The primary registry for `@tidy-ts/*` packages is **JSR** (via `deno publish`). 
 
 ### How It Works
 
-Source packages are written in TypeScript for Deno. The npm build step uses **esbuild** to bundle TS → JS, outputting into a `dist/` directory within each package. A separate npm-specific `package.json` is generated into `dist/` at build time — this avoids conflicting with the Deno workspace `package.json`.
+Source packages are written in TypeScript for Deno. The npm build step uses **esbuild** to bundle TS → JS, and **tsc + rollup-plugin-dts** to generate bundled `.d.ts` declaration files, outputting into a `dist/` directory within each package. A separate npm-specific `package.json` is generated into `dist/` at build time — this avoids conflicting with the Deno workspace `package.json`.
 
 ```
-Source (TS)  →  esbuild bundle  →  packages/<name>/dist/  →  npm publish
+Source (TS)  →  esbuild bundle (JS)   →  packages/<name>/dist/*.js
+             →  tsc (per-file .d.ts)  →  rollup-plugin-dts (bundled .d.ts)  →  packages/<name>/dist/*.d.ts
+             →  npm publish from dist/
 ```
 
 Key details:
@@ -452,8 +454,13 @@ Key details:
 - esbuild resolves all `.ts` imports and strips types automatically (`bundle: true`)
 - `splitting: true` enables code splitting for shared chunks
 - External dependencies (e.g. `zod`, `node:*`) are left as imports, not bundled
-- WASM files are copied alongside the JS output with paths rewritten
+- `.d.ts` generation follows the same approach as `temporal-polyfill`: tsc emits per-file declarations into a temporary `.tsc/` dir, then `rollup-plugin-dts` bundles them into final `.d.ts` files matching the JS entry points. The `.tsc/` dir is cleaned up after.
+- Build scripts dynamically generate a temporary `tsconfig.build.json` and `_build-globals.d.ts` (for Deno/Temporal globals not in `@types/node`), then clean them up after tsc runs
+- The generated `package.json` uses conditional exports with `types` + `import` fields for proper TypeScript resolution
+- WASM files and supporting assets (fonts, resvg WASM, internal JS glue) are copied alongside the JS output with paths rewritten
 - `dist/` directories are gitignored
+- `@tidy-ts/shims` vendors `temporal-polyfill` and `temporal-spec` (no external npm deps except `zod`)
+- `@tidy-ts/dataframe` has `vega`/`vega-lite`/`vega-embed` as optional dependencies (dynamically imported only when charting is used)
 
 ### Build Scripts
 
@@ -467,8 +474,33 @@ Key details:
 Both scripts:
 
 1. Clean the `dist/` directory
-2. Run esbuild with appropriate entry points and externals
-3. Generate an npm-specific `package.json` (reads version from the source `package.json`)
+2. Run esbuild with appropriate entry points and externals (JS bundles)
+3. Run tsc → rollup-plugin-dts to generate bundled `.d.ts` declaration files
+4. Generate an npm-specific `package.json` with `types` and conditional `exports` (reads version from the source `package.json`)
+
+### Vendored Dependencies in Shims
+
+`@tidy-ts/shims` vendors two packages to minimize the npm install footprint:
+
+| Vendored | Source | Location in shims |
+| --- | --- | --- |
+| `temporal-polyfill` | `temporal-polyfill` npm package | `packages/shims/temporal-polyfill/` |
+| `temporal-spec` | `temporal-spec` npm package (types only) | `packages/shims/temporal-spec/` |
+
+Additionally, `temporal-zod` (Zod validators for Temporal types) lives in `packages/shims/temporal-zod/`.
+
+The result: `@tidy-ts/shims` on npm has only one dependency: `zod`. The `@tidy-ts/dataframe` npm package depends on `@tidy-ts/shims` + `zod` as required deps, with vega and platform-specific native binaries as optional.
+
+### Dataframe dist/ Assets
+
+The dataframe npm build (`build-dataframe-npm.ts`) copies these assets alongside the bundled JS:
+
+| File | Purpose |
+| --- | --- |
+| `tidy_ts_dataframe.wasm` | Core WASM binary |
+| `tidy_ts_dataframe.internal.js` | WASM glue (required by Deno's WASM import resolution) |
+| `resvg-wasm-2.6.3-alpha.0_bg.wasm` | SVG-to-PNG rendering (for chart export) |
+| `fonts/` | Inter font files (for chart rendering) |
 
 ### Platform-Specific Native Addons
 
@@ -517,30 +549,28 @@ pnpm napibuild:win32-x64
 
 ### Build
 
-Use `pnpm build` to compile all Rust targets (WASM + native addons) in one command:
+Use `pnpm build` to compile everything in one command:
 
 ```bash
-pnpm build    # = pnpm wasmbuild && pnpm napibuild && pnpm napibuild:win32-x64
+pnpm build    # WASM → native addons → npm JS bundles → git commit
 ```
 
-Or run individual steps:
+This runs these steps in order:
 
-| Script | What it does |
+| Step | What it does |
 | --- | --- |
 | `pnpm wasmbuild` | Compiles Rust → WASM into `packages/dataframe/lib/` |
 | `pnpm napibuild` | Compiles Rust → macOS ARM64 native `.node` binary |
-| `pnpm napibuild:debug` | Same as above but debug build (faster compile, no optimizations) |
 | `pnpm napibuild:win32-x64` | Cross-compiles Rust → Windows x64 native `.node` binary |
+| `pnpm check:shims` | Type checks the shims package |
+| `pnpm check:dataframe` | Type checks the dataframe package |
+| `pnpm test:dataframe` | Runs dataframe tests |
+| `pnpm build:npm` | Bundles TS → JS + .d.ts for npm (`build-shims-npm.ts` + `build-dataframe-npm.ts`) |
+| git commit | Commits all build artifacts |
 
-### npm Build
+Or run individual steps. Use `pnpm napibuild:debug` for a faster debug build (no optimizations).
 
-Use `pnpm build:npm` to bundle TypeScript → JS for npm distribution:
-
-```bash
-pnpm build:npm    # = build-shims-npm.ts && build-dataframe-npm.ts
-```
-
-Use `pnpm pack:npm` to build + create `.tgz` archives for all npm packages (useful for local testing):
+Use `pnpm pack:npm` to create `.tgz` archives from the pre-built dist/ directories (useful for local testing):
 
 ```bash
 pnpm pack:npm
@@ -549,17 +579,17 @@ pnpm pack:npm
 ### Publish Workflow
 
 ```bash
-pnpm bump 1.4.1        # Update version everywhere
-pnpm build              # Compile Rust → WASM + native addons (skip if unchanged)
-pnpm publish:all:npm    # Build + publish all 4 npm packages
+pnpm bump 1.4.1         # Update version everywhere
+pnpm build               # Compile Rust + bundle JS (includes npm packaging)
+pnpm publish:all:npm     # Publish all 4 npm packages from pre-built dist/
 ```
 
 `publish:all:npm` runs these in order, handling the dependency chain automatically:
 
-1. `publish:shims:npm` — Builds shims JS bundle + publishes to npm (triggers auth prompt)
+1. `publish:shims:npm` — Publishes shims from `packages/shims/dist/` (triggers auth prompt)
 2. `publish:dataframe:npm:darwin-arm64` — Publishes macOS ARM64 native addon
 3. `publish:dataframe:npm:win32-x64` — Publishes Windows x64 native addon
-4. `publish:dataframe:npm` — Builds dataframe JS bundle (includes WASM) + publishes to npm
+4. `publish:dataframe:npm` — Publishes dataframe from `packages/dataframe/dist/` (includes WASM + assets)
 
 The first publish triggers npm 2FA. After approving, subsequent publishes within 5 minutes skip the prompt.
 

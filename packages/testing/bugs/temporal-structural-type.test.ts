@@ -1,5 +1,5 @@
 import { expect } from "@std/expect";
-import { Temporal as PolyTemporal } from "temporal-polyfill";
+import { Temporal as PolyTemporal } from "@tidy-ts/shims/temporal-polyfill";
 
 /**
  * Test: can we define a structural type that matches BOTH native and polyfill

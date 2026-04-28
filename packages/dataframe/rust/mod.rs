@@ -66,6 +66,8 @@ pub mod right_join;
 pub mod sum;
 #[path = "dataframe/unique.wasm.rs"]
 pub mod unique;
+#[path = "dataframe/variance.wasm.rs"]
+pub mod variance;
 
 // Statistics module
 #[path = "stats/mod.rs"]
@@ -112,6 +114,8 @@ pub use stats::statistical_tests::*;
 pub use sum::*;
 #[cfg(feature = "wasm")]
 pub use unique::*;
+#[cfg(feature = "wasm")]
+pub use variance::*;
 
 // Re-export NAPI functions (only when napi-rs feature is enabled)
 #[cfg(feature = "napi-rs")]
@@ -166,3 +170,5 @@ pub use join_gather::*;
 pub use sum::*;
 #[cfg(feature = "napi-rs")]
 pub use unique::*;
+#[cfg(feature = "napi-rs")]
+pub use variance::*;

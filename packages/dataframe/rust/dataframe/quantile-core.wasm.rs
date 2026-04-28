@@ -3,18 +3,44 @@
 
 use super::shared_types::QuantileType;
 
-/// Calculate quantiles using R's algorithm
+// ---------------------------------------------------------------------------
+// Single-quantile fast path: O(n) quickselect instead of O(n log n) sort
+// ---------------------------------------------------------------------------
+
+/// Type 7 quickselect for a single probability — O(n) instead of O(n log n).
+/// Data must be mutable (will be partially reordered).
+/// Assumes data contains no NaN/Inf (caller must filter first).
+pub(crate) fn quantile_type7_select(data: &mut [f64], p: f64) -> f64 {
+    let n = data.len() as f64;
+    let h = (n - 1.0) * p + 1.0;
+    let h_floor = h.floor();
+    let h_ceil = h.ceil();
+    let lo = ((h_floor as usize).max(1).min(data.len()) - 1).min(data.len() - 1);
+    let hi = ((h_ceil as usize).max(1).min(data.len()) - 1).min(data.len() - 1);
+
+    if lo == hi {
+        data.select_nth_unstable_by(lo, |a, b| a.partial_cmp(b).unwrap());
+        data[lo]
+    } else {
+        data.select_nth_unstable_by(lo, |a, b| a.partial_cmp(b).unwrap());
+        let lo_val = data[lo];
+        let hi_val = data[lo + 1..].iter().copied().fold(f64::INFINITY, f64::min);
+        let gamma = h - h_floor;
+        lo_val + gamma * (hi_val - lo_val)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
+/// Calculate quantiles using R's algorithm.
+/// Fast path: skips NaN filtering when all values are finite (common for
+/// Float64Array data from the ColumnarStore proxy cache).
 pub(crate) fn quantile(data: &[f64], probs: &[f64], qtype: QuantileType) -> Result<Vec<f64>, String> {
     if data.is_empty() {
         return Err("Cannot calculate quantiles of empty data".to_string());
     }
-
-    // Filter out NaN values and sort
-    let mut clean_data: Vec<f64> = data.iter().filter(|x| x.is_finite()).copied().collect();
-    if clean_data.is_empty() {
-        return Err("No finite values in data".to_string());
-    }
-    clean_data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
 
     // Validate probabilities
     for &p in probs {
@@ -23,25 +49,62 @@ pub(crate) fn quantile(data: &[f64], probs: &[f64], qtype: QuantileType) -> Resu
         }
     }
 
-    let n = clean_data.len() as f64;
-    let mut results = Vec::with_capacity(probs.len());
+    // Check if data is already clean (no NaN/Inf) — common fast path
+    let all_finite = data.iter().all(|x| x.is_finite());
 
-    for &p in probs {
-        let quantile = match qtype {
-            QuantileType::Type1 => quantile_type1(&clean_data, p, n),
-            QuantileType::Type2 => quantile_type2(&clean_data, p, n),
-            QuantileType::Type3 => quantile_type3(&clean_data, p, n),
-            QuantileType::Type4 => quantile_type4(&clean_data, p, n),
-            QuantileType::Type5 => quantile_type5(&clean_data, p, n),
-            QuantileType::Type6 => quantile_type6(&clean_data, p, n),
-            QuantileType::Type7 => quantile_type7(&clean_data, p, n),
-            QuantileType::Type8 => quantile_type8(&clean_data, p, n),
-            QuantileType::Type9 => quantile_type9(&clean_data, p, n),
-        };
-        results.push(quantile);
+    if all_finite {
+        // Single prob + Type7: use O(n) quickselect
+        if probs.len() == 1 && matches!(qtype, QuantileType::Type7) {
+            let mut buf = data.to_vec();
+            return Ok(vec![quantile_type7_select(&mut buf, probs[0])]);
+        }
+
+        // Multiple probs or non-Type7: sort once (no filter copy needed)
+        let mut sorted = data.to_vec();
+        sorted.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        let n = sorted.len() as f64;
+        let mut results = Vec::with_capacity(probs.len());
+        for &p in probs {
+            results.push(dispatch_quantile(&sorted, p, n, &qtype));
+        }
+        return Ok(results);
     }
 
+    // Slow path: filter NaN/Inf, then sort
+    let mut clean_data: Vec<f64> = data.iter().filter(|x| x.is_finite()).copied().collect();
+    if clean_data.is_empty() {
+        return Err("No finite values in data".to_string());
+    }
+
+    // Single prob + Type7: quickselect on clean data
+    if probs.len() == 1 && matches!(qtype, QuantileType::Type7) {
+        return Ok(vec![quantile_type7_select(&mut clean_data, probs[0])]);
+    }
+
+    clean_data.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+
+    let n = clean_data.len() as f64;
+    let mut results = Vec::with_capacity(probs.len());
+    for &p in probs {
+        results.push(dispatch_quantile(&clean_data, p, n, &qtype));
+    }
     Ok(results)
+}
+
+/// Dispatch to the appropriate quantile type on already-sorted data
+#[inline]
+fn dispatch_quantile(sorted: &[f64], p: f64, n: f64, qtype: &QuantileType) -> f64 {
+    match qtype {
+        QuantileType::Type1 => quantile_type1(sorted, p, n),
+        QuantileType::Type2 => quantile_type2(sorted, p, n),
+        QuantileType::Type3 => quantile_type3(sorted, p, n),
+        QuantileType::Type4 => quantile_type4(sorted, p, n),
+        QuantileType::Type5 => quantile_type5(sorted, p, n),
+        QuantileType::Type6 => quantile_type6(sorted, p, n),
+        QuantileType::Type7 => quantile_type7(sorted, p, n),
+        QuantileType::Type8 => quantile_type8(sorted, p, n),
+        QuantileType::Type9 => quantile_type9(sorted, p, n),
+    }
 }
 
 // Type 7: Linear interpolation of modes (R default, Excel)

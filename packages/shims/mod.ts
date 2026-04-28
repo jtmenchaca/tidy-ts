@@ -116,3 +116,9 @@ export {
   type SpinnerStyle,
   withSpinner,
 } from "./spinner/spinner.ts";
+
+// Temporal polyfill (for Node.js/Bun; Deno has native Temporal)
+export { Temporal, toTemporalInstant } from "./temporal-polyfill/impl.ts";
+
+// Temporal Zod validators
+export * from "./temporal-zod/index.ts";

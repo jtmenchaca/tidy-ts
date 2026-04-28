@@ -8,6 +8,22 @@ import { isNA } from "../utilities/mod.ts";
 // Re-export isNA for convenience
 export { isNA };
 
+/**
+ * Extract Float64Array from a column access result.
+ * The Proxy attaches the underlying Float64Array as __typedArray
+ * on frozen arrays returned from df.x access. This avoids the
+ * expensive isAllFiniteNumbers scan + new Float64Array() copy.
+ */
+export function getTypedArray(
+  values: unknown,
+): Float64Array | null {
+  if (values instanceof Float64Array) return values;
+  // deno-lint-ignore no-explicit-any
+  const typed = (values as any)?.__typedArray;
+  if (typed instanceof Float64Array) return typed;
+  return null;
+}
+
 // Type aliases for clear overload signatures
 export type NumbersWithNullable =
   | (number | null | undefined)[]

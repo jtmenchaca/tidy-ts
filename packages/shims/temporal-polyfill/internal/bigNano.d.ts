@@ -1,0 +1,14 @@
+import { NumberSign, divModFloor } from './utils.ts';
+export type BigNano = [days: number, timeNano: number];
+export declare function createBigNano(days: number, timeNano: number): BigNano;
+export declare function addBigNanos(a: BigNano, b: BigNano, sign?: NumberSign): BigNano;
+export declare function moveBigNano(a: BigNano, b: number): BigNano;
+export declare function diffBigNanos(a: BigNano, b: BigNano): BigNano;
+export declare function compareBigNanos(a: BigNano, b: BigNano): NumberSign;
+export declare function bigNanoOutside(subject: BigNano, rangeStart: BigNano, rangeEndExcl: BigNano): boolean;
+export declare function bigIntToBigNano(num: bigint, multiplierNano?: number): BigNano;
+export declare function numberToBigNano(num: number, multiplierNano?: number): BigNano;
+export declare function bigNanoToBigInt(bigNano: BigNano, divisorNano?: number): bigint;
+export declare function bigNanoToNumber(bigNano: BigNano, divisorNano?: number, exact?: boolean): number;
+export declare function bigNanoToExactDays(bigNano: BigNano): number;
+export declare function divModBigNano(bigNano: BigNano, divisorNano: number, divModFunc?: typeof divModFloor): [whole: number, remainderNano: number];

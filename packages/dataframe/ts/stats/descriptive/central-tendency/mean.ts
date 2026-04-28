@@ -1,4 +1,5 @@
-import { canUseFastPath } from "../../helpers.ts";
+import { canUseFastPath, getTypedArray } from "../../helpers.ts";
+import { mean_wasm } from "../../../wasm/wasm-loader.ts";
 
 // Type definitions for number arrays
 export type CleanNumberArray = readonly number[];
@@ -44,6 +45,9 @@ export interface MeanOptions {
 
 // Single value overloads
 export function mean(values: number, options?: MeanOptions): number;
+
+// Float64Array fast path (zero-copy to WASM)
+export function mean(values: Float64Array, options?: MeanOptions): number;
 
 // Clean array overloads (no nulls/undefined)
 export function mean(values: CleanNumberArray, options?: MeanOptions): number;
@@ -96,6 +100,13 @@ export function mean(
       return removeNaN ? null : NaN;
     }
     return values;
+  }
+
+  // Float64Array fast path — skip all scanning and copying
+  const typed = getTypedArray(values);
+  if (typed) {
+    if (typed.length === 0) return null;
+    return mean_wasm(typed);
   }
 
   // Convert to array
