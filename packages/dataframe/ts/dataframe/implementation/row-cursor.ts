@@ -51,7 +51,7 @@ export function withMask<Row extends object>(
   return out as unknown as DataFrame<Row>;
 }
 
-export function withOrder<Row extends object>(
+function withOrder<Row extends object>(
   df: DataFrame<Row>,
   order: (ai: number, bi: number, cols: Record<string, unknown[]>) => number,
 ): DataFrame<Row> {
@@ -105,7 +105,7 @@ export function cowStore(
 }
 
 // Materialize a DataFrame to new store using given index (subset/reorder)
-export function materializeView<Row extends object>(
+function materializeView<Row extends object>(
   df: DataFrame<Row>,
 ): ColumnarStore {
   // deno-lint-ignore no-explicit-any

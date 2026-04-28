@@ -31,7 +31,7 @@ __export(wasm_binding_exports, {
   Resvg: () => Resvg2,
   initWasm: () => initWasm,
 });
-export { initWasm, Resvg2 as Resvg };
+export { Resvg2 as Resvg };
 
 // wasm/dist/index.js
 var wasm;

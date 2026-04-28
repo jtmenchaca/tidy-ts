@@ -263,7 +263,7 @@ export function glmFit(
  * - predict(): Make predictions on new data
  * - More methods coming: residuals(), summary(), etc.
  */
-export class GLM<Row extends Record<string, number>> {
+class GLM<Row extends Record<string, number>> {
   private result: GlmFitResult;
   private formula: string;
   private familyName: string;

@@ -803,3 +803,101 @@ For 1000 groups with 3 aggregations: 3000 WASM calls → 3 WASM calls.
 - Type check (`pnpm check:dataframe`): 0 errors
 - All 1163 dataframe tests pass (10 new + 1153 existing)
 - New tests cover: sum/mean/count equivalence with lambda path, NaN handling, all-NaN columns, multiple grouping keys, empty data, mixed descriptor+lambda mode
+
+---
+
+# Mutate Optimization (2026-04-28)
+
+## Baseline
+
+`mutate({ z: r => r.x + r.y })` on 100K rows: **1.6ms** (18x slower than Polars' 0.065ms).
+
+Profiling showed bottlenecks:
+1. **RowView getter overhead**: `Object.defineProperty` getters cost ~3ms/100K rows per column
+2. **Identity index waste**: `materializeIndex` allocated a 100K identity Uint32Array even with no view
+3. **Grouped path**: Built per-group snapshot objects and `createDataFrame` per group — ~40ms for grouped mutate
+
+## Optimization 1: JS columnar fast path
+
+Parses `String(fn)` to detect simple patterns like `r.x + r.y`, then generates a `new Function` with direct column array access (`cols["x"][i] + cols["y"][i]`) — bypasses RowView property getters entirely.
+
+Also added:
+- **Identity index skip**: When no view/mask, `physicalIndex === i`, skip `materializeIndex`
+- **Grouped columnar**: Columnar fast path works regardless of grouping since `r.x + r.y` doesn't depend on group context
+- **Scalar `.fill()`**: Use `Array.fill()` for scalar assignments on identity path
+
+## Optimization 2: Rust napi vectorized mutate
+
+### Rust (`mutate.wasm.rs`)
+
+Two napi functions:
+- `mutate_binary_cols_napi(a: &[f64], b: &[f64], op: u8) -> Float64Array` — col op col (add/sub/mul/div)
+- `mutate_col_scalar_napi(col: &[f64], scalar: f64, op: u8) -> Float64Array` — col op scalar
+
+### TypeScript (`mutate-helpers-sync.ts`)
+
+`tryNapiMutate` runs before JS columnar path. Detects patterns:
+- `r.x + r.y` → `mutate_binary_cols(colA, colB, 0)` (both must be Float64Array)
+- `r.x * 2` → `mutate_col_scalar(colA, 2, 2)` (col must be Float64Array)
+- `2 * r.x` → same (commutative ops only)
+
+Returns Float64Array directly as the update column (zero-copy into cowStore, since `ColumnData = unknown[] | Float64Array`).
+
+Only works on identity view (no mask/index). Falls through to JS columnar for views, and to RowView for complex expressions (function calls, ternary, etc.).
+
+### TypeScript (`sorting-functions.ts`)
+
+Added `mutate_binary_cols()` and `mutate_col_scalar()` wrappers following the same pattern as `batch_filter_bitset`.
+
+## Results (100K rows, single run with profiling)
+
+### Numeric operations (napi path)
+
+| Test | tidy-ts | Polars | Ratio |
+|------|---------|--------|-------|
+| col + col (`r.x + r.y`) | **0.44ms** | 0.064ms | 6.8x |
+| col * col (`r.x * r.y`) | **0.28ms** | 0.064ms | 4.4x |
+| col - col (`r.x - r.y`) | **0.43ms** | 0.054ms | 8.0x |
+| col / scalar (`r.x / 2`) | **0.30ms** | 0.030ms | 10x |
+| col + scalar (`r.x + 1`) | **0.30ms** | 0.030ms | 10x |
+| col * scalar (`r.x * 100`) | **0.37ms** | 0.031ms | 12x |
+| multi col (`x+y, x*y`) | **0.47ms** | 0.083ms | 5.7x |
+
+The napi compute itself is ~0.001ms. The remaining 0.2-0.4ms is TS overhead: `new Array(n)` allocation for non-napi columns, `cowStore`, `createDataFrame`, `RowView` construction, regex parsing.
+
+### Other mutate types
+
+| Test | tidy-ts | Polars | Ratio |
+|------|---------|--------|-------|
+| boolean (`r.x > 50`) | **1.27ms** | 0.030ms | 42x |
+| scalar (`42`) | **0.20ms** | 0.012ms | 17x |
+| array assign | **0.94ms** | 0.010ms | 94x |
+| string upper | **5.28ms** | 1.647ms | 3.2x |
+| mixed (num+str+scalar) | **1.46ms** | 2.305ms | **0.63x (tidy wins)** |
+| column drop | **0.07ms** | 0.039ms | 1.8x |
+| chained mutate | **0.53ms** | 0.062ms | 8.5x |
+| grouped numeric | **3.26ms** | 0.815ms | 4.0x |
+| grouped string | **7.69ms** | 2.513ms | 3.1x |
+| filter→mutate | **1.78ms** | 0.069ms | 26x |
+| ternary | **3.89ms** | 0.303ms | 13x |
+
+### Stable benchmark (median of 50 iterations)
+
+`mutate (z = x + y)`: **0.277ms** → down from 1.6ms (5.8x improvement). Polars: 0.065ms (4.3x ratio).
+
+## Where the remaining gap is
+
+For numeric col+col/col+scalar (the napi path), ~99% of time is JS overhead:
+- `prepare-columns`: 0.04-0.15ms (allocates `new Array(n)` — could skip for napi path since result is Float64Array)
+- `createUpdatedDataFrame`: 0.03-0.07ms (cowStore, createDataFrame, RowView construction)
+- Regex parsing of `String(fn)`: ~0.1ms (runs every call, not cached)
+
+For boolean/ternary/string expressions, the JS columnar or RowView paths dominate — these can't go through napi without a full expression compiler.
+
+Polars has near-zero overhead because `with_columns` compiles expressions to a Rust execution plan with direct Arrow memory access — no JS boundary crossing at all.
+
+## Validation
+
+- All 1153 dataframe tests pass
+- `bench-profile-mutate.ts`: 18 mutate variants with instrumentation
+- `bench-polars-mutate.py`: Matching Polars benchmark for comparison

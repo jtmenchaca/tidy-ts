@@ -38,7 +38,7 @@ import * as wilcoxon from "./wilcoxon.ts";
  * const chiSquareP = distributions.chiSquare.probability(3.84, 1);
  * ```
  */
-export const dist = {
+const dist = {
   // Continuous distributions
   normal: {
     density: normal.dnorm,

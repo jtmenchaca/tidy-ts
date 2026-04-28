@@ -8,8 +8,8 @@
 
 import type { RowLabelStore } from "../types/row-labels.ts";
 
-/** A column can be a plain JS array or a typed Float64Array for numeric data. */
-export type ColumnData = unknown[] | Float64Array;
+/** A column can be a plain JS array, Float64Array for numeric data, or Uint8Array for boolean masks. */
+export type ColumnData = unknown[] | Float64Array | Uint8Array;
 
 export interface ColumnarStore {
   /** Column data stored as arrays (plain or typed) */
@@ -27,6 +27,11 @@ export function isTypedColumn(col: ColumnData): col is Float64Array {
   return col instanceof Float64Array;
 }
 
+/** True if column is a Uint8Array boolean mask (0/1 values). */
+export function isBooleanColumn(col: ColumnData): col is Uint8Array {
+  return col instanceof Uint8Array;
+}
+
 /**
  * Gather elements from a source column by index, preserving typed array format.
  * If src is Float64Array, returns Float64Array; otherwise returns unknown[].
@@ -38,6 +43,11 @@ export function gatherColumn(
   const len = indices.length;
   if (src instanceof Float64Array) {
     const out = new Float64Array(len);
+    for (let i = 0; i < len; i++) out[i] = src[indices[i]];
+    return out;
+  }
+  if (src instanceof Uint8Array) {
+    const out = new Uint8Array(len);
     for (let i = 0; i < len; i++) out[i] = src[indices[i]];
     return out;
   }
@@ -150,7 +160,7 @@ export function toColumnarStorage<T extends object>(
 /**
  * Get a row by index from columnar storage (lazy reconstruction)
  */
-export function getRowAt<T extends object>(
+function getRowAt<T extends object>(
   store: ColumnarStore,
   index: number,
 ): T | undefined {
@@ -160,7 +170,9 @@ export function getRowAt<T extends object>(
 
   const row = {} as T;
   for (const colName of store.columnNames) {
-    (row as any)[colName] = store.columns[colName][index];
+    const col = store.columns[colName];
+    const val = col[index];
+    (row as any)[colName] = col instanceof Uint8Array ? val !== 0 : val;
   }
   return row;
 }
@@ -168,7 +180,7 @@ export function getRowAt<T extends object>(
 /**
  * Get column data directly
  */
-export function getColumn(
+function getColumn(
   store: ColumnarStore,
   columnName: string,
 ): ColumnData | undefined {
@@ -178,7 +190,7 @@ export function getColumn(
 /**
  * Create iterator for row-wise access (lazy reconstruction)
  */
-export function* iterateRows<T extends object>(
+function* iterateRows<T extends object>(
   store: ColumnarStore,
 ): IterableIterator<T> {
   for (let i = 0; i < store.length; i++) {
@@ -189,7 +201,7 @@ export function* iterateRows<T extends object>(
 /**
  * Convert columnar storage back to row array (for compatibility)
  */
-export function toRowArray<T extends object>(
+function toRowArray<T extends object>(
   store: ColumnarStore,
 ): T[] {
   const result: T[] = new Array(store.length);

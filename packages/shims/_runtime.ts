@@ -31,7 +31,7 @@ const _pathToFileURL: typeof import("node:url").pathToFileURL =
  * Lazy load Node.js modules for async operations
  * Note: path and fileURLToPath are loaded at top level, so this only loads fs/process
  */
-export async function ensureNodeModules(): Promise<void> {
+async function ensureNodeModules(): Promise<void> {
   // Load fs and process only for Node.js/Bun (Deno has its own APIs)
   if (
     !_fs && (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)
@@ -162,7 +162,7 @@ export function getFsSync(): typeof import("node:fs") | null {
 /**
  * Ensure fs sync module is loaded (async version)
  */
-export async function ensureFsSync(): Promise<void> {
+async function ensureFsSync(): Promise<void> {
   if (
     !_fsSync &&
     (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)

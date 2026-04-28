@@ -3,7 +3,7 @@
 import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // High-performance pivot_wider functions
-export function pivot_wider_dense_f64(
+function pivot_wider_dense_f64(
   gid_per_row: Uint32Array,
   cat_codes: Uint32Array,
   values: Float64Array,
@@ -22,7 +22,7 @@ export function pivot_wider_dense_f64(
   );
 }
 
-export function pivot_wider_seen_flags(
+function pivot_wider_seen_flags(
   gid_per_row: Uint32Array,
   cat_codes: Uint32Array,
   values: Float64Array,
@@ -42,7 +42,7 @@ export function pivot_wider_seen_flags(
 }
 
 // New combined pivot function that returns values and seen flags in one pass
-export function pivot_wider_dense_f64_all(
+function pivot_wider_dense_f64_all(
   gid_per_row: Uint32Array,
   cat_codes: Uint32Array,
   values: Float64Array,
@@ -62,7 +62,7 @@ export function pivot_wider_dense_f64_all(
 }
 
 // High-performance pivot_longer functions
-export function pivot_longer_dense(
+function pivot_longer_dense(
   keep_cols_data: Uint32Array,
   fold_cols_data: Float64Array,
   fold_cols_names: Uint32Array,
@@ -82,7 +82,7 @@ export function pivot_longer_dense(
 }
 
 // Ultra-optimized pivot_longer with typed arrays
-export function pivot_longer_typed_arrays(
+function pivot_longer_typed_arrays(
   keep_cols_data: Uint32Array,
   fold_cols_data: Float64Array,
   fold_cols_names: Uint32Array,
@@ -101,7 +101,7 @@ export function pivot_longer_typed_arrays(
   );
 }
 
-export function pivot_longer_numeric(
+function pivot_longer_numeric(
   keep_cols_data: Uint32Array,
   fold_cols_data: Float64Array,
   fold_cols_valid: Uint8Array,
@@ -123,7 +123,7 @@ export function pivot_longer_numeric(
 }
 
 // Ultra-optimized pivot_longer for numeric data
-export function pivot_longer_typed_numeric(
+function pivot_longer_typed_numeric(
   keep_cols_data: Uint32Array,
   fold_cols_data: Float64Array,
   fold_cols_valid: Uint8Array,
@@ -144,7 +144,7 @@ export function pivot_longer_typed_numeric(
   );
 }
 
-export function pivot_longer_strings(
+function pivot_longer_strings(
   keep_cols_data: Uint32Array,
   fold_cols_data: Uint32Array,
   fold_cols_names: Uint32Array,
@@ -164,7 +164,7 @@ export function pivot_longer_strings(
 }
 
 // Ultra-optimized pivot_longer for string data
-export function pivot_longer_typed_strings(
+function pivot_longer_typed_strings(
   keep_cols_data: Uint32Array,
   fold_cols_data: Uint32Array,
   fold_cols_names: Uint32Array,

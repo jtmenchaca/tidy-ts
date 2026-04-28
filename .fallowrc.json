@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
+  "ignorePatterns": [
+    "packages/shims/temporal-polyfill/**",
+    "packages/shims/temporal-spec/**",
+    "packages/testing/runtimes/**"
+  ],
+  "ignoreDependencies": [
+    "@cliffy/command",
+    "@deno/wasmbuild",
+    "@std/csv",
+    "@std/encoding",
+    "@std/expect",
+    "@std/path",
+    "@std/random"
+  ]
+}

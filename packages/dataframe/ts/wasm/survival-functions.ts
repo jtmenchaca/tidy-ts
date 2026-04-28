@@ -268,7 +268,7 @@ export function coxResiduals({
   );
 }
 
-export function survSplit({
+function survSplit({
   tstart,
   tstop,
   cut,

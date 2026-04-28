@@ -35,7 +35,7 @@ export function getStoreAndIndex(
   return { store: tmp, index: idx };
 }
 
-export function firstNonNullish(xs: readonly unknown[]): unknown {
+function firstNonNullish(xs: readonly unknown[]): unknown {
   for (let i = 0; i < xs.length; i++) {
     const v = xs[i];
     if (v !== null && v !== undefined) return v;
@@ -43,7 +43,7 @@ export function firstNonNullish(xs: readonly unknown[]): unknown {
   return undefined;
 }
 
-export function asI64(keys: readonly unknown[]): BigInt64Array {
+function asI64(keys: readonly unknown[]): BigInt64Array {
   const out = new BigInt64Array(keys.length);
   for (let i = 0; i < keys.length; i++) {
     const v = keys[i];
@@ -52,7 +52,7 @@ export function asI64(keys: readonly unknown[]): BigInt64Array {
   return out;
 }
 
-export function projectCompositeKeyColumn(
+function projectCompositeKeyColumn(
   store: ColumnarStore,
   index: Uint32Array,
   keys: string[],
@@ -74,14 +74,14 @@ export function projectCompositeKeyColumn(
 // Multi-key Join API Helpers
 // -----------------------------------------------------------------------------
 
-export function normalizeJoinKeys(
+function normalizeJoinKeys(
   by: any,
 ): any[] {
   return Array.isArray(by) ? by : [by];
 }
 
 // Type guards to distinguish API styles
-export function isObjectJoinOptions(
+function isObjectJoinOptions(
   options: any,
 ): boolean {
   return options && typeof options === "object" && !Array.isArray(options) &&
@@ -182,7 +182,7 @@ export function applySuffixToColumnName(
   return hasConflict && suffix ? `${name}${suffix}` : name;
 }
 
-export function precomputeBaseIndices(
+function precomputeBaseIndices(
   left: StoreAndIndex,
   right: StoreAndIndex,
   leftIdxView: readonly number[],
@@ -209,7 +209,7 @@ export function precomputeBaseIndices(
 // Column Building Helpers
 // -----------------------------------------------------------------------------
 
-export function copyColumnWithIndex(
+function copyColumnWithIndex(
   source: unknown[],
   indices: Uint32Array,
   length: number,
@@ -221,7 +221,7 @@ export function copyColumnWithIndex(
   return out;
 }
 
-export function copyColumnWithNullableIndex(
+function copyColumnWithNullableIndex(
   source: unknown[],
   baseIndices: Uint32Array,
   length: number,
@@ -248,7 +248,7 @@ export interface InnerJoinIndices {
   rightIdxView: number[];
 }
 
-export function buildHashMapForJoin(
+function buildHashMapForJoin(
   keys: readonly unknown[],
 ): Map<unknown, number[]> {
   const map = new Map<unknown, number[]>();
@@ -264,7 +264,7 @@ export function buildHashMapForJoin(
   return map;
 }
 
-export function toNullableIndex(value: number): number | null {
+function toNullableIndex(value: number): number | null {
   return value === NA_U32 ? null : value;
 }
 
@@ -285,7 +285,7 @@ export interface JoinAlgorithmParams {
   threshold?: number;
 }
 
-export function executeJoinWithAdaptiveStrategy(
+function executeJoinWithAdaptiveStrategy(
   params: JoinAlgorithmParams,
 ): JoinIndices {
   const { leftKeys, rightKeys, joinType, wasmFunctions, threshold = 1000 } =
@@ -517,7 +517,7 @@ export function createEmptyJoinResult() {
   });
 }
 
-export function copyDataFrameColumns(
+function copyDataFrameColumns(
   storeAndIndex: StoreAndIndex,
 ): ColumnarStore {
   const { store, index } = storeAndIndex;

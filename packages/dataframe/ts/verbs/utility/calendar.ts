@@ -67,7 +67,7 @@ export function parseCalendarFrequency(
  * addCalendarPeriod(new Date("2023-01-31").getTime(), 1, "M")
  * // Returns: 2023-02-28 (handles month-end correctly)
  */
-export function addCalendarPeriod(
+function addCalendarPeriod(
   date: number,
   value: number,
   unit: "M" | "Q" | "Y",

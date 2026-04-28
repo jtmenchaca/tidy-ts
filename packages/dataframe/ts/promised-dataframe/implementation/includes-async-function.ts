@@ -22,7 +22,7 @@ export function returnsPromise(x: unknown): x is Promise<unknown> {
  * Creates a minimal row snapshot for testing functions.
  * Used by mutate and filter verbs.
  */
-export function makeRowSnapshot(
+function makeRowSnapshot(
   api: any,
   rowIndex: number,
 ): object {
@@ -38,7 +38,7 @@ export function makeRowSnapshot(
  * Creates a minimal DataFrame probe for testing functions.
  * Used by summarise verb.
  */
-export function makeDataFrameProbe<Row extends object>(
+function makeDataFrameProbe<Row extends object>(
   df: DataFrame<Row>,
 ): DataFrame<Row> {
   const n = df.nrows();

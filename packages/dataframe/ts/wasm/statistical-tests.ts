@@ -135,7 +135,7 @@ export function chi_square_independence(
   );
 }
 
-export function chi_square_goodness_of_fit(
+function chi_square_goodness_of_fit(
   observed: Float64Array,
   expected: Float64Array,
   alpha: number,
@@ -148,7 +148,7 @@ export function chi_square_goodness_of_fit(
   );
 }
 
-export function chi_square_variance(
+function chi_square_variance(
   data: Float64Array,
   pop_variance: number,
   tail: string,
@@ -281,7 +281,7 @@ export function proportion_test_two_sample(
 }
 
 // Non-parametric Tests
-export function mann_whitney_test(
+function mann_whitney_test(
   x: Float64Array,
   y: Float64Array,
   alpha: number,

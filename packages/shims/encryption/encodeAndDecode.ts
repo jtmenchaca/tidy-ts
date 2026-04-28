@@ -52,7 +52,7 @@ export function fromBase64URL(base64url: string): string {
   return base64;
 }
 
-export function decodeToBytes(
+function decodeToBytes(
   { data, encoding }: {
     data: string;
     encoding: PlaintextEncoding | CiphertextEncoding;

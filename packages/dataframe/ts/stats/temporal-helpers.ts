@@ -298,7 +298,7 @@ export function floorCalendarTemporal(
  * Add one frequency period to a CalendarTemporal value.
  * Uses native Temporal `add()`.
  */
-export function addCalendarTemporalPeriod(
+function addCalendarTemporalPeriod(
   value: CalendarTemporal,
   freq: CalendarFrequencyParsed,
 ): CalendarTemporal {

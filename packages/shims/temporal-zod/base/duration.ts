@@ -3,7 +3,7 @@ import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const Duration: typeof Temporal.Duration = Temporal.Duration;
+const Duration: typeof Temporal.Duration = Temporal.Duration;
 
 /**
  * Regex pattern for {@link Temporal.Duration} ISO 8601 duration strings

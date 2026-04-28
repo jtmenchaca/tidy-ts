@@ -6,6 +6,10 @@
 use wasm_bindgen::prelude::*;
 #[cfg(feature = "napi-rs")]
 use napi_derive::napi;
+#[cfg(feature = "napi-rs")]
+use napi::bindgen_prelude::Uint8Array;
+#[cfg(feature = "napi-rs")]
+use rayon::prelude::*;
 
 /// Comparison operations for numbers and integers.
 #[derive(Debug, Copy, Clone)]
@@ -140,27 +144,88 @@ pub fn batch_filter_numbers(
         .map_err(|e| JsValue::from_str(&format!("Batch filter error: {}", e)))
 }
 
-/// NAPI export for batch numeric filtering
-/// Returns the output mask as a Vec<u8> instead of mutating in place
+/// NAPI export for batch numeric filtering (rayon-parallelized)
+/// Returns the output mask as a Uint8Array (zero-copy to JS)
 #[cfg(feature = "napi-rs")]
 #[napi]
 pub fn batch_filter_numbers_napi(
     values: &[f64],
     threshold: f64,
     operation: u8,
-) -> Result<Vec<u8>, napi::Error> {
-    let op = match operation {
-        0 => ComparisonOp::Greater,
-        1 => ComparisonOp::GreaterEqual,
-        2 => ComparisonOp::Less,
-        3 => ComparisonOp::LessEqual,
-        4 => ComparisonOp::Equal,
-        5 => ComparisonOp::NotEqual,
+) -> Result<Uint8Array, napi::Error> {
+    let cmp: fn(f64, f64) -> bool = match operation {
+        0 => |v, t| v.is_finite() && t.is_finite() && v > t,
+        1 => |v, t| v.is_finite() && t.is_finite() && v >= t,
+        2 => |v, t| v.is_finite() && t.is_finite() && v < t,
+        3 => |v, t| v.is_finite() && t.is_finite() && v <= t,
+        4 => |v, t| f64_eq(v, t),
+        5 => |v, t| f64_ne(v, t),
         _ => return Err(napi::Error::from_reason("Invalid comparison operation")),
     };
 
-    let mut output = vec![0u8; values.len()];
-    batch_compare_numbers(values, threshold, op, &mut output)
-        .map_err(|e| napi::Error::from_reason(format!("Batch filter error: {}", e)))?;
-    Ok(output)
+    let output: Vec<u8> = values.par_iter()
+        .map(|&v| if cmp(v, threshold) { 1u8 } else { 0u8 })
+        .collect();
+
+    Ok(Uint8Array::new(output))
+}
+
+/// NAPI export for batch numeric filtering that returns a packed bitset (Uint32Array).
+/// Each Uint32 word packs 32 comparison results, MSB-first layout matching JS BitSet.
+/// Eliminates the Uint8Array → BitSet conversion overhead on the JS side.
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn batch_filter_bitset_napi(
+    values: &[f64],
+    threshold: f64,
+    operation: u8,
+) -> Result<napi::bindgen_prelude::Uint32Array, napi::Error> {
+    let profile = std::env::var("TIDY_PROFILE").is_ok();
+    let t0 = if profile { Some(std::time::Instant::now()) } else { None };
+
+    let cmp: fn(f64, f64) -> bool = match operation {
+        0 => |v, t| v > t,
+        1 => |v, t| v >= t,
+        2 => |v, t| v < t,
+        3 => |v, t| v <= t,
+        4 => |v, t| f64_eq(v, t),
+        5 => |v, t| f64_ne(v, t),
+        _ => return Err(napi::Error::from_reason("Invalid comparison operation")),
+    };
+
+    let n = values.len();
+    let n_words = (n + 31) / 32;
+    let mut bits = vec![0u32; n_words];
+
+    // Process 32 values at a time, packing into Uint32 words (MSB-first)
+    let full_words = n / 32;
+    for w in 0..full_words {
+        let base = w * 32;
+        let mut word = 0u32;
+        for j in 0..32 {
+            if cmp(values[base + j], threshold) {
+                word |= 0x80000000u32 >> j;
+            }
+        }
+        bits[w] = word;
+    }
+
+    // Handle remainder
+    let rem = n & 31;
+    if rem > 0 {
+        let base = full_words * 32;
+        let mut word = 0u32;
+        for j in 0..rem {
+            if cmp(values[base + j], threshold) {
+                word |= 0x80000000u32 >> j;
+            }
+        }
+        bits[full_words] = word;
+    }
+
+    if let Some(t) = t0 {
+        eprintln!("      [rust batch_filter_bitset_napi] n={}: {:.4}ms", n, t.elapsed().as_secs_f64() * 1000.0);
+    }
+
+    Ok(napi::bindgen_prelude::Uint32Array::new(bits))
 }

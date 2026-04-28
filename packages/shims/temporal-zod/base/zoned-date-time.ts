@@ -2,7 +2,7 @@ import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const ZonedDateTime: typeof Temporal.ZonedDateTime =
+const ZonedDateTime: typeof Temporal.ZonedDateTime =
   Temporal.ZonedDateTime;
 
 /**

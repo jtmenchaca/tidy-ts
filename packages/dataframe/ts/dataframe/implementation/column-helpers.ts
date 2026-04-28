@@ -16,7 +16,7 @@ import { materializeIndex } from "./columnar-view.ts";
  * Use this when you need to pass a column to a Rust WASM/napi function
  * that expects Float64Array input.
  */
-export function getColumnAsFloat64(
+function getColumnAsFloat64(
   store: ColumnarStore,
   colName: string,
   view?: View | null,
@@ -51,7 +51,7 @@ export function getColumnAsFloat64(
  * Gather a single column through an index array.
  * Handles both Float64Array and plain array columns.
  */
-export function gatherColumn(
+function gatherColumn(
   col: ColumnData,
   indices: Uint32Array,
 ): ColumnData {
@@ -71,7 +71,7 @@ export function gatherColumn(
  *
  * Use this instead of inline scatter-gather loops in verbs.
  */
-export function buildStoreFromIndices(
+function buildStoreFromIndices(
   source: ColumnarStore,
   indices: Uint32Array,
   columnNames?: string[],
@@ -212,7 +212,7 @@ export function detectColumnTypes(
  * @returns Record of column names to their Uint32Array representations
  */
 export function convertToTypedArrays(
-  columns: Record<string, unknown[] | Float64Array>,
+  columns: Record<string, ColumnData>,
   keyCols: string[],
 ): Record<string, Uint32Array> {
   const typedArrays: Record<string, Uint32Array> = {};

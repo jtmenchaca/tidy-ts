@@ -49,7 +49,7 @@ function normalizeRows(rows: any[]): any[] {
 }
 
 /** Build a standalone Vega-Lite spec with inlined data and numeric size. */
-export function buildStandaloneVlSpec(
+function buildStandaloneVlSpec(
   df: any,
   spec: GraphOptions<any>,
   opts?: { width?: number; height?: number; background?: string },
@@ -69,7 +69,7 @@ export function buildStandaloneVlSpec(
 }
 
 /** Render SVG fully in-process (no DOM, no browser). */
-export async function vlToSVG(
+async function vlToSVG(
   vlSpec: any,
   opts?: { width?: number; height?: number },
 ): Promise<string> {
@@ -104,7 +104,7 @@ export async function vlToSVG(
 }
 
 /** Rasterize SVG → PNG using resvg-js WASM. */
-export async function svgToPNG(
+async function svgToPNG(
   svg: string,
   width: number,
   _height: number,

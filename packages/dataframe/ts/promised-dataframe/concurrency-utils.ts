@@ -232,7 +232,7 @@ export async function processConcurrently<T, R>(
  * @deprecated Use processConcurrently with ConcurrencyOptions instead
  */
 // deno-lint-ignore require-await
-export async function processConcurrentlyLegacy<T, R>(
+async function processConcurrentlyLegacy<T, R>(
   tasks: Array<() => Promise<R>>,
   options: LegacyConcurrencyOptions = {},
 ): Promise<R[]> {
@@ -421,7 +421,7 @@ async function isPromiseResolved(promise: Promise<void>): Promise<boolean> {
  * Creates a queue-based concurrency limiter
  * Useful for reusable concurrency control across multiple operations
  */
-export class ConcurrencyQueue {
+class ConcurrencyQueue {
   private running = 0;
   private readonly queue: Array<() => void> = [];
 

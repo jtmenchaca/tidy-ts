@@ -3,7 +3,7 @@ import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const PlainDate: typeof Temporal.PlainDate = Temporal.PlainDate;
+const PlainDate: typeof Temporal.PlainDate = Temporal.PlainDate;
 
 /**
  * Regex pattern for {@link Temporal.PlainDate} ISO 8601 strings (e.g. `2023-01-15`).

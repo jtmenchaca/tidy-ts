@@ -94,6 +94,8 @@ export function sum(
     removeNaN = false,
   } = options;
 
+  const _p = (globalThis as any).__TIDY_PROFILE;
+
   // Handle single number case
   if (typeof values === "number") {
     if (Number.isNaN(values)) {
@@ -103,10 +105,16 @@ export function sum(
   }
 
   // Float64Array fast path — skip all scanning and copying
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   const typed = getTypedArray(values);
+  if (_p) console.log(`  [sum] getTypedArray: ${(performance.now() - t0).toFixed(4)}ms, got=${typed ? "Float64Array" : "null"}`);
   if (typed) {
     if (typed.length === 0) return null;
-    return sum_wasm(typed);
+    if (_p) t0 = performance.now();
+    const result = sum_wasm(typed);
+    if (_p) console.log(`  [sum] sum_wasm(${typed.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+    return result;
   }
 
   // Convert to array

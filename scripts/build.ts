@@ -22,7 +22,7 @@ const steps: Step[] = [
   { label: "Type checking dataframe", command: "pnpm check:dataframe" },
   { label: "Testing dataframe", command: "pnpm test:dataframe" },
   { label: "Building npm packages", command: "pnpm build:npm" },
-  { label: "Committing build artifacts", command: "git add -A && git commit -m 'build'" },
+  { label: "Committing build artifacts", command: "git add packages/dataframe/lib/ packages/shims/dist/ packages/dataframe/dist/ && git commit -m 'build'" },
 ];
 
 for (const step of steps) {

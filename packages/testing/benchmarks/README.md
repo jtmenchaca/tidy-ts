@@ -3,6 +3,12 @@
 ## Quick Start
 
 ```bash
+# Run the stable benchmark (tidy-ts operations, 100K + 500K rows)
+deno run -A --no-check packages/testing/benchmarks/bench-stable.ts
+
+# Run matching Polars comparison
+python3 packages/testing/benchmarks/bench-npm-polars.py
+
 # Run the full cross-language benchmark suite (TS + Python + R)
 cd packages/testing/benchmarks
 deno run -A runner.ts
@@ -16,7 +22,24 @@ the comparison table used in `docs/api/benchmark-results.md`.
 
 ## File Guide
 
-### Cross-Language Suite (canonical)
+### Stable Benchmarks (primary)
+
+| File | Purpose |
+|------|---------|
+| `bench-stable.ts` | Primary tidy-ts benchmark — stats, verbs, joins at 100K/500K rows. Median of 50 iterations. |
+| `bench-npm-polars.py` | Matching Polars benchmark for head-to-head comparison with bench-stable.ts |
+| `bench-npm-tidy.ts` | npm-published package benchmark (uses `@tidy-ts/dataframe` from npm) |
+
+### Profiling Benchmarks (per-operation instrumentation)
+
+These use `__TIDY_PROFILE = true` to log time breakdowns for every phase inside each operation.
+
+| File | Purpose |
+|------|---------|
+| `bench-profile-mutate.ts` | 18 mutate variants with full instrumentation: napi binary, col-scalar, boolean, scalar, array, string, mixed, chained, grouped, filtered, ternary |
+| `bench-polars-mutate.py` | Matching Polars benchmark for all 18 mutate variants |
+
+### Cross-Language Suite
 
 | File | Purpose |
 |------|---------|
@@ -26,12 +49,10 @@ the comparison table used in `docs/api/benchmark-results.md`.
 | `r.R` | R base/dplyr benchmarks |
 | `analyze.ts` | Reads `results/` CSV files and prints formatted comparison tables |
 
-### Optimization Benchmarks
+### Other
 
 | File | Purpose |
 |------|---------|
-| `bench-npm-tidy.ts` | Head-to-head tidy-ts operations (for npm/published package) |
-| `bench-npm-polars.py` | Head-to-head Polars operations (companion to bench-npm-tidy) |
 | `bench-local-stats.ts` | Stats-focused benchmark using local source imports |
 | `mutate-jit.ts` | JIT compilation benchmark for mutate operations |
 
@@ -39,9 +60,27 @@ the comparison table used in `docs/api/benchmark-results.md`.
 
 | File | Purpose |
 |------|---------|
-| `native-rayon-progress-log.md` | Optimization history and mistakes-to-avoid for napi/rayon work |
+| `native-rayon-progress-log.md` | Full optimization history: sort, join, stats, mutate. Includes mistakes-to-avoid, architectural audits (Polars comparison), and per-phase profiling results. |
 
-### Python Environment
+## Optimization Approach
+
+Each optimization follows a consistent methodology:
+
+1. **Profile first**: Enable `(globalThis as any).__TIDY_PROFILE = true` and run the profiling benchmark to see where time goes (e.g. `bench-profile-mutate.ts`)
+2. **Measure Polars**: Run the matching Polars benchmark (e.g. `bench-polars-mutate.py`) for comparison
+3. **Optimize**: Target the dominant cost — usually JS framework overhead, not Rust compute
+4. **Verify**: Run `pnpm test:dataframe` (1153 tests) + `pnpm check:dataframe` (type check)
+5. **Document**: Update `native-rayon-progress-log.md` with before/after numbers
+
+### Common bottleneck patterns
+
+- **napi Vec<u32> / Vec<u8> returns**: Creates N individual JS Number objects. Fix: return `Uint32Array` / `Buffer` instead.
+- **Stale .node binary**: `pnpm napibuild` copies to both `packages/dataframe/lib/` and `packages/npm-darwin-arm64/`. If either is stale, benchmarks use old code.
+- **Identity index materialization**: `materializeIndex` allocates a N-element Uint32Array even when no view exists. Fix: check `!view?.mask && !view?.index` and skip.
+- **Array allocation for napi results**: `new Array(n)` is allocated then overwritten by napi Float64Array. The napi result can be used directly since `ColumnData = unknown[] | Float64Array`.
+- **String(fn) regex parsing**: Each mutate call re-parses the function string. Adds ~0.1ms overhead.
+
+## Python Environment
 
 | File | Purpose |
 |------|---------|

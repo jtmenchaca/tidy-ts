@@ -5,7 +5,7 @@ import {
   isGroupedDataFrame,
 } from "../../utilities/isDataFrame.ts";
 
-export const wrapOutput = (
+const wrapOutput = (
   v: unknown,
   chainFn: (df: any) => any,
   chainGroupedFn: (gdf: any) => any,

@@ -34,13 +34,27 @@ export function count_str(values: string[], target: string): number {
 }
 
 export function mean_wasm(values: Float64Array): number {
+  const _p = (globalThis as any).__TIDY_PROFILE;
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   initWasm();
-  return wasmInternal.mean_wasm(values);
+  if (_p) console.log(`    [mean_wasm] initWasm: ${(performance.now() - t0).toFixed(4)}ms`);
+  if (_p) t0 = performance.now();
+  const result = wasmInternal.mean_wasm(values);
+  if (_p) console.log(`    [mean_wasm] wasmInternal.mean_wasm(${values.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+  return result;
 }
 
 export function sum_wasm(values: Float64Array): number {
+  const _p = (globalThis as any).__TIDY_PROFILE;
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   initWasm();
-  return wasmInternal.sum_wasm(values);
+  if (_p) console.log(`    [sum_wasm] initWasm: ${(performance.now() - t0).toFixed(4)}ms`);
+  if (_p) t0 = performance.now();
+  const result = wasmInternal.sum_wasm(values);
+  if (_p) console.log(`    [sum_wasm] wasmInternal.sum_wasm(${values.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+  return result;
 }
 
 export function quantile_wasm(
@@ -67,11 +81,18 @@ export function variance_wasm(values: Float64Array): number {
 }
 
 export function stdev_wasm(values: Float64Array): number {
+  const _p = (globalThis as any).__TIDY_PROFILE;
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   initWasm();
-  return wasmInternal.stdev_wasm(values);
+  if (_p) console.log(`    [stdev_wasm] initWasm: ${(performance.now() - t0).toFixed(4)}ms`);
+  if (_p) t0 = performance.now();
+  const result = wasmInternal.stdev_wasm(values);
+  if (_p) console.log(`    [stdev_wasm] wasmInternal.stdev_wasm(${values.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+  return result;
 }
 
-export function batch_stats_wasm(
+function batch_stats_wasm(
   values: Float64Array,
   ops: string,
 ): Float64Array {

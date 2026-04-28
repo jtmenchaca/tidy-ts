@@ -2,7 +2,7 @@
  * Seedable pseudo-random number generator using a Linear Congruential Generator (LCG)
  * Based on the same algorithm used by many systems for consistent, reproducible randomness.
  */
-export class SeededRandom {
+class SeededRandom {
   private seed: number;
 
   constructor(seed: number) {
@@ -33,7 +33,7 @@ export class SeededRandom {
  * Create a random number generator. If seed is provided, uses seeded generator.
  * If no seed, uses Math.random() for better entropy.
  */
-export function createRandom(seed?: number): () => number {
+function createRandom(seed?: number): () => number {
   if (seed !== undefined) {
     const seededRandom = new SeededRandom(seed);
     return () => seededRandom.next();

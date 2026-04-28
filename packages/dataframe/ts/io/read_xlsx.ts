@@ -694,7 +694,7 @@ function autoWrapSchema<T extends z.ZodObject<any>>(schema: T): T {
 └───────────────────────────────────────────────────────────────────────────*/
 
 // deno-lint-ignore no-explicit-any
-export function parseXLSXContent<S extends z.ZodObject<any>>(
+function parseXLSXContent<S extends z.ZodObject<any>>(
   rows: string[][],
   schema: S,
   opts: NAOpts = {},

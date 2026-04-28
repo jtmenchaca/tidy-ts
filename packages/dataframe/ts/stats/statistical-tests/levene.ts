@@ -75,7 +75,7 @@ export function leveneTest(
  * @param alpha Significance level (default: 0.05)
  * @returns true if variances appear equal, false if significantly different
  */
-export function hasEqualVariances(
+function hasEqualVariances(
   groups: number[][],
   alpha = 0.05,
 ): boolean {

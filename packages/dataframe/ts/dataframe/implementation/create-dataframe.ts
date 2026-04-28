@@ -13,6 +13,12 @@ import {
 import { materializeIndex, type View } from "./columnar-view.ts";
 import { detectColumnTypes } from "./column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+
+/** Read a value from a column, converting Uint8Array boolean masks to actual booleans. */
+function readCol(col: ColumnData, i: number): unknown {
+  const v = col[i];
+  return col instanceof Uint8Array ? v !== 0 : v;
+}
 import { dataFrameToJSON } from "../../io/write_json.ts";
 
 export type PrintOptions = {
@@ -84,7 +90,9 @@ export function createColumnarDataFrameFromStore<
     for (let i = 0; i < idx.length; i++) {
       const row = {} as Row;
       for (const colName of currentStore.columnNames) {
-        (row as any)[colName] = currentStore.columns[colName][idx[i]];
+        const col = currentStore.columns[colName];
+        const val = col[idx[i]];
+        (row as any)[colName] = col instanceof Uint8Array ? val !== 0 : val;
       }
       yield row;
     }
@@ -116,8 +124,8 @@ export function createColumnarDataFrameFromStore<
     // reconstruct only when a plain object is explicitly requested:
 
     const row = {} as any;
-    for (const col of currentStore.columnNames) {
-      row[col] = currentStore.columns[col][idx[i]];
+    for (const colName of currentStore.columnNames) {
+      row[colName] = readCol(currentStore.columns[colName], idx[i]);
     }
     return row;
   };
@@ -129,7 +137,7 @@ export function createColumnarDataFrameFromStore<
     for (let i = 0; i < idx.length; i++) {
       const row = {} as Row;
       for (const colName of currentStore.columnNames) {
-        (row as any)[colName] = currentStore.columns[colName][idx[i]];
+        (row as any)[colName] = readCol(currentStore.columns[colName], idx[i]);
       }
       result[i] = row;
     }
@@ -142,7 +150,8 @@ export function createColumnarDataFrameFromStore<
     const result = {} as Record<string, unknown[]>;
     for (const colName of currentStore.columnNames) {
       const col = currentStore.columns[colName];
-      result[colName] = Array.from(idx, (i: number) => col[i]);
+      const isBool = col instanceof Uint8Array;
+      result[colName] = Array.from(idx, (i: number) => isBool ? col[i] !== 0 : col[i]);
     }
     return result;
   };
@@ -263,7 +272,7 @@ export function createColumnarDataFrameFromStore<
     for (let i = 0; i < rowsToShow; i++) {
       const row = {} as Row;
       for (const colName of currentStore.columnNames) {
-        (row as any)[colName] = currentStore.columns[colName][i];
+        (row as any)[colName] = readCol(currentStore.columns[colName], i);
       }
       rowSample[i] = row;
     }
@@ -331,7 +340,7 @@ export function createColumnarDataFrameFromStore<
         const row: object = {};
 
         for (const colName of displayCols) {
-          let value = currentStore.columns[colName][actualRowIndex];
+          let value = readCol(currentStore.columns[colName], actualRowIndex);
 
           // Handle nested objects and long strings
           if (value instanceof Date) {
@@ -381,7 +390,7 @@ export function createColumnarDataFrameFromStore<
       const actualRowIndex = idx[i];
       const row: object = {};
       for (const colName of currentStore.columnNames) {
-        const value = currentStore.columns[colName][actualRowIndex];
+        const value = readCol(currentStore.columns[colName], actualRowIndex);
         if (
           typeof value === "object" && value !== null && !Array.isArray(value)
         ) {
@@ -431,11 +440,21 @@ class RowView<Row extends object> {
   ) {
     // define getters once, no Proxy traps in hot loops:
     for (const name of names) {
-      Object.defineProperty(this, name, {
-        get: () => (this.cols as any)[name][this._i],
-        enumerable: true,
-        configurable: false,
-      });
+      const col = cols[name];
+      if (col instanceof Uint8Array) {
+        // Boolean mask column: convert 0/1 → boolean on read
+        Object.defineProperty(this, name, {
+          get: () => (this.cols as any)[name][this._i] !== 0,
+          enumerable: true,
+          configurable: false,
+        });
+      } else {
+        Object.defineProperty(this, name, {
+          get: () => (this.cols as any)[name][this._i],
+          enumerable: true,
+          configurable: false,
+        });
+      }
     }
   }
   setCursor(i: number) {

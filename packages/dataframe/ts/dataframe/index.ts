@@ -41,7 +41,7 @@ export type {
 
 export { createColumnarDataFrameFromStore } from "./implementation/create-dataframe.ts";
 
-export { withIndex, withMask, withOrder } from "./implementation/row-cursor.ts";
+export { withIndex } from "./implementation/row-cursor.ts";
 
 export { materializeIndex } from "./implementation/columnar-view.ts";
 export { cowStore } from "./implementation/row-cursor.ts";

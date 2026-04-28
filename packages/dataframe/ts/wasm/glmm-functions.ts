@@ -163,7 +163,7 @@ export interface GlmmFitResult {
 /**
  * GLMM class with methods for fitted model
  */
-export class GLMM<Row extends Record<string, number | string>> {
+class GLMM<Row extends Record<string, number | string>> {
   private result: GlmmFitResult;
   private _formula: string;
   private _randomEffects: RandomEffectSpec[];

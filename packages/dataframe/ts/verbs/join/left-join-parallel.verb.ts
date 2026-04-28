@@ -158,7 +158,7 @@ function buildJoinResultOptimized(
 /* Parallel path (async, hash-partition both sides)                            */
 /* -------------------------------------------------------------------------- */
 
-export function shouldUseAsyncForJoin(nLeft: number, nRight: number): boolean {
+function shouldUseAsyncForJoin(nLeft: number, nRight: number): boolean {
   if (nLeft >= PAR_MIN_LEFT_ROWS) return true;
   const score = nLeft * Math.log2(Math.max(2, nRight));
   return score > 5e6;

@@ -5,20 +5,20 @@ import {
 
 import type { PrintOptions } from "../implementation/create-dataframe.ts";
 
-export function formatNumber(n: number): string {
+function formatNumber(n: number): string {
   if (Number.isNaN(n)) return "NaN";
   if (n === Infinity) return "∞";
   if (n === -Infinity) return "-∞";
   return String(n);
 }
 
-export function clip(text: string, max: number): string {
+function clip(text: string, max: number): string {
   if (text.length <= max) return text;
   if (max <= 1) return "…";
   return text.slice(0, max - 1) + "…";
 }
 
-export function stringifyCell(v: unknown): string {
+function stringifyCell(v: unknown): string {
   if (v === null) return "null";
   if (v === undefined) return "";
   if (typeof v === "number") return formatNumber(v);

@@ -86,7 +86,7 @@ export function welchAnovaOneWay(
  * @param alpha - Significance level (default: 0.05)
  * @returns TestResult for factor A main effect
  */
-export function _twoWayAnovaFactorA({
+function _twoWayAnovaFactorA({
   data,
   alpha = 0.05,
 }: {
@@ -148,7 +148,7 @@ export function _twoWayAnovaFactorA({
  * @param alpha - Significance level (default: 0.05)
  * @returns TestResult for factor B main effect
  */
-export function _twoWayAnovaFactorB({
+function _twoWayAnovaFactorB({
   data,
   alpha = 0.05,
 }: {
@@ -210,7 +210,7 @@ export function _twoWayAnovaFactorB({
  * @param alpha - Significance level (default: 0.05)
  * @returns TestResult for A×B interaction effect
  */
-export function _twoWayAnovaInteraction({
+function _twoWayAnovaInteraction({
   data,
   alpha = 0.05,
 }: {

@@ -3,7 +3,7 @@
 import { initWasm, wasmInternal } from "./wasm-init.ts";
 
 // Combined grouping function that returns all data in one pass
-export function group_ids_codes_all(
+function group_ids_codes_all(
   keys_codes: Uint32Array,
   n_rows: number,
   n_key_cols: number,
@@ -13,7 +13,7 @@ export function group_ids_codes_all(
 }
 
 // High-performance aggregation functions
-export function reduce_sum_f64(
+function reduce_sum_f64(
   gid_per_row: Uint32Array,
   vals: Float64Array,
   n_groups: number,
@@ -22,7 +22,7 @@ export function reduce_sum_f64(
   return wasmInternal.reduce_sum_f64(gid_per_row, vals, n_groups);
 }
 
-export function reduce_count_u32(
+function reduce_count_u32(
   gid_per_row: Uint32Array,
   valid: Uint8Array,
   n_groups: number,
@@ -31,7 +31,7 @@ export function reduce_count_u32(
   return wasmInternal.reduce_count_u32(gid_per_row, valid, n_groups);
 }
 
-export function reduce_mean_f64(
+function reduce_mean_f64(
   gid_per_row: Uint32Array,
   vals: Float64Array,
   valid: Uint8Array,

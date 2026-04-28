@@ -97,5 +97,5 @@ export function kolmogorovSmirnovUniformTest({
 }
 
 // Alias for the main two-sample test
-export const ksTest = kolmogorovSmirnovTest;
+const ksTest = kolmogorovSmirnovTest;
 export const ksTestUniform = kolmogorovSmirnovUniformTest;

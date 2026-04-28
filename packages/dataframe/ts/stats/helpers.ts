@@ -6,7 +6,6 @@
 import { isNA } from "../utilities/mod.ts";
 
 // Re-export isNA for convenience
-export { isNA };
 
 /**
  * Extract Float64Array from a column access result.
@@ -67,7 +66,7 @@ export function hasMixedTypes(values: unknown[] | Iterable<unknown>): boolean {
  * @param values - Array or iterable of potentially mixed types
  * @returns Array of valid numbers only
  */
-export function extractValidNumbers(
+function extractValidNumbers(
   values: unknown[] | Iterable<unknown>,
 ): number[] {
   // Handle iterables by materializing to array
@@ -99,7 +98,7 @@ export function extractValidNumbers(
  * @param excludeInfinity - If true, filters out Infinity and -Infinity
  * @returns Array of numbers
  */
-export function extractNumbersWithOptions(
+function extractNumbersWithOptions(
   values: unknown[] | Iterable<unknown>,
   excludeNaN: boolean = false,
   excludeInfinity: boolean = false,
@@ -144,7 +143,7 @@ export function extractNumbersWithOptions(
  * @param values - Array or iterable of potentially mixed types
  * @returns Object with sum and hasValidValues flag
  */
-export function computeNumericSum(
+function computeNumericSum(
   values: unknown[] | Iterable<unknown>,
 ): { sum: number; hasValidValues: boolean } {
   // Handle iterables by materializing to array
@@ -178,7 +177,7 @@ export function computeNumericSum(
  * @param allowInfinity - If true, Infinity/-Infinity are considered valid
  * @returns True if value is a valid number for statistical operations
  */
-export function isStatisticalNumber(
+function isStatisticalNumber(
   value: unknown,
   allowNaN: boolean = false,
   allowInfinity: boolean = false,
@@ -216,7 +215,7 @@ export function isAllFiniteNumbers(values: unknown[]): values is number[] {
  * @param values - Array or iterable of potentially mixed types
  * @returns Float64Array of valid numbers
  */
-export function prepareForWASM(
+function prepareForWASM(
   values: unknown[] | Iterable<unknown>,
 ): Float64Array {
   const numericValues = extractValidNumbers(values);
@@ -289,7 +288,7 @@ export function canUseFastPath(
 /**
  * Standard error messages for descriptive statistics
  */
-export const ERROR_MESSAGES = {
+const ERROR_MESSAGES = {
   NO_VALID_VALUES: "No valid numeric values found",
   NO_VALID_VALUES_MEAN: "No valid numeric values found to calculate mean",
   NO_VALID_VALUES_SUM: "No valid numeric values found to calculate sum",

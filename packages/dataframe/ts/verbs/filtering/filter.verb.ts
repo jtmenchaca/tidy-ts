@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   bitsetClear,
+  bitsetFromMask,
   bitsetGet,
   bitsetSet,
   createBitSet,
@@ -8,6 +9,7 @@ import {
 import { withMask } from "../../dataframe/implementation/row-cursor.ts";
 import {
   // numeric/date WASM only; string WASM stays disabled (too much overhead)
+  batch_filter_bitset,
   batch_filter_numbers,
 } from "../../wasm/wasm-loader.ts";
 import {
@@ -55,7 +57,7 @@ type OptimizedPredicate = (
 /* Tunables                                                                   */
 /* -------------------------------------------------------------------------- */
 const ENABLE_WASM_NUMERIC = true;
-const WASM_MIN_ROWS_NUMERIC = Infinity; // below this, JS tends to be faster
+const WASM_MIN_ROWS_NUMERIC = 0; // napi has negligible overhead; WASM threshold handled internally
 
 /* -------------------------------------------------------------------------- */
 /* Public API                                                                  */
@@ -123,6 +125,9 @@ function filterRowsSync(
   });
 
   try {
+    const profile = (globalThis as any).__TIDY_PROFILE;
+    const t0 = profile ? performance.now() : 0;
+
     const api = df as any;
     const store = api.__store;
     const nRowsFull = store.length;
@@ -132,12 +137,15 @@ function filterRowsSync(
       ENABLE_WASM_NUMERIC && nRowsFull >= WASM_MIN_ROWS_NUMERIC &&
       isPlainFrame(api)
     ) {
-      console.log("\n\n----- WASM fast-path -----\n\n");
       try {
-        const wasmMask = tryWasmFilterPathNumericOnly(df, predicates);
-        if (wasmMask) {
-          const bs = maskToBitset(wasmMask, nRowsFull);
-          const out = withMask(df, bs);
+        const t1 = profile ? performance.now() : 0;
+        const wasmResult = tryWasmFilterPath(df, predicates, nRowsFull);
+        if (profile) console.log(`  [filter] tryWasmFilterPath: ${(performance.now() - t1).toFixed(4)}ms, result=${wasmResult ? 'hit' : 'miss'}`);
+        if (wasmResult) {
+          const t3 = profile ? performance.now() : 0;
+          const out = withMask(df, wasmResult);
+          if (profile) console.log(`  [filter] withMask: ${(performance.now() - t3).toFixed(4)}ms`);
+          if (profile) console.log(`  [filter] TOTAL (WASM path): ${(performance.now() - t0).toFixed(4)}ms`);
           if (df.__groups) {
             (out as any).__groups = df.__groups;
             tracer.copyContext(df, out);
@@ -146,19 +154,19 @@ function filterRowsSync(
           tracer.copyContext(df, out);
           return out;
         }
-        console.log("\n\n----- wasmMask is null -----\n\n");
       } catch {
-        console.log("\n\n----- WASM fast-path failed -----\n\n");
         /* fall through to JS path */
       }
     }
 
     // JS path: build AND mask directly in a BitSet
+    const t4 = profile ? performance.now() : 0;
     const bs = tracer.withSpan(df, "compute-filter-mask", () => {
       const bitset = createBitSet(nRowsFull);
       computeFilterMaskDirectly_AND(df, predicates, bitset);
       return bitset;
     });
+    if (profile) console.log(`  [filter] computeFilterMaskDirectly_AND(${nRowsFull}): ${(performance.now() - t4).toFixed(4)}ms`);
 
     // If there's an existing view/mask, combine with the new filter using AND
     const finalMask = tracer.withSpan(df, "combine-masks", () => {
@@ -177,9 +185,12 @@ function filterRowsSync(
       return bs;
     });
 
+    const t5 = profile ? performance.now() : 0;
     const out = tracer.withSpan(df, "create-filtered-dataframe", () => {
       return withMask(df, finalMask);
     });
+    if (profile) console.log(`  [filter] withMask: ${(performance.now() - t5).toFixed(4)}ms`);
+    if (profile) console.log(`  [filter] TOTAL (JS path): ${(performance.now() - t0).toFixed(4)}ms`);
 
     // Copy trace context to new DataFrame
     tracer.copyContext(df, out);
@@ -201,13 +212,11 @@ function filterRowsSync(
 function isPlainFrame(api: any): boolean {
   // Heuristic: only take numeric WASM fast path if there is no existing mask or index mapping.
   // (Direct column scans assume row index === storage index.)
-  return !api?.__mask && !api?.__index && !api?.__slice;
+  return !api?.__mask && !api?.__index && !api?.__slice && !api?.__view?.mask && !api?.__view?.index;
 }
 
-function maskToBitset(mask: Uint8Array, n: number): any {
-  const bs = createBitSet(n);
-  for (let i = 0; i < n; i++) if (mask[i]) bitsetSet(bs, i);
-  return bs;
+function maskToBitset(mask: Uint8Array, _n: number): any {
+  return bitsetFromMask(mask);
 }
 
 function andMasksInPlace(target: Uint8Array, src: Uint8Array): void {
@@ -216,12 +225,81 @@ function andMasksInPlace(target: Uint8Array, src: Uint8Array): void {
 }
 
 /* -------------------------------------------------------------------------- */
-/* WASM (numeric-only)                                                         */
+/* WASM (numeric-only) — returns BitSet directly when possible                  */
 /* -------------------------------------------------------------------------- */
+
+/** Try to produce a BitSet directly via the napi bitset export.
+ *  Falls back to Uint8Array path + bitsetFromMask if bitset napi unavailable. */
+function tryWasmFilterPath(
+  df: any,
+  predicates: any[],
+  nRowsFull: number,
+): any | null {
+  if (predicates.length === 0) return null;
+  const profile = (globalThis as any).__TIDY_PROFILE;
+
+  const api = df as any;
+  const store = api.__store;
+  const n = store.length;
+
+  // Detect all predicates first — bail early if any can't be handled
+  const ops: { values: Float64Array; code: number; value: number }[] = [];
+  for (const pred of predicates) {
+    if (Array.isArray(pred)) return null; // fall to old path for array predicates
+
+    const t1 = profile ? performance.now() : 0;
+    // Try single predicate first, then compound (&&)
+    const detectedOps = detectNumericOps(pred, store, n);
+    if (profile) console.log(`    [wasmFilter] detectNumericOps: ${(performance.now() - t1).toFixed(4)}ms, result=${detectedOps ? detectedOps.length + ' ops' : 'null'}`);
+    if (!detectedOps) return null;
+
+    for (const detected of detectedOps) {
+      ops.push(detected);
+    }
+  }
+
+  // Try bitset path (returns Uint32Array directly, no conversion needed)
+  const t3 = profile ? performance.now() : 0;
+  const firstBits = batch_filter_bitset(ops[0].values, ops[0].value, ops[0].code);
+  if (firstBits) {
+    if (profile) console.log(`    [wasmFilter] batch_filter_bitset(${n}): ${(performance.now() - t3).toFixed(4)}ms`);
+    const bs = { bits: firstBits, size: nRowsFull };
+
+    // AND additional predicates
+    for (let i = 1; i < ops.length; i++) {
+      const t4 = profile ? performance.now() : 0;
+      const moreBits = batch_filter_bitset(ops[i].values, ops[i].value, ops[i].code);
+      if (!moreBits) {
+        // fallback: shouldn't happen, but be safe
+        return tryWasmFilterPathU8Fallback(df, predicates);
+      }
+      // AND in place (word-level)
+      for (let w = 0; w < firstBits.length; w++) {
+        firstBits[w] &= moreBits[w];
+      }
+      if (profile) console.log(`    [wasmFilter] batch_filter_bitset AND(${n}): ${(performance.now() - t4).toFixed(4)}ms`);
+    }
+
+    return bs;
+  }
+
+  // Fallback: use Uint8Array path
+  if (profile) console.log(`    [wasmFilter] bitset path unavailable, falling back to u8`);
+  return tryWasmFilterPathU8Fallback(df, predicates);
+}
+
+/** Legacy Uint8Array path — used when bitset napi export is not available */
+function tryWasmFilterPathU8Fallback(
+  df: any,
+  predicates: any[],
+): any | null {
+  return tryWasmFilterPathNumericOnly(df, predicates);
+}
+
 function tryWasmFilterPathNumericOnly(
   df: any,
   predicates: any[],
-): Uint8Array | null {
+): any | null {
   if (predicates.length === 0) return null;
 
   const api = df as any;
@@ -244,14 +322,12 @@ function tryWasmFilterPathNumericOnly(
 
     const op = detectSimplePredicate(pred);
     if (!op) return null;
-
-    // Keep string/nullcheck off this path (we bail to JS)
     if (op.kind !== "number" && op.kind !== "date") return null;
 
     const col = store.columns[op.column];
     let values: Float64Array;
     if (col instanceof Float64Array && col.length === n) {
-      values = col; // Zero-copy: already Float64Array
+      values = col;
     } else {
       values = new Float64Array(n);
       for (let i = 0; i < n; i++) {
@@ -275,7 +351,8 @@ function tryWasmFilterPathNumericOnly(
     didWasm = true;
   }
 
-  return didWasm ? mask : null;
+  if (!didWasm) return null;
+  return bitsetFromMask(mask);
 }
 
 type DetectedOp =
@@ -298,9 +375,14 @@ function detectSimplePredicate(
     return null;
   }
 
+  // Extract parameter name: (row) =>, (r) =>, row =>, r =>
+  const paramMatch = /\(?(\w+)\)?\s*=>/.exec(s);
+  if (!paramMatch) return null;
+  const p = paramMatch[1]; // the actual parameter name
+
   // null checks
   {
-    const m = /row\.(\w+)\s*([!]?={1,2})\s*null/.exec(s);
+    const m = new RegExp(`${p}\\.(\\w+)\\s*([!]?={1,2})\\s*null`).exec(s);
     if (m) {
       const column = m[1];
       const op = m[2].startsWith("!") ? "!= null" : "== null";
@@ -314,18 +396,16 @@ function detectSimplePredicate(
 
   // string equality / inequality
   {
-    const eq = /row\.(\w+)\s*(===|==|!==|!=)\s*(['"])(.*?)\3/.exec(s);
+    const eq = new RegExp(`${p}\\.(\\w+)\\s*(===|==|!==|!=)\\s*(['"])(.*?)\\3`).exec(s);
     if (eq) {
       const [, column, operator, , val] = eq;
-
       return { kind: "string", column, operator: operator as any, value: val };
     }
   }
 
   // numeric / date compares against numeric literal
   {
-    const cmp = /row\.(\w+)\s*(>=|<=|>|<|===|==|!==|!=)\s*([+\d][\d._eE+-]*)/
-      .exec(s);
+    const cmp = new RegExp(`${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`).exec(s);
     if (cmp) {
       const column = cmp[1], operator = cmp[2], raw = cmp[3];
       const value = Number(raw);
@@ -336,6 +416,76 @@ function detectSimplePredicate(
   }
 
   return null;
+}
+
+/** Detect numeric comparison ops from a predicate function.
+ *  Handles both simple (r.x > 50) and compound AND (r.x > 50 && r.y < 25).
+ *  Returns array of {values, code, value} for each comparison, or null if not all numeric. */
+function detectNumericOps(
+  pred: any,
+  store: any,
+  n: number,
+): { values: Float64Array; code: number; value: number }[] | null {
+  // Try simple predicate first
+  const simple = detectSimplePredicate(pred);
+  if (simple) {
+    if (simple.kind !== "number" && simple.kind !== "date") return null;
+    const resolved = resolveColumn(store, simple.column, n);
+    if (!resolved) return null;
+    const code = opToCode(simple.operator);
+    if (code == null || Number.isNaN(simple.value)) return null;
+    return [{ values: resolved, code, value: simple.value }];
+  }
+
+  // Try compound AND predicate
+  const s = String(pred);
+  if (!s.includes("&&") || s.includes("||")) return null;
+
+  const paramMatch = /\(?(\w+)\)?\s*=>/.exec(s);
+  if (!paramMatch) return null;
+  const p = paramMatch[1];
+
+  const bodyMatch = /=>\s*(.+)/.exec(s);
+  if (!bodyMatch) return null;
+
+  const clauses = bodyMatch[1].split("&&").map((c) => c.trim());
+  const ops: { values: Float64Array; code: number; value: number }[] = [];
+
+  for (const clause of clauses) {
+    const m = new RegExp(
+      `${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`,
+    ).exec(clause);
+    if (!m) return null;
+    const column = m[1], operator = m[2], raw = m[3];
+    const value = Number(raw);
+    if (Number.isNaN(value)) return null;
+    const code = opToCode(operator);
+    if (code == null) return null;
+    const resolved = resolveColumn(store, column, n);
+    if (!resolved) return null;
+    ops.push({ values: resolved, code, value });
+  }
+
+  return ops.length > 0 ? ops : null;
+}
+
+/** Get a column as Float64Array, zero-copy if possible */
+function resolveColumn(store: any, column: string, n: number): Float64Array | null {
+  const col = store.columns[column];
+  if (!col) return null;
+  if (col instanceof Float64Array && col.length === n) return col;
+  const values = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const v = col[i];
+    values[i] = v == null
+      ? Number.NaN
+      : typeof v === "number"
+      ? v
+      : v instanceof Date
+      ? +v
+      : Number.NaN;
+  }
+  return values;
 }
 
 function opToCode(op: string): number | null {
@@ -562,6 +712,11 @@ function tryOptimizeCompoundPredicate(
       return null;
     }
 
+    // Extract parameter name
+    const paramMatch = /\(?(\w+)\)?\s*=>/.exec(s);
+    if (!paramMatch) return null;
+    const p = paramMatch[1];
+
     // Extract the body after the arrow function
     const bodyMatch = /=>\s*(.+)/.exec(s);
     if (!bodyMatch) {
@@ -576,10 +731,9 @@ function tryOptimizeCompoundPredicate(
 
     for (const clause of andClauses) {
       // Try numeric comparison
-      const numMatch =
-        /row\.(\w+)\s*(>=|<=|>|<|===|==|!==|!=)\s*([+\d][\d._eE+-]*)/.exec(
-          clause,
-        );
+      const numMatch = new RegExp(
+        `${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`,
+      ).exec(clause);
       if (numMatch && columnNames.includes(numMatch[1])) {
         const col = numMatch[1], op = numMatch[2], num = Number(numMatch[3]);
         if (!Number.isNaN(num)) {
@@ -613,16 +767,16 @@ function tryOptimizeCompoundPredicate(
               optimizedClauses.push((i, cols) => cols[col][i] !== num);
               break;
             default:
-              return null; // Unsupported operator
+              return null;
           }
           continue;
         }
       }
 
       // Try string comparison
-      const strMatch = /row\.(\w+)\s*(===|==|!==|!=)\s*['"]([^'"]*?)['"]/.exec(
-        clause,
-      );
+      const strMatch = new RegExp(
+        `${p}\\.(\\w+)\\s*(===|==|!==|!=)\\s*['"]([^'"]*?)['"]`,
+      ).exec(clause);
       if (strMatch && columnNames.includes(strMatch[1])) {
         const col = strMatch[1], op = strMatch[2], val = strMatch[3];
         switch (op) {
@@ -640,8 +794,8 @@ function tryOptimizeCompoundPredicate(
         continue;
       }
 
-      // Try boolean field access like row.active
-      const boolMatch = /^row\.(\w+)$/.exec(clause);
+      // Try boolean field access like r.active
+      const boolMatch = new RegExp(`^${p}\\.(\\w+)$`).exec(clause);
       if (boolMatch && columnNames.includes(boolMatch[1])) {
         const col = boolMatch[1];
         optimizedClauses.push((i, cols) => !!cols[col][i]);
@@ -666,17 +820,18 @@ function tryOptimizeNumericPredicate(
   try {
     const s = String(pred);
 
-    // CRITICAL: Must reject compound conditions BEFORE attempting to match
-    // This prevents incorrect optimization of compound predicates like:
-    // (row) => row.height > 180 && row.species === "Human"
-    // which would otherwise be optimized to only check height > 180
     if (s.includes("&&") || s.includes("||")) {
       return null;
     }
 
-    const m =
-      /(?:\(row\)|row)\s*=>\s*row\.(\w+)\s*(>=|<=|>|<|===|==|!==|!=)\s*([+\d][\d._eE+-]*)/
-        .exec(s);
+    // Extract parameter name dynamically
+    const paramMatch = /\(?(\w+)\)?\s*=>/.exec(s);
+    if (!paramMatch) return null;
+    const p = paramMatch[1];
+
+    const m = new RegExp(
+      `${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`,
+    ).exec(s);
     if (m && columnNames.includes(m[1])) {
       const col = m[1], op = m[2], num = Number(m[3]);
       if (!Number.isNaN(num)) {

@@ -3,7 +3,7 @@ import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const PlainDateTime: typeof Temporal.PlainDateTime =
+const PlainDateTime: typeof Temporal.PlainDateTime =
   Temporal.PlainDateTime;
 
 /**

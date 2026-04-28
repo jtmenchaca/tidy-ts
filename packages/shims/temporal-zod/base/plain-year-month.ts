@@ -3,7 +3,7 @@ import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const PlainYearMonth: typeof Temporal.PlainYearMonth =
+const PlainYearMonth: typeof Temporal.PlainYearMonth =
   Temporal.PlainYearMonth;
 
 /**

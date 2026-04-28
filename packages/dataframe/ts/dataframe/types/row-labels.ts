@@ -23,7 +23,7 @@ export interface RowLabelStore {
 /**
  * Create row label store from array of labels
  */
-export function createRowLabelStore(labels: RowLabel[]): RowLabelStore {
+function createRowLabelStore(labels: RowLabel[]): RowLabelStore {
   const labelToIndex = new Map<RowLabel, number>();
 
   for (let i = 0; i < labels.length; i++) {
@@ -61,7 +61,7 @@ export interface DataFrameWithRowLabels<Row extends object> {
 /**
  * Type guard to check if DataFrame has row labels
  */
-export function hasRowLabels<T extends object>(
+function hasRowLabels<T extends object>(
   df: any,
 ): df is DataFrameWithRowLabels<T> {
   return df.__rowLabels !== undefined;

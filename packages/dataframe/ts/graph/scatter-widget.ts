@@ -122,7 +122,7 @@ const spec = {
   },
 };
 
-export const scatterWidget = vegaLiteWidget(rows, spec);
+const scatterWidget = vegaLiteWidget(rows, spec);
 // In Jupyter: just evaluate `scatterWidget` to display.
 // Later updates (live):
 // rows.push({ x: 45, y: 28, cat: "A" });

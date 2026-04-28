@@ -17,14 +17,14 @@ export type FillMethod = <T>(values: T[] | Iterable<T>) => T[];
 /**
  * Check if a function is stats.forwardFill.
  */
-export function isForwardFill(fn: unknown): boolean {
+function isForwardFill(fn: unknown): boolean {
   return fn === stats.forwardFill;
 }
 
 /**
  * Check if a function is stats.backwardFill.
  */
-export function isBackwardFill(fn: unknown): boolean {
+function isBackwardFill(fn: unknown): boolean {
   return fn === stats.backwardFill;
 }
 

@@ -66,6 +66,8 @@ pub mod right_join;
 pub mod sum;
 #[path = "dataframe/unique.wasm.rs"]
 pub mod unique;
+#[path = "dataframe/mutate.wasm.rs"]
+pub mod mutate;
 #[path = "dataframe/variance.wasm.rs"]
 pub mod variance;
 
@@ -170,5 +172,7 @@ pub use join_gather::*;
 pub use sum::*;
 #[cfg(feature = "napi-rs")]
 pub use unique::*;
+#[cfg(feature = "napi-rs")]
+pub use mutate::*;
 #[cfg(feature = "napi-rs")]
 pub use variance::*;

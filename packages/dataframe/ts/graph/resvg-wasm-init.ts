@@ -19,7 +19,7 @@ let resvgInstance: any = null;
 let initialized = false;
 
 // Initialize Resvg WASM from bytes (for workers)
-export async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
+async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
   if (initialized) return { module: resvgWasmModule, Resvg: resvgInstance };
 
   // Lazy load the resvg glue code when actually needed
@@ -46,7 +46,7 @@ export async function initResvgWasmFromBytes(bytes: ArrayBuffer): Promise<any> {
 }
 
 // Get Resvg WASM bytes for transfer to workers
-export function getResvgWasmBytes(): ArrayBuffer {
+function getResvgWasmBytes(): ArrayBuffer {
   if (resvgWasmBytesCache) return resvgWasmBytesCache;
 
   // Lazy load: only read the file when this function is actually called
@@ -102,7 +102,7 @@ export async function initResvgWasm(): Promise<any> {
 }
 
 // Export the Resvg class getter
-export function getResvg(): any {
+function getResvg(): any {
   if (!resvgInstance) {
     throw new Error("Resvg WASM not initialized. Call initResvgWasm() first.");
   }

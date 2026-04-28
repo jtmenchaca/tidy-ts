@@ -32,5 +32,3 @@ export const multiGroups = {
 };
 
 // Re-export individual functions for flexibility
-export { centralTendencyToEachOther } from "./central-tendency.ts";
-export { proportionsToEachOther } from "./proportions.ts";

@@ -94,6 +94,8 @@ export function mean(
     removeNaN = false,
   } = options;
 
+  const _p = (globalThis as any).__TIDY_PROFILE;
+
   // Handle single number case
   if (typeof values === "number") {
     if (Number.isNaN(values)) {
@@ -103,10 +105,16 @@ export function mean(
   }
 
   // Float64Array fast path — skip all scanning and copying
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   const typed = getTypedArray(values);
+  if (_p) console.log(`  [mean] getTypedArray: ${(performance.now() - t0).toFixed(4)}ms, got=${typed ? "Float64Array" : "null"}`);
   if (typed) {
     if (typed.length === 0) return null;
-    return mean_wasm(typed);
+    if (_p) t0 = performance.now();
+    const result = mean_wasm(typed);
+    if (_p) console.log(`  [mean] mean_wasm(${typed.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+    return result;
   }
 
   // Convert to array
@@ -119,6 +127,10 @@ export function mean(
   // Fast path for clean number arrays - only when no removal filtering is needed
   // and array contains only finite numbers
   if (canUseFastPath(processArray, options)) {
+    // Use WASM for very large arrays
+    if (processArray.length >= 1 << 15) {
+      return mean_wasm(new Float64Array(processArray));
+    }
     let sum = 0;
     const len = processArray.length;
     for (let i = 0; i < len; i++) sum += processArray[i];

@@ -18,7 +18,7 @@ import {
 /**
  * Create a snapshot of row data at a logical index to avoid closure issues in async operations
  */
-export function makeRowSnapshot<Row extends object>(
+function makeRowSnapshot<Row extends object>(
   api: any,
   logicalIndex: number,
 ): Row {
@@ -69,7 +69,7 @@ export type AsyncRowProcessor<Row extends object, TResult> = (
 /**
  * Generic grouped data processor that handles both sync and async modes
  */
-export function processGroupedRows<Row extends object, TResult>(
+function processGroupedRows<Row extends object, TResult>(
   df: DataFrame<Row> | GroupedDataFrame<Row>,
   processor: SyncRowProcessor<Row, TResult>,
   resultCollector: (physicalIndex: number, result: TResult) => void,
@@ -183,7 +183,7 @@ export async function processGroupedRowsAsync<Row extends object, TResult>(
 /**
  * Generic ungrouped data processor that handles sync mode
  */
-export function processUngroupedRows<Row extends object, TResult>(
+function processUngroupedRows<Row extends object, TResult>(
   df: DataFrame<Row> | GroupedDataFrame<Row>,
   processor: SyncRowProcessor<Row, TResult>,
   resultCollector: (
@@ -271,7 +271,7 @@ export async function processUngroupedRowsAsync<Row extends object, TResult>(
 /**
  * Collect promises for batch resolution
  */
-export function collectPromises<T>(
+function collectPromises<T>(
   promises: Promise<T>[],
 ): Promise<T[]> {
   return Promise.all(promises);
@@ -280,7 +280,7 @@ export function collectPromises<T>(
 /**
  * Create a promise collector that can handle both sync and async results
  */
-export function createPromiseCollector<T>(
+function createPromiseCollector<T>(
   size: number,
 ): {
   promises: Promise<T>[];
@@ -301,7 +301,7 @@ export function createPromiseCollector<T>(
 /**
  * Create a result array manager for both sync and async operations
  */
-export function createResultArrayManager<T>(
+function createResultArrayManager<T>(
   size: number,
   isAsync: boolean,
 ): {
@@ -361,7 +361,7 @@ export function withErrorHandling<T>(
 /**
  * Process a collection of operations with consistent error handling
  */
-export async function processOperationsWithErrorHandling<T>(
+async function processOperationsWithErrorHandling<T>(
   operations: (() => T | Promise<T>)[],
   fallback: T,
   context?: string,

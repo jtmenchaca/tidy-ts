@@ -5,18 +5,66 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "napi-rs")]
 use napi_derive::napi;
 
+use super::sum::{sum_f64, mean_f64};
+
+/// Pairwise sum of squared deviations from mean.
+/// Uses the same striped accumulation as sum_f64 for auto-vectorization.
+fn sum_sq_dev_f64(values: &[f64], mean: f64) -> f64 {
+    const STRIPE: usize = 16;
+    const BLOCK: usize = 128;
+
+    fn horizontal_sum(mut v: [f64; STRIPE]) -> f64 {
+        let mut width = STRIPE;
+        while width > 4 {
+            for j in 0..width / 2 {
+                v[j] = v[j] + v[width / 2 + j];
+            }
+            width /= 2;
+        }
+        (v[0] + v[2]) + (v[1] + v[3])
+    }
+
+    fn sum_sq_block(block: &[f64], mean: f64) -> f64 {
+        let mut acc = [0.0f64; STRIPE];
+        for chunk in block.chunks_exact(STRIPE) {
+            for j in 0..STRIPE {
+                let d = chunk[j] - mean;
+                acc[j] = acc[j] + d * d;
+            }
+        }
+        horizontal_sum(acc)
+    }
+
+    fn pairwise(values: &[f64], mean: f64) -> f64 {
+        debug_assert!(!values.is_empty() && values.len() % BLOCK == 0);
+        if values.len() == BLOCK {
+            return sum_sq_block(values, mean);
+        }
+        let blocks = values.len() / BLOCK;
+        let left_len = (blocks / 2) * BLOCK;
+        let (left, right) = values.split_at(left_len);
+        pairwise(left, mean) + pairwise(right, mean)
+    }
+
+    let remainder = values.len() % BLOCK;
+    let (rest, main) = values.split_at(remainder);
+    let main_sum = if !main.is_empty() {
+        pairwise(main, mean)
+    } else {
+        0.0
+    };
+    let rest_sum: f64 = rest.iter().map(|&v| { let d = v - mean; d * d }).sum();
+    main_sum + rest_sum
+}
+
 /// Sample variance (N-1 denominator) for f64 values
 pub(crate) fn variance_f64(values: &[f64]) -> f64 {
     let n = values.len();
     if n < 2 {
         return f64::NAN;
     }
-    let mean = values.iter().sum::<f64>() / n as f64;
-    let sum_sq: f64 = values.iter().map(|&v| {
-        let d = v - mean;
-        d * d
-    }).sum();
-    sum_sq / (n - 1) as f64
+    let mean = mean_f64(values);
+    sum_sq_dev_f64(values, mean) / (n - 1) as f64
 }
 
 /// Sample standard deviation for f64 values
@@ -37,11 +85,11 @@ pub(crate) fn batch_stats_f64(values: &[f64], ops: &str) -> Vec<f64> {
     let mut var: Option<f64> = None;
 
     let get_sum = |sum: &mut Option<f64>| -> f64 {
-        *sum.get_or_insert_with(|| values.iter().sum::<f64>())
+        *sum.get_or_insert_with(|| sum_f64(values))
     };
     let get_mean = |sum: &mut Option<f64>, mean: &mut Option<f64>| -> f64 {
         *mean.get_or_insert_with(|| {
-            let s = *sum.get_or_insert_with(|| values.iter().sum::<f64>());
+            let s = *sum.get_or_insert_with(|| sum_f64(values));
             s / n as f64
         })
     };
@@ -49,11 +97,10 @@ pub(crate) fn batch_stats_f64(values: &[f64], ops: &str) -> Vec<f64> {
         *var.get_or_insert_with(|| {
             if n < 2 { return f64::NAN; }
             let m = *mean.get_or_insert_with(|| {
-                let s = *sum.get_or_insert_with(|| values.iter().sum::<f64>());
+                let s = *sum.get_or_insert_with(|| sum_f64(values));
                 s / n as f64
             });
-            let sum_sq: f64 = values.iter().map(|&v| { let d = v - m; d * d }).sum();
-            sum_sq / (n - 1) as f64
+            sum_sq_dev_f64(values, m) / (n - 1) as f64
         })
     };
 
@@ -95,18 +142,30 @@ pub fn batch_stats_wasm(values: &[f64], ops: &str) -> Vec<f64> {
     batch_stats_f64(values, ops)
 }
 
-/// NAPI export for variance calculation
+/// NAPI export for variance calculation (pairwise SIMD-friendly)
 #[cfg(feature = "napi-rs")]
 #[napi]
 pub fn variance_napi(values: &[f64]) -> f64 {
-    variance_f64(values)
+    let profile = std::env::var("TIDY_PROFILE").is_ok();
+    let t0 = if profile { Some(std::time::Instant::now()) } else { None };
+    let result = variance_f64(values);
+    if let Some(t) = t0 {
+        eprintln!("      [rust variance_napi] pairwise n={}: {:.4}ms", values.len(), t.elapsed().as_secs_f64() * 1000.0);
+    }
+    result
 }
 
-/// NAPI export for stdev calculation
+/// NAPI export for stdev calculation (pairwise SIMD-friendly)
 #[cfg(feature = "napi-rs")]
 #[napi]
 pub fn stdev_napi(values: &[f64]) -> f64 {
-    stdev_f64(values)
+    let profile = std::env::var("TIDY_PROFILE").is_ok();
+    let t0 = if profile { Some(std::time::Instant::now()) } else { None };
+    let result = variance_f64(values).sqrt();
+    if let Some(t) = t0 {
+        eprintln!("      [rust stdev_napi] pairwise n={}: {:.4}ms", values.len(), t.elapsed().as_secs_f64() * 1000.0);
+    }
+    result
 }
 
 /// NAPI export for batch stats

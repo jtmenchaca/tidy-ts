@@ -119,7 +119,7 @@ export function slice(
  * - Preserves group order for grouped data
  * - Returns empty array if no valid indices
  */
-export function slice_indices(
+function slice_indices(
   ...indices: number[]
 ) {
   return (df: any) => {

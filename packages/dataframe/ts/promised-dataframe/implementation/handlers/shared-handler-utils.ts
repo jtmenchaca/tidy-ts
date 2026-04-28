@@ -10,7 +10,7 @@ import { wrapThenable } from "../utils.ts";
  * Generic utility to resolve a property from either a resolved object or a promise
  * This is the most common pattern across all handlers
  */
-export function resolveProperty(
+function resolveProperty(
   prop: string | number | symbol,
   objOrPromise: any,
   promise: Promise<any>,
@@ -31,7 +31,7 @@ export function resolveProperty(
  * Access a property and bind it if it's a function
  * Common pattern in sync methods handlers
  */
-export function accessPropertyWithBinding(
+function accessPropertyWithBinding(
   obj: any,
   prop: string | number | symbol,
 ): any {
@@ -46,7 +46,7 @@ export function accessPropertyWithBinding(
  * Process method call results and handle different return types
  * Common pattern in method call handlers
  */
-export function processMethodResult(
+function processMethodResult(
   result: unknown,
   isDataFrame: (x: unknown) => boolean,
   isGroupedDataFrame: (x: unknown) => boolean,
@@ -188,7 +188,7 @@ export function createWriteCSVMethodHandler(
  * Create a property matcher that handles specific property types
  * Common pattern for type-specific handlers
  */
-export function createPropertyMatcher(
+function createPropertyMatcher(
   predicate: (prop: string | number | symbol) => boolean,
   handler: (
     prop: string | number | symbol,

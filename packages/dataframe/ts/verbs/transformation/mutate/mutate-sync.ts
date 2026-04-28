@@ -21,43 +21,27 @@ export function mutateSyncImpl(
   const span = tracer.startSpan(df, "mutate", spec);
 
   try {
+    const profile = (globalThis as any).__TIDY_PROFILE;
+    const t0 = profile ? performance.now() : 0;
     const n = (df as any).nrows();
 
+    // updates are lazily allocated — napi path provides its own arrays
     const updates: Record<string, unknown[]> = {};
-
-    // 1) prepare arrays only for columns being added/replaced
-    tracer.withSpan(df, "prepare-columns", () => {
-      const columnCount = Object.keys(spec).length;
-      const columnsToCreate = Object.keys(spec).filter((col) =>
-        spec[col] !== null
-      );
-
-      tracer.withSpan(df, "count-columns", () => {
-        // This is just counting, should be negligible
-      }, {
-        totalColumns: columnCount,
-        columnsToCreate: columnsToCreate.length,
-      });
-
-      tracer.withSpan(df, "allocate-arrays", () => {
-        for (const col of columnsToCreate) {
-          updates[col] = new Array(n);
-        }
-      }, { arrayCount: columnsToCreate.length, arraySize: n });
-    }, {
-      columns: Object.keys(spec).filter((col) => spec[col] !== null),
-      arraySize: n,
-    });
+    let t1 = profile ? performance.now() : 0;
+    if (profile) console.log(`  [mutate] prepare-columns(${n}): ${(performance.now() - t1).toFixed(4)}ms`);
 
     // 2) determine if we're dealing with grouped data
+    t1 = profile ? performance.now() : 0;
     if ((df as any).__groups) {
       tracer.withSpan(df, "process-grouped-mutations", () => {
         processGroupedMutations(df, spec, updates);
       }, { groupCount: (df as any).__groups.size });
+      if (profile) console.log(`  [mutate] process-grouped(${n}): ${(performance.now() - t1).toFixed(4)}ms`);
     } else {
       tracer.withSpan(df, "process-ungrouped-mutations", () => {
         processUngroupedMutations(df, spec, updates);
       });
+      if (profile) console.log(`  [mutate] process-ungrouped(${n}): ${(performance.now() - t1).toFixed(4)}ms`);
     }
 
     // 3) handle column drops (null values)
@@ -69,9 +53,12 @@ export function mutateSyncImpl(
     }, { dropCount: drops.size });
 
     // 4) build copy-on-write store and return new DataFrame
+    t1 = profile ? performance.now() : 0;
     const result = tracer.withSpan(df, "create-updated-dataframe", () => {
       return createUpdatedDataFrame(df, updates, drops);
     });
+    if (profile) console.log(`  [mutate] createUpdatedDataFrame: ${(performance.now() - t1).toFixed(4)}ms`);
+    if (profile) console.log(`  [mutate] TOTAL: ${(performance.now() - t0).toFixed(4)}ms`);
 
     // Copy trace context to new DataFrame
     tracer.copyContext(df, result);

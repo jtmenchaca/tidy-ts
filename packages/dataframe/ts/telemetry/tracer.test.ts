@@ -85,7 +85,6 @@ Deno.test("tracer - sub-spans timing", () => {
 
   // Verify sub-spans exist
   const subSpanNames = mutateSpan.children.map((child) => child.name);
-  expect(subSpanNames).toContain("prepare-columns");
   expect(subSpanNames).toContain("process-ungrouped-mutations");
   expect(subSpanNames).toContain("handle-drops");
   expect(subSpanNames).toContain("create-updated-dataframe");

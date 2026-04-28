@@ -29,7 +29,7 @@ export function isGroupedDataFrame(
 /**
  * Check if object is any kind of DataFrame (regular or grouped)
  */
-export function isAnyDataFrame(
+function isAnyDataFrame(
   obj: unknown,
 ): obj is DataFrame<any> | GroupedDataFrame<any, any> {
   return isDataFrame(obj) || isGroupedDataFrame(obj);

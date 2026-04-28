@@ -119,6 +119,11 @@ export function variance(
   if (isAllFiniteNumbers(processArray)) {
     if (processArray.length === 1) return null; // Sample variance undefined for n=1
 
+    // Use WASM for very large arrays
+    if (processArray.length >= 1 << 15) {
+      return variance_wasm(new Float64Array(processArray));
+    }
+
     const meanVal = processArray.reduce((sum, val) => sum + val, 0) /
       processArray.length;
     const sumSquaredDiffs = processArray.reduce((sum, val) => {

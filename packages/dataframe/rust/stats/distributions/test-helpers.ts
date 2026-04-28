@@ -89,7 +89,7 @@ export async function callR(
   return parseFloat(output);
 }
 
-export function callRust(functionName: string, ...args: number[]): number {
+function callRust(functionName: string, ...args: number[]): number {
   switch (functionName) {
     // Beta distribution
     case "dbeta":

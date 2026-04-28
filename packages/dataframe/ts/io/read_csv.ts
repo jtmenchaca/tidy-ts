@@ -131,7 +131,7 @@ const toDate = (s: string): Date => {
 };
 
 // public API ---------------------------------------------------------------------
-export const zcsv = {
+const zcsv = {
   string: make<z.ZodString, (s: string) => string>((s) => s),
   number: make<z.ZodNumber, (s: string) => number>((s) => toNumber(s)),
   boolean: make<z.ZodBoolean, (s: string) => boolean>((s) => toBoolean(s)),
@@ -195,7 +195,7 @@ function autoWrapSchema<T extends z.ZodObject<any>>(schema: T): T {
 │  3 · validate whole CSV string                                             │
 └───────────────────────────────────────────────────────────────────────────*/
 // deno-lint-ignore no-explicit-any
-export function parseCSVContent<S extends z.ZodObject<any>>(
+function parseCSVContent<S extends z.ZodObject<any>>(
   csv: string,
   schema: S,
   opts: CsvOptions & NAOpts = {},
@@ -256,7 +256,7 @@ export function parseCSVContent<S extends z.ZodObject<any>>(
 │  4 · single-row helper                                                     │
 └───────────────────────────────────────────────────────────────────────────*/
 // deno-lint-ignore no-explicit-any
-export function parseRow<S extends z.ZodObject<any>>(
+function parseRow<S extends z.ZodObject<any>>(
   row: string,
   schema: S,
   opts?: CsvOptions & NAOpts,

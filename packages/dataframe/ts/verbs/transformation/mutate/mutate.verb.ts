@@ -12,7 +12,6 @@
 export { mutate, mutateAsync } from "./mutate.overloads.ts";
 
 // Re-export group-level functionality
-export { mutate_group } from "./mutate-group.ts";
 
 // Re-export types
 export type {

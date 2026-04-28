@@ -3,7 +3,7 @@ import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
 
-export const PlainTime: typeof Temporal.PlainTime = Temporal.PlainTime;
+const PlainTime: typeof Temporal.PlainTime = Temporal.PlainTime;
 
 /**
  * Regex pattern for {@link Temporal.PlainTime} ISO 8601 strings

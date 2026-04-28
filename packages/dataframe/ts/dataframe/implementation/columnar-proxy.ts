@@ -1,7 +1,7 @@
 // Columnar-optimized proxy handlers
 import { resolveVerb } from "./resolve-verb.ts";
 import type { ColumnarStore } from "./columnar-store.ts";
-import { isTypedColumn } from "./columnar-store.ts";
+import { isBooleanColumn, isTypedColumn } from "./columnar-store.ts";
 import { materializeIndex } from "./columnar-view.ts";
 
 /** Disabled array APIs to nudge users to tidy verbs */
@@ -87,7 +87,10 @@ export function buildColumnarProxyHandlers(
         // Lazy row reconstruction
         const row: Record<string, unknown> = {};
         for (const colName of currentStore.columnNames) {
-          row[colName] = currentStore.columns[colName][actualRowIndex];
+          const col = currentStore.columns[colName];
+          const val = col[actualRowIndex];
+          // Convert Uint8Array boolean mask values (0/1) to actual booleans
+          row[colName] = isBooleanColumn(col) ? val !== 0 : val;
         }
         return row;
       }
@@ -131,8 +134,12 @@ export function buildColumnarProxyHandlers(
 
           // Return cached result if available
           const cached = columnCache.get(prop);
-          if (cached !== undefined) return cached;
+          if (cached !== undefined) {
+            if ((globalThis as any).__TIDY_PROFILE) console.log(`  [proxy] df.${prop}: cache hit`);
+            return cached;
+          }
 
+          if ((globalThis as any).__TIDY_PROFILE) console.log(`  [proxy] df.${prop}: cache MISS, building column`);
           const col = currentStore.columns[prop];
           const hasView = currentView && (currentView.mask || currentView.index);
 
@@ -163,6 +170,21 @@ export function buildColumnarProxyHandlers(
                 configurable: false,
               });
               const result = Object.freeze(arr) as readonly unknown[];
+              columnCache.set(prop, result);
+              return result;
+            } else if (isBooleanColumn(col)) {
+              // Gather Uint8Array boolean mask through view, convert to boolean[]
+              const gathered = new Array(materializedIndex.length);
+              for (let i = 0; i < materializedIndex.length; i++) {
+                gathered[i] = col[materializedIndex[i]] !== 0;
+              }
+              Object.defineProperty(gathered, "toArray", {
+                value: () => [...gathered],
+                enumerable: false,
+                writable: false,
+                configurable: false,
+              });
+              const result = Object.freeze(gathered) as readonly unknown[];
               columnCache.set(prop, result);
               return result;
             } else {
@@ -196,6 +218,22 @@ export function buildColumnarProxyHandlers(
             });
             Object.defineProperty(arr, "toArray", {
               value: () => Array.from(col),
+              enumerable: false,
+              writable: false,
+              configurable: false,
+            });
+            const frozen = Object.freeze(arr) as readonly unknown[];
+            columnCache.set(prop, frozen);
+            return frozen;
+          }
+
+          if (isBooleanColumn(col)) {
+            // Convert Uint8Array boolean mask (0/1) to boolean[]
+            const n = col.length;
+            const arr = new Array(n);
+            for (let i = 0; i < n; i++) arr[i] = col[i] !== 0;
+            Object.defineProperty(arr, "toArray", {
+              value: () => [...arr],
               enumerable: false,
               writable: false,
               configurable: false,

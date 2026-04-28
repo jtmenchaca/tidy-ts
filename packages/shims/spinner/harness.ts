@@ -26,7 +26,7 @@ export interface BaseState {
 }
 
 /** Read terminal dimensions, reserving `reserveRows` at the bottom. */
-export function termSize(reserveRows: number): { cols: number; rows: number } {
+function termSize(reserveRows: number): { cols: number; rows: number } {
   const cols = process.stdout.columns || 80;
   const rows = Math.max((process.stdout.rows || 24) - reserveRows, 8);
   return { cols, rows };

@@ -41,7 +41,7 @@ export function cross_join_u32(leftLen: number, rightLen: number) {
 }
 
 // Full join+gather in Rust (napi fast path — bypasses all TS overhead)
-export function inner_join_gather_f64(
+function inner_join_gather_f64(
   leftKeyCols: Float64Array[],
   rightKeyCols: Float64Array[],
   leftValueCols: Float64Array[],
@@ -56,7 +56,7 @@ export function inner_join_gather_f64(
   );
 }
 
-export function left_join_gather_f64(
+function left_join_gather_f64(
   leftKeyCols: Float64Array[],
   rightKeyCols: Float64Array[],
   leftValueCols: Float64Array[],
@@ -80,7 +80,7 @@ export function gather_f64_columns(
   return wasmInternal.gather_f64_columns(columns, indices);
 }
 
-export function gather_f64_columns_nullable(
+function gather_f64_columns_nullable(
   columns: Float64Array[],
   indices: Uint32Array,
 ): Float64Array[] {
@@ -89,7 +89,7 @@ export function gather_f64_columns_nullable(
 }
 
 // String hashing in Rust (FNV-1a, ~5-10x faster than JS polynomial)
-export function hash_strings(strings: string[]): Uint32Array {
+function hash_strings(strings: string[]): Uint32Array {
   initWasm();
   return wasmInternal.hash_strings(strings);
 }

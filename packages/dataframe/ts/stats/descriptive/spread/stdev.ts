@@ -77,6 +77,8 @@ export function sd(
     | Iterable<unknown>,
   options: SdOptions = {},
 ): number | null {
+  const _p = (globalThis as any).__TIDY_PROFILE;
+
   // Handle single number case
   if (typeof values === "number") {
     if (Number.isNaN(values)) {
@@ -86,11 +88,17 @@ export function sd(
   }
 
   // Float64Array fast path — skip variance delegation, go direct to WASM
+  let t0: number = 0;
+  if (_p) t0 = performance.now();
   const typed = getTypedArray(values);
+  if (_p) console.log(`  [stdev] getTypedArray: ${(performance.now() - t0).toFixed(4)}ms, got=${typed ? "Float64Array" : "null"}`);
   if (typed) {
     if (typed.length === 0) return null;
     if (typed.length === 1) return null;
-    return stdev_wasm(typed);
+    if (_p) t0 = performance.now();
+    const result = stdev_wasm(typed);
+    if (_p) console.log(`  [stdev] stdev_wasm(${typed.length}): ${(performance.now() - t0).toFixed(4)}ms`);
+    return result;
   }
 
   // Delegate to variance with same options

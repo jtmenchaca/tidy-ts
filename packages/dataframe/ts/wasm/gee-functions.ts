@@ -26,7 +26,7 @@ export interface GeeglmResult {
   vcov?: number[][] | null;
 }
 
-export function geeglmFit(
+function geeglmFit(
   formula: string,
   family: string,
   link: string,

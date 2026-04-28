@@ -36,7 +36,7 @@ export function cleanNumeric(
 /**
  * Check if an array contains only boolean values
  */
-export function isBinaryArray(
+function isBinaryArray(
   data: readonly unknown[],
 ): data is readonly boolean[] {
   return data.every((x) => typeof x === "boolean");
@@ -54,7 +54,7 @@ export function to01(value: unknown): 0 | 1 {
 /**
  * Choose alternative hypothesis with default
  */
-export function chooseAlt(
+function chooseAlt(
   alternative?: "two-sided" | "less" | "greater",
 ): "two-sided" | "less" | "greater" {
   return alternative ?? "two-sided";
@@ -63,14 +63,14 @@ export function chooseAlt(
 /**
  * Choose alpha level with default
  */
-export function chooseAlpha(alpha?: number): number {
+function chooseAlpha(alpha?: number): number {
   return alpha ?? 0.05;
 }
 
 /**
  * Check if sample size is suitable for Shapiro-Wilk test
  */
-export function canShapiro(n: number): boolean {
+function canShapiro(n: number): boolean {
   return n >= 3 && n <= 5000;
 }
 
@@ -93,7 +93,7 @@ export function smallSample2(x: number[], y: number[]): boolean {
 /**
  * Calculate expected counts for a 2x2 contingency table
  */
-export function expectedCounts2x2(
+function expectedCounts2x2(
   n11: number,
   n10: number,
   n01: number,
@@ -212,7 +212,7 @@ export function residuals_twoSample(
 /**
  * Compute residuals for multiple groups (each group's deviations from their own mean)
  */
-export function residuals_groups(groups: number[][]): number[][] {
+function residuals_groups(groups: number[][]): number[][] {
   return groups.map((g) => {
     const mean = g.reduce((a, b) => a + b, 0) / g.length;
     return g.map((d) => d - mean);
@@ -258,7 +258,7 @@ export function allGroupsNormal(groups: number[][], alpha = ALPHA): boolean {
 /**
  * Calculate skewness z-score for a sample
  */
-export function skewnessZScore(data: number[]): number {
+function skewnessZScore(data: number[]): number {
   const n = data.length;
   const mean = data.reduce((a, b) => a + b, 0) / n;
 
@@ -282,7 +282,7 @@ export function skewnessZScore(data: number[]): number {
 /**
  * Calculate kurtosis z-score for a sample
  */
-export function kurtosisZScore(data: number[]): number {
+function kurtosisZScore(data: number[]): number {
   const n = data.length;
   const mean = data.reduce((a, b) => a + b, 0) / n;
 
