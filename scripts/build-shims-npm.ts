@@ -1,5 +1,5 @@
 import * as esbuild from "esbuild";
-import { rmSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, rmSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const SHIMS_DIR = "packages/shims";
