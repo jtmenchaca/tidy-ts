@@ -17,31 +17,31 @@ if (DETAIL) {
 
 import { createDataFrame } from "@tidy-ts/dataframe";
 
-const N = 100_000;
+const N = 500_000;
 const ITERS = 50;
 const WARMUP = 10;
 
-// Polars reference medians (100K rows, 50 iters, same machine)
+// Polars reference medians (500K rows, 50 iters, same machine)
 // Re-run bench-polars-mutate.py to update these
 const POLARS: Record<string, number> = {
-  "1": 0.064,
-  "2": 0.061,
-  "3": 0.062,
-  "4": 0.030,
-  "5": 0.030,
-  "6": 0.030,
-  "7": 0.091,
-  "8": 0.031,
-  "9": 0.012,
+  "1": 0.186,
+  "2": 0.276,
+  "3": 0.252,
+  "4": 0.107,
+  "5": 0.084,
+  "6": 0.089,
+  "7": 0.314,
+  "8": 0.092,
+  "9": 0.013,
   "10": 0.011,
-  "11": 1.641,
-  "12": 2.342,
-  "13": 0.041,
-  "14": 0.062,
-  "15": 0.822,
-  "16": 2.509,
-  "17": 0.068,
-  "18": 0.302,
+  "11": 8.757,
+  "12": 11.727,
+  "13": 0.052,
+  "14": 0.211,
+  "15": 4.057,
+  "16": 12.247,
+  "17": 0.089,
+  "18": 1.450,
 };
 
 const rows = Array.from({ length: N }, (_, i) => ({

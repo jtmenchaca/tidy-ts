@@ -24,7 +24,7 @@ function getColumnAsFloat64(
   const col = store.columns[colName];
   if (!col) return null;
 
-  const hasView = view && (view.index || view.mask);
+  const hasView = view && (view.index || view.mask || view.rawMask);
 
   if (isTypedColumn(col)) {
     if (!hasView) return col;

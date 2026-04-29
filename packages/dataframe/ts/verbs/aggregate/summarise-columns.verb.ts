@@ -37,6 +37,7 @@ export function summarise_columns(spec: any) {
       const api = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const baseIndex = usesRawIndices
         ? null
         : materializeIndex(store.length, api.__view);
@@ -54,7 +55,7 @@ export function summarise_columns(spec: any) {
       };
 
       for (let g = 0; g < size; g++) {
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         if (groupIndices.length === 0) continue;
 

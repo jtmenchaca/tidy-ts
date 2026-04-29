@@ -10,6 +10,7 @@ import {
   type BitSet,
   bitsetClear,
   bitsetGet,
+  bitsetSet,
   createBitSet,
 } from "../../dataframe/implementation/columnar-view.ts";
 import { withMask } from "../../dataframe/implementation/row-cursor.ts";
@@ -75,6 +76,7 @@ export function removeNull<Row extends object, Field extends keyof Row>(
   if (store) {
     const nStore = store.length;
     const existingMask = api.__view?.mask;
+    const existingRawMask = api.__view?.rawMask;
 
     // Start from existing mask or all-set
     const bs = createBitSet(nStore);
@@ -82,6 +84,10 @@ export function removeNull<Row extends object, Field extends keyof Row>(
       const src = existingMask.bits;
       const dst = bs.bits;
       for (let i = 0; i < src.length && i < dst.length; i++) dst[i] = src[i];
+    } else if (existingRawMask) {
+      for (let i = 0; i < nStore; i++) {
+        if (existingRawMask[i]) bitsetSet(bs, i);
+      }
     } else {
       bitsetFillAll(bs, nStore);
     }
@@ -152,12 +158,17 @@ export function removeUndefined<Row extends object, Field extends keyof Row>(
   if (store) {
     const nStore = store.length;
     const existingMask = api.__view?.mask;
+    const existingRawMask = api.__view?.rawMask;
 
     const bs = createBitSet(nStore);
     if (existingMask) {
       const src = existingMask.bits;
       const dst = bs.bits;
       for (let i = 0; i < src.length && i < dst.length; i++) dst[i] = src[i];
+    } else if (existingRawMask) {
+      for (let i = 0; i < nStore; i++) {
+        if (existingRawMask[i]) bitsetSet(bs, i);
+      }
     } else {
       bitsetFillAll(bs, nStore);
     }
@@ -228,12 +239,17 @@ export function removeNA<Row extends object, Field extends keyof Row>(
   if (store) {
     const nStore = store.length;
     const existingMask = api.__view?.mask;
+    const existingRawMask = api.__view?.rawMask;
 
     const bs = createBitSet(nStore);
     if (existingMask) {
       const src = existingMask.bits;
       const dst = bs.bits;
       for (let i = 0; i < src.length && i < dst.length; i++) dst[i] = src[i];
+    } else if (existingRawMask) {
+      for (let i = 0; i < nStore; i++) {
+        if (existingRawMask[i]) bitsetSet(bs, i);
+      }
     } else {
       bitsetFillAll(bs, nStore);
     }

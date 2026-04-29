@@ -140,6 +140,66 @@ pub fn mutate_compare_scalar_bool_napi(
     Ok(out)
 }
 
+/// Binary operations between two f64 columns, masked by a Uint8Array.
+/// Only processes rows where mask[i] != 0. Output is full-length (unmasked slots = 0.0).
+/// Operations: 0=add, 1=sub, 2=mul, 3=div
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn mutate_binary_cols_masked_napi(
+    a: &[f64],
+    b: &[f64],
+    operation: u8,
+    mask: &[u8],
+) -> Result<Float64Array, napi::Error> {
+    let n = a.len();
+    if n != b.len() || n != mask.len() {
+        return Err(napi::Error::from_reason(format!(
+            "Length mismatch: a={}, b={}, mask={}", n, b.len(), mask.len()
+        )));
+    }
+
+    let mut out = vec![0.0f64; n];
+    match operation {
+        0 => { for i in 0..n { if mask[i] != 0 { out[i] = a[i] + b[i]; } } }
+        1 => { for i in 0..n { if mask[i] != 0 { out[i] = a[i] - b[i]; } } }
+        2 => { for i in 0..n { if mask[i] != 0 { out[i] = a[i] * b[i]; } } }
+        3 => { for i in 0..n { if mask[i] != 0 { out[i] = a[i] / b[i]; } } }
+        _ => return Err(napi::Error::from_reason("Invalid binary operation")),
+    }
+
+    Ok(Float64Array::new(out))
+}
+
+/// Binary operation: column op scalar, masked by a Uint8Array.
+/// Only processes rows where mask[i] != 0. Output is full-length (unmasked slots = 0.0).
+/// Operations: 0=add, 1=sub, 2=mul, 3=div
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn mutate_col_scalar_masked_napi(
+    col: &[f64],
+    scalar: f64,
+    operation: u8,
+    mask: &[u8],
+) -> Result<Float64Array, napi::Error> {
+    let n = col.len();
+    if n != mask.len() {
+        return Err(napi::Error::from_reason(format!(
+            "Length mismatch: col={}, mask={}", n, mask.len()
+        )));
+    }
+
+    let mut out = vec![0.0f64; n];
+    match operation {
+        0 => { for i in 0..n { if mask[i] != 0 { out[i] = col[i] + scalar; } } }
+        1 => { for i in 0..n { if mask[i] != 0 { out[i] = col[i] - scalar; } } }
+        2 => { for i in 0..n { if mask[i] != 0 { out[i] = col[i] * scalar; } } }
+        3 => { for i in 0..n { if mask[i] != 0 { out[i] = col[i] / scalar; } } }
+        _ => return Err(napi::Error::from_reason("Invalid binary operation")),
+    }
+
+    Ok(Float64Array::new(out))
+}
+
 /// Fill a Float64Array with a scalar value.
 #[cfg(feature = "napi-rs")]
 #[napi]
@@ -150,5 +210,43 @@ pub fn mutate_fill_scalar_napi(
     let n = length as usize;
     let out = vec![scalar; n];
     Ok(Float64Array::new(out))
+}
+
+/// Apply a string transformation to a string column.
+/// Operations: 0=toUpperCase, 1=toLowerCase, 2=trim
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn mutate_string_transform_napi(
+    values: Vec<String>,
+    operation: u8,
+) -> Result<Vec<String>, napi::Error> {
+    let out = match operation {
+        0 => {
+            // toUpperCase — fast ASCII path with Unicode fallback
+            values.into_iter().map(|s| {
+                if s.is_ascii() {
+                    s.to_ascii_uppercase()
+                } else {
+                    s.to_uppercase()
+                }
+            }).collect()
+        }
+        1 => {
+            // toLowerCase
+            values.into_iter().map(|s| {
+                if s.is_ascii() {
+                    s.to_ascii_lowercase()
+                } else {
+                    s.to_lowercase()
+                }
+            }).collect()
+        }
+        2 => {
+            // trim
+            values.into_iter().map(|s| s.trim().to_owned()).collect()
+        }
+        _ => return Err(napi::Error::from_reason("Invalid string operation")),
+    };
+    Ok(out)
 }
 

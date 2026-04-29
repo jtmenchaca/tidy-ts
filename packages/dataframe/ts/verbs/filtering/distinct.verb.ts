@@ -34,11 +34,12 @@ export function distinct(
       // If grouped, apply distinct within each group
       if (api.__groups) {
         const mask = api.__view?.mask;
+        const rawMask = api.__view?.rawMask;
         const rebuilt: any[] = [];
         const { head, next, size } = api.__groups;
 
         for (let g = 0; g < size; g++) {
-          const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+          const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
           // Run distinct on this group
           const typedArrays = convertToTypedArrays(store.columns, keyCols);

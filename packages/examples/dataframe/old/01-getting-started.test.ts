@@ -123,7 +123,7 @@ API calls, database lookups, and complex computations - all type-safe!`);
         await enrichWithExternalData(row.body_mass), // async
       size_category: (row) => row.body_mass > 4000 ? "Large" : "Small", // sync
     })
-    .filter(async (row) => { // async filter
+    .filterAsync(async (row) => { // async filter
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.bill_ratio > 2.0;
     });
@@ -624,7 +624,7 @@ Production async operations need concurrency control and retry mechanisms.`,
 
   // Process with concurrency limit of 2
   const result1 = await data
-    .mutate({
+    .mutateAsync({
       fetched_data: async (row) =>
         await trackConcurrency(async () => {
           console.log(`  Fetching data for ${row.name}...`);
@@ -667,7 +667,7 @@ Production async operations need concurrency control and retry mechanisms.`,
 
   // Process with retry configuration
   const result2 = await retryData
-    .mutate({
+    .mutateAsync({
       api_result: async (row) => await flakeyApi(row.id),
     }, {
       concurrency: 2,
@@ -957,7 +957,7 @@ Production async operations need concurrency control and retry mechanisms.`,
     return !includesDroid; // Exclude droids
   }
 
-  const validatedCharacters = await peopleWithStats.filter(
+  const validatedCharacters = await peopleWithStats.filterAsync(
     async (row) => await validateCharacter(row.species),
   );
   console.log("Characters validated via async API (excluding droids):");
@@ -2247,7 +2247,7 @@ Production async operations need concurrency control and retry mechanisms.`,
       bmi_category: async (row) =>
         await enrichBMICategory(row.mass / Math.pow(row.height / 100, 2)),
     })
-    .filter(async (row) => {
+    .filterAsync(async (row) => {
       await new Promise((resolve) => setTimeout(resolve, 1));
       return row.species !== "Droid";
     })

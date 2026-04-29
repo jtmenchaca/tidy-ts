@@ -8,7 +8,7 @@ Deno.test("simple concurrency test", async () => {
 
   console.log("Testing filter with concurrency option...");
 
-  const result = await df.filter(async (row) => {
+  const result = await df.filterAsync(async (row) => {
     await new Promise((resolve) => setTimeout(resolve, 10));
     return row.age > 20;
   }, { concurrency: 1 });

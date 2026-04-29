@@ -229,3 +229,22 @@ pub fn batch_filter_bitset_napi(
 
     Ok(napi::bindgen_prelude::Uint32Array::new(bits))
 }
+
+/// Convert a Uint8Array boolean mask (0/1) to a compact Uint32Array of set indices.
+/// E.g. mask [0,1,0,1,1] → [1,3,4]
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn mask_to_index_napi(
+    mask: &[u8],
+) -> napi::bindgen_prelude::Uint32Array {
+    let n = mask.len();
+    // Count set bits first for exact allocation
+    let count: usize = mask.iter().map(|&v| v as usize).sum();
+    let mut out = Vec::with_capacity(count);
+    for i in 0..n {
+        if mask[i] != 0 {
+            out.push(i as u32);
+        }
+    }
+    napi::bindgen_prelude::Uint32Array::new(out)
+}

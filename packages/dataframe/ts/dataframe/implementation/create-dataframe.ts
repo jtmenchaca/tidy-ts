@@ -62,11 +62,15 @@ export function createColumnarDataFrameFromStore<
   store: ColumnarStore,
   options: DataFrameOptions = {},
 ): DataFrame<Row> {
+  const profile = (globalThis as any).__TIDY_PROFILE;
+  let _t0 = profile ? performance.now() : 0; // deno-lint-ignore-line prefer-const
+
   const api: any = {};
 
   (api as any).__store = store;
   (api as any).__view = {} as View;
   (api as any).__rowView = makeRowView<Row>(store);
+  if (profile) console.log(`      [createFromStore] makeRowView(${store.columnNames.length} cols): ${(performance.now() - _t0).toFixed(4)}ms`);
 
   // Store options including concurrency and tracing
   (api as any).__options = options;
@@ -107,7 +111,7 @@ export function createColumnarDataFrameFromStore<
     const currentView = (api as any).__view;
 
     // Fast path: no view transformations
-    if (!currentView || (!currentView.index && !currentView.mask)) {
+    if (!currentView || (!currentView.index && !currentView.mask && !currentView.rawMask)) {
       return currentStore.length;
     }
 
@@ -415,6 +419,7 @@ export function createColumnarDataFrameFromStore<
   const unique = <U>(xs: ReadonlyArray<U>): U[] => Array.from(new Set(xs));
 
   // ---- Columnar Proxy: numeric index, fluent routing, direct column access ----
+  _t0 = profile ? performance.now() : 0;
   const handlers = buildColumnarProxyHandlers({
     api,
     store,
@@ -423,6 +428,7 @@ export function createColumnarDataFrameFromStore<
   });
 
   const dataFrame = new Proxy(api, handlers) as unknown as DataFrame<Row>;
+  if (profile) console.log(`      [createFromStore] buildProxy: ${(performance.now() - _t0).toFixed(4)}ms`);
 
   // Initialize tracing if enabled - track the Proxy object, not the api
   if (options.trace) {

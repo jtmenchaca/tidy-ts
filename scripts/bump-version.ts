@@ -2,16 +2,20 @@
  * Bump the version across the entire monorepo.
  *
  * Usage:
- *   deno run -A scripts/bump-version.ts 1.4.1
- *
- * Or edit NEW_VERSION below and run without args:
- *   deno run -A scripts/bump-version.ts
+ *   pnpm bump          # Report current version
+ *   pnpm bump 1.4.1    # Bump to 1.4.1
  */
 
 import { readFileSync, writeFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 
-const NEW_VERSION = Deno.args[0] ?? "1.4.0";
+if (!Deno.args[0]) {
+  const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+  console.log(`Current version: ${pkg.version}`);
+  Deno.exit(0);
+}
+
+const NEW_VERSION = Deno.args[0];
 
 if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(NEW_VERSION)) {
   console.error(`Invalid version: ${NEW_VERSION}`);

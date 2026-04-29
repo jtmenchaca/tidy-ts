@@ -9,7 +9,6 @@ import type {
   ColumnValue,
   MutateAssignments,
 } from "./mutate.types.ts";
-import { shouldUseAsyncForMutate } from "../../../promised-dataframe/index.ts";
 import { mutateSyncImpl } from "./mutate-sync.ts";
 import { mutateAsyncImpl } from "./mutate-async.ts";
 import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency-utils.ts";
@@ -26,8 +25,7 @@ import type { ConcurrencyOptions } from "../../../promised-dataframe/concurrency
  */
 
 /* =================================================================================
-  mutate — synchronous only. Rejects async formulas at the type level via AllSync.
-  At runtime, uses shouldUseAsyncForMutate as a safety net.
+  mutate — synchronous only. Use mutateAsync for async formulas.
   ================================================================================= */
 
 // ---------- GROUPED: object spec of functions (preserve return types) ----------
@@ -111,7 +109,7 @@ export function mutate<
 ): (df: DataFrame<Row>) => DataFrame<AddColumns<Row, Assignments>>;
 
 /* =================================================================================
-  mutate implementation — sync by default, async as safety net.
+  mutate implementation — sync only. Use mutateAsync for async functions.
   ================================================================================= */
 
 export function mutate(
@@ -119,15 +117,6 @@ export function mutate(
 ): any {
   return (df: any): any => {
     if (typeof spec === "object" && spec !== null) {
-      // Safety net: if user accidentally passes async to mutate(), still handle it
-      const isAsync = shouldUseAsyncForMutate(df, spec);
-      if (isAsync) {
-        return mutateAsyncImpl(
-          df,
-          spec as MutateAssignments<Record<string, unknown>>,
-          { concurrency: 10 },
-        );
-      }
       return mutateSyncImpl(
         df,
         spec as MutateAssignments<Record<string, unknown>>,

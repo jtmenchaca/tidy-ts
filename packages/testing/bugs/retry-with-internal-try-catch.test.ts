@@ -58,7 +58,7 @@ Deno.test("Retry with internal try-catch returning number | Error", async () => 
   const flakeyFn1 = createFlakeyApiCallWithTryCatch(2); // Fails twice
 
   try {
-    const result1 = await df1.mutate({
+    const result1 = await df1.mutateAsync({
       doubled: async (row: { id: number; value: number }) =>
         await flakeyFn1(row.value),
     }, {
@@ -134,7 +134,7 @@ Deno.test("Retry with internal try-catch returning number | Error", async () => 
   const flakeyFn2 = createFlakeyApiCallThatThrows(2); // Fails twice
 
   try {
-    const result2 = await df2.mutate({
+    const result2 = await df2.mutateAsync({
       doubled: async (row: { id: number; value: number }) =>
         await flakeyFn2(row.value),
     }, {
@@ -180,7 +180,7 @@ Deno.test("Retry with internal try-catch returning number | Error", async () => 
   const flakeyFn3 = createFlakeyApiCallWithTryCatch(5); // Fails 5 times
 
   try {
-    const result3 = await df3.mutate({
+    const result3 = await df3.mutateAsync({
       doubled: async (row: { id: number; value: number }) =>
         await flakeyFn3(row.value),
     }, {
@@ -223,7 +223,7 @@ Deno.test("Retry with internal try-catch returning number | Error", async () => 
   const flakeyFn4 = createFlakeyApiCallWithTryCatch(3); // Fails 3 times
 
   try {
-    const result4 = await df4.mutate({
+    const result4 = await df4.mutateAsync({
       doubled: async (row: { id: number; value: number }) =>
         await flakeyFn4(row.value),
     }, {

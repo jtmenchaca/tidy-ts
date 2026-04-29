@@ -7,6 +7,7 @@
  */
 
 import process from "node:process";
+import { clearInterval as nodeClearInterval, setInterval as nodeSetInterval } from "node:timers";
 import type { Spinner } from "./spinner.ts";
 import { fadeIn, fadeOut } from "./transition.ts";
 
@@ -20,7 +21,7 @@ export interface BaseState {
   rows: number;
   message: string;
   stopped: boolean;
-  interval: ReturnType<typeof setInterval> | null;
+  interval: ReturnType<typeof nodeSetInterval> | null;
   originalLog: typeof console.log;
   logBuffer: string[];
 }
@@ -76,13 +77,15 @@ export function createAnimationSpinner<S extends BaseState>(
   const cols = process.stdout.columns || 80;
   const termRows = process.stdout.rows || 24;
 
-  fadeIn(cols, termRows).then(() => {
+  const fadeInAbort = new AbortController();
+  const fadeInDone = fadeIn(cols, termRows, fadeInAbort.signal).then(() => {
     if (s.stopped) return;
-    s.interval = setInterval(() => {
+    s.interval = nodeSetInterval(() => {
       if (s.stopped) return;
       config.step(s);
       config.render(s);
     }, config.intervalMs);
+    s.interval.unref();
   });
 
   console.log = (...args: unknown[]) => {
@@ -113,7 +116,9 @@ export function createAnimationSpinner<S extends BaseState>(
     },
     async stop(msg: string) {
       s.stopped = true;
-      if (s.interval) clearInterval(s.interval);
+      fadeInAbort.abort();
+      await fadeInDone;
+      if (s.interval) nodeClearInterval(s.interval);
       process.stdout.removeListener("resize", onResize);
       console.log = s.originalLog;
 

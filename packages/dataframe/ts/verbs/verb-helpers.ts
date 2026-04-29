@@ -111,16 +111,22 @@ export function collectGroupIndices({
   next,
   groupIndex,
   mask,
+  rawMask,
 }: {
   head: Int32Array;
   next: Int32Array;
   groupIndex: number;
   mask?: BitSet | null;
+  rawMask?: Uint8Array | null;
 }): number[] {
   const indices: number[] = [];
   let rowIdx = head[groupIndex];
   while (rowIdx !== -1) {
-    if (!mask || bitsetGet(mask, rowIdx)) {
+    if (mask) {
+      if (bitsetGet(mask, rowIdx)) indices.push(rowIdx);
+    } else if (rawMask) {
+      if (rawMask[rowIdx]) indices.push(rowIdx);
+    } else {
       indices.push(rowIdx);
     }
     rowIdx = next[rowIdx];

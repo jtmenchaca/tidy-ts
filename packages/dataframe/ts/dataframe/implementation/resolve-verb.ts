@@ -103,9 +103,16 @@ import { thenableGroupedDataFrame } from "../../promised-dataframe/index.ts";
 export function resolveVerb(prop: PropertyKey, df: unknown) {
   if (prop === "mutate") {
     return (spec: object, options?: any) => {
-      const result = (mutate as any)(spec, options)(df);
+      const _p = (globalThis as any).__TIDY_PROFILE;
+      let _t0 = _p ? performance.now() : 0;
+      const mutateFn = (mutate as any)(spec, options);
+      if (_p) { console.log(`  [resolveVerb] mutate() closure create: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
+      const result = mutateFn(df);
+      if (_p) { console.log(`  [resolveVerb] mutate() execute: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
       // Only wrap if result is a Promise, otherwise return directly for chaining
-      return result instanceof Promise ? thenableDataFrame(result) : result;
+      const out = result instanceof Promise ? thenableDataFrame(result) : result;
+      if (_p) console.log(`  [resolveVerb] mutate() wrap: ${(performance.now() - _t0).toFixed(4)}ms`);
+      return out;
     };
   }
   if (prop === "mutateAsync") {
@@ -128,13 +135,19 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   }
   if (prop === "filter") {
     return (...a: unknown[]) => {
+      const _p = (globalThis as any).__TIDY_PROFILE;
+      let _t0 = _p ? performance.now() : 0;
       // Handle both old variadic and new (predicates, options) signatures
-      const result = (filter as any)(...a)(df);
+      const filterFn = (filter as any)(...a);
+      if (_p) { console.log(`  [resolveVerb] filter() closure create: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
+      const result = filterFn(df);
+      if (_p) { console.log(`  [resolveVerb] filter() execute: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
 
       // Only wrap if result is a Promise, otherwise return directly for chaining
       const wrapped = result instanceof Promise
         ? thenableDataFrame(result)
         : result;
+      if (_p) console.log(`  [resolveVerb] filter() wrap: ${(performance.now() - _t0).toFixed(4)}ms`);
       return wrapped;
     };
   }

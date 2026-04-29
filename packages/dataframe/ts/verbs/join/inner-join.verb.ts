@@ -22,7 +22,7 @@ function getStoreViewInfo(df: any): {
   const store: ColumnarStore | undefined = df.__store;
   const view = df.__view;
   if (store) {
-    const hasView = !!(view && (view.index || view.mask));
+    const hasView = !!(view && (view.index || view.mask || view.rawMask));
     const index = hasView
       ? materializeIndex(store.length, view)
       : undefined!; // unused when !hasView

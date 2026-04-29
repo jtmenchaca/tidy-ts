@@ -22,7 +22,7 @@ declare function assertType<T>(value: T): void;
 // ═══════════════════════════════════════════════════════════════════════════
 
 function test_async_mutate_returns_promised(df: DataFrame<HasIdAndValue>) {
-  const result = df.mutate({
+  const result = df.mutateAsync({
     doubled: async (row) => {
       await new Promise((r) => setTimeout(r, 1));
       return row.value * 2;

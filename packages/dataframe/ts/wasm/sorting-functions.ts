@@ -124,6 +124,44 @@ export function mutate_col_scalar(
 }
 
 /**
+ * Masked binary operation between two f64 columns.
+ * Only processes rows where mask[i] != 0. Unmasked slots = 0.0.
+ * Returns null if napi not available.
+ */
+export function mutate_binary_cols_masked(
+  a: Float64Array,
+  b: Float64Array,
+  operation: number,
+  mask: Uint8Array,
+): Float64Array | null {
+  initWasm();
+  const fn_ = wasmInternal.mutate_binary_cols_masked;
+  if (fn_) {
+    return fn_(a, b, operation, mask);
+  }
+  return null;
+}
+
+/**
+ * Masked column op scalar.
+ * Only processes rows where mask[i] != 0. Unmasked slots = 0.0.
+ * Returns null if napi not available.
+ */
+export function mutate_col_scalar_masked(
+  col: Float64Array,
+  scalar: number,
+  operation: number,
+  mask: Uint8Array,
+): Float64Array | null {
+  initWasm();
+  const fn_ = wasmInternal.mutate_col_scalar_masked;
+  if (fn_) {
+    return fn_(col, scalar, operation, mask);
+  }
+  return null;
+}
+
+/**
  * Compare column against scalar, returning array of 0/1 booleans.
  * Operations: 0=gt, 1=gte, 2=lt, 3=lte, 4=eq, 5=neq
  */
@@ -218,6 +256,22 @@ export function mutate_compare_cols_raw(
 }
 
 /**
+ * Convert a Uint8Array boolean mask (0/1) to a compact Uint32Array of set indices.
+ * E.g. mask [0,1,0,1,1] → [1,3,4]
+ * Returns null if napi not available.
+ */
+export function mask_to_index(
+  mask: Uint8Array,
+): Uint32Array | null {
+  initWasm();
+  const fn_ = wasmInternal.mask_to_index;
+  if (fn_) {
+    return fn_(mask);
+  }
+  return null;
+}
+
+/**
  * Fill a Float64Array with a scalar value.
  */
 export function mutate_fill_scalar(
@@ -228,6 +282,26 @@ export function mutate_fill_scalar(
   const fn_ = wasmInternal.mutate_fill_scalar;
   if (fn_) {
     return fn_(length, scalar);
+  }
+  return null;
+}
+
+/**
+ * Apply a string transformation to a string column.
+ * Operations: 0=toUpperCase, 1=toLowerCase, 2=trim
+ */
+export function mutate_string_transform(
+  values: string[],
+  operation: number,
+): string[] | null {
+  initWasm();
+  const fn_ = wasmInternal.mutate_string_transform;
+  if (fn_) {
+    const _p = (globalThis as Record<string, unknown>).__TIDY_PROFILE;
+    const _t = _p ? performance.now() : 0;
+    const result = fn_(values, operation);
+    if (_p) console.log(`        [napi] mutate_string_transform(${values.length}, op=${operation}): ${(performance.now() - _t).toFixed(4)}ms`);
+    return result;
   }
   return null;
 }

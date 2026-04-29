@@ -14,6 +14,7 @@
  */
 
 import process from "node:process";
+import { clearInterval as nodeClearInterval, setInterval as nodeSetInterval } from "node:timers";
 import { type AnimationName, createAnimatedSpinner } from "./mod.ts";
 
 const FRAMES = ["\u280B", "\u2819", "\u2839", "\u2838", "\u283C", "\u2834", "\u2826", "\u2827", "\u2807", "\u280F"];
@@ -55,12 +56,13 @@ export function createSpinner(initialMessage: string, style?: SpinnerStyle): Spi
   }
 
   const interval = isTTY
-    ? setInterval(() => {
+    ? nodeSetInterval(() => {
         if (stopped) return;
         write(`\r${FRAMES[frame % FRAMES.length]} ${message}`);
         frame++;
       }, 80)
     : null;
+  interval?.unref();
 
   function redraw() {
     if (isTTY && !stopped) {
@@ -97,7 +99,7 @@ export function createSpinner(initialMessage: string, style?: SpinnerStyle): Spi
     },
     stop(msg: string) {
       stopped = true;
-      if (interval) clearInterval(interval);
+      if (interval) nodeClearInterval(interval);
       console.log = originalLog;
       if (isTTY) {
         write(`\r\x1b[K${msg}\n`);

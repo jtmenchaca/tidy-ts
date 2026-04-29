@@ -6,15 +6,18 @@ import {
   bitsetSet,
   createBitSet,
 } from "../../dataframe/implementation/columnar-view.ts";
-import { withMask } from "../../dataframe/implementation/row-cursor.ts";
+import { withMask, withRawMask } from "../../dataframe/implementation/row-cursor.ts";
 import {
   // numeric/date WASM only; string WASM stays disabled (too much overhead)
   batch_filter_bitset,
   batch_filter_numbers,
 } from "../../wasm/wasm-loader.ts";
 import {
+  mutate_compare_scalar_raw,
+  mutate_compare_cols_raw,
+} from "../../wasm/sorting-functions.ts";
+import {
   returnsPromise,
-  shouldUseAsyncForFilter,
 } from "../../promised-dataframe/index.ts";
 import {
   type ConcurrencyOptions,
@@ -68,19 +71,9 @@ export function filter(
   ...args: any[]
 ): any {
   return (df: any): any => {
-    // Handle both old (...predicates) and new (predicates, options) signatures
+    // Sync only. Use filterAsync for async predicates.
     const predicates: any[] = args;
-
-    // Safety net: if user accidentally passes async to filter(), still handle it
-    const isAsync = shouldUseAsyncForFilter(df, predicates);
-
-    if (isAsync) {
-      const dfOptions = (df as any).__options as ConcurrencyOptions | undefined;
-      const concurrencyOptions = dfOptions || DEFAULT_CONCURRENCY.filter;
-      return filterRowsAsync(df, predicates, concurrencyOptions);
-    } else {
-      return filterRowsSync(df, predicates);
-    }
+    return filterRowsSync(df, predicates);
   };
 }
 
@@ -120,9 +113,12 @@ function filterRowsSync(
   df: any,
   predicates: any[],
 ): any {
+  const _pf = (globalThis as any).__TIDY_PROFILE;
+  const _tSpan = _pf ? performance.now() : 0;
   const span = tracer.startSpan(df, "filter", {
     predicates: predicates.length,
   });
+  if (_pf) console.log(`  [filter] tracer.startSpan: ${(performance.now() - _tSpan).toFixed(4)}ms`);
 
   try {
     const profile = (globalThis as any).__TIDY_PROFILE;
@@ -131,6 +127,46 @@ function filterRowsSync(
     const api = df as any;
     const store = api.__store;
     const nRowsFull = store.length;
+
+    if (profile) {
+      const _ts = performance.now();
+      const _span = tracer.startSpan;
+      console.log(`  [filter] setup (store access, span): ${(performance.now() - t0).toFixed(4)}ms`);
+    }
+
+    // Ultra-fast raw mask path: use mutate_compare_scalar_raw to produce
+    // Uint8Array directly (skips bitset packing entirely).
+    // Only for plain frames with simple numeric predicates that can all be
+    // handled by napi compare kernels.
+    let _tPlain = profile ? performance.now() : 0;
+    const _isPlain = isPlainFrame(api);
+    if (profile) console.log(`  [filter] isPlainFrame: ${(performance.now() - _tPlain).toFixed(4)}ms, result=${_isPlain}`);
+    if (_isPlain) {
+      try {
+        const t1 = profile ? performance.now() : 0;
+        const rawResult = tryRawMaskFilterPath(store, predicates, nRowsFull, profile);
+        if (rawResult) {
+          if (profile) console.log(`  [filter] tryRawMaskFilterPath: ${(performance.now() - t1).toFixed(4)}ms`);
+          const t3 = profile ? performance.now() : 0;
+          const out = withRawMask(df, rawResult);
+          if (profile) console.log(`  [filter] withRawMask: ${(performance.now() - t3).toFixed(4)}ms`);
+          let _tCopy = profile ? performance.now() : 0;
+          if (df.__groups) {
+            (out as any).__groups = df.__groups;
+            tracer.copyContext(df, out);
+            if (profile) console.log(`  [filter] tracer.copyContext + groups: ${(performance.now() - _tCopy).toFixed(4)}ms`);
+            if (profile) console.log(`  [filter] TOTAL (rawMask path): ${(performance.now() - t0).toFixed(4)}ms`);
+            return out;
+          }
+          tracer.copyContext(df, out);
+          if (profile) console.log(`  [filter] tracer.copyContext: ${(performance.now() - _tCopy).toFixed(4)}ms`);
+          if (profile) console.log(`  [filter] TOTAL (rawMask path): ${(performance.now() - t0).toFixed(4)}ms`);
+          return out;
+        }
+      } catch {
+        /* fall through */
+      }
+    }
 
     // Numeric/date WASM fast-path for very large unmasked, unindexed frames
     if (
@@ -182,6 +218,16 @@ function filterRowsSync(
         }
         return combinedMask;
       }
+      if (existingView?.rawMask) {
+        // Combine rawMask (Uint8Array) AND new bitset filter
+        const combinedMask = createBitSet(nRowsFull);
+        for (let i = 0; i < nRowsFull; i++) {
+          if (existingView.rawMask[i] && bitsetGet(bs, i)) {
+            bitsetSet(combinedMask, i);
+          }
+        }
+        return combinedMask;
+      }
       return bs;
     });
 
@@ -206,13 +252,82 @@ function filterRowsSync(
 }
 
 /* -------------------------------------------------------------------------- */
+/* Raw Uint8Array mask path — fastest for simple numeric predicates            */
+/* -------------------------------------------------------------------------- */
+
+const CMP_MAP_FILTER: Record<string, number> = { ">": 0, ">=": 1, "<": 2, "<=": 3, "===": 4, "!==": 5, "==": 4, "!=": 5 };
+
+/**
+ * Try to produce a raw Uint8Array mask using napi compare kernels.
+ * Handles single and AND-compound numeric predicates on Float64Array columns.
+ * Returns null if any predicate can't be handled.
+ */
+function tryRawMaskFilterPath(
+  store: any,
+  predicates: any[],
+  n: number,
+  profile: boolean,
+): Uint8Array | null {
+  if (predicates.length === 0) return null;
+
+  let mask: Uint8Array | null = null;
+
+  for (const pred of predicates) {
+    if (Array.isArray(pred)) return null;
+
+    const s = String(pred);
+    const paramMatch = /\(?(\w+)\)?\s*=>/.exec(s);
+    if (!paramMatch) return null;
+    const p = paramMatch[1];
+
+    const bodyMatch = /=>\s*(.+)$/.exec(s);
+    if (!bodyMatch) return null;
+    const body = bodyMatch[1].trim();
+
+    // Split on && for compound predicates
+    const clauses = body.includes("&&") && !body.includes("||")
+      ? body.split("&&").map((c: string) => c.trim())
+      : [body];
+
+    for (const clause of clauses) {
+      // Pattern: r.col CMP number
+      const cmpMatch = new RegExp(
+        `^${p}\\.(\\w+)\\s*(>=|<=|===|!==|==|!=|>|<)\\s*(-?\\d+(?:\\.\\d+)?)$`,
+      ).exec(clause);
+      if (!cmpMatch) return null;
+
+      const [, colName, op, numStr] = cmpMatch;
+      const opCode = CMP_MAP_FILTER[op];
+      if (opCode === undefined) return null;
+
+      const col = store.columns[colName];
+      if (!(col instanceof Float64Array)) return null;
+
+      const t0 = profile ? performance.now() : 0;
+      const result = mutate_compare_scalar_raw(col, Number(numStr), opCode);
+      if (profile) console.log(`    [rawMaskFilter] compare "${colName} ${op} ${numStr}": ${(performance.now() - t0).toFixed(4)}ms`);
+      if (!result) return null;
+
+      if (!mask) {
+        mask = result;
+      } else {
+        // AND in place
+        for (let i = 0; i < n; i++) mask[i] &= result[i];
+      }
+    }
+  }
+
+  return mask;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Helpers                                                                     */
 /* -------------------------------------------------------------------------- */
 
 function isPlainFrame(api: any): boolean {
   // Heuristic: only take numeric WASM fast path if there is no existing mask or index mapping.
   // (Direct column scans assume row index === storage index.)
-  return !api?.__mask && !api?.__index && !api?.__slice && !api?.__view?.mask && !api?.__view?.index;
+  return !api?.__mask && !api?.__index && !api?.__slice && !api?.__view?.mask && !api?.__view?.rawMask && !api?.__view?.index;
 }
 
 function maskToBitset(mask: Uint8Array, _n: number): any {
@@ -659,11 +774,13 @@ function computeFilterMaskDirectly_AND(
     // O(n²) logical→physical mapping via getPhysicalIndex.
     const existingView = api.__view;
     const existingMask = existingView?.mask;
+    const existingRawMask = existingView?.rawMask;
     if (hasStore && !existingView?.index) {
       // No index mapping — iterate physical indices, check existing mask
       if (first) {
         for (let p = 0; p < nStore; p++) {
           if (existingMask && !bitsetGet(existingMask, p)) continue;
+          if (existingRawMask && !existingRawMask[p]) continue;
           const snap = makePhysicalSnapshot(store, p);
           if ((pred as any)(snap, p, df)) bitsetSet(bs, p);
         }
@@ -672,6 +789,10 @@ function computeFilterMaskDirectly_AND(
         for (let p = 0; p < nStore; p++) {
           if (!bitsetGet(bs, p)) continue;
           if (existingMask && !bitsetGet(existingMask, p)) {
+            bitsetClear(bs, p);
+            continue;
+          }
+          if (existingRawMask && !existingRawMask[p]) {
             bitsetClear(bs, p);
             continue;
           }
@@ -888,6 +1009,22 @@ function getPhysicalIndex(api: any, logicalIndex: number): number {
     return physicalIdx;
   }
 
+  if (view.rawMask) {
+    let physicalIdx = -1;
+    let logicalCount = -1;
+    const nTotal = api.__store.length;
+    for (let p = 0; p < nTotal; p++) {
+      if (view.rawMask[p]) {
+        logicalCount++;
+        if (logicalCount === logicalIndex) {
+          physicalIdx = p;
+          break;
+        }
+      }
+    }
+    return physicalIdx;
+  }
+
   return logicalIndex;
 }
 
@@ -980,6 +1117,14 @@ async function filterRowsAsync(
     const combinedMask = createBitSet(store.length);
     for (let i = 0; i < store.length; i++) {
       if (bitsetGet(existingView.mask, i) && bitsetGet(bs, i)) {
+        bitsetSet(combinedMask, i);
+      }
+    }
+    finalMask = combinedMask;
+  } else if (existingView?.rawMask) {
+    const combinedMask = createBitSet(store.length);
+    for (let i = 0; i < store.length; i++) {
+      if (existingView.rawMask[i] && bitsetGet(bs, i)) {
         bitsetSet(combinedMask, i);
       }
     }

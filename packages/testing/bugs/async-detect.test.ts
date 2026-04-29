@@ -23,7 +23,7 @@ function test_generic_join<K extends string, T extends HasIdAndDate<K>>(
 // ── Concrete mixed sync+async → PromisedDataFrame ──
 
 function test_mixed(df: DataFrame<IdVal>) {
-  const r = df.mutate({
+  const r = df.mutateAsync({
     sync_col: (row) => row.value * 2,
     async_col: async (row) => row.id.toUpperCase(),
   });
@@ -40,7 +40,7 @@ function test_sync(df: DataFrame<IdVal>) {
 // ── Negative: mixed should NOT be DataFrame ──
 
 function test_mixed_negative(df: DataFrame<IdVal>) {
-  const r = df.mutate({
+  const r = df.mutateAsync({
     sync_col: (row) => row.value * 2,
     async_col: async (row) => row.id.toUpperCase(),
   });

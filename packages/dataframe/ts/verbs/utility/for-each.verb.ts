@@ -121,7 +121,7 @@ function createViewAwareProxy(
   const view = api.__view;
 
   // If no view, return original DataFrame to preserve reference equality
-  if (!view || (!view.mask && !view.index)) return df;
+  if (!view || (!view.mask && !view.rawMask && !view.index)) return df;
 
   return new Proxy(df, {
     get(target, prop, receiver) {

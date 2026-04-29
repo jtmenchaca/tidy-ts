@@ -11,7 +11,7 @@ import os
 
 os.environ["POLARS_MAX_THREADS"] = "4"
 
-N = 100_000
+N = 500_000
 ITERS = 50
 WARMUP = 10
 

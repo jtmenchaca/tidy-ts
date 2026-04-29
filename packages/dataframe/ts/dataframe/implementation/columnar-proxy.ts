@@ -105,8 +105,12 @@ export function buildColumnarProxyHandlers(
       }
 
       // Fluent method routing
+      const _pt0 = (globalThis as any).__TIDY_PROFILE ? performance.now() : 0;
       const routed = resolveVerb(prop, _recv);
-      if (routed) return routed;
+      if (routed) {
+        if ((globalThis as any).__TIDY_PROFILE) console.log(`  [proxy] resolveVerb("${String(prop)}"): ${(performance.now() - _pt0).toFixed(4)}ms`);
+        return routed;
+      }
 
       // Direct column access - returns cached, read-only column data
       // deno-lint-invoke no-explicit-any
@@ -141,7 +145,7 @@ export function buildColumnarProxyHandlers(
 
           if ((globalThis as any).__TIDY_PROFILE) console.log(`  [proxy] df.${prop}: cache MISS, building column`);
           const col = currentStore.columns[prop];
-          const hasView = currentView && (currentView.mask || currentView.index);
+          const hasView = currentView && (currentView.mask || currentView.rawMask || currentView.index);
 
           if (hasView) {
             // View case: must gather through index
@@ -345,7 +349,7 @@ export function buildColumnarProxyHandlers(
         }
 
         // Add or update the column in the store
-        if (currentView && (currentView.mask || currentView.index)) {
+        if (currentView && (currentView.mask || currentView.rawMask || currentView.index)) {
           // If there's a view, we need to expand the values to full store size
           const fullColumn = currentStore.columns[prop] ||
             new Array(currentStore.length);

@@ -576,6 +576,7 @@ Deno.test("concat nested DataFrames with mismatched columns", () => {
   expect(allLabs.nrows()).toBe(2);
   expect(allLabs.test).toEqual(["A1C", "LDL"]);
   expect(allLabs.value).toEqual([6.1, 120]);
+  // @ts-expect-error unit is not a column of the outer DataFrame - may deserve fixing later
   expect(allLabs.unit).toEqual([undefined, "mg/dL"]); 
 });
 

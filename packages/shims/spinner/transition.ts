@@ -7,6 +7,7 @@
  */
 
 import process from "node:process";
+import { clearInterval as nodeClearInterval, setInterval as nodeSetInterval } from "node:timers";
 
 const SHADES_IN = ["\u2588", "\u2593", "\u2592", "\u2591"];
 const SHADES_OUT = ["\u2591", "\u2592", "\u2593", "\u2588"];
@@ -21,34 +22,46 @@ function fillScreen(char: string, cols: number, rows: number) {
   process.stdout.write(out);
 }
 
-export function fadeIn(cols: number, rows: number): Promise<void> {
+export function fadeIn(cols: number, rows: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
+    if (signal?.aborted) { resolve(); return; }
     let i = 0;
-    const iv = setInterval(() => {
-      if (i >= SHADES_IN.length) {
-        clearInterval(iv);
-        process.stdout.write("\x1b[2J\x1b[H");
+    const iv = nodeSetInterval(() => {
+      if (signal?.aborted || i >= SHADES_IN.length) {
+        nodeClearInterval(iv);
+        if (!signal?.aborted) process.stdout.write("\x1b[2J\x1b[H");
         resolve();
         return;
       }
       fillScreen(SHADES_IN[i], cols, rows);
       i++;
     }, FRAME_MS);
+    iv.unref();
+    signal?.addEventListener("abort", () => {
+      nodeClearInterval(iv);
+      resolve();
+    }, { once: true });
   });
 }
 
-export function fadeOut(cols: number, rows: number): Promise<void> {
+export function fadeOut(cols: number, rows: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
+    if (signal?.aborted) { resolve(); return; }
     let i = 0;
-    const iv = setInterval(() => {
-      if (i >= SHADES_OUT.length) {
-        clearInterval(iv);
-        process.stdout.write("\x1b[2J\x1b[H");
+    const iv = nodeSetInterval(() => {
+      if (signal?.aborted || i >= SHADES_OUT.length) {
+        nodeClearInterval(iv);
+        if (!signal?.aborted) process.stdout.write("\x1b[2J\x1b[H");
         resolve();
         return;
       }
       fillScreen(SHADES_OUT[i], cols, rows);
       i++;
     }, FRAME_MS);
+    iv.unref();
+    signal?.addEventListener("abort", () => {
+      nodeClearInterval(iv);
+      resolve();
+    }, { once: true });
   });
 }

@@ -45,11 +45,12 @@ export function shuffle(seed?: number) {
 
     if (api.__groups) {
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
       const { head, next, size } = api.__groups;
 
       for (let g = 0; g < size; g++) {
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         const groupRows: any[] = [];
         for (const physIdx of groupIndices) {

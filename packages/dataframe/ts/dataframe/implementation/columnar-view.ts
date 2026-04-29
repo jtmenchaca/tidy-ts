@@ -1,6 +1,8 @@
 // A light view: keeps a pointer to the column store + optional
 // row index (ordering/subset), optional bitset mask, and cached derived index.
 
+import { mask_to_index } from "../../wasm/sorting-functions.ts";
+
 export type BitSet = {
   bits: Uint32Array;
   size: number; // number of rows in the *base* store
@@ -9,6 +11,7 @@ export type BitSet = {
 export type View = {
   index?: Uint32Array | null; // when set, defines row order/subset
   mask?: BitSet | null; // when set, defines keep/discard
+  rawMask?: Uint8Array | null; // optional raw 0/1 mask (faster to produce than BitSet)
   // Derived cache
   _materializedIndex?: Uint32Array | null;
   // Optional compiled comparator used by arrange()
@@ -194,20 +197,32 @@ export function materializeIndex(len: number, view?: View | null): Uint32Array {
   if (!view) {
     return Uint32Array.from({ length: len }, (_, i) => i);
   }
-  if (view._materializedIndex) return view._materializedIndex;
+  if (view._materializedIndex) {
+    if ((globalThis as any).__TIDY_PROFILE) console.log(`      [materializeIndex] cache HIT (${view._materializedIndex.length} rows)`);
+    return view._materializedIndex;
+  }
+  if ((globalThis as any).__TIDY_PROFILE) console.log(`      [materializeIndex] cache MISS — materializing...`);
 
   // If we have an explicit index and a mask, filter the index
   if (view.index) {
     if (view.mask) {
       const idx = view.index;
-      // Pre-allocate worst case, then slice
       const tmp = new Uint32Array(idx.length);
       let k = 0;
       for (let i = 0; i < idx.length; i++) {
         if (bitsetTest(view.mask, idx[i])) tmp[k++] = idx[i];
       }
-      const out = tmp.subarray(0, k);
-      return (view._materializedIndex = out);
+      return (view._materializedIndex = tmp.subarray(0, k));
+    }
+    if (view.rawMask) {
+      const idx = view.index;
+      const rm = view.rawMask;
+      const tmp = new Uint32Array(idx.length);
+      let k = 0;
+      for (let i = 0; i < idx.length; i++) {
+        if (rm[idx[i]]) tmp[k++] = idx[i];
+      }
+      return (view._materializedIndex = tmp.subarray(0, k));
     }
     return (view._materializedIndex = view.index);
   }
@@ -215,6 +230,33 @@ export function materializeIndex(len: number, view?: View | null): Uint32Array {
   // If only a mask, compact it
   if (view.mask) {
     const out = bitsetToIndex(view.mask);
+    return (view._materializedIndex = out);
+  }
+
+  // Raw Uint8Array mask: try napi first, then JS fallback
+  if (view.rawMask) {
+    const _pm = (globalThis as any).__TIDY_PROFILE;
+    const _tm = _pm ? performance.now() : 0;
+    const rm = view.rawMask;
+    // Fast path: napi mask_to_index
+    const napiResult = mask_to_index(rm);
+    if (napiResult) {
+      if (_pm) console.log(`      [materializeIndex] napi mask_to_index(${rm.length}→${napiResult.length}): ${(performance.now() - _tm).toFixed(4)}ms`);
+      return (view._materializedIndex = napiResult);
+    }
+    // JS fallback: two-pass count + collect
+    const n = rm.length;
+    let count = 0;
+    const n8 = n & ~7;
+    for (let i = 0; i < n8; i += 8) {
+      count += (rm[i] + rm[i+1] + rm[i+2] + rm[i+3] +
+                rm[i+4] + rm[i+5] + rm[i+6] + rm[i+7]) as number;
+    }
+    for (let i = n8; i < n; i++) if (rm[i]) count++;
+    const out = new Uint32Array(count);
+    let k = 0;
+    for (let i = 0; i < n; i++) if (rm[i]) out[k++] = i;
+    if (_pm) console.log(`      [materializeIndex] JS fallback(${rm.length}→${count}): ${(performance.now() - _tm).toFixed(4)}ms`);
     return (view._materializedIndex = out);
   }
 

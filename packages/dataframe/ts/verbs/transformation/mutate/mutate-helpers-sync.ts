@@ -60,13 +60,28 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
   updates: Record<string, unknown[]>,
 ): void {
   const profile = (globalThis as any).__TIDY_PROFILE;
+  let t1 = profile ? performance.now() : 0;
   const api = df as any;
   const row = api.__rowView as any;
   const store = api.__store;
   const g = (df as any).__groups;
   const view = api.__view;
   const storeLength = store.length;
-  const materialized = materializeIndex(storeLength, view);
+  if (profile) console.log(`    [groupedMutate] setup(store/view/groups): ${(performance.now() - t1).toFixed(4)}ms`);
+
+  const isIdentity = !view?.mask && !view?.rawMask && !view?.index;
+  let _materialized: Uint32Array | null = null;
+  const getMaterialized = () => {
+    if (!_materialized) {
+      t1 = profile ? performance.now() : 0;
+      _materialized = materializeIndex(storeLength, view);
+      if (profile) console.log(`    [groupedMutate] materializeIndex(${storeLength}→${_materialized.length}): ${(performance.now() - t1).toFixed(4)}ms`);
+    }
+    return _materialized;
+  };
+  // Eagerly materialize only when we know we need it (non-identity view)
+  if (!isIdentity) getMaterialized();
+
   const usesRaw = !!g?.usesRawIndices;
 
   for (const [col, expr] of Object.entries(spec)) {
@@ -78,18 +93,21 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
     if (typeof expr === "function") {
       // Try columnar fast path first — works regardless of grouping
       // since grouped mutate with r => r.x + r.y doesn't depend on group context
-      const isIdentity = !view?.mask && !view?.index;
-      const len = isIdentity ? storeLength : materialized.length;
-      const idx = isIdentity ? null : materialized;
+      const len = isIdentity ? storeLength : getMaterialized().length;
+      const idx = isIdentity ? null : getMaterialized();
       if (!updates[col]) updates[col] = new Array(storeLength);
-      const columnar = tryColumnarMutate(expr, store, col, updates, len, idx, profile);
+      let _tc = profile ? performance.now() : 0;
+      const columnar = tryColumnarMutate(expr, store, col, updates, len, idx, null, profile);
+      if (profile) console.log(`    [groupedMutate] tryColumnarMutate("${col}"): ${(performance.now() - _tc).toFixed(4)}ms, result=${columnar}`);
       if (columnar) continue;
 
       // Check if the function uses the 3rd arg (groupDF)
+      _tc = profile ? performance.now() : 0;
       const fnStr = String(expr);
       const fnParams = /^\(?([^)]*)\)?\s*=>/.exec(fnStr);
       const paramCount = fnParams ? fnParams[1].split(",").length : 0;
       const usesGroupDF = paramCount >= 3;
+      if (profile) console.log(`    [groupedMutate] fnStr parse: ${(performance.now() - _tc).toFixed(4)}ms, usesGroupDF=${usesGroupDF}, paramCount=${paramCount}`);
 
       const { head, next, size } = g;
 
@@ -103,7 +121,7 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
             const groupRow: Record<string, unknown> = {};
             const physicalIndex = usesRaw
               ? tempRowIdx
-              : materialized[tempRowIdx];
+              : getMaterialized()[tempRowIdx];
             for (const colName of store.columnNames) {
               groupRow[colName] = store.columns[colName][physicalIndex];
             }
@@ -116,7 +134,7 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
           let k = 0;
           let rowIdx = head[groupIdx];
           while (rowIdx !== -1) {
-            const physicalIndex = usesRaw ? rowIdx : materialized[rowIdx];
+            const physicalIndex = usesRaw ? rowIdx : getMaterialized()[rowIdx];
             row.setCursor(physicalIndex);
             updates[col][physicalIndex] = (expr as any)(row, k, groupDF);
             k++;
@@ -126,18 +144,30 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
         if (profile) console.log(`    [groupedMutate] fn col "${col}"(${storeLength} rows, ${size} groups, fullGroupDF): ${(performance.now() - t0).toFixed(4)}ms`);
       } else {
         // Fast path: just use RowView cursor, skip groupDF construction
+        let _tLoop = profile ? performance.now() : 0;
+        let _setCursorTotal = 0;
+        let _fnCallTotal = 0;
+        let _rowCount = 0;
         for (let groupIdx = 0; groupIdx < size; groupIdx++) {
           let k = 0;
           let rowIdx = head[groupIdx];
           while (rowIdx !== -1) {
-            const physicalIndex = usesRaw ? rowIdx : materialized[rowIdx];
-            row.setCursor(physicalIndex);
-            updates[col][physicalIndex] = (expr as any)(row, k);
+            const physicalIndex = usesRaw ? rowIdx : getMaterialized()[rowIdx];
+            if (profile) { const _ts = performance.now(); row.setCursor(physicalIndex); _setCursorTotal += performance.now() - _ts; }
+            else row.setCursor(physicalIndex);
+            if (profile) { const _tf = performance.now(); updates[col][physicalIndex] = (expr as any)(row, k); _fnCallTotal += performance.now() - _tf; }
+            else updates[col][physicalIndex] = (expr as any)(row, k);
             k++;
+            _rowCount++;
             rowIdx = next[rowIdx];
           }
         }
-        if (profile) console.log(`    [groupedMutate] fn col "${col}"(${storeLength} rows, ${size} groups, cursorOnly): ${(performance.now() - t0).toFixed(4)}ms`);
+        if (profile) {
+          console.log(`    [groupedMutate] cursor loop(${_rowCount} rows, ${size} groups): ${(performance.now() - _tLoop).toFixed(4)}ms`);
+          console.log(`      [groupedMutate] setCursor total: ${_setCursorTotal.toFixed(4)}ms`);
+          console.log(`      [groupedMutate] fn call total: ${_fnCallTotal.toFixed(4)}ms`);
+          console.log(`    [groupedMutate] fn col "${col}"(${storeLength} rows, ${size} groups, cursorOnly): ${(performance.now() - t0).toFixed(4)}ms`);
+        }
       }
     } else if (Array.isArray(expr)) {
       const n = (df as DataFrame<Row>).nrows();
@@ -149,13 +179,13 @@ export function processGroupedMutations<Row extends Record<string, unknown>>(
       }
       if (!updates[col]) updates[col] = new Array(storeLength);
       // Map array values to physical indices respecting the view
-      const idx = materialized;
+      const idx = getMaterialized();
       for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = expr[i];
       if (profile) console.log(`    [groupedMutate] array col "${col}"(${storeLength} rows): ${(performance.now() - t0).toFixed(4)}ms`);
     } else {
       if (!updates[col]) updates[col] = new Array(storeLength);
       // Apply scalar to visible rows only, respecting the view
-      const idx = materialized;
+      const idx = getMaterialized();
       for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = expr;
       if (profile) console.log(`    [groupedMutate] scalar col "${col}"(${storeLength} rows): ${(performance.now() - t0).toFixed(4)}ms`);
     }
@@ -171,21 +201,37 @@ export function processUngroupedMutations<Row extends Record<string, unknown>>(
   updates: Record<string, unknown[]>,
 ): void {
   const profile = (globalThis as any).__TIDY_PROFILE;
+  let t0 = profile ? performance.now() : 0;
   const api = df as any;
   const store = api.__store;
   const row = api.__rowView as any;
-  const n = (df as DataFrame<Row>).nrows();
+  if (profile) console.log(`    [ungroupedMutate] access store/rowView: ${(performance.now() - t0).toFixed(4)}ms`);
+
+  // Defer nrows() — only needed for Array.isArray(expr) validation.
+  // Calling it eagerly triggers materializeIndex on rawMask views (~0.35ms).
+  let _n: number | undefined;
+  const getNrows = () => {
+    if (_n === undefined) {
+      t0 = profile ? performance.now() : 0;
+      _n = (df as DataFrame<Row>).nrows();
+      if (profile) console.log(`    [ungroupedMutate] nrows() [deferred]: ${(performance.now() - t0).toFixed(4)}ms, n=${_n}`);
+    }
+    return _n;
+  };
 
   // For ungrouped data, need to respect the view (filtered/masked data)
   const view = api.__view;
   const storeLength = store.length;
-  let t0 = profile ? performance.now() : 0;
+  t0 = profile ? performance.now() : 0;
 
   // Fast path: no view means physical === logical, skip materializeIndex entirely
-  const isIdentity = !view?.mask && !view?.index;
-  const materializedIndex = isIdentity ? null : materializeIndex(storeLength, view);
-  const len = isIdentity ? storeLength : materializedIndex!.length;
-  if (profile) console.log(`    [ungroupedMutate] materializeIndex(${storeLength}): ${(performance.now() - t0).toFixed(4)}ms, identity=${isIdentity}`);
+  const isIdentity = !view?.mask && !view?.rawMask && !view?.index;
+  // rawMask-only: napi can process full store columns (no gather/scatter needed),
+  // but non-napi paths still need the materialized index for correct row mapping.
+  const isRawMaskOnly = !isIdentity && !!view?.rawMask && !view?.mask && !view?.index;
+  const materializedIndex = isIdentity ? null : (isRawMaskOnly ? null : materializeIndex(storeLength, view));
+  const len = isIdentity ? storeLength : (isRawMaskOnly ? storeLength : materializedIndex!.length);
+  if (profile) console.log(`    [ungroupedMutate] materializeIndex(${storeLength}): ${(performance.now() - t0).toFixed(4)}ms, identity=${isIdentity}, rawMaskOnly=${isRawMaskOnly}, viewKeys=${view ? Object.keys(view).filter(k => (view as any)[k] != null).join(",") : "none"}`);
 
   for (const [col, expr] of Object.entries(spec)) {
     if (expr === null) {
@@ -195,25 +241,41 @@ export function processUngroupedMutations<Row extends Record<string, unknown>>(
     if (typeof expr === "function") {
       // Try columnar fast path: detect simple column-access patterns
       // (napi path may set updates[col] directly — no pre-allocation needed)
-      const columnarFn = tryColumnarMutate(expr, store, col, updates, len, materializedIndex, profile);
+      const rawMask = isRawMaskOnly ? view.rawMask as Uint8Array : null;
+      if (profile) console.log(`    [ungroupedMutate] trying columnar for "${col}", materializedIndex=${materializedIndex ? `Uint32(${materializedIndex.length})` : "null"}, len=${len}, rawMask=${rawMask ? `Uint8(${rawMask.length})` : "null"}`);
+      const columnarFn = tryColumnarMutate(expr, store, col, updates, len, materializedIndex, rawMask, profile);
       if (!columnarFn) {
+        // Napi/columnar didn't handle it — need materialized index for rawMask views
+        const idx = materializedIndex ?? (isRawMaskOnly ? materializeIndex(storeLength, view) : null);
+        const rowLen = idx ? idx.length : len;
         if (!updates[col]) updates[col] = new Array(storeLength);
         // Fallback: row-by-row via RowView cursor
-        if (isIdentity) {
-          for (let i = 0; i < len; i++) {
-            row.setCursor(i);
-            updates[col][i] = (expr as any)(row, i, df);
+        let _setCursorTotal = 0;
+        let _fnCallTotal = 0;
+        if (!idx) {
+          for (let i = 0; i < rowLen; i++) {
+            if (profile) { const _ts = performance.now(); row.setCursor(i); _setCursorTotal += performance.now() - _ts; }
+            else row.setCursor(i);
+            if (profile) { const _tf = performance.now(); updates[col][i] = (expr as any)(row, i, df); _fnCallTotal += performance.now() - _tf; }
+            else updates[col][i] = (expr as any)(row, i, df);
           }
         } else {
-          for (let i = 0; i < len; i++) {
-            const physicalIndex = materializedIndex![i];
-            row.setCursor(physicalIndex);
-            updates[col][physicalIndex] = (expr as any)(row, i, df);
+          for (let i = 0; i < rowLen; i++) {
+            const physicalIndex = idx[i];
+            if (profile) { const _ts = performance.now(); row.setCursor(physicalIndex); _setCursorTotal += performance.now() - _ts; }
+            else row.setCursor(physicalIndex);
+            if (profile) { const _tf = performance.now(); updates[col][physicalIndex] = (expr as any)(row, i, df); _fnCallTotal += performance.now() - _tf; }
+            else updates[col][physicalIndex] = (expr as any)(row, i, df);
           }
         }
-        if (profile) console.log(`    [ungroupedMutate] fn col "${col}"(${len} rows, rowView): ${(performance.now() - t0).toFixed(4)}ms`);
+        if (profile) {
+          console.log(`    [ungroupedMutate] fn col "${col}"(${rowLen} rows, rowView): ${(performance.now() - t0).toFixed(4)}ms`);
+          console.log(`      [ungroupedMutate] setCursor total: ${_setCursorTotal.toFixed(4)}ms`);
+          console.log(`      [ungroupedMutate] fn call total: ${_fnCallTotal.toFixed(4)}ms`);
+        }
       }
     } else if (Array.isArray(expr)) {
+      const n = getNrows();
       if (expr.length !== n) {
         throw new Error(
           `Array length mismatch for column "${col}": provided ${expr.length} values but DataFrame has ${n} rows. ` +
@@ -224,28 +286,32 @@ export function processUngroupedMutations<Row extends Record<string, unknown>>(
         // Zero-copy: assign the array directly
         updates[col] = expr as unknown[];
       } else {
+        const idx = materializedIndex ?? materializeIndex(storeLength, view);
         if (!updates[col]) updates[col] = new Array(storeLength);
-        for (let i = 0; i < len; i++) {
-          updates[col][materializedIndex![i]] = expr[i];
+        for (let i = 0; i < idx.length; i++) {
+          updates[col][idx[i]] = expr[i];
         }
       }
-      if (profile) console.log(`    [ungroupedMutate] array col "${col}"(${len} rows): ${(performance.now() - t0).toFixed(4)}ms`);
+      if (profile) console.log(`    [ungroupedMutate] array col "${col}"(${getNrows()} rows): ${(performance.now() - t0).toFixed(4)}ms`);
     } else {
-      // Scalar: try napi fill for numeric scalars on identity path
-      if (isIdentity && typeof expr === "number") {
-        const filled = mutate_fill_scalar(len, expr);
+      // For numeric scalars on identity/rawMask, use napi fill (returns Float64Array — fastest eager fill).
+      // Note: Polars pl.lit() is lazy (0.013ms) so the ratio looks bad, but our eager fill at 0.08ms
+      // is the fastest materialized option (vs new Array().fill at 0.39ms).
+      if ((isIdentity || isRawMaskOnly) && typeof expr === "number") {
+        const filled = mutate_fill_scalar(storeLength, expr);
         if (filled) {
           updates[col] = filled as unknown as unknown[];
-          if (profile) console.log(`    [ungroupedMutate] napi fill-scalar "${col}"(${len} rows): ${(performance.now() - t0).toFixed(4)}ms`);
+          if (profile) console.log(`    [ungroupedMutate] napi fill-scalar "${col}"(${storeLength} rows): ${(performance.now() - t0).toFixed(4)}ms`);
           continue;
         }
       }
       if (!updates[col]) updates[col] = new Array(storeLength);
-      if (isIdentity) {
+      if (isIdentity || isRawMaskOnly) {
         updates[col].fill(expr as any);
       } else {
-        for (let i = 0; i < len; i++) {
-          updates[col][materializedIndex![i]] = expr;
+        const idx = materializedIndex ?? materializeIndex(storeLength, view);
+        for (let i = 0; i < idx.length; i++) {
+          updates[col][idx[i]] = expr;
         }
       }
       if (profile) console.log(`    [ungroupedMutate] scalar col "${col}"(${len} rows): ${(performance.now() - t0).toFixed(4)}ms`);
@@ -326,15 +392,18 @@ function tryNapiMutate(
   updates: Record<string, unknown[]>,
   len: number,
   materializedIndex: Uint32Array | null,
+  rawMask: Uint8Array | null,
   profile: boolean,
 ): boolean {
   const idx = materializedIndex;
   const storeLength = store.length as number;
+  let _tn = profile ? performance.now() : 0;
 
   // Pattern: r.colA op r.colB
   const binColMatch = new RegExp(
     `^${p}\\.(\\w+)\\s*([+\\-*/])\\s*${p}\\.(\\w+)$`,
   ).exec(body);
+  if (profile) console.log(`        [tryNapi] regex binCol: ${(performance.now() - _tn).toFixed(4)}ms, match=${!!binColMatch}`);
   if (binColMatch) {
     const [, colA, op, colB] = binColMatch;
     const opCode = OP_MAP[op];
@@ -343,16 +412,23 @@ function tryNapiMutate(
     const b = store.columns[colB];
     if (!(a instanceof Float64Array) || !(b instanceof Float64Array)) return false;
     try {
+      let tb = profile ? performance.now() : 0;
       const ga = idx ? gatherF64(a, idx) : a;
       const gb = idx ? gatherF64(b, idx) : b;
+      if (profile && idx) console.log(`      [mutate] gather(${idx.length}): ${(performance.now() - tb).toFixed(4)}ms`);
+      tb = profile ? performance.now() : 0;
       const result = mutate_binary_cols(ga, gb, opCode);
+      if (profile) console.log(`      [mutate] napi call(${ga.length}): ${(performance.now() - tb).toFixed(4)}ms`);
       if (result) {
+        tb = profile ? performance.now() : 0;
         if (idx) {
           scatterResult(result, idx, storeLength, updates, col);
+          if (profile) console.log(`      [mutate] scatter(${idx.length}): ${(performance.now() - tb).toFixed(4)}ms`);
         } else {
           updates[col] = result as unknown as unknown[];
+          if (profile) console.log(`      [mutate] assign: ${(performance.now() - tb).toFixed(4)}ms`);
         }
-        if (profile) console.log(`    [mutate] napi binary "${colA} ${op} ${colB}"(${len} rows${idx ? ", view" : ""}): ok`);
+        if (profile) console.log(`    [mutate] napi binary "${colA} ${op} ${colB}"(${ga.length} rows${idx ? ", view" : ""}): ok`);
         return true;
       }
     } catch { /* napi not available */ }
@@ -360,9 +436,11 @@ function tryNapiMutate(
   }
 
   // Pattern: r.colA op number  OR  number op r.colA
+  _tn = profile ? performance.now() : 0;
   const colScalarMatch = new RegExp(
     `^${p}\\.(\\w+)\\s*([+\\-*/])\\s*(-?\\d+(?:\\.\\d+)?)$`,
   ).exec(body);
+  if (profile) console.log(`        [tryNapi] regex colScalar: ${(performance.now() - _tn).toFixed(4)}ms, match=${!!colScalarMatch}`);
   if (colScalarMatch) {
     const [, colA, op, numStr] = colScalarMatch;
     const opCode = OP_MAP[op];
@@ -378,7 +456,7 @@ function tryNapiMutate(
         } else {
           updates[col] = result as unknown as unknown[];
         }
-        if (profile) console.log(`    [mutate] napi col-scalar "${colA} ${op} ${numStr}"(${len} rows${idx ? ", view" : ""}): ok`);
+        if (profile) console.log(`    [mutate] napi col-scalar "${colA} ${op} ${numStr}"(${ga.length} rows${idx ? ", view" : ""}): ok`);
         return true;
       }
     } catch { /* napi not available */ }
@@ -386,9 +464,11 @@ function tryNapiMutate(
   }
 
   // Pattern: number op r.colA (e.g. 2 * r.x)
+  _tn = profile ? performance.now() : 0;
   const scalarColMatch = new RegExp(
     `^(-?\\d+(?:\\.\\d+)?)\\s*([+\\-*/])\\s*${p}\\.(\\w+)$`,
   ).exec(body);
+  if (profile) console.log(`        [tryNapi] regex scalarCol: ${(performance.now() - _tn).toFixed(4)}ms, match=${!!scalarColMatch}`);
   if (scalarColMatch) {
     const [, numStr, op, colA] = scalarColMatch;
     const a = store.columns[colA];
@@ -404,7 +484,7 @@ function tryNapiMutate(
           } else {
             updates[col] = result as unknown as unknown[];
           }
-          if (profile) console.log(`    [mutate] napi scalar-col "${numStr} ${op} ${colA}"(${len} rows${idx ? ", view" : ""}): ok`);
+          if (profile) console.log(`    [mutate] napi scalar-col "${numStr} ${op} ${colA}"(${ga.length} rows${idx ? ", view" : ""}): ok`);
           return true;
         }
       } catch { /* napi not available */ }
@@ -413,9 +493,11 @@ function tryNapiMutate(
   }
 
   // Pattern: r.colA cmp number (e.g. r.x > 50)
+  _tn = profile ? performance.now() : 0;
   const cmpScalarMatch = new RegExp(
     `^${p}\\.(\\w+)\\s*(>=|<=|===|!==|==|!=|>|<)\\s*(-?\\d+(?:\\.\\d+)?)$`,
   ).exec(body);
+  if (profile) console.log(`        [tryNapi] regex cmpScalar: ${(performance.now() - _tn).toFixed(4)}ms, match=${!!cmpScalarMatch}`);
   if (cmpScalarMatch) {
     const [, colA, op, numStr] = cmpScalarMatch;
     const opCode = CMP_MAP[op];
@@ -434,7 +516,7 @@ function tryNapiMutate(
           // Store raw Uint8Array (0/1) — proxy/RowView convert to boolean on read
           updates[col] = result as unknown as unknown[];
         }
-        if (profile) console.log(`    [mutate] napi cmp-scalar "${colA} ${op} ${numStr}"(${len} rows${idx ? ", view" : ""}): ok`);
+        if (profile) console.log(`    [mutate] napi cmp-scalar "${colA} ${op} ${numStr}"(${ga.length} rows${idx ? ", view" : ""}): ok`);
         return true;
       }
     } catch { /* napi not available */ }
@@ -442,9 +524,11 @@ function tryNapiMutate(
   }
 
   // Pattern: r.colA cmp r.colB (e.g. r.x > r.y)
+  _tn = profile ? performance.now() : 0;
   const cmpColMatch = new RegExp(
     `^${p}\\.(\\w+)\\s*(>=|<=|===|!==|==|!=|>|<)\\s*${p}\\.(\\w+)$`,
   ).exec(body);
+  if (profile) console.log(`        [tryNapi] regex cmpCol: ${(performance.now() - _tn).toFixed(4)}ms, match=${!!cmpColMatch}`);
   if (cmpColMatch) {
     const [, colA, op, colB] = cmpColMatch;
     const opCode = CMP_MAP[op];
@@ -464,7 +548,7 @@ function tryNapiMutate(
         } else {
           updates[col] = result as unknown as unknown[];
         }
-        if (profile) console.log(`    [mutate] napi cmp-cols "${colA} ${op} ${colB}"(${len} rows${idx ? ", view" : ""}): ok`);
+        if (profile) console.log(`    [mutate] napi cmp-cols "${colA} ${op} ${colB}"(${ga.length} rows${idx ? ", view" : ""}): ok`);
         return true;
       }
     } catch { /* napi not available */ }
@@ -558,15 +642,21 @@ function tryColumnarMutate(
   updates: Record<string, unknown[]>,
   len: number,
   materializedIndex: Uint32Array | null,
+  rawMask: Uint8Array | null,
   profile: boolean,
 ): boolean {
+  let _tc = profile ? performance.now() : 0;
   const parsed = parseMutateFunction(expr);
+  if (profile) console.log(`      [tryColumnar] parseMutateFunction: ${(performance.now() - _tc).toFixed(4)}ms, result=${parsed ? `"${parsed.body}"` : "null"}`);
   if (!parsed) return false;
   const { param: p, body, isComplex } = parsed;
 
   // Try napi vectorized path first (only for simple numeric binary ops on identity view)
   if (!isComplex) {
-    if (tryNapiMutate(parsed, store, col, updates, len, materializedIndex, profile)) {
+    _tc = profile ? performance.now() : 0;
+    const napiResult = tryNapiMutate(parsed, store, col, updates, len, materializedIndex, rawMask, profile);
+    if (profile) console.log(`      [tryColumnar] tryNapiMutate: ${(performance.now() - _tc).toFixed(4)}ms, result=${napiResult}`);
+    if (napiResult) {
       return true;
     }
   }
@@ -577,7 +667,9 @@ function tryColumnarMutate(
     if (ternaryResult) return true;
   }
 
-  if (isComplex) return false;
+  // For complex expressions (function calls like .toUpperCase(), Math.round(), .slice(), etc.),
+  // skip napi (string marshalling overhead > JS execution) and fall through to the
+  // generic JS columnar path (new Function) which accesses columns directly.
 
   // Parse column references: r.colName
   const colRefs = new Set<string>();

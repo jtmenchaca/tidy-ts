@@ -31,10 +31,14 @@ export function withMask<Row extends object>(
   df: DataFrame<Row>,
   mask: import("./columnar-view.ts").BitSet,
 ): DataFrame<Row> {
+  const _p = (globalThis as Record<string, unknown>).__TIDY_PROFILE;
+  let _t0 = _p ? performance.now() : 0;
   // deno-lint-ignore no-explicit-any
   const api = df as any;
   const view: View = { ...(api.__view || {}), mask, _materializedIndex: null };
+  if (_p) { console.log(`    [withMask] build view: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
   const out = createColumnarDataFrame([] as readonly object[]);
+  if (_p) { console.log(`    [withMask] createColumnarDataFrame(empty): ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
   // deno-lint-ignore no-explicit-any
   (out as any).__store = api.__store;
   // deno-lint-ignore no-explicit-any
@@ -48,6 +52,35 @@ export function withMask<Row extends object>(
   (out as any).__groups = api.__groups;
   // deno-lint-ignore no-explicit-any
   (out as any).__rowLabels = api.__rowLabels;
+  if (_p) console.log(`    [withMask] assign props: ${(performance.now() - _t0).toFixed(4)}ms`);
+  return out as unknown as DataFrame<Row>;
+}
+
+export function withRawMask<Row extends object>(
+  df: DataFrame<Row>,
+  rawMask: Uint8Array,
+): DataFrame<Row> {
+  const _p = (globalThis as Record<string, unknown>).__TIDY_PROFILE;
+  let _t0 = _p ? performance.now() : 0;
+  // deno-lint-ignore no-explicit-any
+  const api = df as any;
+  const view: View = { ...(api.__view || {}), rawMask, mask: null, _materializedIndex: null };
+  if (_p) { console.log(`    [withRawMask] build view: ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
+  const out = createColumnarDataFrame([] as readonly object[]);
+  if (_p) { console.log(`    [withRawMask] createColumnarDataFrame(empty): ${(performance.now() - _t0).toFixed(4)}ms`); _t0 = performance.now(); }
+  // deno-lint-ignore no-explicit-any
+  (out as any).__store = api.__store;
+  // deno-lint-ignore no-explicit-any
+  (out as any).__view = view;
+  // deno-lint-ignore no-explicit-any
+  (out as any).__rowView = api.__rowView;
+  // deno-lint-ignore no-explicit-any
+  (out as any).__kind = api.__kind;
+  // deno-lint-ignore no-explicit-any
+  (out as any).__groups = api.__groups;
+  // deno-lint-ignore no-explicit-any
+  (out as any).__rowLabels = api.__rowLabels;
+  if (_p) console.log(`    [withRawMask] assign props: ${(performance.now() - _t0).toFixed(4)}ms`);
   return out as unknown as DataFrame<Row>;
 }
 

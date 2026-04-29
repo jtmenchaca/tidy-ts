@@ -5,6 +5,7 @@
  * The harness handles all the boilerplate: TTY detection, cursor visibility,
  * fade transitions, console.log buffering, resize handling, and the Spinner API.
  */
+import { setInterval as nodeSetInterval } from "node:timers";
 import type { Spinner } from "./spinner.ts";
 /** Braille spinner frames shared by all animations' status lines. */
 export declare const SPIN: string[];
@@ -15,7 +16,7 @@ export interface BaseState {
     rows: number;
     message: string;
     stopped: boolean;
-    interval: ReturnType<typeof setInterval> | null;
+    interval: ReturnType<typeof nodeSetInterval> | null;
     originalLog: typeof console.log;
     logBuffer: string[];
 }

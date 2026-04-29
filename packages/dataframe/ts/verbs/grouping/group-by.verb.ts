@@ -35,7 +35,7 @@ export function groupBy(
     let n: number;
     let getVal: (i: number, col: string) => unknown;
 
-    if (!viewObj || (!viewObj.index && !viewObj.mask)) {
+    if (!viewObj || (!viewObj.index && !viewObj.mask && !viewObj.rawMask)) {
       // Fast path: no view transformations, work directly with raw indices
       n = store.length;
       getVal = (i: number, col: string) => {

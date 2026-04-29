@@ -52,12 +52,13 @@ export function slice(
     const groupedDf = df;
     if (groupedDf.__groups) {
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
       const { head, next, size } = groupedDf.__groups;
 
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         const n = groupIndices.length;
         const s = Math.max(0, start < 0 ? n + start : start);
@@ -128,6 +129,7 @@ function slice_indices(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -136,7 +138,7 @@ function slice_indices(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Apply slice indices to this group
         for (const idx of indices) {
@@ -215,6 +217,7 @@ export function slice_head(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -223,7 +226,7 @@ export function slice_head(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Take first n rows from this group
         const takeCount = Math.min(n, groupIndices.length);
@@ -298,6 +301,7 @@ export function slice_tail(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -306,7 +310,7 @@ export function slice_tail(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Take last n rows from this group
         for (
@@ -386,6 +390,7 @@ export function slice_min(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -394,7 +399,7 @@ export function slice_min(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Build rows from indices and sort
         const groupData = groupIndices.map((i: number) => {
@@ -488,6 +493,7 @@ export function slice_max(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -496,7 +502,7 @@ export function slice_max(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
@@ -593,6 +599,7 @@ export function slice_sample(
       const api: any = df as any;
       const store = api.__store;
       const mask = api.__view?.mask;
+      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
 
       if (!groupedDf.__groups) return df;
@@ -601,7 +608,7 @@ export function slice_sample(
       // Iterate through each group using adjacency list
       for (let g = 0; g < size; g++) {
         // Collect physical indices for this group, filtering by mask if present
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask });
+        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
 
         // Build rows from indices
         const groupData = groupIndices.map((i: number) => {
