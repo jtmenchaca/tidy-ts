@@ -5,5 +5,5 @@
  * fade-in:  ████ → ▓▓▓▓ → ▒▒▒▒ → ░░░░ → (clear)
  * fade-out: (clear) → ░░░░ → ▒▒▒▒ → ▓▓▓▓ → ████ → (clear screen)
  */
-export declare function fadeIn(cols: number, rows: number): Promise<void>;
-export declare function fadeOut(cols: number, rows: number): Promise<void>;
+export declare function fadeIn(cols: number, rows: number, signal?: AbortSignal): Promise<void>;
+export declare function fadeOut(cols: number, rows: number, signal?: AbortSignal): Promise<void>;

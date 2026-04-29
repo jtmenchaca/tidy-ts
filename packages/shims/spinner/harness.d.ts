@@ -34,6 +34,10 @@ export interface AnimationConfig<S extends BaseState> {
     intervalMs: number;
     /** How many terminal rows to reserve below the animation (for border, status, etc.). */
     reserveRows: number;
+    /** Called after the animation loop starts, with the state. Use for input listeners, etc. */
+    setup?(state: S): void;
+    /** Called on stop, before fade-out. Use to clean up input listeners, raw mode, etc. */
+    cleanup?(state: S): void;
 }
 /** Wire up an AnimationConfig into a full Spinner with all the shared plumbing. */
 export declare function createAnimationSpinner<S extends BaseState>(config: AnimationConfig<S>, initialMessage: string): Spinner | null;
