@@ -21,7 +21,8 @@ const ANIMATIONS: Record<string, AnimationFactory> = {
   nyan: createNyanSpinner,
 };
 
-const ANIMATION_NAMES = Object.keys(ANIMATIONS);
+/** Animations included in the random rotation. */
+const RANDOM_POOL = ["aquarium", "invaders", "matrix", "nyan"];
 
 export type AnimationName = "aquarium" | "invaders" | "lava" | "matrix" | "nyan";
 
@@ -33,7 +34,7 @@ export function createAnimatedSpinner(
     return ANIMATIONS[animation](initialMessage);
   }
 
-  // Random pick
-  const name = ANIMATION_NAMES[Math.floor(Math.random() * ANIMATION_NAMES.length)];
+  // Random pick from the pool (excludes lava)
+  const name = RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)];
   return ANIMATIONS[name](initialMessage);
 }

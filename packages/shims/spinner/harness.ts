@@ -60,6 +60,10 @@ export interface AnimationConfig<S extends BaseState> {
   intervalMs: number;
   /** How many terminal rows to reserve below the animation (for border, status, etc.). */
   reserveRows: number;
+  /** Called after the animation loop starts, with the state. Use for input listeners, etc. */
+  setup?(state: S): void;
+  /** Called on stop, before fade-out. Use to clean up input listeners, raw mode, etc. */
+  cleanup?(state: S): void;
 }
 
 /** Wire up an AnimationConfig into a full Spinner with all the shared plumbing. */
@@ -86,6 +90,7 @@ export function createAnimationSpinner<S extends BaseState>(
       config.render(s);
     }, config.intervalMs);
     s.interval.unref();
+    config.setup?.(s);
   });
 
   console.log = (...args: unknown[]) => {
@@ -119,6 +124,7 @@ export function createAnimationSpinner<S extends BaseState>(
       fadeInAbort.abort();
       await fadeInDone;
       if (s.interval) nodeClearInterval(s.interval);
+      config.cleanup?.(s);
       process.stdout.removeListener("resize", onResize);
       console.log = s.originalLog;
 
