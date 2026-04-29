@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
-export declare const PlainTime: typeof Temporal.PlainTime;
+declare const PlainTime: typeof Temporal.PlainTime;
 /**
  * Regex pattern for {@link Temporal.PlainTime} ISO 8601 strings
  * (e.g. `13:45:30` or `13:45:30.123456789`).
@@ -16,3 +16,4 @@ export declare const zPlainTime: ZodTemporal<typeof PlainTime>;
  * Validates that the value is an instance of {@link Temporal.PlainTime}.
  */
 export declare const zPlainTimeInstance: z.ZodType<Temporal.PlainTime>;
+export {};

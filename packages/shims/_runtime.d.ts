@@ -3,11 +3,6 @@
  * Provides type-safe access to runtime-specific APIs
  */
 /**
- * Lazy load Node.js modules for async operations
- * Note: path and fileURLToPath are loaded at top level, so this only loads fs/process
- */
-export declare function ensureNodeModules(): Promise<void>;
-/**
  * Get Deno namespace if available
  */
 export declare function getDenoNamespace(): typeof Deno | null;
@@ -35,7 +30,3 @@ export declare function getPathToFileURL(): typeof import("node:url").pathToFile
  * Get Node.js fs sync module (lazy-loads if needed)
  */
 export declare function getFsSync(): typeof import("node:fs") | null;
-/**
- * Ensure fs sync module is loaded (async version)
- */
-export declare function ensureFsSync(): Promise<void>;

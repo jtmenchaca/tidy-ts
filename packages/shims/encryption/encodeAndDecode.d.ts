@@ -15,10 +15,6 @@ export declare function toBase64URL(base64: string): string;
  * Replaces '-' with '+', '_' with '/', and adds '=' padding.
  */
 export declare function fromBase64URL(base64url: string): string;
-export declare function decodeToBytes({ data, encoding }: {
-    data: string;
-    encoding: PlaintextEncoding | CiphertextEncoding;
-}): Uint8Array;
 export declare function encodeFromBytes({ data, encoding }: {
     data: Uint8Array;
     encoding: CiphertextEncoding | "utf8";

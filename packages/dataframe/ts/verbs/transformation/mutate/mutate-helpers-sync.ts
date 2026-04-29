@@ -427,9 +427,9 @@ function tryNapiMutate(
       const result = mutate_compare_scalar_raw(ga, Number(numStr), opCode);
       if (result) {
         if (idx) {
-          // Scatter Uint8Array boolean mask back
+          // Scatter Uint8Array boolean mask back, converting 0/1 → false/true
           if (!updates[col]) updates[col] = new Array(storeLength);
-          for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = result[i];
+          for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = result[i] !== 0;
         } else {
           // Store raw Uint8Array (0/1) — proxy/RowView convert to boolean on read
           updates[col] = result as unknown as unknown[];
@@ -458,8 +458,9 @@ function tryNapiMutate(
       const result = mutate_compare_cols_raw(ga, gb, opCode);
       if (result) {
         if (idx) {
+          // Convert 0/1 → false/true when scattering into plain Array
           if (!updates[col]) updates[col] = new Array(storeLength);
-          for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = result[i];
+          for (let i = 0; i < idx.length; i++) updates[col][idx[i]] = result[i] !== 0;
         } else {
           updates[col] = result as unknown as unknown[];
         }

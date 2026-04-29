@@ -19,11 +19,6 @@ export interface BaseState {
     originalLog: typeof console.log;
     logBuffer: string[];
 }
-/** Read terminal dimensions, reserving `reserveRows` at the bottom. */
-export declare function termSize(reserveRows: number): {
-    cols: number;
-    rows: number;
-};
 /** Create base state fields. Override `rows` in the animation's own init if needed. */
 export declare function createBaseState(message: string, reserveRows: number): BaseState;
 /** Definition that each animation must provide. */
