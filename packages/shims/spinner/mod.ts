@@ -6,6 +6,8 @@
 
 import type { Spinner } from "./spinner.ts";
 import { createAquariumSpinner } from "./aquarium.ts";
+import { createInvadersSpinner } from "./invaders.ts";
+import { createLavaSpinner } from "./lava.ts";
 import { createMatrixSpinner } from "./matrix.ts";
 import { createNyanSpinner } from "./nyan.ts";
 
@@ -13,13 +15,15 @@ type AnimationFactory = (message: string) => Spinner | null;
 
 const ANIMATIONS: Record<string, AnimationFactory> = {
   aquarium: createAquariumSpinner,
+  invaders: createInvadersSpinner,
+  lava: createLavaSpinner,
   matrix: createMatrixSpinner,
   nyan: createNyanSpinner,
 };
 
 const ANIMATION_NAMES = Object.keys(ANIMATIONS);
 
-export type AnimationName = "aquarium" | "matrix" | "nyan";
+export type AnimationName = "aquarium" | "invaders" | "lava" | "matrix" | "nyan";
 
 export function createAnimatedSpinner(
   initialMessage: string,

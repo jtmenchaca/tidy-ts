@@ -15,7 +15,7 @@
     "vega": "npm:vega@^6.2.0",
     "vega-embed": "npm:vega-embed@^7.0.2",
     "vega-lite": "npm:vega-lite@^6.4.1",
-    "@tidy-ts/shims/temporal-polyfill": "jsr:@tidy-ts/shims@1.4.3/temporal-polyfill"
+    "@tidy-ts/shims/temporal-polyfill": "jsr:@tidy-ts/shims@1.4.4"
   },
   "exclude": ["dist/"],
   "include": [

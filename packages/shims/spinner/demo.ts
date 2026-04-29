@@ -6,7 +6,7 @@
 import process from "node:process";
 import { createSpinner, type SpinnerStyle } from "./spinner.ts";
 
-const styles: SpinnerStyle[] = ["aquarium", "matrix", "nyan"];
+const styles: SpinnerStyle[] = ["lava", "invaders"];
 const DURATION = 7;
 
 function sleep(ms: number): Promise<void> {

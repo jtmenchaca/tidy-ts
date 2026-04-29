@@ -67,7 +67,7 @@ replaceInFile("Cargo.toml", [
 jsonVersion("packages/dataframe/package.json");
 replaceInFile("packages/dataframe/deno.jsonc", [
   [/("version"\s*:\s*")[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
-  [/("@tidy-ts\/shims"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
+  [/("@tidy-ts\/shims[^"]*"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
 ]);
 
 // Shims
@@ -80,10 +80,10 @@ jsonVersion("packages/npm-win32-x64/package.json");
 
 // Downstream shims imports (arrow, parquet)
 replaceInFile("packages/arrow/deno.jsonc", [
-  [/("@tidy-ts\/shims"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
+  [/("@tidy-ts\/shims[^"]*"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
 ]);
 replaceInFile("packages/parquet/deno.jsonc", [
-  [/("@tidy-ts\/shims"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
+  [/("@tidy-ts\/shims[^"]*"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
 ]);
 
 // Build script shims dependency
