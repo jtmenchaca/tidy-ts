@@ -56,7 +56,7 @@
     "joss:local-render": "devkit md2pdf joss/paper.md",
     "joss:render": "cd joss && docker run --rm --volume \"$PWD:/data\" --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/inara",
     "intellisense": "npx tsx scripts/intellisense.ts",
-    "spinner:demo": "deno run -A packages/shims/spinner/demo.ts"
+    "spinner": "deno run -A packages/shims/spinner/demo.ts"
   },
   "dependencies": {
     "@cliffy/command": "jsr:@cliffy/command@^1.0.0-rc.7",

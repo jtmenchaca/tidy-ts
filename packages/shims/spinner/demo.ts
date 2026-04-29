@@ -6,8 +6,8 @@
 import process from "node:process";
 import { createSpinner, type SpinnerStyle } from "./spinner.ts";
 
-const styles: SpinnerStyle[] = ["lava", "invaders"];
-const DURATION = 7;
+const styles: SpinnerStyle[] = ["kaleidoscope"];
+const DURATION = 30;
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

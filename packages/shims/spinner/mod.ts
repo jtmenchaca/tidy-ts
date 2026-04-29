@@ -7,7 +7,7 @@
 import type { Spinner } from "./spinner.ts";
 import { createAquariumSpinner } from "./aquarium.ts";
 import { createInvadersSpinner } from "./invaders.ts";
-import { createLavaSpinner } from "./lava.ts";
+import { createKaleidoscopeSpinner } from "./kaleidoscope.ts";
 import { createMatrixSpinner } from "./matrix.ts";
 import { createNyanSpinner } from "./nyan.ts";
 
@@ -16,7 +16,7 @@ type AnimationFactory = (message: string) => Spinner | null;
 const ANIMATIONS: Record<string, AnimationFactory> = {
   aquarium: createAquariumSpinner,
   invaders: createInvadersSpinner,
-  lava: createLavaSpinner,
+  kaleidoscope: createKaleidoscopeSpinner,
   matrix: createMatrixSpinner,
   nyan: createNyanSpinner,
 };
@@ -24,7 +24,7 @@ const ANIMATIONS: Record<string, AnimationFactory> = {
 /** Animations included in the random rotation. */
 const RANDOM_POOL = ["aquarium", "invaders", "matrix", "nyan"];
 
-export type AnimationName = "aquarium" | "invaders" | "lava" | "matrix" | "nyan";
+export type AnimationName = "aquarium" | "invaders" | "kaleidoscope" | "matrix" | "nyan";
 
 export function createAnimatedSpinner(
   initialMessage: string,
@@ -34,7 +34,7 @@ export function createAnimatedSpinner(
     return ANIMATIONS[animation](initialMessage);
   }
 
-  // Random pick from the pool (excludes lava)
+  // Random pick from the pool
   const name = RANDOM_POOL[Math.floor(Math.random() * RANDOM_POOL.length)];
   return ANIMATIONS[name](initialMessage);
 }

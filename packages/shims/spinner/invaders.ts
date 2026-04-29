@@ -96,7 +96,7 @@ function init(msg: string): State {
     explosions: [],
     cannonCol: Math.floor(base.cols / 2) - Math.floor(CANNON_W / 2),
     alienDir: 1,
-    alienSpeed: 3,
+    alienSpeed: 6,
     moveCounter: 0,
     score: 0,
     wave: 0,
@@ -150,13 +150,13 @@ function teardown(s: State) {
 function step(s: State) {
   s.frame++;
 
-  // Player movement (2 cells per tick for responsiveness)
+  // Player movement (4 cells per tick for snappy response)
   if (s.moveLeft) {
-    s.cannonCol = Math.max(0, s.cannonCol - 2);
+    s.cannonCol = Math.max(0, s.cannonCol - 4);
     s.moveLeft = false;
   }
   if (s.moveRight) {
-    s.cannonCol = Math.min(s.cols - CANNON_W, s.cannonCol + 2);
+    s.cannonCol = Math.min(s.cols - CANNON_W, s.cannonCol + 4);
     s.moveRight = false;
   }
 
