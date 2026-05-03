@@ -7,7 +7,7 @@ import {
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
-import { collectGroupIndices } from "../verb-helpers.ts";
+import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
 
 // API: require at least one column (SQL-like DISTINCT)
@@ -33,13 +33,12 @@ export function distinct(
 
       // If grouped, apply distinct within each group
       if (api.__groups) {
-        const mask = api.__view?.mask;
-        const rawMask = api.__view?.rawMask;
         const rebuilt: any[] = [];
-        const { head, next, size } = api.__groups;
+        const { head, next, size, usesRawIndices } = api.__groups;
+        const baseIndex = usesRawIndices ? null : materializeIndex(store.length, api.__view);
 
         for (let g = 0; g < size; g++) {
-          const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
+          const groupIndices = collectGroupPhysicalIndices({ head, next, groupIndex: g, usesRawIndices, baseIndex });
 
           // Run distinct on this group
           const typedArrays = convertToTypedArrays(store.columns, keyCols);

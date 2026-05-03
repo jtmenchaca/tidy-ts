@@ -4,7 +4,7 @@ import {
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { shuffleArray } from "../utility/seedable-random.ts";
-import { collectGroupIndices } from "../verb-helpers.ts";
+import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 
 /**
  * Randomize the order of rows in a DataFrame.
@@ -44,13 +44,12 @@ export function shuffle(seed?: number) {
     const store = api.__store;
 
     if (api.__groups) {
-      const mask = api.__view?.mask;
-      const rawMask = api.__view?.rawMask;
       const rebuilt: any[] = [];
-      const { head, next, size } = api.__groups;
+      const { head, next, size, usesRawIndices } = api.__groups;
+      const baseIndex = usesRawIndices ? null : materializeIndex(store.length, api.__view);
 
       for (let g = 0; g < size; g++) {
-        const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
+        const groupIndices = collectGroupPhysicalIndices({ head, next, groupIndex: g, usesRawIndices, baseIndex });
 
         const groupRows: any[] = [];
         for (const physIdx of groupIndices) {

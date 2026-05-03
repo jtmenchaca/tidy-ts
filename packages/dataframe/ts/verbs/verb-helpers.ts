@@ -133,3 +133,35 @@ export function collectGroupIndices({
   }
   return indices;
 }
+
+/**
+ * Collect **physical store indices** for a single group.
+ *
+ * When `usesRawIndices` is true (no view), adjacency list values are already
+ * physical indices. Otherwise they are view-level offsets that must be
+ * remapped through `baseIndex`.
+ *
+ * Unlike `collectGroupIndices`, this does NOT re-filter by mask/rawMask
+ * because `groupBy` already built the adjacency list from only visible rows.
+ */
+export function collectGroupPhysicalIndices({
+  head,
+  next,
+  groupIndex,
+  usesRawIndices,
+  baseIndex,
+}: {
+  head: Int32Array;
+  next: Int32Array;
+  groupIndex: number;
+  usesRawIndices: boolean;
+  baseIndex: Uint32Array | null;
+}): number[] {
+  const indices: number[] = [];
+  let rowIdx = head[groupIndex];
+  while (rowIdx !== -1) {
+    indices.push(usesRawIndices ? rowIdx : baseIndex![rowIdx]);
+    rowIdx = next[rowIdx];
+  }
+  return indices;
+}

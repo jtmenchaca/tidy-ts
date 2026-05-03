@@ -1,6 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
-import { collectGroupIndices } from "../verb-helpers.ts";
+import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import type { FillMethod } from "./upsample.types.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
@@ -35,8 +35,6 @@ function upsampleImpl(
       groupedDf.__groups;
     const api = df as any;
     const store = api.__store;
-    const mask = api.__view?.mask;
-    const rawMask = api.__view?.rawMask;
     const baseIndex = usesRawIndices
       ? null
       : materializeIndex(store.length, api.__view);
@@ -44,10 +42,9 @@ function upsampleImpl(
 
     // Process each group separately
     for (let g = 0; g < size; g++) {
-      const groupIndices = collectGroupIndices({ head, next, groupIndex: g, mask, rawMask });
+      const groupIndices = collectGroupPhysicalIndices({ head, next, groupIndex: g, usesRawIndices, baseIndex });
       const groupRows: any[] = [];
-      for (const idx of groupIndices) {
-        const physIdx = baseIndex ? baseIndex[idx] : idx;
+      for (const physIdx of groupIndices) {
         const row: any = {};
         for (const colName of store.columnNames) {
           row[colName] = store.columns[colName][physIdx];

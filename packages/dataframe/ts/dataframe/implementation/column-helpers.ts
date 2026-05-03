@@ -285,7 +285,9 @@ export function convertToTypedArrays(
         out[i] = h < 4 ? (h + 4) : h === 0xFFFFFFFF ? 0xFFFFFFFE : h;
       } else {
         // Optimized fast string hash - polynomial hash
-        const str = "" + v;
+        // Use String() not "" + v — the + operator calls valueOf() which
+        // Temporal types throw on; String() calls toString() instead.
+        const str = String(v);
         let hash = 0;
         for (let j = 0; j < str.length; j++) {
           hash = (Math.imul(hash, 31) + str.charCodeAt(j)) >>> 0;

@@ -284,10 +284,25 @@ function tryRawMaskFilterPath(
     if (!bodyMatch) return null;
     const body = bodyMatch[1].trim();
 
-    // Split on && for compound predicates
-    const clauses = body.includes("&&") && !body.includes("||")
-      ? body.split("&&").map((c: string) => c.trim())
-      : [body];
+    // Detect negation wrapper: !(expr)
+    let negated = false;
+    let innerBody = body;
+    const negMatch = /^!\((.+)\)$/.exec(body);
+    if (negMatch) {
+      negated = true;
+      innerBody = negMatch[1].trim();
+      // Compound negation !(a && b) → OR via De Morgan's — can't handle in AND-only path
+      if (innerBody.includes("&&") || innerBody.includes("||")) return null;
+    } else if (body.startsWith("!")) {
+      return null; // Other negation forms we can't parse
+    }
+
+    // Split on && for compound predicates (only for non-negated)
+    const clauses = !negated && innerBody.includes("&&") && !innerBody.includes("||")
+      ? innerBody.split("&&").map((c: string) => c.trim())
+      : [innerBody];
+
+    let predMask: Uint8Array | null = null;
 
     for (const clause of clauses) {
       // Pattern: r.col CMP number
@@ -296,7 +311,13 @@ function tryRawMaskFilterPath(
       ).exec(clause);
       if (!cmpMatch) return null;
 
-      const [, colName, op, numStr] = cmpMatch;
+      let [, colName, op, numStr] = cmpMatch;
+      // For negated simple predicates, flip the operator
+      if (negated) {
+        const flipped = flipOp(op);
+        if (!flipped) return null;
+        op = flipped;
+      }
       const opCode = CMP_MAP_FILTER[op];
       if (opCode === undefined) return null;
 
@@ -308,12 +329,21 @@ function tryRawMaskFilterPath(
       if (profile) console.log(`    [rawMaskFilter] compare "${colName} ${op} ${numStr}": ${(performance.now() - t0).toFixed(4)}ms`);
       if (!result) return null;
 
-      if (!mask) {
-        mask = result;
+      if (!predMask) {
+        predMask = result;
       } else {
         // AND in place
-        for (let i = 0; i < n; i++) mask[i] &= result[i];
+        for (let i = 0; i < n; i++) predMask[i] &= result[i];
       }
+    }
+
+    if (!predMask) return null;
+
+    if (!mask) {
+      mask = predMask;
+    } else {
+      // AND across predicates
+      for (let i = 0; i < n; i++) mask[i] &= predMask[i];
     }
   }
 
@@ -495,12 +525,31 @@ function detectSimplePredicate(
   if (!paramMatch) return null;
   const p = paramMatch[1]; // the actual parameter name
 
+  // Detect negation wrapper: !(expr) — unwrap and flip operator
+  let negated = false;
+  let innerSource = s;
+  const bodyCheck = /=>\s*(.+)/.exec(s);
+  if (bodyCheck) {
+    const body = bodyCheck[1].trim();
+    // Match !(single_expr) — unwrap the negation
+    const negMatch = /^!\((.+)\)$/.exec(body);
+    if (negMatch) {
+      negated = true;
+      // Rebuild source with the inner expression for the regex matchers below
+      innerSource = s.replace(/=>\s*.+/, `=> ${negMatch[1].trim()}`);
+    } else if (body.startsWith("!")) {
+      // Other negation forms we can't parse (e.g. !r.flag)
+      return null;
+    }
+  }
+
   // null checks
   {
-    const m = new RegExp(`${p}\\.(\\w+)\\s*([!]?={1,2})\\s*null`).exec(s);
+    const m = new RegExp(`${p}\\.(\\w+)\\s*([!]?={1,2})\\s*null`).exec(innerSource);
     if (m) {
       const column = m[1];
-      const op = m[2].startsWith("!") ? "!= null" : "== null";
+      let op = m[2].startsWith("!") ? "!= null" : "== null";
+      if (negated) op = op === "!= null" ? "== null" : "!= null";
       return {
         kind: "nullcheck",
         column,
@@ -511,21 +560,23 @@ function detectSimplePredicate(
 
   // string equality / inequality
   {
-    const eq = new RegExp(`${p}\\.(\\w+)\\s*(===|==|!==|!=)\\s*(['"])(.*?)\\3`).exec(s);
+    const eq = new RegExp(`${p}\\.(\\w+)\\s*(===|==|!==|!=)\\s*(['"])(.*?)\\3`).exec(innerSource);
     if (eq) {
       const [, column, operator, , val] = eq;
-      return { kind: "string", column, operator: operator as any, value: val };
+      const finalOp = negated ? (flipOp(operator) ?? operator) : operator;
+      return { kind: "string", column, operator: finalOp as any, value: val };
     }
   }
 
   // numeric / date compares against numeric literal
   {
-    const cmp = new RegExp(`${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`).exec(s);
+    const cmp = new RegExp(`${p}\\.(\\w+)\\s*(>=|<=|>|<|===|==|!==|!=)\\s*([+\\d][\\d._eE+-]*)`).exec(innerSource);
     if (cmp) {
       const column = cmp[1], operator = cmp[2], raw = cmp[3];
       const value = Number(raw);
       if (!Number.isNaN(value)) {
-        return { kind: "number", column, operator, value };
+        const finalOp = negated ? (flipOp(operator) ?? operator) : operator;
+        return { kind: "number", column, operator: finalOp, value };
       }
     }
   }
@@ -562,8 +613,11 @@ function detectNumericOps(
 
   const bodyMatch = /=>\s*(.+)/.exec(s);
   if (!bodyMatch) return null;
+  const bodyTrimmed = bodyMatch[1].trim();
+  // Negated compound !(a && b) → OR via De Morgan's — can't handle in AND-only numeric path
+  if (bodyTrimmed.startsWith("!")) return null;
 
-  const clauses = bodyMatch[1].split("&&").map((c) => c.trim());
+  const clauses = bodyTrimmed.split("&&").map((c) => c.trim());
   const ops: { values: Float64Array; code: number; value: number }[] = [];
 
   for (const clause of clauses) {
@@ -621,6 +675,21 @@ function opToCode(op: string): number | null {
       return 5;
     default:
       return null;
+  }
+}
+
+/** Flip a comparison operator for negation: !(a > b) → a <= b */
+function flipOp(op: string): string | null {
+  switch (op) {
+    case ">": return "<=";
+    case ">=": return "<";
+    case "<": return ">=";
+    case "<=": return ">";
+    case "===": return "!==";
+    case "==": return "!=";
+    case "!==": return "===";
+    case "!=": return "==";
+    default: return null;
   }
 }
 
@@ -844,7 +913,9 @@ function tryOptimizeCompoundPredicate(
       return null;
     }
 
-    const body = bodyMatch[1];
+    const body = bodyMatch[1].trim();
+    // Negated compound !(a && b) → OR via De Morgan's — can't handle in AND-only compound path
+    if (body.startsWith("!")) return null;
     const andClauses = body.split("&&").map((clause) => clause.trim());
     const optimizedClauses: Array<
       (i: number, cols: Record<string, unknown[]>) => boolean
