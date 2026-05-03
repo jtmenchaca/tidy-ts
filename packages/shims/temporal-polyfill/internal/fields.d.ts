@@ -80,10 +80,10 @@ export declare const dateFieldNamesAlpha: string[];
 export declare const monthDayFieldNames: string[];
 export declare const monthCodeDayFieldNames: string[];
 export declare const timeFieldDefaults: {
-    hour: number;
-    minute: number;
-    second: number;
-    millisecond: number;
-    microsecond: number;
     nanosecond: number;
+    microsecond: number;
+    millisecond: number;
+    second: number;
+    minute: number;
+    hour: number;
 };

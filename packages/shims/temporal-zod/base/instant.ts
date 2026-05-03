@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { temporalValidators } from "./temporal-validator.ts";
+import { Temporal } from "../../temporal-polyfill/impl.ts";
 
 /**
  * Regex pattern for {@link Temporal.Instant} ISO 8601 strings

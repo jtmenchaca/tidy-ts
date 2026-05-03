@@ -1,19 +1,19 @@
 # Benchmarks
 
-## Broad Comparison (tidy-ts vs Polars, 2M rows)
+## Broad Comparison (tidy-ts vs Polars vs pandas, 2M rows)
 
 ```bash
 # Run tidy-ts broad benchmark
 deno run -A --no-check packages/testing/benchmarks/bench-broad-2m.ts
 
-# Run matching Polars broad benchmark
+# Run matching Python broad benchmark (Polars + pandas)
 python3 packages/testing/benchmarks/bench-broad-2m.py
 ```
 
 | File | Purpose |
 |------|---------|
 | `bench-broad-2m.ts` | 22 operations at 2M rows: creation, filter (numeric/string/complex), select, sort (numeric/string/multi-col), mutate (col/scalar, col+col, string upper, scalar), distinct, groupBy (single/multi), summarise (ungrouped/grouped), innerJoin, leftJoin, pivotLonger, bindRows, stats |
-| `bench-broad-2m.py` | Matching Polars benchmark for all 22 operations |
+| `bench-broad-2m.py` | Matching Polars + pandas benchmark for all 22 operations, with comparison table |
 
 ## Quick Start
 

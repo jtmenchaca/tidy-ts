@@ -47,27 +47,12 @@ async function ensureNodeModules(): Promise<void> {
  */
 if (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun) {
   try {
-    // @ts-ignore - require may not be typed in all environments
-    if (typeof require !== "undefined") {
-      // CommonJS or Node.js with require available
-      // @ts-ignore - require may not be typed in all environments
-      const nodeProcess = require("node:process");
-      // @ts-ignore - require may not be typed in all environments
-      const nodeFs = require("node:fs");
-      // Path and fileURLToPath are already loaded at top level via ESM imports
-      _process = nodeProcess;
-      _fsSync = nodeFs;
-    } else {
-      // ESM context - process is available on globalThis
-      // fsSync will be lazy-loaded via ensureFsSyncSync() when needed
-      // @ts-ignore - process may not be typed in all environments
-      if (typeof globalThis.process !== "undefined") {
-        // @ts-ignore - process may not be typed in all environments
-        _process = globalThis.process;
-      }
-    }
+    // Use createRequire — works in both CJS and ESM, and avoids
+    // esbuild's __require shim which is always defined but throws in ESM.
+    const requireFn = createRequire(import.meta.url);
+    _process = requireFn("node:process");
+    _fsSync = requireFn("node:fs");
   } catch {
-    // If require fails, use globalThis.process as fallback
     // @ts-ignore - process may not be typed in all environments
     if (typeof globalThis.process !== "undefined") {
       // @ts-ignore - process may not be typed in all environments
@@ -138,16 +123,9 @@ export function getFsSync(): typeof import("node:fs") | null {
     (currentRuntime === Runtime.Node || currentRuntime === Runtime.Bun)
   ) {
     try {
-      // Try to use require if available (CommonJS)
-      // @ts-ignore - require may not be typed in all environments
-      if (typeof require !== "undefined") {
-        // @ts-ignore - require may not be typed in all environments
-        _fsSync = require("node:fs");
-        return _fsSync;
-      }
-      // ESM context - use createRequire for synchronous loading
+      // Prefer createRequire — works in both CJS and ESM, and avoids
+      // esbuild's __require shim which is always defined but throws in ESM.
       const requireFn = createRequire(import.meta.url);
-      // @ts-ignore - require may not be typed in all environments
       _fsSync = requireFn("node:fs");
       return _fsSync;
     } catch {

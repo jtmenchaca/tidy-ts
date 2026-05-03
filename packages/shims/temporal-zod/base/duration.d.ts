@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
+import { Temporal } from "../../temporal-polyfill/impl.ts";
 declare const Duration: typeof Temporal.Duration;
 /**
  * Regex pattern for {@link Temporal.Duration} ISO 8601 duration strings

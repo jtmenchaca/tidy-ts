@@ -2,6 +2,7 @@ import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
 
 import { temporalValidators } from "./temporal-validator.ts";
+import { Temporal } from "../../temporal-polyfill/impl.ts";
 
 const PlainTime: typeof Temporal.PlainTime = Temporal.PlainTime;
 

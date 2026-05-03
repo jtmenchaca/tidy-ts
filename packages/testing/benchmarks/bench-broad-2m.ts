@@ -3,12 +3,67 @@
  * Broad tidy-ts benchmark at 2M rows.
  * Covers: creation, filter, select, sort, mutate, distinct, groupBy,
  *         summarise, innerJoin, leftJoin, pivotLonger, bindRows, stats
+ *
+ * Prints a 3-way comparison table (tidy-ts vs Polars vs pandas).
+ * Re-run bench-broad-2m.py to update the reference numbers below.
  */
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 
 const N = 2_000_000;
 const ITERS = 10;
 const WARMUP = 5;
+
+// Reference medians from bench-broad-2m.py (2M rows, 10 iters, 5 warmup)
+// Re-run: python3 packages/testing/benchmarks/bench-broad-2m.py
+const POLARS: Record<string, number> = {
+  "creation": 55.883,
+  "filter (numeric)": 1.728,
+  "filter (string)": 1.326,
+  "filter (complex)": 1.489,
+  "select": 0.037,
+  "sort (numeric)": 72.893,
+  "sort (string)": 95.259,
+  "sort (multi-col)": 216.636,
+  "mutate (col/scalar)": 1.969,
+  "mutate (col+col)": 2.127,
+  "mutate (string upper)": 39.760,
+  "mutate (scalar)": 0.013,
+  "distinct": 87.022,
+  "groupBy (single)": 3.982,
+  "groupBy (multi)": 11.251,
+  "summarise (ungrouped)": 0.451,
+  "summarise (grouped)": 19.398,
+  "innerJoin": 54.833,
+  "leftJoin": 68.612,
+  "pivotLonger": 45.331,
+  "bindRows": 0.036,
+  "stats": 8.503,
+};
+
+const PANDAS: Record<string, number> = {
+  "creation": 126.866,
+  "filter (numeric)": 15.518,
+  "filter (string)": 10.548,
+  "filter (complex)": 7.514,
+  "select": 0.189,
+  "sort (numeric)": 301.104,
+  "sort (string)": 470.756,
+  "sort (multi-col)": 854.214,
+  "mutate (col/scalar)": 0.835,
+  "mutate (col+col)": 0.959,
+  "mutate (string upper)": 21.248,
+  "mutate (scalar)": 0.695,
+  "distinct": 419.233,
+  "groupBy (single)": 23.618,
+  "groupBy (multi)": 37.184,
+  "summarise (ungrouped)": 5.097,
+  "summarise (grouped)": 33.479,
+  "innerJoin": 278.515,
+  "leftJoin": 276.623,
+  "pivotLonger": 41.450,
+  "bindRows": 1.281,
+  "stats": 38.808,
+};
 
 function median(arr: number[]): number {
   const sorted = [...arr].sort((a, b) => a - b);
@@ -23,8 +78,7 @@ function bench(label: string, fn: () => unknown): number {
     fn();
     times.push(performance.now() - t);
   }
-  const med = median(times);
-  return med;
+  return median(times);
 }
 
 console.log(`\n=== Broad Benchmark (${(N/1e6).toFixed(0)}M rows, ${ITERS} iters, ${WARMUP} warmup) ===\n`);
@@ -172,5 +226,49 @@ run("stats", () => {
   stats.variance(values);
   stats.stdev(values);
 });
+
+// ── 3-way comparison table ──
+const pad = (s: string, n: number) => s.padEnd(n);
+const rpad = (s: string, n: number) => s.padStart(n);
+
+// Collect rows with delta for sorting
+const rows: { op: string; ms: number; pl: number; pd: number; deltaPolars: number; deltaPandas: number }[] = [];
+let totalTidy = 0, totalPolars = 0, totalPandas = 0;
+
+for (const { op, ms } of results) {
+  const pl = POLARS[op] ?? 0;
+  const pdMs = PANDAS[op] ?? 0;
+  totalTidy += ms;
+  totalPolars += pl;
+  totalPandas += pdMs;
+  rows.push({ op, ms, pl, pd: pdMs, deltaPolars: ms - pl, deltaPandas: ms - pdMs });
+}
+
+// Sort by Δ vs Polars descending — biggest time gaps first
+const sorted = [...rows].sort((a, b) => b.deltaPolars - a.deltaPolars);
+
+const W = 100;
+console.log(`\n${"─".repeat(W)}`);
+console.log(`  ${pad("Operation", 30)} ${rpad("tidy-ts", 10)} ${rpad("Polars", 10)} ${rpad("pandas", 10)} ${rpad("Δ Polars", 10)} ${rpad("Δ pandas", 10)} ${rpad("vs Polars", 10)} ${rpad("vs pandas", 10)}`);
+console.log(`${"─".repeat(W)}`);
+
+for (const { op, ms, pl, pd, deltaPolars, deltaPandas } of sorted) {
+  const fmtDelta = (d: number) => {
+    const sign = d >= 0 ? "+" : "";
+    return `${sign}${d.toFixed(1)}ms`;
+  };
+  const vsPolars = pl > 0 ? `${(ms / pl).toFixed(1)}x` : "—";
+  const vsPandas = pd > 0 ? `${(ms / pd).toFixed(1)}x` : "—";
+
+  console.log(
+    `  ${pad(op, 30)} ${rpad(ms.toFixed(1) + "ms", 10)} ${rpad(pl.toFixed(1) + "ms", 10)} ${rpad(pd.toFixed(1) + "ms", 10)} ${rpad(fmtDelta(deltaPolars), 10)} ${rpad(fmtDelta(deltaPandas), 10)} ${rpad(vsPolars, 10)} ${rpad(vsPandas, 10)}`
+  );
+}
+
+console.log(`${"─".repeat(W)}`);
+const fmtTotalDelta = (d: number) => `${d >= 0 ? "+" : ""}${d.toFixed(1)}ms`;
+console.log(
+  `  ${pad("TOTAL", 30)} ${rpad(totalTidy.toFixed(1) + "ms", 10)} ${rpad(totalPolars.toFixed(1) + "ms", 10)} ${rpad(totalPandas.toFixed(1) + "ms", 10)} ${rpad(fmtTotalDelta(totalTidy - totalPolars), 10)} ${rpad(fmtTotalDelta(totalTidy - totalPandas), 10)} ${rpad((totalTidy / totalPolars).toFixed(1) + "x", 10)} ${rpad((totalTidy / totalPandas).toFixed(1) + "x", 10)}`
+);
 
 console.log("\nDone.");

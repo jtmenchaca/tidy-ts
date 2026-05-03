@@ -21,5 +21,6 @@ export { decryptFields, encryptFields, type EnvelopeDecryptionError, type Envelo
 export { batch, chunk, type CustomBackoff, type ExponentialBackoff, type LinearBackoff, parallel, type RetryConfig, type SettledResult, } from "./async.ts";
 import "./compression.ts";
 export { createSpinner, type Spinner, type SpinnerStyle, withSpinner, } from "./spinner/spinner.ts";
+import "./temporal-polyfill/global.ts";
 export { Temporal, toTemporalInstant } from "./temporal-polyfill/impl.ts";
 export * from "./temporal-zod/index.ts";

@@ -25,10 +25,10 @@ export declare const durationTimeFieldNamesAsc: DurationTimeFieldName[];
 export declare const durationDateFieldNamesAsc: DurationFieldName[];
 export declare const durationCalendarFieldNamesAsc: DurationFieldName[];
 export declare const durationFieldIndexes: {
-    days: number;
     years: number;
     months: number;
     weeks: number;
+    days: number;
     hours: number;
     minutes: number;
     seconds: number;
@@ -37,10 +37,10 @@ export declare const durationFieldIndexes: {
     nanoseconds: number;
 };
 export declare const durationFieldDefaults: {
-    days: number;
     years: number;
     months: number;
     weeks: number;
+    days: number;
     hours: number;
     minutes: number;
     seconds: number;

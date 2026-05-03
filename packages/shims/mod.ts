@@ -117,7 +117,8 @@ export {
   withSpinner,
 } from "./spinner/spinner.ts";
 
-// Temporal polyfill (for Node.js/Bun; Deno has native Temporal)
+// Temporal polyfill — install on globalThis for Node.js/Bun (Deno has native)
+import "./temporal-polyfill/global.ts";
 export { Temporal, toTemporalInstant } from "./temporal-polyfill/impl.ts";
 
 // Temporal Zod validators

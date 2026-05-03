@@ -4,7 +4,6 @@ import {
   createDataFrame,
   materializeIndex,
 } from "../../dataframe/index.ts";
-import { shouldUseAsyncForSummarise } from "../../promised-dataframe/index.ts";
 import { withErrorHandling } from "../../promised-dataframe/async-sync-processor.ts";
 import {
   type ConcurrencyOptions,
@@ -21,18 +20,9 @@ export function summarise(
     const span = tracer.startSpan(df, "summarise", { spec: typeof spec });
 
     try {
-      // Safety net: if user accidentally passes async to summarise(), still handle it
-      const isAsync = shouldUseAsyncForSummarise(df, spec);
-
-      if (isAsync) {
-        const dfOptions = df.__options as ConcurrencyOptions | undefined;
-        const concurrencyOptions = dfOptions || DEFAULT_CONCURRENCY.summarise;
-        return summariseAsync(df, spec, concurrencyOptions);
-      } else {
-        const result = summariseSync(df, spec);
-        tracer.copyContext(df, result);
-        return result;
-      }
+      const result = summariseSync(df, spec);
+      tracer.copyContext(df, result);
+      return result;
     } finally {
       tracer.endSpan(df, span);
     }

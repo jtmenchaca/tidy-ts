@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
+import { Temporal } from "../../temporal-polyfill/impl.ts";
 declare const PlainMonthDay: typeof Temporal.PlainMonthDay;
 /**
  * Regex pattern for {@link Temporal.PlainMonthDay} ISO 8601 strings (e.g. `--01-15` or `01-15`).

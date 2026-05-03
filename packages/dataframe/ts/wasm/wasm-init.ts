@@ -49,21 +49,6 @@ let preloadPromise: Promise<void> | null = null;
 
 // Runtime detection helpers
 const isBrowser = currentRuntime === Runtime.Browser;
-const isDeno = currentRuntime === Runtime.Deno;
-
-// For Deno: pre-load WASM at module initialization using top-level await
-// Note: Dynamic import with expression is intentional for Deno WASM loading.
-// Webpack will warn about this, but it's harmless as this code only runs in Deno.
-if (isDeno && !isBrowser) {
-  const wasmUrl = new URL("../../lib/tidy_ts_dataframe.wasm", import.meta.url);
-  // webpackIgnore: true - This dynamic import is Deno-specific and won't execute in browser bundles
-  // @ts-ignore - Dynamic import with expression is intentional
-  const wasmExports = await import(wasmUrl.href);
-
-  // Deno 2.1+ returns the instantiated WASM exports directly
-  _wasmInternalReal.__wbg_set_wasm(wasmExports);
-  wasmModule = wasmExports;
-}
 
 // Build imports from internal glue (functions only)
 function buildImports() {
@@ -195,12 +180,7 @@ export function initWasm(): any {
     return wasmModule;
   }
 
-  // Deno: already loaded at module initialization via top-level await
-  if (isDeno) {
-    return wasmModule;
-  }
-
-  // Node/Bun: original sync path using file system
+  // Deno/Node/Bun: sync path using file system
   const currentDir = dirname(fileURLToPath(import.meta.url));
   const wasmPath = resolve(currentDir, "../../lib/tidy_ts_dataframe.wasm");
 

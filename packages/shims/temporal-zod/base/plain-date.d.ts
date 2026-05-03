@@ -1,5 +1,6 @@
 import type { z } from "zod";
 import type { ZodTemporal } from "./temporal-validator.ts";
+import { Temporal } from "../../temporal-polyfill/impl.ts";
 declare const PlainDate: typeof Temporal.PlainDate;
 /**
  * Regex pattern for {@link Temporal.PlainDate} ISO 8601 strings (e.g. `2023-01-15`).
