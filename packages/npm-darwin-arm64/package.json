@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/dataframe-darwin-arm64",
-  "version": "1.4.5",
+  "version": "1.4.6",
   "description": "Native binary for @tidy-ts/dataframe on macOS ARM64",
   "os": ["darwin"],
   "cpu": ["arm64"],
