@@ -47,9 +47,9 @@ impl DevianceFunction for GaussianDeviance {
             return Ok(0.0);
         }
 
-        // For Gaussian: deviance residual = sqrt(weight) * |y - mu|
-        let dev_resid = (y - mu).abs();
-        Ok(weight.sqrt() * dev_resid)
+        // For Gaussian: deviance contribution = weight * (y - mu)^2
+        let dev_resid = (y - mu) * (y - mu);
+        Ok(weight * dev_resid)
     }
 
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -170,7 +170,7 @@ impl DevianceFunction for GammaDeviance {
         }
 
         let dev_resid = -2.0 * ((y / mu).ln() - (y - mu) / mu);
-        Ok(weight.sqrt() * dev_resid.sqrt())
+        Ok(weight * dev_resid)
     }
 
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -193,8 +193,9 @@ impl DevianceFunction for GammaDeviance {
             };
 
             if weight > 0.0 {
+                // Total deviance = sum of raw deviance contributions
                 let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                total_deviance += dev_resid;
             }
         }
 
@@ -225,7 +226,7 @@ impl DevianceFunction for InverseGaussianDeviance {
         }
 
         let dev_resid = (y - mu).powi(2) / (y * mu * mu);
-        Ok(weight.sqrt() * dev_resid.sqrt())
+        Ok(weight * dev_resid)
     }
 
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -248,8 +249,9 @@ impl DevianceFunction for InverseGaussianDeviance {
             };
 
             if weight > 0.0 {
+                // Total deviance = sum of raw deviance contributions
                 let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                total_deviance += dev_resid;
             }
         }
 
@@ -324,7 +326,7 @@ impl DevianceFunction for QuasiDeviance {
             (y - mu).powi(2) / variance
         };
 
-        Ok(weight.sqrt() * dev_resid.sqrt())
+        Ok(weight * dev_resid)
     }
 
     fn deviance(&self, y: &[f64], mu: &[f64], weights: &[f64]) -> Result<f64, &'static str> {
@@ -347,8 +349,9 @@ impl DevianceFunction for QuasiDeviance {
             };
 
             if weight > 0.0 {
+                // Total deviance = sum of raw deviance contributions
                 let dev_resid = self.deviance_residual(yi, mui, weight)?;
-                total_deviance += dev_resid * dev_resid;
+                total_deviance += dev_resid;
             }
         }
 
@@ -379,9 +382,9 @@ mod tests {
         let deviance = dev_fn.deviance(&y, &mu, &weights).unwrap();
         assert!(deviance >= 0.0);
 
-        // Test single residual
+        // Test single residual: weight * (y - mu)^2 = 1.0 * (1.0 - 1.1)^2 = 0.01
         let resid = dev_fn.deviance_residual(1.0, 1.1, 1.0).unwrap();
-        assert!((resid - 0.1).abs() < 1e-10);
+        assert!((resid - 0.01).abs() < 1e-10);
     }
 
     #[test]

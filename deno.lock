@@ -87,7 +87,7 @@
         "npm:@jsr/std__path@^1.0.8",
         "npm:@jsr/std__random@~0.1.2",
         "npm:@libsql/client@~0.15.15",
-        "npm:@openai/agents@~0.2.1",
+        "npm:@openai/agents@~0.8.5",
         "npm:@playwright/test@^1.55.0",
         "npm:@radix-ui/react-accordion@^1.2.3",
         "npm:@radix-ui/react-alert-dialog@^1.1.6",
@@ -137,7 +137,6 @@
         "npm:class-variance-authority@~0.7.1",
         "npm:clsx@^2.1.1",
         "npm:date-fns@^4.1.0",
-        "npm:dotenv@^17.2.3",
         "npm:drizzle-orm@~0.45.1",
         "npm:embla-carousel-react@^8.5.2",
         "npm:esbuild@~0.25.10",
@@ -150,7 +149,7 @@
         "npm:hyparquet@^1.23.2",
         "npm:lucide-react@0.476",
         "npm:next-themes@~0.4.4",
-        "npm:openai@^6.7.0",
+        "npm:openai@^6.36.0",
         "npm:playwright@^1.54.1",
         "npm:react-day-picker@^9.8.0",
         "npm:react-dom@^19.1.1",
@@ -183,10 +182,12 @@
     },
     "members": {
       "packages/ai": {
+        "dependencies": [
+          "jsr:@tidy-ts/shims@1.4.9"
+        ],
         "packageJson": {
           "dependencies": [
             "npm:@openai/agents@*",
-            "npm:dotenv@*",
             "npm:openai@*",
             "npm:zod@*"
           ]

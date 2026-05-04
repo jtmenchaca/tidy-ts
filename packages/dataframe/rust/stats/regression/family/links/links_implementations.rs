@@ -353,25 +353,26 @@ impl LinkFunction for CloglogLink {
         if !self.valid_mu(mu) {
             return Err("Invalid mu for cloglog link");
         }
-        Ok((-(-mu).ln()).ln())
+        // log(-log(1-mu))
+        Ok((-(1.0 - mu).ln()).ln())
     }
 
     fn link_inverse(&self, eta: f64) -> Result<f64, &'static str> {
         if !self.valid_eta(eta) {
             return Err("Invalid eta for cloglog link");
         }
-        Ok(1.0 - (-eta).exp().exp())
+        // 1 - exp(-exp(eta))
+        Ok(1.0 - (-eta.exp()).exp())
     }
 
     fn mu_eta(&self, eta: f64) -> Result<f64, &'static str> {
         if !self.valid_eta(eta) {
             return Err("Invalid eta for cloglog link");
         }
-        let mu = self.link_inverse(eta)?;
-        Ok(
-            crate::stats::regression::family::binomial_utils::binomial_variance_safe(mu)
-                * (-mu).ln(),
-        )
+        // d/d(eta)[1 - exp(-exp(eta))] = exp(eta) * exp(-exp(eta))
+        let exp_eta = eta.exp();
+        let result = exp_eta * (-exp_eta).exp();
+        Ok(result.max(f64::EPSILON))
     }
 
     fn name(&self) -> &'static str {

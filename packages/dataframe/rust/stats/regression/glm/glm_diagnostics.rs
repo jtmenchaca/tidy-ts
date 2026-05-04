@@ -958,7 +958,7 @@ fn create_family(
     family_name: &str,
     link_name: &str,
 ) -> Result<Box<dyn crate::stats::regression::family::GlmFamily>, String> {
-    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson};
+    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson, quasibinomial, quasipoisson};
 
     match family_name {
         "gaussian" => match link_name {
@@ -984,6 +984,7 @@ fn create_family(
         "gamma" => match link_name {
             "inverse" => Ok(Box::new(gamma::GammaFamily::inverse())),
             "identity" => Ok(Box::new(gamma::GammaFamily::identity())),
+            "log" => Ok(Box::new(gamma::GammaFamily::log())),
             _ => Err(format!("Unknown link '{}' for gamma family", link_name)),
         },
         "inverse_gaussian" => match link_name {
@@ -997,6 +998,20 @@ fn create_family(
                 "Unknown link '{}' for inverse_gaussian family",
                 link_name
             )),
+        },
+        "quasibinomial" => match link_name {
+            "logit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::logit())),
+            "probit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::probit())),
+            "cauchit" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::cauchit())),
+            "log" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::log())),
+            "cloglog" => Ok(Box::new(quasibinomial::QuasiBinomialFamily::cloglog())),
+            _ => Err(format!("Unknown link '{}' for quasibinomial family", link_name)),
+        },
+        "quasipoisson" => match link_name {
+            "log" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::log())),
+            "identity" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::identity())),
+            "sqrt" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::sqrt())),
+            _ => Err(format!("Unknown link '{}' for quasipoisson family", link_name)),
         },
         _ => Err(format!("Unknown family: {}", family_name)),
     }

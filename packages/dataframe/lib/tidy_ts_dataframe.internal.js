@@ -1617,12 +1617,18 @@ export function geeglm_fit_wasm(
 
 /**
  * GLM confint() - Compute confidence intervals for coefficients
- * @param {any} result
+ * @param {string} result
  * @param {number} level
  * @returns {any}
  */
 export function glm_confint_wasm(result, level) {
-  const ret = wasm.glm_confint_wasm(result, level);
+  const ptr0 = passStringToWasm0(
+    result,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_confint_wasm(ptr0, len0, level);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -1711,11 +1717,17 @@ export function glm_fit_wasm(
  * WASM export for influence measures
  *
  * Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
- * @param {any} result
+ * @param {string} result
  * @returns {any}
  */
 export function glm_influence_wasm(result) {
-  const ret = wasm.glm_influence_wasm(result);
+  const ptr0 = passStringToWasm0(
+    result,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_influence_wasm(ptr0, len0);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -1724,19 +1736,25 @@ export function glm_influence_wasm(result) {
 
 /**
  * GLM predict() - Make predictions on new data
- * @param {any} result
+ * @param {string} result
  * @param {any} newdata
  * @param {string} pred_type
  * @returns {any}
  */
 export function glm_predict_wasm(result, newdata, pred_type) {
   const ptr0 = passStringToWasm0(
-    pred_type,
+    result,
     wasm.__wbindgen_malloc,
     wasm.__wbindgen_realloc,
   );
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.glm_predict_wasm(result, newdata, ptr0, len0);
+  const ptr1 = passStringToWasm0(
+    pred_type,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_predict_wasm(ptr0, len0, newdata, ptr1, len1);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -1747,18 +1765,24 @@ export function glm_predict_wasm(result, newdata, pred_type) {
  * WASM export for standardized residuals
  *
  * Returns rstandard() values
- * @param {any} result
+ * @param {string} result
  * @param {string} residual_type
  * @returns {any}
  */
 export function glm_rstandard_wasm(result, residual_type) {
   const ptr0 = passStringToWasm0(
-    residual_type,
+    result,
     wasm.__wbindgen_malloc,
     wasm.__wbindgen_realloc,
   );
   const len0 = WASM_VECTOR_LEN;
-  const ret = wasm.glm_rstandard_wasm(result, ptr0, len0);
+  const ptr1 = passStringToWasm0(
+    residual_type,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len1 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_rstandard_wasm(ptr0, len0, ptr1, len1);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -1769,11 +1793,17 @@ export function glm_rstandard_wasm(result, residual_type) {
  * WASM export for studentized residuals
  *
  * Returns rstudent() values
- * @param {any} result
+ * @param {string} result
  * @returns {any}
  */
 export function glm_rstudent_wasm(result) {
-  const ret = wasm.glm_rstudent_wasm(result);
+  const ptr0 = passStringToWasm0(
+    result,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_rstudent_wasm(ptr0, len0);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -1784,11 +1814,17 @@ export function glm_rstudent_wasm(result) {
  * WASM export for GLM summary
  *
  * Returns coefficient table with test statistics and p-values
- * @param {any} result
+ * @param {string} result
  * @returns {any}
  */
 export function glm_summary_wasm(result) {
-  const ret = wasm.glm_summary_wasm(result);
+  const ptr0 = passStringToWasm0(
+    result,
+    wasm.__wbindgen_malloc,
+    wasm.__wbindgen_realloc,
+  );
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.glm_summary_wasm(ptr0, len0);
   if (ret[2]) {
     throw takeFromExternrefTable0(ret[1]);
   }
@@ -4300,20 +4336,6 @@ export function __wbg_String_8f0eb39a4a4c2f66(arg0, arg1) {
   getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 }
 
-export function __wbg___wbindgen_bigint_get_as_i64_6e32f5e6aff02e1d(
-  arg0,
-  arg1,
-) {
-  const v = arg1;
-  const ret = typeof v === "bigint" ? v : undefined;
-  getDataViewMemory0().setBigInt64(
-    arg0 + 8 * 1,
-    isLikeNone(ret) ? BigInt(0) : ret,
-    true,
-  );
-  getDataViewMemory0().setInt32(arg0 + 4 * 0, !isLikeNone(ret), true);
-}
-
 export function __wbg___wbindgen_boolean_get_dea25b33882b895b(arg0) {
   const v = arg0;
   const ret = typeof v === "boolean" ? v : undefined;
@@ -4342,16 +4364,6 @@ export function __wbg___wbindgen_debug_string_adfb662ae34724b6(arg0, arg1) {
   getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true);
 }
 
-export function __wbg___wbindgen_in_0d3e1e8f0c669317(arg0, arg1) {
-  const ret = arg0 in arg1;
-  return ret;
-}
-
-export function __wbg___wbindgen_is_bigint_0e1a2e3f55cfae27(arg0) {
-  const ret = typeof arg0 === "bigint";
-  return ret;
-}
-
 export function __wbg___wbindgen_is_function_8d400b8b1af978cd(arg0) {
   const ret = typeof arg0 === "function";
   return ret;
@@ -4370,11 +4382,6 @@ export function __wbg___wbindgen_is_string_704ef9c8fc131030(arg0) {
 
 export function __wbg___wbindgen_is_undefined_f6b95eab589e0269(arg0) {
   const ret = arg0 === undefined;
-  return ret;
-}
-
-export function __wbg___wbindgen_jsval_eq_b6101cc9cef1fe36(arg0, arg1) {
-  const ret = arg0 === arg1;
   return ret;
 }
 
@@ -4433,11 +4440,6 @@ export function __wbg_done_62ea16af4ce34b24(arg0) {
   return ret;
 }
 
-export function __wbg_entries_83c79938054e065f(arg0) {
-  const ret = Object.entries(arg0);
-  return ret;
-}
-
 export function __wbg_getRandomValues_b8f5dbd5f3995a9e() {
   return handleError(function (arg0, arg1) {
     arg0.getRandomValues(arg1);
@@ -4461,26 +4463,10 @@ export function __wbg_get_index_1226ed36df27e708(arg0, arg1) {
   return ret;
 }
 
-export function __wbg_get_with_ref_key_1dc361bd10053bfe(arg0, arg1) {
-  const ret = arg0[arg1];
-  return ret;
-}
-
 export function __wbg_instanceof_ArrayBuffer_f3320d2419cd0355(arg0) {
   let result;
   try {
     result = arg0 instanceof ArrayBuffer;
-  } catch (_) {
-    result = false;
-  }
-  const ret = result;
-  return ret;
-}
-
-export function __wbg_instanceof_Map_084be8da74364158(arg0) {
-  let result;
-  try {
-    result = arg0 instanceof Map;
   } catch (_) {
     result = false;
   }

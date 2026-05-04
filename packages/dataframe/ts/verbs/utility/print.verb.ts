@@ -21,16 +21,19 @@ export function print(
 ) {
   return (df: any): any => {
     // Handle both string message and options
+    const resolvedOpts = typeof messageOrOpts === "string" ? opts : messageOrOpts;
+
     if (typeof messageOrOpts === "string") {
       console.log(messageOrOpts);
-      printTable(df.toTable(opts), {
-        showIndex: opts?.showIndex,
-        colorRows: opts?.colorRows,
-      });
+    }
+
+    if (resolvedOpts?.expand) {
+      // Use raw row data for expanded view (bypass toTable's object stringification)
+      printExpanded(df.toArray(), Object.keys(df.toArray()[0] || {}));
     } else {
-      printTable(df.toTable(messageOrOpts), {
-        showIndex: messageOrOpts?.showIndex,
-        colorRows: messageOrOpts?.colorRows,
+      printTable(df.toTable(resolvedOpts), {
+        showIndex: resolvedOpts?.showIndex,
+        colorRows: resolvedOpts?.colorRows,
       });
     }
 
@@ -145,4 +148,31 @@ function printTable(
   });
 
   console.log("└─" + bottomBorder + "─┘");
+}
+
+/**
+ * Print rows in expanded format — one row per block with nested objects shown as indented JSON.
+ */
+function printExpanded(data: object[], columns: string[]): void {
+  data.forEach((row, index) => {
+    console.log(`── Row ${index} ${"─".repeat(40)}`);
+    for (const col of columns) {
+      const value = (row as any)[col];
+      if (value === null) {
+        console.log(`  ${col}: (null)`);
+      } else if (value === undefined) {
+        console.log(`  ${col}: (undefined)`);
+      } else if (value instanceof Date) {
+        console.log(`  ${col}: ${formatDateUTC(value)}`);
+      } else if (typeof value === "object") {
+        console.log(`  ${col}:`);
+        const json = JSON.stringify(value, null, 4);
+        for (const line of json.split("\n")) {
+          console.log(`    ${line}`);
+        }
+      } else {
+        console.log(`  ${col}: ${value}`);
+      }
+    }
+  });
 }

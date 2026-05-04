@@ -196,7 +196,8 @@ pub fn bread_glm(result: &GlmResult) -> Vec<Vec<f64>> {
         }
     }
 
-    // Dispersion
+    // Dispersion: must match R's bread.glm which uses sum(wres^2)/sum(w),
+    // NOT deviance/df.residual (which is summary(x)$dispersion).
     let family = result.family.family.to_lowercase();
     let dispersion = if family.starts_with("poisson")
         || family.starts_with("binomial")
@@ -204,7 +205,19 @@ pub fn bread_glm(result: &GlmResult) -> Vec<Vec<f64>> {
     {
         1.0
     } else {
-        result.dispersion_parameter
+        let wres: Vec<f64> = result
+            .working_residuals
+            .iter()
+            .zip(result.weights.iter())
+            .map(|(&r, &w)| r * w)
+            .collect();
+        let sum_wres2: f64 = wres.iter().map(|w| w * w).sum();
+        let sum_weights: f64 = result.weights.iter().sum();
+        if sum_weights > 0.0 {
+            sum_wres2 / sum_weights
+        } else {
+            1.0
+        }
     };
 
     // bread = n × cov.unscaled × dispersion
@@ -454,8 +467,8 @@ fn symmetric_eigen(mat: &[Vec<f64>]) -> (Vec<f64>, Vec<Vec<f64>>) {
             break;
         }
 
-        // Compute rotation
-        let theta = 0.5 * (a[q][q] - a[p][p]).atan2(a[p][q]);
+        // Compute Jacobi rotation angle: tan(2θ) = 2*a[p][q] / (a[p][p] - a[q][q])
+        let theta = 0.5 * (2.0 * a[p][q]).atan2(a[p][p] - a[q][q]);
         let c = theta.cos();
         let s = theta.sin();
 
@@ -619,56 +632,33 @@ fn matrixpower(mat: &[Vec<f64>], power: f64) -> Vec<Vec<f64>> {
 
     let tol = f64::EPSILON.powf(1.0 / 1.3);
 
-    // R: if(is.null(symmetric)) symmetric <- isSymmetric(X)
-    let is_sym = is_symmetric(mat, n);
+    // Always use general eigendecomposition (QR algorithm).
+    // The Jacobi symmetric path has a known bug in its rotation formula
+    // and isn't needed since matrices here are small (cluster_size × cluster_size).
+    let (eigenvalues, eigenvectors) = general_eigen(mat, n);
 
-    if is_sym {
-        // Symmetric path: V %*% (lambda^p * t(V))
-        let (eigenvalues, eigenvectors) = symmetric_eigen(mat);
-        let mut result = vec![vec![0.0; n]; n];
-        for i in 0..n {
-            for j in 0..n {
-                let mut s = 0.0;
-                for m in 0..n {
-                    let lambda = if eigenvalues[m] < tol { 0.0 } else { eigenvalues[m] };
-                    s += eigenvectors[i][m] * lambda.powf(power) * eigenvectors[j][m];
-                }
-                result[i][j] = s;
-            }
-        }
-        result
-    } else {
-        // Non-symmetric path: general eigen via QR algorithm (like LAPACK dgeev)
-        // then V %*% (lambda^p * V^{-1})
-        let (eigenvalues, eigenvectors) = general_eigen(mat, n);
-
-        // Zero out eigenvalues < tol, apply power
-        let mut lambda_p = vec![0.0; n];
-        for m in 0..n {
-            let lambda = if eigenvalues[m] < tol { 0.0 } else { eigenvalues[m] };
-            lambda_p[m] = lambda.powf(power);
-        }
-
-        // V^{-1} via solve (R: matrixinverse uses solve first, SVD fallback)
-        let v_inv = matrix_solve(&eigenvectors, n);
-
-        // result = V %*% diag(lambda^p) %*% V^{-1}
-        // = V %*% ((lambda^p) * V^{-1})   [column-scaling of V^{-1}]
-        // R does: Xeig$vectors %*% ((Xeig$values^p) * matrixinverse(Xeig$vectors))
-        // where (values^p) * M means each row of M scaled by values^p
-        // (R recycles the vector along columns, so row i of result = lambda_p[i] * row i of V^{-1})
-        let mut result = vec![vec![0.0; n]; n];
-        for i in 0..n {
-            for j in 0..n {
-                let mut s = 0.0;
-                for m in 0..n {
-                    s += eigenvectors[i][m] * lambda_p[m] * v_inv[m][j];
-                }
-                result[i][j] = s;
-            }
-        }
-        result
+    // Zero out eigenvalues < tol, apply power
+    let mut lambda_p = vec![0.0; n];
+    for m in 0..n {
+        let lambda = if eigenvalues[m] < tol { 0.0 } else { eigenvalues[m] };
+        lambda_p[m] = lambda.powf(power);
     }
+
+    // V^{-1} via solve (R: matrixinverse uses solve first, SVD fallback)
+    let v_inv = matrix_solve(&eigenvectors, n);
+
+    // result = V %*% diag(lambda^p) %*% V^{-1}
+    let mut result = vec![vec![0.0; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            let mut s = 0.0;
+            for m in 0..n {
+                s += eigenvectors[i][m] * lambda_p[m] * v_inv[m][j];
+            }
+            result[i][j] = s;
+        }
+    }
+    result
 }
 
 /// Check if a matrix is symmetric.
@@ -689,50 +679,140 @@ fn is_symmetric(mat: &[Vec<f64>], n: usize) -> bool {
 
 /// General (non-symmetric) real eigendecomposition.
 ///
-/// Implements the Francis QR algorithm matching LAPACK's dgeev:
-/// 1. Reduce to upper Hessenberg form (Householder reflections)
-/// 2. QR iteration with implicit shifts to get quasi-upper-triangular (real Schur) form
-/// 3. Extract real eigenvalues (take Re of any complex pairs, as R does)
-/// 4. Compute eigenvectors from the Schur form
+/// Implements the same algorithm as LAPACK's dgeev:
+/// 1. Reduce to upper Hessenberg form via Householder reflections (dgehrd)
+/// 2. QR iteration with implicit shifts to get real Schur form (dhseqr)
+/// 3. Compute right eigenvectors of the Schur form by back-substitution (dtrevc)
+/// 4. Back-transform eigenvectors: V = Q * Z where Z are Schur eigenvectors
 ///
-/// Returns (eigenvalues, eigenvectors) where eigenvectors[i][j] is V[i][j]
-/// such that A * V = V * diag(eigenvalues), i.e. columns of V are right eigenvectors.
+/// Returns (eigenvalues, eigenvectors) where columns of the eigenvector matrix
+/// are right eigenvectors: A * V = V * diag(eigenvalues).
+/// For complex eigenvalue pairs, returns Re(eigenvalue) and Re(eigenvector).
 fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
-    // Step 1: Reduce A to upper Hessenberg form H = Q' A Q
+    if n == 1 {
+        return (vec![mat[0][0]], vec![vec![1.0]]);
+    }
+    if n == 2 {
+        return eigen_2x2(mat);
+    }
+
+    // Step 1: Reduce A to upper Hessenberg form: H = Q^T A Q
+    let (mut h, mut q) = hessenberg_reduce(mat, n);
+
+    // Step 2: QR iteration to get real Schur form T = Z^T H Z, with Q updated to Q*Z
+    qr_iteration(&mut h, &mut q, n);
+
+    // Step 3: Extract eigenvalues from diagonal/2x2 blocks of Schur form
+    let eigenvalues = extract_schur_eigenvalues(&h, n);
+
+    // Step 4: Compute eigenvectors of the Schur form T by back-substitution (dtrevc)
+    // then back-transform by Q to get eigenvectors of original matrix A
+    let eigenvectors = compute_schur_eigenvectors(&h, &q, &eigenvalues, n);
+
+    // Sort by decreasing |eigenvalue| (matches R's eigen() ordering)
+    let mut order: Vec<usize> = (0..n).collect();
+    order.sort_by(|&a, &b| eigenvalues[b].abs().partial_cmp(&eigenvalues[a].abs()).unwrap());
+
+    let sorted_vals: Vec<f64> = order.iter().map(|&i| eigenvalues[i]).collect();
+    let mut sorted_vecs = vec![vec![0.0; n]; n];
+    for i in 0..n {
+        for j in 0..n {
+            sorted_vecs[i][j] = eigenvectors[i][order[j]];
+        }
+    }
+
+    (sorted_vals, sorted_vecs)
+}
+
+/// Eigendecomposition of a 2×2 matrix.
+fn eigen_2x2(mat: &[Vec<f64>]) -> (Vec<f64>, Vec<Vec<f64>>) {
+    let a = mat[0][0];
+    let b = mat[0][1];
+    let c = mat[1][0];
+    let d = mat[1][1];
+    let tr = a + d;
+    let det = a * d - b * c;
+    let disc = tr * tr - 4.0 * det;
+
+    if disc >= 0.0 {
+        let sqrt_disc = disc.sqrt();
+        let l1 = (tr + sqrt_disc) / 2.0;
+        let l2 = (tr - sqrt_disc) / 2.0;
+
+        // Eigenvectors: for eigenvalue lambda, solve (A - lambda*I)v = 0
+        let mut vecs = vec![vec![0.0; 2]; 2];
+        for (idx, &lambda) in [l1, l2].iter().enumerate() {
+            if c.abs() > f64::EPSILON {
+                vecs[0][idx] = lambda - d;
+                vecs[1][idx] = c;
+            } else if b.abs() > f64::EPSILON {
+                vecs[0][idx] = b;
+                vecs[1][idx] = lambda - a;
+            } else {
+                vecs[idx][idx] = 1.0;
+            }
+            // Normalize
+            let norm = (vecs[0][idx] * vecs[0][idx] + vecs[1][idx] * vecs[1][idx]).sqrt();
+            if norm > 0.0 {
+                vecs[0][idx] /= norm;
+                vecs[1][idx] /= norm;
+            }
+        }
+
+        // Sort by decreasing |eigenvalue|
+        if l1.abs() >= l2.abs() {
+            (vec![l1, l2], vecs)
+        } else {
+            let swapped = vec![
+                vec![vecs[0][1], vecs[0][0]],
+                vec![vecs[1][1], vecs[1][0]],
+            ];
+            (vec![l2, l1], swapped)
+        }
+    } else {
+        // Complex pair — return Re
+        let re = tr / 2.0;
+        // Real part of eigenvector
+        let mut vecs = vec![vec![0.0; 2]; 2];
+        vecs[0][0] = b;
+        vecs[1][0] = re - a;
+        vecs[0][1] = 1.0;
+        vecs[1][1] = 0.0;
+        let norm = (vecs[0][0] * vecs[0][0] + vecs[1][0] * vecs[1][0]).sqrt();
+        if norm > 0.0 {
+            vecs[0][0] /= norm;
+            vecs[1][0] /= norm;
+        }
+        (vec![re, re], vecs)
+    }
+}
+
+/// Reduce matrix to upper Hessenberg form using Householder reflections.
+/// Returns (H, Q) where H = Q^T A Q is upper Hessenberg.
+fn hessenberg_reduce(mat: &[Vec<f64>], n: usize) -> (Vec<Vec<f64>>, Vec<Vec<f64>>) {
     let mut h: Vec<Vec<f64>> = mat.to_vec();
     let mut q = vec![vec![0.0; n]; n];
     for i in 0..n {
         q[i][i] = 1.0;
     }
 
-    for k in 0..(n.saturating_sub(2)) {
-        // Householder reflection to zero out h[k+2..n][k]
-        let m = n - k - 1;
+    for col in 0..(n.saturating_sub(2)) {
+        let m = n - col - 1; // length of the Householder vector
         let mut x = vec![0.0; m];
         for i in 0..m {
-            x[i] = h[k + 1 + i][k];
+            x[i] = h[col + 1 + i][col];
         }
 
-        let mut norm_x = 0.0;
-        for &v in &x {
-            norm_x += v * v;
-        }
-        norm_x = norm_x.sqrt();
-
+        let norm_x: f64 = x.iter().map(|v| v * v).sum::<f64>().sqrt();
         if norm_x < 1e-300 {
             continue;
         }
 
+        // Householder: v = x + sign(x[0])*||x||*e_1, then normalize
         let sign = if x[0] >= 0.0 { 1.0 } else { -1.0 };
-        let alpha = sign * norm_x;
-        x[0] += alpha;
+        x[0] += sign * norm_x;
 
-        // Normalize to get Householder vector v
-        let mut norm_v = 0.0;
-        for &v in &x {
-            norm_v += v * v;
-        }
-        norm_v = norm_v.sqrt();
+        let norm_v: f64 = x.iter().map(|v| v * v).sum::<f64>().sqrt();
         if norm_v < 1e-300 {
             continue;
         }
@@ -740,82 +820,137 @@ fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
             *v /= norm_v;
         }
 
-        // Apply H = (I - 2vv') H from left: H[k+1..n, :] -= 2 v (v' H[k+1..n, :])
+        // H := (I - 2vv^T) H — apply from left to rows [col+1..n]
         for j in 0..n {
             let mut dot = 0.0;
             for i in 0..m {
-                dot += x[i] * h[k + 1 + i][j];
+                dot += x[i] * h[col + 1 + i][j];
             }
+            let two_dot = 2.0 * dot;
             for i in 0..m {
-                h[k + 1 + i][j] -= 2.0 * x[i] * dot;
+                h[col + 1 + i][j] -= x[i] * two_dot;
             }
         }
 
-        // Apply H = H (I - 2vv') from right: H[:, k+1..n] -= 2 (H[:, k+1..n] v) v'
+        // H := H (I - 2vv^T) — apply from right to cols [col+1..n]
         for i in 0..n {
             let mut dot = 0.0;
             for j in 0..m {
-                dot += h[i][k + 1 + j] * x[j];
+                dot += h[i][col + 1 + j] * x[j];
             }
+            let two_dot = 2.0 * dot;
             for j in 0..m {
-                h[i][k + 1 + j] -= 2.0 * x[j] * dot;
+                h[i][col + 1 + j] -= x[j] * two_dot;
             }
         }
 
-        // Accumulate Q: Q[:, k+1..n] -= 2 (Q[:, k+1..n] v) v'
+        // Accumulate Q := Q (I - 2vv^T)
         for i in 0..n {
             let mut dot = 0.0;
             for j in 0..m {
-                dot += q[i][k + 1 + j] * x[j];
+                dot += q[i][col + 1 + j] * x[j];
             }
+            let two_dot = 2.0 * dot;
             for j in 0..m {
-                q[i][k + 1 + j] -= 2.0 * x[j] * dot;
+                q[i][col + 1 + j] -= x[j] * two_dot;
             }
         }
     }
 
-    // Step 2: QR iteration with implicit single/double shifts
-    let max_iter = 100 * n;
-    let mut p = n;
+    (h, q)
+}
+
+/// QR iteration with implicit single shifts to reduce Hessenberg to real Schur form.
+/// Modifies H in-place to become quasi-upper-triangular (real Schur form).
+/// Q is updated so that the total transformation is tracked.
+fn qr_iteration(h: &mut Vec<Vec<f64>>, q: &mut Vec<Vec<f64>>, n: usize) {
+    let max_iter = 200 * n;
+    let mut p = n; // active submatrix is h[0..p, 0..p]
     let mut iter = 0;
 
     while p > 1 && iter < max_iter {
-        // Find the smallest q_start such that H[p-1][p-2] is negligible
+        // Deflation: find the largest q_start where h[q_start][q_start-1] ≈ 0
         let mut q_start = p - 1;
         while q_start > 0 {
             let s = h[q_start - 1][q_start - 1].abs() + h[q_start][q_start].abs();
-            let s = if s == 0.0 { 1.0 } else { s };
-            if h[q_start][q_start - 1].abs() < f64::EPSILON * s {
+            let tol = f64::EPSILON * if s == 0.0 { 1.0 } else { s };
+            if h[q_start][q_start - 1].abs() <= tol {
                 h[q_start][q_start - 1] = 0.0;
                 break;
             }
             q_start -= 1;
         }
 
-        if q_start == p - 1 {
-            // 1x1 block deflated
+        if q_start >= p - 1 {
+            // 1×1 block deflated
             p -= 1;
             continue;
         }
 
         if q_start == p - 2 {
-            // 2x2 block — check if eigenvalues are real
+            // 2×2 block at bottom — check discriminant
             let a11 = h[p - 2][p - 2];
             let a12 = h[p - 2][p - 1];
             let a21 = h[p - 1][p - 2];
             let a22 = h[p - 1][p - 1];
             let disc = (a11 - a22) * (a11 - a22) + 4.0 * a12 * a21;
-            if disc >= 0.0 {
-                // Real eigenvalues — can deflate both
+            if disc < 0.0 {
+                // Complex pair — deflate as 2×2 block
                 p -= 2;
             } else {
-                // Complex pair — deflate both (we'll take Re later)
-                p -= 2;
+                // Real eigenvalues — apply one more Givens rotation to split
+                // Use a shift equal to the eigenvalue closest to a22
+                let sqrt_disc = disc.sqrt();
+                let mu1 = (a11 + a22 + sqrt_disc) / 2.0;
+                let mu2 = (a11 + a22 - sqrt_disc) / 2.0;
+                let shift = if (mu1 - a22).abs() <= (mu2 - a22).abs() { mu1 } else { mu2 };
+
+                let x = h[p - 2][p - 2] - shift;
+                let y = h[p - 1][p - 2];
+                let r = (x * x + y * y).sqrt();
+                if r < 1e-300 {
+                    p -= 2;
+                    continue;
+                }
+                let c = x / r;
+                let s = y / r;
+
+                // Apply Givens from left
+                for j in 0..n {
+                    let t1 = h[p - 2][j];
+                    let t2 = h[p - 1][j];
+                    h[p - 2][j] = c * t1 + s * t2;
+                    h[p - 1][j] = -s * t1 + c * t2;
+                }
+                // Apply Givens from right
+                for i in 0..n {
+                    let t1 = h[i][p - 2];
+                    let t2 = h[i][p - 1];
+                    h[i][p - 2] = c * t1 + s * t2;
+                    h[i][p - 1] = -s * t1 + c * t2;
+                }
+                // Accumulate in Q
+                for i in 0..n {
+                    let t1 = q[i][p - 2];
+                    let t2 = q[i][p - 1];
+                    q[i][p - 2] = c * t1 + s * t2;
+                    q[i][p - 1] = -s * t1 + c * t2;
+                }
+
+                // Check if we've successfully split
+                let sub_tol = f64::EPSILON * (h[p - 2][p - 2].abs() + h[p - 1][p - 1].abs()).max(1.0);
+                if h[p - 1][p - 2].abs() <= sub_tol {
+                    h[p - 1][p - 2] = 0.0;
+                    p -= 2;
+                } else {
+                    // Didn't converge in one step, just iterate again
+                    iter += 1;
+                }
             }
             continue;
         }
 
-        // Wilkinson shift: eigenvalue of trailing 2x2 block closest to h[p-1][p-1]
+        // Wilkinson shift from trailing 2×2 block
         let a11 = h[p - 2][p - 2];
         let a12 = h[p - 2][p - 1];
         let a21 = h[p - 1][p - 2];
@@ -825,26 +960,19 @@ fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
         let disc = tr * tr - 4.0 * det;
 
         let shift = if disc >= 0.0 {
-            // Real eigenvalues — pick the one closest to a22
             let sqrt_disc = disc.sqrt();
             let mu1 = (tr + sqrt_disc) / 2.0;
             let mu2 = (tr - sqrt_disc) / 2.0;
-            if (mu1 - a22).abs() < (mu2 - a22).abs() {
-                mu1
-            } else {
-                mu2
-            }
+            if (mu1 - a22).abs() <= (mu2 - a22).abs() { mu1 } else { mu2 }
         } else {
-            // Complex eigenvalues — use a22 as shift
-            a22
+            a22 // use real part when complex
         };
 
-        // Implicit QR step with shift on H[q_start..p, q_start..p]
+        // Implicit QR step with Givens rotations on h[q_start..p, :]
         let mut x = h[q_start][q_start] - shift;
         let mut y = h[q_start + 1][q_start];
 
         for k in q_start..(p - 1) {
-            // Givens rotation to zero out y
             let r = (x * x + y * y).sqrt();
             if r < 1e-300 {
                 break;
@@ -852,7 +980,7 @@ fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
             let c = x / r;
             let s = y / r;
 
-            // Apply rotation from left: rows k, k+1
+            // Apply Givens rotation from left: rows k, k+1
             for j in 0..n {
                 let t1 = h[k][j];
                 let t2 = h[k + 1][j];
@@ -860,8 +988,9 @@ fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
                 h[k + 1][j] = -s * t1 + c * t2;
             }
 
-            // Apply rotation from right: cols k, k+1
-            let upper = (k + 3).min(p);
+            // Apply Givens rotation from right: cols k, k+1
+            // Only rows 0..min(k+3, p) are affected (Hessenberg structure)
+            let upper = (k + 3).min(n);
             for i in 0..upper {
                 let t1 = h[i][k];
                 let t2 = h[i][k + 1];
@@ -885,113 +1014,171 @@ fn general_eigen(mat: &[Vec<f64>], n: usize) -> (Vec<f64>, Vec<Vec<f64>>) {
 
         iter += 1;
     }
+}
 
-    // Step 3: Extract eigenvalues from the quasi-upper-triangular Schur form
+/// Extract eigenvalues from the quasi-upper-triangular real Schur form.
+/// 1×1 diagonal blocks give real eigenvalues.
+/// 2×2 diagonal blocks give complex conjugate pairs; we return Re(lambda).
+fn extract_schur_eigenvalues(h: &[Vec<f64>], n: usize) -> Vec<f64> {
     let mut eigenvalues = vec![0.0; n];
-    {
-        let mut i = 0;
-        while i < n {
-            if i + 1 < n && h[i + 1][i].abs() > f64::EPSILON * (h[i][i].abs() + h[i + 1][i + 1].abs()).max(1.0) {
-                // 2x2 block — complex pair, take Re (= average of diagonal)
+    let mut i = 0;
+    while i < n {
+        if i + 1 < n {
+            let sub = h[i + 1][i].abs();
+            let diag_scale = h[i][i].abs() + h[i + 1][i + 1].abs();
+            let tol = f64::EPSILON * if diag_scale == 0.0 { 1.0 } else { diag_scale };
+            if sub > tol {
+                // 2×2 block: complex conjugate pair
                 let re = (h[i][i] + h[i + 1][i + 1]) / 2.0;
                 eigenvalues[i] = re;
                 eigenvalues[i + 1] = re;
                 i += 2;
-            } else {
-                eigenvalues[i] = h[i][i];
-                i += 1;
+                continue;
             }
         }
+        eigenvalues[i] = h[i][i];
+        i += 1;
     }
+    eigenvalues
+}
 
-    // Step 4: Compute eigenvectors from real Schur form
-    // For each real eigenvalue, solve (T - lambda*I) v = 0 by back-substitution
-    // Then transform back: eigvec = Q * v
+/// Compute eigenvectors from the real Schur form T and transformation Q.
+///
+/// For each eigenvalue, solve (T - lambda*I) z = 0 by back-substitution
+/// on the upper triangular part of T, then compute v = Q * z.
+///
+/// This is the equivalent of LAPACK's dtrevc + back-transformation.
+fn compute_schur_eigenvectors(
+    t: &[Vec<f64>],
+    q: &[Vec<f64>],
+    eigenvalues: &[f64],
+    n: usize,
+) -> Vec<Vec<f64>> {
     let mut eigenvectors = vec![vec![0.0; n]; n];
+
+    // Identify which columns are part of 2×2 blocks
+    let mut is_2x2 = vec![false; n];
     {
         let mut i = 0;
         while i < n {
-            if i + 1 < n && h[i + 1][i].abs() > f64::EPSILON * (h[i][i].abs() + h[i + 1][i + 1].abs()).max(1.0) {
-                // 2x2 block (complex pair) — compute real parts of eigenvectors
-                // For the complex eigenvalue lambda = a + bi from the 2x2 block:
-                //   [h[i][i]   h[i][i+1]  ] with eigenvalues (h[i][i]+h[i+1][i+1])/2 +/- ...
-                //   [h[i+1][i] h[i+1][i+1]]
-                // We solve (T - lambda*I)z = 0 working with real parts.
-                // Use the first column of the Schur vectors for both.
-                let lambda = eigenvalues[i];
-
-                for col in i..=(i + 1) {
-                    let mut v = vec![0.0; n];
-                    v[col] = 1.0;
-                    // Back-substitute in upper quasi-triangular part
-                    for row in (0..col).rev() {
-                        if row + 1 < n && row + 1 != col
-                            && h[row + 1][row].abs() > f64::EPSILON * (h[row][row].abs() + h[row + 1][row + 1].abs()).max(1.0)
-                        {
-                            continue; // skip rows that are part of a 2x2 block we haven't resolved
-                        }
-                        let mut s = 0.0;
-                        for j in (row + 1)..n {
-                            s += h[row][j] * v[j];
-                        }
-                        let denom = h[row][row] - lambda;
-                        v[row] = if denom.abs() > 1e-300 { -s / denom } else { 0.0 };
-                    }
-
-                    // Transform: eigvec = Q * v
-                    for r in 0..n {
-                        let mut s = 0.0;
-                        for j in 0..n {
-                            s += q[r][j] * v[j];
-                        }
-                        eigenvectors[r][col] = s;
-                    }
+            if i + 1 < n {
+                let sub = t[i + 1][i].abs();
+                let diag_scale = t[i][i].abs() + t[i + 1][i + 1].abs();
+                let tol = f64::EPSILON * if diag_scale == 0.0 { 1.0 } else { diag_scale };
+                if sub > tol {
+                    is_2x2[i] = true;
+                    is_2x2[i + 1] = true;
+                    i += 2;
+                    continue;
                 }
+            }
+            i += 1;
+        }
+    }
 
-                i += 2;
-            } else {
-                // Real eigenvalue
-                let lambda = eigenvalues[i];
-                let mut v = vec![0.0; n];
-                v[i] = 1.0;
+    let mut i = 0;
+    while i < n {
+        if is_2x2[i] {
+            // 2×2 block at (i, i+1): complex conjugate eigenvalues
+            // We return Re(eigenvector) for both columns
+            // The 2x2 block is [[a,b],[c,d]] with complex eigenvalues a+bi type
+            // For the real part of the eigenvector, use the first column approach
+            let lambda = eigenvalues[i];
 
-                // Back-substitute: (T - lambda*I) v = 0
+            // For each of the two columns, solve (T - lambda*I)z = 0
+            for col in 0..2 {
+                let ci = i + col;
+                let mut z = vec![0.0; n];
+                z[ci] = 1.0;
+
+                // Back-substitute rows ci-1 down to 0
                 for row in (0..i).rev() {
+                    if is_2x2[row] && row > 0 && is_2x2[row - 1] {
+                        // row is the second row of a 2x2 block — skip, handled with row-1
+                        continue;
+                    }
                     let mut s = 0.0;
                     for j in (row + 1)..n {
-                        s += h[row][j] * v[j];
+                        s += t[row][j] * z[j];
                     }
-                    let denom = h[row][row] - lambda;
-                    v[row] = if denom.abs() > 1e-300 { -s / denom } else { 0.0 };
+                    let denom = t[row][row] - lambda;
+                    z[row] = if denom.abs() > 1e-14 { -s / denom } else { 0.0 };
                 }
 
-                // Transform: eigvec = Q * v
+                // Back-transform: v = Q * z
                 for r in 0..n {
                     let mut s = 0.0;
                     for j in 0..n {
-                        s += q[r][j] * v[j];
+                        s += q[r][j] * z[j];
                     }
-                    eigenvectors[r][i] = s;
+                    eigenvectors[r][ci] = s;
+                }
+            }
+
+            i += 2;
+        } else {
+            // Real eigenvalue at position i
+            let lambda = eigenvalues[i];
+            let mut z = vec![0.0; n];
+            z[i] = 1.0;
+
+            // Back-substitute: for row = i-1 down to 0, solve for z[row]
+            // (T[row][row] - lambda) * z[row] + sum_{j>row} T[row][j] * z[j] = 0
+            for row in (0..i).rev() {
+                // If this row is the second row of a 2×2 block, handle specially
+                if is_2x2[row] && row > 0 && is_2x2[row - 1] {
+                    // This is the bottom row of a 2×2 block.
+                    // We need to solve the 2×2 system:
+                    //   (T[row-1][row-1] - λ) z[row-1] + T[row-1][row] z[row] = -rhs_{row-1}
+                    //   T[row][row-1] z[row-1] + (T[row][row] - λ) z[row] = -rhs_row
+                    let r1 = row - 1;
+                    let r2 = row;
+                    let mut rhs1 = 0.0;
+                    let mut rhs2 = 0.0;
+                    for j in (r2 + 1)..n {
+                        rhs1 += t[r1][j] * z[j];
+                        rhs2 += t[r2][j] * z[j];
+                    }
+                    let a11 = t[r1][r1] - lambda;
+                    let a12 = t[r1][r2];
+                    let a21 = t[r2][r1];
+                    let a22 = t[r2][r2] - lambda;
+                    let det = a11 * a22 - a12 * a21;
+                    if det.abs() > 1e-30 {
+                        z[r1] = (-rhs1 * a22 + rhs2 * a12) / det;
+                        z[r2] = (rhs1 * a21 - rhs2 * a11) / det;
+                    }
+                    continue;
                 }
 
-                i += 1;
+                // If this row is the top of a 2×2 block, skip — handled when we hit the bottom row
+                if is_2x2[row] && row + 1 < n && is_2x2[row + 1] {
+                    continue;
+                }
+
+                // Standard 1×1 back-substitution
+                let mut s = 0.0;
+                for j in (row + 1)..n {
+                    s += t[row][j] * z[j];
+                }
+                let denom = t[row][row] - lambda;
+                z[row] = if denom.abs() > 1e-14 { -s / denom } else { 0.0 };
             }
+
+            // Back-transform: v = Q * z
+            for r in 0..n {
+                let mut s = 0.0;
+                for j in 0..n {
+                    s += q[r][j] * z[j];
+                }
+                eigenvectors[r][i] = s;
+            }
+
+            i += 1;
         }
     }
 
-    // Sort eigenvalues by decreasing absolute value (matching R's eigen ordering)
-    let mut order: Vec<usize> = (0..n).collect();
-    order.sort_by(|&a, &b| eigenvalues[b].abs().partial_cmp(&eigenvalues[a].abs()).unwrap());
-
-    let sorted_vals: Vec<f64> = order.iter().map(|&i| eigenvalues[i]).collect();
-    let mut sorted_vecs = vec![vec![0.0; n]; n];
-    for i in 0..n {
-        for j in 0..n {
-            sorted_vecs[i][j] = eigenvectors[i][order[j]];
-        }
-    }
-
-    (sorted_vals, sorted_vecs)
+    eigenvectors
 }
 
 /// Solve a linear system A x = b for square matrix A.
@@ -1080,7 +1267,14 @@ pub fn vcov_cl_from_input(
     {
         1.0
     } else {
-        input.dispersion_parameter
+        // Must match R's estfun.glm/bread.glm: sum(wres^2)/sum(w)
+        let sum_wres2: f64 = wres.iter().map(|w| w * w).sum();
+        let sum_weights: f64 = input.weights.iter().sum();
+        if sum_weights > 0.0 {
+            sum_wres2 / sum_weights
+        } else {
+            1.0
+        }
     };
 
     let mut ef = vec![vec![0.0; k]; n];

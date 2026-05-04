@@ -168,7 +168,8 @@ export type GlmFamily =
   | "quasibinomial"
   | "poisson"
   | "gamma"
-  | "inverse_gaussian";
+  | "inverse_gaussian"
+  | "quasipoisson";
 
 /**
  * GLM link options
@@ -275,6 +276,7 @@ function nullsToNaN(arr: any[]): void {
 
 class GLM<Row extends Record<string, number>> {
   private result: GlmFitResult;
+  private _wasmSafeResult: GlmFitResult | null = null;
   private formula: string;
   private familyName: string;
   private linkName: string;
@@ -307,6 +309,22 @@ class GLM<Row extends Record<string, number>> {
     this.familyName = family;
     this.linkName = link;
     this.data = data;
+  }
+
+  /**
+   * Get a JSON-serialized version of the result for passing back to WASM/NAPI
+   * functions that need to deserialize it. The raw WASM result object has
+   * circular references in the `family` field that prevent JSON.stringify,
+   * so we use a replacer to handle circulars and replace family with a clean object.
+   */
+  private get resultJson(): string {
+    if (!this._wasmSafeResult) {
+      // Fix family in-place to break circular references before serialization
+      this.result.family = { family: this.familyName, link: this.linkName };
+      this._wasmSafeResult = this.result;
+    }
+    // JSON.stringify with NaN → null (serde_json handles null for Option/NaN)
+    return JSON.stringify(this._wasmSafeResult);
   }
 
   // Getters for all result properties
@@ -461,7 +479,7 @@ class GLM<Row extends Record<string, number>> {
     link: string;
   } {
     // Call Rust implementation via WASM (takes JsValue, returns JsValue)
-    const summary = wasmInternal.glm_summary_wasm(this.result) as Record<
+    const summary = wasmInternal.glm_summary_wasm(this.resultJson) as Record<
       string,
       // deno-lint-ignore no-explicit-any
       any
@@ -502,7 +520,7 @@ class GLM<Row extends Record<string, number>> {
   ): number[] {
     // Call Rust implementation via WASM (takes JsValue, returns JsValue)
     const result = wasmInternal.glm_rstandard_wasm(
-      this.result,
+      this.resultJson,
       type,
     ) as number[];
 
@@ -524,7 +542,7 @@ class GLM<Row extends Record<string, number>> {
    */
   rstudent(): number[] {
     // Call Rust implementation via WASM (takes JsValue, returns JsValue)
-    const result = wasmInternal.glm_rstudent_wasm(this.result) as number[];
+    const result = wasmInternal.glm_rstudent_wasm(this.resultJson) as number[];
 
     if ((result as unknown as { error?: string }).error) {
       throw new Error(
@@ -553,7 +571,7 @@ class GLM<Row extends Record<string, number>> {
     hat: number[];
   } {
     // Call Rust implementation via WASM (takes JsValue, returns JsValue)
-    return wasmInternal.glm_influence_wasm(this.result) as {
+    return wasmInternal.glm_influence_wasm(this.resultJson) as {
       dfbeta: number[][];
       dfbetas: number[][];
       dffits: number[];
@@ -622,7 +640,7 @@ class GLM<Row extends Record<string, number>> {
     }
 
     // For non-default levels, fall back to WASM call
-    const confint = wasmInternal.glm_confint_wasm(this.result, level) as {
+    const confint = wasmInternal.glm_confint_wasm(this.resultJson, level) as {
       names: string[];
       lower: number[];
       upper: number[];
@@ -688,7 +706,7 @@ class GLM<Row extends Record<string, number>> {
     }
 
     const predictions = wasmInternal.glm_predict_wasm(
-      this.result,
+      this.resultJson,
       newdataMatrix,
       type,
     ) as number[] | { error: string };
@@ -732,13 +750,7 @@ export function glm<Row extends Record<string, number>>({
   options,
 }: {
   formula: string;
-  family:
-    | "gaussian"
-    | "binomial"
-    | "quasibinomial"
-    | "poisson"
-    | "gamma"
-    | "inverse_gaussian";
+  family: GlmFamily;
   link:
     | "identity"
     | "logit"

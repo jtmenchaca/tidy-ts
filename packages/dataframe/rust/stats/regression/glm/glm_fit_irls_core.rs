@@ -278,7 +278,7 @@ pub fn run_irls_iteration(
         let dev = deviance_fn.deviance(y, mu, weights)
             .map_err(|e| format!("Failed to calculate deviance at iteration {}: {}", iter_count, e))?;
 
-        // Deviance calculated
+        eprintln!("[IRLS] iter={} dev={} devold={}", iter_count, dev, *devold);
 
         if control.trace != 0 {
             println!("Deviance = {} Iterations - {}", dev, iter_count);
@@ -422,6 +422,7 @@ pub fn run_irls_iteration(
 
             while (current_dev - *devold) / (0.1 + current_dev.abs()) >= -control.epsilon {
                 if ii > control.maxit {
+                    eprintln!("[IRLS] inner loop 3 FAILED: current_dev={} devold={}", current_dev, *devold);
                     return Err("inner loop 3; cannot correct step size".to_string());
                 }
                 ii += 1;

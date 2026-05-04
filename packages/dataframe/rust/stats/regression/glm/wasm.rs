@@ -479,7 +479,7 @@ fn create_family(
     family_name: &str,
     link_name: &str,
 ) -> Result<Box<dyn crate::stats::regression::family::GlmFamily>, String> {
-    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson, quasibinomial};
+    use crate::stats::regression::family::{binomial, gamma, gaussian, inverse_gaussian, poisson, quasibinomial, quasipoisson};
 
     match family_name {
         "gaussian" => match link_name {
@@ -513,7 +513,7 @@ fn create_family(
         "gamma" => match link_name {
             "inverse" => Ok(Box::new(gamma::GammaFamily::inverse())),
             "identity" => Ok(Box::new(gamma::GammaFamily::identity())),
-            // "log" => Ok(Box::new(gamma::GammaFamily::log())),
+            "log" => Ok(Box::new(gamma::GammaFamily::log())),
             _ => Err(format!("Unknown link '{}' for gamma family", link_name)),
         },
         "inverse_gaussian" => match link_name {
@@ -528,6 +528,12 @@ fn create_family(
                 link_name
             )),
         },
+        "quasipoisson" => match link_name {
+            "log" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::log())),
+            "identity" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::identity())),
+            "sqrt" => Ok(Box::new(quasipoisson::QuasiPoissonFamily::sqrt())),
+            _ => Err(format!("Unknown link '{}' for quasipoisson family", link_name)),
+        },
         _ => Err(format!("Unknown family '{}'", family_name)),
     }
 }
@@ -537,9 +543,9 @@ fn create_family(
 /// Returns coefficient table with test statistics and p-values
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_summary_wasm(result: JsValue) -> Result<JsValue, JsValue> {
-    // Parse GLM result from JsValue
-    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_summary_wasm(result: &str) -> Result<JsValue, JsValue> {
+    // Parse GLM result from JSON string
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Compute summary
@@ -555,12 +561,10 @@ pub fn glm_summary_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// Returns rstandard() values
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_rstandard_wasm(result: JsValue, residual_type: &str) -> Result<JsValue, JsValue> {
-    // Parse GLM result from JsValue
-    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_rstandard_wasm(result: &str, residual_type: &str) -> Result<JsValue, JsValue> {
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
-    // Compute rstandard
     let rstandard = result.rstandard(residual_type)
         .map_err(|e| JsValue::from_str(&e))?;
 
@@ -573,12 +577,10 @@ pub fn glm_rstandard_wasm(result: JsValue, residual_type: &str) -> Result<JsValu
 /// Returns rstudent() values
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_rstudent_wasm(result: JsValue) -> Result<JsValue, JsValue> {
-    // Parse GLM result from JsValue
-    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_rstudent_wasm(result: &str) -> Result<JsValue, JsValue> {
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
-    // Compute rstudent
     let rstudent = result.rstudent()
         .map_err(|e| JsValue::from_str(&e))?;
 
@@ -591,12 +593,10 @@ pub fn glm_rstudent_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
-    // Parse GLM result from JsValue
-    let result: GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_influence_wasm(result: &str) -> Result<JsValue, JsValue> {
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
-    // Compute influence measures
     let influence = result.influence()
         .map_err(|e| JsValue::from_str(&e))?;
 
@@ -607,8 +607,8 @@ pub fn glm_influence_wasm(result: JsValue) -> Result<JsValue, JsValue> {
 /// GLM confint() - Compute confidence intervals for coefficients
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue> {
-    let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_confint_wasm(result: &str, level: f64) -> Result<JsValue, JsValue> {
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     let confint = result.confint(level)
@@ -621,8 +621,8 @@ pub fn glm_confint_wasm(result: JsValue, level: f64) -> Result<JsValue, JsValue>
 /// GLM predict() - Make predictions on new data
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn glm_predict_wasm(result: JsValue, newdata: JsValue, pred_type: &str) -> Result<JsValue, JsValue> {
-    let result: super::types_results::GlmResult = serde_wasm_bindgen::from_value(result)
+pub fn glm_predict_wasm(result: &str, newdata: JsValue, pred_type: &str) -> Result<JsValue, JsValue> {
+    let result: GlmResult = serde_json::from_str(result)
         .map_err(|e| JsValue::from_str(&format!("Failed to parse GLM result: {}", e)))?;
 
     // Parse newdata (expecting array of arrays: [[1, 2, 3], [4, 5, 6], ...])

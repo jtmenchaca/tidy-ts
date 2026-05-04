@@ -1,6 +1,6 @@
 // LLM utility with Zod schema validation and type inference
 import { Agent, type AgentInputItem, run, user } from "@openai/agents";
-import { config } from "dotenv";
+import { env } from "@tidy-ts/shims";
 import OpenAI from "openai";
 import {
   z,
@@ -12,7 +12,7 @@ import {
 } from "zod";
 
 // Load environment variables from .env file
-config();
+env.loadFromFileSync(".env");
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
@@ -258,7 +258,7 @@ async function respond<T extends z.ZodObject>({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini";
+  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
   schema: T;
 }): Promise<z.infer<T>>;
 
@@ -272,7 +272,7 @@ async function respond({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini";
+  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
 }): Promise<string>;
 
 // Implementation
@@ -286,7 +286,7 @@ async function respond<T extends z.ZodObject>({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini";
+  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
   schema?: T;
 }): Promise<z.infer<T> | string> {
   // Convert z.date() to z.iso.date() if schema is provided
@@ -391,6 +391,15 @@ function _compareEmbeddings({
 │  5 · LLM utility object                                                    │
 └───────────────────────────────────────────────────────────────────────────*/
 
+import { runScaffold } from "./scaffold.ts";
+import { pipeline } from "./scaffolds/llm.pipeline.ts";
+import { evaluate } from "./scaffolds/llm.evaluate.ts";
+import { debate } from "./scaffolds/llm.debate.ts";
+import { refine } from "./scaffolds/llm.refine.ts";
+import { ensemble } from "./scaffolds/llm.ensemble.ts";
+export type { ScaffoldOptions, ScaffoldStep, ScaffoldStepConfig } from "./scaffold.ts";
+export type { EvaluateConfig, ModelOption, StepDef } from "./scaffolds/types.ts";
+
 /**
  * LLM utility functions for language models and embeddings.
  *
@@ -422,7 +431,25 @@ export const LLM: {
   readonly embed: typeof getEmbeddings;
   /** Get structured responses from language models with Zod schema validation */
   readonly respond: typeof respond;
+  /** Run a custom multi-step agent scaffold */
+  readonly runScaffold: typeof runScaffold;
+  /** Linear pipeline: each step's output feeds into the next */
+  readonly pipeline: typeof pipeline;
+  /** Evaluator/Adjudicator: generate → parallel evaluators → adjudicator */
+  readonly evaluate: typeof evaluate;
+  /** Debate: generate → advocate + critic in parallel → judge decides */
+  readonly debate: typeof debate;
+  /** Self-refine: draft → critique → revise, repeated N rounds */
+  readonly refine: typeof refine;
+  /** Ensemble: parallel attempts → synthesizer picks/merges the best */
+  readonly ensemble: typeof ensemble;
 } = {
   embed: getEmbeddings,
   respond,
+  runScaffold,
+  pipeline,
+  evaluate,
+  debate,
+  refine,
+  ensemble,
 };

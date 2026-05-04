@@ -183,6 +183,7 @@ export interface DataFrameBase<Row extends object = object>
       transpose?: boolean;
       showIndex?: boolean;
       colorRows?: boolean;
+      expand?: boolean;
     },
     opts?: {
       maxCols?: number;
@@ -190,6 +191,7 @@ export interface DataFrameBase<Row extends object = object>
       transpose?: boolean;
       showIndex?: boolean;
       colorRows?: boolean;
+      expand?: boolean;
     },
   ): this;
 

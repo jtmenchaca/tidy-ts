@@ -292,6 +292,39 @@ Deno.test("print() maxWidth option test", () => {
   longDf.select("description").print("Description column only:");
 });
 
+Deno.test("print() with expand option for nested objects", () => {
+  console.log("\n=== Expand Option Test ===");
+
+  const df = createDataFrame([
+    {
+      name: "metformin",
+      dose: "1000mg",
+      result: {
+        generator: { description: "Helps control blood sugar levels" },
+        evaluator: { score: 9, jargon: [] },
+        adjudicator: { description: "Helps your body use sugar better" },
+      },
+    },
+    {
+      name: "lisinopril",
+      dose: "20mg",
+      result: {
+        generator: { description: "Lowers blood pressure" },
+        evaluator: { score: 8, jargon: ["ACE inhibitor"] },
+        adjudicator: { description: "Helps keep your blood pressure down" },
+      },
+    },
+  ]);
+
+  // Default print — objects shown as compact strings
+  console.log("\n--- Default (no expand) ---");
+  df.print();
+
+  // Expanded print — full JSON for object columns
+  console.log("\n--- With expand: true ---");
+  df.print({ expand: true });
+});
+
 Deno.test("print() edge cases", () => {
   console.log("\n=== Edge Cases Test ===");
 

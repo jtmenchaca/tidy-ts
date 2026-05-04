@@ -364,7 +364,7 @@ export function geeglm_fit_wasm(
 /**
  * GLM confint() - Compute confidence intervals for coefficients
  */
-export function glm_confint_wasm(result: any, level: number): any;
+export function glm_confint_wasm(result: string, level: number): any;
 
 /**
  * WASM export for GLM fitting
@@ -394,13 +394,13 @@ export function glm_fit_wasm(
  *
  * Returns influence() measures (dfbeta, dfbetas, dffits, covratio, cook's distance)
  */
-export function glm_influence_wasm(result: any): any;
+export function glm_influence_wasm(result: string): any;
 
 /**
  * GLM predict() - Make predictions on new data
  */
 export function glm_predict_wasm(
-  result: any,
+  result: string,
   newdata: any,
   pred_type: string,
 ): any;
@@ -410,21 +410,21 @@ export function glm_predict_wasm(
  *
  * Returns rstandard() values
  */
-export function glm_rstandard_wasm(result: any, residual_type: string): any;
+export function glm_rstandard_wasm(result: string, residual_type: string): any;
 
 /**
  * WASM export for studentized residuals
  *
  * Returns rstudent() values
  */
-export function glm_rstudent_wasm(result: any): any;
+export function glm_rstudent_wasm(result: string): any;
 
 /**
  * WASM export for GLM summary
  *
  * Returns coefficient table with test statistics and p-values
  */
-export function glm_summary_wasm(result: any): any;
+export function glm_summary_wasm(result: string): any;
 
 /**
  * WASM export for clustered robust covariance matrix (sandwich::vcovCL)
