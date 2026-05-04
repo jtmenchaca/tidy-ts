@@ -50,7 +50,6 @@ import { extract_nth_where_sorted } from "../../verbs/selection/extract-nth-wher
 // Joins
 import { inner_join } from "../../verbs/join/inner-join.verb.ts";
 import { left_join } from "../../verbs/join/left-join.verb.ts";
-import { left_join_parallel } from "../../verbs/join/left-join-parallel.verb.ts";
 import { right_join } from "../../verbs/join/right-join.verb.ts";
 import { outer_join } from "../../verbs/join/outer-join.verb.ts";
 import { cross_join } from "../../verbs/join/cross-join.verb.ts";
@@ -245,24 +244,6 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
       } else {
         // Simple API: leftJoin(other, keys, options?)
         result = (left_join as any)(o, onOrOptions, options)(df);
-      }
-      // Only wrap if result is a Promise, otherwise return directly for chaining
-      return result instanceof Promise ? thenableDataFrame(result) : result;
-    };
-  }
-  if (prop === "leftJoinParallel") {
-    return (o: unknown, onOrOptions: unknown, options?: unknown) => {
-      let result;
-      // Check if second argument is an object with 'keys' property (advanced API)
-      if (
-        onOrOptions && typeof onOrOptions === "object" &&
-        !Array.isArray(onOrOptions) && "keys" in onOrOptions
-      ) {
-        // Advanced API: leftJoin(other, { keys: ..., suffixes: ... })
-        result = (left_join_parallel as any)(o, onOrOptions)(df);
-      } else {
-        // Simple API: leftJoin(other, keys, options?)
-        result = (left_join_parallel as any)(o, onOrOptions, options)(df);
       }
       // Only wrap if result is a Promise, otherwise return directly for chaining
       return result instanceof Promise ? thenableDataFrame(result) : result;

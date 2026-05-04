@@ -282,7 +282,7 @@ Deno.test("Grouped DataFrame - Comprehensive Functionality Test", () => {
   expect(remainingSpecies).toBeLessThanOrEqual(5);
 
   // Verify groups were rebuilt
-  expect(heavyCharacters.__groups!.size).toBe(4); // Human, Wookiee, Droid, Unknown (all 4 species have members with mass > 70)
+  expect(heavyCharacters.__groups!.size).toBe(3); // Human, Wookiee, Droid (Unknown/Yoda has mass 17, filtered out)
 
   console.log(
     `Group rebuilding handled empty groups (${remainingSpecies} species remaining)`,

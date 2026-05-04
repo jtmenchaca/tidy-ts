@@ -6,7 +6,7 @@ import { TOL, assertClose } from "./glm-test-helpers.ts";
 // Test vcov(), confint(), and residuals() methods for GLM
 // Validates against R output from glm-vcov-confint.test.R
 
-const TOL_PROFILE = 1e-2; // profile likelihood CIs are iterative, less precise than Wald
+const TOL_PROFILE = TOL;
 
 Deno.test("GLM vcov/confint/residuals - Test 1: Gaussian GLM - vcov and confint", () => {
   const df = createDataFrame({
@@ -416,8 +416,8 @@ Deno.test("GLM vcov/confint/residuals - Test 3: Poisson GLM - vcov and confint",
   const ci = model.confint({ level: 0.95 });
   assertClose(ci.lower[0], -0.659863166, TOL_PROFILE, "poisson profile CI lower intercept");
   assertClose(ci.upper[0], 0.904767995, TOL_PROFILE, "poisson profile CI upper intercept");
-  assertClose(ci.lower[2], 0.002123691, 1e-3, "poisson profile CI lower hp");
-  assertClose(ci.upper[2], 0.008589864, 1e-3, "poisson profile CI upper hp");
+  assertClose(ci.lower[2], 0.002123691, TOL, "poisson profile CI lower hp");
+  assertClose(ci.upper[2], 0.008589864, TOL, "poisson profile CI upper hp");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 4: Different confidence levels", () => {

@@ -35,6 +35,7 @@ pub struct ModelMatrix {
 pub struct GlmResult {
     // Core Components (1-7) - Direct R GLM components
     /// Fitted coefficients (1. coefficients)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64")]
     pub coefficients: Vec<f64>,
     /// Residuals (2. residuals)
     pub residuals: Vec<f64>,
@@ -63,6 +64,7 @@ pub struct GlmResult {
     /// Deviance (10. deviance)
     pub deviance: f64,
     /// AIC (11. aic)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64")]
     pub aic: f64,
     /// Null deviance (12. null.deviance)
     pub null_deviance: f64,
@@ -165,16 +167,21 @@ pub struct GlmResult {
     /// Reference levels (44. reference_levels)
     pub reference_levels: HashMap<String, String>,
     /// Dispersion parameter (45. dispersion_parameter)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_f64")]
     pub dispersion_parameter: f64,
     /// Individual deviance residuals (46. deviance_residuals)
     pub deviance_residuals: Vec<f64>,
     /// Parameter covariance matrix (47. covariance_matrix)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_vec_f64")]
     pub covariance_matrix: Vec<Vec<f64>>,
     /// Standard errors for coefficients (48. standard_errors)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64")]
     pub standard_errors: Vec<f64>,
     /// T-statistics for coefficients (48a. t_statistics)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64")]
     pub t_statistics: Vec<f64>,
     /// P-values for coefficients (48b. p_values)
+    #[serde(deserialize_with = "crate::stats::regression::glm::serde_special_floats::deserialize_vec_f64")]
     pub p_values: Vec<f64>,
     /// Leverage values (49. leverage)
     #[serde(

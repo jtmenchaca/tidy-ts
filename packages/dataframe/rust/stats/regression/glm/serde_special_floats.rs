@@ -88,21 +88,68 @@ where
     let values: Vec<serde_json::Value> = Vec::deserialize(d)?;
     values
         .into_iter()
-        .map(|val| match val {
-            serde_json::Value::String(s) => match s.as_str() {
-                "NaN" => Ok(f64::NAN),
-                "Infinity" => Ok(f64::INFINITY),
-                "-Infinity" => Ok(f64::NEG_INFINITY),
-                _ => Err(serde::de::Error::custom(format!(
-                    "invalid float string: {}",
-                    s
-                ))),
-            },
-            serde_json::Value::Number(n) => n
-                .as_f64()
-                .ok_or_else(|| serde::de::Error::custom("invalid number")),
-            serde_json::Value::Null => Ok(f64::NAN),
-            _ => Err(serde::de::Error::custom("invalid value type")),
+        .map(|val| deserialize_f64_value::<D>(&val))
+        .collect()
+}
+
+/// Helper: parse a single serde_json::Value as f64 with NaN/Infinity support
+fn deserialize_f64_value<'de, D>(val: &serde_json::Value) -> Result<f64, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    match val {
+        serde_json::Value::String(s) => match s.as_str() {
+            "NaN" => Ok(f64::NAN),
+            "Infinity" => Ok(f64::INFINITY),
+            "-Infinity" => Ok(f64::NEG_INFINITY),
+            _ => Err(serde::de::Error::custom(format!(
+                "invalid float string: {}",
+                s
+            ))),
+        },
+        serde_json::Value::Number(n) => n
+            .as_f64()
+            .ok_or_else(|| serde::de::Error::custom("invalid number")),
+        serde_json::Value::Null => Ok(f64::NAN),
+        _ => Err(serde::de::Error::custom("invalid value type")),
+    }
+}
+
+/// Serialize Vec<Vec<f64>> with special float handling
+pub fn serialize_vec_vec_f64<S>(x: &Vec<Vec<f64>>, s: S) -> Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    use serde::ser::SerializeSeq;
+    let mut outer = s.serialize_seq(Some(x.len()))?;
+    for row in x {
+        let converted: Vec<serde_json::Value> = row.iter().map(|v| {
+            if v.is_nan() {
+                serde_json::Value::String("NaN".to_string())
+            } else if *v == f64::INFINITY {
+                serde_json::Value::String("Infinity".to_string())
+            } else if *v == f64::NEG_INFINITY {
+                serde_json::Value::String("-Infinity".to_string())
+            } else {
+                serde_json::json!(*v)
+            }
+        }).collect();
+        outer.serialize_element(&converted)?;
+    }
+    outer.end()
+}
+
+/// Deserialize Vec<Vec<f64>> with special float handling
+pub fn deserialize_vec_vec_f64<'de, D>(d: D) -> Result<Vec<Vec<f64>>, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let rows: Vec<Vec<serde_json::Value>> = Vec::deserialize(d)?;
+    rows.into_iter()
+        .map(|row| {
+            row.iter()
+                .map(|val| deserialize_f64_value::<D>(val))
+                .collect()
         })
         .collect()
 }

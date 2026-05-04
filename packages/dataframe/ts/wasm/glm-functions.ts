@@ -263,6 +263,16 @@ export function glmFit(
  * - predict(): Make predictions on new data
  * - More methods coming: residuals(), summary(), etc.
  */
+/** Replace null entries with NaN in a numeric array (in-place).
+ *  JSON cannot represent NaN, so serde_json serializes f64::NAN as null.
+ *  This restores the correct numeric representation. */
+// deno-lint-ignore no-explicit-any
+function nullsToNaN(arr: any[]): void {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] === null) arr[i] = NaN;
+  }
+}
+
 class GLM<Row extends Record<string, number>> {
   private result: GlmFitResult;
   private formula: string;
@@ -283,6 +293,15 @@ class GLM<Row extends Record<string, number>> {
     link: string;
     data: DataFrame<Row>;
   }) {
+    // serde_json serializes f64::NAN as null (JSON has no NaN literal).
+    // serde_wasm_bindgen preserves NaN natively. Normalize so both
+    // backends produce NaN for non-finite values in known numeric fields.
+    nullsToNaN(result.coefficients);
+    nullsToNaN(result.standardErrors);
+    nullsToNaN(result.tStatistics);
+    nullsToNaN(result.pValues);
+    for (const row of result.covarianceMatrix) nullsToNaN(row);
+
     this.result = result;
     this.formula = formula;
     this.familyName = family;

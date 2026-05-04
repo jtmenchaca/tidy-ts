@@ -240,16 +240,12 @@ pub fn run_irls_iteration(
         let pivot = &qr_result.pivot;
         let p = coef.len();
 
-        eprintln!("IRLS: qr_coef={:?} pivot={:?} rank={}",
-            &qr_result.coefficients[..p.min(qr_result.coefficients.len())], pivot, qr_result.rank);
         for i in 0..p.min(qr_result.coefficients.len()) {
             let pivot_idx = pivot[i] as usize - 1; // R uses 1-based indexing
             if pivot_idx < p {
                 coef[pivot_idx] = qr_result.coefficients[i];
             }
         }
-        eprintln!("IRLS: coef_after={:?}", &coef[..p]);
-
         // R: eta <- drop(x %*% start)
         *eta = offset
             .iter()
@@ -262,8 +258,6 @@ pub fn run_irls_iteration(
                     .sum::<f64>()
             })
             .collect();
-
-        eprintln!("IRLS: eta[0..5]={:?} mu_before_linkinv", &eta[..5.min(eta.len())]);
 
         *mu = linkinv(eta);
 

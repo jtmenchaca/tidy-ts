@@ -147,16 +147,12 @@ pub fn glm_fit(
         coef = irls_result.coef;
         let rank = irls_result.rank;
 
-        eprintln!("FINAL: coef={:?} rank={}", &coef, rank);
-
         // Recompute eta and mu from final coefficients (before setting NaN).
         // Beyond-rank coefficients are 0 at this point, matching R's IRLS.
         eta = (0..n).map(|i| {
             offset[i] + x[i].iter().zip(coef.iter()).map(|(x_ij, &c_j)| x_ij * c_j).sum::<f64>()
         }).collect();
         mu = linkinv(&eta);
-        eprintln!("FINAL: eta={:?} mu={:?}", &eta[..5.min(eta.len())], &mu[..5.min(mu.len())]);
-
         // R: if (fit$rank < nvars) coef[fit$pivot][seq.int(fit$rank+1, nvars)] <- NA
         // Set beyond-rank coefficients to NaN after eta/mu computation
         if let Some(ref qr) = irls_result.qr_result {
@@ -211,13 +207,11 @@ pub fn glm_fit(
     // Calculate residuals
     let residuals = calculate_residuals(&y, &mu, &eta, &mu_eta);
 
-    // Calculate working weights for final result
-    let variance_fn = |mu: &[f64]| {
-        mu.iter()
-            .map(|&mu_i| variance.variance(mu_i).unwrap_or(1.0))
-            .collect()
-    };
-    let (w, good) = calculate_working_weights(&weights, &mu, &eta, &variance_fn, &mu_eta);
+    // Use IRLS last-iteration weights (R stores w from the last iteration,
+    // NOT recomputed from converged mu — these differ slightly because mu
+    // is updated after the last QR solve but w was computed before it).
+    let w = irls_w.clone();
+    let good: Vec<bool> = w.iter().map(|&wi| wi > 0.0).collect();
 
     // Calculate deviance residuals: sign(y - mu) * sqrt(dev_resids(y, mu, wts))
     let dev_resids_fn = family.dev_resids();
@@ -305,19 +299,27 @@ pub fn glm_fit(
 
                 irls_wt_resid_sq / resdf as f64
             } else {
-                1.0
+                // R: df.r == 0 → dispersion = NaN (line 704 of summary.glm)
+                f64::NAN
             }
         }
     };
 
-    // Extract upper triangular R from QR result
-    let r_matrix: Vec<Vec<f64>> = irls_qr_result
+    // Extract upper triangular R from QR result, respecting rank.
+    // R does: p1 <- 1L:p; chol2inv(Qr$qr[p1, p1, drop=FALSE])
+    // where p is rank, not nvars. Only the rank×rank upper-left is inverted.
+    let pivot: Vec<usize> = irls_qr_result
+        .as_ref()
+        .map(|qr| qr.pivot.iter().map(|&x| (x - 1) as usize).collect())
+        .unwrap_or_else(|| (0..p).collect());
+
+    let r_rank_matrix: Vec<Vec<f64>> = irls_qr_result
         .as_ref()
         .map(|qr| {
-            let mut r_mat = vec![vec![0.0; p]; p];
+            let mut r_mat = vec![vec![0.0; rank]; rank];
             let n_qr = qr.qr.len() / p;
-            for i in 0..p {
-                for j in i..p {
+            for i in 0..rank {
+                for j in i..rank {
                     let idx = j * n_qr + i;
                     if idx < qr.qr.len() {
                         r_mat[i][j] = qr.qr[idx];
@@ -326,10 +328,26 @@ pub fn glm_fit(
             }
             r_mat
         })
-        .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+        .unwrap_or_else(|| vec![vec![0.0; rank]; rank]);
 
-    // cov.unscaled = chol2inv(R) = (R'R)^{-1}
-    let cov_unscaled = chol2inv(&r_matrix).unwrap_or_else(|_| vec![vec![0.0; p]; p]);
+    // cov.unscaled = chol2inv(R[1:rank, 1:rank]) — rank×rank matrix
+    let cov_unscaled_rank = chol2inv(&r_rank_matrix)
+        .unwrap_or_else(|_| vec![vec![0.0; rank]; rank]);
+
+    // Expand to p×p via .vcov.aliased: NaN for aliased (rank-deficient) entries.
+    // R: aliased <- is.na(coef); VC <- matrix(NA, p, p); j <- which(!aliased); VC[j,j] <- vc
+    // The non-aliased positions correspond to pivot[0..rank] in original column order.
+    let cov_unscaled = {
+        let mut full = vec![vec![f64::NAN; p]; p];
+        for ri in 0..rank {
+            for rj in 0..rank {
+                let oi = pivot[ri];
+                let oj = pivot[rj];
+                full[oi][oj] = cov_unscaled_rank[ri][rj];
+            }
+        }
+        full
+    };
 
     // cov.scaled = dispersion * cov.unscaled
     let cov_scaled: Vec<Vec<f64>> = cov_unscaled
@@ -337,14 +355,14 @@ pub fn glm_fit(
         .map(|row| row.iter().map(|&v| v * sigma_squared).collect())
         .collect();
 
-    // SE = sqrt(diag(cov.scaled))
+    // SE = sqrt(diag(cov.scaled)) — NaN for aliased coefficients
     let std_errors_vec: Vec<f64> = (0..p).map(|i| cov_scaled[i][i].sqrt()).collect();
 
-    // t-statistics = coef / SE
+    // t-statistics = coef / SE — NaN for aliased
     let t_stats_vec: Vec<f64> = coef_for_stats
         .iter()
         .zip(std_errors_vec.iter())
-        .map(|(&c, &se)| if se > 0.0 { c / se } else { 0.0 })
+        .map(|(&c, &se)| if se > 0.0 && se.is_finite() { c / se } else { f64::NAN })
         .collect();
 
     // p-values from t-distribution (or z for known dispersion)

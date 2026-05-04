@@ -107,8 +107,8 @@ Deno.test("removeNA with grouped data", () => {
   // After removeNA("homeworld"), we have:
   // - Luke (Rebel, Tatooine) ✓
   // - Han (null affiliation, Corellia) ✓
-  // Grouped by affiliation gives us: Rebel, null, Empire, undefined (4 groups)
-  expect(result.nrows()).toBe(4);
+  // Grouped by affiliation gives us: Rebel, null (2 groups with rows remaining)
+  expect(result.nrows()).toBe(2);
 });
 
 Deno.test("removeNA with multiple fields using rest params", () => {

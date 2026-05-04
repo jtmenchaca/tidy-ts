@@ -14,6 +14,7 @@ import {
   createBitSet,
 } from "../../dataframe/implementation/columnar-view.ts";
 import { withMask } from "../../dataframe/implementation/row-cursor.ts";
+import { materializeIndex, rebuildGroupsColumnar } from "../../dataframe/index.ts";
 
 /** Fill all valid bits in a bitset (up to n), leaving padding bits clear. */
 function bitsetFillAll(bs: BitSet, n: number): void {
@@ -104,7 +105,14 @@ export function removeNull<Row extends object, Field extends keyof Row>(
     }
 
     const out = withMask(api, bs);
-    if (api.__groups) (out as any).__groups = api.__groups;
+    if (api.__groups) {
+      const idx = materializeIndex(store.length, (out as any).__view);
+      const groupCols = api.__groups.groupingColumns.map(String);
+      if (idx.length > 0 && groupCols.length > 0) {
+        (out as any).__groups = rebuildGroupsColumnar(store, groupCols, idx);
+        (out as any).__kind = "GroupedDataFrame";
+      }
+    }
     return out;
   }
 
@@ -184,7 +192,14 @@ export function removeUndefined<Row extends object, Field extends keyof Row>(
     }
 
     const out = withMask(api, bs);
-    if (api.__groups) (out as any).__groups = api.__groups;
+    if (api.__groups) {
+      const idx = materializeIndex(store.length, (out as any).__view);
+      const groupCols = api.__groups.groupingColumns.map(String);
+      if (idx.length > 0 && groupCols.length > 0) {
+        (out as any).__groups = rebuildGroupsColumnar(store, groupCols, idx);
+        (out as any).__kind = "GroupedDataFrame";
+      }
+    }
     return out;
   }
 
@@ -265,7 +280,14 @@ export function removeNA<Row extends object, Field extends keyof Row>(
     }
 
     const out = withMask(api, bs);
-    if (api.__groups) (out as any).__groups = api.__groups;
+    if (api.__groups) {
+      const idx = materializeIndex(store.length, (out as any).__view);
+      const groupCols = api.__groups.groupingColumns.map(String);
+      if (idx.length > 0 && groupCols.length > 0) {
+        (out as any).__groups = rebuildGroupsColumnar(store, groupCols, idx);
+        (out as any).__kind = "GroupedDataFrame";
+      }
+    }
     return out;
   }
 

@@ -259,3 +259,79 @@ export function withGroupsRebuilt(
 
   return out;
 }
+
+/**
+ * Rebuild groups directly from columnar store + visible physical indices.
+ * Avoids materializing row objects — used by filter on grouped DataFrames.
+ *
+ * The resulting adjacency list uses `usesRawIndices: true` and indexes
+ * into the physical store (same as rebuildGroups does after row-materializing verbs).
+ */
+// deno-lint-ignore no-explicit-any
+export function rebuildGroupsColumnar(
+  store: { columns: Record<string, unknown[]> },
+  groupingColumns: readonly string[],
+  physicalIndices: Uint32Array,
+): {
+  groupingColumns: string[];
+  head: Int32Array;
+  next: Int32Array;
+  count: Uint32Array;
+  keyRow: Uint32Array;
+  size: number;
+  usesRawIndices: boolean;
+} {
+  const n = physicalIndices.length;
+  const next = new Int32Array(n);
+  const head: number[] = [];
+  const count: number[] = [];
+  const keyRow: number[] = [];
+
+  const map = new Map<string, number>();
+  let gid = 0;
+
+  for (let i = 0; i < n; i++) {
+    const physIdx = physicalIndices[i];
+    // Build group key from columnar store
+    let key = "";
+    for (let c = 0; c < groupingColumns.length; c++) {
+      if (c > 0) key += "\x00";
+      key += String(store.columns[groupingColumns[c]][physIdx]);
+    }
+
+    let g = map.get(key);
+    if (g === undefined) {
+      g = gid++;
+      map.set(key, g);
+      head[g] = -1;
+      count[g] = 0;
+      keyRow[g] = i;
+    }
+
+    next[i] = head[g];
+    head[g] = i;
+    count[g] = (count[g] + 1) | 0;
+  }
+
+  // Pack to typed arrays
+  const G = gid;
+  const headArr = new Int32Array(G);
+  const cntArr = new Uint32Array(G);
+  const keyRowArr = new Uint32Array(G);
+
+  for (let g = 0; g < G; g++) {
+    headArr[g] = head[g] ?? -1;
+    cntArr[g] = count[g] ?? 0;
+    keyRowArr[g] = keyRow[g] ?? 0;
+  }
+
+  return {
+    groupingColumns: groupingColumns.slice() as string[],
+    head: headArr,
+    next,
+    count: cntArr,
+    keyRow: keyRowArr,
+    size: G,
+    usesRawIndices: true,
+  };
+}

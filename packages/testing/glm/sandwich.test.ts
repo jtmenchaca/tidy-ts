@@ -3,6 +3,7 @@ import {
   glmFit,
   vcovCL,
 } from "../../dataframe/ts/wasm/glm-functions.ts";
+import { TOL } from "./glm-test-helpers.ts";
 
 // R reference data generated with:
 // set.seed(42); n=20; x1=rnorm(n); x2=rnorm(n); cluster=rep(1:5,each=4)
@@ -80,7 +81,7 @@ Deno.test("vcovCL: HC0 with cadjust matches R sandwich::vcovCL", () => {
   expect(result.names.length).toBe(3);
   expect(result.nClusters).toBe(5);
   expect(result.type).toBe("HC0");
-  assertMatrixClose(result.matrix, ref.vcov_hc0, 1e-4, "vcov_hc0");
+  assertMatrixClose(result.matrix, ref.vcov_hc0, TOL, "vcov_hc0");
 });
 
 Deno.test("vcovCL: HC1 with cadjust matches R sandwich::vcovCL", () => {
@@ -99,7 +100,7 @@ Deno.test("vcovCL: HC1 with cadjust matches R sandwich::vcovCL", () => {
   });
 
   expect(result.type).toBe("HC1");
-  assertMatrixClose(result.matrix, ref.vcov_hc1, 1e-4, "vcov_hc1");
+  assertMatrixClose(result.matrix, ref.vcov_hc1, TOL, "vcov_hc1");
 });
 
 Deno.test("vcovCL: HC0 without cadjust matches R sandwich::vcovCL", () => {
@@ -120,7 +121,7 @@ Deno.test("vcovCL: HC0 without cadjust matches R sandwich::vcovCL", () => {
   assertMatrixClose(
     result.matrix,
     ref.vcov_hc0_noadj,
-    1e-4,
+    TOL,
     "vcov_hc0_noadj",
   );
 });

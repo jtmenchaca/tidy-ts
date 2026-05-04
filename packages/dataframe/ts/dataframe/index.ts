@@ -20,6 +20,7 @@ export { resolveVerb } from "./implementation/resolve-verb.ts";
 
 export {
   preserveDataFrameMetadata,
+  rebuildGroupsColumnar,
   withGroups,
   withGroupsRebuilt,
 } from "./implementation/with-groups.ts";

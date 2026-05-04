@@ -1,3 +1,4 @@
+import { expect } from "@std/expect";
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { assertClose, TOL } from "./glm-test-helpers.ts";
@@ -54,16 +55,14 @@ Deno.test("Weighted GLM vcov/confint - Test 2: Single non-zero weight - edge cas
     options: { weights: weights2 },
   });
 
-  // R gives: Intercept=10.3, Slope=NA
-  // TS currently gives: Intercept=-10.3, Slope=0
-  console.log("Single non-zero weight:");
-  console.log("  TS Intercept:", result.coefficients[0], "R: 10.3");
-  console.log("  TS Slope:", result.coefficients[1], "R: NA");
+  // R gives: Intercept=10.3 (weighted mean of single obs), Slope=NA (rank-deficient)
+  assertClose(result.coefficients[0], 10.3, TOL, "single non-zero weight intercept");
+  expect(isNaN(result.coefficients[1])).toBe(true);
 
-  // Check vcov - R gives NaN for intercept, NA for others
+  // vcov: R gives NaN for intercept variance, NA for slope
   const vcov = result.vcov();
-  console.log("  TS vcov[0][0]:", vcov[0][0], "R: NaN");
-  console.log("  TS vcov[1][1]:", vcov[1][1], "R: NA");
+  expect(isNaN(vcov[0][0])).toBe(true);
+  expect(isNaN(vcov[1][1])).toBe(true);
 });
 
 Deno.test("Weighted GLM vcov/confint - Test 3: Identical x values - edge case", () => {
@@ -81,16 +80,14 @@ Deno.test("Weighted GLM vcov/confint - Test 3: Identical x values - edge case", 
     options: { weights: weights3 },
   });
 
-  // R gives: Intercept=7.453333, Slope=NA
-  // TS currently gives: Intercept=0, Slope=0
-  console.log("Identical x values:");
-  console.log("  TS Intercept:", result.coefficients[0], "R: 7.453333");
-  console.log("  TS Slope:", result.coefficients[1], "R: NA");
+  // R gives: Intercept=7.453333 (weighted mean), Slope=NA (rank-deficient)
+  assertClose(result.coefficients[0], 7.453333, TOL, "identical x intercept");
+  expect(isNaN(result.coefficients[1])).toBe(true);
 
-  // Check vcov - R gives 1.670289 for intercept variance, NA for slope
+  // vcov: R gives 1.670289 for intercept variance, NA for slope
   const vcov = result.vcov();
-  console.log("  TS vcov[0][0]:", vcov[0][0], "R: 1.670289");
-  console.log("  TS vcov[1][1]:", vcov[1][1], "R: NA");
+  assertClose(vcov[0][0], 1.670289, TOL, "identical x vcov[0][0]");
+  expect(isNaN(vcov[1][1])).toBe(true);
 });
 
 Deno.test("Weighted GLM vcov/confint - Test 4: Single observation", () => {
@@ -108,16 +105,14 @@ Deno.test("Weighted GLM vcov/confint - Test 4: Single observation", () => {
     options: { weights: weights4 },
   });
 
-  // R gives: Intercept=2.1, Slope=NA
-  // TS currently gives: Intercept=-2.1, Slope=0
-  console.log("Single observation:");
-  console.log("  TS Intercept:", result.coefficients[0], "R: 2.1");
-  console.log("  TS Slope:", result.coefficients[1], "R: NA");
+  // R gives: Intercept=2.1, Slope=NA (rank-deficient)
+  assertClose(result.coefficients[0], 2.1, TOL, "single obs intercept");
+  expect(isNaN(result.coefficients[1])).toBe(true);
 
-  // Check vcov - R gives NaN for intercept, NA for slope
+  // vcov: R gives NaN for intercept, NA for slope
   const vcov = result.vcov();
-  console.log("  TS vcov[0][0]:", vcov[0][0], "R: NaN");
-  console.log("  TS vcov[1][1]:", vcov[1][1], "R: NA");
+  expect(isNaN(vcov[0][0])).toBe(true);
+  expect(isNaN(vcov[1][1])).toBe(true);
 });
 
 Deno.test("Weighted GLM vcov/confint - Test 5: Very small weights", () => {
@@ -183,8 +178,8 @@ Deno.test("Weighted GLM vcov/confint - Test 6: Binomial with weights and vcov", 
 
   // Check confidence intervals (profile CI - R's confint())
   const ci = result.confint({ level: 0.95 });
-  assertClose(ci.lower[0], 0.4183132, 1e-4, "binomial-weighted CI lower[0]");
-  assertClose(ci.upper[0], 3.150958, 1e-4, "binomial-weighted CI upper[0]");
-  assertClose(ci.lower[1], -0.5601602, 1e-4, "binomial-weighted CI lower[1]");
-  assertClose(ci.upper[1], 0.1436985, 1e-4, "binomial-weighted CI upper[1]");
+  assertClose(ci.lower[0], 0.4183132, TOL, "binomial-weighted CI lower[0]");
+  assertClose(ci.upper[0], 3.150958, TOL, "binomial-weighted CI upper[0]");
+  assertClose(ci.lower[1], -0.5601602, TOL, "binomial-weighted CI lower[1]");
+  assertClose(ci.upper[1], 0.1436985, TOL, "binomial-weighted CI upper[1]");
 });

@@ -269,7 +269,6 @@ Deno.test("Weighted GLM Edge Cases - Test 12: Single observation", () => {
   expect(result.converged).toBe(true);
   expect(result.coefficients).toHaveLength(2);
 
-  // TODO: sign issue with rank-deficient Householder when nonzero data isn't in leading rows
   assertClose(result.fitted_values[0], y[0], TOL, "single observation fitted value");
 });
 

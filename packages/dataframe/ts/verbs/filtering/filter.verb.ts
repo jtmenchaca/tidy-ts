@@ -7,6 +7,7 @@ import {
   createBitSet,
 } from "../../dataframe/implementation/columnar-view.ts";
 import { withMask, withRawMask } from "../../dataframe/implementation/row-cursor.ts";
+import { materializeIndex, rebuildGroupsColumnar } from "../../dataframe/index.ts";
 import {
   // numeric/date WASM only; string WASM stays disabled (too much overhead)
   batch_filter_bitset,
@@ -151,15 +152,9 @@ function filterRowsSync(
           const out = withRawMask(df, rawResult);
           if (profile) console.log(`  [filter] withRawMask: ${(performance.now() - t3).toFixed(4)}ms`);
           let _tCopy = profile ? performance.now() : 0;
-          if (df.__groups) {
-            (out as any).__groups = df.__groups;
-            tracer.copyContext(df, out);
-            if (profile) console.log(`  [filter] tracer.copyContext + groups: ${(performance.now() - _tCopy).toFixed(4)}ms`);
-            if (profile) console.log(`  [filter] TOTAL (rawMask path): ${(performance.now() - t0).toFixed(4)}ms`);
-            return out;
-          }
+          rebuildFilteredGroups(df, out);
           tracer.copyContext(df, out);
-          if (profile) console.log(`  [filter] tracer.copyContext: ${(performance.now() - _tCopy).toFixed(4)}ms`);
+          if (profile) console.log(`  [filter] tracer.copyContext + groups: ${(performance.now() - _tCopy).toFixed(4)}ms`);
           if (profile) console.log(`  [filter] TOTAL (rawMask path): ${(performance.now() - t0).toFixed(4)}ms`);
           return out;
         }
@@ -182,11 +177,7 @@ function filterRowsSync(
           const out = withMask(df, wasmResult);
           if (profile) console.log(`  [filter] withMask: ${(performance.now() - t3).toFixed(4)}ms`);
           if (profile) console.log(`  [filter] TOTAL (WASM path): ${(performance.now() - t0).toFixed(4)}ms`);
-          if (df.__groups) {
-            (out as any).__groups = df.__groups;
-            tracer.copyContext(df, out);
-            return out;
-          }
+          rebuildFilteredGroups(df, out);
           tracer.copyContext(df, out);
           return out;
         }
@@ -241,10 +232,7 @@ function filterRowsSync(
     // Copy trace context to new DataFrame
     tracer.copyContext(df, out);
 
-    if (df.__groups) {
-      (out as any).__groups = df.__groups;
-      return out;
-    }
+    rebuildFilteredGroups(df, out);
     return out;
   } finally {
     tracer.endSpan(df, span);
@@ -367,6 +355,18 @@ function maskToBitset(mask: Uint8Array, _n: number): any {
 function andMasksInPlace(target: Uint8Array, src: Uint8Array): void {
   const n = target.length;
   for (let i = 0; i < n; i++) target[i] &= src[i];
+}
+
+/** Rebuild __groups on `out` after filtering a grouped DataFrame. */
+function rebuildFilteredGroups(df: any, out: any): void {
+  if (!df.__groups) return;
+  const store = (out as any).__store;
+  const idx = materializeIndex(store.length, (out as any).__view);
+  const groupingColumns = df.__groups.groupingColumns.map(String);
+  if (idx.length > 0 && groupingColumns.length > 0) {
+    (out as any).__groups = rebuildGroupsColumnar(store, groupingColumns, idx);
+    (out as any).__kind = "GroupedDataFrame";
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1203,9 +1203,6 @@ async function filterRowsAsync(
   }
 
   const out = withMask(df, finalMask);
-  if (df.__groups) {
-    (out as any).__groups = df.__groups;
-    return out;
-  }
+  rebuildFilteredGroups(df, out);
   return out;
 }
