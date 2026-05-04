@@ -1,6 +1,7 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "../../dataframe/ts/dataframe/index.ts";
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
+import { TOL, assertClose } from "./glm-test-helpers.ts";
 
 /**
  * Comprehensive validation test for all the fixes made to influence() and related methods.
@@ -132,52 +133,41 @@ Deno.test("Comprehensive Fix Validation - All influence measures", () => {
   // Test 1: Verify QR matrix is correctly extracted (proves fix #1)
   // deno-lint-ignore no-explicit-any
   const qrData = (model as any).result.qr;
-  expect(qrData.qr[0][0]).toBeCloseTo(-2.022667, 4); // R value
-  expect(qrData.qr[0][1]).toBeCloseTo(-39.754399, 4); // R value
-  expect(qrData.qraux[0]).toBeCloseTo(1.247196, 4); // R value
+  assertClose(qrData.qr[0][0], -2.022667, TOL, "qr[0][0]");
+  assertClose(qrData.qr[0][1], -39.754399, TOL, "qr[0][1]");
+  assertClose(qrData.qraux[0], 1.247196, TOL, "qraux[0]");
 
-  // Test 2: Verify sigma calculation (proves fix #2)
-  // deno-lint-ignore no-explicit-any
-  const sigma = (model as any)._computeSigma();
-  expect(sigma[0]).toBeCloseTo(0.9206739, 4); // R's infl$sigma[1]
-  expect(sigma[1]).toBeCloseTo(0.9188490, 4); // R's infl$sigma[2]
-
-  // Test 3: Verify Q matrix extraction (proves fix #4)
-  // deno-lint-ignore no-explicit-any
-  const Q = (model as any)._extractQ(qrData, 32, 3);
-  expect(Q[0][0]).toBeCloseTo(-0.2471960, 5); // R's qr.Q(model$qr)[1,1]
-  expect(Q[0][1]).toBeCloseTo(-0.1079894, 5); // R's qr.Q(model$qr)[1,2]
-
-  // Test 4: Verify all influence measures match R exactly
+  // Test 2: Verify all influence measures match R exactly
+  // (sigma and Q matrix extraction are now computed in Rust's influence())
   const infl = model.influence();
 
   // dfbeta (tests Q*R^-1 calculation) - raw change in coefficients
-  expect(infl.dfbeta[0][0]).toBeCloseTo(-1.9601193, 4); // R's influence()$coefficients[1,1]
-  expect(infl.dfbeta[0][1]).toBeCloseTo(0.0357822, 4); // R's influence()$coefficients[1,2]
-  expect(infl.dfbeta[0][2]).toBeCloseTo(0.3400869, 4); // R's influence()$coefficients[1,3]
+  assertClose(infl.dfbeta[0][0], -1.9601193, TOL, "dfbeta[0][0]");
+  assertClose(infl.dfbeta[0][1], 0.0357822, TOL, "dfbeta[0][1]");
+  assertClose(infl.dfbeta[0][2], 0.3400869, TOL, "dfbeta[0][2]");
 
   // dfbetas (tests standardization) - standardized dfbeta
-  expect(infl.dfbetas[0][0]).toBeCloseTo(-0.2514761, 4); // R's dfbetas (from influence.measures)
-  expect(infl.dfbetas[0][1]).toBeCloseTo(0.1492412, 4);
-  expect(infl.dfbetas[0][2]).toBeCloseTo(0.3118616, 4);
+  assertClose(infl.dfbetas[0][0], -0.2514761, TOL, "dfbetas[0][0]");
+  assertClose(infl.dfbetas[0][1], 0.1492412, TOL, "dfbetas[0][1]");
+  assertClose(infl.dfbetas[0][2], 0.3118616, TOL, "dfbetas[0][2]");
 
   // dffits (tests sigma calculation - fix #2)
-  expect(infl.dffits[0]).toBeCloseTo(-0.4996871, 3);
-  expect(infl.dffits[1]).toBeCloseTo(-0.4034616, 3);
-  expect(infl.dffits[2]).toBeCloseTo(0.4203414, 3);
+  assertClose(infl.dffits[0], -0.4996871, TOL, "dffits[0]");
+  assertClose(infl.dffits[1], -0.4034616, TOL, "dffits[1]");
+  assertClose(infl.dffits[2], 0.4203414, TOL, "dffits[2]");
 
   // covratio (tests formula fix #3)
-  expect(infl.covratio[0]).toBeCloseTo(1.0415926, 3);
-  expect(infl.covratio[1]).toBeCloseTo(0.9817319, 3);
-  expect(infl.covratio[2]).toBeCloseTo(1.1674268, 3);
+  assertClose(infl.covratio[0], 1.0415926, TOL, "covratio[0]");
+  assertClose(infl.covratio[1], 0.9817319, TOL, "covratio[1]");
+  assertClose(infl.covratio[2], 1.1674268, TOL, "covratio[2]");
 
   // hat values (should be from Rust)
-  expect(infl.hat[0]).toBeCloseTo(0.11919691, 4);
-  expect(infl.hat[1]).toBeCloseTo(0.07654888, 4);
+  assertClose(infl.hat[0], 0.11919691, TOL, "hat[0]");
+  assertClose(infl.hat[1], 0.07654888, TOL, "hat[1]");
 
   // cook's distance (should be from Rust)
-  expect(infl.cooks_distance[0]).toBeCloseTo(0.05076573, 4);
-  expect(infl.cooks_distance[1]).toBeCloseTo(0.03441305, 4);
+  assertClose(infl.cooksDistance[0], 0.05076573, TOL, "cooks[0]");
+  assertClose(infl.cooksDistance[1], 0.03441305, TOL, "cooks[1]");
 });
 
 Deno.test("Comprehensive Fix Validation - Gaussian family", () => {
@@ -208,14 +198,7 @@ Deno.test("Comprehensive Fix Validation - Gaussian family", () => {
     data: df,
   });
 
-  // Verify sigma calculation for Gaussian
-  // deno-lint-ignore no-explicit-any
-  const sigma = (model as any)._computeSigma();
-  expect(sigma.length).toBe(10);
-  expect(sigma[0]).toBeGreaterThan(0); // Should be positive
-  expect(isFinite(sigma[0])).toBe(true);
-
-  // Verify influence measures work
+  // Verify influence measures work (sigma now computed in Rust)
   const infl = model.influence();
   expect(infl.dffits.length).toBe(10);
   expect(infl.dfbeta.length).toBe(10);

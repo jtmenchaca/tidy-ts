@@ -2,6 +2,7 @@
 //!
 //! This file contains the main glm_fit function and core fitting logic.
 
+use super::chol2inv::chol2inv;
 use super::glm_aic::calculate_aic;
 use super::glm_fit_core_calculation::*;
 use super::glm_fit_core_initialization::*;
@@ -122,6 +123,7 @@ pub fn glm_fit(
     // Track rank and QR from IRLS
     let mut irls_rank: Option<usize> = None;
     let mut irls_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
+    let mut irls_w: Vec<f64> = vec![0.0; n];
 
     if !empty {
         // Run IRLS iteration
@@ -142,15 +144,40 @@ pub fn glm_fit(
         )?;
 
         // Update values from IRLS result
-        eta = irls_result.eta;
-        mu = irls_result.mu;
         coef = irls_result.coef;
+        let rank = irls_result.rank;
+
+        eprintln!("FINAL: coef={:?} rank={}", &coef, rank);
+
+        // Recompute eta and mu from final coefficients (before setting NaN).
+        // Beyond-rank coefficients are 0 at this point, matching R's IRLS.
+        eta = (0..n).map(|i| {
+            offset[i] + x[i].iter().zip(coef.iter()).map(|(x_ij, &c_j)| x_ij * c_j).sum::<f64>()
+        }).collect();
+        mu = linkinv(&eta);
+        eprintln!("FINAL: eta={:?} mu={:?}", &eta[..5.min(eta.len())], &mu[..5.min(mu.len())]);
+
+        // R: if (fit$rank < nvars) coef[fit$pivot][seq.int(fit$rank+1, nvars)] <- NA
+        // Set beyond-rank coefficients to NaN after eta/mu computation
+        if let Some(ref qr) = irls_result.qr_result {
+            if rank < p {
+                let pivot = &qr.pivot;
+                for i in rank..p {
+                    let pivot_idx = pivot[i] as usize - 1;
+                    if pivot_idx < p {
+                        coef[pivot_idx] = f64::NAN;
+                    }
+                }
+            }
+        }
 
         // Update convergence and boundary status from IRLS result
         conv = irls_result.converged;
         boundary = irls_result.boundary;
-        irls_rank = Some(irls_result.rank);
+        irls_rank = Some(rank);
         irls_qr_result = irls_result.qr_result;
+        // Save IRLS working weights for R-compatible dispersion computation
+        irls_w = irls_result.w;
 
         // Handle convergence and boundary warnings (matching R's behavior)
         if !conv {
@@ -256,6 +283,84 @@ pub fn glm_fit(
 
     // Clone coef before moving it into the struct so we can use it for calculations
     let coef_for_stats = coef.clone();
+
+    // ── Covariance matrix via chol2inv (matches R's summary.glm) ────────────
+    // R computes: cov.unscaled = chol2inv(Qr$qr[1:p, 1:p])
+    //             cov.scaled   = dispersion * cov.unscaled
+    // Dispersion is fixed at 1.0 for binomial/poisson, estimated for others.
+    let sigma_squared = match family.name() {
+        "binomial" | "poisson" => 1.0,
+        _ => {
+            if resdf > 0 {
+                // R computes: sum(object$weights * object$residuals^2) / df.residual
+                // where object$weights = w^2 (IRLS weights from last iteration)
+                // and object$residuals = working residuals = (y - mu) / mu.eta(eta)
+                // This equals Pearson chi-sq when using the IRLS loop's w.
+                let irls_wt_resid_sq: f64 = irls_w.iter()
+                    .zip(residuals.iter())
+                    .enumerate()
+                    .filter(|&(_, (w_i, _))| *w_i > 0.0)
+                    .map(|(_, (w_i, r_i))| w_i * w_i * r_i * r_i)
+                    .sum();
+
+                irls_wt_resid_sq / resdf as f64
+            } else {
+                1.0
+            }
+        }
+    };
+
+    // Extract upper triangular R from QR result
+    let r_matrix: Vec<Vec<f64>> = irls_qr_result
+        .as_ref()
+        .map(|qr| {
+            let mut r_mat = vec![vec![0.0; p]; p];
+            let n_qr = qr.qr.len() / p;
+            for i in 0..p {
+                for j in i..p {
+                    let idx = j * n_qr + i;
+                    if idx < qr.qr.len() {
+                        r_mat[i][j] = qr.qr[idx];
+                    }
+                }
+            }
+            r_mat
+        })
+        .unwrap_or_else(|| vec![vec![0.0; p]; p]);
+
+    // cov.unscaled = chol2inv(R) = (R'R)^{-1}
+    let cov_unscaled = chol2inv(&r_matrix).unwrap_or_else(|_| vec![vec![0.0; p]; p]);
+
+    // cov.scaled = dispersion * cov.unscaled
+    let cov_scaled: Vec<Vec<f64>> = cov_unscaled
+        .iter()
+        .map(|row| row.iter().map(|&v| v * sigma_squared).collect())
+        .collect();
+
+    // SE = sqrt(diag(cov.scaled))
+    let std_errors_vec: Vec<f64> = (0..p).map(|i| cov_scaled[i][i].sqrt()).collect();
+
+    // t-statistics = coef / SE
+    let t_stats_vec: Vec<f64> = coef_for_stats
+        .iter()
+        .zip(std_errors_vec.iter())
+        .map(|(&c, &se)| if se > 0.0 { c / se } else { 0.0 })
+        .collect();
+
+    // p-values from t-distribution (or z for known dispersion)
+    let p_values_vec: Vec<f64> = {
+        use crate::stats::distributions::students_t;
+        t_stats_vec
+            .iter()
+            .map(|&t| {
+                if resdf > 0 && t.is_finite() {
+                    2.0 * students_t::pt(t.abs(), resdf as f64, false, false)
+                } else {
+                    f64::NAN
+                }
+            })
+            .collect()
+    };
 
     let mut glm_result = GlmResult {
         coefficients: coef,
@@ -379,7 +484,7 @@ pub fn glm_fit(
         // Additional derived information (31-50)
         model_matrix: x.clone(),
         model_matrix_dimensions: (y.len(), p),
-        model_matrix_column_names: column_names.unwrap_or_else(|| (0..p).map(|i| format!("x{}", i)).collect()),
+        model_matrix_column_names: column_names.as_ref().map_or_else(|| (0..p).map(|i| format!("x{}", i)).collect(), |names| names.clone()),
         residual_standard_error: if resdf > 0 {
             (devold / resdf as f64).sqrt()
         } else {
@@ -413,278 +518,12 @@ pub fn glm_fit(
         predictor_variable_names: (0..p).map(|i| format!("x{}", i)).collect(),
         factor_levels: HashMap::new(),
         reference_levels: HashMap::new(),
-        dispersion_parameter: if resdf > 0 {
-            devold / resdf as f64
-        } else {
-            1.0
-        },
+        dispersion_parameter: sigma_squared,
         deviance_residuals: deviance_residuals.clone(),
-        covariance_matrix: {
-            // Calculate covariance matrix from R matrix
-            // Cov = (X'X)^(-1) * σ² = R^(-1) * (R^(-1))' * σ²
-            // For binomial and poisson, dispersion is fixed at 1.0 (matching R's summary.glm)
-            let sigma_squared = match family.name() {
-                "binomial" | "poisson" => 1.0,
-                _ => {
-                    if resdf > 0 {
-                        devold / resdf as f64
-                    } else {
-                        1.0
-                    }
-                }
-            };
-
-            // Get R matrix from QR result
-            let r_matrix = irls_qr_result
-                .as_ref()
-                .map(|qr| {
-                    // Convert QR matrix to R matrix format (upper triangular)
-                    // QR decomposition stores R in upper triangle of qr matrix
-                    let mut r_mat = vec![vec![0.0; p]; p];
-                    let n = qr.qr.len() / p; // number of rows
-                    for i in 0..p {
-                        for j in i..p {
-                            // Column-major indexing: element at (row=i, col=j) is at index j*n + i
-                            let idx = j * n + i;
-                            if idx < qr.qr.len() {
-                                r_mat[i][j] = qr.qr[idx];
-                            }
-                        }
-                    }
-                    r_mat
-                })
-                .unwrap_or_else(|| vec![vec![0.0; p]; p]);
-
-            // Calculate R^(-1) using back substitution
-            // For upper triangular matrix R, solve R * R_inv = I
-            let mut r_inv = vec![vec![0.0; p]; p];
-
-            // Solve for each column of R_inv
-            for j in 0..p {
-                // Start with identity matrix column j
-                let mut b = vec![0.0; p];
-                b[j] = 1.0;
-
-                // Back substitution: solve R * x = b
-                for i in (0..p).rev() {
-                    if r_matrix[i][i].abs() < 1e-10 {
-                        // Singular matrix
-                        r_inv[i][j] = 0.0;
-                    } else {
-                        let mut sum = b[i];
-                        for k in (i + 1)..p {
-                            sum -= r_matrix[i][k] * r_inv[k][j];
-                        }
-                        r_inv[i][j] = sum / r_matrix[i][i];
-                    }
-                }
-            }
-
-            // Calculate covariance matrix: R^(-1) * (R^(-1))' * σ²
-            let mut cov = vec![vec![0.0; p]; p];
-            for i in 0..p {
-                for j in 0..p {
-                    for k in 0..p {
-                        cov[i][j] += r_inv[i][k] * r_inv[j][k];
-                    }
-                    cov[i][j] *= sigma_squared;
-                }
-            }
-            cov
-        },
-        standard_errors: {
-            // Calculate standard errors from covariance matrix diagonal
-            // SE = sqrt(diag(Cov)) = sqrt(diag((X'X)^(-1) * σ²))
-            // For binomial and poisson, dispersion is fixed at 1.0 (matching R's summary.glm)
-            let sigma_squared = match family.name() {
-                "binomial" | "poisson" => 1.0,
-                _ => {
-                    if resdf > 0 {
-                        devold / resdf as f64
-                    } else {
-                        1.0
-                    }
-                }
-            };
-
-            // Get R matrix and compute (X'X)^(-1) = R^(-1) * (R^(-1))'
-            let r_matrix = irls_qr_result
-                .as_ref()
-                .map(|qr| {
-                    let mut r_mat = vec![vec![0.0; p]; p];
-                    let n = qr.qr.len() / p;
-                    for i in 0..p {
-                        for j in i..p {
-                            let idx = j * n + i;
-                            if idx < qr.qr.len() {
-                                r_mat[i][j] = qr.qr[idx];
-                            }
-                        }
-                    }
-                    r_mat
-                })
-                .unwrap_or_else(|| vec![vec![0.0; p]; p]);
-
-            // Compute R^(-1)
-            let mut r_inv = vec![vec![0.0; p]; p];
-            for j in 0..p {
-                let mut b = vec![0.0; p];
-                b[j] = 1.0;
-                for i in (0..p).rev() {
-                    if r_matrix[i][i].abs() < 1e-10 {
-                        r_inv[i][j] = 0.0;
-                    } else {
-                        let mut sum = b[i];
-                        for k in (i + 1)..p {
-                            sum -= r_matrix[i][k] * r_inv[k][j];
-                        }
-                        r_inv[i][j] = sum / r_matrix[i][i];
-                    }
-                }
-            }
-
-            // Compute diagonal of (X'X)^(-1) = R^(-1) * (R^(-1))'
-            let mut std_errors = vec![0.0; p];
-            for i in 0..p {
-                let mut var_i = 0.0;
-                for k in 0..p {
-                    var_i += r_inv[i][k] * r_inv[i][k];
-                }
-                std_errors[i] = (var_i * sigma_squared).sqrt();
-            }
-            std_errors
-        },
-        t_statistics: {
-            // Calculate t-statistics: t = coefficient / SE
-            coef_for_stats.iter()
-                .zip(
-                    // Recompute standard errors inline (we can't reference the above)
-                    {
-                        let sigma_squared = if resdf > 0 {
-                            devold / resdf as f64
-                        } else {
-                            1.0
-                        };
-
-                        let r_matrix = irls_qr_result
-                            .as_ref()
-                            .map(|qr| {
-                                let mut r_mat = vec![vec![0.0; p]; p];
-                                let n = qr.qr.len() / p;
-                                for i in 0..p {
-                                    for j in i..p {
-                                        let idx = j * n + i;
-                                        if idx < qr.qr.len() {
-                                            r_mat[i][j] = qr.qr[idx];
-                                        }
-                                    }
-                                }
-                                r_mat
-                            })
-                            .unwrap_or_else(|| vec![vec![0.0; p]; p]);
-
-                        let mut r_inv = vec![vec![0.0; p]; p];
-                        for j in 0..p {
-                            let mut b = vec![0.0; p];
-                            b[j] = 1.0;
-                            for i in (0..p).rev() {
-                                if r_matrix[i][i].abs() < 1e-10 {
-                                    r_inv[i][j] = 0.0;
-                                } else {
-                                    let mut sum = b[i];
-                                    for k in (i + 1)..p {
-                                        sum -= r_matrix[i][k] * r_inv[k][j];
-                                    }
-                                    r_inv[i][j] = sum / r_matrix[i][i];
-                                }
-                            }
-                        }
-
-                        let mut std_errors = vec![0.0; p];
-                        for i in 0..p {
-                            let mut var_i = 0.0;
-                            for k in 0..p {
-                                var_i += r_inv[i][k] * r_inv[i][k];
-                            }
-                            std_errors[i] = (var_i * sigma_squared).sqrt();
-                        }
-                        std_errors
-                    }.into_iter()
-                )
-                .map(|(&coef_val, se)| if se > 0.0 { coef_val / se } else { 0.0 })
-                .collect()
-        },
-        p_values: {
-            // Calculate p-values from t-distribution
-            use crate::stats::distributions::students_t;
-
-            coef_for_stats.iter()
-                .zip(
-                    // Recompute standard errors and t-stats inline
-                    {
-                        let sigma_squared = if resdf > 0 {
-                            devold / resdf as f64
-                        } else {
-                            1.0
-                        };
-
-                        let r_matrix = irls_qr_result
-                            .as_ref()
-                            .map(|qr| {
-                                let mut r_mat = vec![vec![0.0; p]; p];
-                                let n = qr.qr.len() / p;
-                                for i in 0..p {
-                                    for j in i..p {
-                                        let idx = j * n + i;
-                                        if idx < qr.qr.len() {
-                                            r_mat[i][j] = qr.qr[idx];
-                                        }
-                                    }
-                                }
-                                r_mat
-                            })
-                            .unwrap_or_else(|| vec![vec![0.0; p]; p]);
-
-                        let mut r_inv = vec![vec![0.0; p]; p];
-                        for j in 0..p {
-                            let mut b = vec![0.0; p];
-                            b[j] = 1.0;
-                            for i in (0..p).rev() {
-                                if r_matrix[i][i].abs() < 1e-10 {
-                                    r_inv[i][j] = 0.0;
-                                } else {
-                                    let mut sum = b[i];
-                                    for k in (i + 1)..p {
-                                        sum -= r_matrix[i][k] * r_inv[k][j];
-                                    }
-                                    r_inv[i][j] = sum / r_matrix[i][i];
-                                }
-                            }
-                        }
-
-                        let mut t_stats = Vec::new();
-                        for i in 0..p {
-                            let mut var_i = 0.0;
-                            for k in 0..p {
-                                var_i += r_inv[i][k] * r_inv[i][k];
-                            }
-                            let se = (var_i * sigma_squared).sqrt();
-                            let t = if se > 0.0 { coef_for_stats[i] / se } else { 0.0 };
-                            t_stats.push(t);
-                        }
-                        t_stats
-                    }.into_iter()
-                )
-                .map(|(&_coef_val, t_stat)| {
-                    if resdf > 0 {
-                        // Two-tailed p-value from t-distribution
-                        2.0 * students_t::pt(t_stat.abs(), resdf as f64, false, false)
-                    } else {
-                        f64::NAN
-                    }
-                })
-                .collect()
-        },
+        covariance_matrix: cov_scaled,
+        standard_errors: std_errors_vec,
+        t_statistics: t_stats_vec,
+        p_values: p_values_vec,
         leverage: {
             // Calculate leverage (hat values) following R's lminfl.f algorithm:
             // For each column j=1..k: compute Q*e_j and accumulate squared values
@@ -771,11 +610,13 @@ pub fn glm_fit(
             // Calculate Cook's distance for each observation
             // Formula from R: (pearson_res/(1-hat))^2 * hat/(dispersion * p)
             // Dispersion is 1.0 for binomial and poisson, estimated for others
+            // R uses Pearson chi-squared / df_resid for estimated dispersion
             let dispersion = match family.name() {
                 "binomial" | "poisson" | "quasibinomial" | "quasipoisson" => 1.0,
                 _ => {
                     if resdf > 0 {
-                        devold / resdf as f64
+                        let pearson_chisq: f64 = pearson_residuals.iter().map(|r| r * r).sum();
+                        pearson_chisq / resdf as f64
                     } else {
                         1.0
                     }
@@ -805,9 +646,12 @@ pub fn glm_fit(
 
     // Pre-compute 95% confidence intervals at fit time to avoid serde_wasm_bindgen round-trip issues
     // (serde_wasm_bindgen corrupts Option<String> fields, making from_value() fail on GlmResult)
-    if let Ok(ci) = glm_result.confint(0.95) {
-        glm_result.confint_lower = ci.lower;
-        glm_result.confint_upper = ci.upper;
+    // Only do this for top-level fits (with column_names), not for constrained fits inside profiling
+    if column_names.is_some() {
+        if let Ok(ci) = glm_result.confint(0.95) {
+            glm_result.confint_lower = ci.lower;
+            glm_result.confint_upper = ci.upper;
+        }
     }
 
     Ok(glm_result)

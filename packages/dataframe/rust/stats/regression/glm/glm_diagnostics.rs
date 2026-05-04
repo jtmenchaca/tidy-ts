@@ -228,15 +228,16 @@ impl GlmResult {
         let dev_res = &self.deviance_residuals;
         let hat = &self.leverage;
 
-        // Determine if dispersion is fixed
-        let _is_fixed_dispersion =
-            self.family.family == "binomial" || self.family.family == "poisson";
-
         // Compute leave-one-out sigma
         let sigma = self.compute_sigma_loo()?;
 
-        // Compute standard errors for each coefficient
-        let se = &self.standard_errors;
+        // Compute sqrt(diag(xxi)) for dfbetas standardization
+        // xxi = (X'WX)^{-1} = vcov / dispersion
+        // R's influence.measures: dfbetas = dfbeta / outer(sigma_loo, sqrt(diag(xxi)))
+        let dispersion = self.get_dispersion();
+        let sqrt_diag_xxi: Vec<f64> = self.standard_errors.iter()
+            .map(|se| se / dispersion.sqrt())
+            .collect();
 
         // Compute overall model sigma for covratio calculation
         // R formula: s <- sqrt(sum(e^2, na.rm=TRUE)/df.residual(model))
@@ -277,9 +278,11 @@ impl GlmResult {
             for j in 0..p {
                 dfbeta[i][j] = inv_rqtt[i][j] * factor;
 
-                // Compute dfbetas: dfbeta / se[j]
-                if se[j] > 0.0 && !se[j].is_nan() {
-                    dfbetas[i][j] = dfbeta[i][j] / se[j];
+                // Compute dfbetas: dfbeta / (sigma_loo[i] * sqrt(diag(xxi)[j]))
+                // Matches R's influence.measures(): cf / outer(infl$sigma, sqrt(diag(xxi)))
+                let denom = sigma[i] * sqrt_diag_xxi[j];
+                if denom > 0.0 && !denom.is_nan() {
+                    dfbetas[i][j] = dfbeta[i][j] / denom;
                 } else {
                     dfbetas[i][j] = f64::NAN;
                 }
@@ -406,7 +409,13 @@ impl GlmResult {
         let mut upper = Vec::with_capacity(p);
 
         // Get dispersion parameter
-        let dispersion = self.dispersion_parameter;
+        // R's profile.glm uses summary(fitted)$dispersion:
+        // For binomial/poisson, this is always 1.0 (fixed dispersion)
+        // For gaussian/gamma/etc., it's the estimated dispersion (deviance/df.residual)
+        let dispersion = match self.family.family.as_str() {
+            "binomial" | "poisson" => 1.0,
+            _ => self.dispersion_parameter,
+        };
 
         // Profile each parameter
         for i in 0..p {
@@ -436,6 +445,7 @@ impl GlmResult {
 
     /// Profile likelihood for a single parameter
     /// Returns parameter values and corresponding signed sqrt deviance differences
+    /// Matches R's profile.glm: chains steps using previous fit's LP as etastart
     fn profile_parameter(
         &self,
         param_idx: usize,
@@ -445,7 +455,8 @@ impl GlmResult {
         use crate::stats::distributions::f_distribution::qf;
 
         let max_steps = 10;
-        let n = self.n_observations as f64;
+        let n = self.n_observations as usize;
+        let nf = n as f64;
         let p = self.coefficients.len() as f64;
 
         // Match R's profile.glm: use different distributions based on family
@@ -457,7 +468,7 @@ impl GlmResult {
             _ => {
                 // For families with estimated dispersion (gaussian, gamma, inverse.gaussian, quasi)
                 // use F-distribution: sqrt(qf(1 - alpha, 1, n - p))
-                qf(1.0 - alpha, 1.0, n - p, true, false).sqrt()
+                qf(1.0 - alpha, 1.0, nf - p, true, false).sqrt()
             }
         };
 
@@ -468,33 +479,80 @@ impl GlmResult {
 
         let std_err = self.standard_errors[param_idx];
 
+        // Build reduced X matrix (without constrained column) once
+        let p_full = self.coefficients.len();
+        let x_reduced: Vec<Vec<f64>> = (0..n)
+            .map(|row| {
+                (0..p_full)
+                    .filter(|&col| col != param_idx)
+                    .map(|col| self.model_matrix[row][col])
+                    .collect()
+            })
+            .collect();
+
+        // Compute initial LP = X %*% B0 + O (full model linear predictor)
+        let base_offset: Vec<f64> = (0..n)
+            .map(|i| self.offset.as_ref().map_or(0.0, |o| o[i]))
+            .collect();
+
         // Profile in both directions
         for sgn in [-1.0, 1.0] {
-            for step in 1..=max_steps {
-                let param_value =
+            let dir = if sgn < 0.0 { "down" } else { "up" };
+            // R resets LP at start of each direction
+            let mut lp: Vec<f64> = (0..n)
+                .map(|i| {
+                    let mut eta = 0.0;
+                    for j in 0..p_full {
+                        eta += self.model_matrix[i][j] * self.coefficients[j];
+                    }
+                    eta + base_offset[i]
+                })
+                .collect();
+
+            let mut step = 0;
+            let mut z = 0.0_f64;
+            while step < max_steps && z.abs() < zmax {
+                step += 1;
+                let bi =
                     self.coefficients[param_idx] + sgn * (step as f64) * del * std_err;
 
-                // Refit model with this parameter fixed
-                match self.fit_constrained(param_idx, param_value) {
-                    Ok(constrained_dev) => {
-                        // Calculate signed sqrt of deviance difference
-                        let dev_diff = (constrained_dev - self.deviance) / dispersion;
+                // Offset = O + X[,i] * bi
+                let offset: Vec<f64> = (0..n)
+                    .map(|i| base_offset[i] + self.model_matrix[i][param_idx] * bi)
+                    .collect();
+
+                // R passes etastart=LP to glm.fit, NOT mustart
+                match self.fit_constrained_with_etastart(
+                    &x_reduced,
+                    &offset,
+                    lp.clone(),
+                ) {
+                    Ok(fit_result) => {
+                        // Update LP for next step: LP = Xi %*% fm$coefficients + o
+                        lp = (0..n)
+                            .map(|i| {
+                                let mut eta = 0.0;
+                                for (j, &coef) in fit_result.coefficients.iter().enumerate() {
+                                    eta += x_reduced[i][j] * coef;
+                                }
+                                eta + offset[i]
+                            })
+                            .collect();
+
+                        let dev_diff =
+                            (fit_result.deviance - self.deviance) / dispersion;
                         if dev_diff < -1e-3 {
-                            // Profile found better solution - original fit didn't converge
                             break;
                         }
                         let dev_diff = dev_diff.max(0.0);
-                        let z = sgn * dev_diff.sqrt();
+                        z = sgn * dev_diff.sqrt();
 
-                        par_vals.push(param_value);
+                        par_vals.push(bi);
                         z_vals.push(z);
-
-                        // Stop if we've gone far enough
-                        if z.abs() >= zmax {
-                            break;
-                        }
                     }
-                    Err(_) => break, // Stop if fit fails
+                    Err(_e) => {
+                        break;
+                    }
                 }
             }
         }
@@ -503,67 +561,42 @@ impl GlmResult {
     }
 
     /// Fit GLM with one parameter constrained to a fixed value
-    /// Returns the deviance of the constrained model
-    fn fit_constrained(&self, param_idx: usize, param_value: f64) -> Result<f64, String> {
+    /// Passes etastart (linear predictor) matching R's profile.glm behavior
+    fn fit_constrained_with_etastart(
+        &self,
+        x_reduced: &[Vec<f64>],
+        offset: &[f64],
+        etastart: Vec<f64>,
+    ) -> Result<ConstrainedFitResult, String> {
         use super::glm_fit_core::glm_fit;
         use super::types_control::GlmControl;
 
-        let n = self.y.len();
-        let p = self.model_matrix_column_names.len();
-
-        // Create X matrix without the constrained column
-        let mut x_reduced = Vec::new();
-        for row_idx in 0..n {
-            let mut row = Vec::new();
-            for col_idx in 0..p {
-                if col_idx != param_idx {
-                    row.push(self.model_matrix[row_idx][col_idx]);
-                }
-            }
-            if !row.is_empty() {
-                x_reduced.push(row);
-            }
-        }
-
-        // Create offset that includes the constrained parameter's contribution
-        let mut offset = vec![0.0; n];
-        for row_idx in 0..n {
-            offset[row_idx] = self.model_matrix[row_idx][param_idx] * param_value;
-        }
-
-        // Add existing offset if present
-        if let Some(ref orig_offset) = self.offset {
-            for i in 0..n {
-                offset[i] += orig_offset[i];
-            }
-        }
-
-        // Create family object
         let family = create_family(&self.family.family, &self.family.link)?;
 
-        // Set up control with same parameters as original fit
         let control = GlmControl {
             epsilon: self.control.epsilon,
             maxit: self.control.maxit,
-            trace: 0, // Don't trace during profiling
+            trace: 0,
         };
 
-        // Fit the constrained model
         let result = glm_fit(
-            x_reduced,
+            x_reduced.to_vec(),
             self.y.clone(),
             Some(self.prior_weights.clone()),
-            None, // start
-            None, // etastart
-            None, // mustart
-            Some(offset),
+            None,              // start
+            Some(etastart),    // etastart = LP (matching R's profile.glm)
+            None,              // mustart
+            Some(offset.to_vec()),
             family,
             control,
-            true, // intercept - check original model
-            None, // column_names
+            false, // intercept=false: reduced X already has intercept column if needed
+            None,
         )?;
 
-        Ok(result.deviance)
+        Ok(ConstrainedFitResult {
+            deviance: result.deviance,
+            coefficients: result.coefficients,
+        })
     }
 
     /// Make predictions on new data
@@ -975,8 +1008,14 @@ struct ProfileResult {
     z_vals: Vec<f64>,   // Signed sqrt of deviance differences
 }
 
+/// Result of a constrained GLM fit (for profile chaining)
+struct ConstrainedFitResult {
+    deviance: f64,
+    coefficients: Vec<f64>,
+}
+
 /// Interpolate profile to find confidence interval bounds
-/// Uses cubic spline interpolation to find where z crosses ±cutoff
+/// Matches R's approach: spline(par_vals, z_vals) then approx(sp$y, sp$x, xout=cutoff)
 fn interpolate_profile_ci(
     par_vals: &[f64],
     z_vals: &[f64],
@@ -986,46 +1025,168 @@ fn interpolate_profile_ci(
         return Err("Insufficient profile points for interpolation".to_string());
     }
 
-    // Sort by parameter value
+    // Sort by parameter value (x = par_vals, y = z_vals)
     let mut indices: Vec<usize> = (0..par_vals.len()).collect();
     indices.sort_by(|&a, &b| par_vals[a].partial_cmp(&par_vals[b]).unwrap());
 
-    let sorted_pars: Vec<f64> = indices.iter().map(|&i| par_vals[i]).collect();
-    let sorted_zs: Vec<f64> = indices.iter().map(|&i| z_vals[i]).collect();
+    let xs: Vec<f64> = indices.iter().map(|&i| par_vals[i]).collect();
+    let ys: Vec<f64> = indices.iter().map(|&i| z_vals[i]).collect();
 
-    // Simple linear interpolation to find bounds
-    // Lower bound: where z crosses -cutoff
-    let lower = find_crossing(&sorted_pars, &sorted_zs, -cutoff)?;
+    // R's spline() default: n = 3 * length(x)
+    let n_dense = xs.len() * 3;
+    let (sp_x, sp_y) = cubic_spline_interpolate(&xs, &ys, n_dense);
 
-    // Upper bound: where z crosses +cutoff
-    let upper = find_crossing(&sorted_pars, &sorted_zs, cutoff)?;
+    // approx(sp$y, sp$x, xout=cutoff) — find x where spline y == cutoff
+    let lower = approx_crossing(&sp_y, &sp_x, -cutoff)?;
+    let upper = approx_crossing(&sp_y, &sp_x, cutoff)?;
 
     Ok((lower, upper))
 }
 
-/// Find where the profile crosses a specific z-value using linear interpolation
-fn find_crossing(pars: &[f64], zs: &[f64], target_z: f64) -> Result<f64, String> {
-    // Find the interval where z crosses target_z
-    for i in 0..zs.len() - 1 {
-        let z1 = zs[i];
-        let z2 = zs[i + 1];
+/// FMM (Forsythe-Malcolm-Moler) cubic spline interpolation
+/// Matches R's spline() default method exactly.
+/// Given (xs, ys) knot points, generate n_out evenly-spaced interpolated points.
+/// Ported from R's src/library/stats/src/splines.c fmm_spline()
+fn cubic_spline_interpolate(xs: &[f64], ys: &[f64], n_out: usize) -> (Vec<f64>, Vec<f64>) {
+    let n = xs.len();
+    if n < 2 {
+        return (xs.to_vec(), ys.to_vec());
+    }
+    if n == 2 {
+        let mut out_x = Vec::with_capacity(n_out);
+        let mut out_y = Vec::with_capacity(n_out);
+        for i in 0..n_out {
+            let t = i as f64 / (n_out - 1) as f64;
+            out_x.push(xs[0] + t * (xs[1] - xs[0]));
+            out_y.push(ys[0] + t * (ys[1] - ys[0]));
+        }
+        return (out_x, out_y);
+    }
 
-        // Check if target_z is between z1 and z2
-        if (z1 <= target_z && target_z <= z2) || (z2 <= target_z && target_z <= z1) {
-            // Linear interpolation
-            let p1 = pars[i];
-            let p2 = pars[i + 1];
-            let t = (target_z - z1) / (z2 - z1);
-            return Ok(p1 + t * (p2 - p1));
+    // FMM spline coefficients (matching R's fmm_spline exactly)
+    // R uses 1-based indexing; we use 0-based here
+    let nm1 = n - 1;
+
+    // d[i] = x[i+1] - x[i] (interval widths)
+    let mut dd = vec![0.0; n]; // extra space for R's indexing
+    let mut bb = vec![0.0; n];
+    let mut cc = vec![0.0; n];
+
+    // Set up tridiagonal system (R lines 167-174)
+    dd[0] = xs[1] - xs[0];
+    cc[1] = (ys[1] - ys[0]) / dd[0];
+    for i in 1..nm1 {
+        dd[i] = xs[i + 1] - xs[i];
+        bb[i] = 2.0 * (dd[i - 1] + dd[i]);
+        cc[i + 1] = (ys[i + 1] - ys[i]) / dd[i];
+        cc[i] = cc[i + 1] - cc[i];
+    }
+
+    // FMM end conditions (R lines 180-188)
+    bb[0] = -dd[0];
+    bb[nm1] = -dd[nm1 - 1];
+    cc[0] = 0.0;
+    cc[nm1] = 0.0;
+    if n > 3 {
+        // c[1] = c[3]/(x[4]-x[2]) - c[2]/(x[3]-x[1])  (R 1-based: indices 1,2,3,4)
+        // 0-based: c[0] = c[2]/(x[3]-x[1]) - c[1]/(x[2]-x[0])
+        cc[0] = cc[2] / (xs[3] - xs[1]) - cc[1] / (xs[2] - xs[0]);
+        // c[n] = c[nm1]/(x[n]-x[n-2]) - c[n-2]/(x[nm1]-x[n-3])  (R 1-based)
+        // 0-based: c[nm1] = c[nm1-1]/(x[nm1]-x[nm1-2]) - c[nm1-2]/(x[nm1-1]-x[nm1-3])
+        cc[nm1] = cc[nm1 - 1] / (xs[nm1] - xs[nm1 - 2])
+            - cc[nm1 - 2] / (xs[nm1 - 1] - xs[nm1 - 3]);
+        // c[1] = c[1]*d[1]*d[1]/(x[4]-x[1])  (R 1-based)
+        cc[0] = cc[0] * dd[0] * dd[0] / (xs[3] - xs[0]);
+        // c[n] = -c[n]*d[nm1]*d[nm1]/(x[n]-x[n-3])  (R 1-based)
+        cc[nm1] = -cc[nm1] * dd[nm1 - 1] * dd[nm1 - 1] / (xs[nm1] - xs[nm1 - 3]);
+    }
+
+    // Gaussian elimination (R lines 192-196)
+    for i in 1..n {
+        let t = dd[i - 1] / bb[i - 1];
+        bb[i] = bb[i] - t * dd[i - 1];
+        cc[i] = cc[i] - t * cc[i - 1];
+    }
+
+    // Backward substitution (R lines 200-202)
+    cc[nm1] = cc[nm1] / bb[nm1];
+    for i in (0..nm1).rev() {
+        cc[i] = (cc[i] - dd[i] * cc[i + 1]) / bb[i];
+    }
+
+    // Compute polynomial coefficients (R lines 207-214)
+    // b[n] = (y[n]-y[n-1])/d[n-1] + d[n-1]*(c[n-1]+2*c[n])  (R 1-based)
+    // We store b/d for segments 0..nm1-1 only for evaluation
+    let mut b_coef = vec![0.0; n];
+    let mut d_coef = vec![0.0; n];
+
+    // R line 208-211: for i=1..nm1
+    for i in 0..nm1 {
+        b_coef[i] = (ys[i + 1] - ys[i]) / dd[i] - dd[i] * (cc[i + 1] + 2.0 * cc[i]);
+        d_coef[i] = (cc[i + 1] - cc[i]) / dd[i];
+        cc[i] = 3.0 * cc[i];
+    }
+    // Last point (R lines 207, 213-214)
+    b_coef[nm1] = (ys[nm1] - ys[nm1 - 1]) / dd[nm1 - 1]
+        + dd[nm1 - 1] * (cc[nm1 - 1] / 3.0 + 2.0 * cc[nm1]);
+    cc[nm1] = 3.0 * cc[nm1];
+    d_coef[nm1] = d_coef[nm1 - 1]; // R: d[n] = d[nm1]
+
+    // Generate evenly-spaced output points using spline_eval logic
+    let x_min = xs[0];
+    let x_max = xs[nm1];
+    let mut out_x = Vec::with_capacity(n_out);
+    let mut out_y = Vec::with_capacity(n_out);
+
+    for i in 0..n_out {
+        let t = i as f64 / (n_out - 1) as f64;
+        let x = x_min + t * (x_max - x_min);
+
+        // Binary search for segment (matching R's spline_eval)
+        let mut lo = 0usize;
+        let mut hi = n;
+        while hi > lo + 1 {
+            let k = (lo + hi) / 2;
+            if x < xs[k] {
+                hi = k;
+            } else {
+                lo = k;
+            }
+        }
+        let seg = lo;
+
+        let dx = x - xs[seg];
+        let y = ys[seg] + dx * (b_coef[seg] + dx * (cc[seg] + dx * d_coef[seg]));
+
+        out_x.push(x);
+        out_y.push(y);
+    }
+
+    (out_x, out_y)
+}
+
+/// Linear interpolation to find x where y crosses target
+/// Equivalent to R's approx(y, x, xout=target)
+fn approx_crossing(ys: &[f64], xs: &[f64], target_y: f64) -> Result<f64, String> {
+    for i in 0..ys.len() - 1 {
+        let y1 = ys[i];
+        let y2 = ys[i + 1];
+
+        if (y1 <= target_y && target_y <= y2) || (y2 <= target_y && target_y <= y1) {
+            let denom = y2 - y1;
+            if denom.abs() < 1e-15 {
+                return Ok(xs[i]);
+            }
+            let t = (target_y - y1) / denom;
+            return Ok(xs[i] + t * (xs[i + 1] - xs[i]));
         }
     }
 
     // If we didn't find a crossing, return the closest endpoint
-    // This can happen if the profile didn't extend far enough
-    if target_z < 0.0 {
-        Ok(*pars.first().unwrap())
+    if target_y < 0.0 {
+        Ok(*xs.first().unwrap())
     } else {
-        Ok(*pars.last().unwrap())
+        Ok(*xs.last().unwrap())
     }
 }
 

@@ -1,6 +1,7 @@
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { TOL, assertClose } from "./glm-test-helpers.ts";
 
 Deno.test("Weighted GLM - Test 1: Gaussian GLM with weights", () => {
   const x = [1, 2, 3, 4, 5];
@@ -21,14 +22,14 @@ Deno.test("Weighted GLM - Test 1: Gaussian GLM with weights", () => {
   const expectedIntercept = -0.04210526;
   const expectedSlope = 2.03157895;
 
-  expect(result.coefficients[0]).toBeCloseTo(expectedIntercept, 5);
-  expect(result.coefficients[1]).toBeCloseTo(expectedSlope, 5);
+  assertClose(result.coefficients[0], expectedIntercept, TOL, "gaussian weighted intercept");
+  assertClose(result.coefficients[1], expectedSlope, TOL, "gaussian weighted slope");
 
   // Check deviance and AIC match R
-  expect(result.deviance).toBeCloseTo(0.2063158, 5);
-  expect(result.aic).toBeCloseTo(2.864165, 5);
+  assertClose(result.deviance, 0.206315789473685, TOL, "gaussian weighted deviance");
+  assertClose(result.aic, 2.86416478193601, TOL, "gaussian weighted AIC");
 
-  expect(result.null_deviance).toBeCloseTo(45.01714, 4);
+  assertClose(result.null_deviance, 45.0171428571429, TOL, "gaussian weighted null deviance");
 });
 
 Deno.test("Weighted GLM - Test 2: Binomial GLM with weights (aggregated data)", () => {
@@ -55,8 +56,8 @@ Deno.test("Weighted GLM - Test 2: Binomial GLM with weights (aggregated data)", 
   const expectedIntercept = 1.6953808;
   const expectedSlope = -0.1957673; // Negative because proportion decreases with x
 
-  expect(result.coefficients[0]).toBeCloseTo(expectedIntercept, 5);
-  expect(result.coefficients[1]).toBeCloseTo(expectedSlope, 5);
+  assertClose(result.coefficients[0], expectedIntercept, TOL, "binomial weighted intercept");
+  assertClose(result.coefficients[1], expectedSlope, TOL, "binomial weighted slope");
 
   // Check fitted values are proportions (between 0 and 1)
   result.fitted_values.forEach((fitted) => {
@@ -112,8 +113,8 @@ Deno.test("Weighted GLM - Test 4: Gaussian GLM with zero weights", () => {
 
   // The observation with zero weight should not affect the fit
   // With data (1,2), (2,4), (4,8), (5,10) - perfect linear relationship y = 2x
-  expect(result.coefficients[0]).toBeCloseTo(0, 5); // Intercept near 0
-  expect(result.coefficients[1]).toBeCloseTo(2, 5); // Slope near 2
+  assertClose(result.coefficients[0], 0, TOL, "zero-weight intercept"); // Intercept near 0
+  assertClose(result.coefficients[1], 2, TOL, "zero-weight slope"); // Slope near 2
 });
 
 Deno.test("Weighted GLM - Test 5: Uniform weights should match unweighted", () => {

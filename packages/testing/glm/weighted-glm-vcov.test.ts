@@ -1,6 +1,6 @@
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
 import { createDataFrame } from "@tidy-ts/dataframe";
-import { expect } from "@std/expect";
+import { assertClose, TOL } from "./glm-test-helpers.ts";
 
 // Test weighted GLM with vcov() and confint()
 // This checks if edge cases affect variance-covariance and confidence intervals
@@ -21,22 +21,22 @@ Deno.test("Weighted GLM vcov/confint - Test 1: Normal weighted GLM - baseline", 
   });
 
   // Check coefficients
-  expect(result.coefficients[0]).toBeCloseTo(-0.04210526, 6);
-  expect(result.coefficients[1]).toBeCloseTo(2.03157895, 6);
+  assertClose(result.coefficients[0], -0.04210526, TOL, "weighted coef[0]");
+  assertClose(result.coefficients[1], 2.03157895, TOL, "weighted coef[1]");
 
   // Check vcov matrix
   const vcov = result.vcov();
-  expect(vcov[0][0]).toBeCloseTo(0.07239151, 6);
-  expect(vcov[0][1]).toBeCloseTo(-0.019907664, 6);
-  expect(vcov[1][0]).toBeCloseTo(-0.01990766, 6);
-  expect(vcov[1][1]).toBeCloseTo(0.006334257, 6);
+  assertClose(vcov[0][0], 0.07239151, TOL, "weighted vcov[0][0]");
+  assertClose(vcov[0][1], -0.019907664, TOL, "weighted vcov[0][1]");
+  assertClose(vcov[1][0], -0.01990766, TOL, "weighted vcov[1][0]");
+  assertClose(vcov[1][1], 0.006334257, TOL, "weighted vcov[1][1]");
 
   // Check confidence intervals
   const ci = result.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(-0.5694467, 5);
-  expect(ci.upper[0]).toBeCloseTo(0.4852362, 5);
-  expect(ci.lower[1]).toBeCloseTo(1.8755892, 5);
-  expect(ci.upper[1]).toBeCloseTo(2.1875686, 5);
+  assertClose(ci.lower[0], -0.5694467, TOL, "weighted CI lower[0]");
+  assertClose(ci.upper[0], 0.4852362, TOL, "weighted CI upper[0]");
+  assertClose(ci.lower[1], 1.8755892, TOL, "weighted CI lower[1]");
+  assertClose(ci.upper[1], 2.1875686, TOL, "weighted CI upper[1]");
 });
 
 Deno.test("Weighted GLM vcov/confint - Test 2: Single non-zero weight - edge case", () => {
@@ -136,22 +136,22 @@ Deno.test("Weighted GLM vcov/confint - Test 5: Very small weights", () => {
   });
 
   // Check coefficients
-  expect(result.coefficients[0]).toBeCloseTo(-0.7089085, 6);
-  expect(result.coefficients[1]).toBeCloseTo(2.2017834, 6);
+  assertClose(result.coefficients[0], -0.7089085, TOL, "small-weights coef[0]");
+  assertClose(result.coefficients[1], 2.2017834, TOL, "small-weights coef[1]");
 
   // Check vcov matrix
   const vcov = result.vcov();
-  expect(vcov[0][0]).toBeCloseTo(0.0009834810, 7);
-  expect(vcov[0][1]).toBeCloseTo(-1.970136e-04, 7);
-  expect(vcov[1][0]).toBeCloseTo(-0.0001970136, 7);
-  expect(vcov[1][1]).toBeCloseTo(3.948249e-05, 8);
+  assertClose(vcov[0][0], 0.0009834810, TOL, "small-weights vcov[0][0]");
+  assertClose(vcov[0][1], -1.970136e-04, TOL, "small-weights vcov[0][1]");
+  assertClose(vcov[1][0], -0.0001970136, TOL, "small-weights vcov[1][0]");
+  assertClose(vcov[1][1], 3.948249e-05, TOL, "small-weights vcov[1][1]");
 
   // Check confidence intervals
   const ci = result.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(-0.7703739, 5);
-  expect(ci.upper[0]).toBeCloseTo(-0.647443, 5);
-  expect(ci.lower[1]).toBeCloseTo(2.1894680, 5);
-  expect(ci.upper[1]).toBeCloseTo(2.214099, 5);
+  assertClose(ci.lower[0], -0.7703739, TOL, "small-weights CI lower[0]");
+  assertClose(ci.upper[0], -0.647443, TOL, "small-weights CI upper[0]");
+  assertClose(ci.lower[1], 2.1894680, TOL, "small-weights CI lower[1]");
+  assertClose(ci.upper[1], 2.214099, TOL, "small-weights CI upper[1]");
 });
 
 Deno.test("Weighted GLM vcov/confint - Test 6: Binomial with weights and vcov", () => {
@@ -171,20 +171,20 @@ Deno.test("Weighted GLM vcov/confint - Test 6: Binomial with weights and vcov", 
   });
 
   // Check coefficients
-  expect(result.coefficients[0]).toBeCloseTo(1.6953808, 5);
-  expect(result.coefficients[1]).toBeCloseTo(-0.1957673, 5);
+  assertClose(result.coefficients[0], 1.6953808, TOL, "binomial-weighted coef[0]");
+  assertClose(result.coefficients[1], -0.1957673, TOL, "binomial-weighted coef[1]");
 
   // Check vcov matrix
   const vcov = result.vcov();
-  expect(vcov[0][0]).toBeCloseTo(0.4752707, 5);
-  expect(vcov[0][1]).toBeCloseTo(-0.11584094, 5);
-  expect(vcov[1][0]).toBeCloseTo(-0.1158409, 5);
-  expect(vcov[1][1]).toBeCloseTo(0.03165606, 5);
+  assertClose(vcov[0][0], 0.4752707, TOL, "binomial-weighted vcov[0][0]");
+  assertClose(vcov[0][1], -0.11584094, TOL, "binomial-weighted vcov[0][1]");
+  assertClose(vcov[1][0], -0.1158409, TOL, "binomial-weighted vcov[1][0]");
+  assertClose(vcov[1][1], 0.03165606, TOL, "binomial-weighted vcov[1][1]");
 
-  // Check confidence intervals
+  // Check confidence intervals (profile CI - R's confint())
   const ci = result.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(0.344184, 4);
-  expect(ci.upper[0]).toBeCloseTo(3.0465776, 4);
-  expect(ci.lower[1]).toBeCloseTo(-0.544487, 4);
-  expect(ci.upper[1]).toBeCloseTo(0.1529524, 4);
+  assertClose(ci.lower[0], 0.4183132, 1e-4, "binomial-weighted CI lower[0]");
+  assertClose(ci.upper[0], 3.150958, 1e-4, "binomial-weighted CI upper[0]");
+  assertClose(ci.lower[1], -0.5601602, 1e-4, "binomial-weighted CI lower[1]");
+  assertClose(ci.upper[1], 0.1436985, 1e-4, "binomial-weighted CI upper[1]");
 });

@@ -1,6 +1,7 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "../../dataframe/ts/dataframe/index.ts";
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
+import { TOL, assertClose } from "./glm-test-helpers.ts";
 
 // Test summary(), rstandard(), rstudent(), and influence() methods
 // Validates against R output from glm-methods.test.R
@@ -125,30 +126,30 @@ Deno.test("GLM Methods - Test 1: Binomial GLM - summary", () => {
   console.log("Summary:", summary);
 
   // Check coefficients
-  expect(summary.coefficients.estimate[0]).toBeCloseTo(-12.5412218, 4);
-  expect(summary.coefficients.estimate[1]).toBeCloseTo(0.5240640, 4);
-  expect(summary.coefficients.estimate[2]).toBeCloseTo(0.5828598, 4);
+  assertClose(summary.coefficients.estimate[0], -12.5412218, TOL, "binomial intercept");
+  assertClose(summary.coefficients.estimate[1], 0.5240640, TOL, "binomial coef[1] mpg");
+  assertClose(summary.coefficients.estimate[2], 0.5828598, TOL, "binomial coef[2] wt");
 
   // Check standard errors
-  expect(summary.coefficients.std_error[0]).toBeCloseTo(8.4660329, 4);
-  expect(summary.coefficients.std_error[1]).toBeCloseTo(0.2604188, 4);
-  expect(summary.coefficients.std_error[2]).toBeCloseTo(1.1844650, 4);
+  assertClose(summary.coefficients.std_error[0], 8.4660329, TOL, "binomial se[0]");
+  assertClose(summary.coefficients.std_error[1], 0.2604188, TOL, "binomial se[1]");
+  assertClose(summary.coefficients.std_error[2], 1.1844650, TOL, "binomial se[2]");
 
   // Check z-values
-  expect(summary.coefficients.statistic[0]).toBeCloseTo(-1.481358, 3);
-  expect(summary.coefficients.statistic[1]).toBeCloseTo(2.012389, 3);
-  expect(summary.coefficients.statistic[2]).toBeCloseTo(0.492087, 3);
+  assertClose(summary.coefficients.statistic[0], -1.481358, TOL, "binomial z[0]");
+  assertClose(summary.coefficients.statistic[1], 2.012389, TOL, "binomial z[1]");
+  assertClose(summary.coefficients.statistic[2], 0.492087, TOL, "binomial z[2]");
 
   // Check p-values
-  expect(summary.coefficients.pValue[0]).toBeCloseTo(0.1385113, 3);
-  expect(summary.coefficients.pValue[1]).toBeCloseTo(0.0441789, 3);
-  expect(summary.coefficients.pValue[2]).toBeCloseTo(0.6226579, 3);
+  assertClose(summary.coefficients.p_value[0], 0.1385113, TOL, "binomial p[0]");
+  assertClose(summary.coefficients.p_value[1], 0.0441789, TOL, "binomial p[1]");
+  assertClose(summary.coefficients.p_value[2], 0.6226579, TOL, "binomial p[2]");
 
   // Check other summary stats
   expect(summary.dispersion).toBe(1.0);
-  expect(summary.null_deviance).toBeCloseTo(43.86011, 3);
-  expect(summary.residual_deviance).toBeCloseTo(25.29788, 3);
-  expect(summary.aic).toBeCloseTo(31.29788, 3);
+  assertClose(summary.null_deviance, 43.8601092656933, TOL, "binomial null deviance");
+  assertClose(summary.residual_deviance, 25.2978755411394, TOL, "binomial residual deviance");
+  assertClose(summary.aic, 31.2978755411394, TOL, "binomial AIC");
 });
 
 Deno.test("GLM Methods - Test 2: Gaussian GLM - summary", () => {
@@ -268,17 +269,17 @@ Deno.test("GLM Methods - Test 2: Gaussian GLM - summary", () => {
   const summary = model.summary();
 
   // Check coefficients
-  expect(summary.coefficients.estimate[0]).toBeCloseTo(37.22727012, 4);
-  expect(summary.coefficients.estimate[1]).toBeCloseTo(-3.87783074, 4);
-  expect(summary.coefficients.estimate[2]).toBeCloseTo(-0.03177295, 4);
+  assertClose(summary.coefficients.estimate[0], 37.22727012, TOL, "gaussian intercept");
+  assertClose(summary.coefficients.estimate[1], -3.87783074, TOL, "gaussian coef[1] wt");
+  assertClose(summary.coefficients.estimate[2], -0.03177295, TOL, "gaussian coef[2] hp");
 
   // Check t-values (not z-values, since gaussian uses t-test)
-  expect(summary.coefficients.statistic[0]).toBeCloseTo(23.284689, 3);
-  expect(summary.coefficients.statistic[1]).toBeCloseTo(-6.128695, 3);
-  expect(summary.coefficients.statistic[2]).toBeCloseTo(-3.518712, 3);
+  assertClose(summary.coefficients.statistic[0], 23.284689, TOL, "gaussian t[0]");
+  assertClose(summary.coefficients.statistic[1], -6.128695, TOL, "gaussian t[1]");
+  assertClose(summary.coefficients.statistic[2], -3.518712, TOL, "gaussian t[2]");
 
   // Check dispersion (not 1.0 for gaussian)
-  expect(summary.dispersion).toBeCloseTo(6.725785, 3);
+  assertClose(summary.dispersion, 6.725785, TOL, "gaussian dispersion");
 });
 
 Deno.test("GLM Methods - Test 3: rstandard - deviance type", () => {
@@ -397,11 +398,11 @@ Deno.test("GLM Methods - Test 3: rstandard - deviance type", () => {
   });
   const rs = model.rstandard({ type: "deviance" });
 
-  expect(rs[0]).toBeCloseTo(-1.2505782, 4);
-  expect(rs[1]).toBeCloseTo(-1.2876088, 4);
-  expect(rs[2]).toBeCloseTo(0.9481600, 4);
-  expect(rs[3]).toBeCloseTo(1.0094881, 4);
-  expect(rs[4]).toBeCloseTo(-0.9123216, 4);
+  assertClose(rs[0], -1.2505782, TOL, "rstandard deviance[0]");
+  assertClose(rs[1], -1.2876088, TOL, "rstandard deviance[1]");
+  assertClose(rs[2], 0.9481600, TOL, "rstandard deviance[2]");
+  assertClose(rs[3], 1.0094881, TOL, "rstandard deviance[3]");
+  assertClose(rs[4], -0.9123216, TOL, "rstandard deviance[4]");
 });
 
 Deno.test("GLM Methods - Test 4: rstandard - pearson type", () => {
@@ -520,11 +521,11 @@ Deno.test("GLM Methods - Test 4: rstandard - pearson type", () => {
   });
   const rs = model.rstandard({ type: "pearson" });
 
-  expect(rs[0]).toBeCloseTo(-1.0608472, 4);
-  expect(rs[1]).toBeCloseTo(-1.1159886, 4);
-  expect(rs[2]).toBeCloseTo(0.7402285, 4);
-  expect(rs[3]).toBeCloseTo(0.8035547, 4);
-  expect(rs[4]).toBeCloseTo(-0.7136809, 4);
+  assertClose(rs[0], -1.0608472, TOL, "rstandard pearson[0]");
+  assertClose(rs[1], -1.1159886, TOL, "rstandard pearson[1]");
+  assertClose(rs[2], 0.7402285, TOL, "rstandard pearson[2]");
+  assertClose(rs[3], 0.8035547, TOL, "rstandard pearson[3]");
+  assertClose(rs[4], -0.7136809, TOL, "rstandard pearson[4]");
 });
 
 Deno.test("GLM Methods - Test 5: rstudent", () => {
@@ -643,11 +644,11 @@ Deno.test("GLM Methods - Test 5: rstudent", () => {
   });
   const rst = model.rstudent();
 
-  expect(rst[0]).toBeCloseTo(-1.2295007, 4);
-  expect(rst[1]).toBeCloseTo(-1.2752880, 4);
-  expect(rst[2]).toBeCloseTo(0.9206926, 4);
-  expect(rst[3]).toBeCloseTo(0.9900000, 4);
-  expect(rst[4]).toBeCloseTo(-0.9016931, 4);
+  assertClose(rst[0], -1.2295007, TOL, "rstudent[0]");
+  assertClose(rst[1], -1.2752880, TOL, "rstudent[1]");
+  assertClose(rst[2], 0.9206926, TOL, "rstudent[2]");
+  assertClose(rst[3], 0.9900000, TOL, "rstudent[3]");
+  assertClose(rst[4], -0.9016931, TOL, "rstudent[4]");
 });
 
 Deno.test("GLM Methods - Test 6: influence - dffits", () => {
@@ -767,26 +768,26 @@ Deno.test("GLM Methods - Test 6: influence - dffits", () => {
   const infl = model.influence();
 
   // Check dffits
-  expect(infl.dffits[0]).toBeCloseTo(-0.4996871, 3);
-  expect(infl.dffits[1]).toBeCloseTo(-0.4034616, 3);
-  expect(infl.dffits[2]).toBeCloseTo(0.4203414, 3);
-  expect(infl.dffits[3]).toBeCloseTo(0.3700643, 3);
-  expect(infl.dffits[4]).toBeCloseTo(-0.2459103, 3);
+  assertClose(infl.dffits[0], -0.4996871, TOL, "dffits[0]");
+  assertClose(infl.dffits[1], -0.4034616, TOL, "dffits[1]");
+  assertClose(infl.dffits[2], 0.4203414, TOL, "dffits[2]");
+  assertClose(infl.dffits[3], 0.3700643, TOL, "dffits[3]");
+  assertClose(infl.dffits[4], -0.2459103, TOL, "dffits[4]");
 
   // Check covratio
-  expect(infl.covratio[0]).toBeCloseTo(1.0415926, 3);
-  expect(infl.covratio[1]).toBeCloseTo(0.9817319, 3);
-  expect(infl.covratio[2]).toBeCloseTo(1.1674268, 3);
-  expect(infl.covratio[3]).toBeCloseTo(1.0965251, 3);
-  expect(infl.covratio[4]).toBeCloseTo(1.0687172, 3);
+  assertClose(infl.covratio[0], 1.0415926, TOL, "covratio[0]");
+  assertClose(infl.covratio[1], 0.9817319, TOL, "covratio[1]");
+  assertClose(infl.covratio[2], 1.1674268, TOL, "covratio[2]");
+  assertClose(infl.covratio[3], 1.0965251, TOL, "covratio[3]");
+  assertClose(infl.covratio[4], 1.0687172, TOL, "covratio[4]");
 
   // Check cooks_distance
-  expect(infl.cooks_distance[0]).toBeCloseTo(0.05076573, 4);
-  expect(infl.cooks_distance[1]).toBeCloseTo(0.03441305, 4);
+  assertClose(infl.cooksDistance[0], 0.05076573, TOL, "cooks distance[0]");
+  assertClose(infl.cooksDistance[1], 0.03441305, TOL, "cooks distance[1]");
 
   // Check hat
-  expect(infl.hat[0]).toBeCloseTo(0.11919691, 4);
-  expect(infl.hat[1]).toBeCloseTo(0.07654888, 4);
+  assertClose(infl.hat[0], 0.11919691, TOL, "hat[0]");
+  assertClose(infl.hat[1], 0.07654888, TOL, "hat[1]");
 });
 
 Deno.test("GLM Methods - Test 8: Poisson GLM - summary and diagnostics", () => {
@@ -906,28 +907,28 @@ Deno.test("GLM Methods - Test 8: Poisson GLM - summary and diagnostics", () => {
   const summary = model.summary();
 
   // Check coefficients
-  expect(summary.coefficients.estimate[0]).toBeCloseTo(0.138788291, 4);
-  expect(summary.coefficients.estimate[1]).toBeCloseTo(0.004481936, 4);
-  expect(summary.coefficients.estimate[2]).toBeCloseTo(0.005487240, 4);
+  assertClose(summary.coefficients.estimate[0], 0.138788291, TOL, "poisson intercept");
+  assertClose(summary.coefficients.estimate[1], 0.004481936, TOL, "poisson coef[1] wt");
+  assertClose(summary.coefficients.estimate[2], 0.005487240, TOL, "poisson coef[2] hp");
 
   // Check z-values
-  expect(summary.coefficients.statistic[0]).toBeCloseTo(0.3481318, 3);
-  expect(summary.coefficients.statistic[1]).toBeCloseTo(0.0342206, 3);
-  expect(summary.coefficients.statistic[2]).toBeCloseTo(3.3374412, 3);
+  assertClose(summary.coefficients.statistic[0], 0.3481318, TOL, "poisson z[0]");
+  assertClose(summary.coefficients.statistic[1], 0.0342206, TOL, "poisson z[1]");
+  assertClose(summary.coefficients.statistic[2], 3.3374412, TOL, "poisson z[2]");
 
   // Check rstandard
   const rs = model.rstandard();
-  expect(rs[0]).toBeCloseTo(1.1717237, 4);
-  expect(rs[1]).toBeCloseTo(1.1668362, 4);
-  expect(rs[2]).toBeCloseTo(-0.7630870, 4);
-  expect(rs[3]).toBeCloseTo(-0.8847124, 4);
-  expect(rs[4]).toBeCloseTo(-0.6519321, 4);
+  assertClose(rs[0], 1.1717237, TOL, "poisson rstandard[0]");
+  assertClose(rs[1], 1.1668362, TOL, "poisson rstandard[1]");
+  assertClose(rs[2], -0.7630870, TOL, "poisson rstandard[2]");
+  assertClose(rs[3], -0.8847124, TOL, "poisson rstandard[3]");
+  assertClose(rs[4], -0.6519321, TOL, "poisson rstandard[4]");
 
   // Check rstudent
   const rst = model.rstudent();
-  expect(rst[0]).toBeCloseTo(1.1788823, 4);
-  expect(rst[1]).toBeCloseTo(1.1732108, 4);
-  expect(rst[2]).toBeCloseTo(-0.7591497, 4);
-  expect(rst[3]).toBeCloseTo(-0.8809544, 4);
-  expect(rst[4]).toBeCloseTo(-0.6505781, 4);
+  assertClose(rst[0], 1.1788823, TOL, "poisson rstudent[0]");
+  assertClose(rst[1], 1.1732108, TOL, "poisson rstudent[1]");
+  assertClose(rst[2], -0.7591497, TOL, "poisson rstudent[2]");
+  assertClose(rst[3], -0.8809544, TOL, "poisson rstudent[3]");
+  assertClose(rst[4], -0.6505781, TOL, "poisson rstudent[4]");
 });

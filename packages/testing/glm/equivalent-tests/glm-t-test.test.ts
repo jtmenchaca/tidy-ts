@@ -57,7 +57,7 @@ Deno.test("GLM T-Test Equivalent", () => {
     }]`,
   );
   console.log(
-    `P-values: [${glmResult.pValues.map((p) => p.toFixed(5)).join(", ")}]`,
+    `P-values: [${glmResult.p_values.map((p: number) => p.toFixed(5)).join(", ")}]`,
   );
   console.log(
     `Deviance: ${glmResult.deviance.toFixed(4)} | AIC: ${

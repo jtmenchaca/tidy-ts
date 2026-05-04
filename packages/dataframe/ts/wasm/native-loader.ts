@@ -94,6 +94,7 @@ const JSVALUE_INPUT_FUNCTIONS = new Set([
   "glm_influence_wasm",
   "glm_confint_wasm",
   "glm_predict_wasm",
+  "glm_vcov_cl_wasm",
 ]);
 
 // Join functions that return {left, right} objects instead of JoinIdxU32 class
@@ -219,10 +220,11 @@ export function buildNativeProxy(native: Record<string, any>): Record<string, an
           return arg;
         });
 
-        // For JsValue input functions, stringify the first object arg
+        // For JsValue input functions, stringify all object/array args
+        // (Rust napi expects String where wasm_bindgen used JsValue)
         if (isJsValueInput) {
-          convertedArgs = convertedArgs.map((arg: any, i: number) => {
-            if (i === 0 && typeof arg === "object" && arg !== null && !Array.isArray(arg)) {
+          convertedArgs = convertedArgs.map((arg: any) => {
+            if (typeof arg === "object" && arg !== null) {
               return JSON.stringify(arg);
             }
             return arg;

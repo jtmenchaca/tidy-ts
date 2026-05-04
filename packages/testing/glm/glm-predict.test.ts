@@ -1,6 +1,7 @@
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { assertClose, TOL } from "./glm-test-helpers.ts";
 
 Deno.test("GLM predict() - returns fitted values for response type", () => {
   const x = [1, 2, 3, 4, 5];
@@ -84,7 +85,7 @@ Deno.test("GLM class - accessor methods work", () => {
 
   // Test all getters
   expect(model.coefficients).toHaveLength(2);
-  expect(model.residuals).toHaveLength(5);
+  expect(model.residuals()).toHaveLength(5);
   expect(model.fitted_values).toHaveLength(5);
   expect(model.linear_predictors).toHaveLength(5);
   expect(typeof model.deviance).toBe("number");
@@ -141,9 +142,9 @@ Deno.test("GLM predict() - predicts on new data (Gaussian)", () => {
 
   // For y = 2x (approximately), predictions should be [12, 14, 16]
   expect(predictions).toHaveLength(3);
-  expect(predictions[0]).toBeCloseTo(12, 5);
-  expect(predictions[1]).toBeCloseTo(14, 5);
-  expect(predictions[2]).toBeCloseTo(16, 5);
+  assertClose(predictions[0], 12, TOL, "predict newdata[0]");
+  assertClose(predictions[1], 14, TOL, "predict newdata[1]");
+  assertClose(predictions[2], 16, TOL, "predict newdata[2]");
 });
 
 Deno.test("GLM predict() - predicts on new data (Binomial)", () => {
@@ -219,7 +220,7 @@ Deno.test("GLM predict() - predicts on object data", () => {
   const predictions = model.predict(newData);
 
   expect(predictions).toHaveLength(3);
-  expect(predictions[0]).toBeCloseTo(12, 5);
-  expect(predictions[1]).toBeCloseTo(14, 5);
-  expect(predictions[2]).toBeCloseTo(16, 5);
+  assertClose(predictions[0], 12, TOL, "predict object[0]");
+  assertClose(predictions[1], 14, TOL, "predict object[1]");
+  assertClose(predictions[2], 16, TOL, "predict object[2]");
 });

@@ -1,6 +1,7 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "../../dataframe/ts/dataframe/index.ts";
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
+import { TOL, assertClose } from "./glm-test-helpers.ts";
 
 Deno.test("GLM diagnostics - Test 1: Simple Gaussian GLM leverage", () => {
   const x = [1, 2, 3, 4, 5];
@@ -20,7 +21,7 @@ Deno.test("GLM diagnostics - Test 1: Simple Gaussian GLM leverage", () => {
 
   expect(model.leverage).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.leverage[i]).toBeCloseTo(expectedLeverage[i], 5);
+    assertClose(model.leverage[i], expectedLeverage[i], TOL, `gaussian leverage[${i}]`);
   }
 
   // Cook's distance is NaN for perfect fit (no residuals)
@@ -54,7 +55,7 @@ Deno.test("GLM diagnostics - Test 2: Weighted Gaussian GLM", () => {
 
   expect(model.leverage).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.leverage[i]).toBeCloseTo(expectedLeverage[i], 5);
+    assertClose(model.leverage[i], expectedLeverage[i], TOL, `weighted leverage[${i}]`);
   }
 
   // Expected Cook's distance from R
@@ -68,7 +69,7 @@ Deno.test("GLM diagnostics - Test 2: Weighted Gaussian GLM", () => {
 
   expect(model.cooks_distance).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.cooks_distance[i]).toBeCloseTo(expectedCooks[i], 5);
+    assertClose(model.cooks_distance[i], expectedCooks[i], TOL, `weighted cooks[${i}]`);
   }
 });
 
@@ -99,7 +100,7 @@ Deno.test("GLM diagnostics - Test 3: Binomial GLM", () => {
 
   expect(model.leverage).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.leverage[i]).toBeCloseTo(expectedLeverage[i], 4);
+    assertClose(model.leverage[i], expectedLeverage[i], TOL, `binomial leverage[${i}]`);
   }
 
   // Expected Cook's distance from R
@@ -113,7 +114,7 @@ Deno.test("GLM diagnostics - Test 3: Binomial GLM", () => {
 
   expect(model.cooks_distance).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.cooks_distance[i]).toBeCloseTo(expectedCooks[i], 4);
+    assertClose(model.cooks_distance[i], expectedCooks[i], TOL, `binomial cooks[${i}]`);
   }
 });
 
@@ -141,7 +142,7 @@ Deno.test("GLM diagnostics - Test 4: Poisson GLM", () => {
 
   expect(model.leverage).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.leverage[i]).toBeCloseTo(expectedLeverage[i], 4);
+    assertClose(model.leverage[i], expectedLeverage[i], TOL, `poisson leverage[${i}]`);
   }
 
   // Expected Cook's distance from R
@@ -155,7 +156,7 @@ Deno.test("GLM diagnostics - Test 4: Poisson GLM", () => {
 
   expect(model.cooks_distance).toHaveLength(5);
   for (let i = 0; i < 5; i++) {
-    expect(model.cooks_distance[i]).toBeCloseTo(expectedCooks[i], 4);
+    assertClose(model.cooks_distance[i], expectedCooks[i], TOL, `poisson cooks[${i}]`);
   }
 });
 
@@ -184,7 +185,7 @@ Deno.test("GLM diagnostics - Test 5: GLM with outlier (high Cook's distance)", (
 
   expect(model.leverage).toHaveLength(6);
   for (let i = 0; i < 6; i++) {
-    expect(model.leverage[i]).toBeCloseTo(expectedLeverage[i], 5);
+    assertClose(model.leverage[i], expectedLeverage[i], TOL, `outlier leverage[${i}]`);
   }
 
   // Expected Cook's distance from R
@@ -199,7 +200,7 @@ Deno.test("GLM diagnostics - Test 5: GLM with outlier (high Cook's distance)", (
 
   expect(model.cooks_distance).toHaveLength(6);
   for (let i = 0; i < 6; i++) {
-    expect(model.cooks_distance[i]).toBeCloseTo(expectedCooks[i], 4);
+    assertClose(model.cooks_distance[i], expectedCooks[i], TOL, `outlier cooks[${i}]`);
   }
 
   // Last observation should have very high Cook's distance (> 1.0)

@@ -1546,7 +1546,7 @@ dependencies = [
 
 [[package]]
 name = "tidy-ts-dataframe"
-version = "1.4.4"
+version = "1.4.6"
 dependencies = [
  "faer",
  "getrandom",

@@ -456,9 +456,9 @@ class GLM<Row extends Record<string, number>> {
     return {
       coefficients: {
         estimate: summary.estimate,
-        std_error: summary.std_error,
+        std_error: summary.stdError,
         statistic: summary.statistic,
-        p_value: summary.p_value,
+        p_value: summary.pValue,
         names: summary.names,
       },
       dispersion: summary.dispersion,
@@ -629,6 +629,10 @@ class GLM<Row extends Record<string, number>> {
     options: { type?: "link" | "response" } = {},
   ): number[] {
     const type = options.type || "response";
+    const validTypes = ["link", "response"];
+    if (!validTypes.includes(type)) {
+      throw new Error(`Invalid prediction type '${type}'. Must be one of: ${validTypes.join(", ")}`);
+    }
 
     // If no newdata, return fitted values
     if (!newdata) {

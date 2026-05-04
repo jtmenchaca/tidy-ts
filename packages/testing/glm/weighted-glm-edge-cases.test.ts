@@ -1,6 +1,7 @@
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
 import { createDataFrame } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
+import { assertClose, TOL } from "./glm-test-helpers.ts";
 
 Deno.test("Weighted GLM Edge Cases - Test 1: Very small weights", () => {
   const x = [1, 2, 3, 4, 5];
@@ -44,9 +45,9 @@ Deno.test("Weighted GLM Edge Cases - Test 2: Very large weights", () => {
   expect(result.converged).toBe(true);
   expect(result.coefficients).toHaveLength(2);
 
-  // With very large weights, the first observation should dominate
-  // Expected: slope should be close to 0 (horizontal line at y=2.1)
-  expect(result.coefficients[1]).toBeCloseTo(0, 1);
+  // With geometrically increasing weights, the last observation (x=5, y=10.3) dominates
+  // R gives slope ≈ 2.20
+  expect(result.coefficients[1]).toBeCloseTo(2.201783, 1);
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 3: Mixed extreme weights", () => {
@@ -68,8 +69,8 @@ Deno.test("Weighted GLM Edge Cases - Test 3: Mixed extreme weights", () => {
   expect(result.coefficients).toHaveLength(2);
 
   // Should fit through points (1,1), (3,3), (5,5) - perfect y=x line
-  expect(result.coefficients[0]).toBeCloseTo(0, 5); // Intercept = 0
-  expect(result.coefficients[1]).toBeCloseTo(1, 5); // Slope = 1
+  assertClose(result.coefficients[0], 0, TOL, "mixed extreme weights intercept");
+  assertClose(result.coefficients[1], 1, TOL, "mixed extreme weights slope");
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 4: Single non-zero weight", () => {
@@ -90,9 +91,7 @@ Deno.test("Weighted GLM Edge Cases - Test 4: Single non-zero weight", () => {
   expect(result.converged).toBe(true);
   expect(result.coefficients).toHaveLength(2);
 
-  // With only one point, we can't determine slope uniquely
-  // The fitted value should equal the observed value
-  expect(result.fitted_values[4]).toBeCloseTo(y[4], 5);
+  assertClose(result.fitted_values[4], y[4], TOL, "single non-zero weight fitted value");
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 5: Binomial with extreme weights", () => {
@@ -190,12 +189,12 @@ Deno.test("Weighted GLM Edge Cases - Test 8: Identical x values with different w
   expect(result.coefficients).toHaveLength(2);
 
   // With identical x values, slope should be 0
-  expect(result.coefficients[1]).toBeCloseTo(0, 5);
+  assertClose(result.coefficients[1], 0, TOL, "identical x slope");
 
   // Intercept should be weighted mean of y values
   const weightedMean = weights.reduce((sum, w, i) => sum + w * y[i], 0) /
     weights.reduce((sum, w) => sum + w, 0);
-  expect(result.coefficients[0]).toBeCloseTo(weightedMean, 5);
+  assertClose(result.coefficients[0], weightedMean, TOL, "identical x intercept (weighted mean)");
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 9: All weights zero", () => {
@@ -213,7 +212,7 @@ Deno.test("Weighted GLM Edge Cases - Test 9: All weights zero", () => {
       data: df,
       options: { weights },
     });
-  }).toThrow(/all weights are zero|no valid observations/i);
+  }).toThrow(/all weights are zero|no valid observations|no observations informative/i);
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 10: Weights with NaN values", () => {
@@ -231,7 +230,7 @@ Deno.test("Weighted GLM Edge Cases - Test 10: Weights with NaN values", () => {
       data: df,
       options: { weights },
     });
-  }).toThrow(/invalid weight|NaN/i);
+  }).toThrow(/invalid weight|NaN|weights must be numeric/i);
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 11: Weights with Infinity values", () => {
@@ -249,7 +248,7 @@ Deno.test("Weighted GLM Edge Cases - Test 11: Weights with Infinity values", () 
       data: df,
       options: { weights },
     });
-  }).toThrow(/invalid weight|infinity/i);
+  }).toThrow(/invalid weight|infinity|weights must be numeric/i);
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 12: Single observation", () => {
@@ -270,8 +269,8 @@ Deno.test("Weighted GLM Edge Cases - Test 12: Single observation", () => {
   expect(result.converged).toBe(true);
   expect(result.coefficients).toHaveLength(2);
 
-  // With single observation, fitted value should equal observed value
-  expect(result.fitted_values[0]).toBeCloseTo(y[0], 5);
+  // TODO: sign issue with rank-deficient Householder when nonzero data isn't in leading rows
+  assertClose(result.fitted_values[0], y[0], TOL, "single observation fitted value");
 });
 
 Deno.test("Weighted GLM Edge Cases - Test 13: Gamma GLM with weights", () => {
@@ -337,5 +336,5 @@ Deno.test("Weighted GLM Edge Cases - Test 15: Weights length mismatch", () => {
       data: df,
       options: { weights },
     });
-  }).toThrow(/length mismatch|dimension/i);
+  }).toThrow(/length mismatch|dimension|weights length must match/i);
 });

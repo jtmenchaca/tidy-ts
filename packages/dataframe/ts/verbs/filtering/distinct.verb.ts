@@ -6,6 +6,10 @@ import {
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import { convertToTypedArrays } from "../../dataframe/implementation/column-helpers.ts";
+import {
+  type BitSet,
+  bitsetGet,
+} from "../../dataframe/implementation/columnar-view.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
@@ -36,9 +40,19 @@ export function distinct(
         const rebuilt: any[] = [];
         const { head, next, size, usesRawIndices } = api.__groups;
         const baseIndex = usesRawIndices ? null : materializeIndex(store.length, api.__view);
+        const viewMask: BitSet | null = api.__view?.mask ?? null;
+        const viewRawMask: Uint8Array | null = api.__view?.rawMask ?? null;
 
         for (let g = 0; g < size; g++) {
-          const groupIndices = collectGroupPhysicalIndices({ head, next, groupIndex: g, usesRawIndices, baseIndex });
+          let groupIndices = collectGroupPhysicalIndices({ head, next, groupIndex: g, usesRawIndices, baseIndex });
+
+          // Filter out indices hidden by the view mask (e.g. after filter)
+          if (viewMask) {
+            groupIndices = groupIndices.filter(i => bitsetGet(viewMask, i));
+          } else if (viewRawMask) {
+            groupIndices = groupIndices.filter(i => viewRawMask[i]);
+          }
+          if (groupIndices.length === 0) continue;
 
           // Run distinct on this group
           const typedArrays = convertToTypedArrays(store.columns, keyCols);

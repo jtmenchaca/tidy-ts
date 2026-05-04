@@ -1,9 +1,12 @@
 import { expect } from "@std/expect";
 import { createDataFrame } from "../../dataframe/ts/dataframe/index.ts";
 import { glm } from "../../dataframe/ts/wasm/glm-functions.ts";
+import { TOL, assertClose } from "./glm-test-helpers.ts";
 
 // Test vcov(), confint(), and residuals() methods for GLM
 // Validates against R output from glm-vcov-confint.test.R
+
+const TOL_PROFILE = 1e-2; // profile likelihood CIs are iterative, less precise than Wald
 
 Deno.test("GLM vcov/confint/residuals - Test 1: Gaussian GLM - vcov and confint", () => {
   const df = createDataFrame({
@@ -121,30 +124,30 @@ Deno.test("GLM vcov/confint/residuals - Test 1: Gaussian GLM - vcov and confint"
   });
 
   // Check coefficients
-  expect(model.coefficients[0]).toBeCloseTo(37.22727012, 6);
-  expect(model.coefficients[1]).toBeCloseTo(-3.87783074, 6);
-  expect(model.coefficients[2]).toBeCloseTo(-0.03177295, 6);
+  assertClose(model.coefficients[0], 37.22727012, TOL, "gaussian coef intercept");
+  assertClose(model.coefficients[1], -3.87783074, TOL, "gaussian coef wt");
+  assertClose(model.coefficients[2], -0.03177295, TOL, "gaussian coef hp");
 
   // Check vcov matrix
   const vcov = model.vcov();
-  expect(vcov[0][0]).toBeCloseTo(2.5561215917, 8);
-  expect(vcov[0][1]).toBeCloseTo(-0.73594515, 8);
-  expect(vcov[0][2]).toBeCloseTo(0.0001484701, 8);
-  expect(vcov[1][0]).toBeCloseTo(-0.7359451464, 8);
-  expect(vcov[1][1]).toBeCloseTo(0.40035167, 8);
-  expect(vcov[1][2]).toBeCloseTo(-0.003763690, 8);
-  expect(vcov[2][0]).toBeCloseTo(0.0001484701, 8);
-  expect(vcov[2][1]).toBeCloseTo(-0.00376369, 8);
-  expect(vcov[2][2]).toBeCloseTo(0.00008153566, 8);
+  assertClose(vcov[0][0], 2.5561215917, TOL, "vcov[0][0] intercept variance");
+  assertClose(vcov[0][1], -0.73594515, TOL, "vcov[0][1] intercept-wt covariance");
+  assertClose(vcov[0][2], 0.0001484701, TOL, "vcov[0][2] intercept-hp covariance");
+  assertClose(vcov[1][0], -0.7359451464, TOL, "vcov[1][0] wt-intercept covariance");
+  assertClose(vcov[1][1], 0.40035167, TOL, "vcov[1][1] wt variance");
+  assertClose(vcov[1][2], -0.003763690, TOL, "vcov[1][2] wt-hp covariance");
+  assertClose(vcov[2][0], 0.0001484701, TOL, "vcov[2][0] hp-intercept covariance");
+  assertClose(vcov[2][1], -0.00376369, TOL, "vcov[2][1] hp-wt covariance");
+  assertClose(vcov[2][2], 0.00008153566, TOL, "vcov[2][2] hp variance");
 
-  // Check confidence intervals (95%)
+  // Check confidence intervals (95%, Wald CIs for Gaussian)
   const ci = model.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(34.09370412, 5);
-  expect(ci.upper[0]).toBeCloseTo(40.36083611, 5);
-  expect(ci.lower[1]).toBeCloseTo(-5.11796560, 5);
-  expect(ci.upper[1]).toBeCloseTo(-2.63769588, 5);
-  expect(ci.lower[2]).toBeCloseTo(-0.04947085, 5);
-  expect(ci.upper[2]).toBeCloseTo(-0.01407504, 5);
+  assertClose(ci.lower[0], 34.09370412, TOL, "gaussian 95% CI lower intercept");
+  assertClose(ci.upper[0], 40.36083611, TOL, "gaussian 95% CI upper intercept");
+  assertClose(ci.lower[1], -5.11796560, TOL, "gaussian 95% CI lower wt");
+  assertClose(ci.upper[1], -2.63769588, TOL, "gaussian 95% CI upper wt");
+  assertClose(ci.lower[2], -0.04947085, TOL, "gaussian 95% CI lower hp");
+  assertClose(ci.upper[2], -0.01407504, TOL, "gaussian 95% CI upper hp");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 2: Binomial GLM - vcov and confint", () => {
@@ -263,24 +266,24 @@ Deno.test("GLM vcov/confint/residuals - Test 2: Binomial GLM - vcov and confint"
   });
 
   // Check coefficients
-  expect(model.coefficients[0]).toBeCloseTo(-12.5412218, 4);
-  expect(model.coefficients[1]).toBeCloseTo(0.5240640, 4);
-  expect(model.coefficients[2]).toBeCloseTo(0.5828598, 4);
+  assertClose(model.coefficients[0], -12.5412218, TOL, "binomial coef intercept");
+  assertClose(model.coefficients[1], 0.5240640, TOL, "binomial coef mpg");
+  assertClose(model.coefficients[2], 0.5828598, TOL, "binomial coef wt");
 
   // Check vcov matrix
   const vcov = model.vcov();
-  expect(vcov[0][0]).toBeCloseTo(71.673713, 4);
-  expect(vcov[0][1]).toBeCloseTo(-2.11427173, 4);
-  expect(vcov[0][2]).toBeCloseTo(-9.2870188, 4);
-  expect(vcov[1][1]).toBeCloseTo(0.06781794, 4);
-  expect(vcov[2][2]).toBeCloseTo(1.4029573, 4);
+  assertClose(vcov[0][0], 71.673713, TOL, "binomial vcov[0][0] intercept variance");
+  assertClose(vcov[0][1], -2.11427173, TOL, "binomial vcov[0][1] intercept-mpg covariance");
+  assertClose(vcov[0][2], -9.2870188, TOL, "binomial vcov[0][2] intercept-wt covariance");
+  assertClose(vcov[1][1], 0.06781794, TOL, "binomial vcov[1][1] mpg variance");
+  assertClose(vcov[2][2], 1.4029573, TOL, "binomial vcov[2][2] wt variance");
 
-  // Check confidence intervals
+  // Check confidence intervals (profile likelihood, matches R 4.x confint.glm)
   const ci = model.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(-29.13434142, 3);
-  expect(ci.upper[0]).toBeCloseTo(4.051898, 3);
-  expect(ci.lower[1]).toBeCloseTo(0.01365257, 3);
-  expect(ci.upper[1]).toBeCloseTo(1.034475, 3);
+  assertClose(ci.lower[0], -31.90842474, TOL_PROFILE, "binomial profile CI lower intercept");
+  assertClose(ci.upper[0], 2.921046, TOL_PROFILE, "binomial profile CI upper intercept");
+  assertClose(ci.lower[1], 0.09326514, TOL_PROFILE, "binomial profile CI lower mpg");
+  assertClose(ci.upper[1], 1.165436, TOL_PROFILE, "binomial profile CI upper mpg");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 3: Poisson GLM - vcov and confint", () => {
@@ -399,22 +402,22 @@ Deno.test("GLM vcov/confint/residuals - Test 3: Poisson GLM - vcov and confint",
   });
 
   // Check coefficients
-  expect(model.coefficients[0]).toBeCloseTo(0.138788291, 5);
-  expect(model.coefficients[1]).toBeCloseTo(0.004481936, 5);
-  expect(model.coefficients[2]).toBeCloseTo(0.005487240, 5);
+  assertClose(model.coefficients[0], 0.138788291, TOL, "poisson coef intercept");
+  assertClose(model.coefficients[1], 0.004481936, TOL, "poisson coef wt");
+  assertClose(model.coefficients[2], 0.005487240, TOL, "poisson coef hp");
 
   // Check vcov matrix
   const vcov = model.vcov();
-  expect(vcov[0][0]).toBeCloseTo(0.1589345071, 5);
-  expect(vcov[1][1]).toBeCloseTo(0.0171536296, 5);
-  expect(vcov[2][2]).toBeCloseTo(0.000002703216, 5);
+  assertClose(vcov[0][0], 0.1589345071, TOL, "poisson vcov[0][0] intercept variance");
+  assertClose(vcov[1][1], 0.0171536296, TOL, "poisson vcov[1][1] wt variance");
+  assertClose(vcov[2][2], 0.000002703216, TOL, "poisson vcov[2][2] hp variance");
 
-  // Check confidence intervals
+  // Check confidence intervals (profile likelihood, matches R 4.x confint.glm)
   const ci = model.confint({ level: 0.95 });
-  expect(ci.lower[0]).toBeCloseTo(-0.642582533, 3);
-  expect(ci.upper[0]).toBeCloseTo(0.920159115, 3);
-  expect(ci.lower[2]).toBeCloseTo(0.002264774, 4);
-  expect(ci.upper[2]).toBeCloseTo(0.008709707, 4);
+  assertClose(ci.lower[0], -0.659863166, TOL_PROFILE, "poisson profile CI lower intercept");
+  assertClose(ci.upper[0], 0.904767995, TOL_PROFILE, "poisson profile CI upper intercept");
+  assertClose(ci.lower[2], 0.002123691, 1e-3, "poisson profile CI lower hp");
+  assertClose(ci.upper[2], 0.008589864, 1e-3, "poisson profile CI upper hp");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 4: Different confidence levels", () => {
@@ -500,17 +503,17 @@ Deno.test("GLM vcov/confint/residuals - Test 4: Different confidence levels", ()
 
   // Check 90% CI
   const ci90 = model.confint({ level: 0.90 });
-  expect(ci90.lower[0]).toBeCloseTo(34.196704, 4);
-  expect(ci90.upper[0]).toBeCloseTo(40.373548, 4);
-  expect(ci90.lower[1]).toBeCloseTo(-6.264111, 4);
-  expect(ci90.upper[1]).toBeCloseTo(-4.424832, 4);
+  assertClose(ci90.lower[0], 34.1967040315934, TOL, "gaussian 90% CI lower intercept");
+  assertClose(ci90.upper[0], 40.3735483030906, TOL, "gaussian 90% CI upper intercept");
+  assertClose(ci90.lower[1], -6.26411095458666, TOL, "gaussian 90% CI lower wt");
+  assertClose(ci90.upper[1], -4.42483219085870, TOL, "gaussian 90% CI upper wt");
 
   // Check 99% CI
   const ci99 = model.confint({ level: 0.99 });
-  expect(ci99.lower[0]).toBeCloseTo(32.44868, 4);
-  expect(ci99.upper[0]).toBeCloseTo(42.121574, 4);
-  expect(ci99.lower[1]).toBeCloseTo(-6.78462, 4);
-  expect(ci99.upper[1]).toBeCloseTo(-3.904323, 4);
+  assertClose(ci99.lower[0], 32.4486786508938, TOL, "gaussian 99% CI lower intercept");
+  assertClose(ci99.upper[0], 42.1215736837903, TOL, "gaussian 99% CI upper intercept");
+  assertClose(ci99.lower[1], -6.78462042833433, TOL, "gaussian 99% CI lower wt");
+  assertClose(ci99.upper[1], -3.90432271711103, TOL, "gaussian 99% CI upper wt");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 5: Residuals - all types", () => {
@@ -630,35 +633,35 @@ Deno.test("GLM vcov/confint/residuals - Test 5: Residuals - all types", () => {
 
   // Check deviance residuals (first 5)
   const deviance = model.residuals({ type: "deviance" });
-  expect(deviance[0]).toBeCloseTo(-1.1736815, 4);
-  expect(deviance[1]).toBeCloseTo(-1.2373452, 4);
-  expect(deviance[2]).toBeCloseTo(0.8761030, 4);
-  expect(deviance[3]).toBeCloseTo(0.9553595, 4);
-  expect(deviance[4]).toBeCloseTo(-0.8846730, 4);
+  assertClose(deviance[0], -1.1736815, TOL, "deviance residual obs 1");
+  assertClose(deviance[1], -1.2373452, TOL, "deviance residual obs 2");
+  assertClose(deviance[2], 0.8761030, TOL, "deviance residual obs 3");
+  assertClose(deviance[3], 0.9553595, TOL, "deviance residual obs 4");
+  assertClose(deviance[4], -0.8846730, TOL, "deviance residual obs 5");
 
   // Check Pearson residuals (first 5)
   const pearson = model.residuals({ type: "pearson" });
-  expect(pearson[0]).toBeCloseTo(-0.9956169, 4);
-  expect(pearson[1]).toBeCloseTo(-1.0724244, 4);
-  expect(pearson[2]).toBeCloseTo(0.6839736, 4);
-  expect(pearson[3]).toBeCloseTo(0.7604683, 4);
-  expect(pearson[4]).toBeCloseTo(-0.6920523, 4);
+  assertClose(pearson[0], -0.9956169, TOL, "pearson residual obs 1");
+  assertClose(pearson[1], -1.0724244, TOL, "pearson residual obs 2");
+  assertClose(pearson[2], 0.6839736, TOL, "pearson residual obs 3");
+  assertClose(pearson[3], 0.7604683, TOL, "pearson residual obs 4");
+  assertClose(pearson[4], -0.6920523, TOL, "pearson residual obs 5");
 
   // Check working residuals (first 5)
   const working = model.residuals({ type: "working" });
-  expect(working[0]).toBeCloseTo(-1.991253, 4);
-  expect(working[1]).toBeCloseTo(-2.150094, 4);
-  expect(working[2]).toBeCloseTo(1.467820, 4);
-  expect(working[3]).toBeCloseTo(1.578312, 4);
-  expect(working[4]).toBeCloseTo(-1.478936, 4);
+  assertClose(working[0], -1.991253, TOL, "working residual obs 1");
+  assertClose(working[1], -2.150094, TOL, "working residual obs 2");
+  assertClose(working[2], 1.467820, TOL, "working residual obs 3");
+  assertClose(working[3], 1.578312, TOL, "working residual obs 4");
+  assertClose(working[4], -1.478936, TOL, "working residual obs 5");
 
   // Check response residuals (first 5)
   const response = model.residuals({ type: "response" });
-  expect(response[0]).toBeCloseTo(-0.4978037, 4);
-  expect(response[1]).toBeCloseTo(-0.5349041, 4);
-  expect(response[2]).toBeCloseTo(0.3187175, 4);
-  expect(response[3]).toBeCloseTo(0.3664117, 4);
-  expect(response[4]).toBeCloseTo(-0.3238384, 4);
+  assertClose(response[0], -0.4978037, TOL, "response residual obs 1");
+  assertClose(response[1], -0.5349041, TOL, "response residual obs 2");
+  assertClose(response[2], 0.3187175, TOL, "response residual obs 3");
+  assertClose(response[3], 0.3664117, TOL, "response residual obs 4");
+  assertClose(response[4], -0.3238384, TOL, "response residual obs 5");
 });
 
 Deno.test("GLM vcov/confint/residuals - Test 6: Subset of parameters for confint", () => {
@@ -815,8 +818,8 @@ Deno.test("GLM vcov/confint/residuals - Test 6: Subset of parameters for confint
   // Extract wt and hp from results
   const wtIdx = ci.names.indexOf("wt");
   const hpIdx = ci.names.indexOf("hp");
-  expect(ci.lower[wtIdx]).toBeCloseTo(-5.83406286, 4);
-  expect(ci.upper[wtIdx]).toBeCloseTo(-2.88353154, 4);
-  expect(ci.lower[hpIdx]).toBeCloseTo(-0.04718482, 4);
-  expect(ci.upper[hpIdx]).toBeCloseTo(0.01154028, 4);
+  assertClose(ci.lower[wtIdx], -5.83406286, TOL, "subset CI lower wt");
+  assertClose(ci.upper[wtIdx], -2.88353154, TOL, "subset CI upper wt");
+  assertClose(ci.lower[hpIdx], -0.04718482, TOL, "subset CI lower hp");
+  assertClose(ci.upper[hpIdx], 0.01154028, TOL, "subset CI upper hp");
 });

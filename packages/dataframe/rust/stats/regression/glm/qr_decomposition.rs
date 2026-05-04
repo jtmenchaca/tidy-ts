@@ -110,10 +110,11 @@ pub fn cdqrls(
     for col in 0..lup {
         // Limited pivoting via cycling: move negligible columns to the right
         loop {
-            if col >= k_cur {
+            // R (1-based): if (l .ge. k) exit
+            // col is 0-based, k_cur is 1-based (starts at p+1)
+            if col + 1 >= k_cur {
                 break;
             }
-            // Checking column for rank deficiency
             if qraux[col] >= work2[col] * tol_eff {
                 break;
             }
@@ -149,13 +150,18 @@ pub fn cdqrls(
         }
 
         // Householder transformation for column col (matching R's dqrdc2)
-        if col < n {
+        // R: if (l .ne. n) — skip when l equals n (1-based)
+        if col + 1 != n {
             // Compute norm of subcolumn x(col:n, col)
             let mut nrmxl = 0.0;
             for i in col..n {
                 nrmxl += x_qr[(i, col)] * x_qr[(i, col)];
             }
             nrmxl = nrmxl.sqrt();
+
+            eprintln!("HH col={} nrmxl={:.6e} x_diag={:.6e} subcol={:?}",
+                col, nrmxl, x_qr[(col, col)],
+                (col..n).map(|i| x_qr[(i, col)]).collect::<Vec<_>>());
 
             if nrmxl != 0.0 {
                 // Set sign like R: nrmxl = sign(nrmxl, x(col,col))
@@ -166,6 +172,7 @@ pub fn cdqrls(
                         nrmxl
                     };
                 }
+                eprintln!("HH col={} nrmxl_signed={:.6e}", col, nrmxl);
 
                 // Scale the subcolumn: x(col:n, col) = x(col:n, col) / nrmxl
                 for i in col..n {
@@ -174,6 +181,9 @@ pub fn cdqrls(
 
                 // Set x(col, col) = 1 + x(col, col)
                 x_qr[(col, col)] = 1.0 + x_qr[(col, col)];
+                eprintln!("HH col={} after: x_diag={:.6e} subcol={:?}",
+                    col, x_qr[(col, col)],
+                    (col..n).map(|i| x_qr[(i, col)]).collect::<Vec<_>>());
 
                 // Apply transformation to remaining columns
                 if col + 1 < p {
@@ -217,6 +227,7 @@ pub fn cdqrls(
                 // Save the transformation: qraux(col) = x(col, col), x(col, col) = -nrmxl
                 qraux[col] = x_qr[(col, col)];
                 x_qr[(col, col)] = -nrmxl;
+                eprintln!("HH col={} saved: qraux={:.6e} R_diag={:.6e}", col, qraux[col], x_qr[(col, col)]);
             }
         }
     }
@@ -229,6 +240,9 @@ pub fn cdqrls(
     // Apply Q^T to y using stored Householder transformations (matching R's dqrsl)
     let mut qty_work = y_work.clone();
 
+    eprintln!("QTY: rank={} n={} y_init={:?}", rank, n,
+        (0..n).map(|i| qty_work[(i, 0)]).collect::<Vec<_>>());
+
     // Apply Householder transformations to compute Q^T * y
     // R applies transformations for qty in FORWARD order: j = 1..ju, ju = min(k, n-1)
     let ju = rank.min(n.saturating_sub(1));
@@ -239,23 +253,34 @@ pub fn cdqrls(
                 let temp = x_qr[(j, j)];
                 x_qr[(j, j)] = qraux[j];
 
+                let hh_vec: Vec<f64> = (j..n).map(|i| x_qr[(i, j)]).collect();
+                eprintln!("QTY j={} qraux={:.6e} hh_vec={:?}", j, qraux[j], hh_vec);
+
                 // t = -ddot(n-j, x(j:j.., j), qty(j:j.., k)) / x(j,j)
                 let mut t = 0.0;
                 for i in j..n {
                     t += x_qr[(i, j)] * qty_work[(i, k)];
                 }
                 t = -t / x_qr[(j, j)];
+                eprintln!("QTY j={} t={:.6e}", j, t);
 
                 // qty(j:n, k) += t * x(j:n, j)
                 for i in j..n {
                     qty_work[(i, k)] += t * x_qr[(i, j)];
                 }
 
+                eprintln!("QTY j={} result={:?}", j,
+                    (0..n).map(|i| qty_work[(i, 0)]).collect::<Vec<_>>());
+
                 // Restore original diagonal
                 x_qr[(j, j)] = temp;
             }
         }
     }
+
+    eprintln!("BACKSUB: rank={} R_diag={:?} qty={:?}", rank,
+        (0..rank).map(|i| x_qr[(i, i)]).collect::<Vec<_>>(),
+        (0..rank).map(|i| qty_work[(i, 0)]).collect::<Vec<_>>());
 
     // Back-substitute to solve R * coef = Q^T * y (matching R's dqrsl)
     let mut coef = Mat::zeros(p, ny);
@@ -286,40 +311,38 @@ pub fn cdqrls(
         }
     }
 
-    // Unscramble coefficients back to ORIGINAL column order using pivot
-    // R's dqrls returns coefficients in pivoted order; callers expect original order
-    let mut coef_unscrambled = Mat::zeros(p, ny);
+    // R's dqrls returns b in pivoted order: "b contains the solution vectors
+    // with rows permuted in the same way as the columns of x.
+    // Components corresponding to columns not used are set to zero."
+    // Caller unscrambles via: start[fit$pivot] <- fit$coefficients
+
+    // Residuals need unscrambled coefs for y - X*b computation
+    let mut coef_orig = Mat::zeros(p, ny);
     for j in 0..ny {
-        // Only copy coefficients for the first 'rank' columns (estimable parameters)
         for i in 0..rank {
-            let orig_col = (pivot[i] - 1) as usize; // pivot is 1-based
-            coef_unscrambled[(orig_col, j)] = coef[(i, j)];
+            let orig_col = (pivot[i] - 1) as usize;
+            coef_orig[(orig_col, j)] = coef[(i, j)];
         }
-        // Non-estimable coefficients remain zero (Mat::zeros initialization)
     }
-
-    // Compute fitted values and residuals using original X and unscrambled coefficients
-    let fitted = &x_mat * &coef_unscrambled;
-
+    let fitted = &x_mat * &coef_orig;
     let residuals = Mat::from_fn(n, ny, |i, j| y_mat[(i, j)] - fitted[(i, j)]);
 
-    // Effects are Q^T * y (first n elements of qty_work)
+    // Effects are Q^T * y
     let effects = qty_work.clone();
 
-    // Create packed QR output (R in upper triangle, Householder vectors below)
+    // Packed QR output (R in upper triangle, Householder vectors below)
     let mut qr_packed = vec![0.0; n * p];
-
     for j in 0..p {
         for i in 0..n {
             qr_packed[i + j * n] = x_qr[(i, j)];
         }
     }
 
+    // Coefficients in PIVOTED order (matching R's dqrls)
     let mut coefficients = Vec::with_capacity(p * ny);
     for j in 0..ny {
         for i in 0..p {
-            let coef_val = coef_unscrambled[(i, j)];
-            coefficients.push(coef_val);
+            coefficients.push(coef[(i, j)]);
         }
     }
 

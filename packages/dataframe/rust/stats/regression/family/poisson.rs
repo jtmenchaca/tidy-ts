@@ -96,22 +96,9 @@ impl GlmFamily for PoissonFamily {
             return Err("weights must have length 1 or same as y".to_string());
         }
 
+        // R: mustart <- y + 0.1
         for i in 0..y.len() {
-            let yi = y[i];
-            let weight = if weights.len() == 1 {
-                weights[0]
-            } else {
-                weights[i]
-            };
-
-            // Initialize mu based on y and weights
-            let mu_init = if weight > 0.0 {
-                if yi == 0.0 { 0.1 } else { yi }
-            } else {
-                1.0
-            };
-
-            mu[i] = mu_init;
+            mu[i] = y[i] + 0.1;
         }
 
         Ok(())

@@ -66,6 +66,9 @@ import * as uniform from "./distributions/uniform.ts";
 import * as weibull from "./distributions/weibull.ts";
 import * as wilcoxon from "./distributions/wilcoxon.ts";
 
+// Import regression/modeling functions
+import { glm } from "../wasm/glm-functions.ts";
+
 // Import compare API functions
 import { centralTendencyToValue } from "./statistical-tests/compare-api/one-group/central-tendency.ts";
 import { proportionsToValue } from "./statistical-tests/compare-api/one-group/proportions.ts";
@@ -569,6 +572,9 @@ export const stats: {
       readonly tukey: typeof tukeyHSD;
     };
   };
+
+  /** Fit a Generalized Linear Model (GLM) */
+  readonly glm: typeof glm;
 } = {
   // Boolean aggregates
   any,
@@ -851,6 +857,9 @@ export const stats: {
       tukey: tukeyHSD,
     },
   },
+
+  // Regression models
+  glm,
 };
 
 /**

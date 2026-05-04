@@ -94,17 +94,17 @@ Deno.test("GLM Demo 4: Confidence Intervals", () => {
   console.log("\n=== Confidence Intervals ===\n");
 
   const data = createDataFrame([
-    { y: 0, x: 1 },
-    { y: 1, x: 2 },
-    { y: 0, x: 1.5 },
-    { y: 1, x: 2.5 },
-    { y: 1, x: 3 },
+    { y: 2.1, x: 1 },
+    { y: 3.9, x: 2 },
+    { y: 6.2, x: 3 },
+    { y: 7.8, x: 4 },
+    { y: 10.1, x: 5 },
   ]);
 
   const model = glm({
     formula: "y ~ x",
-    family: "binomial",
-    link: "logit",
+    family: "gaussian",
+    link: "identity",
     data,
   });
 
@@ -183,7 +183,7 @@ Deno.test("GLM Demo 6: Influence Measures", () => {
   );
   console.log(
     "Cook's D:",
-    influence.cooks_distance.map((d: number) =>
+    influence.cooksDistance.map((d: number) =>
       (d == null || Number.isNaN(d)) ? "NaN" : d.toFixed(3)
     ),
   );

@@ -20,6 +20,9 @@ pub struct IrlsResult {
     pub rank: usize,
     /// QR decomposition result from the final iteration
     pub qr_result: Option<super::qr_decomposition::QrLsResult>,
+    /// IRLS working weights (w) from the start of the final iteration.
+    /// R stores wt = w^2 in object$weights; used for dispersion computation.
+    pub w: Vec<f64>,
 }
 
 /// Run the IRLS iteration algorithm
@@ -59,6 +62,8 @@ pub fn run_irls_iteration(
     // Track the estimated rank from the weighted least squares step
     let mut last_rank: usize = 0;
     let mut last_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
+    let mut last_w: Vec<f64> = Vec::new();
+    let mut last_good: Vec<bool> = Vec::new();
 
     for iter_count in 1..=control.maxit {
         // Starting iteration {}/{}
@@ -149,6 +154,10 @@ pub fn run_irls_iteration(
             })
             .collect();
 
+        // Save w and good for the return value (R stores these from the last iteration)
+        last_w = w.clone();
+        last_good = good.clone();
+
         // Create weighted design matrix and response
         let mut x_weighted = Vec::new();
         let mut z_weighted = Vec::new();
@@ -191,7 +200,6 @@ pub fn run_irls_iteration(
             Some(control.epsilon / 1000.0),
         )?;
 
-        // cdqrls completed
         // Store QR result for final return
         last_qr_result = Some(qr_result.clone());
 
@@ -223,32 +231,26 @@ pub fn run_irls_iteration(
         // Store old coefficients for step halving
         coefold = Some(coef.clone());
 
-        // Updating coefficients with pivot permutation (matching R's glm.fit)
-        // R does: start[fit$pivot] <- fit$coefficients
-        // This handles rank-deficient cases where some coefficients should be NA
+        // R's glm.fit: start[fit$pivot] <- fit$coefficients
+        // dqrls returns coefficients in pivoted order with zeros beyond rank.
+        // During IRLS iterations, beyond-rank coefficients are 0 (not NaN)
+        // so that eta = X %*% start works correctly.
+        // NaN is only set in the final output (after convergence).
 
-        let rank = qr_result.rank;
         let pivot = &qr_result.pivot;
         let p = coef.len();
 
-        // Set all coefficients to NaN first
-        for c in coef.iter_mut() {
-            *c = f64::NAN;
-        }
-
-        // Only update coefficients up to rank, using pivot permutation
-        for i in 0..rank.min(qr_result.coefficients.len()) {
+        eprintln!("IRLS: qr_coef={:?} pivot={:?} rank={}",
+            &qr_result.coefficients[..p.min(qr_result.coefficients.len())], pivot, qr_result.rank);
+        for i in 0..p.min(qr_result.coefficients.len()) {
             let pivot_idx = pivot[i] as usize - 1; // R uses 1-based indexing
             if pivot_idx < p {
                 coef[pivot_idx] = qr_result.coefficients[i];
             }
         }
+        eprintln!("IRLS: coef_after={:?}", &coef[..p]);
 
-        // Coefficients updated
-
-        // Updating eta and mu
-
-        // Update eta and mu, treating NaN coefficients as 0
+        // R: eta <- drop(x %*% start)
         *eta = offset
             .iter()
             .enumerate()
@@ -256,18 +258,12 @@ pub fn run_irls_iteration(
                 o + x[i]
                     .iter()
                     .zip(coef.iter())
-                    .map(|(x_ij, &c_j)| {
-                        if c_j.is_nan() {
-                            0.0
-                        } else {
-                            x_ij * c_j
-                        }
-                    })
+                    .map(|(x_ij, &c_j)| x_ij * c_j)
                     .sum::<f64>()
             })
             .collect();
 
-        // Calling linkinv
+        eprintln!("IRLS: eta[0..5]={:?} mu_before_linkinv", &eta[..5.min(eta.len())]);
 
         *mu = linkinv(eta);
 
@@ -490,7 +486,8 @@ pub fn run_irls_iteration(
             .deviance(y, mu, weights)
             .map_err(|e| format!("Failed to calculate final deviance: {}", e))?;
 
-        if (dev - *devold).abs() / (0.1 + dev.abs()) < control.epsilon {
+        let criterion = (dev - *devold).abs() / (0.1 + dev.abs());
+        if criterion < control.epsilon {
             *conv = true;
             *devold = dev;
             break;
@@ -511,6 +508,17 @@ pub fn run_irls_iteration(
         // We'll let the calling code handle this as a warning, not an error
     }
 
+    // Expand w back to full observation length (R: wt <- rep.int(0, nobs); wt[good] <- w^2)
+    let n = eta.len();
+    let mut w_full = vec![0.0; n];
+    let mut good_idx = 0;
+    for (i, &is_good) in last_good.iter().enumerate() {
+        if is_good && good_idx < last_w.len() {
+            w_full[i] = last_w[good_idx];
+            good_idx += 1;
+        }
+    }
+
     Ok(IrlsResult {
         eta: eta.clone(),
         mu: mu.clone(),
@@ -519,5 +527,6 @@ pub fn run_irls_iteration(
         boundary: *boundary,
         rank: last_rank,
         qr_result: last_qr_result,
+        w: w_full,
     })
 }

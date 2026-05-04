@@ -14,6 +14,7 @@
 //! - `types.rs` - Core types and structures
 
 // Core GLM modules (in dependency order) - public for internal use but not exported
+pub mod chol2inv;
 pub mod glm_aic;
 pub mod glm_control;
 pub mod glm_diagnostics;
