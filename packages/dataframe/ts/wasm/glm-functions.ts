@@ -838,7 +838,7 @@ export interface VcovCLResult {
  *
  * @param result - A fitted GlmFitResult (from glmFit or glm().result)
  * @param cluster - Integer cluster IDs, one per observation
- * @param type - HC correction type: "HC0" (default) or "HC1"
+ * @param type - HC correction type: "HC0" (default), "HC1", "HC2", or "HC3"
  * @param cadjust - Apply cluster adjustment g/(g-1), default true
  * @param fix - Fix non-positive-definite result, default false
  * @returns VcovCLResult with the robust covariance matrix
@@ -852,7 +852,7 @@ export function vcovCL({
 }: {
   result: GlmFitResult;
   cluster: number[];
-  type?: "HC0" | "HC1";
+  type?: "HC0" | "HC1" | "HC2" | "HC3";
   cadjust?: boolean;
   fix?: boolean;
 }): VcovCLResult {

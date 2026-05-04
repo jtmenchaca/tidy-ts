@@ -32,6 +32,42 @@ const ref = {
     [0.4205461398658368, 0.2595176099473264, -0.1712213410855744],
     [-0.2022227848922731, -0.1712213410855745, 0.3941718506413193],
   ],
+  // HC2 clustered (5 clusters, cadjust=TRUE)
+  vcov_hc2: [
+    [2.6204150111825419e+00, -3.8249631701270936e-01, 4.0965315726486629e-01],
+    [-3.8249631701270864e-01, 1.2754029577754423e+01, -5.1606377564797645e+00],
+    [4.0965315726486795e-01, -5.1606377564797548e+00, 2.3868593586378126e+00],
+  ],
+  // HC3 clustered (5 clusters, cadjust=TRUE)
+  vcov_hc3: [
+    [4.5802677593031946e+00, -5.4732016472920879e+00, 3.4623502749802935e+00],
+    [-5.4732016472920719e+00, 1.9595703847284312e+02, -9.2925791702108484e+01],
+    [3.4623502749802983e+00, -9.2925791702108398e+01, 4.4559996307818587e+01],
+  ],
+  // HC2 clustered without cadjust
+  vcov_hc2_noadj: [
+    [2.0963320089460331e+00, -3.0599705361016705e-01, 3.2772252581189254e-01],
+    [-3.0599705361016738e-01, 1.0203223662203541e+01, -4.1285102051838161e+00],
+    [3.2772252581189193e-01, -4.1285102051838152e+00, 1.9094874869102616e+00],
+  ],
+  // HC3 clustered without cadjust
+  vcov_hc3_noadj: [
+    [3.6642142074425568e+00, -4.3785613178336797e+00, 2.7698802199842421e+00],
+    [-4.3785613178336744e+00, 1.5676563077827444e+02, -7.4340633361686713e+01],
+    [2.7698802199842247e+00, -7.4340633361686784e+01, 3.5647997046254908e+01],
+  ],
+  // HC2 non-clustered (g==n, each obs is its own cluster)
+  vcov_hc2_nocl: [
+    [1.3215121731789035e+00, 2.1899400806186120e-01, -9.9846624919562130e-02],
+    [2.1899400806186087e-01, 1.2580972374545618e+00, -6.6722308532506969e-01],
+    [-9.9846624919561783e-02, -6.6722308532506980e-01, 1.1776334940491551e+00],
+  ],
+  // HC3 non-clustered (g==n)
+  vcov_hc3_nocl: [
+    [2.0589593639256565e+00, -5.3507693812982904e-01, 8.4537774555292124e-03],
+    [-5.3507693812982982e-01, 3.4483971927164081e+00, -3.5508537751922781e-01],
+    [8.4537774555296912e-03, -3.5508537751922836e-01, 1.7739415124587634e+00],
+  ],
   coefficients: [1.106189643350182, 2.680469907286557, -2.580249115623844],
 };
 
@@ -124,4 +160,104 @@ Deno.test("vcovCL: HC0 without cadjust matches R sandwich::vcovCL", () => {
     TOL,
     "vcov_hc0_noadj",
   );
+});
+
+// --- HC2 tests ---
+
+Deno.test("vcovCL: HC2 clustered with cadjust matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const result = vcovCL({
+    result: fit,
+    cluster: ref.data.cluster,
+    type: "HC2",
+    cadjust: true,
+  });
+
+  expect(result.type).toBe("HC2");
+  expect(result.nClusters).toBe(5);
+  assertMatrixClose(result.matrix, ref.vcov_hc2, TOL, "vcov_hc2");
+});
+
+Deno.test("vcovCL: HC2 clustered without cadjust matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const result = vcovCL({
+    result: fit,
+    cluster: ref.data.cluster,
+    type: "HC2",
+    cadjust: false,
+  });
+
+  assertMatrixClose(
+    result.matrix,
+    ref.vcov_hc2_noadj,
+    TOL,
+    "vcov_hc2_noadj",
+  );
+});
+
+Deno.test("vcovCL: HC2 non-clustered (g==n) matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const nocl = Array.from({ length: 20 }, (_, i) => i + 1);
+  const result = vcovCL({
+    result: fit,
+    cluster: nocl,
+    type: "HC2",
+    cadjust: true,
+  });
+
+  expect(result.nClusters).toBe(20);
+  assertMatrixClose(result.matrix, ref.vcov_hc2_nocl, TOL, "vcov_hc2_nocl");
+});
+
+// --- HC3 tests ---
+
+Deno.test("vcovCL: HC3 clustered with cadjust matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const result = vcovCL({
+    result: fit,
+    cluster: ref.data.cluster,
+    type: "HC3",
+    cadjust: true,
+  });
+
+  expect(result.type).toBe("HC3");
+  expect(result.nClusters).toBe(5);
+  assertMatrixClose(result.matrix, ref.vcov_hc3, TOL, "vcov_hc3");
+});
+
+Deno.test("vcovCL: HC3 clustered without cadjust matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const result = vcovCL({
+    result: fit,
+    cluster: ref.data.cluster,
+    type: "HC3",
+    cadjust: false,
+  });
+
+  assertMatrixClose(
+    result.matrix,
+    ref.vcov_hc3_noadj,
+    TOL,
+    "vcov_hc3_noadj",
+  );
+});
+
+Deno.test("vcovCL: HC3 non-clustered (g==n) matches R", () => {
+  const fit = glmFit("y ~ x1 + x2", "binomial", "logit", ref.data);
+
+  const nocl = Array.from({ length: 20 }, (_, i) => i + 1);
+  const result = vcovCL({
+    result: fit,
+    cluster: nocl,
+    type: "HC3",
+    cadjust: true,
+  });
+
+  expect(result.nClusters).toBe(20);
+  assertMatrixClose(result.matrix, ref.vcov_hc3_nocl, TOL, "vcov_hc3_nocl");
 });

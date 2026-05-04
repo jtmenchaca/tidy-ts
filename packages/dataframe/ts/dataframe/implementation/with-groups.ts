@@ -282,7 +282,9 @@ export function rebuildGroupsColumnar(
   usesRawIndices: boolean;
 } {
   const n = physicalIndices.length;
-  const next = new Int32Array(n);
+  // Size next[] to the store length so we can index by physical store position
+  const storeLen = Object.values(store.columns)[0]?.length ?? 0;
+  const next = new Int32Array(storeLen).fill(-1);
   const head: number[] = [];
   const count: number[] = [];
   const keyRow: number[] = [];
@@ -305,11 +307,11 @@ export function rebuildGroupsColumnar(
       map.set(key, g);
       head[g] = -1;
       count[g] = 0;
-      keyRow[g] = i;
+      keyRow[g] = physIdx;
     }
 
-    next[i] = head[g];
-    head[g] = i;
+    next[physIdx] = head[g];
+    head[g] = physIdx;
     count[g] = (count[g] + 1) | 0;
   }
 

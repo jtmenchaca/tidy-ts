@@ -1,5 +1,7 @@
 import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { glm } from "../../../dataframe/ts/wasm/glm-functions.ts";
+import { expect } from "@std/expect";
+import { TOL, assertClose } from "../glm-test-helpers.ts";
 
 Deno.test("GLM T-Test Equivalent", () => {
   // Data from R test
@@ -8,17 +10,22 @@ Deno.test("GLM T-Test Equivalent", () => {
   const y = [...groupA, ...groupB];
   const group = ["A", "A", "A", "A", "A", "A", "B", "B", "B", "B", "B", "B"];
 
-  // Calculate means manually since mean_difference is not exposed
-  const meanA = groupA.reduce((sum, val) => sum + val, 0) / groupA.length;
-  const meanB = groupB.reduce((sum, val) => sum + val, 0) / groupB.length;
-  const _meanDifference = meanA - meanB;
+  // R reference values
+  const R_COEF = [25.15, -9.983333];
+  const R_SE = [0.886269, 1.253373];
+  const R_PVALUES = [6.868e-11, 1.223e-05];
+  const R_DEVIANCE = 47.128333;
+  const R_AIC = 56.470138;
+  const R_T_STAT = -7.965172;
+  const R_T_PVALUE = 1.223e-05;
+  const R_MEAN_DIFF = 9.983333;
 
-  // 1. Perform independent t-test (Welch's t-test)
-  const _ttest = stats.test.t.independent({
+  // 1. Perform equal-variance t-test
+  const ttest = stats.test.t.independent({
     x: groupA,
     y: groupB,
     alternative: "two-sided",
-    equalVar: false, // Welch's t-test
+    equalVar: true,
   });
 
   // 2. Perform GLM with Gaussian family
@@ -37,66 +44,63 @@ Deno.test("GLM T-Test Equivalent", () => {
     data: df,
   });
 
-  // Display GLM result comparison
-  console.log("=== TYPESCRIPT GLM RESULT ===");
-  console.log(
-    `Coefficients: [${
-      glmResult.coefficients.map((c) => c.toFixed(4)).join(", ")
-    }]`,
+  // -- GLM coefficients match R reference values --
+  assertClose(glmResult.coefficients[0], R_COEF[0], TOL, "intercept");
+  assertClose(
+    glmResult.coefficients[1],
+    R_COEF[1],
+    TOL,
+    "group coefficient",
   );
-  console.log(
-    `Standard errors: [${
-      glmResult.standard_errors.map((se) => se.toFixed(4)).join(", ")
-    }]`,
+
+  // -- GLM standard errors match R --
+  assertClose(glmResult.standard_errors[0], R_SE[0], 1e-4, "SE intercept");
+  assertClose(glmResult.standard_errors[1], R_SE[1], 1e-4, "SE group");
+
+  // -- GLM p-values match R --
+  assertClose(glmResult.p_values[0], R_PVALUES[0], 1e-12, "p-value intercept");
+  assertClose(glmResult.p_values[1], R_PVALUES[1], 1e-7, "p-value group");
+
+  // -- GLM deviance and AIC match R --
+  assertClose(glmResult.deviance, R_DEVIANCE, 1e-4, "deviance");
+  assertClose(glmResult.aic, R_AIC, 1e-4, "AIC");
+
+  // -- GLM group coefficient equals mean difference from t-test --
+  // The GLM coefficient for the group indicator is exactly meanA - meanB
+  const meanA = groupA.reduce((sum, val) => sum + val, 0) / groupA.length;
+  const meanB = groupB.reduce((sum, val) => sum + val, 0) / groupB.length;
+  const meanDiff = meanA - meanB;
+  assertClose(
+    glmResult.coefficients[1],
+    meanDiff,
+    TOL,
+    "GLM group coef = mean difference",
   );
-  console.log(
-    `T-statistics: [${
-      glmResult.coefficients.map((c, i) =>
-        (c / glmResult.standard_errors[i]).toFixed(4)
-      ).join(", ")
-    }]`,
+  assertClose(Math.abs(meanDiff), R_MEAN_DIFF, 1e-4, "mean difference vs R");
+
+  // -- GLM p-value for group matches t-test p-value --
+  // Both tests are equivalent: Gaussian GLM with binary predictor = equal-variance t-test
+  assertClose(
+    glmResult.p_values[1],
+    ttest.pValue,
+    1e-7,
+    "GLM group p-value = t-test p-value",
   );
-  console.log(
-    `P-values: [${glmResult.p_values.map((p: number) => p.toFixed(5)).join(", ")}]`,
+  assertClose(ttest.pValue, R_T_PVALUE, 1e-7, "t-test p-value vs R");
+
+  // -- T-statistic from GLM matches t-test --
+  const glmTStat = glmResult.coefficients[1] / glmResult.standard_errors[1];
+  assertClose(glmTStat, R_T_STAT, 1e-4, "GLM t-statistic vs R");
+  assertClose(
+    Math.abs(glmTStat),
+    Math.abs(ttest.testStatistic.value),
+    1e-4,
+    "GLM t-stat magnitude = t-test statistic magnitude",
   );
-  console.log(
-    `Deviance: ${glmResult.deviance.toFixed(4)} | AIC: ${
-      glmResult.aic.toFixed(4)
-    }`,
-  );
-  console.log(
-    `Null deviance: ${
-      glmResult.null_deviance.toFixed(4)
-    } | Residual df: ${glmResult.df_residual}`,
-  );
-  console.log(
-    `Rank: ${glmResult.rank} | Iterations: ${glmResult.iter} | Converged: ${glmResult.converged}`,
-  );
-  console.log(
-    `R-squared: ${glmResult.r_squared.toFixed(4)} | Adj R-squared: ${
-      glmResult.adjusted_r_squared.toFixed(4)
-    }`,
-  );
-  console.log(
-    `Residual SE: ${
-      glmResult.residual_standard_error.toFixed(4)
-    } | Dispersion: ${glmResult.dispersion_parameter.toFixed(4)}`,
-  );
-  console.log(
-    `Family: ${glmResult.family.family} | Link: ${glmResult.family.link}`,
-  );
-  console.log("Covariance matrix:");
-  glmResult.covariance_matrix.forEach((row) => {
-    console.log(`  [${row.map((val) => val.toFixed(4)).join(", ")}]`);
-  });
-  console.log("R matrix:");
-  glmResult.r.forEach((row) => {
-    console.log(`  [${row.map((val) => val.toFixed(4)).join(", ")}]`);
-  });
-  console.log(
-    `Model matrix: ${glmResult.model_matrix_dimensions[0]}x${
-      glmResult.model_matrix_dimensions[1]
-    }, cols: [${glmResult.model_matrix_column_names.join(", ")}]`,
-  );
-  console.log("=== END TYPESCRIPT GLM ===");
+
+  // -- Basic structural checks --
+  expect(glmResult.converged).toBe(true);
+  expect(glmResult.family.family).toBe("gaussian");
+  expect(glmResult.family.link).toBe("identity");
+  expect(glmResult.rank).toBe(2);
 });
