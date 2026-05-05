@@ -1,9 +1,28 @@
 export { LLM } from "./ts/llm.ts";
-export { createEvaluateConfig } from "./ts/scaffolds/types.ts";
+export {
+  createDebateScaffold,
+  createEnsembleScaffold,
+  createEvaluateScaffold,
+  createPipelineScaffold,
+  createRefineScaffold,
+} from "./ts/scaffolds/types.ts";
 export type {
-  EvaluateConfig,
+  DebateScaffold,
+  DebateResult,
+  EnsembleScaffold,
+  EnsembleResult,
+  EvaluateScaffold,
   EvaluateResult,
+  InferDebateResult,
+  InferEnsembleResult,
+  InferEvaluateResult,
+  InferPipelineResult,
+  InferRefineResult,
   ModelOption,
+  PipelineScaffold,
+  PipelineResult,
+  RefineScaffold,
+  RefineResult,
   StepDef,
 } from "./ts/scaffolds/types.ts";
 export type {

@@ -6,6 +6,7 @@ import type {
   NumbersWithNullableIterable,
 } from "../../../helpers.ts";
 import { cleanNumeric } from "../helpers.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 
 /**
  * Test if data follows a normal distribution (Shapiro-Wilk test).
@@ -32,7 +33,7 @@ export function distributionToNormal({
     | NumbersWithNullable
     | NumbersWithNullableIterable;
   alpha?: number;
-}): ShapiroWilkTestResult {
+}): PrettifyDeep<ShapiroWilkTestResult> {
   // ============================================================================
   // DECISION TREE: One Group Distribution to Normal
   // ============================================================================

@@ -4,6 +4,7 @@ import {
 } from "../../wasm/statistical-tests.ts";
 
 import type { KolmogorovSmirnovTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Two-sample Kolmogorov-Smirnov test
@@ -30,7 +31,7 @@ export function kolmogorovSmirnovTest({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): KolmogorovSmirnovTestResult {
+}): PrettifyDeep<KolmogorovSmirnovTestResult> {
   // Clean data
   const cleanX = x.filter((v) => isFinite(v));
   const cleanY = y.filter((v) => isFinite(v));
@@ -73,7 +74,7 @@ export function kolmogorovSmirnovUniformTest({
   max?: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): KolmogorovSmirnovTestResult {
+}): PrettifyDeep<KolmogorovSmirnovTestResult> {
   // Clean data
   const cleanX = x.filter((v) => isFinite(v));
 

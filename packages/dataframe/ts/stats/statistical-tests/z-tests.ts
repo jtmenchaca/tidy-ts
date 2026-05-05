@@ -6,6 +6,7 @@ import type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
 } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 export type {
   OneSampleZTestResult,
   TwoSampleZTestResult,
@@ -26,7 +27,7 @@ export function zTestOneSample({
   popStd: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): OneSampleZTestResult {
+}): PrettifyDeep<OneSampleZTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length === 0) {
@@ -64,7 +65,7 @@ export function zTestTwoSample({
   popStd2: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): TwoSampleZTestResult {
+}): PrettifyDeep<TwoSampleZTestResult> {
   const cleanData1 = data1.filter((x) => isFinite(x));
   const cleanData2 = data2.filter((x) => isFinite(x));
 

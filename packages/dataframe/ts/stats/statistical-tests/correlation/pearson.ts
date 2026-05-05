@@ -4,6 +4,7 @@ import {
 import type {
   PearsonCorrelationTestResult,
 } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Pearson correlation test
@@ -18,7 +19,7 @@ export function pearsonTest({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): PearsonCorrelationTestResult {
+}): PrettifyDeep<PearsonCorrelationTestResult> {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }

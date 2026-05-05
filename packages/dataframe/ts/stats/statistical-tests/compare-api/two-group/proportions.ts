@@ -6,6 +6,7 @@ import type {
   FishersExactTestResult,
   TwoSampleProportionTestResult,
 } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 import { to01 } from "../helpers.ts";
 
 /**
@@ -40,7 +41,7 @@ export function proportionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: false;
   alpha?: number;
-}): TwoSampleProportionTestResult;
+}): PrettifyDeep<TwoSampleProportionTestResult>;
 
 export function proportionsToEachOther({
   data1,
@@ -54,7 +55,7 @@ export function proportionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: true;
   alpha?: number;
-}): ChiSquareIndependenceTestResult;
+}): PrettifyDeep<ChiSquareIndependenceTestResult>;
 
 export function proportionsToEachOther({
   data1,
@@ -68,7 +69,7 @@ export function proportionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare: "fisher";
   alpha?: number;
-}): FishersExactTestResult;
+}): PrettifyDeep<FishersExactTestResult>;
 
 export function proportionsToEachOther({
   data1,
@@ -82,10 +83,11 @@ export function proportionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare?: boolean | "auto" | "fisher";
   alpha?: number;
-}):
+}): PrettifyDeep<
   | TwoSampleProportionTestResult
   | ChiSquareIndependenceTestResult
-  | FishersExactTestResult;
+  | FishersExactTestResult
+>;
 
 export function proportionsToEachOther({
   data1,
@@ -99,10 +101,11 @@ export function proportionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   useChiSquare?: boolean | "auto" | "fisher";
   alpha?: number;
-}):
+}): PrettifyDeep<
   | TwoSampleProportionTestResult
   | ChiSquareIndependenceTestResult
-  | FishersExactTestResult {
+  | FishersExactTestResult
+> {
   // Map comparator to alternative parameter for underlying functions
   const alternative = comparator === "not equal to"
     ? "two-sided"

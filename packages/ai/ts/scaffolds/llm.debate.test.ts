@@ -11,8 +11,8 @@ Deno.test({
     });
 
     const result = await LLM.debate({
-      debate: {
-        input: "Should pineapple be allowed on pizza?",
+      input: "Should pineapple be allowed on pizza?",
+      config: {
         proposition: {
           instructions:
             "State the proposition clearly: 'Pineapple belongs on pizza.' Provide a brief thesis.",
@@ -28,23 +28,29 @@ Deno.test({
             "You are a passionate critic AGAINST pineapple on pizza. Make your 3 strongest counterarguments.",
           schema: argumentSchema,
         },
-      },
-      judge: {
-        instructions:
-          "You are an impartial judge. Weigh both sides and deliver a verdict with reasoning.",
-        schema: z.object({
-          verdict: z.enum(["for", "against", "undecided"]),
-          reasoning: z.string(),
-          winningArgument: z.string(),
-        }),
+        judge: {
+          instructions:
+            "You are an impartial judge. Weigh both sides and deliver a verdict with reasoning.",
+          schema: z.object({
+            verdict: z.enum(["for", "against", "undecided"]),
+            reasoning: z.string(),
+            winningArgument: z.string(),
+          }),
+        },
       },
     });
 
-    expect(["for", "against", "undecided"]).toContain(result.verdict);
-    expect(typeof result.reasoning).toBe("string");
-    expect(typeof result.winningArgument).toBe("string");
+    // All intermediates are exposed
+    expect(typeof result.proposition.thesis).toBe("string");
+    expect(typeof result.advocate.position).toBe("string");
+    expect(result.advocate.keyPoints.length).toBeGreaterThan(0);
+    expect(typeof result.critic.position).toBe("string");
+    expect(result.critic.keyPoints.length).toBeGreaterThan(0);
+
+    // Judge output
+    expect(["for", "against", "undecided"]).toContain(result.judge.verdict);
+    expect(typeof result.judge.reasoning).toBe("string");
+    expect(typeof result.judge.winningArgument).toBe("string");
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

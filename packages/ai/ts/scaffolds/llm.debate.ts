@@ -1,27 +1,29 @@
 import { z } from "zod";
 import { runScaffold } from "../scaffold.ts";
-import type { ModelOption, StepDef } from "./types.ts";
+import type { DebateScaffold, InferDebateResult } from "./types.ts";
 
 /**
- * Debate/Adversarial: Generate → advocate FOR + advocate AGAINST → judge decides.
+ * Debate/Adversarial: Proposition → Advocate + Critic (parallel) → Judge.
+ * Returns all intermediate outputs keyed by step name.
  */
-export async function debate<T extends z.ZodObject>({
-  debate: { input, proposition, advocate, critic },
-  judge,
-  model = "gpt-5.4-mini",
+export async function debate<
+  P extends z.ZodObject,
+  A extends z.ZodObject,
+  C extends z.ZodObject,
+  J extends z.ZodObject,
+>({
+  input,
+  config,
 }: {
-  debate: {
-    input: string;
-    proposition: StepDef;
-    advocate: { instructions: string; schema: z.ZodObject; model?: ModelOption };
-    critic: { instructions: string; schema: z.ZodObject; model?: ModelOption };
-  };
-  judge: { instructions: string; schema: T; model?: ModelOption };
-  model?: ModelOption;
-}): Promise<z.infer<T>> {
-  return runScaffold({
+  input: string;
+  config: DebateScaffold<P, A, C, J>;
+}): Promise<InferDebateResult<DebateScaffold<P, A, C, J>>> {
+  const { proposition, advocate, critic, judge, model: configModel } = config;
+  const model = configModel ?? "gpt-5.4-mini";
+  const results = await runScaffold({
     input,
     model,
+    returnAll: true,
     steps: [
       // Step 1: Generate the proposition
       () => ({
@@ -56,4 +58,10 @@ export async function debate<T extends z.ZodObject>({
       }),
     ],
   });
+  return {
+    proposition: results[0],
+    advocate: results[1][0],
+    critic: results[1][1],
+    judge: results[2],
+  } as InferDebateResult<DebateScaffold<P, A, C, J>>;
 }

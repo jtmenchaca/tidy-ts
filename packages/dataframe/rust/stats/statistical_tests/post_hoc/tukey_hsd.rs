@@ -5,7 +5,7 @@
 
 use super::types::{PairwiseComparison, TukeyHsdTestResult};
 use crate::stats::core::types::{ConfidenceInterval, TestStatistic};
-use statrs::distribution::{ContinuousCDF, StudentsT};
+use statrs::distribution::ContinuousCDF;
 use std::f64::consts::PI;
 
 /// Standard normal PDF
@@ -34,6 +34,31 @@ fn gamma(x: f64) -> f64 {
     statrs_gamma(x)
 }
 
+/// Studentized range quantile function (inverse CDF) via bisection
+/// Returns q such that ptukey_exact(q, k, nu) = p
+fn qtukey(p: f64, k: f64, nu: f64) -> f64 {
+    if p <= 0.0 { return 0.0; }
+    if p >= 1.0 { return f64::INFINITY; }
+
+    let mut lo = 0.0_f64;
+    let mut hi = 20.0_f64;
+
+    // Bisection search
+    for _ in 0..100 {
+        let mid = (lo + hi) / 2.0;
+        let cdf = ptukey_exact(mid, k, nu);
+        if cdf < p {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+        if (hi - lo) < 1e-10 {
+            break;
+        }
+    }
+    (lo + hi) / 2.0
+}
+
 /// Studentized range CDF implementation based on the mathematical definition
 /// F_R(q;k,ν) = (sqrt(2π) k ν^(ν/2)) / (Γ(ν/2) 2^(ν/2-1)) ∫[0,∞] s^(ν-1) φ(√ν s) [∫[-∞,∞] φ(z) [Φ(z+qs) - Φ(z)]^(k-1) dz] ds
 pub fn ptukey_exact(q: f64, k: f64, nu: f64) -> f64 {
@@ -54,7 +79,7 @@ pub fn ptukey_exact(q: f64, k: f64, nu: f64) -> f64 {
     let constant = (sqrt_2pi * k * nu_power) / (gamma_nu_2 * power_2);
 
     // Numerical integration over s using Simpson's rule
-    let n_steps = 100;
+    let n_steps = 200;
     let s_max = 10.0; // Integration limit for s
     let ds = s_max / n_steps as f64;
 
@@ -70,7 +95,7 @@ pub fn ptukey_exact(q: f64, k: f64, nu: f64) -> f64 {
         let s_term = s.powf(nu - 1.0) * phi(sqrt_nu * s);
 
         // Inner integral over z using numerical integration
-        let n_z_steps = 50;
+        let n_z_steps = 100;
         let z_min = -8.0;
         let z_max = 8.0;
         let dz = (z_max - z_min) / n_z_steps as f64;
@@ -214,10 +239,13 @@ where
             // For Tukey HSD, the p-value from studentized range is already adjusted
             let adjusted_p = p_value;
 
-            // For confidence intervals, use t-distribution critical value
-            let t_dist = StudentsT::new(0.0, 1.0, df_within).unwrap();
-            let t_critical = t_dist.inverse_cdf(1.0 - alpha / 2.0);
-            let ci_margin = t_critical * se;
+            // Confidence interval using studentized range critical value
+            // R formula: diff ± qtukey(1-alpha, k, df) * sqrt(MSE/n_per_group)
+            // Since se = sqrt(MSE*(1/n_i + 1/n_j)) and for the CI we need
+            // qtukey * sqrt(MSE/n) = qtukey * se/sqrt(2) (for balanced groups)
+            // General: ci_margin = qtukey(1-alpha, k, df) / sqrt(2) * se
+            let q_critical = qtukey(1.0 - alpha, n_groups as f64, df_within);
+            let ci_margin = q_critical / (2.0_f64).sqrt() * se;
             let ci_lower = mean_diff - ci_margin;
             let ci_upper = mean_diff + ci_margin;
 

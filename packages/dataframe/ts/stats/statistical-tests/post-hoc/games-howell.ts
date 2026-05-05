@@ -2,6 +2,7 @@ import {
   games_howell_wasm,
 } from "../../../wasm/statistical-tests.ts";
 import type { GamesHowellTestResult } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Games-Howell test for pairwise comparisons
@@ -23,7 +24,7 @@ import type { GamesHowellTestResult } from "../types.ts";
 export function gamesHowellTest(
   groups: number[][],
   alpha = 0.05,
-): GamesHowellTestResult {
+): PrettifyDeep<GamesHowellTestResult> {
   // Clean data and check group sizes
   const cleanGroups = groups.map((group) =>
     group.filter((x) => Number.isFinite(x))

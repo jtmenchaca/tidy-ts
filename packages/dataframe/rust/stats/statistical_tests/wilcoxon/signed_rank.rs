@@ -323,10 +323,13 @@ mod tests {
 
     #[test]
     fn n_8_ties() {
-        let distribution = super::SignedRank::new(8, 0, 7).unwrap();
-        assert_eq!(distribution.cdf(3.0), 0.03542823032427003);
-        assert_eq!(distribution.cdf(2.5), 0.029739401378297385);
-        assert_eq!(distribution.cdf(2.0), 0.024854396634115632);
+        // tie_correction = sum(t^3 - t) = 54 for tie groups [2, 3, 3]
+        // R: mean=18, var=n*(n+1)*(2n+1)/24 - 54/48 = 49.875, sigma=7.062223
+        let distribution = super::SignedRank::new(8, 0, 54).unwrap();
+        let tol = 1e-6;
+        assert!((distribution.cdf(3.0) - 0.01683603).abs() < tol);
+        assert!((distribution.cdf(2.5) - 0.01408983).abs() < tol);
+        assert!((distribution.cdf(2.0) - 0.01173870).abs() < tol);
     }
 
     #[test]

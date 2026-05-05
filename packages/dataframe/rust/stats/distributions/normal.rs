@@ -61,7 +61,7 @@ pub fn z_test_result(
     let z_dist = standard_normal();
 
     let p_value = calculate_p(test_statistic, tail.clone(), &z_dist);
-    let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &z_dist);
+    let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &z_dist, tail);
 
     TestResultData {
         p_value,

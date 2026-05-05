@@ -489,7 +489,7 @@ fn cauchy_quantile(p: f64) -> f64 {
 }
 
 fn cauchy_cdf(x: f64) -> f64 {
-    0.5 + (x / std::f64::consts::PI).atan()
+    0.5 + x.atan() / std::f64::consts::PI
 }
 
 fn cauchy_pdf(x: f64) -> f64 {

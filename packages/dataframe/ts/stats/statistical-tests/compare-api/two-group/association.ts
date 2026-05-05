@@ -8,6 +8,7 @@ import type {
   PearsonCorrelationTestResult,
   SpearmanCorrelationTestResult,
 } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -52,7 +53,7 @@ export function associationToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "auto";
   alpha?: number;
-}): PearsonCorrelationTestResult;
+}): PrettifyDeep<PearsonCorrelationTestResult>;
 
 export function associationToEachOther({
   x,
@@ -70,7 +71,7 @@ export function associationToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "auto";
   alpha?: number;
-}): PearsonCorrelationTestResult;
+}): PrettifyDeep<PearsonCorrelationTestResult>;
 
 // Standard numeric correlation
 export function associationToEachOther({
@@ -93,10 +94,11 @@ export function associationToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "spearman" | "kendall" | "auto";
   alpha?: number;
-}):
+}): PrettifyDeep<
   | PearsonCorrelationTestResult
   | SpearmanCorrelationTestResult
-  | KendallCorrelationTestResult;
+  | KendallCorrelationTestResult
+>;
 
 export function associationToEachOther({
   x,
@@ -120,10 +122,11 @@ export function associationToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "pearson" | "spearman" | "kendall" | "auto";
   alpha?: number;
-}):
+}): PrettifyDeep<
   | PearsonCorrelationTestResult
   | SpearmanCorrelationTestResult
-  | KendallCorrelationTestResult {
+  | KendallCorrelationTestResult
+> {
   // Map comparator to alternative parameter for underlying functions
   const alternative = comparator === "not equal to"
     ? "two-sided"

@@ -5,16 +5,16 @@
 | Feature | Gaussian | Binomial | Poisson | Gamma | InvGauss | QuasiBinom | QuasiPoisson |
 |---|---|---|---|---|---|---|---|
 | Core fit (coef, SE, deviance, AIC) | Y | Y | Y | Y | Y | Y | Y |
-| Non-canonical links | Y (log, inverse) | Y (probit, cloglog) | Y (identity, sqrt) | Y (log) | Y (log) | - | - |
+| Non-canonical links | Y (log, inverse) | Y (probit, cloglog, cauchit) | Y (identity, sqrt) | Y (log) | Y (log) | - | - |
 | Sandwich vcovCL (HC0-HC3) | Y | Y (sandwich.test) | Y | Y | Y | - | Y |
 | Weighted GLM | Y | Y | Y | Y (edge) | Y (edge) | - | - |
-| Predictions (newdata) | Y | Y | Y | Y | - | - | - |
+| Predictions (newdata) | Y | Y | Y | Y | Y | - | - |
 | Diagnostics (leverage, Cook's) | Y | Y | Y | Y | - | - | - |
 | Confidence intervals | Y | Y | Y | Y | Y | Y | Y (Wald) |
 | Fitted values vs R | Y | Y | Y | Y | Y (log) | - | Y |
-| Residuals (all types) | Y | Y | Y | - | - | - | - |
-| vcov matrix | Y | Y | Y | - | - | - | - |
-| Influence (rstandard, rstudent, dffits) | Y | Y | Y | - | - | - | - |
+| Residuals (all types) | Y | Y | Y | Y | - | - | - |
+| vcov matrix | Y | Y | Y | Y | - | - | - |
+| Influence (rstandard, rstudent, dffits) | Y | Y | Y | Y | - | - | - |
 | Intercept-only (y ~ 1) | Y | Y | Y | - | - | - | - |
 | R source tests (clotting, etc.) | - | - | Y (offset) | Y (lot1, lot2) | Y (identity, inverse) | - | - |
 
@@ -32,18 +32,25 @@
 
 ## Remaining Gaps (Priority Order)
 
+### High Priority
+
+1. Prediction SE (SE.fit) - Only point predictions tested, not standard errors. Not yet implemented in Rust.
+2. Anscombe residuals - Not implemented for any family.
+
 ### Medium Priority
 
-1. Prediction SE (SE.fit) - Only point predictions tested, not standard errors.
-2. Gamma residuals / vcov / influence - Not tested beyond basic fit + diagnostics.
-3. Inverse Gaussian predictions on new data - Not tested.
-4. Cauchit link (binomial) - Exists but not tested.
-5. Anscombe residuals - Not tested for any family.
-6. Offset + weights combined - Tested separately, never together.
+3. Offset + weights combined - Tested separately, never together.
 
 ### Lower Priority
 
-7. Contrast coding (treatment, sum, helmert).
-8. Likelihood ratio tests / model comparison.
-9. Pseudo R-squared metrics.
-10. High-dimensional models (p > 20).
+4. Contrast coding (treatment, sum, helmert).
+5. Likelihood ratio tests / model comparison.
+6. Pseudo R-squared metrics.
+7. High-dimensional models (p > 20).
+
+## Recently Closed Gaps
+
+- Gamma residuals / vcov / influence — covered in medium-gaps.test.ts
+- Inverse Gaussian predictions on new data — covered in medium-gaps.test.ts
+- Cauchit link (binomial) — covered in medium-gaps.test.ts (fixed cauchy_cdf bug)
+- Deviance residual contract aligned with R (gamma, inverse gaussian, quasi families)

@@ -48,8 +48,6 @@ Deno.test({
 
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 /**
@@ -116,8 +114,6 @@ Deno.test({
 
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 /**
@@ -167,6 +163,4 @@ Deno.test({
       expect(typeof row.analysis.difference).toBe("number");
     }
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

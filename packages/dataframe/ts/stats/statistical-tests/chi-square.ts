@@ -2,6 +2,7 @@ import {
   chi_square_independence,
 } from "../../wasm/statistical-tests.ts";
 import type { ChiSquareIndependenceTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Chi-square test of independence for categorical data
@@ -12,7 +13,7 @@ export function chiSquareTest({
 }: {
   contingencyTable: number[][];
   alpha?: number;
-}): ChiSquareIndependenceTestResult {
+}): PrettifyDeep<ChiSquareIndependenceTestResult> {
   if (contingencyTable.length < 2 || contingencyTable[0].length < 2) {
     throw new Error("Contingency table must be at least 2x2");
   }

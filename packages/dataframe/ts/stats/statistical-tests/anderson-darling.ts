@@ -2,6 +2,7 @@ import {
   anderson_darling_test,
 } from "../../wasm/statistical-tests.ts";
 import type { AndersonDarlingTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Test for normality using Anderson-Darling test
@@ -32,7 +33,7 @@ export function andersonDarlingTest({
 }: {
   data: number[];
   alpha?: number;
-}): AndersonDarlingTestResult {
+}): PrettifyDeep<AndersonDarlingTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length < 7) {

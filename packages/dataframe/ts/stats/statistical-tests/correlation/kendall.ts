@@ -4,6 +4,7 @@ import {
 import type {
   KendallCorrelationTestResult,
 } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Kendall rank correlation test
@@ -20,7 +21,7 @@ export function kendallTest({
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
   exact?: boolean;
-}): KendallCorrelationTestResult {
+}): PrettifyDeep<KendallCorrelationTestResult> {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }

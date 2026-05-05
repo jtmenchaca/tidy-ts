@@ -15,6 +15,7 @@ import type {
   TwoWayAnovaTestResult,
   WelchAnovaTestResult,
 } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 
 // Extended result types that include post-hoc tests
 export interface OneWayAnovaWithPostHocResult extends OneWayAnovaTestResult {
@@ -95,7 +96,7 @@ export function centralTendencyToEachOther({
   parametric: "parametric";
   alpha?: number;
   assumeEqualVariances?: boolean;
-}): OneWayAnovaWithPostHocResult;
+}): PrettifyDeep<OneWayAnovaWithPostHocResult>;
 
 // Two-way ANOVA overload
 export function centralTendencyToEachOther({
@@ -108,7 +109,7 @@ export function centralTendencyToEachOther({
   parametric: "parametric";
   design: "two-way";
   alpha?: number;
-}): TwoWayAnovaTestResult;
+}): PrettifyDeep<TwoWayAnovaTestResult>;
 
 export function centralTendencyToEachOther({
   groups,
@@ -118,7 +119,7 @@ export function centralTendencyToEachOther({
   groups: number[][];
   parametric: "nonparametric";
   alpha?: number;
-}): KruskalWallisWithPostHocResult;
+}): PrettifyDeep<KruskalWallisWithPostHocResult>;
 
 export function centralTendencyToEachOther({
   groups,
@@ -130,7 +131,7 @@ export function centralTendencyToEachOther({
   parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   assumeEqualVariances?: boolean;
-}): OneWayAnovaWithPostHocResult | KruskalWallisWithPostHocResult;
+}): PrettifyDeep<OneWayAnovaWithPostHocResult | KruskalWallisWithPostHocResult>;
 
 export function centralTendencyToEachOther({
   groups,
@@ -146,11 +147,12 @@ export function centralTendencyToEachOther({
   alpha?: number;
   design?: "one-way" | "two-way";
   assumeEqualVariances?: boolean;
-}):
+}): PrettifyDeep<
   | OneWayAnovaWithPostHocResult
   | WelchAnovaWithPostHocResult
   | TwoWayAnovaTestResult
-  | KruskalWallisWithPostHocResult {
+  | KruskalWallisWithPostHocResult
+> {
   // Handle two-way ANOVA
   if (design === "two-way" && data) {
     if (parametric !== "parametric") {

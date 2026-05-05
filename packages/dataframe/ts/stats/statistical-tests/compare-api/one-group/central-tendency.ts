@@ -9,6 +9,7 @@ import type {
   NumbersWithNullable,
   NumbersWithNullableIterable,
 } from "../../../helpers.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 import { cleanNumeric, normalityOK, residuals_oneSample } from "../helpers.ts";
 
 /**
@@ -41,7 +42,7 @@ export function centralTendencyToValue({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric: "parametric";
-}): OneSampleTTestResult;
+}): PrettifyDeep<OneSampleTTestResult>;
 
 export function centralTendencyToValue({
   data,
@@ -55,7 +56,7 @@ export function centralTendencyToValue({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric: "nonparametric";
-}): WilcoxonSignedRankTestResult;
+}): PrettifyDeep<WilcoxonSignedRankTestResult>;
 
 export function centralTendencyToValue({
   data,
@@ -69,7 +70,7 @@ export function centralTendencyToValue({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric?: "parametric" | "nonparametric" | "auto";
-}): OneSampleTTestResult | WilcoxonSignedRankTestResult;
+}): PrettifyDeep<OneSampleTTestResult | WilcoxonSignedRankTestResult>;
 
 export function centralTendencyToValue({
   data,
@@ -87,7 +88,7 @@ export function centralTendencyToValue({
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
   parametric?: "parametric" | "nonparametric" | "auto";
-}): OneSampleTTestResult | WilcoxonSignedRankTestResult {
+}): PrettifyDeep<OneSampleTTestResult | WilcoxonSignedRankTestResult> {
   // Convert data to a regular array for processing and filter out null/undefined values
   const cleanData = cleanNumeric(data);
 

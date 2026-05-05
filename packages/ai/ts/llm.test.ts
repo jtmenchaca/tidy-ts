@@ -21,8 +21,6 @@ Deno.test({
     });
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -44,8 +42,6 @@ Deno.test({
     const now = new Date();
     console.log(`${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -60,8 +56,6 @@ Deno.test({
     });
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -91,8 +85,6 @@ Deno.test({
     // │ Jane │ 25  │ Jane is 25 years ... │
     // └──────┴─────┴──────────────────────┘
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -134,8 +126,6 @@ Deno.test({
     // │ John │ 30  │ John's age is 30.... │
     // └──────┴─────┴──────────────────────┘
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -150,8 +140,6 @@ Deno.test({
     console.log(`Embedding dimension: ${embedding.length}`);
     console.log(`First 5 values: ${embedding.slice(0, 5)}`);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -173,8 +161,6 @@ Deno.test({
     console.log(`Number of embeddings: ${embeddings.length}`);
     console.log(`Each embedding dimension: ${embeddings[0].length}`);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });
 
 Deno.test({
@@ -191,6 +177,4 @@ Deno.test({
 
     console.log(`Small model embedding dimension: ${embedding.length}`);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

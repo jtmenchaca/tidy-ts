@@ -4,6 +4,7 @@ import type {
   GamesHowellTestResult,
   TukeyHsdTestResult,
 } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 import {
   cleanNumeric,
   hasBalancedSizes,
@@ -40,7 +41,7 @@ export function postHocFor({
   testType?: PostHocTestType;
   originalTest?: "anova" | "kruskal-wallis";
   alpha?: number;
-}): TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult {
+}): PrettifyDeep<TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult> {
   // Clean data
   const cleanGroups = groups.map((group) => cleanNumeric(group));
 

@@ -1,23 +1,25 @@
 import { z } from "zod";
 import { runScaffold } from "../scaffold.ts";
-import type { ModelOption, StepDef } from "./types.ts";
+import type { EnsembleScaffold, InferEnsembleResult } from "./types.ts";
 
 /**
  * Ensemble + Synthesize: Multiple agents attempt the same task in parallel,
  * then a synthesizer picks the best or merges them.
+ * Returns all attempt outputs plus the typed synthesizer result.
  */
-export async function ensemble<T extends z.ZodObject>({
-  ensemble: { input, attempts },
-  synthesizer,
-  model = "gpt-5.4-mini",
+export async function ensemble<S extends z.ZodObject>({
+  input,
+  config,
 }: {
-  ensemble: { input: string; attempts: StepDef[] };
-  synthesizer: { instructions: string; schema: T; model?: ModelOption };
-  model?: ModelOption;
-}): Promise<z.infer<T>> {
-  return runScaffold({
+  input: string;
+  config: EnsembleScaffold<S>;
+}): Promise<InferEnsembleResult<EnsembleScaffold<S>>> {
+  const { attempts, synthesizer, model: configModel } = config;
+  const model = configModel ?? "gpt-5.4-mini";
+  const results = await runScaffold({
     input,
     model,
+    returnAll: true,
     steps: [
       // Step 1: All attempts in parallel
       () =>
@@ -37,4 +39,8 @@ export async function ensemble<T extends z.ZodObject>({
       }),
     ],
   });
+  return {
+    attempts: results[0],
+    synthesizer: results[1],
+  } as InferEnsembleResult<EnsembleScaffold<S>>;
 }

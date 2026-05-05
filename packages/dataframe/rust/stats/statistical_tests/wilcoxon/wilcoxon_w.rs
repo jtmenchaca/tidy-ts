@@ -12,6 +12,8 @@ trait StatOps {
 }
 
 impl StatOps for [f64] {
+    /// Returns (ranks, tie_correction) where tie_correction = sum(t^3 - t)
+    /// for each tie group of size t. This matches R's NTIES formula.
     fn ranks(&self) -> (Vec<f64>, usize) {
         let mut indexed: Vec<(f64, usize)> =
             self.iter().enumerate().map(|(i, &v)| (v, i)).collect();
@@ -19,7 +21,7 @@ impl StatOps for [f64] {
 
         let mut ranks = vec![0.0; self.len()];
         let mut i = 0;
-        let mut tie_correction = 0;
+        let mut tie_correction: usize = 0;
 
         while i < indexed.len() {
             let mut j = i;
@@ -32,7 +34,8 @@ impl StatOps for [f64] {
 
             let tie_count = j - i;
             if tie_count > 1 {
-                tie_correction += tie_count * (tie_count + 1) * (tie_count - 1) / 12;
+                // R formula: sum(NTIES^3 - NTIES) where NTIES is tie group size
+                tie_correction += tie_count * tie_count * tie_count - tie_count;
             }
 
             let avg_rank = (i + j + 1) as f64 / 2.0;
@@ -204,9 +207,9 @@ mod tests {
         let x = vec![8.0, 6.0, 5.5, 11.0, 8.5, 5.0, 6.0, 6.0];
         let y = vec![8.5, 9.0, 6.5, 10.5, 9.0, 7.0, 6.5, 7.0];
         let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
-        // R gives 0.03322777 but with ties warning - our implementation may handle ties differently
-        assert!((test.p_value - 0.03322777).abs() < 0.03); // Allow tolerance for tie handling
-        // Effect size is now Cohen's d instead of rank-biserial
+        // R: wilcox.test(x, y, paired=TRUE, exact=FALSE, correct=TRUE) → p=0.03322777
+        // Has ties in abs_diffs, so uses normal approximation with continuity correction
+        assert!((test.p_value - 0.03322777).abs() < 1e-6);
     }
 
     #[test]
@@ -214,8 +217,7 @@ mod tests {
         let x = vec![209.0, 200.0, 177.0, 169.0, 159.0, 169.0, 187.0, 198.0];
         let y = vec![151.0, 168.0, 147.0, 164.0, 166.0, 163.0, 176.0, 188.0];
         let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
-        // Our implementation returns 0.078125 vs R's 0.0390625 - allow tolerance
-        assert!((test.p_value - 0.078125).abs() < 1e-10);
-        // Effect size is now Cohen's d instead of rank-biserial
+        // R: wilcox.test(x, y, paired=TRUE) → exact p=0.0390625 (no ties, n<50)
+        assert!((test.p_value - 0.0390625).abs() < 1e-6);
     }
 }

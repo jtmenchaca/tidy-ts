@@ -4,6 +4,7 @@ import type {
   MannWhitneyTestResult,
   TwoSampleTTestResult,
 } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -56,7 +57,7 @@ export function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-}): TwoSampleTTestResult;
+}): PrettifyDeep<TwoSampleTTestResult>;
 
 // Overload: nonparametric
 export function centralTendencyToEachOther({
@@ -73,7 +74,7 @@ export function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-}): MannWhitneyTestResult;
+}): PrettifyDeep<MannWhitneyTestResult>;
 
 // Overload: auto
 export function centralTendencyToEachOther({
@@ -90,7 +91,7 @@ export function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-}): TwoSampleTTestResult | MannWhitneyTestResult;
+}): PrettifyDeep<TwoSampleTTestResult> | PrettifyDeep<MannWhitneyTestResult>;
 
 export function centralTendencyToEachOther({
   x,
@@ -114,7 +115,7 @@ export function centralTendencyToEachOther({
   assumeEqualVariances?: boolean;
   comparator?: "not equal to" | "less than" | "greater than";
   alpha?: number;
-}): TwoSampleTTestResult | MannWhitneyTestResult {
+}): PrettifyDeep<TwoSampleTTestResult> | PrettifyDeep<MannWhitneyTestResult> {
   // Convert data to regular arrays and filter out null/undefined/infinite values
   const cleanX = cleanNumeric(x);
   const cleanY = cleanNumeric(y);

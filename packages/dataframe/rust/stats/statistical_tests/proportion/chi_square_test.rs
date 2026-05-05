@@ -42,10 +42,10 @@ pub fn chi_square_test_one_sample(
     let observed_success = x;
     let observed_failure = n - x;
 
-    // Chi-square statistic: sum((|observed - expected| - yates)^2 / expected)
-    let chi_square_stat = ((observed_success - expected_success).abs() - yates).powi(2)
+    // Chi-square statistic: sum(max(|O-E| - yates, 0)^2 / E), matching R
+    let chi_square_stat = ((observed_success - expected_success).abs() - yates).max(0.0).powi(2)
         / expected_success
-        + ((observed_failure - expected_failure).abs() - yates).powi(2) / expected_failure;
+        + ((observed_failure - expected_failure).abs() - yates).max(0.0).powi(2) / expected_failure;
 
     // Calculate p-value
     let p_value = match alternative {
@@ -169,11 +169,11 @@ pub fn chi_square_test_two_sample(
     // Yates continuity correction
     let yates = if correct { 0.5 } else { 0.0 };
 
-    // Chi-square statistic
-    let chi_square_stat = ((x1 - e11).abs() - yates).powi(2) / e11
-        + ((n1 - x1 - e12).abs() - yates).powi(2) / e12
-        + ((x2 - e21).abs() - yates).powi(2) / e21
-        + ((n2 - x2 - e22).abs() - yates).powi(2) / e22;
+    // Chi-square statistic (Yates: max(|O-E| - 0.5, 0), matching R)
+    let chi_square_stat = ((x1 - e11).abs() - yates).max(0.0).powi(2) / e11
+        + ((n1 - x1 - e12).abs() - yates).max(0.0).powi(2) / e12
+        + ((x2 - e21).abs() - yates).max(0.0).powi(2) / e21
+        + ((n2 - x2 - e22).abs() - yates).max(0.0).powi(2) / e22;
 
     // Calculate p-value
     let p_value = match alternative {
@@ -205,7 +205,13 @@ pub fn chi_square_test_two_sample(
     };
 
     let se = (p1 * (1.0 - p1) / n1 + p2 * (1.0 - p2) / n2).sqrt();
-    let yates_correction = yates * (1.0 / n1 + 1.0 / n2);
+    // R uses YATES = min(0.5, |delta| / sum(1/n)) for the CI correction
+    let ci_yates = if correct {
+        (0.5_f64).min(delta.abs() / (1.0 / n1 + 1.0 / n2))
+    } else {
+        0.0
+    };
+    let yates_correction = ci_yates * (1.0 / n1 + 1.0 / n2);
     let width = z_crit * se + yates_correction;
 
     let (ci_lower, ci_upper) = match alternative {

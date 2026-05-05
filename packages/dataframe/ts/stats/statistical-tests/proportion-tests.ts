@@ -13,6 +13,7 @@ import type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
 } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 export type {
   OneSampleProportionTestResult,
   TwoSampleProportionTestResult,
@@ -31,7 +32,7 @@ export function proportionTestOneSample({
   hypothesizedProportion: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): OneSampleProportionTestResult {
+}): PrettifyDeep<OneSampleProportionTestResult> {
   const n = data.length;
 
   if (n === 0) {
@@ -71,7 +72,7 @@ export function proportionTestTwoSample({
   pooled?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): TwoSampleProportionTestResult {
+}): PrettifyDeep<TwoSampleProportionTestResult> {
   const n1 = data1.length;
   const n2 = data2.length;
 

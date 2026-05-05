@@ -4,6 +4,7 @@ import {
 import type {
   SpearmanCorrelationTestResult,
 } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Spearman rank correlation test
@@ -18,7 +19,7 @@ export function spearmanTest({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): SpearmanCorrelationTestResult {
+}): PrettifyDeep<SpearmanCorrelationTestResult> {
   if (x.length !== y.length) {
     throw new Error("x and y must have the same length");
   }

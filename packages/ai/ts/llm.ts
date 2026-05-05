@@ -10,6 +10,7 @@ import {
   ZodOptional,
   type ZodTypeAny,
 } from "zod";
+import type { ModelOption } from "./scaffolds/types.ts";
 
 // Load environment variables from .env file
 env.loadFromFileSync(".env");
@@ -258,7 +259,7 @@ async function respond<T extends z.ZodObject>({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
+  model?: ModelOption;
   schema: T;
 }): Promise<z.infer<T>>;
 
@@ -272,7 +273,7 @@ async function respond({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
+  model?: ModelOption;
 }): Promise<string>;
 
 // Implementation
@@ -286,7 +287,7 @@ async function respond<T extends z.ZodObject>({
   userInput: string;
   priorMessages?: AgentInputItem[];
   instructions?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
+  model?: ModelOption;
   schema?: T;
 }): Promise<z.infer<T> | string> {
   // Convert z.date() to z.iso.date() if schema is provided
@@ -398,7 +399,25 @@ import { debate } from "./scaffolds/llm.debate.ts";
 import { refine } from "./scaffolds/llm.refine.ts";
 import { ensemble } from "./scaffolds/llm.ensemble.ts";
 export type { ScaffoldOptions, ScaffoldStep, ScaffoldStepConfig } from "./scaffold.ts";
-export type { EvaluateConfig, ModelOption, StepDef } from "./scaffolds/types.ts";
+export type {
+  DebateScaffold,
+  DebateResult,
+  EnsembleScaffold,
+  EnsembleResult,
+  EvaluateScaffold,
+  EvaluateResult,
+  InferDebateResult,
+  InferEnsembleResult,
+  InferEvaluateResult,
+  InferPipelineResult,
+  InferRefineResult,
+  ModelOption,
+  PipelineScaffold,
+  PipelineResult,
+  RefineScaffold,
+  RefineResult,
+  StepDef,
+} from "./scaffolds/types.ts";
 
 /**
  * LLM utility functions for language models and embeddings.

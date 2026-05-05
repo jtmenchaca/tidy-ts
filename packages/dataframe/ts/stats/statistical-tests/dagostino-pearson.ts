@@ -2,6 +2,7 @@ import {
   dagostino_pearson_test,
 } from "../../wasm/statistical-tests.ts";
 import type { DAgostinoPearsonTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Test for normality using D'Agostino-Pearson K² test
@@ -48,7 +49,7 @@ export function dagostinoPearsonTest({
 }: {
   data: number[];
   alpha?: number;
-}): DAgostinoPearsonTestResult {
+}): PrettifyDeep<DAgostinoPearsonTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length < 20) {

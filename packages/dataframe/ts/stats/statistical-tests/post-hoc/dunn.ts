@@ -2,6 +2,7 @@ import {
   dunn_test_wasm,
 } from "../../../wasm/statistical-tests.ts";
 import type { DunnTestResult } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Dunn's test for pairwise comparisons
@@ -23,7 +24,7 @@ import type { DunnTestResult } from "../types.ts";
 export function dunnTest(
   groups: number[][],
   alpha = 0.05,
-): DunnTestResult {
+): PrettifyDeep<DunnTestResult> {
   // Clean data and check group sizes
   const cleanGroups = groups.map((group) =>
     group.filter((x) => Number.isFinite(x))

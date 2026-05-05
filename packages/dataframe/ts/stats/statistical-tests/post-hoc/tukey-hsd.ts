@@ -2,6 +2,7 @@ import {
   tukey_hsd_wasm,
 } from "../../../wasm/statistical-tests.ts";
 import type { TukeyHsdTestResult } from "../types.ts";
+import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
 
 /**
  * Tukey's Honestly Significant Difference (HSD) test
@@ -22,7 +23,7 @@ import type { TukeyHsdTestResult } from "../types.ts";
 export function tukeyHSD(
   groups: number[][],
   alpha = 0.05,
-): TukeyHsdTestResult {
+): PrettifyDeep<TukeyHsdTestResult> {
   // Clean data and check group sizes
   const cleanGroups = groups.map((group) =>
     group.filter((x) => Number.isFinite(x))

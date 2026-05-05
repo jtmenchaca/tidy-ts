@@ -80,7 +80,7 @@ pub fn fishers_exact_test(
     let mid_p_value = Some(mid_p_corrected);
     
     // Calculate confidence interval for odds ratio
-    let (ci_lower, ci_upper) = odds_ratio_confidence_interval(a, b, c, d, alpha);
+    let (ci_lower, ci_upper) = odds_ratio_confidence_interval(a, b, c, d, alpha, alternative);
 
     Ok(FishersExactTestResult {
         test_statistic: TestStatistic {
@@ -328,16 +328,10 @@ fn mle_odds_ratio(x: i32, m: i32, n: i32, k: i32) -> f64 {
 
 /// Binary search to find MLE odds ratio
 fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high: f64) -> f64 {
-    const MAX_ITER: usize = 50;
-    const TOL: f64 = 1e-6;
-
-    for _ in 0..MAX_ITER {
+    // Pure bisection: converge until interval is negligible relative to solution
+    for _ in 0..200 {
         let mid = (low + high) / 2.0;
         let exp = expectation_nhyper(m, n, k, mid);
-
-        if (exp - target).abs() < TOL {
-            return mid;
-        }
 
         if exp > target {
             high = mid;
@@ -345,7 +339,8 @@ fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high
             low = mid;
         }
 
-        if (high - low) < TOL {
+        // Relative convergence: stop when interval is < 1e-12 relative to mid
+        if (high - low) < mid * 1e-12 {
             break;
         }
     }
@@ -355,33 +350,47 @@ fn binary_search_mle(m: i32, n: i32, k: i32, target: f64, mut low: f64, mut high
 
 /// Calculate confidence interval for odds ratio in Fisher's exact test
 /// Uses the central hypergeometric distribution approach
-fn odds_ratio_confidence_interval(a: i32, b: i32, c: i32, d: i32, alpha: f64) -> (f64, f64) {
+fn odds_ratio_confidence_interval(a: i32, b: i32, c: i32, d: i32, alpha: f64, alternative: &str) -> (f64, f64) {
     let m = a + c;
     let n = b + d;
     let k = a + b;
     let x = a;
-    
-    let tail_prob = alpha / 2.0;
-    
-    // Handle edge cases first
-    if a == 0 && d == 0 {
-        return (0.0, f64::INFINITY);
+
+    let alternative_type = AlternativeType::from_str(alternative);
+
+    match alternative_type {
+        AlternativeType::Less => {
+            // One-sided: CI = [0, upper_bound(alpha)]
+            let upper = compute_upper_ci_bound(m, n, k, x, alpha);
+            (0.0, upper)
+        }
+        AlternativeType::Greater => {
+            // One-sided: CI = [lower_bound(alpha), Inf]
+            let lower = compute_lower_ci_bound(m, n, k, x, alpha);
+            (lower, f64::INFINITY)
+        }
+        AlternativeType::TwoSided => {
+            let tail_prob = alpha / 2.0;
+
+            // Handle edge cases
+            if a == 0 && d == 0 {
+                return (0.0, f64::INFINITY);
+            }
+            if b == 0 && c == 0 {
+                return (0.0, f64::INFINITY);
+            }
+            if a == 0 || d == 0 {
+                return (0.0, compute_upper_ci_bound(m, n, k, x, tail_prob));
+            }
+            if b == 0 || c == 0 {
+                return (compute_lower_ci_bound(m, n, k, x, tail_prob), f64::INFINITY);
+            }
+
+            let lower = compute_lower_ci_bound(m, n, k, x, tail_prob);
+            let upper = compute_upper_ci_bound(m, n, k, x, tail_prob);
+            (lower, upper)
+        }
     }
-    if b == 0 && c == 0 {
-        return (0.0, f64::INFINITY);
-    }
-    if a == 0 || d == 0 {
-        return (0.0, compute_upper_ci_bound(m, n, k, x, tail_prob));
-    }
-    if b == 0 || c == 0 {
-        return (compute_lower_ci_bound(m, n, k, x, tail_prob), f64::INFINITY);
-    }
-    
-    // Normal case: compute both bounds
-    let lower = compute_lower_ci_bound(m, n, k, x, tail_prob);
-    let upper = compute_upper_ci_bound(m, n, k, x, tail_prob);
-    
-    (lower, upper)
 }
 
 /// Compute lower confidence bound for odds ratio
@@ -389,58 +398,52 @@ fn compute_lower_ci_bound(m: i32, n: i32, k: i32, x: i32, tail_prob: f64) -> f64
     if x == 0 {
         return 0.0;
     }
-    
+
     // Find odds ratio such that P(X >= x) = tail_prob
-    binary_search_ci_bound(m, n, k, x, tail_prob, true, 0.0001, 1000.0)
+    binary_search_ci_bound(m, n, k, x, tail_prob, true, 1e-10, 1e8)
 }
 
-/// Compute upper confidence bound for odds ratio  
+/// Compute upper confidence bound for odds ratio
 fn compute_upper_ci_bound(m: i32, n: i32, k: i32, x: i32, tail_prob: f64) -> f64 {
     let hi = std::cmp::min(k, m);
     if x == hi {
         return f64::INFINITY;
     }
-    
+
     // Find odds ratio such that P(X <= x) = tail_prob
-    binary_search_ci_bound(m, n, k, x, tail_prob, false, 0.0001, 1000.0)
+    binary_search_ci_bound(m, n, k, x, tail_prob, false, 1e-10, 1e8)
 }
 
 /// Binary search for confidence interval bounds
 fn binary_search_ci_bound(m: i32, n: i32, k: i32, x: i32, target_prob: f64, upper_tail: bool, mut low: f64, mut high: f64) -> f64 {
-    const MAX_ITER: usize = 100;
-    const TOL: f64 = 1e-6;
-    
-    for _ in 0..MAX_ITER {
+    // Pure bisection with relative convergence
+    for _ in 0..200 {
         let mid = (low + high) / 2.0;
-        
+
         let prob = if upper_tail {
             pnhyper(x, m, n, k, mid, true)  // P(X >= x)
         } else {
-            pnhyper(x, m, n, k, mid, false) // P(X <= x)  
+            pnhyper(x, m, n, k, mid, false) // P(X <= x)
         };
-        
-        if (prob - target_prob).abs() < TOL {
-            return mid;
-        }
-        
+
         if prob > target_prob {
             if upper_tail {
-                high = mid;  // If P(X >= x) too high, reduce odds ratio
+                high = mid;
             } else {
-                low = mid;   // If P(X <= x) too high, increase odds ratio
+                low = mid;
             }
         } else {
             if upper_tail {
-                low = mid;   // If P(X >= x) too low, increase odds ratio
+                low = mid;
             } else {
-                high = mid;  // If P(X <= x) too low, reduce odds ratio
+                high = mid;
             }
         }
-        
-        if (high - low) < TOL {
+
+        if (high - low) < mid * 1e-12 {
             break;
         }
     }
-    
+
     (low + high) / 2.0
 }

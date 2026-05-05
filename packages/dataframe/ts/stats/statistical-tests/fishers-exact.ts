@@ -2,6 +2,7 @@ import {
   fishers_exact_test_wasm,
 } from "../../wasm/statistical-tests.ts";
 import type { FishersExactTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Fisher's exact test for 2x2 contingency tables.
@@ -19,7 +20,7 @@ export function fishersExactTest({
   alternative?: "two-sided" | "less" | "greater";
   oddsRatio?: number;
   alpha?: number;
-}): FishersExactTestResult {
+}): PrettifyDeep<FishersExactTestResult> {
   if (
     contingencyTable.length !== 2 || contingencyTable[0].length !== 2 ||
     contingencyTable[1].length !== 2
@@ -47,6 +48,15 @@ export function fishersExactTest({
     alternative,
     oddsRatio,
     alpha,
-  );
-  return result as FishersExactTestResult;
+  ) as FishersExactTestResult;
+
+  // WASM serializes f64::INFINITY as null; restore Infinity for CI bounds
+  if (result.confidenceInterval.lower === null) {
+    (result.confidenceInterval as { lower: number }).lower = -Infinity;
+  }
+  if (result.confidenceInterval.upper === null) {
+    (result.confidenceInterval as { upper: number }).upper = Infinity;
+  }
+
+  return result;
 }

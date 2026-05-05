@@ -58,7 +58,7 @@ pub fn t_test_result(
     let t_dist = standard_students_t(df);
 
     let p_value = calculate_p(test_statistic, tail.clone(), &t_dist);
-    let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &t_dist);
+    let confidence_interval = calculate_ci(sample_mean, std_error, alpha, &t_dist, tail);
 
     TestResultData {
         p_value,

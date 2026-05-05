@@ -1,5 +1,6 @@
 import { levene_test_wasm } from "../../wasm/statistical-tests.ts";
 import type { OneWayAnovaTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Levene's test for equality of variances
@@ -40,7 +41,7 @@ import type { OneWayAnovaTestResult } from "./types.ts";
 export function leveneTest(
   groups: number[][],
   alpha = 0.05,
-): OneWayAnovaTestResult {
+): PrettifyDeep<OneWayAnovaTestResult> {
   if (groups.length < 2) {
     throw new Error("Levene's test requires at least 2 groups");
   }

@@ -7,6 +7,7 @@ import {
   kruskal_wallis_test_wasm,
 } from "../../wasm/statistical-tests.ts";
 import type { KruskalWallisTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 export type { KruskalWallisTestResult } from "./types.ts";
 
 /**
@@ -18,7 +19,7 @@ export type { KruskalWallisTestResult } from "./types.ts";
 export function kruskalWallisTest(
   groups: number[][],
   alpha = 0.05,
-): KruskalWallisTestResult {
+): PrettifyDeep<KruskalWallisTestResult> {
   // Validate input
   if (groups.length < 2) {
     throw new Error("Need at least 2 groups for Kruskal-Wallis test");
@@ -68,7 +69,7 @@ export function kruskalWallisTestByGroup({
   data: number[];
   groups: (string | number)[];
   alpha?: number;
-}): KruskalWallisTestResult {
+}): PrettifyDeep<KruskalWallisTestResult> {
   if (data.length !== groups.length) {
     throw new Error("Data and groups must have the same length");
   }

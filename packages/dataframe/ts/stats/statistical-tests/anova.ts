@@ -12,6 +12,7 @@ import type {
   TwoWayAnovaTestResult,
   WelchAnovaTestResult,
 } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * One-way ANOVA (WASM implementation)
@@ -22,7 +23,7 @@ import type {
 export function anovaOneWay(
   groups: number[][],
   alpha = 0.05,
-): OneWayAnovaTestResult {
+): PrettifyDeep<OneWayAnovaTestResult> {
   if (groups.length < 2) {
     throw new Error("ANOVA requires at least 2 groups");
   }
@@ -54,7 +55,7 @@ export function anovaOneWay(
 export function welchAnovaOneWay(
   groups: number[][],
   alpha = 0.05,
-): WelchAnovaTestResult {
+): PrettifyDeep<WelchAnovaTestResult> {
   if (groups.length < 2) {
     throw new Error("Welch ANOVA requires at least 2 groups");
   }
@@ -92,7 +93,7 @@ function _twoWayAnovaFactorA({
 }: {
   data: number[][][];
   alpha?: number;
-}): OneWayAnovaTestResult {
+}): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
     throw new Error("Two-way ANOVA requires at least 2 levels for factor A");
   }
@@ -154,7 +155,7 @@ function _twoWayAnovaFactorB({
 }: {
   data: number[][][];
   alpha?: number;
-}): OneWayAnovaTestResult {
+}): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
     throw new Error("Two-way ANOVA requires at least 2 levels for factor A");
   }
@@ -216,7 +217,7 @@ function _twoWayAnovaInteraction({
 }: {
   data: number[][][];
   alpha?: number;
-}): OneWayAnovaTestResult {
+}): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
     throw new Error("Two-way ANOVA requires at least 2 levels for factor A");
   }
@@ -278,7 +279,7 @@ export function twoWayAnova({
 }: {
   data: number[][][];
   alpha?: number;
-}): TwoWayAnovaTestResult {
+}): PrettifyDeep<TwoWayAnovaTestResult> {
   if (data.length < 2) {
     throw new Error("Two-way ANOVA requires at least 2 levels for factor A");
   }

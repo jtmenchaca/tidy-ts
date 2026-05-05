@@ -1,5 +1,6 @@
 import { Agent, run, user } from "@openai/agents";
 import { z } from "zod";
+import type { ModelOption } from "./scaffolds/types.ts";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  Types                                                                     │
@@ -11,7 +12,7 @@ export interface ScaffoldStepConfig<T extends z.ZodObject = z.ZodObject> {
   schema: T;
   /** Override the user input for this step. If omitted, uses the scaffold's initial input. */
   userInput?: string;
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
+  model?: ModelOption;
 }
 
 /**
@@ -30,7 +31,7 @@ export interface ScaffoldOptions {
   /** Array of step functions that define the scaffold pipeline */
   steps: ScaffoldStep[];
   /** Default model for all steps (can be overridden per step) */
-  model?: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini";
+  model?: ModelOption;
   /** If true, return the full array of all step results instead of just the last */
   returnAll?: boolean;
 }
@@ -42,7 +43,7 @@ export interface ScaffoldOptions {
 async function executeStep(
   config: ScaffoldStepConfig,
   defaultInput: string,
-  defaultModel: "gpt-4.1-mini" | "gpt-4.1" | "gpt-5-mini" | "gpt-5.4-mini",
+  defaultModel: ModelOption,
 ): Promise<z.infer<typeof config.schema>> {
   const agent = new Agent({
     name: "scaffold-agent",

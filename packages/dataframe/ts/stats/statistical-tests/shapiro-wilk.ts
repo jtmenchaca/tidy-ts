@@ -2,6 +2,7 @@ import {
   shapiro_wilk_test,
 } from "../../wasm/statistical-tests.ts";
 import type { ShapiroWilkTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 export type { ShapiroWilkTestResult } from "./types.ts";
 
 /**
@@ -13,7 +14,7 @@ export function shapiroWilkTest({
 }: {
   data: number[];
   alpha?: number;
-}): ShapiroWilkTestResult {
+}): PrettifyDeep<ShapiroWilkTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length < 3) {

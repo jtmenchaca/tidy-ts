@@ -4,6 +4,7 @@ import type {
   KolmogorovSmirnovTestResult,
   MannWhitneyTestResult,
 } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 import type {
   NumberIterable,
   NumbersWithNullable,
@@ -45,7 +46,7 @@ export function distributionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "auto" | "ks" | "mann-whitney";
   alpha?: number;
-}): MannWhitneyTestResult | KolmogorovSmirnovTestResult;
+}): PrettifyDeep<MannWhitneyTestResult | KolmogorovSmirnovTestResult>;
 
 export function distributionsToEachOther({
   x,
@@ -67,7 +68,7 @@ export function distributionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method: "ks";
   alpha?: number;
-}): KolmogorovSmirnovTestResult;
+}): PrettifyDeep<KolmogorovSmirnovTestResult>;
 
 export function distributionsToEachOther({
   x,
@@ -89,7 +90,7 @@ export function distributionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method: "mann-whitney";
   alpha?: number;
-}): MannWhitneyTestResult;
+}): PrettifyDeep<MannWhitneyTestResult>;
 
 export function distributionsToEachOther({
   x,
@@ -111,7 +112,7 @@ export function distributionsToEachOther({
   comparator?: "not equal to" | "less than" | "greater than";
   method?: "auto" | "ks" | "mann-whitney";
   alpha?: number;
-}): MannWhitneyTestResult | KolmogorovSmirnovTestResult {
+}): PrettifyDeep<MannWhitneyTestResult | KolmogorovSmirnovTestResult> {
   // Map comparator to alternative parameter for underlying functions
   const alternative = comparator === "not equal to"
     ? "two-sided"

@@ -2,6 +2,7 @@ import {
   mann_whitney_test_with_config,
 } from "../../wasm/statistical-tests.ts";
 import type { MannWhitneyTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
  * Mann-Whitney U test (Wilcoxon rank-sum) for non-parametric comparison
@@ -20,7 +21,7 @@ export function mannWhitneyTest({
   continuityCorrection?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): MannWhitneyTestResult {
+}): PrettifyDeep<MannWhitneyTestResult> {
   const cleanX = x.filter((x) => isFinite(x));
   const cleanY = y.filter((x) => isFinite(x));
 

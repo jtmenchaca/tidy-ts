@@ -1,5 +1,6 @@
 import { chiSquareTest } from "../../chi-square.ts";
 import type { ChiSquareIndependenceTestResult } from "../../types.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 
 /**
  * Test independence of categorical variables across multiple groups.
@@ -23,7 +24,7 @@ export function proportionsToEachOther({
 }: {
   contingencyTable: number[][];
   alpha?: number;
-}): ChiSquareIndependenceTestResult {
+}): PrettifyDeep<ChiSquareIndependenceTestResult> {
   return chiSquareTest({
     contingencyTable,
     alpha,

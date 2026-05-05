@@ -8,6 +8,17 @@ import type {
   PairedTTestResult,
   TwoSampleTTestResult,
 } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
+
+/** WASM serializes f64::INFINITY as null; restore Infinity for CI bounds */
+function fixCiBounds(result: { confidenceInterval: { lower: number | null; upper: number | null } }) {
+  if (result.confidenceInterval.lower === null) {
+    (result.confidenceInterval as { lower: number }).lower = -Infinity;
+  }
+  if (result.confidenceInterval.upper === null) {
+    (result.confidenceInterval as { upper: number }).upper = Infinity;
+  }
+}
 
 /**
  * One-sample t-test for comparing sample mean to hypothesized population mean
@@ -27,7 +38,7 @@ export function tTestOneSample({
   mu?: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): OneSampleTTestResult {
+}): PrettifyDeep<OneSampleTTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
 
   if (cleanData.length < 2) {
@@ -39,8 +50,9 @@ export function tTestOneSample({
     mu,
     alpha,
     alternative,
-  );
-  return result as OneSampleTTestResult;
+  ) as OneSampleTTestResult;
+  fixCiBounds(result);
+  return result;
 }
 
 /**
@@ -64,7 +76,7 @@ export function tTestIndependent({
   equalVar?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): TwoSampleTTestResult {
+}): PrettifyDeep<TwoSampleTTestResult> {
   const cleanX = x.filter((x) => isFinite(x));
   const cleanY = y.filter((x) => isFinite(x));
 
@@ -78,8 +90,9 @@ export function tTestIndependent({
     alpha,
     alternative,
     equalVar,
-  );
-  return result as TwoSampleTTestResult;
+  ) as TwoSampleTTestResult;
+  fixCiBounds(result);
+  return result;
 }
 
 /**
@@ -100,7 +113,7 @@ export function tTestPaired({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): PairedTTestResult {
+}): PrettifyDeep<PairedTTestResult> {
   const cleanX = x.filter((val) => isFinite(val));
   const cleanY = y.filter((val) => isFinite(val));
 
@@ -117,6 +130,7 @@ export function tTestPaired({
     new Float64Array(cleanY),
     alpha,
     alternative,
-  );
-  return result as PairedTTestResult;
+  ) as PairedTTestResult;
+  fixCiBounds(result);
+  return result;
 }

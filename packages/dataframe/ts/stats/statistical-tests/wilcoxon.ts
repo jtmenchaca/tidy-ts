@@ -2,6 +2,7 @@ import {
   wilcoxon_w_test,
 } from "../../wasm/statistical-tests.ts";
 import type { WilcoxonSignedRankTestResult } from "./types.ts";
+import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 export type { WilcoxonSignedRankTestResult } from "./types.ts";
 
 /**
@@ -17,7 +18,7 @@ export function wilcoxonSignedRankTest({
   y: number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
-}): WilcoxonSignedRankTestResult {
+}): PrettifyDeep<WilcoxonSignedRankTestResult> {
   const cleanX = x.filter((x) => isFinite(x));
   const cleanY = y.filter((x) => isFinite(x));
 

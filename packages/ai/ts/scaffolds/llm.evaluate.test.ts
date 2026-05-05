@@ -44,6 +44,4 @@ Deno.test({
     expect(["use as-is", "revise", "discard"]).toContain(result.adjudicator.recommendation);
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

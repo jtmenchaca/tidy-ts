@@ -9,51 +9,53 @@ Deno.test({
       tagline: z.string(),
       tone: z.string(),
     });
- 
+
     const result = await LLM.ensemble({
-      ensemble: {
-        input:
+      input:
         "Create a tagline for a sustainable fashion brand called 'EverGreen'",
+      config: {
         attempts: [
-            {
-              instructions: "Write a playful, fun tagline. Describe its tone.",
-              schema: taglineSchema,
-            },
-            {
-              instructions:
-                "Write a serious, aspirational tagline. Describe its tone.",
-              schema: taglineSchema,
-            },
-            {
-              instructions:
-                "Write a minimalist, zen-like tagline. Describe its tone.",
-              schema: taglineSchema,
-            },
-          ],
-      },
-      synthesizer: {
-        instructions:
-          "Review all tagline attempts. Pick the best one or combine elements from multiple. Explain your choice.",
-        schema: z.object({
-          chosenTagline: z.string(),
-          reasoning: z.string(),
-          source: z.enum([
-            "attempt_1",
-            "attempt_2",
-            "attempt_3",
-            "combined",
-          ]),
-        }),
+          {
+            instructions: "Write a playful, fun tagline. Describe its tone.",
+            schema: taglineSchema,
+          },
+          {
+            instructions:
+              "Write a serious, aspirational tagline. Describe its tone.",
+            schema: taglineSchema,
+          },
+          {
+            instructions:
+              "Write a minimalist, zen-like tagline. Describe its tone.",
+            schema: taglineSchema,
+          },
+        ],
+        synthesizer: {
+          instructions:
+            "Review all tagline attempts. Pick the best one or combine elements from multiple. Explain your choice.",
+          schema: z.object({
+            chosenTagline: z.string(),
+            reasoning: z.string(),
+            source: z.enum([
+              "attempt_1",
+              "attempt_2",
+              "attempt_3",
+              "combined",
+            ]),
+          }),
+        },
       },
     });
 
-    expect(typeof result.chosenTagline).toBe("string");
-    expect(typeof result.reasoning).toBe("string");
+    // All attempts are exposed
+    expect(result.attempts.length).toBe(3);
+
+    // Synthesizer output
+    expect(typeof result.synthesizer.chosenTagline).toBe("string");
+    expect(typeof result.synthesizer.reasoning).toBe("string");
     expect(["attempt_1", "attempt_2", "attempt_3", "combined"]).toContain(
-      result.source,
+      result.synthesizer.source,
     );
     console.log(result);
   },
-  sanitizeResources: false,
-  sanitizeOps: false,
 });

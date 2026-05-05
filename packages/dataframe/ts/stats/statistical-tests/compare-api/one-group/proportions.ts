@@ -1,6 +1,7 @@
 import { proportionTestOneSample } from "../../proportion-tests.ts";
 import type { OneSampleProportionTestResult } from "../../types.ts";
 import { to01 } from "../helpers.ts";
+import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts";
 
 /**
  * Test if a sample proportion differs from a hypothesized population proportion.
@@ -29,7 +30,7 @@ export function proportionsToValue({
   comparator: "not equal to" | "less than" | "greater than";
   hypothesizedProportion: number;
   alpha?: number;
-}): OneSampleProportionTestResult {
+}): PrettifyDeep<OneSampleProportionTestResult> {
   // ============================================================================
   // DECISION TREE: One Group Proportions vs Value
   // ============================================================================

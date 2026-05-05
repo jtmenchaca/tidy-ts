@@ -45,9 +45,24 @@ pub fn calculate_confidence_interval(
     std_error: f64,
     alpha: f64,
     dist: &dyn ContinuousCDF<f64, f64>,
+    tail: TailType,
 ) -> (f64, f64) {
-    let margin_of_error = dist.inverse_cdf(1.0 - alpha / 2.0) * std_error;
-    (sample_mean - margin_of_error, sample_mean + margin_of_error)
+    match tail {
+        TailType::Left => {
+            // "less" alternative: CI = (-Inf, upper)
+            let critical = dist.inverse_cdf(1.0 - alpha) * std_error;
+            (f64::NEG_INFINITY, sample_mean + critical)
+        }
+        TailType::Right => {
+            // "greater" alternative: CI = (lower, Inf)
+            let critical = dist.inverse_cdf(1.0 - alpha) * std_error;
+            (sample_mean - critical, f64::INFINITY)
+        }
+        TailType::Two => {
+            let margin_of_error = dist.inverse_cdf(1.0 - alpha / 2.0) * std_error;
+            (sample_mean - margin_of_error, sample_mean + margin_of_error)
+        }
+    }
 }
 
 /// Calculates the confidence interval for Chi-squared distribution.
