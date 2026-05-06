@@ -5,7 +5,7 @@
   "license": "MIT",
   "imports": {
     "zod": "npm:zod@^4.1.8",
-    "@tidy-ts/shims": "jsr:@tidy-ts/shims@1.5.0",
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims@1.5.1",
     "@tidy-ts/dataframe": "jsr:@tidy-ts/dataframe@^1.1.0",
     "hyparquet": "npm:hyparquet@^1.23.2",
     "hyparquet-compressors": "npm:hyparquet-compressors@^1.1.1",
