@@ -23,19 +23,14 @@ import { RowView } from "../verb-helpers.ts";
  * // Remove a single column
  * df.drop("mass")
  *
- * // Remove multiple columns (sequential arguments)
+ * // Remove multiple columns
  * df.drop("mass", "homeworld")
- *
- * // Remove multiple columns (array syntax)
- * df.drop(["mass", "homeworld"])
  *
  * // Non-existent columns are ignored
  * df.drop("nonexistent", "mass") // Only removes "mass"
- * df.drop(["nonexistent", "mass"]) // Only removes "mass"
  *
  * // Remove all columns (results in empty objects)
  * df.drop("id", "name", "mass", "species", "homeworld")
- * df.drop(["id", "name", "mass", "species", "homeworld"])
  * ```
  *
  * @remarks

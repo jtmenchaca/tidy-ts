@@ -298,10 +298,6 @@ export interface DataFrameBase<Row extends object = object>
    * df.select("name", "age", "email")
    *
    * @example
-   * // Select using array syntax
-   * df.select(["name", "age", "email"])
-   *
-   * @example
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
@@ -486,9 +482,6 @@ export interface DataFrameBase<Row extends object = object>
    *
    * @example
    * df.drop("col1", "col2", "col3")
-   *
-   * @example
-   * df.drop(["col1", "col2"])
    *
    * @example
    * df.groupBy("category").drop("internalId")

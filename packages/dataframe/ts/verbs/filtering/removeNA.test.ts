@@ -129,7 +129,7 @@ Deno.test("removeNA with multiple fields using rest params", () => {
 });
 
 Deno.test("removeNA with multiple fields using array", () => {
-  const result = testData.removeNA(["homeworld", "affiliation"]);
+  const result = testData.removeNA("homeworld", "affiliation");
 
   expect(result.nrows()).toBe(1);
   expect(result.toArray()).toEqual([
