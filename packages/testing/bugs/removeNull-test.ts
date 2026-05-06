@@ -60,3 +60,36 @@ function testRemoveNullNarrows(
 
     return result2;
 }
+
+// Case 3: Filter events using data from another table without adding columns.
+// Use a Map lookup instead of join+drop to preserve the generic type T.
+function testFilterWithLookup<
+  K extends string,
+  C extends string,
+  T extends HasIdDateAndCode<K, C>,
+>(
+  events: DataFrame<T>,
+  birthDates: DataFrame<{ id: string; _birthDate: Temporal.PlainDateTime }>,
+  fieldName: K & keyof T,
+): DataFrame<T> {
+  const birthMap = new Map(
+    birthDates.toRows().map((r) => [r.id, r._birthDate]),
+  );
+  return events.filter((r) => {
+    const bd = birthMap.get(r.id);
+    return bd != null && Temporal.PlainDateTime.compare(bd, r[fieldName]) < 0;
+  });
+}
+
+// Case 4: same pattern with concrete type — join+drop works fine (no generic T)
+type ConcreteEvent = { id: string; date: Temporal.PlainDateTime; code: string };
+
+function testDropAfterJoinConcrete(
+  events: DataFrame<ConcreteEvent>,
+  birthDates: DataFrame<{ id: string; _birthDate: Temporal.PlainDateTime }>,
+): DataFrame<ConcreteEvent> {
+  return events
+    .innerJoin(birthDates, "id")
+    .filter((r) => Temporal.PlainDateTime.compare(r._birthDate, r.date) < 0)
+    .drop("_birthDate");
+}
