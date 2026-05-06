@@ -5,7 +5,7 @@
   "license": "MIT",
   "imports": {
     "zod": "npm:zod@^4.1.8",
-    "@tidy-ts/shims": "jsr:@tidy-ts/shims@1.4.9",
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims@1.5.0",
     "@tidy-ts/dataframe": "jsr:@tidy-ts/dataframe@^1.1.0",
     "@uwdata/flechette": "npm:@uwdata/flechette@^2.2.3"
   }
