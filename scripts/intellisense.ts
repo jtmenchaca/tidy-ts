@@ -1,13 +1,18 @@
 #!/usr/bin/env -S npx tsx
 /**
- * Get TypeScript hover/tooltip information for a specific file:line:column.
+ * Get TypeScript hover/tooltip information for identifiers in a file.
  *
  * Usage:
+ *   npx tsx scripts/intellisense.ts <file> <name> [name ...]
  *   npx tsx scripts/intellisense.ts <file> <line:col> [line:col ...]
- *   npx tsx scripts/intellisense.ts packages/testing/bugs/test-join.ts 88:10
- *   npx tsx scripts/intellisense.ts packages/testing/bugs/test-join.ts 88:10 33:9 155:9
  *
- * Line and column are 1-based (like your editor shows).
+ * Examples:
+ *   npx tsx scripts/intellisense.ts packages/testing/bugs/test-join.ts arranged dropped mutated
+ *   npx tsx scripts/intellisense.ts packages/testing/bugs/test-join.ts 88:10 33:9
+ *
+ * Names are matched against variable declarations, type aliases, function declarations,
+ * and other named identifiers. If a name appears multiple times, all occurrences are shown.
+ * Line:col positions are 1-based (like your editor shows).
  */
 
 import ts from "typescript";
@@ -16,11 +21,12 @@ import process from "node:process";
 
 const args = process.argv.slice(2);
 const file = args[0];
-const positions = args.slice(1);
+const queries = args.slice(1);
 
-if (!file || positions.length === 0) {
-  console.error("Usage: npx tsx scripts/intellisense.ts <file> <line:col> [line:col ...]");
-  console.error("  line and column are 1-based");
+if (!file || queries.length === 0) {
+  console.error("Usage: npx tsx scripts/intellisense.ts <file> <name|line:col> [...]");
+  console.error("  name: variable/type/function name to look up");
+  console.error("  line:col: 1-based position");
   process.exit(1);
 }
 
@@ -100,21 +106,111 @@ if (!sourceFile) {
   process.exit(1);
 }
 
-for (const pos of positions) {
-  const [lineStr, colStr] = pos.split(":");
-  const line = parseInt(lineStr, 10);
-  const col = parseInt(colStr, 10);
+function isLineCol(query: string): boolean {
+  return /^\d+:\d+$/.test(query);
+}
 
-  const offset = sourceFile?.getPositionOfLineAndCharacter(line - 1, col - 1);
-  const info = offset ? service.getQuickInfoAtPosition(filePath, offset) : undefined;
+function getInfoAtOffset(offset: number) {
+  return service.getQuickInfoAtPosition(filePath, offset);
+}
 
-  console.log(`\n=== ${file}:${line}:${col} ===`);
+function formatInfo(info: ts.QuickInfo): string {
+  return info.displayParts?.map((p) => p.text).join("") ?? "";
+}
 
-  if (!info) {
-    console.log("(no type info)");
-    continue;
+function getLineAndCol(offset: number): { line: number; col: number } {
+  const { line, character } = sourceFile!.getLineAndCharacterOfPosition(offset);
+  return { line: line + 1, col: character + 1 };
+}
+
+// Find all declaration positions for a given name
+function findNamePositions(name: string): number[] {
+  const positions: number[] = [];
+
+  function visit(node: ts.Node) {
+    // Variable declarations: const foo = ...
+    if (ts.isVariableDeclaration(node) && ts.isIdentifier(node.name) && node.name.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    // Function declarations: function foo() {}
+    else if (ts.isFunctionDeclaration(node) && node.name?.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    // Type alias: type Foo = ...
+    else if (ts.isTypeAliasDeclaration(node) && node.name.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    // Interface: interface Foo {}
+    else if (ts.isInterfaceDeclaration(node) && node.name.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    // Class: class Foo {}
+    else if (ts.isClassDeclaration(node) && node.name?.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    // Enum: enum Foo {}
+    else if (ts.isEnumDeclaration(node) && node.name.text === name) {
+      positions.push(node.name.getStart(sourceFile));
+    }
+    ts.forEachChild(node, visit);
   }
 
-  const displayParts = info.displayParts?.map((p) => p.text).join("") ?? "";
-  console.log(displayParts);
+  visit(sourceFile!);
+  return positions;
+}
+
+for (const query of queries) {
+  if (isLineCol(query)) {
+    const [lineStr, colStr] = query.split(":");
+    const line = parseInt(lineStr, 10);
+    const col = parseInt(colStr, 10);
+    const lineCount = sourceFile.getLineStarts().length;
+
+    if (line < 1 || line > lineCount) {
+      console.log(`\n=== ${file}:${line}:${col} ===`);
+      console.log(`(line out of range, file has ${lineCount} lines)`);
+      continue;
+    }
+
+    const lineStart = sourceFile.getLineStarts()[line - 1];
+    const lineEnd = line < lineCount ? sourceFile.getLineStarts()[line] : content.length;
+    const lineLength = lineEnd - lineStart;
+
+    if (col < 1 || col > lineLength) {
+      console.log(`\n=== ${file}:${line}:${col} ===`);
+      console.log(`(column out of range, line has ${lineLength} characters)`);
+      continue;
+    }
+
+    const offset = sourceFile.getPositionOfLineAndCharacter(line - 1, col - 1);
+    const info = getInfoAtOffset(offset);
+
+    console.log(`\n=== ${file}:${line}:${col} ===`);
+    if (!info) {
+      console.log("(no type info)");
+    } else {
+      console.log(formatInfo(info));
+    }
+  } else {
+    // Name-based lookup
+    const positions = findNamePositions(query);
+
+    if (positions.length === 0) {
+      console.log(`\n=== ${query} ===`);
+      console.log("(not found)");
+      continue;
+    }
+
+    for (const pos of positions) {
+      const { line, col } = getLineAndCol(pos);
+      const info = getInfoAtOffset(pos);
+
+      console.log(`\n=== ${query} (${file}:${line}:${col}) ===`);
+      if (!info) {
+        console.log("(no type info)");
+      } else {
+        console.log(formatInfo(info));
+      }
+    }
+  }
 }

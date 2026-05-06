@@ -2,8 +2,8 @@
 //!
 //! This file contains the core IRLS algorithm implementation.
 
-// Removed solve_weighted_ls import - now using cdqrls from LM
 use super::types_control::GlmControl;
+use crate::stats::linalg::{cdqrls, QrLsResult};
 use crate::stats::regression::family::GlmFamily;
 
 // Console logging removed for cleaner output
@@ -19,7 +19,7 @@ pub struct IrlsResult {
     /// Estimated rank of the design matrix from the final IRLS WLS solve
     pub rank: usize,
     /// QR decomposition result from the final iteration
-    pub qr_result: Option<super::qr_decomposition::QrLsResult>,
+    pub qr_result: Option<QrLsResult>,
     /// IRLS working weights (w) from the start of the final iteration.
     /// R stores wt = w^2 in object$weights; used for dispersion computation.
     pub w: Vec<f64>,
@@ -61,7 +61,7 @@ pub fn run_irls_iteration(
     // Main IRLS iteration
     // Track the estimated rank from the weighted least squares step
     let mut last_rank: usize = 0;
-    let mut last_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
+    let mut last_qr_result: Option<QrLsResult> = None;
     let mut last_w: Vec<f64> = Vec::new();
     let mut last_good: Vec<bool> = Vec::new();
 
@@ -173,8 +173,6 @@ pub fn run_irls_iteration(
         }
 
         // Solve weighted least squares using QR decomposition
-        use super::qr_decomposition::cdqrls;
-
         // Convert to the format expected by cdqrls (column-major)
         let n_weighted = x_weighted.len();
         let p_weighted = if n_weighted > 0 {

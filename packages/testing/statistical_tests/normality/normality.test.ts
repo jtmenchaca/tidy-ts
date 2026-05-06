@@ -21,6 +21,8 @@ interface NormalityRef {
   dagostino_normal_p: number;
   dagostino_skewed_stat: number;
   dagostino_skewed_p: number;
+  dagostino_uniform_stat: number;
+  dagostino_uniform_p: number;
 }
 
 const ref = getReferenceFromRScript<NormalityRef>(refPath);
@@ -69,4 +71,10 @@ Deno.test("Normality: D'Agostino-Pearson skewed data", () => {
   const result = dagostinoPearsonTest({ data: skewed_data, alpha: 0.05 });
   assertClose(result.testStatistic.value, ref.dagostino_skewed_stat, TOL, "omnibus statistic");
   assertClose(result.pValue, ref.dagostino_skewed_p, TOL, "p-value");
+});
+
+Deno.test("Normality: D'Agostino-Pearson uniform data", () => {
+  const result = dagostinoPearsonTest({ data: uniform_data, alpha: 0.05 });
+  assertClose(result.testStatistic.value, ref.dagostino_uniform_stat, TOL, "omnibus statistic");
+  assertClose(result.pValue, ref.dagostino_uniform_p, TOL, "p-value");
 });

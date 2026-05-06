@@ -78,6 +78,17 @@ two_sample_equal <- list(
   two_sample_equal_estimate_2 = unname(res$estimate[2])
 )
 
+# --- Scenario 8: two_sample_less ---
+res <- prop.test(c(40, 60), c(100, 100), alternative = "less")
+two_sample_less <- list(
+  two_sample_less_statistic = unname(res$statistic),
+  two_sample_less_p_value = res$p.value,
+  two_sample_less_conf_int_lower = res$conf.int[1],
+  two_sample_less_conf_int_upper = res$conf.int[2],
+  two_sample_less_estimate_1 = unname(res$estimate[1]),
+  two_sample_less_estimate_2 = unname(res$estimate[2])
+)
+
 # Combine all and emit
 result <- c(
   one_sample_two_sided,
@@ -86,7 +97,8 @@ result <- c(
   one_sample_custom_p,
   two_sample_two_sided,
   two_sample_greater,
-  two_sample_equal
+  two_sample_equal,
+  two_sample_less
 )
 
 emit_reference(result)

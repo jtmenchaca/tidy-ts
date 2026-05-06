@@ -10,7 +10,9 @@
 import process from "node:process";
 import { createSpinner } from "@tidy-ts/shims/spinner";
 
-const args = Deno.args;
+// Filter out flags that are valid for `deno run` but not `deno check`
+const checkInvalidFlags = new Set(["-A", "--allow-all", "--allow-read", "--allow-write", "--allow-net", "--allow-env", "--allow-run", "--allow-ffi", "--allow-sys", "--allow-hrtime"]);
+const args = Deno.args.filter((a) => !checkInvalidFlags.has(a));
 const label = `deno check ${args.join(" ")}`;
 const spinner = createSpinner(label);
 

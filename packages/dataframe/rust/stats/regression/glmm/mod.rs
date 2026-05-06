@@ -91,7 +91,7 @@ pub use random_effects::{
 
 // Re-export variance components types
 pub use variance_components::{
-    cholesky_decompose, cholesky_to_vcov, initial_theta, log_jacobian_determinant,
+    cholesky_to_vcov, initial_theta, log_jacobian_determinant,
     log_jacobian_determinant_gradient, split_theta, theta_to_cholesky, theta_to_corr,
     theta_to_sd, theta_to_variance_component, theta_to_vcov, theta_to_vcov_jacobian,
     total_theta_params, vcov_to_corr, vcov_to_theta,
@@ -105,7 +105,7 @@ pub use random_effects_likelihood::{
 
 // Re-export laplace approximation types
 pub use laplace::{
-    compute_reml_adjustment, compute_weighted_xtx, find_b_mode, invert_symmetric_positive_definite,
+    compute_reml_adjustment, compute_weighted_xtx, find_b_mode,
     joint_gradient_b, joint_hessian_b, joint_log_likelihood, laplace_approximation,
     laplace_marginal_likelihood, update_beta, LaplaceControl, LaplaceResult,
 };

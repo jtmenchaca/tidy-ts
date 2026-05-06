@@ -40,6 +40,7 @@
 //! - `cs_correlation_transform`: x → rho for compound symmetry
 //! - `cs_correlation_inv_transform`: rho → x for compound symmetry
 
+use crate::stats::linalg::cholesky_decompose;
 use super::types::CovarianceType;
 
 /// Transform unconstrained parameter to valid CS correlation
@@ -215,38 +216,6 @@ pub fn vcov_to_theta(vcov: &[Vec<f64>]) -> Option<Vec<f64>> {
     Some(theta)
 }
 
-/// Cholesky decomposition of a symmetric positive-definite matrix
-///
-/// # Arguments
-/// * `a` - Symmetric positive-definite matrix
-///
-/// # Returns
-/// * Lower-triangular Cholesky factor L such that A = L L^T, or None if not positive definite
-pub fn cholesky_decompose(a: &[Vec<f64>]) -> Option<Vec<Vec<f64>>> {
-    let n = a.len();
-    let mut l = vec![vec![0.0; n]; n];
-
-    for i in 0..n {
-        for j in 0..=i {
-            let mut sum = a[i][j];
-
-            for k in 0..j {
-                sum -= l[i][k] * l[j][k];
-            }
-
-            if i == j {
-                if sum <= 0.0 {
-                    return None; // Not positive definite
-                }
-                l[i][j] = sum.sqrt();
-            } else {
-                l[i][j] = sum / l[j][j];
-            }
-        }
-    }
-
-    Some(l)
-}
 
 /// Convert theta parameters to standard deviations
 ///

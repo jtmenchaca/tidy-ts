@@ -12,6 +12,16 @@ export type {
   TwoSampleZTestResult,
 } from "./types.ts";
 
+/** WASM serializes f64::INFINITY as null; restore Infinity for CI bounds */
+function fixCiBounds(result: { confidenceInterval: { lower: number | null; upper: number | null } }) {
+  if (result.confidenceInterval.lower === null) {
+    (result.confidenceInterval as { lower: number }).lower = -Infinity;
+  }
+  if (result.confidenceInterval.upper === null) {
+    (result.confidenceInterval as { upper: number }).upper = Infinity;
+  }
+}
+
 /**
  * One-sample Z-test for means (WASM implementation)
  */
@@ -44,8 +54,9 @@ export function zTestOneSample({
     popStd,
     alpha,
     alternative,
-  );
-  return result as OneSampleZTestResult;
+  ) as OneSampleZTestResult;
+  fixCiBounds(result);
+  return result;
 }
 
 /**
@@ -86,6 +97,7 @@ export function zTestTwoSample({
     popStd2,
     alpha,
     alternative,
-  );
-  return result as TwoSampleZTestResult;
+  ) as TwoSampleZTestResult;
+  fixCiBounds(result);
+  return result;
 }

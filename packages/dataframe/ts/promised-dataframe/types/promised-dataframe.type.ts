@@ -62,7 +62,7 @@ import type {
  *   .filter(row => row.data.active);
  * ```
  */
-export type PromisedDataFrame<Row extends Record<string, unknown>> =
+export type PromisedDataFrame<Row extends object> =
   & Omit<
     DataFrame<Row>,
     | "mutate"
@@ -121,7 +121,7 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
       ): PromisedDataFrame<
         Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> }
       >;
-      <Assignments extends Record<string, unknown>>(
+      <Assignments extends object>(
         assignments: Assignments,
       ): PromisedDataFrame<Row & Assignments>;
     };
@@ -254,7 +254,7 @@ export type PromisedDataFrame<Row extends Record<string, unknown>> =
  * ```
  */
 export type PromisedGroupedDataFrame<
-  Row extends Record<string, unknown>,
+  Row extends object,
   K extends keyof Row,
 > =
   & Omit<

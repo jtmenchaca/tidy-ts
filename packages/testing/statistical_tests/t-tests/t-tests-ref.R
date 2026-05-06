@@ -104,6 +104,28 @@ large_effect <- list(
   large_effect_estimate_y = unname(res$estimate[2])
 )
 
+# --- Scenario 9: independent_less ---
+res <- t.test(x, y, var.equal = TRUE, alternative = "less")
+independent_less <- list(
+  independent_less_statistic = unname(res$statistic),
+  independent_less_p_value = res$p.value,
+  independent_less_conf_int_lower = res$conf.int[1],
+  independent_less_conf_int_upper = res$conf.int[2],
+  independent_less_parameter = unname(res$parameter),
+  independent_less_estimate_x = unname(res$estimate[1]),
+  independent_less_estimate_y = unname(res$estimate[2])
+)
+
+# --- Scenario 10: one_sample_alpha_01 ---
+res <- t.test(data1, mu = 2.0, alternative = "two.sided", conf.level = 0.99)
+one_sample_alpha_01 <- list(
+  one_sample_alpha_01_statistic = unname(res$statistic),
+  one_sample_alpha_01_p_value = res$p.value,
+  one_sample_alpha_01_conf_int_lower = res$conf.int[1],
+  one_sample_alpha_01_conf_int_upper = res$conf.int[2],
+  one_sample_alpha_01_parameter = unname(res$parameter)
+)
+
 # Emit all results as a single flat object
 emit_reference(c(
   one_sample,
@@ -113,5 +135,7 @@ emit_reference(c(
   independent_greater,
   paired,
   paired_less,
-  large_effect
+  large_effect,
+  independent_less,
+  one_sample_alpha_01
 ))

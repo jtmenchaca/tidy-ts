@@ -16,6 +16,7 @@ pub mod core;
 pub mod distributions;
 pub mod extensions;
 pub mod helpers;
+pub mod linalg;
 pub mod regression;
 pub mod splines;
 pub mod statistical_tests;

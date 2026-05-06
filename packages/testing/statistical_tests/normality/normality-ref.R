@@ -37,5 +37,8 @@ emit_reference(list(
   dagostino_normal_stat = dag_normal@test$statistic[[1]],
   dagostino_normal_p = dag_normal@test$p.value[[1]],
   dagostino_skewed_stat = dag_skewed@test$statistic[[1]],
-  dagostino_skewed_p = dag_skewed@test$p.value[[1]]
+  dagostino_skewed_p = dag_skewed@test$p.value[[1]],
+
+  dagostino_uniform_stat = fBasics::dagoTest(uniform_data)@test$statistic[[1]],
+  dagostino_uniform_p = fBasics::dagoTest(uniform_data)@test$p.value[[1]]
 ))

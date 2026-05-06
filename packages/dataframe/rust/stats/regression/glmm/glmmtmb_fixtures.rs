@@ -566,10 +566,11 @@ mod tests {
     /// WITHOUT beta profiling. This isolates the likelihood formula from profiling.
     #[test]
     fn test_likelihood_no_profiling() {
+        use crate::dataframe::stats::linalg::log_determinant;
         use crate::dataframe::stats::regression::family::PoissonFamily;
         use crate::dataframe::stats::regression::glmm::laplace::{
             find_b_mode, joint_log_likelihood_with_sigma, joint_hessian_b,
-            LaplaceControl, log_determinant,
+            LaplaceControl,
         };
 
         let (y, x, random_effects, z) = create_salamanders_data();

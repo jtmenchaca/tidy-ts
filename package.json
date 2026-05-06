@@ -34,6 +34,7 @@
     "test:runtimes": "cd packages/testing/runtimes && bash test-runner.sh",
     "wasmbuild": "deno run -A scripts/parse-build.ts Building WASM -- deno run -A jsr:@deno/wasmbuild@0.21.1 --features wasm --out packages/dataframe/lib",
     "napibuild": "deno run -A scripts/parse-build.ts Building native addon -- sh -c 'cargo build --features napi-rs --release && cp target/release/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/release/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node'",
+    "wasm:napi:build": "pnpm wasmbuild & pnpm napibuild & wait",
     "napibuild:debug": "deno run -A scripts/parse-build.ts Building native addon [debug] -- sh -c 'cargo build --features napi-rs && cp target/debug/libtidy_ts_dataframe.dylib packages/dataframe/lib/tidy_ts_dataframe.darwin-arm64.node && cp target/debug/libtidy_ts_dataframe.dylib packages/npm-darwin-arm64/tidy_ts_dataframe.darwin-arm64.node'",
     "napibuild:win32-x64": "deno run -A scripts/parse-build.ts Building native addon [win32-x64] -- sh -c 'cargo xwin build --features napi-rs --release --target x86_64-pc-windows-msvc && cp target/x86_64-pc-windows-msvc/release/tidy_ts_dataframe.dll packages/npm-win32-x64/tidy_ts_dataframe.win32-x64.node'",
     "build": "deno run -A scripts/build.ts",

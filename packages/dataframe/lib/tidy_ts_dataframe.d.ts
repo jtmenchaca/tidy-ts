@@ -1010,6 +1010,19 @@ export function wasm_dbinom(
  */
 export function wasm_dchisq(x: number, df: number, give_log: boolean): number;
 
+export function wasm_ddirac(
+  x: number,
+  location: number,
+  give_log: boolean,
+): number;
+
+export function wasm_dev1(
+  x: number,
+  location: number,
+  scale: number,
+  give_log: boolean,
+): number;
+
 /**
  * WASM export for exponential density function
  */
@@ -1081,6 +1094,13 @@ export function wasm_dnorm(
   give_log: boolean,
 ): number;
 
+export function wasm_dpareto(
+  x: number,
+  scale: number,
+  shape: number,
+  give_log: boolean,
+): number;
+
 /**
  * WASM export for Poisson density function
  */
@@ -1125,6 +1145,13 @@ export function wasm_dwilcox(
   give_log: boolean,
 ): number;
 
+export function wasm_dzipf(
+  x: number,
+  n: number,
+  s: number,
+  give_log: boolean,
+): number;
+
 /**
  * WASM export for beta cumulative distribution function
  */
@@ -1153,6 +1180,21 @@ export function wasm_pbinom(
 export function wasm_pchisq(
   x: number,
   df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
+export function wasm_pdirac(
+  x: number,
+  location: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
+export function wasm_pev1(
+  x: number,
+  location: number,
+  scale: number,
   lower_tail: boolean,
   log_p: boolean,
 ): number;
@@ -1244,6 +1286,14 @@ export function wasm_pnorm(
   log_p: boolean,
 ): number;
 
+export function wasm_ppareto(
+  x: number,
+  scale: number,
+  shape: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
 /**
  * WASM export for Poisson cumulative distribution function
  */
@@ -1297,6 +1347,14 @@ export function wasm_pwilcox(
   log_p: boolean,
 ): number;
 
+export function wasm_pzipf(
+  x: number,
+  n: number,
+  s: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
 /**
  * WASM export for beta quantile function
  */
@@ -1325,6 +1383,21 @@ export function wasm_qbinom(
 export function wasm_qchisq(
   p: number,
   df: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
+export function wasm_qdirac(
+  p: number,
+  location: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
+export function wasm_qev1(
+  p: number,
+  location: number,
+  scale: number,
   lower_tail: boolean,
   log_p: boolean,
 ): number;
@@ -1416,6 +1489,14 @@ export function wasm_qnorm(
   log_p: boolean,
 ): number;
 
+export function wasm_qpareto(
+  p: number,
+  scale: number,
+  shape: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
 /**
  * WASM export for Poisson quantile function
  */
@@ -1469,6 +1550,14 @@ export function wasm_qwilcox(
   log_p: boolean,
 ): number;
 
+export function wasm_qzipf(
+  p: number,
+  n: number,
+  s: number,
+  lower_tail: boolean,
+  log_p: boolean,
+): number;
+
 /**
  * WASM export for beta random number generation
  */
@@ -1483,6 +1572,10 @@ export function wasm_rbinom(size: number, prob: number): number;
  * WASM export for chi-squared random number generation
  */
 export function wasm_rchisq(df: number): number;
+
+export function wasm_rdirac(location: number): number;
+
+export function wasm_rev1(location: number, scale: number): number;
 
 /**
  * WASM export for exponential random number generation
@@ -1524,6 +1617,8 @@ export function wasm_rnbinom(r: number, prob: number): number;
  */
 export function wasm_rnorm(mean: number, sd: number): number;
 
+export function wasm_rpareto(scale: number, shape: number): number;
+
 /**
  * WASM export for Poisson random number generation
  */
@@ -1548,6 +1643,8 @@ export function wasm_rweibull(shape: number, scale: number): number;
  * WASM export for Wilcoxon random number generation
  */
 export function wasm_rwilcox(m: number, n: number): number;
+
+export function wasm_rzipf(n: number, s: number): number;
 
 export function wasm_test(): number;
 

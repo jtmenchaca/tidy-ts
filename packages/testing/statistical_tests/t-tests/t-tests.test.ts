@@ -133,3 +133,34 @@ Deno.test("T-test: large_effect", () => {
   assertClose(result.degreesOfFreedom, ref.large_effect_parameter as number, TOL, "df");
   expect(typeof result.effectSize.value).toBe("number");
 });
+
+Deno.test("T-test: independent_less", () => {
+  const result = tTestIndependent({
+    x: [5.1, 4.9, 5.3, 5.0, 5.2],
+    y: [4.5, 4.3, 4.7, 4.4, 4.6],
+    equalVar: true,
+    alternative: "less",
+  });
+
+  assertClose(result.testStatistic.value, ref.independent_less_statistic as number, TOL, "statistic");
+  assertClose(result.pValue, ref.independent_less_p_value as number, TOL, "p-value");
+  expect(result.confidenceInterval.lower).toBe(-Infinity);
+  assertClose(result.confidenceInterval.upper, ref.independent_less_conf_int_upper as number, TOL, "CI upper");
+  assertClose(result.degreesOfFreedom, ref.independent_less_parameter as number, TOL, "df");
+  expect(typeof result.effectSize.value).toBe("number");
+});
+
+Deno.test("T-test: one_sample_alpha_0.01", () => {
+  const result = tTestOneSample({
+    data: [2.3, 1.9, 2.5, 2.1, 2.8, 2.0, 2.4],
+    mu: 2.0,
+    alternative: "two-sided",
+    alpha: 0.01,
+  });
+
+  assertClose(result.testStatistic.value, ref.one_sample_alpha_01_statistic as number, TOL, "statistic");
+  assertClose(result.pValue, ref.one_sample_alpha_01_p_value as number, TOL, "p-value");
+  assertClose(result.confidenceInterval.lower, ref.one_sample_alpha_01_conf_int_lower as number, TOL, "CI lower");
+  assertClose(result.confidenceInterval.upper, ref.one_sample_alpha_01_conf_int_upper as number, TOL, "CI upper");
+  assertClose(result.degreesOfFreedom, ref.one_sample_alpha_01_parameter as number, TOL, "df");
+});

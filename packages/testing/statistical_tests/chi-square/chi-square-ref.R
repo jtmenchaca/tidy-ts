@@ -123,6 +123,10 @@ ci_5 <- fisher_ci_precise(3, 1, 1, 3, 0.05, "two.sided")
 ci_6 <- fisher_ci_precise(3, 1, 1, 3, 0.05, "greater")
 ci_7 <- fisher_ci_precise(10, 1, 2, 8, 0.05, "two.sided")
 
+# --- Scenario 8: fisher_less ---
+res8 <- fisher.test(mat5, alternative = "less")
+ci_8 <- fisher_ci_precise(3, 1, 1, 3, 0.05, "less")
+
 # For independence tests, emit expected and residuals in row-major order
 # (matching the TS contingencyTable layout) using as.vector(t(...))
 emit_reference(list(
@@ -163,5 +167,10 @@ emit_reference(list(
   fisher_large_or_p_value = res7$p.value,
   fisher_large_or_odds_ratio = or_7,
   fisher_large_or_conf_int_lower = ci_7[1],
-  fisher_large_or_conf_int_upper = ci_7[2]
+  fisher_large_or_conf_int_upper = ci_7[2],
+
+  fisher_less_p_value = res8$p.value,
+  fisher_less_odds_ratio = or_5,
+  fisher_less_conf_int_lower = ci_8[1],
+  fisher_less_conf_int_upper = ci_8[2]
 ))

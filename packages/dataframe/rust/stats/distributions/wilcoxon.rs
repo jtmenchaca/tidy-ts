@@ -194,10 +194,18 @@ pub fn pwilcox(q: f64, m: f64, n: f64, lower_tail: bool, log_p: bool) -> f64 {
 
     let m = m.trunc() as usize;
     let n = n.trunc() as usize;
-    let q = (q + 1e-7).floor() as usize; // R uses floor(q + 1e-7)
+    let q_floor = (q + 1e-7).floor();
 
-    // q is usize, so it can't be negative, but we keep this for completeness
-    // and to match R's interface exactly
+    // q < 0: CDF is 0 (lower_tail) or 1 (upper_tail)
+    if q_floor < 0.0 {
+        return if lower_tail {
+            if log_p { f64::NEG_INFINITY } else { 0.0 }
+        } else {
+            if log_p { 0.0 } else { 1.0 }
+        };
+    }
+
+    let q = q_floor as usize;
 
     if q >= m * n {
         return if lower_tail {

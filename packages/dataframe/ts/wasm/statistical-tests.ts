@@ -135,7 +135,7 @@ export function chi_square_independence(
   );
 }
 
-function chi_square_goodness_of_fit(
+export function chi_square_goodness_of_fit(
   observed: Float64Array,
   expected: Float64Array,
   alpha: number,

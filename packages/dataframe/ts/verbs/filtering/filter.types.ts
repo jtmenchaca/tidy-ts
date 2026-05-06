@@ -46,7 +46,7 @@ type AsyncRowFilter<Row extends object> =
  */
 
 /** Filtering preserves row shape (values change, shape doesn't). */
-export type RowAfterFilter<Row extends object> = Prettify<Row>;
+export type RowAfterFilter<Row extends object> = Row;
 
 /**
  * Synchronous filter — always returns DataFrame or GroupedDataFrame.

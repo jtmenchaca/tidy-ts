@@ -585,3 +585,152 @@ export function wasm_rwilcox(m: number, n: number): number {
   initWasm();
   return wasmInternal.wasm_rwilcox(m, n);
 }
+
+// EV1 (Gumbel Maximum) Distribution
+export function wasm_dev1(
+  x: number,
+  location: number,
+  scale: number,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_dev1(x, location, scale, giveLog);
+}
+
+export function wasm_pev1(
+  x: number,
+  location: number,
+  scale: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_pev1(x, location, scale, lowerTail, giveLog);
+}
+
+export function wasm_qev1(
+  p: number,
+  location: number,
+  scale: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_qev1(p, location, scale, lowerTail, giveLog);
+}
+
+export function wasm_rev1(location: number, scale: number): number {
+  initWasm();
+  return wasmInternal.wasm_rev1(location, scale);
+}
+
+// Zipf Distribution
+export function wasm_dzipf(
+  x: number,
+  n: number,
+  s: number,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_dzipf(x, n, s, giveLog);
+}
+
+export function wasm_pzipf(
+  x: number,
+  n: number,
+  s: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_pzipf(x, n, s, lowerTail, giveLog);
+}
+
+export function wasm_qzipf(
+  p: number,
+  n: number,
+  s: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_qzipf(p, n, s, lowerTail, giveLog);
+}
+
+export function wasm_rzipf(n: number, s: number): number {
+  initWasm();
+  return wasmInternal.wasm_rzipf(n, s);
+}
+
+// Dirac Delta Distribution
+export function wasm_ddirac(
+  x: number,
+  location: number,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_ddirac(x, location, giveLog);
+}
+
+export function wasm_pdirac(
+  x: number,
+  location: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_pdirac(x, location, lowerTail, giveLog);
+}
+
+export function wasm_qdirac(
+  p: number,
+  location: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_qdirac(p, location, lowerTail, giveLog);
+}
+
+export function wasm_rdirac(location: number): number {
+  initWasm();
+  return wasmInternal.wasm_rdirac(location);
+}
+
+// Pareto Distribution
+export function wasm_dpareto(
+  x: number,
+  scale: number,
+  shape: number,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_dpareto(x, scale, shape, giveLog);
+}
+
+export function wasm_ppareto(
+  x: number,
+  scale: number,
+  shape: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_ppareto(x, scale, shape, lowerTail, giveLog);
+}
+
+export function wasm_qpareto(
+  p: number,
+  scale: number,
+  shape: number,
+  lowerTail: boolean,
+  giveLog: boolean,
+): number {
+  initWasm();
+  return wasmInternal.wasm_qpareto(p, scale, shape, lowerTail, giveLog);
+}
+
+export function wasm_rpareto(scale: number, shape: number): number {
+  initWasm();
+  return wasmInternal.wasm_rpareto(scale, shape);
+}

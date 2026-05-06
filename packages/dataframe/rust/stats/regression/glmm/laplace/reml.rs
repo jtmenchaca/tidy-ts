@@ -22,7 +22,7 @@
 use crate::stats::regression::family::GlmFamily;
 
 use super::super::random_effects::SparseMatrix;
-use super::linear_algebra::log_determinant;
+use crate::stats::linalg::log_determinant;
 
 /// Compute the weighted information matrix X'WX for REML adjustment
 ///

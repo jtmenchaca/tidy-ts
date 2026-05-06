@@ -37,6 +37,9 @@ interface MannWhitneyRef {
   single_obs_pValue: number;
   single_obs_alternative: string;
   single_obs_method: string;
+
+  continuity_W: number;
+  continuity_pValue: number;
 }
 
 const ref = getReferenceFromRScript<MannWhitneyRef>(
@@ -146,5 +149,19 @@ Deno.test("Mann-Whitney: single observation", () => {
   assertClose(result.testStatistic.value, ref.single_obs_W, TOL, "W statistic");
   assertClose(result.pValue, ref.single_obs_pValue, TOL, "p-value");
   expect(typeof result.effectSize.value).toBe("number");
+  expect(result.alternative).toBe("two-sided");
+});
+
+Deno.test("Mann-Whitney: continuity correction", () => {
+  const result = mannWhitneyTest({
+    x: [14, 15, 16, 17, 18],
+    y: [20, 21, 22, 23, 24],
+    alternative: "two-sided",
+    exact: false,
+    continuityCorrection: true,
+  });
+
+  assertClose(result.testStatistic.value, ref.continuity_W, TOL, "W statistic");
+  assertClose(result.pValue, ref.continuity_pValue, TOL, "p-value");
   expect(result.alternative).toBe("two-sided");
 });

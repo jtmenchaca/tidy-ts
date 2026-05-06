@@ -4,8 +4,24 @@ use rand::Rng;
 use statrs::distribution::{Continuous, ContinuousCDF, LogNormal};
 
 pub fn dlnorm(x: f64, meanlog: f64, sdlog: f64, give_log: bool) -> f64 {
-    if sdlog <= 0.0 {
+    if x.is_nan() || meanlog.is_nan() || sdlog.is_nan() {
+        return x + meanlog + sdlog;
+    }
+    if sdlog < 0.0 {
         return f64::NAN;
+    }
+    if !x.is_finite() && x.ln() == meanlog {
+        return f64::NAN; // log(x) - meanlog is NaN
+    }
+    if sdlog == 0.0 {
+        return if x > 0.0 && x.ln() == meanlog {
+            if give_log { f64::INFINITY } else { f64::INFINITY }
+        } else {
+            if give_log { f64::NEG_INFINITY } else { 0.0 }
+        };
+    }
+    if x <= 0.0 {
+        return if give_log { f64::NEG_INFINITY } else { 0.0 };
     }
     let dist = LogNormal::new(meanlog, sdlog).expect("validated parameters: sdlog > 0");
     if give_log {

@@ -17,8 +17,9 @@
 //! Uses L-BFGS for unconstrained optimization of theta (log-Cholesky parameterization
 //! ensures covariance matrices are always positive-definite).
 
+use crate::stats::linalg::invert_symmetric_positive_definite;
 use super::laplace::{
-    compute_reml_adjustment, extract_sigma_from_theta, invert_symmetric_positive_definite,
+    compute_reml_adjustment, extract_sigma_from_theta,
     laplace_approximation, LaplaceControl,
 };
 use super::random_effects::SparseMatrix;
@@ -724,7 +725,7 @@ fn build_blups(
 
     // Compute the inverse Hessian if available
     // This gives us Var(b | y) = H^{-1}, the conditional covariance matrix
-    let hessian_inv = hessian_b.and_then(|h| invert_symmetric_positive_definite(h));
+    let hessian_inv: Option<Vec<Vec<f64>>> = hessian_b.and_then(|h| invert_symmetric_positive_definite(h));
 
     let mut offset = 0;
 
@@ -3917,7 +3918,7 @@ mod tests {
         }
 
         // Compute log determinant via Cholesky
-        use super::super::variance_components::cholesky_decompose;
+        use crate::stats::linalg::cholesky_decompose;
         let chol = cholesky_decompose(&xtx).expect("X'X should be positive definite");
         let _log_det_xtx: f64 = 2.0 * chol.iter().map(|row| row.iter().position(|&x| x != 0.0).map_or(0.0, |i| row[i].ln())).sum::<f64>();
 

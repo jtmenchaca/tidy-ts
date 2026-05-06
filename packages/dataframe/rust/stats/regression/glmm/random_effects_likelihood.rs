@@ -24,7 +24,8 @@
 //! - Memory scales linearly with number of groups, not quadratically
 
 use super::types::{CovarianceType, RandomEffect};
-use super::variance_components::{cholesky_decompose, theta_to_vcov, split_theta};
+use crate::stats::linalg::cholesky_decompose;
+use super::variance_components::{theta_to_vcov, split_theta};
 
 /// Result from computing the random effects prior likelihood
 #[derive(Debug, Clone)]

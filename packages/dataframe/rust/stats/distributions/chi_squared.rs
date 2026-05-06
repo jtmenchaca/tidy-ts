@@ -3,9 +3,21 @@
 use rand::Rng;
 use statrs::distribution::{ChiSquared, Continuous, ContinuousCDF};
 
+/// Chi-squared density — delegates to dgamma(x, df/2, scale=2) per R's dchisq.c
 pub fn dchisq(x: f64, df: f64, give_log: bool) -> f64 {
-    if df <= 0.0 {
+    if df < 0.0 {
         return f64::NAN;
+    }
+    // R: dchisq(x, df) = dgamma(x, df/2, scale=2)
+    // Handle df=0 as point mass at 0 (from R's dgamma: shape==0 → x==0 ? Inf : 0)
+    if df == 0.0 {
+        if x < 0.0 {
+            return if give_log { f64::NEG_INFINITY } else { 0.0 };
+        }
+        if x == 0.0 {
+            return f64::INFINITY;
+        }
+        return if give_log { f64::NEG_INFINITY } else { 0.0 };
     }
     let dist = ChiSquared::new(df).expect("validated parameters: df > 0");
     if give_log {
@@ -16,8 +28,18 @@ pub fn dchisq(x: f64, df: f64, give_log: bool) -> f64 {
 }
 
 pub fn pchisq(x: f64, df: f64, lower_tail: bool, log_p: bool) -> f64 {
-    if df <= 0.0 {
+    if df < 0.0 {
         return f64::NAN;
+    }
+    // df=0: point mass at 0
+    // R: pchisq(x, df=0) = 0 for x <= 0, 1 for x > 0
+    if df == 0.0 {
+        let p: f64 = if x > 0.0 {
+            if lower_tail { 1.0 } else { 0.0 }
+        } else {
+            if lower_tail { 0.0 } else { 1.0 }
+        };
+        return if log_p { p.ln() } else { p };
     }
     let dist = ChiSquared::new(df).expect("validated parameters: df > 0");
     let cdf = if lower_tail { dist.cdf(x) } else { 1.0 - dist.cdf(x) };

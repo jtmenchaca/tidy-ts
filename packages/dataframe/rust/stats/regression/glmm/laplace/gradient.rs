@@ -237,7 +237,7 @@ mod tests {
     use crate::stats::regression::glmm::random_effects::{
         construct_z_matrix, intercept_term_values, populate_random_effect,
     };
-    use crate::stats::regression::glmm::variance_components::cholesky_decompose;
+    use crate::stats::linalg::cholesky_decompose;
 
     fn create_test_data() -> (Vec<f64>, Vec<Vec<f64>>, RandomEffect, SparseMatrix) {
         let n = 20;

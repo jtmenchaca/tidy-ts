@@ -6,27 +6,12 @@ Please understand that Deno, Bun, and node all successfully run the napi-rs .nod
 - **PLEASE** do not type check with pnpm check:dataframe unless it's really needed.  Just check the relevant file(s) you're editing. 
 - **Type checking output is already clean**: `pnpm check:dataframe` or whatever is more targeted and relevant (i.e. do not read whole packages unless necessary) (and all check scripts) use `scripts/parse-check.ts` which strips verbose output and shows only errors with file locations. **Do NOT pipe through `2>&1`, `tail`, `grep`, or `head`** — just run the command directly and read the output as-is.
 
-## Quick Reference
+## Parsing scripts
+When checking, run like:
+deno run -A scripts/parse-check.ts -A packages/testing/glm/
 
-```bash
-# Type check
-pnpm check
-
-# Run all CI tests
-pnpm ci
-
-# Run specific test suites
-pnpm test:dataframe        # DataFrame core tests
-pnpm test:examples         # Example tests
-pnpm test:statistical-tests # Statistical test validation
-pnpm test:glm              # GLM regression tests
-
-# Build Rust → WASM
-pnpm wasmbuild
-
-# Format and lint
-pnpm fmt && pnpm lint
-```
+When testing, run like:
+deno run -A scripts/parse-test.ts -A packages/testing/glm/
 
 ## Notes for Development
 

@@ -18,7 +18,6 @@
 //! - [`types`]: Core types (LaplaceResult, LaplaceControl)
 //! - [`likelihood`]: Data log-likelihood computation using proper distributions
 //! - [`gradient`]: Gradient and Hessian of joint log-likelihood
-//! - [`linear_algebra`]: Matrix operations (solve, log_det, invert)
 //! - [`mode_finding`]: Newton's method for random effect modes
 //! - [`beta_update`]: IRLS update for fixed effects
 //! - [`approximation`]: Main Laplace approximation function
@@ -33,7 +32,6 @@ pub mod approximation;
 pub mod beta_update;
 pub mod gradient;
 pub mod likelihood;
-pub mod linear_algebra;
 pub mod mode_finding;
 pub mod reml;
 pub mod types;
@@ -49,6 +47,5 @@ pub use approximation::{
 pub use beta_update::update_beta;
 pub use gradient::{joint_gradient_b, joint_hessian_b};
 pub use likelihood::{compute_data_log_likelihood, joint_log_likelihood, joint_log_likelihood_with_sigma};
-pub use linear_algebra::{invert_symmetric_positive_definite, log_determinant, solve_linear_system};
 pub use mode_finding::find_b_mode;
 pub use reml::{compute_reml_adjustment, compute_weighted_xtx};

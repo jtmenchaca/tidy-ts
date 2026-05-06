@@ -3402,6 +3402,29 @@ export function wasm_dchisq(x, df, give_log) {
 }
 
 /**
+ * @param {number} x
+ * @param {number} location
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_ddirac(x, location, give_log) {
+  const ret = wasm.wasm_ddirac(x, location, give_log);
+  return ret;
+}
+
+/**
+ * @param {number} x
+ * @param {number} location
+ * @param {number} scale
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dev1(x, location, scale, give_log) {
+  const ret = wasm.wasm_dev1(x, location, scale, give_log);
+  return ret;
+}
+
+/**
  * WASM export for exponential density function
  * @param {number} x
  * @param {number} rate
@@ -3505,6 +3528,18 @@ export function wasm_dnorm(x, mean, sd, give_log) {
 }
 
 /**
+ * @param {number} x
+ * @param {number} scale
+ * @param {number} shape
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dpareto(x, scale, shape, give_log) {
+  const ret = wasm.wasm_dpareto(x, scale, shape, give_log);
+  return ret;
+}
+
+/**
  * WASM export for Poisson density function
  * @param {number} x
  * @param {number} lambda
@@ -3568,6 +3603,18 @@ export function wasm_dwilcox(x, m, n, give_log) {
 }
 
 /**
+ * @param {number} x
+ * @param {number} n
+ * @param {number} s
+ * @param {boolean} give_log
+ * @returns {number}
+ */
+export function wasm_dzipf(x, n, s, give_log) {
+  const ret = wasm.wasm_dzipf(x, n, s, give_log);
+  return ret;
+}
+
+/**
  * WASM export for beta cumulative distribution function
  * @param {number} x
  * @param {number} shape1
@@ -3605,6 +3652,31 @@ export function wasm_pbinom(x, size, prob, lower_tail, log_p) {
  */
 export function wasm_pchisq(x, df, lower_tail, log_p) {
   const ret = wasm.wasm_pchisq(x, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * @param {number} x
+ * @param {number} location
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pdirac(x, location, lower_tail, log_p) {
+  const ret = wasm.wasm_pdirac(x, location, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * @param {number} x
+ * @param {number} location
+ * @param {number} scale
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pev1(x, location, scale, lower_tail, log_p) {
+  const ret = wasm.wasm_pev1(x, location, scale, lower_tail, log_p);
   return ret;
 }
 
@@ -3720,6 +3792,19 @@ export function wasm_pnorm(x, mean, sd, lower_tail, log_p) {
 }
 
 /**
+ * @param {number} x
+ * @param {number} scale
+ * @param {number} shape
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_ppareto(x, scale, shape, lower_tail, log_p) {
+  const ret = wasm.wasm_ppareto(x, scale, shape, lower_tail, log_p);
+  return ret;
+}
+
+/**
  * WASM export for Poisson cumulative distribution function
  * @param {number} x
  * @param {number} lambda
@@ -3788,6 +3873,19 @@ export function wasm_pwilcox(q, m, n, lower_tail, log_p) {
 }
 
 /**
+ * @param {number} x
+ * @param {number} n
+ * @param {number} s
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_pzipf(x, n, s, lower_tail, log_p) {
+  const ret = wasm.wasm_pzipf(x, n, s, lower_tail, log_p);
+  return ret;
+}
+
+/**
  * WASM export for beta quantile function
  * @param {number} p
  * @param {number} shape1
@@ -3825,6 +3923,31 @@ export function wasm_qbinom(p, size, prob, lower_tail, log_p) {
  */
 export function wasm_qchisq(p, df, lower_tail, log_p) {
   const ret = wasm.wasm_qchisq(p, df, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * @param {number} p
+ * @param {number} location
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qdirac(p, location, lower_tail, log_p) {
+  const ret = wasm.wasm_qdirac(p, location, lower_tail, log_p);
+  return ret;
+}
+
+/**
+ * @param {number} p
+ * @param {number} location
+ * @param {number} scale
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qev1(p, location, scale, lower_tail, log_p) {
+  const ret = wasm.wasm_qev1(p, location, scale, lower_tail, log_p);
   return ret;
 }
 
@@ -3940,6 +4063,19 @@ export function wasm_qnorm(p, mean, sd, lower_tail, log_p) {
 }
 
 /**
+ * @param {number} p
+ * @param {number} scale
+ * @param {number} shape
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qpareto(p, scale, shape, lower_tail, log_p) {
+  const ret = wasm.wasm_qpareto(p, scale, shape, lower_tail, log_p);
+  return ret;
+}
+
+/**
  * WASM export for Poisson quantile function
  * @param {number} p
  * @param {number} lambda
@@ -4008,6 +4144,19 @@ export function wasm_qwilcox(p, m, n, lower_tail, log_p) {
 }
 
 /**
+ * @param {number} p
+ * @param {number} n
+ * @param {number} s
+ * @param {boolean} lower_tail
+ * @param {boolean} log_p
+ * @returns {number}
+ */
+export function wasm_qzipf(p, n, s, lower_tail, log_p) {
+  const ret = wasm.wasm_qzipf(p, n, s, lower_tail, log_p);
+  return ret;
+}
+
+/**
  * WASM export for beta random number generation
  * @param {number} shape1
  * @param {number} shape2
@@ -4036,6 +4185,25 @@ export function wasm_rbinom(size, prob) {
  */
 export function wasm_rchisq(df) {
   const ret = wasm.wasm_rchisq(df);
+  return ret;
+}
+
+/**
+ * @param {number} location
+ * @returns {number}
+ */
+export function wasm_rdirac(location) {
+  const ret = wasm.wasm_rdirac(location);
+  return ret;
+}
+
+/**
+ * @param {number} location
+ * @param {number} scale
+ * @returns {number}
+ */
+export function wasm_rev1(location, scale) {
+  const ret = wasm.wasm_rev1(location, scale);
   return ret;
 }
 
@@ -4127,6 +4295,16 @@ export function wasm_rnorm(mean, sd) {
 }
 
 /**
+ * @param {number} scale
+ * @param {number} shape
+ * @returns {number}
+ */
+export function wasm_rpareto(scale, shape) {
+  const ret = wasm.wasm_rpareto(scale, shape);
+  return ret;
+}
+
+/**
  * WASM export for Poisson random number generation
  * @param {number} lambda
  * @returns {number}
@@ -4176,6 +4354,16 @@ export function wasm_rweibull(shape, scale) {
  */
 export function wasm_rwilcox(m, n) {
   const ret = wasm.wasm_rwilcox(m, n);
+  return ret;
+}
+
+/**
+ * @param {number} n
+ * @param {number} s
+ * @returns {number}
+ */
+export function wasm_rzipf(n, s) {
+  const ret = wasm.wasm_rzipf(n, s);
   return ret;
 }
 

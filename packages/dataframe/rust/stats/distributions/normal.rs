@@ -96,8 +96,18 @@ pub fn normal_inverse_cdf(p: f64) -> f64 {
 /// # Returns
 /// The normal density or log density
 pub fn dnorm(x: f64, mean: f64, sd: f64, give_log: bool) -> f64 {
-    if sd <= 0.0 {
+    if x.is_nan() || mean.is_nan() || sd.is_nan() {
+        return x + mean + sd;
+    }
+    if sd < 0.0 {
         return f64::NAN;
+    }
+    if sd == 0.0 {
+        return if x == mean {
+            if give_log { f64::INFINITY } else { f64::INFINITY }
+        } else {
+            if give_log { f64::NEG_INFINITY } else { 0.0 }
+        };
     }
     let dist = Normal::new(mean, sd).expect("validated parameters: sd > 0");
     if give_log {
@@ -119,8 +129,16 @@ pub fn dnorm(x: f64, mean: f64, sd: f64, give_log: bool) -> f64 {
 /// # Returns
 /// The cumulative probability or log cumulative probability
 pub fn pnorm(x: f64, mean: f64, sd: f64, lower_tail: bool, log_p: bool) -> f64 {
-    if sd <= 0.0 {
+    if x.is_nan() || mean.is_nan() || sd.is_nan() {
+        return x + mean + sd;
+    }
+    if sd < 0.0 {
         return f64::NAN;
+    }
+    if sd == 0.0 {
+        let p: f64 = if x < mean { 0.0 } else { 1.0 };
+        let p: f64 = if lower_tail { p } else { 1.0 - p };
+        return if log_p { if p == 0.0 { f64::NEG_INFINITY } else { p.ln() } } else { p };
     }
     let dist = Normal::new(mean, sd).expect("validated parameters: sd > 0");
     let cdf = if lower_tail { dist.cdf(x) } else { dist.sf(x) };
@@ -139,8 +157,11 @@ pub fn pnorm(x: f64, mean: f64, sd: f64, lower_tail: bool, log_p: bool) -> f64 {
 /// # Returns
 /// The quantile value
 pub fn qnorm(p: f64, mean: f64, sd: f64, lower_tail: bool, log_p: bool) -> f64 {
-    if sd <= 0.0 {
+    if sd < 0.0 {
         return f64::NAN;
+    }
+    if sd == 0.0 {
+        return mean;
     }
     let dist = Normal::new(mean, sd).expect("validated parameters: sd > 0");
     let mut p_val = if log_p { p.exp() } else { p };
@@ -161,8 +182,11 @@ pub fn qnorm(p: f64, mean: f64, sd: f64, lower_tail: bool, log_p: bool) -> f64 {
 /// # Returns
 /// A random sample from the normal distribution
 pub fn rnorm<R: Rng>(mean: f64, sd: f64, rng: &mut R) -> f64 {
-    if sd <= 0.0 {
+    if sd < 0.0 {
         return f64::NAN;
+    }
+    if sd == 0.0 {
+        return mean;
     }
     let dist = Normal::new(mean, sd).expect("validated parameters: sd > 0");
     rng.sample(dist)

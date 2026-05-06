@@ -14,7 +14,6 @@
 //! - `types.rs` - Core types and structures
 
 // Core GLM modules (in dependency order) - public for internal use but not exported
-pub mod chol2inv;
 pub mod glm_aic;
 pub mod glm_control;
 pub mod glm_diagnostics;
@@ -26,7 +25,6 @@ pub mod glm_fit_core_validation;
 pub mod glm_fit_core_warnings;
 pub mod glm_fit_irls_core;
 pub mod glm_main_core;
-pub mod qr_decomposition;
 pub mod types;
 pub mod types_anova;
 pub mod types_control;

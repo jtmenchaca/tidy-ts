@@ -1002,3 +1002,219 @@ pub fn wasm_rwilcox_napi(m: f64, n: f64) -> f64 {
     let mut rng = thread_rng();
     rwilcox(m, n, &mut rng)
 }
+
+// ============================================================================
+// EV1 (GUMBEL MAXIMUM) DISTRIBUTION
+// ============================================================================
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_dev1(x: f64, location: f64, scale: f64, give_log: bool) -> f64 {
+    dev1(x, location, scale, give_log)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_dev1_napi(x: f64, location: f64, scale: f64, give_log: bool) -> f64 {
+    dev1(x, location, scale, give_log)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_pev1(x: f64, location: f64, scale: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pev1(x, location, scale, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_pev1_napi(x: f64, location: f64, scale: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pev1(x, location, scale, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_qev1(p: f64, location: f64, scale: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qev1(p, location, scale, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_qev1_napi(p: f64, location: f64, scale: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qev1(p, location, scale, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_rev1(location: f64, scale: f64) -> f64 {
+    let mut rng = thread_rng();
+    rev1(location, scale, &mut rng)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_rev1_napi(location: f64, scale: f64) -> f64 {
+    let mut rng = thread_rng();
+    rev1(location, scale, &mut rng)
+}
+
+// ============================================================================
+// ZIPF DISTRIBUTION
+// ============================================================================
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_dzipf(x: f64, n: f64, s: f64, give_log: bool) -> f64 {
+    dzipf(x, n, s, give_log)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_dzipf_napi(x: f64, n: f64, s: f64, give_log: bool) -> f64 {
+    dzipf(x, n, s, give_log)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_pzipf(x: f64, n: f64, s: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pzipf(x, n, s, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_pzipf_napi(x: f64, n: f64, s: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pzipf(x, n, s, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_qzipf(p: f64, n: f64, s: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qzipf(p, n, s, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_qzipf_napi(p: f64, n: f64, s: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qzipf(p, n, s, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_rzipf(n: f64, s: f64) -> f64 {
+    let mut rng = thread_rng();
+    rzipf(n, s, &mut rng)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_rzipf_napi(n: f64, s: f64) -> f64 {
+    let mut rng = thread_rng();
+    rzipf(n, s, &mut rng)
+}
+
+// ============================================================================
+// DIRAC DELTA DISTRIBUTION
+// ============================================================================
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_ddirac(x: f64, location: f64, give_log: bool) -> f64 {
+    ddirac(x, location, give_log)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_ddirac_napi(x: f64, location: f64, give_log: bool) -> f64 {
+    ddirac(x, location, give_log)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_pdirac(x: f64, location: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pdirac(x, location, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_pdirac_napi(x: f64, location: f64, lower_tail: bool, log_p: bool) -> f64 {
+    pdirac(x, location, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_qdirac(p: f64, location: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qdirac(p, location, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_qdirac_napi(p: f64, location: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qdirac(p, location, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_rdirac(location: f64) -> f64 {
+    let mut rng = thread_rng();
+    rdirac(location, &mut rng)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_rdirac_napi(location: f64) -> f64 {
+    let mut rng = thread_rng();
+    rdirac(location, &mut rng)
+}
+
+// ============================================================================
+// PARETO DISTRIBUTION
+// ============================================================================
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_dpareto(x: f64, scale: f64, shape: f64, give_log: bool) -> f64 {
+    dpareto(x, scale, shape, give_log)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_dpareto_napi(x: f64, scale: f64, shape: f64, give_log: bool) -> f64 {
+    dpareto(x, scale, shape, give_log)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_ppareto(x: f64, scale: f64, shape: f64, lower_tail: bool, log_p: bool) -> f64 {
+    ppareto(x, scale, shape, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_ppareto_napi(x: f64, scale: f64, shape: f64, lower_tail: bool, log_p: bool) -> f64 {
+    ppareto(x, scale, shape, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_qpareto(p: f64, scale: f64, shape: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qpareto(p, scale, shape, lower_tail, log_p)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_qpareto_napi(p: f64, scale: f64, shape: f64, lower_tail: bool, log_p: bool) -> f64 {
+    qpareto(p, scale, shape, lower_tail, log_p)
+}
+
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn wasm_rpareto(scale: f64, shape: f64) -> f64 {
+    let mut rng = thread_rng();
+    rpareto(scale, shape, &mut rng)
+}
+
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn wasm_rpareto_napi(scale: f64, shape: f64) -> f64 {
+    let mut rng = thread_rng();
+    rpareto(scale, shape, &mut rng)
+}

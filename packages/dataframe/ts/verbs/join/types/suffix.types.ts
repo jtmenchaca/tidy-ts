@@ -1,11 +1,5 @@
 // Suffix-aware join types
-import type { MakeUndefined, Prettify } from "../../../dataframe/index.ts";
-import type {
-  FullJoinResult,
-  InnerJoinResult,
-  LeftJoinResult,
-  RightJoinResult,
-} from "./result.types.ts";
+import type { MakeUndefined } from "../../../dataframe/index.ts";
 
 // -----------------------------------------------------------------------------
 // Suffix-aware helpers
@@ -102,18 +96,27 @@ type AsofJoinWithSuffixes<
   >;
 
 // Fallback for when no suffixes provided — asof join has left-join semantics
-// with `_y` suffix for conflicting non-key columns
+// with `_y` suffix for conflicting non-key columns.
+// Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
+// non-key R columns remain accessible even when L is generic.
 type SimpleAsofJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = Prettify<
+> =
   & L
-  & MakeUndefined<Omit<R, keyof L & keyof R>>
+  // All non-key R columns (always resolves, even when L is generic)
   & MakeUndefined<{
-    [P in Exclude<keyof L & keyof R, K> as `${Extract<P, string>}_y`]: R[P];
+    [P in keyof R as P extends K ? never : P]: R[P];
   }>
->;
+  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  & MakeUndefined<{
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? `${Extract<P, string>}_y`
+        : never]: R[P];
+  }>;
 
 // Final dispatcher for asof join
 export type SuffixAwareAsofJoinResult<
@@ -155,16 +158,34 @@ type LeftJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback: reuse result.types.ts (shared keys inferred as keyof L & keyof R)
+// Fallback: L columns as-is, all non-key R columns with | undefined, conflicting
+// non-key columns also get _y suffix with | undefined.
+// Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
+// non-key R columns remain accessible even when L is generic.
 type SimpleLeftJoinResult<
   L extends object,
   R extends object,
-> = Prettify<LeftJoinResult<L, R, keyof L & keyof R>>;
+  K extends keyof L & keyof R,
+> =
+  & L
+  // All non-key R columns (always resolves, even when L is generic)
+  & MakeUndefined<{
+    [P in keyof R as P extends K ? never : P]: R[P];
+  }>
+  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  & MakeUndefined<{
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? `${Extract<P, string>}_y`
+        : never]: R[P];
+  }>;
 
 // Final dispatcher
 export type SuffixAwareLeftJoinResult<
   L extends object,
   R extends object,
+  K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
 > = Options extends { suffixes: infer _S } ? LeftJoinWithSuffixes<
@@ -173,7 +194,7 @@ export type SuffixAwareLeftJoinResult<
     ExtractJoinKeys<Options>,
     ExtractSuffixes<Options>
   >
-  : SimpleLeftJoinResult<L, R>;
+  : SimpleLeftJoinResult<L, R, K>;
 
 // -----------------------------------------------------------------------------
 // Right Join Suffix Types
@@ -198,16 +219,33 @@ type RightJoinWithSuffixes<
   // 5) left conflicting cols (renamed, optional)
   & MakeUndefined<ApplySuffix<Pick<L, ConflictingColumns<L, R, K>>, S["left"]>>;
 
-// Fallback: reuse result.types.ts
+// Fallback: R columns as-is, all non-key L columns with | undefined, conflicting
+// non-key columns from L also get _y suffix with | undefined.
+// Uses `P extends K ? never : P` so non-key L columns remain accessible on generic R.
 type SimpleRightJoinResult<
   L extends object,
   R extends object,
-> = Prettify<RightJoinResult<L, R, keyof L & keyof R>>;
+  K extends keyof L & keyof R,
+> =
+  & R
+  // All non-key L columns (always resolves, even when R is generic)
+  & MakeUndefined<{
+    [P in keyof L as P extends K ? never : P]: L[P];
+  }>
+  // Conflicting non-key columns get _y suffix (defers harmlessly on generic R)
+  & MakeUndefined<{
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_y`
+        : never]: L[P];
+  }>;
 
 // Final dispatcher for right join
 export type SuffixAwareRightJoinResult<
   L extends object,
   R extends object,
+  K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
 > = Options extends { suffixes: infer _S } ? RightJoinWithSuffixes<
@@ -216,7 +254,7 @@ export type SuffixAwareRightJoinResult<
     ExtractJoinKeys<Options>,
     ExtractSuffixes<Options>
   >
-  : SimpleRightJoinResult<L, R>;
+  : SimpleRightJoinResult<L, R, K>;
 
 // -----------------------------------------------------------------------------
 // Outer Join Suffix Types
@@ -248,16 +286,38 @@ type OuterJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback: reuse result.types.ts
+// Fallback: keys required, all non-key columns | undefined, conflicting non-key
+// columns get _y suffix with | undefined.
+// Uses `P extends K ? never : P` so non-key columns remain accessible on generics.
 type SimpleOuterJoinResult<
   L extends object,
   R extends object,
-> = Prettify<FullJoinResult<L, R, keyof L & keyof R>>;
+  K extends keyof L & keyof R,
+> =
+  // Keys are required (from L)
+  & Pick<L, K>
+  // All non-key L columns (optional — outer join)
+  & MakeUndefined<{
+    [P in keyof L as P extends K ? never : P]: L[P];
+  }>
+  // All non-key R columns (optional — outer join)
+  & MakeUndefined<{
+    [P in keyof R as P extends K ? never : P]: R[P];
+  }>
+  // R conflicting non-key columns get _y suffix (defers harmlessly on generics)
+  & MakeUndefined<{
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? `${Extract<P, string>}_y`
+        : never]: R[P];
+  }>;
 
 // Final dispatcher for outer join
 export type SuffixAwareOuterJoinResult<
   L extends object,
   R extends object,
+  K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
 > = Options extends { suffixes: infer _S } ? OuterJoinWithSuffixes<
@@ -266,7 +326,7 @@ export type SuffixAwareOuterJoinResult<
     ExtractJoinKeys<Options>,
     ExtractSuffixes<Options>
   >
-  : SimpleOuterJoinResult<L, R>;
+  : SimpleOuterJoinResult<L, R, K>;
 
 // -----------------------------------------------------------------------------
 // Inner Join Suffix Types
@@ -291,16 +351,34 @@ type InnerJoinWithSuffixes<
   // 5) right conflicting cols (renamed, required)
   & ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>;
 
-// Fallback: reuse result.types.ts
+// Fallback: L columns as-is, all non-key R columns required, conflicting non-key
+// columns also get _y suffix (required — inner join guarantees match).
+// Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
+// non-key R columns remain accessible even when L is generic.
 type SimpleInnerJoinResult<
   L extends object,
   R extends object,
-> = Prettify<InnerJoinResult<L, R, keyof L & keyof R>>;
+  K extends keyof L & keyof R,
+> =
+  & L
+  // All non-key R columns (always resolves, even when L is generic)
+  & {
+    [P in keyof R as P extends K ? never : P]: R[P];
+  }
+  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  & {
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? `${Extract<P, string>}_y`
+        : never]: R[P];
+  };
 
 // Final dispatcher for inner join
 export type SuffixAwareInnerJoinResult<
   L extends object,
   R extends object,
+  K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
 > = Options extends { suffixes: infer _S } ? InnerJoinWithSuffixes<
@@ -309,4 +387,4 @@ export type SuffixAwareInnerJoinResult<
     ExtractJoinKeys<Options>,
     ExtractSuffixes<Options>
   >
-  : SimpleInnerJoinResult<L, R>;
+  : SimpleInnerJoinResult<L, R, K>;

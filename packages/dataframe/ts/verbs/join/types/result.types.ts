@@ -15,13 +15,16 @@
 
 /**
  * Inner join result type: L ∪ R\K
- * All fields are required (no undefined values)
+ * All fields are required (no undefined values).
+ * Avoids Omit (which defers on generics) — uses key remapping instead.
  */
 export type InnerJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
-> = L & Omit<R, K>;
+> = L & {
+  [P in keyof R as P extends K ? never : P]: R[P];
+};
 
 /**
  * Left join result type: L ∪ (R\K)?
@@ -46,6 +49,21 @@ export type RightJoinResult<
 > = {
   [P in keyof L]: P extends keyof R ? L[P] : L[P] | undefined;
 } & R;
+
+/**
+ * Asof join result type: L ∪ (R\L)?
+ * All fields from L are required, non-key R fields become T | undefined.
+ * Matches LeftJoinResult pattern — conflicting non-key columns get `_y` suffix
+ * at runtime, but modeling that in the base type breaks generic structural checks.
+ * Use SuffixAwareAsofJoinResult (in suffix.types.ts) for concrete `_y` tracking.
+ */
+export type AsofJoinResult<
+  L extends object,
+  R extends object,
+  _K extends keyof L & keyof R,
+> = L & {
+  [P in keyof R]: P extends keyof L ? R[P] : R[P] | undefined;
+};
 
 /**
  * Full outer join result type: (L\K)? ∪ (R\K)?

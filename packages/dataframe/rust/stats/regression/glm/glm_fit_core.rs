@@ -2,7 +2,7 @@
 //!
 //! This file contains the main glm_fit function and core fitting logic.
 
-use super::chol2inv::chol2inv;
+use crate::stats::linalg::{apply_qy, chol2inv, QrLsResult};
 use super::glm_aic::calculate_aic;
 use super::glm_fit_core_calculation::*;
 use super::glm_fit_core_initialization::*;
@@ -122,7 +122,7 @@ pub fn glm_fit(
 
     // Track rank and QR from IRLS
     let mut irls_rank: Option<usize> = None;
-    let mut irls_qr_result: Option<super::qr_decomposition::QrLsResult> = None;
+    let mut irls_qr_result: Option<QrLsResult> = None;
     let mut irls_w: Vec<f64> = vec![0.0; n];
 
     if !empty {
@@ -548,8 +548,6 @@ pub fn glm_fit(
             // hat[i] = sum_j (Q*e_j)[i]^2 where e_j is the j-th unit vector
             // This is equivalent to computing row sums of Q^2
 
-            use super::qr_decomposition::apply_qy;
-
             if let Some(ref qr) = irls_qr_result {
                 let n_obs = y.len();
                 let mut hat_values = vec![0.0; n_obs];
@@ -596,8 +594,6 @@ pub fn glm_fit(
             // where r_i is the Pearson residual, h_i is leverage, p is number of parameters
 
             // First calculate leverage (same formula as above)
-            use super::qr_decomposition::apply_qy;
-
             let hat_values = if let Some(ref qr) = irls_qr_result {
                 let n_obs = y.len();
                 let mut hat_vals = vec![0.0; n_obs];

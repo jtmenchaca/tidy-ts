@@ -3,9 +3,27 @@
 use rand::Rng;
 use statrs::distribution::{Continuous, ContinuousCDF, FisherSnedecor};
 
+/// F distribution density — uses statrs with R edge-case handling from df.c
 pub fn df(x: f64, df1: f64, df2: f64, give_log: bool) -> f64 {
+    if x.is_nan() || df1.is_nan() || df2.is_nan() {
+        return x + df1 + df2;
+    }
     if df1 <= 0.0 || df2 <= 0.0 {
         return f64::NAN;
+    }
+    if x < 0.0 {
+        return if give_log { f64::NEG_INFINITY } else { 0.0 };
+    }
+    // R's df.c line 48: edge case at x=0
+    if x == 0.0 {
+        if df1 > 2.0 {
+            return if give_log { f64::NEG_INFINITY } else { 0.0 };
+        }
+        if df1 == 2.0 {
+            return if give_log { 0.0 } else { 1.0 };
+        }
+        // df1 < 2
+        return f64::INFINITY;
     }
     let dist = FisherSnedecor::new(df1, df2).expect("validated parameters: df1 > 0, df2 > 0");
     if give_log {
@@ -83,7 +101,7 @@ mod tests {
         // Test with df1=3, df2=5
         let expected = 1.0; // qf(0.5351452, 3, 5) in R
         let actual = qf(0.5351452, 3.0, 5.0, true, false);
-        assert!((actual - expected).abs() < 2e-4); // Adjusted tolerance due to qbeta precision
+        assert!((actual - expected).abs() < 1e-6);
     }
 
     #[test]
@@ -107,6 +125,6 @@ mod tests {
     fn test_qf_log() {
         let p = (0.5351452f64).ln();
         let expected = 1.0;
-        assert!((qf(p, 3.0, 5.0, true, true) - expected).abs() < 2e-4); // Adjusted tolerance due to qbeta precision
+        assert!((qf(p, 3.0, 5.0, true, true) - expected).abs() < 1e-6);
     }
 }

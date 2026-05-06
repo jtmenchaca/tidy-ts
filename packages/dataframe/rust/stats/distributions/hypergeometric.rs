@@ -56,23 +56,80 @@ pub fn phyper(x: f64, m: f64, n: f64, k: f64, lower_tail: bool, log_p: bool) -> 
     if log_p { cdf.ln() } else { cdf }
 }
 
+/// Hypergeometric quantile function — ported from R's qhyper.c
+///
+/// Finds xr such that phyper(xr, m, n, k) >= p > phyper(xr-1, m, n, k)
+/// Uses direct summation of PMF terms with ratio updates.
 pub fn qhyper(p: f64, m: f64, n: f64, k: f64, lower_tail: bool, log_p: bool) -> f64 {
-    if m < 0.0 || n < 0.0 || k < 0.0 || k > m + n {
+    if p.is_nan() || m.is_nan() || n.is_nan() || k.is_nan() {
+        return p + m + n + k;
+    }
+    if !p.is_finite() || !m.is_finite() || !n.is_finite() || !k.is_finite() {
         return f64::NAN;
     }
-    // Map R parameters to statrs: (population_size, successes, samples)
-    let population_size = (m + n) as u64;
-    let successes = m as u64;
-    let samples = k as u64;
-    
-    let dist = Hypergeometric::new(population_size, successes, samples)
-        .expect("validated parameters: m >= 0, n >= 0, k >= 0, k <= m + n");
+    let nr = m.trunc(); // NR = number of red (successes in population)
+    let nb = n.trunc(); // NB = number of black (failures in population)
+    let big_n = nr + nb;
+    let nn = k.trunc(); // n = sample size
+    if nr < 0.0 || nb < 0.0 || nn < 0.0 || nn > big_n {
+        return f64::NAN;
+    }
+
+    let xstart = (nn - nb).max(0.0);
+    let xend = nn.min(nr);
+
+    // R_Q_P01_boundaries: boundary checks
     let mut p_val = if log_p { p.exp() } else { p };
     if !lower_tail {
         p_val = 1.0 - p_val;
     }
-    p_val = super::clamp_unit(p_val);
-    dist.inverse_cdf(p_val) as f64
+    if p_val < 0.0 || p_val > 1.0 {
+        return f64::NAN;
+    }
+    if p_val == 0.0 {
+        return xstart;
+    }
+    if p_val == 1.0 {
+        return xend;
+    }
+
+    // Fudge factor for left-continuity
+    p_val *= 1.0 - 1000.0 * f64::EPSILON;
+
+    let mut xr = xstart;
+    let mut xb = nn - xr;
+
+    let small_n = big_n < 1000.0;
+
+    // lfastchoose = lnCombination
+    fn lfastchoose(n: f64, k: f64) -> f64 {
+        statrs::function::gamma::ln_gamma(n + 1.0)
+            - statrs::function::gamma::ln_gamma(k + 1.0)
+            - statrs::function::gamma::ln_gamma(n - k + 1.0)
+    }
+
+    let mut term = lfastchoose(nr, xr) + lfastchoose(nb, xb) - lfastchoose(big_n, nn);
+    if small_n {
+        term = term.exp();
+    }
+    let mut nr_rem = nr - xr;
+    let mut nb_rem = nb - xb;
+
+    let mut sum = if small_n { term } else { term.exp() };
+
+    while sum < p_val && xr < xend {
+        xr += 1.0;
+        nb_rem += 1.0;
+        if small_n {
+            term *= (nr_rem / xr) * (xb / nb_rem);
+        } else {
+            term += ((nr_rem / xr) * (xb / nb_rem)).ln();
+        }
+        sum += if small_n { term } else { term.exp() };
+        xb -= 1.0;
+        nr_rem -= 1.0;
+    }
+    xr
 }
 
 pub fn rhyper<R: Rng>(m: f64, n: f64, k: f64, rng: &mut R) -> f64 {

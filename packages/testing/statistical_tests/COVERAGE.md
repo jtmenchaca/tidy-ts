@@ -4,18 +4,20 @@
 
 | Suite | Tests | Pass | Fail | Notes |
 |---|---|---|---|---|
-| Mann-Whitney (Wilcoxon rank-sum) | 7 | 7 | 0 | All scenarios at TOL=1e-6 |
+| Mann-Whitney (Wilcoxon rank-sum) | 8 | 8 | 0 | Including continuity correction |
 | ANOVA (one-way, Welch) | 4 | 4 | 0 | All scenarios at TOL=1e-6 |
 | KS Test (one/two-sample) | 7 | 7 | 0 | All scenarios at TOL=1e-6 |
-| Correlation (Pearson, Spearman, Kendall) | 8 | 8 | 0 | All scenarios at TOL=1e-6 |
-| Normality (Shapiro-Wilk, Anderson-Darling, D'Agostino) | 7 | 7 | 0 | All scenarios at TOL=1e-6 |
-| T-tests (one-sample, two-sample, paired, Welch) | 8 | 8 | 0 | Including one-sided CIs with ±Infinity |
-| Proportion (one-sample, two-sample) | 7 | 7 | 0 | Including equal proportions edge case |
-| Chi-square / Fisher's exact | 5 | 5 | 0 | High-precision MLE and one-sided CIs |
+| Correlation (Pearson, Spearman, Kendall) | 10 | 10 | 0 | All alternatives (two-sided, less, greater) |
+| Normality (Shapiro-Wilk, Anderson-Darling, D'Agostino) | 8 | 8 | 0 | Including uniform data for D'Agostino |
+| T-tests (one-sample, two-sample, paired, Welch) | 10 | 10 | 0 | Including independent less + custom alpha |
+| Proportion (one-sample, two-sample) | 8 | 8 | 0 | All alternatives (two-sided, less, greater) |
+| Chi-square / Fisher's exact / GOF | 8 | 8 | 0 | GOF + Fisher's less/greater alternatives |
 | Nonparametric (Wilcoxon signed-rank, Kruskal-Wallis) | 7 | 7 | 0 | Correct tie correction and continuity |
 | Post-hoc (Tukey HSD, Games-Howell, Dunn) | 3 | 3 | 0 | Studentized range quantile, Simpson's rule |
+| Z-tests (one-sample, two-sample) | 7 | 7 | 0 | Including custom alpha (0.01) |
+| Levene (Brown-Forsythe) | 3 | 3 | 0 | Median-based, matches R car::leveneTest |
 
-**Total: 63 tests, 63 pass, 0 fail**
+**Total: 83 tests, 83 pass, 0 fail**
 
 ## Test Pattern
 
@@ -67,25 +69,31 @@ Each suite follows the GLM test pattern:
 | Feature | Status | File |
 |---|---|---|
 | Pearson correlation + CI | Pass | correlation/correlation.test.ts |
-| Spearman rank correlation | Pass | correlation/correlation.test.ts |
-| Kendall tau correlation | Pass | correlation/correlation.test.ts |
-| One-sided alternatives (greater/less) | Pass | correlation, mann-whitney, t-tests |
+| Spearman rank correlation (all alternatives) | Pass | correlation/correlation.test.ts |
+| Kendall tau correlation (all alternatives) | Pass | correlation/correlation.test.ts |
+| One-sided alternatives (greater/less) | Pass | correlation, mann-whitney, t-tests, proportion, fisher, z-tests |
 | Shapiro-Wilk normality test | Pass | normality/normality.test.ts |
 | Anderson-Darling normality test | Pass | normality/normality.test.ts |
-| D'Agostino-Pearson omnibus test | Pass | normality/normality.test.ts |
+| D'Agostino-Pearson omnibus test (normal, skewed, uniform) | Pass | normality/normality.test.ts |
 | One-way ANOVA (F-test) | Pass | anova/anova.test.ts |
 | Welch's ANOVA | Pass | anova/anova.test.ts |
 | KS test (one-sample, various distributions) | Pass | ks-test/ks-test.test.ts |
 | KS test (two-sample) | Pass | ks-test/ks-test.test.ts |
 | Mann-Whitney U / Wilcoxon rank-sum | Pass | mann-whitney/mann-whitney.test.ts |
+| Mann-Whitney with continuity correction | Pass | mann-whitney/mann-whitney.test.ts |
 | Chi-square independence test | Pass | chi-square/chi-square.test.ts |
-| Fisher's exact test (two-sided + one-sided) | Pass | chi-square/chi-square.test.ts |
-| Proportion test (one-sample, two-sample) | Pass | proportion/proportion.test.ts |
+| Chi-square goodness-of-fit test | Pass | chi-square/chi-square.test.ts |
+| Fisher's exact test (two-sided, greater, less) | Pass | chi-square/chi-square.test.ts |
+| Proportion test (one-sample, two-sample, all alternatives) | Pass | proportion/proportion.test.ts |
 | Wilcoxon signed-rank test | Pass | nonparametric/nonparametric.test.ts |
 | Kruskal-Wallis test | Pass | nonparametric/nonparametric.test.ts |
 | Tukey HSD post-hoc | Pass | post-hoc/post-hoc.test.ts |
 | Games-Howell post-hoc | Pass | post-hoc/post-hoc.test.ts |
 | Dunn test post-hoc | Pass | post-hoc/post-hoc.test.ts |
+| Z-test one-sample (two-sided, less, greater) | Pass | z-tests/z-tests.test.ts |
+| Z-test two-sample (two-sided, greater, less) | Pass | z-tests/z-tests.test.ts |
+| Z-test / T-test custom alpha (0.01) | Pass | z-tests/z-tests.test.ts, t-tests/t-tests.test.ts |
+| Levene (Brown-Forsythe) equal/unequal/two-group | Pass | levene/levene.test.ts |
 
 ## Not Yet Implemented/Tested
 

@@ -1,7 +1,11 @@
 import {
   chi_square_independence,
+  chi_square_goodness_of_fit,
 } from "../../wasm/statistical-tests.ts";
-import type { ChiSquareIndependenceTestResult } from "./types.ts";
+import type {
+  ChiSquareIndependenceTestResult,
+  ChiSquareGoodnessOfFitTestResult,
+} from "./types.ts";
 import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
@@ -40,4 +44,37 @@ export function chiSquareTest({
     alpha,
   );
   return result as ChiSquareIndependenceTestResult;
+}
+
+/**
+ * Chi-square goodness-of-fit test
+ */
+export function chiSquareGoodnessOfFitTest({
+  observed,
+  expected,
+  alpha = 0.05,
+}: {
+  observed: number[];
+  expected: number[];
+  alpha?: number;
+}): PrettifyDeep<ChiSquareGoodnessOfFitTestResult> {
+  if (observed.length !== expected.length) {
+    throw new Error("Observed and expected arrays must have the same length");
+  }
+  if (observed.length < 2) {
+    throw new Error("At least 2 categories are required");
+  }
+  if (!observed.every((v) => Number.isFinite(v) && v >= 0)) {
+    throw new Error("All observed values must be non-negative numbers");
+  }
+  if (!expected.every((v) => Number.isFinite(v) && v > 0)) {
+    throw new Error("All expected values must be positive numbers");
+  }
+
+  const result = chi_square_goodness_of_fit(
+    new Float64Array(observed),
+    new Float64Array(expected),
+    alpha,
+  );
+  return result as ChiSquareGoodnessOfFitTestResult;
 }

@@ -239,3 +239,35 @@ Deno.test("Proportion: two_sample_equal", () => {
   const expectedDiff = ref.two_sample_equal_estimate_1 - ref.two_sample_equal_estimate_2;
   assertClose(result.proportionDifference, expectedDiff, TOL, "proportion difference");
 });
+
+Deno.test("Proportion: two_sample_less", () => {
+  const data1 = makeBoolArray(40, 100);
+  const data2 = makeBoolArray(60, 100);
+  const result = proportionTestTwoSample({
+    data1,
+    data2,
+    alternative: "less",
+  });
+
+  assertClose(
+    result.testStatistic.value,
+    ref.two_sample_less_statistic,
+    TOL,
+    "statistic",
+  );
+  assertClose(result.pValue, ref.two_sample_less_p_value, TOL, "p-value");
+  assertClose(
+    result.confidenceInterval.lower,
+    ref.two_sample_less_conf_int_lower,
+    TOL,
+    "CI lower",
+  );
+  assertClose(
+    result.confidenceInterval.upper,
+    ref.two_sample_less_conf_int_upper,
+    TOL,
+    "CI upper",
+  );
+  const expectedDiff = ref.two_sample_less_estimate_1 - ref.two_sample_less_estimate_2;
+  assertClose(result.proportionDifference, expectedDiff, TOL, "proportion difference");
+});

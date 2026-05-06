@@ -66,6 +66,12 @@ pub mod uniform;
 pub mod weibull;
 pub mod wilcoxon;
 
+// Additional implementations (custom math, no statrs equivalent)
+pub mod dirac;
+pub mod ev1;
+pub mod pareto;
+pub mod zipf;
+
 // Re-export custom implementations
 pub use binomial::*;
 pub use gamma::*;
@@ -86,6 +92,12 @@ pub use poisson::*;
 pub use uniform::*;
 pub use weibull::*;
 pub use wilcoxon::*;
+
+// Re-export additional implementations
+pub use dirac::*;
+pub use ev1::*;
+pub use pareto::*;
+pub use zipf::*;
 
 // WASM bindings
 #[cfg(any(feature = "wasm", feature = "napi-rs"))]

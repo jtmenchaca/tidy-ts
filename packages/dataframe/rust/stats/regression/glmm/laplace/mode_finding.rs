@@ -23,7 +23,7 @@ use crate::stats::regression::family::GlmFamily;
 use super::super::random_effects::SparseMatrix;
 use super::super::types::RandomEffect;
 use super::gradient::{joint_gradient_b, joint_hessian_b};
-use super::linear_algebra::solve_linear_system;
+use crate::stats::linalg::solve_linear_system;
 use super::types::LaplaceControl;
 
 /// Find the mode of the random effects (inner optimization)

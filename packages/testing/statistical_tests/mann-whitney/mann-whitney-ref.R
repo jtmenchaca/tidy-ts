@@ -72,5 +72,9 @@ emit_reference(list(
   single_obs_W = unname(res7$statistic),
   single_obs_pValue = res7$p.value,
   single_obs_alternative = res7$alternative,
-  single_obs_method = res7$method
+  single_obs_method = res7$method,
+
+  # --- Scenario 8: continuity correction ---
+  continuity_W = unname(wilcox.test(x1, y1, alternative = "two.sided", exact = FALSE, correct = TRUE)$statistic),
+  continuity_pValue = wilcox.test(x1, y1, alternative = "two.sided", exact = FALSE, correct = TRUE)$p.value
 ))

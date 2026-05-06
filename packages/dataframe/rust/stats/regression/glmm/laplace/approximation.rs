@@ -36,7 +36,7 @@ use super::super::types::RandomEffect;
 use super::super::variance_components::total_theta_params;
 use super::gradient::joint_hessian_b;
 use super::likelihood::joint_log_likelihood_with_sigma;
-use super::linear_algebra::log_determinant;
+use crate::stats::linalg::log_determinant;
 use super::mode_finding::find_b_mode;
 use super::types::{LaplaceControl, LaplaceResult};
 

@@ -20,17 +20,51 @@ pub fn pweibull(x: f64, shape: f64, scale: f64, lower_tail: bool, log_p: bool) -
     if log_p { cdf.ln() } else { cdf }
 }
 
+/// Weibull quantile function — ported from R's qweibull.c
+///
+/// Uses closed-form: scale * (-log(1-p))^(1/shape)
+/// R_DT_Clog(p) = log(1-p) accounting for lower_tail/log_p
 pub fn qweibull(p: f64, shape: f64, scale: f64, lower_tail: bool, log_p: bool) -> f64 {
+    if p.is_nan() || shape.is_nan() || scale.is_nan() {
+        return p + shape + scale;
+    }
     if shape <= 0.0 || scale <= 0.0 {
         return f64::NAN;
     }
-    let dist = Weibull::new(shape, scale).expect("validated parameters: shape > 0, scale > 0");
-    let mut p_val = if log_p { p.exp() } else { p };
-    if !lower_tail {
-        p_val = 1.0 - p_val;
+    // R_Q_P01_boundaries(p, 0, ML_POSINF)
+    if log_p {
+        if p > 0.0 { return f64::NAN; }
+        if p == 0.0 { return if lower_tail { f64::INFINITY } else { 0.0 }; }
+        if p == f64::NEG_INFINITY { return if lower_tail { 0.0 } else { f64::INFINITY }; }
+    } else {
+        if p < 0.0 || p > 1.0 { return f64::NAN; }
+        if p == 0.0 { return if lower_tail { 0.0 } else { f64::INFINITY }; }
+        if p == 1.0 { return if lower_tail { f64::INFINITY } else { 0.0 }; }
     }
-    p_val = super::helpers::clamp_unit(p_val);
-    dist.inverse_cdf(p_val)
+
+    // R_DT_Clog(p) = log(1-p) in the quantile function
+    // lower_tail ? R_D_LExp(p) : R_D_log(p)
+    // R_D_LExp(x) = log_p ? R_Log1_Exp(x) : log1p(-x)
+    // R_D_log(p)  = log_p ? p : log(p)
+    let clog = if lower_tail {
+        // R_D_LExp(p)
+        if log_p {
+            // R_Log1_Exp(p): log(1 - exp(p))
+            if p > -std::f64::consts::LN_2 {
+                (-p.exp_m1()).ln() // log(-expm1(p))
+            } else {
+                (-p.exp()).ln_1p() // log1p(-exp(p))
+            }
+        } else {
+            (-p).ln_1p() // log1p(-p)
+        }
+    } else {
+        // R_D_log(p)
+        if log_p { p } else { p.ln() }
+    };
+
+    // scale * pow(-clog, 1/shape)
+    scale * (-clog).powf(1.0 / shape)
 }
 
 pub fn rweibull<R: Rng>(shape: f64, scale: f64, rng: &mut R) -> f64 {

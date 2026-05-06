@@ -6,7 +6,7 @@
 use crate::stats::regression::family::GlmFamily;
 
 use super::super::random_effects::SparseMatrix;
-use super::linear_algebra::solve_linear_system;
+use crate::stats::linalg::solve_linear_system;
 
 /// Update fixed effects beta given current random effects b
 ///

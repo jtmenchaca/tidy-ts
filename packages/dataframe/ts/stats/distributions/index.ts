@@ -4,6 +4,8 @@
 import * as beta from "./beta.ts";
 import * as binomial from "./binomial.ts";
 import * as chiSquare from "./chi-square.ts";
+import * as dirac from "./dirac.ts";
+import * as ev1 from "./ev1.ts";
 import * as exponential from "./exponential.ts";
 import * as fDist from "./f-distribution.ts";
 import * as gamma from "./gamma.ts";
@@ -18,6 +20,7 @@ import * as tDist from "./t-distribution.ts";
 import * as uniform from "./uniform.ts";
 import * as weibull from "./weibull.ts";
 import * as wilcoxon from "./wilcoxon.ts";
+import * as zipf from "./zipf.ts";
 
 /**
  * Comprehensive probability distributions organized by type.
@@ -126,6 +129,21 @@ const dist = {
     data: pareto.paretoData,
   },
 
+  ev1: {
+    density: ev1.dev1,
+    probability: ev1.pev1,
+    quantile: ev1.qev1,
+    random: ev1.rev1,
+    data: ev1.ev1Data,
+  },
+
+  dirac: {
+    density: dirac.ddirac,
+    probability: dirac.pdirac,
+    quantile: dirac.qdirac,
+    random: dirac.rdirac,
+  },
+
   wilcoxon: {
     density: wilcoxon.dwilcox,
     probability: wilcoxon.pwilcox,
@@ -170,12 +188,21 @@ const dist = {
     quantile: hypergeometric.qhyper,
     random: hypergeometric.rhyper,
   },
+
+  zipf: {
+    density: zipf.dzipf,
+    probability: zipf.pzipf,
+    quantile: zipf.qzipf,
+    random: zipf.rzipf,
+  },
 } as const;
 
 // Export for backward compatibility (flat exports)
 export * from "./beta.ts";
 export * from "./binomial.ts";
 export * from "./chi-square.ts";
+export * from "./dirac.ts";
+export * from "./ev1.ts";
 export * from "./exponential.ts";
 export * from "./f-distribution.ts";
 export * from "./gamma.ts";
@@ -190,6 +217,7 @@ export * from "./t-distribution.ts";
 export * from "./uniform.ts";
 export * from "./weibull.ts";
 export * from "./wilcoxon.ts";
+export * from "./zipf.ts";
 
 // Also export distributions as default
 export default dist;

@@ -27,7 +27,13 @@ res5 <- cor.test(x, y, method = "kendall", alternative = "two.sided")
 # --- Scenario 6: kendall_greater ---
 res6 <- cor.test(x, y, method = "kendall", alternative = "greater")
 
-# --- Scenario 7: weak_correlation ---
+# --- Scenario 7: kendall_less ---
+res7k <- cor.test(x, y, method = "kendall", alternative = "less")
+
+# --- Scenario 8: spearman_greater ---
+res8s <- cor.test(x, y, method = "spearman", alternative = "greater")
+
+# --- Scenario 9: weak_correlation ---
 x2 <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 y2 <- c(5, 3, 7, 2, 8, 4, 9, 1, 6, 10)
 res7 <- cor.test(x2, y2, method = "pearson", alternative = "two.sided")
@@ -72,5 +78,13 @@ emit_reference(list(
   negative_correlation_statistic = unname(res8$statistic),
   negative_correlation_pValue = res8$p.value,
   negative_correlation_estimate = unname(res8$estimate),
-  negative_correlation_conf_int = as.vector(res8$conf.int)
+  negative_correlation_conf_int = as.vector(res8$conf.int),
+
+  kendall_less_statistic = unname(res7k$statistic),
+  kendall_less_pValue = res7k$p.value,
+  kendall_less_estimate = unname(res7k$estimate),
+
+  spearman_greater_statistic = unname(res8s$statistic),
+  spearman_greater_pValue = res8s$p.value,
+  spearman_greater_estimate = unname(res8s$estimate)
 ))

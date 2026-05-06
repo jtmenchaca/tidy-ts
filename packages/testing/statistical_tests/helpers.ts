@@ -18,9 +18,11 @@ export function assertClose(
 ) {
   if (actual === expected) return; // handles ±Infinity equality
   const diff = Math.abs(actual - expected);
-  if (diff > tol) {
+  // Use relative tolerance for large values (like R's all.equal)
+  const scale = Math.max(1, Math.abs(expected));
+  if (diff / scale > tol) {
     throw new Error(
-      `${label ?? ""} expected ${expected}, got ${actual} (diff=${diff}, tol=${tol})`,
+      `${label ?? ""} expected ${expected}, got ${actual} (diff=${diff}, rel=${diff / scale}, tol=${tol})`,
     );
   }
 }

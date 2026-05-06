@@ -42,6 +42,14 @@ interface Ref {
   negative_correlation_pValue: number;
   negative_correlation_estimate: number;
   negative_correlation_conf_int: [number, number];
+
+  kendall_less_statistic: number;
+  kendall_less_pValue: number;
+  kendall_less_estimate: number;
+
+  spearman_greater_statistic: number;
+  spearman_greater_pValue: number;
+  spearman_greater_estimate: number;
 }
 
 const ref = getReferenceFromRScript<Ref>(REF_PATH);
@@ -116,4 +124,18 @@ Deno.test("Correlation: negative_correlation", () => {
   expect(result.pValue).toBeLessThan(0.001);
   assertClose(result.confidenceInterval.lower, ref.negative_correlation_conf_int[0], TOL, "CI lower");
   assertClose(result.confidenceInterval.upper, ref.negative_correlation_conf_int[1], TOL, "CI upper");
+});
+
+Deno.test("Correlation: kendall_less", () => {
+  const result = kendallTest({ x, y, alternative: "less" });
+  assertClose(result.testStatistic.value, ref.kendall_less_statistic, TOL, "statistic");
+  assertClose(result.pValue, ref.kendall_less_pValue, TOL, "pValue");
+  assertClose(result.effectSize.value, ref.kendall_less_estimate, TOL, "estimate");
+});
+
+Deno.test("Correlation: spearman_greater", () => {
+  const result = spearmanTest({ x, y, alternative: "greater" });
+  assertClose(result.testStatistic.value, ref.spearman_greater_statistic, TOL, "statistic");
+  assertClose(result.pValue, ref.spearman_greater_pValue, TOL, "pValue");
+  assertClose(result.effectSize.value, ref.spearman_greater_estimate, TOL, "estimate");
 });

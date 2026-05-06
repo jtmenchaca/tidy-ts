@@ -16,5 +16,3 @@ pub fn group_indices_by_id(id: &[usize]) -> Vec<(usize, usize)> {
     result.push((start, id.len()));
     result
 }
-
-pub mod lin_alg;

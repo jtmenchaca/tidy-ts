@@ -5,7 +5,7 @@ import {
   getReferenceFromRScript,
   TOL,
 } from "../helpers.ts";
-import { chiSquareTest } from "../../../dataframe/ts/stats/statistical-tests/chi-square.ts";
+import { chiSquareTest, chiSquareGoodnessOfFitTest } from "../../../dataframe/ts/stats/statistical-tests/chi-square.ts";
 import { fishersExactTest } from "../../../dataframe/ts/stats/statistical-tests/fishers-exact.ts";
 
 interface ChiSquareRef {
@@ -47,6 +47,11 @@ interface ChiSquareRef {
   fisher_large_or_odds_ratio: number;
   fisher_large_or_conf_int_lower: number;
   fisher_large_or_conf_int_upper: number;
+
+  fisher_less_p_value: number;
+  fisher_less_odds_ratio: number;
+  fisher_less_conf_int_lower: number;
+  fisher_less_conf_int_upper: number;
 }
 
 const ref = getReferenceFromRScript<ChiSquareRef>(
@@ -118,4 +123,46 @@ Deno.test("Chi-Square: Fisher's exact large odds ratio", () => {
   assertClose(result.effectSize.value, ref.fisher_large_or_odds_ratio, TOL, "odds ratio");
   assertClose(result.confidenceInterval.lower, ref.fisher_large_or_conf_int_lower, TOL, "CI lower");
   assertClose(result.confidenceInterval.upper, ref.fisher_large_or_conf_int_upper, TOL, "CI upper");
+});
+
+// --- Chi-Square Goodness-of-Fit Tests ---
+
+Deno.test("Chi-Square: goodness-of-fit equal probabilities", () => {
+  // R: chisq.test(c(25, 30, 20, 25), p = c(0.25, 0.25, 0.25, 0.25))
+  const result = chiSquareGoodnessOfFitTest({
+    observed: [25, 30, 20, 25],
+    expected: [25, 25, 25, 25],
+  });
+
+  assertClose(result.testStatistic.value, ref.goodness_of_fit_statistic, TOL, "statistic");
+  assertClose(result.pValue, ref.goodness_of_fit_p_value, TOL, "p-value");
+  expect(result.degreesOfFreedom).toBe(ref.goodness_of_fit_df);
+  assertArrayClose(result.chiSquareExpected, ref.goodness_of_fit_expected, TOL, "expected");
+});
+
+Deno.test("Chi-Square: goodness-of-fit unequal probabilities", () => {
+  // R: chisq.test(c(40, 30, 20, 10), p = c(0.4, 0.3, 0.2, 0.1))
+  const result = chiSquareGoodnessOfFitTest({
+    observed: [40, 30, 20, 10],
+    expected: [40, 30, 20, 10],
+  });
+
+  assertClose(result.testStatistic.value, ref.goodness_unequal_statistic, TOL, "statistic");
+  assertClose(result.pValue, ref.goodness_unequal_p_value, TOL, "p-value");
+  expect(result.degreesOfFreedom).toBe(ref.goodness_unequal_df);
+  assertArrayClose(result.chiSquareExpected, ref.goodness_unequal_expected, TOL, "expected");
+});
+
+// --- Fisher's Exact: "less" alternative ---
+
+Deno.test("Chi-Square: Fisher's exact one-sided less", () => {
+  const result = fishersExactTest({
+    contingencyTable: [[3, 1], [1, 3]],
+    alternative: "less",
+  });
+
+  assertClose(result.pValue, ref.fisher_less_p_value, TOL, "p-value");
+  assertClose(result.effectSize.value, ref.fisher_less_odds_ratio, TOL, "odds ratio");
+  assertClose(result.confidenceInterval.lower, ref.fisher_less_conf_int_lower, TOL, "CI lower");
+  assertClose(result.confidenceInterval.upper, ref.fisher_less_conf_int_upper, TOL, "CI upper");
 });
