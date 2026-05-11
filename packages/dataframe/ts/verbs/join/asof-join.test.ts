@@ -163,10 +163,10 @@ Deno.test("asofJoin - with group_by", () => {
   });
 
   expect(result.toArray()).toEqual([
-    { symbol: "AAPL", time: 1, order: "buy", price: 100, symbol_y: "AAPL" }, // AAPL: 0 is closest backward
-    { symbol: "AAPL", time: 3, order: "sell", price: 102, symbol_y: "AAPL" }, // AAPL: 2 is closest backward
-    { symbol: "MSFT", time: 2, order: "buy", price: 200, symbol_y: "MSFT" }, // MSFT: 1 is closest backward
-    { symbol: "MSFT", time: 4, order: "sell", price: 205, symbol_y: "MSFT" }, // MSFT: 3 is closest backward
+    { symbol_x: "AAPL", time: 1, order: "buy", price: 100, symbol_y: "AAPL" }, // AAPL: 0 is closest backward
+    { symbol_x: "AAPL", time: 3, order: "sell", price: 102, symbol_y: "AAPL" }, // AAPL: 2 is closest backward
+    { symbol_x: "MSFT", time: 2, order: "buy", price: 200, symbol_y: "MSFT" }, // MSFT: 1 is closest backward
+    { symbol_x: "MSFT", time: 4, order: "sell", price: 205, symbol_y: "MSFT" }, // MSFT: 3 is closest backward
   ]);
 });
 
@@ -304,15 +304,15 @@ Deno.test("asofJoin - mixed group matching", () => {
   });
 
   expect(result.toArray()).toEqual([
-    { symbol: "AAPL", time: 1, order: "buy", price: 100, symbol_y: "AAPL" }, // AAPL: 0 is closest backward
+    { symbol_x: "AAPL", time: 1, order: "buy", price: 100, symbol_y: "AAPL" }, // AAPL: 0 is closest backward
     {
-      symbol: "MSFT",
+      symbol_x: "MSFT",
       time: 1,
       order: "buy",
       price: undefined,
       symbol_y: undefined,
     }, // MSFT: no backward match
-    { symbol: "AAPL", time: 5, order: "sell", price: 105, symbol_y: "AAPL" }, // AAPL: 4 is closest backward
+    { symbol_x: "AAPL", time: 5, order: "sell", price: 105, symbol_y: "AAPL" }, // AAPL: 4 is closest backward
   ]);
 });
 

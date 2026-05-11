@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 
 /**
@@ -14,6 +15,17 @@ export function summarise_columns(spec: any) {
     df: any,
   ): any => {
     const groupedDf = df;
+
+    // Validate columns exist (skip for empty DataFrames)
+    if (df.nrows() > 0) {
+      const store = (df as any).__store;
+      if (store) {
+        validateColumnsExist(
+          spec.columns.map(String),
+          store.columnNames,
+        );
+      }
+    }
 
     const getColumnData = (
       data: any,

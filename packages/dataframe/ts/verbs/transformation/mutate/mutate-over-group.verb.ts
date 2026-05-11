@@ -6,7 +6,7 @@ import {
   preserveDataFrameMetadata,
 } from "../../../dataframe/index.ts";
 import { materializeIndex } from "../../../dataframe/implementation/columnar-view.ts";
-import { RowView } from "../../verb-helpers.ts";
+import { RowView, wrapRowView } from "../../verb-helpers.ts";
 
 /**
  * Group-level mutate: each expression receives the group DataFrame and returns an array.
@@ -111,11 +111,11 @@ export function mutateOverGroup(
     const out = createDataFrame([] as readonly Record<string, unknown>[]);
     (out as any).__store = nextStore;
     (out as any).__view = df.__view;
-    (out as any).__rowView = new RowView(
+    (out as any).__rowView = wrapRowView(new RowView(
       nextStore.columns,
       nextStore.columnNames,
       true,
-    );
+    ), nextStore.columnNames);
     preserveDataFrameMetadata(out, df);
     return out;
   };

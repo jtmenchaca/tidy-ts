@@ -10,6 +10,7 @@ import {
   type BitSet,
   bitsetGet,
 } from "../../dataframe/implementation/columnar-view.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import { distinct_rows_generic_typed } from "../../wasm/wasm-loader.ts";
@@ -27,6 +28,12 @@ export function distinct(
       const api: any = df as any;
       const store = api.__store;
       const selectedCols = cols.map(String) as string[];
+
+      // Validate columns exist (skip for empty DataFrames)
+      if (store.length > 0) {
+        validateColumnsExist(selectedCols, store.columnNames);
+      }
+
       const keyCols = [...selectedCols].sort();
 
       // For grouped DataFrames, include grouping columns in output

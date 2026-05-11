@@ -216,8 +216,8 @@ Deno.test("innerJoin - default suffixes", () => {
   expect(result.toArray()).toEqual([
     {
       id: 1,
-      x: 10, // left x preserved
-      y: "left_y", // left y preserved
+      x_x: 10, // left x gets default "_x" suffix
+      y_x: "left_y", // left y gets default "_x" suffix
       x_y: 99, // right x gets default "_y" suffix
       y_y: "right_y", // right y gets default "_y" suffix
     },
@@ -237,5 +237,6 @@ Deno.test("innerJoin - join key preservation", () => {
 
   // The left join key should be preserved, right join key dropped
   expect(result[0].id).toBe(1);
-  expect(result[0].x).toBe(10); // left x preserved
+  // deno-lint-ignore no-explicit-any
+  expect((result[0] as any).x_x).toBe(10); // left x gets _x suffix
 });

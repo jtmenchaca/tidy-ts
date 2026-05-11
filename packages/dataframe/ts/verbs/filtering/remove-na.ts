@@ -4,6 +4,7 @@ import type {
   DataFrame,
   GroupedDataFrame,
 } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { filter } from "./filter.verb.ts";
 import {
   type BitSet,
@@ -87,6 +88,9 @@ function removeBy(
     const [parentKey, nestedKey] = fieldOrFields;
 
     if (store) {
+      if (store.length > 0) {
+        validateColumnsExist([parentKey], store.columnNames);
+      }
       const parentCol = store.columns[parentKey];
       if (parentCol) {
         const nStore = store.length;
@@ -111,10 +115,12 @@ function removeBy(
 
   if (store) {
     const nStore = store.length;
+    if (nStore > 0) {
+      validateColumnsExist(allFields, store.columnNames);
+    }
     const bs = initBitSet(api, nStore);
     for (const field of allFields) {
       const col = store.columns[field];
-      if (!col) continue;
       for (let p = 0; p < nStore; p++) {
         if (bitsetGet(bs, p) && check(col[p])) {
           bitsetClear(bs, p);

@@ -471,7 +471,19 @@ class RowView<Row extends object> {
 function makeRowView<Row extends object>(
   store: ColumnarStore,
 ): RowView<Row> {
-  return new RowView<Row>(store.columns, store.columnNames);
+  const view = new RowView<Row>(store.columns, store.columnNames);
+  const names = store.columnNames;
+  return new Proxy(view, {
+    get(target, prop, receiver) {
+      if (prop in target) return Reflect.get(target, prop, receiver);
+      if (typeof prop === "string" && prop !== "then" && !prop.startsWith("_")) {
+        throw new Error(
+          `Column "${prop}" not found. Available columns: [${names.join(", ")}]`,
+        );
+      }
+      return undefined;
+    },
+  }) as RowView<Row>;
 }
 
 // ============================================================================

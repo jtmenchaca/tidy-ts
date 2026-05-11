@@ -9,6 +9,7 @@ import {
   materializeIndex,
   toColumnarStorage,
 } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import type {
   JoinArgs,
   StoreAndIndex,
@@ -62,7 +63,7 @@ function projectCompositeKeyColumn(
     const rowIdx = index[i];
     const keyValues = keys.map((k) => {
       const src = store.columns[k];
-      if (!src) throw new Error(`Join key '${k}' not found`);
+      if (!src) throwColumnNotFound(k, store.columnNames);
       return String(src[rowIdx]);
     });
     out[i] = keyValues.join("\0");
@@ -88,6 +89,17 @@ function isObjectJoinOptions(
     "keys" in options;
 }
 
+/**
+ * When no suffixes are provided at all, default to _x/_y.
+ * When a suffixes object is provided, missing sides default to "" (no rename).
+ */
+function resolveDefaultSuffixes(
+  suffixes: { left?: string; right?: string } | undefined,
+): { left?: string; right?: string } {
+  if (!suffixes) return { left: "_x", right: "_y" };
+  return suffixes;
+}
+
 export function parseJoinArgs(
   arg2: any, // Can be keys or options
   arg3?: any, // Can be options or undefined
@@ -101,7 +113,7 @@ export function parseJoinArgs(
       return {
         leftKeys: keys,
         rightKeys: keys,
-        suffixes: opts.suffixes || {},
+        suffixes: resolveDefaultSuffixes(opts.suffixes),
       };
     } else {
       // Different column names: { keys: { left: ["emp_id"], right: ["id"] } }
@@ -113,7 +125,7 @@ export function parseJoinArgs(
         rightKeys: Array.isArray(mapping.right)
           ? (mapping.right as string[]).map(String)
           : [String(mapping.right)],
-        suffixes: opts.suffixes || {},
+        suffixes: resolveDefaultSuffixes(opts.suffixes),
       };
     }
   }
@@ -123,7 +135,7 @@ export function parseJoinArgs(
   return {
     leftKeys: keys,
     rightKeys: keys,
-    suffixes: arg3?.suffixes || {},
+    suffixes: resolveDefaultSuffixes(arg3?.suffixes),
   };
 }
 

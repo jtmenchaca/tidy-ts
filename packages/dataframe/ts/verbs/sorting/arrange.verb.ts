@@ -3,6 +3,7 @@
 import { withIndex } from "../../dataframe/index.ts";
 import { withGroupsRebuilt } from "../../dataframe/index.ts";
 import { isComparable } from "../../stats/helpers.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import {
   // fast path: multi-column numeric/date sorter (column-major f64)
   arrange_multi_f64_wasm,
@@ -274,6 +275,9 @@ export function arrange(
 
     const nRows = store.length;
     const colNames = columns.map(String);
+    if (nRows > 0) {
+      validateColumnsExist(colNames, store.columnNames);
+    }
     const cols: unknown[][] = colNames.map((n) => store.columns[n]);
     const allNumeric = cols.every(isNumericishCol);
 

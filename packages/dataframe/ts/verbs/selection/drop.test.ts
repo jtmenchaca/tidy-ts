@@ -33,24 +33,18 @@ Deno.test("drop multiple columns (sequential arguments)", () => {
   ]);
 });
 
-Deno.test("drop non-existent columns (should be silently ignored)", () => {
-  // @ts-expect-error - non-existent column
-  const result = testData.drop("nonexistent", "alsomissing");
-  console.log("Drop non-existent columns result:", result);
-
-  // Should return data unchanged
-  expect(result.toArray()).toEqual(testData.toArray());
+Deno.test("drop non-existent columns throws", () => {
+  expect(() => {
+    // @ts-expect-error - non-existent column
+    testData.drop("nonexistent", "alsomissing");
+  }).toThrow('Columns [nonexistent, alsomissing] not found. Available columns: [id, name, mass, species, homeworld]');
 });
 
-Deno.test("drop mixed existing and non-existent columns", () => {
-  // @ts-expect-error - non-existent column
-  const result = testData.drop("mass", "nonexistent", "species");
-  console.log("Drop mixed columns result:", result);
-
-  expect(result.toArray()).toEqual([
-    { id: 1, name: "Luke", homeworld: "Tatooine" },
-    { id: 2, name: "Chewbacca", homeworld: "Kashyyyk" },
-  ]);
+Deno.test("drop mixed existing and non-existent columns throws", () => {
+  expect(() => {
+    // @ts-expect-error - non-existent column
+    testData.drop("mass", "nonexistent", "species");
+  }).toThrow('Column "nonexistent" not found. Available columns: [id, name, mass, species, homeworld]');
 });
 
 Deno.test("drop all columns", () => {

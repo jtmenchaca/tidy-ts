@@ -3,6 +3,7 @@ import {
   createColumnarDataFrameFromStore,
   preserveDataFrameMetadata,
 } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 /**
@@ -74,15 +75,7 @@ export function select(
       // Validate columns exist (except for empty DataFrames)
       tracer.withSpan(df, "validate-columns", () => {
         if (store.length > 0) {
-          for (const col of uniqueColumns) {
-            if (!(col in store.columns)) {
-              throw new ReferenceError(
-                `Column "${col}" not found. Available columns: [${
-                  store.columnNames.join(", ")
-                }]`,
-              );
-            }
-          }
+          validateColumnsExist(uniqueColumns, store.columnNames);
         }
       });
 

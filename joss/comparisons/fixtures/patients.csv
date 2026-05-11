@@ -1,0 +1,9 @@
+patient_id,first_name,last_name,date_of_birth,sex,race,insurance_type
+P001,Maria,Gonzalez,1958-03-14,F,Hispanic,Medicare
+P002,James,Chen,1975-11-02,M,Asian,Commercial
+P003,Abigail,Williams,1990-06-28,F,Black,Medicaid
+P004,Robert,Smith,1945-09-17,M,White,Medicare
+P005,Fatima,Al-Hassan,1982-01-09,F,Middle Eastern,Commercial
+P006,David,Okafor,1968-12-21,M,Black,Commercial
+P007,Sarah,Kim,1995-04-03,F,Asian,Uninsured
+P008,Carlos,Rivera,1952-07-30,M,Hispanic,Medicare

@@ -5,14 +5,14 @@ import {
   materializeIndex,
   withGroups,
 } from "../../dataframe/index.ts";
-import { RowView } from "../verb-helpers.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
+import { RowView, wrapRowView } from "../verb-helpers.ts";
 
 /**
  * Remove columns by name from a dataframe.
  *
- * Returns a new dataframe with the specified columns removed. Non-existent columns
- * are silently ignored, making this function safe to use even when column names
- * might not exist in the data.
+ * Returns a new dataframe with the specified columns removed.
+ * Throws a ReferenceError if any specified column does not exist.
  *
  * @param columnOrColumns - Column name, array of column names, or undefined
  * @param additionalColumns - Additional column names (when using sequential arguments)
@@ -26,15 +26,12 @@ import { RowView } from "../verb-helpers.ts";
  * // Remove multiple columns
  * df.drop("mass", "homeworld")
  *
- * // Non-existent columns are ignored
- * df.drop("nonexistent", "mass") // Only removes "mass"
- *
  * // Remove all columns (results in empty objects)
  * df.drop("id", "name", "mass", "species", "homeworld")
  * ```
  *
  * @remarks
- * - Silently ignores missing column names (no error thrown)
+ * - Throws ReferenceError for non-existent column names
  * - Returns a new dataframe (does not mutate the original)
  * - Preserves all rows and remaining columns
  * - Works with empty dataframes
@@ -57,6 +54,11 @@ export function drop(
     const api: any = df as any;
     const store = api.__store as ColumnarStore | undefined;
 
+    // Validate all requested columns exist
+    if (cols.length > 0 && store && store.length > 0) {
+      validateColumnsExist(cols, store.columnNames);
+    }
+
     if (store) {
       // View-aware columnar implementation
       const idx = materializeIndex(store.length, api.__view);
@@ -78,13 +80,7 @@ export function drop(
         const out = createDataFrame([]);
         (out as any).__store = emptyStore;
         (out as any).__view = {}; // reset view
-        (out as any).__rowView = new (class RowView {
-          private _i = 0;
-          constructor() {}
-          setCursor(i: number) {
-            this._i = i;
-          }
-        })();
+        (out as any).__rowView = wrapRowView(new RowView({}, []), []);
 
         return out;
       }
@@ -111,7 +107,7 @@ export function drop(
       (out as any).__store = newStore;
       (out as any).__view = {}; // reset view
 
-      (out as any).__rowView = new RowView(newColumns, keepColumns);
+      (out as any).__rowView = wrapRowView(new RowView(newColumns, keepColumns), keepColumns);
 
       // Preserve groups if they exist (column-only operation)
       return api.__groups ? withGroups(df, out) : out;

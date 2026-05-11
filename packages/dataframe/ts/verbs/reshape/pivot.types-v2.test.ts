@@ -21,7 +21,7 @@ const basicPivot = salesData
 
 // Example 1: Basic pivot with automatic type inference
 const _basicPivotV2: DataFrame<
-  { store: string; apples: number; bananas: number }
+  { store: string; apples: number | undefined; bananas: number | undefined }
 > = salesData
   .pivotWider({
     namesFrom: "product",

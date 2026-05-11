@@ -31,12 +31,12 @@ type MergeRows<Row1, Row2> =
     ]: Row1[K] | Row2[K];
   }
   & {
-    // For keys only in Row1, keep them as-is
-    [K in Exclude<keyof Row1, keyof Row2>]: Row1[K];
+    // For keys only in Row1, missing in Row2 rows → T | undefined
+    [K in Exclude<keyof Row1, keyof Row2>]: Row1[K] | undefined;
   }
   & {
-    // For keys only in Row2, make them optional
-    [K in Exclude<keyof Row2, keyof Row1>]?: Row2[K];
+    // For keys only in Row2, missing in Row1 rows → T | undefined
+    [K in Exclude<keyof Row2, keyof Row1>]: Row2[K] | undefined;
   };
 
 /**

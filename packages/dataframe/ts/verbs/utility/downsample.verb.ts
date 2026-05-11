@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import type { Frequency } from "./downsample.types.ts";
 import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
@@ -569,6 +570,11 @@ export function downsample(
   return (
     df: any,
   ): any => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(String(args.timeColumn) in store.columns)) {
+      throwColumnNotFound(String(args.timeColumn), store.columnNames);
+    }
+
     const rows: any[] = Array.from(df);
     if (rows.length === 0) {
       return createDataFrame([]);

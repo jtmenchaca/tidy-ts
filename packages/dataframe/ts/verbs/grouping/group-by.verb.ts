@@ -4,6 +4,7 @@ import {
   materializeIndex,
 } from "../../dataframe/index.ts";
 import { isComparable } from "../../stats/helpers.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 
 export function groupBy(
   columnOrColumns?: string | string[],
@@ -40,13 +41,7 @@ export function groupBy(
       n = store.length;
       getVal = (i: number, col: string) => {
         const column = store.columns[col];
-        if (!column) {
-          throw new Error(
-            `Column '${col}' not found in DataFrame. Available columns: [${
-              Object.keys(store.columns).join(", ")
-            }]`,
-          );
-        }
+        if (!column) throwColumnNotFound(col, Object.keys(store.columns));
         return column[i];
       };
     } else {
@@ -55,13 +50,7 @@ export function groupBy(
       n = view.length;
       getVal = (i: number, col: string) => {
         const column = store.columns[col];
-        if (!column) {
-          throw new Error(
-            `Column '${col}' not found in DataFrame. Available columns: [${
-              Object.keys(store.columns).join(", ")
-            }]`,
-          );
-        }
+        if (!column) throwColumnNotFound(col, Object.keys(store.columns));
         return column[view![i]];
       };
     }

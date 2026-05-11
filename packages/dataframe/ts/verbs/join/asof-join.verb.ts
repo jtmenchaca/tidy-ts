@@ -4,6 +4,7 @@ import {
   withGroupsRebuilt,
 } from "../../dataframe/index.ts";
 import type { ColumnarStore } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import {
   getStoreAndIndex,
   NA_U32,
@@ -25,7 +26,7 @@ function projectColumn(
   name: string,
 ): unknown[] {
   const src = store.columns[name];
-  if (!src) throw new Error(`Column '${name}' not found`);
+  if (!src) throwColumnNotFound(name, store.columnNames);
   const out = new Array(index.length);
   for (let i = 0; i < index.length; i++) out[i] = src[index[i]];
   return out;
@@ -124,6 +125,7 @@ function buildOutputStoreAsof(
   right: StoreAndIndex,
   leftPickRight: readonly (number | null)[], // one right index or null per left row (in *view* order)
   joinKey: string,
+  suffixLeft: string,
   suffixRight: string,
 ): ColumnarStore {
   const n = leftPickRight.length;
@@ -137,16 +139,23 @@ function buildOutputStoreAsof(
     rightBase[i] = rv == null ? NA_U32 : right.index[rv];
   }
 
-  // Process left columns (always present, no conflicts since asof join keeps all left)
+  // Process left columns (apply suffix to conflicting non-key columns)
+  const rightNameSet = new Set(right.store.columnNames);
+  const leftConflictSet = new Set<string>();
+  for (const name of left.store.columnNames) {
+    if (name !== joinKey && rightNameSet.has(name)) {
+      leftConflictSet.add(name);
+    }
+  }
   const leftResult = processJoinColumns({
     store: left,
     baseIndices: leftBase,
     columnNames: left.store.columnNames,
     nameSet: new Set(left.store.columnNames),
-    conflictSet: new Set<string>(), // No conflicts for left side in asof join
+    conflictSet: leftConflictSet,
     keySet: new Set<string>(), // No special key handling for left side
     dropKeys: new Set<string>(),
-    suffix: "",
+    suffix: suffixLeft,
     useNullable: false,
   });
 
@@ -190,7 +199,7 @@ export function asof_join(
     direction?: "backward" | "forward" | "nearest";
     tolerance?: number; // in key units; NaN/undefined => no limit
     group_by?: string[];
-    suffixes?: { right?: string };
+    suffixes?: { left?: string; right?: string };
   },
 ) {
   return (left: any): any => {
@@ -219,7 +228,9 @@ export function asof_join(
 
     const key = String(by);
     const groupNames = opts?.group_by?.map(String) ?? [];
-    const suffixRight = opts?.suffixes?.right ?? "_y";
+    const hasSuffixes = opts?.suffixes != null;
+    const suffixLeft = hasSuffixes ? (opts?.suffixes?.left ?? "") : "_x";
+    const suffixRight = hasSuffixes ? (opts?.suffixes?.right ?? "_y") : "_y";
     const direction = opts?.direction ?? "backward";
     const tol = opts?.tolerance;
     const tolEnabled = typeof tol === "number" && Number.isFinite(tol);
@@ -372,6 +383,7 @@ export function asof_join(
       Rs,
       pickR_viewOrder,
       key,
+      suffixLeft,
       suffixRight,
     );
 

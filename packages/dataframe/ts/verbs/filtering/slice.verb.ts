@@ -6,6 +6,7 @@ import {
   withIndex,
 } from "../../dataframe/index.ts";
 import { createRandomInt, sampleArray } from "../utility/seedable-random.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { buildDataFrameFromIndices, collectGroupPhysicalIndices, compareValues } from "../verb-helpers.ts";
 
 /**
@@ -423,8 +424,7 @@ export function slice_min(
 
       const sortColumn = store.columns[column as string];
       if (!sortColumn) {
-        // Column doesn't exist, return empty
-        return createDataFrame([]);
+        throwColumnNotFound(String(column), store.columnNames);
       }
 
       // Sort physical indices by their column values
@@ -525,8 +525,7 @@ export function slice_max(
 
       const sortColumn = store.columns[column as string];
       if (!sortColumn) {
-        // Column doesn't exist, return empty
-        return createDataFrame([]);
+        throwColumnNotFound(String(column), store.columnNames);
       }
 
       // Sort physical indices by their column values (descending for max)

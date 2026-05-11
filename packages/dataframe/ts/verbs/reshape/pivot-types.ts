@@ -20,7 +20,7 @@ export type RowAfterPivotWider<
   & {
     [ColName in ColNames[number] as `${Prefix}${ColName}`]:
       // deno-lint-ignore no-explicit-any
-      ValuesFn extends (values: any) => infer Result ? Result : Row[ValuesFrom];
+      ValuesFn extends (values: any) => infer Result ? Result : Row[ValuesFrom] | undefined;
   }
 >;
 

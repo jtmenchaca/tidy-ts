@@ -51,6 +51,7 @@ export function append<T extends Record<string, unknown>>(
 ) {
   return (df: DataFrame<T>): DataFrame<T> => {
     let rowsToAdd: T[];
+    let isDataFrameInput = false;
 
     // Handle different input types
     if (rowOrRows && typeof rowOrRows === "object" && "nrows" in rowOrRows) {
@@ -61,6 +62,7 @@ export function append<T extends Record<string, unknown>>(
       const dfStore = dfApi.__store as ColumnarStore;
 
       // Reconstruct rows from columnar storage to ensure we have all available data
+      isDataFrameInput = true;
       rowsToAdd = [];
       for (let i = 0; i < dfStore.length; i++) {
         const row: any = {};
@@ -88,6 +90,46 @@ export function append<T extends Record<string, unknown>>(
     // COLUMNAR OPTIMIZATION: Work directly with columnar storage
     const api = df as any;
     const originalStore = api.__store as ColumnarStore;
+
+    // Validate appended rows against the existing schema (raw rows only, not DataFrame merges)
+    if (!isDataFrameInput) {
+    const schemaColumns = originalStore.columnNames;
+    for (let i = 0; i < rowsToAdd.length; i++) {
+      const row = rowsToAdd[i];
+      const rowKeys = Object.keys(row);
+
+      // Check for missing columns
+      for (const col of schemaColumns) {
+        if (!(col in row)) {
+          throw new Error(
+            `append: row ${i} is missing column "${col}". ` +
+              `Expected columns: [${schemaColumns.join(", ")}]. ` +
+              `Got: [${rowKeys.join(", ")}]`,
+          );
+        }
+      }
+
+      // Check for type mismatches against existing column data
+      if (originalStore.length > 0) {
+        for (const col of schemaColumns) {
+          const existingVal = originalStore.columns[col][0];
+          const newVal = (row as any)[col];
+          if (
+            existingVal !== null &&
+            existingVal !== undefined &&
+            newVal !== null &&
+            newVal !== undefined &&
+            typeof existingVal !== typeof newVal
+          ) {
+            throw new Error(
+              `append: row ${i} has wrong type for column "${col}". ` +
+                `Expected ${typeof existingVal}, got ${typeof newVal}`,
+            );
+          }
+        }
+      }
+    }
+    } // end validation for raw row inputs
     const originalLength = originalStore.length;
     const newRowsCount = rowsToAdd.length;
     const totalLength = originalLength + newRowsCount;

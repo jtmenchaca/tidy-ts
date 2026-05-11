@@ -1,4 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 
 /**
  * Extract year from date column.
@@ -22,6 +23,10 @@ export function year(
 ) {
   return function (df: any): any {
     const colName = String(col);
+    const store = df.__store;
+    if (store && store.length > 0 && !(colName in store.columns)) {
+      throwColumnNotFound(colName, store.columnNames);
+    }
     const column = [...df[colName]] as (Date | string | number | null)[];
 
     if (!column || column.length === 0) {
@@ -72,6 +77,10 @@ export function month(
 ) {
   return function (df: any): any {
     const colName = String(col);
+    const store = df.__store;
+    if (store && store.length > 0 && !(colName in store.columns)) {
+      throwColumnNotFound(colName, store.columnNames);
+    }
     const column = [...df[colName]] as (Date | string | number | null)[];
 
     if (!column || column.length === 0) {
@@ -122,6 +131,10 @@ export function day(
 ) {
   return function (df: any): any {
     const colName = String(col);
+    const store = df.__store;
+    if (store && store.length > 0 && !(colName in store.columns)) {
+      throwColumnNotFound(colName, store.columnNames);
+    }
     const column = [...df[colName]] as (Date | string | number | null)[];
 
     if (!column || column.length === 0) {

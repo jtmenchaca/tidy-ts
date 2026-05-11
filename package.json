@@ -101,6 +101,7 @@
     "@std/encoding": "jsr:@std/encoding@^1.0.10",
     "@std/expect": "jsr:@std/expect@^1.0.15",
     "@std/path": "jsr:@std/path@^1.0.8",
+    "@std/testing": "jsr:@std/testing@^1.0.18",
     "@std/random": "jsr:@std/random@^0.1.2",
     "@tailwindcss/vite": "^4.0.9",
     "@tanstack/react-query": "^5.67.0",

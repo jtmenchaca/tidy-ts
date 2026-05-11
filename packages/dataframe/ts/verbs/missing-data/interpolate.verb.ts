@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { interpolate as statsInterpolate } from "../../stats/window/interpolate.ts";
 import { isComparable } from "../../stats/helpers.ts";
 import {
@@ -49,6 +50,11 @@ export function interpolate(
   method: "linear" | "spline",
 ) {
   return (df: any): any => {
+    const store = df.__store;
+    if (store && store.length > 0) {
+      validateColumnsExist([valueColumn, xColumn], store.columnNames);
+    }
+
     const result: any[] = [];
 
     // Extract arrays from DataFrame

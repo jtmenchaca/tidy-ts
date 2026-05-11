@@ -3,6 +3,7 @@ import {
   createColumnarDataFrameFromStore,
   withGroups,
 } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 // Policy mapping for aggregation functions (simplified for non-WASM approach)
@@ -442,20 +443,10 @@ export function pivot_longer(
       // Validate that all specified columns exist in the data
       tracer.withSpan(df, "validate-columns", () => {
         if (df.nrows() > 0) {
-          const availableColumns = Object.keys(df[0]);
-          const missingColumns = cols.filter((col: string) =>
-            !availableColumns.includes(String(col))
+          validateColumnsExist(
+            cols.map(String),
+            Object.keys(df[0]),
           );
-
-          if (missingColumns.length > 0) {
-            throw new Error(
-              `Columns [${
-                missingColumns.join(", ")
-              }] not found in data. Available columns: [${
-                availableColumns.join(", ")
-              }]`,
-            );
-          }
         }
       }, {
         foldColumns: cols.length,

@@ -12,11 +12,11 @@ const quotes = createDataFrame([
 ]);
 
 // 1. Basic asof join — shared key "time" matches
-//    "symbol" is shared non-key: L keeps "symbol", R gets "symbol_y"
+//    "symbol" is shared non-key: L gets "symbol_x", R gets "symbol_y"
 const basic = trades.asofJoin(quotes, "time");
 const _basicTypeCheck: DataFrame<{
   time: number;
-  symbol: string;
+  symbol_x: string;
   quantity: number;
   price: number | undefined;
   bid: number | undefined;
@@ -51,7 +51,7 @@ const _withSuffixesTypeCheck: DataFrame<{
 }> = withSuffixes;
 
 // 4. Multiple shared non-key cols — join on "time"
-//    "id" and "code" are shared non-key: L keeps originals, R gets _y suffix
+//    "id" and "code" are shared non-key: L gets _x suffix, R gets _y suffix
 const events = createDataFrame([
   { id: "a", time: 1, code: "X" },
 ]);
@@ -60,9 +60,9 @@ const logs = createDataFrame([
 ]);
 const multiShared = events.asofJoin(logs, "time");
 const _multiSharedTypeCheck: DataFrame<{
-  id: string;
+  id_x: string;
   time: number;
-  code: string;
+  code_x: string;
   detail: string | undefined;
   id_y: string | undefined;
   code_y: string | undefined;

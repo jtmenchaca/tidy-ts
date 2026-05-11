@@ -35,12 +35,12 @@ type ColumnValueResult<
   Row extends object,
   Value,
 > =
-  // 1) Prefer our canonical (row, idx?, df?) function shape - unwrap Promise
+  // 1) Prefer our canonical (row, idx?, df?) function shape
   Value extends (row: Row, idx?: number, df?: DataFrame<Row>) => infer Result
-    ? Awaited<Result>
-    // 2) Fallback: *any* function collapses to its return type - unwrap Promise
+    ? Result
+    // 2) Fallback: *any* function collapses to its return type
     // deno-lint-ignore no-explicit-any
-    : Value extends (...args: any[]) => infer Result ? Awaited<Result>
+    : Value extends (...args: any[]) => infer Result ? Result
     // 3) Array literal → element type
     : Value extends readonly (infer Element)[] ? Element
     // 4) null deletes the column
@@ -70,6 +70,16 @@ export type RowAfterMutation<
   & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
   // New/overwritten keys from Assignments
   & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+>;
+
+/** Like RowAfterMutation but unwraps Promises — used by mutateAsync which resolves them. */
+export type AwaitedRowAfterMutation<
+  Row extends object,
+  // deno-lint-ignore no-explicit-any
+  Assignments extends Record<string, any>,
+> = Prettify<
+  & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+  & { [K in keyof Assignments]: Awaited<ColumnValueResult<Row, Assignments[K]>> }
 >;
 
 /** 🔁 Compatibility alias so existing runtime code can keep importing `AddColumns` */
@@ -275,8 +285,8 @@ export interface MutateAsyncMethod<Row extends object> {
     formulas: Formulas,
     options?: ConcurrencyOptions,
   ): PromisedGroupedDataFrame<
-    RowAfterMutation<R, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
+    AwaitedRowAfterMutation<R, Formulas>,
+    Extract<GroupName, keyof AwaitedRowAfterMutation<R, Formulas>>
   >;
 
   // ── Ungrouped — function formulas ───────────────────────────────────────
@@ -290,7 +300,7 @@ export interface MutateAsyncMethod<Row extends object> {
     this: DataFrame<R>,
     formulas: Formulas,
     options?: ConcurrencyOptions,
-  ): PromisedDataFrame<RowAfterMutation<R, Formulas>>;
+  ): PromisedDataFrame<AwaitedRowAfterMutation<R, Formulas>>;
 
   // ── Grouped — mixed assignments ─────────────────────────────────────────
   <
@@ -302,8 +312,8 @@ export interface MutateAsyncMethod<Row extends object> {
     assignments: Assignments,
     options?: ConcurrencyOptions,
   ): PromisedGroupedDataFrame<
-    RowAfterMutation<R, Assignments>,
-    Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
+    AwaitedRowAfterMutation<R, Assignments>,
+    Extract<GroupName, keyof AwaitedRowAfterMutation<R, Assignments>>
   >;
 
   // ── Ungrouped — mixed assignments ───────────────────────────────────────
@@ -311,5 +321,5 @@ export interface MutateAsyncMethod<Row extends object> {
     this: DataFrame<R>,
     assignments: Assignments,
     options?: ConcurrencyOptions,
-  ): PromisedDataFrame<RowAfterMutation<R, Assignments>>;
+  ): PromisedDataFrame<AwaitedRowAfterMutation<R, Assignments>>;
 }

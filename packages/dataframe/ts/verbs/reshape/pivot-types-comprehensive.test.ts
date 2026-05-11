@@ -25,8 +25,8 @@ const basicWider = longData
 // Type check passes - columns are properly inferred
 const _basicWiderTypeCheck: DataFrame<{
   group: string;
-  x: number;
-  y: number;
+  x: number | undefined;
+  y: number | undefined;
 }> = basicWider;
 
 console.log("Basic pivot_wider result:", basicWider);
@@ -67,8 +67,8 @@ const prefixedWider = longData
 // Type check - prefix is applied to column names
 const _prefixedWiderTypeCheck: DataFrame<{
   group: string;
-  val_x: number;
-  val_y: number;
+  val_x: number | undefined;
+  val_y: number | undefined;
 }> = prefixedWider;
 
 console.log("Prefixed pivot_wider result:", prefixedWider);

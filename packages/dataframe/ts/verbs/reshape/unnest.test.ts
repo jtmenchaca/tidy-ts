@@ -171,7 +171,7 @@ Deno.test("unnest - error on non-existent column", () => {
   expect(() => {
     // @ts-expect-error - nonexistent column
     df.unnest("nonexistent");
-  }).toThrow("Column 'nonexistent' not found in DataFrame");
+  }).toThrow('Column "nonexistent" not found');
 });
 
 Deno.test("unnest - empty DataFrame", () => {
@@ -180,7 +180,7 @@ Deno.test("unnest - empty DataFrame", () => {
   expect(() => {
     // @ts-expect-error - empty DataFrame has no columns
     df.unnest("tags");
-  }).toThrow("Column 'tags' not found in DataFrame");
+  }).toThrow('Column "tags" not found');
 });
 
 Deno.test("unnest - all empty arrays", () => {

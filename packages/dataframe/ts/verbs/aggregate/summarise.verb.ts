@@ -4,6 +4,7 @@ import {
   createDataFrame,
   materializeIndex,
 } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { withErrorHandling } from "../../promised-dataframe/async-sync-processor.ts";
 import {
   type ConcurrencyOptions,
@@ -163,7 +164,7 @@ function summariseSync(
 
             const sourceColumn = store.columns[colName];
             if (!sourceColumn) {
-              throw new Error(`Column '${colName}' not found`);
+              throwColumnNotFound(colName, store.columnNames);
             }
 
             // Extract column on demand

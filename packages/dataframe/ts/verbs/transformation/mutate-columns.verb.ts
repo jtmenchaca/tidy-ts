@@ -4,7 +4,8 @@ import {
   materializeIndex,
   withGroups,
 } from "../../dataframe/index.ts";
-import { RowView } from "../verb-helpers.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
+import { RowView, wrapRowView } from "../verb-helpers.ts";
 
 /**
  * Mutate across multiple columns of the same type.
@@ -78,19 +79,10 @@ export function mutate_columns(
       const viewLength = idx.length;
 
       // Runtime validation using store columns
-      const availableColumns = store.columnNames;
-      const missingColumns = config.columns.filter((col: string) =>
-        !availableColumns.includes(String(col))
+      validateColumnsExist(
+        config.columns.map(String),
+        store.columnNames,
       );
-      if (missingColumns.length > 0) {
-        throw new Error(
-          `Columns [${
-            missingColumns.join(", ")
-          }] not found in data. Available columns: [${
-            availableColumns.join(", ")
-          }]`,
-        );
-      }
 
       // Build new columns
       const newColumns: Record<string, unknown[]> = {};
@@ -155,7 +147,7 @@ export function mutate_columns(
       (outDf as any).__store = newStore;
       (outDf as any).__view = {}; // reset view
 
-      (outDf as any).__rowView = new RowView(newColumns, newColumnNames);
+      (outDf as any).__rowView = wrapRowView(new RowView(newColumns, newColumnNames), newColumnNames);
 
       const groupedDf = df as any;
       if (groupedDf.__groups) {
@@ -174,19 +166,10 @@ export function mutate_columns(
 
     // Runtime validation
     if (df.nrows() > 0) {
-      const availableColumns = Object.keys(df[0]);
-      const missingColumns = config.columns.filter((col: string) =>
-        !availableColumns.includes(String(col))
+      validateColumnsExist(
+        config.columns.map(String),
+        Object.keys(df[0]),
       );
-      if (missingColumns.length > 0) {
-        throw new Error(
-          `Columns [${
-            missingColumns.join(", ")
-          }] not found in data. Available columns: [${
-            availableColumns.join(", ")
-          }]`,
-        );
-      }
     }
 
     // Helper function to get properly typed column value

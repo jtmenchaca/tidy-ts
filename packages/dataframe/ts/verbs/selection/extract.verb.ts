@@ -1,7 +1,13 @@
+import { throwColumnNotFound } from "../../utilities/errors.ts";
+
 export function extract(
   column: string,
 ) {
   return (df: any): any[] => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     const out: any[] = [];
     for (const row of df) out.push(row[column]);
     return out;
@@ -27,6 +33,10 @@ export function extract_head(
   n: number,
 ) {
   return (df: any): any => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     const out: any[] = [];
     let count = 0;
     for (const row of df) {
@@ -62,6 +72,10 @@ export function extract_tail(
   n: number,
 ) {
   return (df: any): any => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     const all: any[] = [];
     for (const row of df) all.push(row[column]);
     const result = all.slice(-n);
@@ -93,6 +107,10 @@ export function extract_nth(
   index: number,
 ) {
   return (df: any): any => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     let currentIndex = 0;
     for (const row of df) {
       if (currentIndex === index) {
@@ -121,6 +139,10 @@ export function extract_sample(
   n: number,
 ) {
   return (df: any): any[] => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     const all: any[] = [];
     for (const row of df) all.push(row[column]);
 
@@ -154,6 +176,10 @@ export function extract_unique(
   column: string,
 ) {
   return (df: any): any[] => {
+    const store = (df as any).__store;
+    if (store && store.length > 0 && !(column in store.columns)) {
+      throwColumnNotFound(column, store.columnNames);
+    }
     const values: any[] = [];
     for (const row of df) values.push(row[column]);
     return [...new Set(values)];

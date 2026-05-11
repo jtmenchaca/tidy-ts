@@ -1,3 +1,5 @@
+import { throwColumnNotFound } from "../../utilities/errors.ts";
+
 /**
  * Extract a column's values into arrays grouped by another column's values.
  *
@@ -40,15 +42,12 @@ export function extract_column_by_group(
     // Validate columns exist
     if (df.nrows() > 0) {
       const firstRow = df[0];
+      const available = Object.keys(firstRow);
       if (!(groupColumn in firstRow)) {
-        throw new Error(
-          `Group column '${String(groupColumn)}' not found in data`,
-        );
+        throwColumnNotFound(groupColumn, available);
       }
       if (!(valueColumn in firstRow)) {
-        throw new Error(
-          `Value column '${String(valueColumn)}' not found in data`,
-        );
+        throwColumnNotFound(valueColumn, available);
       }
     }
 

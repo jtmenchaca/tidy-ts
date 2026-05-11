@@ -1,4 +1,5 @@
 // packages/dataframe/ts/transformation/reorder.ts
+import { validateColumnsExist } from "../../utilities/errors.ts";
 
 /**
  * Reorder columns explicitly.
@@ -28,6 +29,9 @@ export function reorder(
   return function (df: any): any {
     const allColumns = df.columns();
     const specified = cols.map(String);
+    if (specified.length > 0) {
+      validateColumnsExist(specified, allColumns);
+    }
     const remaining = allColumns.filter((col: string) => !specified.includes(col));
     const newOrder = [...specified, ...remaining];
 

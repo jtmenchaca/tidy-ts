@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 
 type ReplacePredicate = (value: unknown) => boolean;
 
@@ -8,6 +9,12 @@ function replaceWithMapping(
   mapping: Record<string, any>,
   shouldReplace: ReplacePredicate,
 ): any {
+  const mappingKeys = Object.keys(mapping);
+  const store = df.__store;
+  if (store && store.length > 0 && mappingKeys.length > 0) {
+    validateColumnsExist(mappingKeys, store.columnNames);
+  }
+
   const result: any[] = [];
 
   for (const row of df) {

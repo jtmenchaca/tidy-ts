@@ -189,8 +189,8 @@ Deno.test("rightJoin - default suffixes", () => {
   expect(result.toArray()).toEqual([
     {
       id: 1,
-      x: 10, // left x gets no suffix
-      y: "left_y", // left y gets no suffix
+      x_x: 10, // left x gets default "_x" suffix
+      y_x: "left_y", // left y gets default "_x" suffix
       x_y: 99, // right x gets default "_y" suffix
       y_y: "right_y", // right y gets default "_y" suffix
     },

@@ -1,4 +1,5 @@
 import { materializeIndex } from "../../dataframe/implementation/columnar-view.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 import { compareValues } from "../verb-helpers.ts";
 
 /**
@@ -49,11 +50,12 @@ export function extract_nth_where_sorted(
     const store = api.__store;
     const idx = materializeIndex(store.length, api.__view);
 
-    const sortColumn = store.columns[sortBy];
-    if (!sortColumn) {
-      // Column doesn't exist, return undefined
-      return undefined;
+    // Validate columns exist (skip for empty DataFrames)
+    if (store.length > 0) {
+      validateColumnsExist([column, sortBy], store.columnNames);
     }
+
+    const sortColumn = store.columns[sortBy];
 
     // Sort physical indices by their column values based on direction
     const sortableIndices = Array.from(idx);

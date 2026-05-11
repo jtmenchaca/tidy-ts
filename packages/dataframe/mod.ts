@@ -3,6 +3,7 @@ export { str } from "./ts/stats/strings/str.ts";
 export {
   createDataFrame,
   type DataFrame,
+  type DataFrameBase,
   type DataFrameOptions,
   type GroupedDataFrame,
   type PromisedDataFrame,

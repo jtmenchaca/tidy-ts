@@ -96,20 +96,33 @@ type AsofJoinWithSuffixes<
   >;
 
 // Fallback for when no suffixes provided — asof join has left-join semantics
-// with `_y` suffix for conflicting non-key columns.
-// Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
-// non-key R columns remain accessible even when L is generic.
+// with _x/_y suffixes for conflicting non-key columns.
 type SimpleAsofJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
 > =
-  & L
-  // All non-key R columns (always resolves, even when L is generic)
+  // Join keys from L
+  & Pick<L, K>
+  // L non-conflicting non-key columns (as-is)
+  & Omit<L, ConflictingColumns<L, R, Extract<K, StrKey>>>
+  // L conflicting non-key columns get _x suffix
+  & {
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_x`
+        : never]: L[P];
+  }
+  // R non-conflicting non-key columns (optional)
   & MakeUndefined<{
-    [P in keyof R as P extends K ? never : P]: R[P];
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? never
+        : P]: R[P];
   }>
-  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  // R conflicting non-key columns get _y suffix (optional)
   & MakeUndefined<{
     [P in keyof R as P extends K
       ? never
@@ -125,12 +138,13 @@ export type SuffixAwareAsofJoinResult<
   K extends keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
-> = Options extends { suffixes: infer _S } ? AsofJoinWithSuffixes<
-    L,
-    R,
-    K,
-    ExtractSuffixes<Options>
-  >
+> = HasDefinedSuffixes<Options> extends true
+  ? AsofJoinWithSuffixes<
+      L,
+      R,
+      K,
+      ExtractSuffixes<Options>
+    >
   : SimpleAsofJoinResult<L, R, K>;
 
 // -----------------------------------------------------------------------------
@@ -158,21 +172,34 @@ type LeftJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback: L columns as-is, all non-key R columns with | undefined, conflicting
-// non-key columns also get _y suffix with | undefined.
-// Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
-// non-key R columns remain accessible even when L is generic.
+// Fallback: L non-conflicting as-is, L conflicting get _x suffix,
+// R non-conflicting with | undefined, R conflicting get _y suffix with | undefined.
 type SimpleLeftJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
 > =
-  & L
-  // All non-key R columns (always resolves, even when L is generic)
+  // Join keys from L
+  & Pick<L, K>
+  // L non-conflicting non-key columns (as-is)
+  & Omit<L, ConflictingColumns<L, R, Extract<K, StrKey>>>
+  // L conflicting non-key columns get _x suffix
+  & {
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_x`
+        : never]: L[P];
+  }
+  // R non-conflicting non-key columns (optional)
   & MakeUndefined<{
-    [P in keyof R as P extends K ? never : P]: R[P];
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? never
+        : P]: R[P];
   }>
-  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  // R conflicting non-key columns get _y suffix (optional)
   & MakeUndefined<{
     [P in keyof R as P extends K
       ? never
@@ -188,13 +215,18 @@ export type SuffixAwareLeftJoinResult<
   K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
-> = Options extends { suffixes: infer _S } ? LeftJoinWithSuffixes<
-    L,
-    R,
-    ExtractJoinKeys<Options>,
-    ExtractSuffixes<Options>
-  >
-  : SimpleLeftJoinResult<L, R, K>;
+> = HasDefinedSuffixes<Options> extends true
+  ? LeftJoinWithSuffixes<
+      L,
+      R,
+      ExtractJoinKeys<Options>,
+      ExtractSuffixes<Options>
+    >
+  : SimpleLeftJoinResult<
+      L,
+      R,
+      Options extends { keys: infer _K } ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R> : K
+    >;
 
 // -----------------------------------------------------------------------------
 // Right Join Suffix Types
@@ -219,25 +251,39 @@ type RightJoinWithSuffixes<
   // 5) left conflicting cols (renamed, optional)
   & MakeUndefined<ApplySuffix<Pick<L, ConflictingColumns<L, R, K>>, S["left"]>>;
 
-// Fallback: R columns as-is, all non-key L columns with | undefined, conflicting
-// non-key columns from L also get _y suffix with | undefined.
-// Uses `P extends K ? never : P` so non-key L columns remain accessible on generic R.
+// Fallback: R non-conflicting as-is, R conflicting get _y suffix,
+// L non-conflicting with | undefined, L conflicting get _x suffix with | undefined.
 type SimpleRightJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
 > =
-  & R
-  // All non-key L columns (always resolves, even when R is generic)
-  & MakeUndefined<{
-    [P in keyof L as P extends K ? never : P]: L[P];
-  }>
-  // Conflicting non-key columns get _y suffix (defers harmlessly on generic R)
+  // Join keys from R
+  & Pick<R, K>
+  // R non-conflicting non-key columns (as-is)
+  & Omit<R, ConflictingColumns<L, R, Extract<K, StrKey>>>
+  // R conflicting non-key columns get _y suffix
+  & {
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? `${Extract<P, string>}_y`
+        : never]: R[P];
+  }
+  // L non-conflicting non-key columns (optional)
   & MakeUndefined<{
     [P in keyof L as P extends K
       ? never
       : P extends keyof R
-        ? `${Extract<P, string>}_y`
+        ? never
+        : P]: L[P];
+  }>
+  // L conflicting non-key columns get _x suffix (optional)
+  & MakeUndefined<{
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_x`
         : never]: L[P];
   }>;
 
@@ -248,13 +294,18 @@ export type SuffixAwareRightJoinResult<
   K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
-> = Options extends { suffixes: infer _S } ? RightJoinWithSuffixes<
-    L,
-    R,
-    ExtractJoinKeys<Options>,
-    ExtractSuffixes<Options>
-  >
-  : SimpleRightJoinResult<L, R, K>;
+> = HasDefinedSuffixes<Options> extends true
+  ? RightJoinWithSuffixes<
+      L,
+      R,
+      ExtractJoinKeys<Options>,
+      ExtractSuffixes<Options>
+    >
+  : SimpleRightJoinResult<
+      L,
+      R,
+      Options extends { keys: infer _K } ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R> : K
+    >;
 
 // -----------------------------------------------------------------------------
 // Outer Join Suffix Types
@@ -286,9 +337,8 @@ type OuterJoinWithSuffixes<
     ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>
   >;
 
-// Fallback: keys required, all non-key columns | undefined, conflicting non-key
-// columns get _y suffix with | undefined.
-// Uses `P extends K ? never : P` so non-key columns remain accessible on generics.
+// Fallback: keys required, non-conflicting columns | undefined,
+// L conflicting get _x suffix | undefined, R conflicting get _y suffix | undefined.
 type SimpleOuterJoinResult<
   L extends object,
   R extends object,
@@ -296,15 +346,31 @@ type SimpleOuterJoinResult<
 > =
   // Keys are required (from L)
   & Pick<L, K>
-  // All non-key L columns (optional — outer join)
+  // L non-conflicting non-key columns (optional — outer join)
   & MakeUndefined<{
-    [P in keyof L as P extends K ? never : P]: L[P];
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? never
+        : P]: L[P];
   }>
-  // All non-key R columns (optional — outer join)
+  // L conflicting non-key columns get _x suffix (optional)
   & MakeUndefined<{
-    [P in keyof R as P extends K ? never : P]: R[P];
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_x`
+        : never]: L[P];
   }>
-  // R conflicting non-key columns get _y suffix (defers harmlessly on generics)
+  // R non-conflicting non-key columns (optional — outer join)
+  & MakeUndefined<{
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? never
+        : P]: R[P];
+  }>
+  // R conflicting non-key columns get _y suffix (optional)
   & MakeUndefined<{
     [P in keyof R as P extends K
       ? never
@@ -320,13 +386,18 @@ export type SuffixAwareOuterJoinResult<
   K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
-> = Options extends { suffixes: infer _S } ? OuterJoinWithSuffixes<
-    L,
-    R,
-    ExtractJoinKeys<Options>,
-    ExtractSuffixes<Options>
-  >
-  : SimpleOuterJoinResult<L, R, K>;
+> = HasDefinedSuffixes<Options> extends true
+  ? OuterJoinWithSuffixes<
+      L,
+      R,
+      ExtractJoinKeys<Options>,
+      ExtractSuffixes<Options>
+    >
+  : SimpleOuterJoinResult<
+      L,
+      R,
+      Options extends { keys: infer _K } ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R> : K
+    >;
 
 // -----------------------------------------------------------------------------
 // Inner Join Suffix Types
@@ -351,8 +422,8 @@ type InnerJoinWithSuffixes<
   // 5) right conflicting cols (renamed, required)
   & ApplySuffix<Pick<R, ConflictingColumns<L, R, K>>, S["right"]>;
 
-// Fallback: L columns as-is, all non-key R columns required, conflicting non-key
-// columns also get _y suffix (required — inner join guarantees match).
+// Fallback: L non-conflicting columns as-is, L conflicting columns get _x suffix,
+// all non-key R columns (non-conflicting as-is), conflicting get _y suffix.
 // Uses `P extends K ? never : P` (not `P extends keyof L ? never : P`) so that
 // non-key R columns remain accessible even when L is generic.
 type SimpleInnerJoinResult<
@@ -360,12 +431,27 @@ type SimpleInnerJoinResult<
   R extends object,
   K extends keyof L & keyof R,
 > =
-  & L
-  // All non-key R columns (always resolves, even when L is generic)
+  // Join keys from L
+  & Pick<L, K>
+  // L non-conflicting non-key columns (as-is)
+  & Omit<L, ConflictingColumns<L, R, Extract<K, StrKey>>>
+  // L conflicting non-key columns get _x suffix
   & {
-    [P in keyof R as P extends K ? never : P]: R[P];
+    [P in keyof L as P extends K
+      ? never
+      : P extends keyof R
+        ? `${Extract<P, string>}_x`
+        : never]: L[P];
   }
-  // Conflicting non-key columns get _y suffix (defers harmlessly on generic L)
+  // R non-conflicting non-key columns
+  & {
+    [P in keyof R as P extends K
+      ? never
+      : P extends keyof L
+        ? never
+        : P]: R[P];
+  }
+  // R conflicting non-key columns get _y suffix
   & {
     [P in keyof R as P extends K
       ? never
@@ -374,6 +460,12 @@ type SimpleInnerJoinResult<
         : never]: R[P];
   };
 
+// Check whether Options has suffixes that are actually defined (not undefined)
+type HasDefinedSuffixes<Options> = Options extends
+  { suffixes: infer S }
+  ? S extends { left: string } | { right: string } ? true : false
+  : false;
+
 // Final dispatcher for inner join
 export type SuffixAwareInnerJoinResult<
   L extends object,
@@ -381,10 +473,15 @@ export type SuffixAwareInnerJoinResult<
   K extends keyof L & keyof R = keyof L & keyof R,
   // deno-lint-ignore ban-types
   Options = {},
-> = Options extends { suffixes: infer _S } ? InnerJoinWithSuffixes<
-    L,
-    R,
-    ExtractJoinKeys<Options>,
-    ExtractSuffixes<Options>
-  >
-  : SimpleInnerJoinResult<L, R, K>;
+> = HasDefinedSuffixes<Options> extends true
+  ? InnerJoinWithSuffixes<
+      L,
+      R,
+      ExtractJoinKeys<Options>,
+      ExtractSuffixes<Options>
+    >
+  : SimpleInnerJoinResult<
+      L,
+      R,
+      Options extends { keys: infer _K } ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R> : K
+    >;

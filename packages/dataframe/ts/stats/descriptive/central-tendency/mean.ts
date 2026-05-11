@@ -1,5 +1,6 @@
 import { canUseFastPath, getTypedArray } from "../../helpers.ts";
 import { mean_wasm } from "../../../wasm/wasm-loader.ts";
+import { tidyWarn } from "../../../utilities/errors.ts";
 
 // Type definitions for number arrays
 export type CleanNumberArray = readonly number[];
@@ -151,16 +152,21 @@ export function mean(
       if (!removeUndefined) return null;
       continue;
     }
-    if (typeof v === "number") {
-      if (Number.isNaN(v)) {
-        if (!removeNaN) {
-          foundNaN = true;
-        }
+    if (typeof v !== "number") {
+      if (removeNull || removeUndefined || removeNaN) {
         continue;
       }
-      count++;
-      sum += v;
+      tidyWarn(`s.mean() received non-numeric value: ${JSON.stringify(v)} (type: ${typeof v}). Returning null.`);
+      return null;
     }
+    if (Number.isNaN(v)) {
+      if (!removeNaN) {
+        foundNaN = true;
+      }
+      continue;
+    }
+    count++;
+    sum += v;
   }
 
   // If we found NaN and didn't remove it, return NaN

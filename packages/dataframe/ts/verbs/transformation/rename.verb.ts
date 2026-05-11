@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 // All user-facing type safety comes from rename.types.ts (RenameMethod<Row>).
 // This file is called via (rename as any)(...a)(df) from resolve-verb.ts.
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 
 /**
  * Rename columns in a dataframe.
@@ -22,9 +23,7 @@ export function rename(mapping: any): any {
 
       // Validate old column exists
       if (!dfColumns.includes(oldNameStr)) {
-        throw new ReferenceError(
-          `Column "${oldNameStr}" not found in DataFrame`,
-        );
+        throwColumnNotFound(oldNameStr, dfColumns);
       }
 
       // Check for new name collisions

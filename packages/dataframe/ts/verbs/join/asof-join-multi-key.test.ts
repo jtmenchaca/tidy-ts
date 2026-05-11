@@ -16,33 +16,33 @@ Deno.test("asofJoin - basic backward join", () => {
 
   const result = left.asofJoin(right, "timestamp");
 
-  // Type check: asof join should preserve all left columns and add right columns as possibly undefined
+  // Type check: asof join should rename conflicting columns with _x/_y suffixes
   const _basicTypeCheck: DataFrame<{
     timestamp: number; // Key field (required)
-    symbol: string; // Left column (required)
+    symbol_x: string; // Left conflicting column with _x suffix
     price: number; // Left column (required)
-    symbol_y: string | undefined; // Right column (optional due to asof join)
+    symbol_y: string | undefined; // Right conflicting column with _y suffix (optional)
     volume: number | undefined; // Right column (optional due to asof join)
   }> = result;
 
   expect(result.toArray()).toEqual([
     {
       timestamp: 100,
-      symbol: "AAPL",
+      symbol_x: "AAPL",
       price: 150,
       symbol_y: "AAPL",
       volume: 1000,
     }, // matches 90
     {
       timestamp: 200,
-      symbol: "AAPL",
+      symbol_x: "AAPL",
       price: 155,
       symbol_y: "AAPL",
       volume: 2000,
     }, // matches 150
     {
       timestamp: 300,
-      symbol: "AAPL",
+      symbol_x: "AAPL",
       price: 160,
       symbol_y: "AAPL",
       volume: 3000,
@@ -170,17 +170,17 @@ Deno.test("asofJoin - with group_by", () => {
   // Type check: asof join with grouping
   const _groupByTypeCheck: DataFrame<{
     time: number; // Key field (required)
-    symbol: string; // Left column and group key (required)
+    symbol_x: string; // Left conflicting column with _x suffix
     price: number; // Left column (required)
     bid: number | undefined; // Right column (optional)
     ask: number | undefined; // Right column (optional)
-    symbol_y: string | undefined; // Right conflicting column with suffix (optional)
+    symbol_y: string | undefined; // Right conflicting column with _y suffix (optional)
   }> = result;
 
   expect(result.toArray()).toEqual([
     {
       time: 100,
-      symbol: "AAPL",
+      symbol_x: "AAPL",
       price: 150,
       symbol_y: "AAPL",
       bid: 149,
@@ -188,7 +188,7 @@ Deno.test("asofJoin - with group_by", () => {
     }, // matches AAPL 90
     {
       time: 200,
-      symbol: "AAPL",
+      symbol_x: "AAPL",
       price: 155,
       symbol_y: "AAPL",
       bid: 154,
@@ -196,7 +196,7 @@ Deno.test("asofJoin - with group_by", () => {
     }, // matches AAPL 180
     {
       time: 150,
-      symbol: "MSFT",
+      symbol_x: "MSFT",
       price: 250,
       symbol_y: "MSFT",
       bid: 249,
@@ -204,7 +204,7 @@ Deno.test("asofJoin - with group_by", () => {
     }, // matches MSFT 140
     {
       time: 250,
-      symbol: "MSFT",
+      symbol_x: "MSFT",
       price: 255,
       symbol_y: "MSFT",
       bid: 254,

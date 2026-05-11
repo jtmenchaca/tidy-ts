@@ -25,6 +25,7 @@ import {
   DEFAULT_CONCURRENCY,
   processConcurrently,
 } from "../../promised-dataframe/concurrency-utils.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { tracer } from "../../telemetry/tracer.ts";
 
 // Helper function for filter verb that handles logical indexing
@@ -745,6 +746,11 @@ function computeFilterMaskDirectly_AND(
     const hasStore = !!store;
 
     const simple = hasStore ? detectSimplePredicate(pred as any) : null;
+
+    // Validate detected column exists (skip for empty DataFrames)
+    if (nStore > 0 && simple && "column" in simple && !(simple.column in store.columns)) {
+      throwColumnNotFound(simple.column, store.columnNames);
+    }
 
     // Null-check fast path: scan column directly for !== null / === null
     if (hasStore && simple?.kind === "nullcheck") {

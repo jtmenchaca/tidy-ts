@@ -25,6 +25,6 @@ const basicWider = longData
 
 const _basicWiderTypeCheck: DataFrame<{
   group: string;
-  x: number;
-  y: number;
+  x: number | undefined;
+  y: number | undefined;
 }> = basicWider;

@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import { createDataFrame, withGroups } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 
 /**
  * Create boolean dummy columns from a categorical column (one-hot encoding).
@@ -34,6 +35,11 @@ export function dummy_col(column: any, opts: {
 
   return (df: any) => {
     if (df.nrows() === 0) return createDataFrame([]);
+
+    const store = df.__store;
+    if (store && store.length > 0 && !(String(column) in store.columns)) {
+      throwColumnNotFound(String(column), store.columnNames);
+    }
 
     // Compute categories once (global, not per-group) unless provided
     const cats: string[] = expected_categories

@@ -1,4 +1,5 @@
 import { createDataFrame } from "../../dataframe/index.ts";
+import { validateColumnsExist } from "../../utilities/errors.ts";
 
 /**
  * Backward fill null/undefined values in specified columns.
@@ -38,6 +39,11 @@ export function fillBackward(
 ) {
   // deno-lint-ignore no-explicit-any
   return (df: any): any => {
+    const store = df.__store;
+    if (store && store.length > 0 && columnNames.length > 0) {
+      validateColumnsExist(columnNames, store.columnNames);
+    }
+
     const result: any[] = [];
     const rows = Array.from(df);
 

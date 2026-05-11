@@ -1,6 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import type { ColumnarStore } from "../../dataframe/implementation/columnar-store.ts";
 import { createDataFrame } from "../../dataframe/index.ts";
+import { throwColumnNotFound } from "../../utilities/errors.ts";
 
 /**
  * Unnest an array column, creating one row per array element.
@@ -39,7 +40,7 @@ export function unnest(
     // Get the array column
     const arrayColumn = store.columns[column];
     if (!arrayColumn) {
-      throw new Error(`Column '${String(column)}' not found in DataFrame`);
+      throwColumnNotFound(column, store.columnNames);
     }
 
     // Check if the column contains arrays

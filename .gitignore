@@ -65,4 +65,7 @@ Claude.md/
 .claude/
 
 tmp/src/dataframe/ts/io/fixtures/T214*.xlsx
-examples/fixtures/test-output.xlsx 
+examples/fixtures/test-output.xlsx
+
+# Changelog (generated, not committed)
+changelog/

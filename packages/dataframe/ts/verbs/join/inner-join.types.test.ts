@@ -34,11 +34,11 @@ const right = createDataFrame([
   { time: 2, symbol: "GOOG", price: 2800 },
 ]);
 
-// "symbol" is shared but NOT a join key — L keeps "symbol", R gets "symbol_y"
+// "symbol" is shared but NOT a join key — L gets "symbol_x", R gets "symbol_y"
 const overlap = left.innerJoin(right, "time");
 const _overlapCheck: DataFrame<{
   time: number;
-  symbol: string;
+  symbol_x: string;
   quantity: number;
   price: number;
   symbol_y: string;
@@ -55,12 +55,12 @@ const logs = createDataFrame([
 ]);
 
 // Join on "id" — "time" and "code" are shared non-key cols
-// L keeps originals, R versions get _y suffix
+// L gets _x suffix, R gets _y suffix
 const multiShared = events.innerJoin(logs, "id");
 const _multiSharedCheck: DataFrame<{
   id: string;
-  time: number;
-  code: string;
+  time_x: number;
+  code_x: string;
   flag: boolean;
   detail: string;
   time_y: number;
@@ -91,3 +91,32 @@ const _withSuffixCheck: DataFrame<{
   price: number;
   symbol_quote: string;
 }> = withSuffix;
+
+// ── 6. Object API without suffixes (keys only) ─────────────────────────
+// Should behave identically to the simple API — collision gets _x/_y suffixes
+
+const objNoSuffix = left.innerJoin(right, {
+  keys: ["time"],
+});
+const _objNoSuffixCheck: DataFrame<{
+  time: number;
+  symbol_x: string;
+  quantity: number;
+  price: number;
+  symbol_y: string;
+}> = objNoSuffix;
+
+// ── 7. Object API without suffixes, multiple shared non-key columns ────
+
+const objMultiShared = events.innerJoin(logs, {
+  keys: ["id"],
+});
+const _objMultiSharedCheck: DataFrame<{
+  id: string;
+  time_x: number;
+  code_x: string;
+  flag: boolean;
+  detail: string;
+  time_y: number;
+  code_y: string;
+}> = objMultiShared;

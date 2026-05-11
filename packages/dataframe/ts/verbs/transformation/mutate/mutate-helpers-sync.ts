@@ -32,6 +32,17 @@ export function createUpdatedDataFrame<Row extends Record<string, unknown>>(
   const api = df as any;
   const store = api.__store;
 
+  // Check for Promise values (async function passed to sync mutate)
+  for (const [col, values] of Object.entries(updates)) {
+    for (let i = 0; i < values.length; i++) {
+      if (values[i] instanceof Promise) {
+        throw new Error(
+          `Column "${col}" received a Promise value. Did you pass an async function to mutate()? Use mutateAsync() instead.`,
+        );
+      }
+    }
+  }
+
   // Build copy-on-write store
   let t0 = profile ? performance.now() : 0;
   const nextStore = cowStore(store, updates, drops);

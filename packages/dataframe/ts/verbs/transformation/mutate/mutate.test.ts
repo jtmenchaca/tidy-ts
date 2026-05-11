@@ -231,3 +231,34 @@ Deno.test("group mutate index", () => {
   expect(grouped[3]).toHaveProperty("groupSize", 2);
   expect(grouped[3]).toHaveProperty("indexWithinGroup", 2);
 });
+
+// ── Async function in sync mutate ─────────────────────────────────────────
+
+async function asyncDouble(n: number): Promise<number> {
+  return n * 2;
+}
+
+Deno.test("sync mutate with async function — types preserve Promise", () => {
+  const df = createDataFrame([{ id: 1, value: 10 }]);
+
+  // mutate throws at runtime (Promise detection), but the type
+  // check is what we're testing — Promise<number> is preserved
+  try {
+    const result = df.mutate({ doubled: (r) => asyncDouble(r.value) });
+
+    // @ts-expect-error: Promise<number> can't be compared to number
+    result.filter((r) => r.doubled > 5);
+
+    // @ts-expect-error: Promise<number> can't be added to number
+    result.mutate({ tripled: (r) => r.doubled + r.value });
+  } catch { /* runtime Promise detection — expected */ }
+});
+
+Deno.test("sync mutate with async function — runtime throws", () => {
+  const df = createDataFrame([{ id: 1, value: 10 }]);
+
+  expect(() =>
+    // deno-lint-ignore no-explicit-any
+    (df as any).mutate({ doubled: async (r: any) => await asyncDouble(r.value) })
+  ).toThrow("received a Promise value");
+});

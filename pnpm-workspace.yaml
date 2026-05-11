@@ -116,6 +116,7 @@ overrides:
   "@std/expect": $@std/expect
   "@std/path": $@std/path
   "@std/random": $@std/random
+  "@std/testing": $@std/testing
   "@cliffy/command": $@cliffy/command
   "@deno/wasmbuild": $@deno/wasmbuild
 

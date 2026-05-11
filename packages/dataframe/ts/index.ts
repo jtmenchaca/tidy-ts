@@ -1,6 +1,7 @@
 export {
   createDataFrame,
   type DataFrame,
+  type DataFrameBase,
   type GroupedDataFrame,
 } from "./dataframe/index.ts";
 export {

@@ -41,6 +41,21 @@ export class RowView {
   }
 }
 
+/** Wrap a RowView in a Proxy that throws on unknown column access. */
+export function wrapRowView(view: RowView, names: string[]): RowView {
+  return new Proxy(view, {
+    get(target, prop, receiver) {
+      if (prop in target) return Reflect.get(target, prop, receiver);
+      if (typeof prop === "string" && prop !== "then" && !prop.startsWith("_")) {
+        throw new Error(
+          `Column "${prop}" not found. Available columns: [${names.join(", ")}]`,
+        );
+      }
+      return undefined;
+    },
+  });
+}
+
 /**
  * Build a new DataFrame from a columnar store by selecting rows at the given
  * physical indices. Returns the DataFrame with __view reset and __rowView attached.
@@ -64,7 +79,7 @@ export function buildDataFrameFromIndices(
   // deno-lint-ignore no-explicit-any
   (out as any).__view = {};
   // deno-lint-ignore no-explicit-any
-  (out as any).__rowView = new RowView(newColumns, newStore.columnNames);
+  (out as any).__rowView = wrapRowView(new RowView(newColumns, newStore.columnNames), newStore.columnNames);
   return out;
 }
 
