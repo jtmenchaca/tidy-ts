@@ -14,13 +14,22 @@ const COMPARISONS_DIR = new URL(".", import.meta.url).pathname;
 const TAG_START = "__TABLE_DATA__";
 const TAG_END = "__END_TABLE_DATA__";
 
+// Find all cat-* test files
+const catDirs: string[] = [];
+for await (const entry of Deno.readDir(COMPARISONS_DIR)) {
+  if (entry.isDirectory && entry.name.startsWith("cat-")) {
+    catDirs.push(`${COMPARISONS_DIR}${entry.name}/${entry.name}.test.ts`);
+  }
+}
+catDirs.sort();
+
 const cmd = new Deno.Command("deno", {
   args: [
     "test",
     "-A",
     "--v8-flags=--max-old-space-size=8192",
     "--parallel",
-    COMPARISONS_DIR,
+    ...catDirs,
   ],
   stdout: "piped",
   stderr: "piped",

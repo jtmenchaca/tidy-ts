@@ -16,7 +16,7 @@ affiliations:
     index: 1
   - name: University of Utah, Department of Internal Medicine
     index: 2
-date: 06 October 2025
+date: 
 bibliography: paper.bib
 repository: https://github.com/jtmenchaca/tidy-ts
 ---
@@ -63,7 +63,7 @@ This library implements and builds upon a tidyverse-style grammar of data manipu
 >   .arrange("total_revenue", "desc");
 > ```
 
-Tidy-TS also includes support for statistical hypothesis testing (Example 2). These functions are validated against R using randomized test suites to ensure parity in results. The validation framework compares test statistics and p-values across implementations, requiring differences to be within 1e-4 tolerance. Output from statistical tests is returned in typed objects that contain test names, effect sizes, p-values, confidence intervals, and other relevant statistics in a structured format. Providing these features natively is a priority for this work, particularly as research applications increasingly converge data collection and data analysis through technologies like TypeScript and interactive applications. Example 2 demonstrates how Tidy-TS exposes statistical tests directly and via an API that guides users to the correct test based on their intention - invoking the tidyverse philosophy of human-centered design.  Both methods return the same structured, typed results.
+Tidy-TS also includes support for statistical hypothesis testing (Example 2). These functions are validated against R using randomized test suites to ensure parity in results. The validation framework compares test statistics and p-values across implementations, requiring differences to be within 1e-6 tolerance. Output from statistical tests is returned in typed objects that contain test names, effect sizes, p-values, confidence intervals, and other relevant statistics in a structured format. Providing these features natively is a priority for this work, particularly as research applications increasingly converge data collection and data analysis through technologies like TypeScript and interactive applications. Example 2 demonstrates how Tidy-TS exposes statistical tests directly and via an API that guides users to the correct test based on their intention - invoking the tidyverse philosophy of human-centered design.  Both methods return the same structured, typed results.
 
 
 > **Example 2: Statistical Hypothesis Testing with Type Safety**
@@ -80,16 +80,6 @@ Tidy-TS also includes support for statistical hypothesis testing (Example 2). Th
 >   data: heights,
 >   mu: 170,
 >   alternative: "two-sided",
->   alpha: 0.05
-> });
->
-> // Compare API
-> // Intent-driven hypothesis testing api 
-> const compareAPI = s.compare.oneGroup.centralTendency.toValue({
->   data: heights,
->   comparator: "not equal to" // or "less than" | "greater than"
->   hypothesizedValue: 170,
->   parametric: "parametric", // or "nonparametric" | "auto"
 >   alpha: 0.05
 > });
 > 
@@ -109,9 +99,9 @@ Tidy-TS also includes support for statistical hypothesis testing (Example 2). Th
 
 Many modern analytics workflows also rely on remote API calls or external services for validation and analysis. Tidy-TS supports asynchronous transformations, permitting row-wise async operations within `mutate`, `filter`, and `summarize` operations. It also includes both dataframe-level and operation-level controls for concurrency and retries.  This eases the task of building analytics pipelines dependent on external services or subject to API rate limits. Applications that call remote artificial intelligence (AI) models or services are a key use case.
 
-Modern workflows also ingest data from various sources.  Tidy-TS provides tools to import CSV, Parquet, Arrow, and JSON in a type-safe manner with the help of Zod schema.  Likewise, databases queries made with raw SQL can be made type-safe with schema validation.  For data queried via popular type-safe Object-Relational Mappers, Tidy-TS can create dataframes using their provided types directly.
+Modern workflows also ingest data from various sources.  Tidy-TS provides tools to import CSV, XLSX, Parquet, Arrow, and JSON in a type-safe manner with the help of Zod schema.  Likewise, databases queries made with raw SQL can be made type-safe with schema validation.  For data queried via popular type-safe Object-Relational Mappers, Tidy-TS can create dataframes using their provided types directly.
 
-Tidy-TS ultimately builds on lessons from tools like pandas, dplyr, and Polars and adapts them for modern Typescript development needs. Tidy-TS is tested on each commit with a suite of over 900 tests and across Node, Bun, Deno, and browser targets.
+Tidy-TS ultimately builds on lessons from tools like pandas, dplyr, and Polars and adapts them for modern Typescript development needs. Tidy-TS is tested on each commit with a suite of over 1700 tests and across Node, Bun, Deno, and browser targets.
 
 # Research applications
 

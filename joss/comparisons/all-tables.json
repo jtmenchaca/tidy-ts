@@ -1,9 +1,9 @@
 [
   {
-    "title": "Error Class 01: Column Reference Errors",
+    "title": "Category 1: Column & Schema Reference",
     "rows": [
       {
-        "label": "1a: mutate(r.patientId)",
+        "label": "a: misspelled column name in expression",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -13,7 +13,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "1b: filter(r.diagnosis)",
+        "label": "b: nonexistent column in predicate",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -23,57 +23,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "1c: arrange('result_values')",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 02: Type Mismatch Errors",
-    "rows": [
-      {
-        "label": "2a: test_name * 10",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "produced NaN silently",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      },
-      {
-        "label": "2b: mean(test_name)",
-        "tsCompile": "error",
-        "tsRuntime": "warning",
-        "tsResult": "returned null with warning",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "warning",
-        "rResult": "returned NA for each group"
-      },
-      {
-        "label": "2c: result_value === 'high'",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "returned 0 rows, no error",
-        "pyRuntime": "silent",
-        "pyResult": "returned 0 rows, no error",
-        "rRuntime": "silent",
-        "rResult": "returned 0 rows, no error"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 03: Join Key Errors",
-    "rows": [
-      {
-        "label": "3a: join on missing key",
+        "label": "c: misspelled column name in sort",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -83,7 +33,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "3b: join on misspelled key",
+        "label": "d: column dropped by selection still referenced",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -93,22 +43,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "3c: access missing col post-join",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 04: Schema Evolution Through Pipelines",
-    "rows": [
-      {
-        "label": "4a: access dropped col after select",
+        "label": "e: original column referenced after aggregation",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -118,7 +53,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "4b: access col after summarize",
+        "label": "f: dropped column used in sort",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -128,67 +63,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "4c: sort by dropped col",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 05: Null Safety Errors",
-    "rows": [
-      {
-        "label": "5a: method on nullable col",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "NaN propagated silently",
-        "rRuntime": "silent",
-        "rResult": "NA propagated silently"
-      },
-      {
-        "label": "5b: arithmetic on nullable col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "null coerced to 0 silently",
-        "pyRuntime": "silent",
-        "pyResult": "NaN propagated silently",
-        "rRuntime": "silent",
-        "rResult": "NA propagated silently"
-      },
-      {
-        "label": "5c: comparison on nullable col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "null rows silently dropped (1)",
-        "pyRuntime": "silent",
-        "pyResult": "2 NaN rows silently dropped",
-        "rRuntime": "silent",
-        "rResult": "2 NA rows silently dropped"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 06: Schema Validation at Data Boundaries",
-    "rows": [
-      {
-        "label": "6a: non-numeric in numeric col",
-        "tsCompile": "—",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "mixed types silently accepted",
-        "rRuntime": "warning",
-        "rResult": "non-numeric coerced to NA"
-      },
-      {
-        "label": "6b: missing column after load",
+        "label": "g: old column name used after rename",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -198,22 +73,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "6c: empty cells in non-null col",
-        "tsCompile": "—",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "2 cells silently became NaN",
-        "rRuntime": "silent",
-        "rResult": "2 cells silently became NA"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 07: Pipeline Composition Errors",
-    "rows": [
-      {
-        "label": "7a: old name after rename",
+        "label": "h: pre-aggregation column referenced after summarize",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -223,202 +83,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "7b: col removed by summarize",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 08: Async/Sync Confusion",
-    "rows": [
-      {
-        "label": "8a: filter on async-mutated col",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "0 rows (coroutine != 'none')",
-        "rRuntime": "—",
-        "rResult": "—"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 09: Forbidden Array Methods / API Escape",
-    "rows": [
-      {
-        "label": "9a: .map() / direct mutation",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "age set to -5, no error",
-        "rRuntime": "warning",
-        "rResult": "typo returned NULL silently"
-      },
-      {
-        "label": "9b: .push() / mixed apply",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "dtype became object (mixed)",
-        "rRuntime": "silent",
-        "rResult": "col type changed to character"
-      },
-      {
-        "label": "9c: .reduce() / type coercion",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "string concat via .values",
-        "rRuntime": "silent",
-        "rResult": "loop concat: 17 chars"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 10: Type Conversion and Narrowing",
-    "rows": [
-      {
-        "label": "10a: arithmetic on string col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 value coerced to NaN",
-        "pyRuntime": "silent",
-        "pyResult": "1 value coerced to NaN",
-        "rRuntime": "warning",
-        "rResult": "1 value coerced to NA"
-      },
-      {
-        "label": "10b: arithmetic on nullable",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "null*2=0, 1 null coerced",
-        "pyRuntime": "silent",
-        "pyResult": "NaN propagated, 1 NaN",
-        "rRuntime": "silent",
-        "rResult": "NA propagated, 1 NA"
-      },
-      {
-        "label": "10c: mean after conversion",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 unparseable became null",
-        "pyRuntime": "silent",
-        "pyResult": "mean skipped NaN silently",
-        "rRuntime": "silent",
-        "rResult": "mean returned NA silently"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 11: Null Narrowing via replaceNull / removeNull",
-    "rows": [
-      {
-        "label": "11a: arithmetic on nullable col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 Infinity from null div",
-        "pyRuntime": "silent",
-        "pyResult": "2 NaN from null div",
-        "rRuntime": "silent",
-        "rResult": "2 NA from null div"
-      },
-      {
-        "label": "11b: arithmetic after re-introducing null",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 Infinity after re-null",
-        "pyRuntime": "silent",
-        "pyResult": "4 NaN after re-null div",
-        "rRuntime": "silent",
-        "rResult": "4 NA after re-null div"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 12: Aggregation on Columns with Missing Data",
-    "rows": [
-      {
-        "label": "12a: mean on NaN/NA col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 null*2 coerced to 0",
-        "pyRuntime": "silent",
-        "pyResult": "mean*2 skipped NaN silently",
-        "rRuntime": "silent",
-        "rResult": "mean*2 returned NA: TRUE"
-      },
-      {
-        "label": "12b: sum on NaN/NA col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 null*2 coerced to 0",
-        "pyRuntime": "silent",
-        "pyResult": "sum*2 skipped NaN silently",
-        "rRuntime": "silent",
-        "rResult": "sum*2 returned NA: TRUE"
-      },
-      {
-        "label": "12c: min on NaN/NA col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 null*2 coerced to 0",
-        "pyRuntime": "silent",
-        "pyResult": "min*2 skipped NaN silently",
-        "rRuntime": "silent",
-        "rResult": "min*2 returned NA: TRUE"
-      },
-      {
-        "label": "12d: groupby mean NaN/NA",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "1 null+1 coerced to 1",
-        "pyRuntime": "silent",
-        "pyResult": "2 NaN+1 still NaN",
-        "rRuntime": "silent",
-        "rResult": "2 NA+1 still NA"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 13: Bind Rows Schema Mismatch",
-    "rows": [
-      {
-        "label": "13a: access optional col",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "NaN-filled 2 missing cols",
-        "rRuntime": "silent",
-        "rResult": "NA-filled 2 missing cols"
-      },
-      {
-        "label": "13b: string op on NaN/NA",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "NaN propagated to 2 rows",
-        "rRuntime": "silent",
-        "rResult": "NA propagated to 2 rows"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 14: Pivot Type Safety",
-    "rows": [
-      {
-        "label": "14a: undeclared pivot col",
+        "label": "i: undeclared column after pivot",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -428,7 +93,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "14b: pre-pivot col gone",
+        "label": "j: consumed column referenced after pivot",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -436,14 +101,9 @@
         "pyResult": "N/A",
         "rRuntime": "error",
         "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 15: Distinct Column Narrowing",
-    "rows": [
+      },
       {
-        "label": "15a: access dropped col",
+        "label": "k: unselected column referenced after distinct",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -453,7 +113,7 @@
         "rResult": "physician col dropped"
       },
       {
-        "label": "15b: distinct .keep_all",
+        "label": "l: narrowed schema after distinct without keep-all",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -461,14 +121,104 @@
         "pyResult": "all columns kept silently",
         "rRuntime": "silent",
         "rResult": "all cols kept, arbitrary vals"
+      },
+      {
+        "label": "m: unselected column referenced after select",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "Silently dropped 2 columns",
+        "rRuntime": "silent",
+        "rResult": "Silently dropped 2 columns"
+      },
+      {
+        "label": "n: error message lists available columns",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "o: error message on invalid column access",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
       }
     ]
   },
   {
-    "title": "Error Class 16: Return Type Consistency in Mutate",
+    "title": "Category 2: Type Safety",
     "rows": [
       {
-        "label": "16a: arithmetic on union col",
+        "label": "a: arithmetic on string column",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "produced NaN silently",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "b: numeric aggregation on string column",
+        "tsCompile": "error",
+        "tsRuntime": "warning",
+        "tsResult": "returned null with warning",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "warning",
+        "rResult": "returned NA for each group"
+      },
+      {
+        "label": "c: number compared to string literal",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "returned 0 rows, no error",
+        "pyRuntime": "silent",
+        "pyResult": "returned 0 rows, no error",
+        "rRuntime": "silent",
+        "rResult": "returned 0 rows, no error"
+      },
+      {
+        "label": "d: unparseable string silently becomes null/NaN",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 value coerced to NaN",
+        "pyRuntime": "silent",
+        "pyResult": "1 value coerced to NaN",
+        "rRuntime": "warning",
+        "rResult": "1 value coerced to NA"
+      },
+      {
+        "label": "e: arithmetic on nullable after conversion",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "null*2=0, 1 null coerced",
+        "pyRuntime": "silent",
+        "pyResult": "NaN propagated, 1 NaN",
+        "rRuntime": "silent",
+        "rResult": "NA propagated, 1 NA"
+      },
+      {
+        "label": "f: aggregation skips null/NaN after conversion",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 unparseable became null",
+        "pyRuntime": "silent",
+        "pyResult": "mean skipped NaN silently",
+        "rRuntime": "silent",
+        "rResult": "mean returned NA silently"
+      },
+      {
+        "label": "g: arithmetic on mixed-type return column",
         "tsCompile": "error",
         "tsRuntime": "silent",
         "tsResult": "NaN from string * 2",
@@ -476,139 +226,9 @@
         "pyResult": "string repeated, not math",
         "rRuntime": "warning",
         "rResult": "2 NA from character * 2"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 17: Join Nullability",
-    "rows": [
-      {
-        "label": "17a: method on join-null",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "produced 2 NaN silently",
-        "rRuntime": "silent",
-        "rResult": "produced 2 NA silently"
       },
       {
-        "label": "17b: arithmetic on join-null",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "produced NaN silently",
-        "pyRuntime": "silent",
-        "pyResult": "produced 2 NaN silently",
-        "rRuntime": "silent",
-        "rResult": "produced 2 NA silently"
-      },
-      {
-        "label": "17c: comparison excludes null",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "excluded undefined rows",
-        "pyRuntime": "silent",
-        "pyResult": "excluded 2 NaN rows",
-        "rRuntime": "silent",
-        "rResult": "excluded 2 NA rows"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 18: Column Name Collision in Joins",
-    "rows": [
-      {
-        "label": "18a: explicit suffix — access original name",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      },
-      {
-        "label": "18b: no suffix — access original name",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 19: GroupBy State Tracking",
-    "rows": [
-      {
-        "label": "19b: multi-group state",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "produced MultiIndex silently",
-        "rRuntime": "silent",
-        "rResult": "gave 2 rows, not 1"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 20: Implicit Type Coercion in Row Binding",
-    "rows": [
-      {
-        "label": "20a: bindRows type mismatch",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "mixed types in column",
-        "pyRuntime": "silent",
-        "pyResult": "coerced to 'object' dtype",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      },
-      {
-        "label": "20b: arithmetic on mixed col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "strings produce NaN",
-        "pyRuntime": "silent",
-        "pyResult": "strings repeated, not math",
-        "rRuntime": "silent",
-        "rResult": "logical coerced to numeric"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 21: Aggregation Return Type Narrowing",
-    "rows": [
-      {
-        "label": "21a: sum skips/returns NA",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "Skipped null, returned number",
-        "pyRuntime": "silent",
-        "pyResult": "Skipped 1 NaN, returned 1700",
-        "rRuntime": "silent",
-        "rResult": "sum() returned NA silently"
-      },
-      {
-        "label": "21b: arithmetic on NA result",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "Divided null-skipped sum by 2",
-        "pyRuntime": "silent",
-        "pyResult": "Divided NaN-skipped sum by 2",
-        "rRuntime": "silent",
-        "rResult": "NA propagated through division"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 22: Temporal Type Safety",
-    "rows": [
-      {
-        "label": "22a: invalid date parse",
+        "label": "h: invalid date string parse",
         "tsCompile": "—",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -618,47 +238,27 @@
         "rResult": "Invalid date produced NA"
       },
       {
-        "label": "22b: arithmetic on NaT/NA",
-        "tsCompile": "—",
-        "tsRuntime": "silent",
-        "tsResult": "Computed days on valid dates",
-        "pyRuntime": "silent",
-        "pyResult": "NaT propagated in addition",
-        "rRuntime": "silent",
-        "rResult": "NA propagated through addition"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 24: Window Function Output Type",
-    "rows": [
-      {
-        "label": "24a: shift/lag introduces null",
+        "label": "i: date compared to number",
         "tsCompile": "error",
         "tsRuntime": "silent",
-        "tsResult": "lag() introduced 1 undefined",
-        "pyRuntime": "silent",
-        "pyResult": "shift() introduced 1 NaN",
+        "tsResult": "0 rows (date > 100)",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
         "rRuntime": "silent",
-        "rResult": "lag() introduced 1 NA"
+        "rResult": "2 rows (date > 100)"
       },
       {
-        "label": "24b: arithmetic on lagged null",
+        "label": "j: date + number arithmetic",
         "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "NaN produced in subtraction",
-        "pyRuntime": "silent",
-        "pyResult": "NaN propagated in subtraction",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
         "rRuntime": "silent",
-        "rResult": "NA propagated in subtraction"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 25: Column Type Constraint in Specialized Verbs",
-    "rows": [
+        "rResult": "date+7=2024-01-22"
+      },
       {
-        "label": "25a: numeric op on string col",
+        "label": "k: numeric function applied to string column",
         "tsCompile": "error",
         "tsRuntime": "silent",
         "tsResult": "Math.log returned NaN column",
@@ -666,104 +266,9 @@
         "pyResult": "String repeated, not doubled",
         "rRuntime": "error",
         "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 26: Sorting on Nullable Columns",
-    "rows": [
-      {
-        "label": "26a: sort places null at end",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "Nulls sorted to end",
-        "pyRuntime": "silent",
-        "pyResult": "NaN silently placed at end",
-        "rRuntime": "silent",
-        "rResult": "NA silently placed at end"
       },
       {
-        "label": "26b: rank with null",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "null * 2 coerced to 0",
-        "pyRuntime": "silent",
-        "pyResult": "NaN rank returned as NaN",
-        "rRuntime": "silent",
-        "rResult": "1 NA rank produced silently"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 27: Append Row Type Mismatch",
-    "rows": [
-      {
-        "label": "27a: missing col in append",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "Missing col filled with NaN",
-        "rRuntime": "silent",
-        "rResult": "Missing col filled with NA"
-      },
-      {
-        "label": "27b: wrong type in append",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "Age dtype coerced to object",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 28: Reorder vs Select Schema Preservation",
-    "rows": [
-      {
-        "label": "28a: access dropped after select",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "Silently dropped 2 columns",
-        "rRuntime": "silent",
-        "rResult": "Silently dropped 2 columns"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 29: Empty DataFrame Operations",
-    "rows": [
-      {
-        "label": "29a: arithmetic on empty sum",
-        "tsCompile": "—",
-        "tsRuntime": "silent",
-        "tsResult": "[] (0 rows)",
-        "pyRuntime": "silent",
-        "pyResult": "sum()=0, 0*2=0",
-        "rRuntime": "silent",
-        "rResult": "sum()=0, 0*2=0"
-      },
-      {
-        "label": "29b: arithmetic on empty mean",
-        "tsCompile": "—",
-        "tsRuntime": "silent",
-        "tsResult": "[] (0 rows)",
-        "pyRuntime": "silent",
-        "pyResult": "mean()=NaN, NaN*2=NaN",
-        "rRuntime": "silent",
-        "rResult": "mean()=NaN, NaN*2=NaN"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 30: Row Label Transpose Type Safety",
-    "rows": [
-      {
-        "label": "30a: arithmetic on transposed col",
+        "label": "l: arithmetic on transposed mixed-type column",
         "tsCompile": "error",
         "tsRuntime": "silent",
         "tsResult": "\"systolic\"*2=NaN",
@@ -773,7 +278,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "30b: pre-transpose col after transpose",
+        "label": "m: pre-transpose column name after transpose",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -781,54 +286,9 @@
         "pyResult": "N/A",
         "rRuntime": "error",
         "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 31: Nullable vs Optional Distinction",
-    "rows": [
-      {
-        "label": "31a: null vs missing conflated",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "null and missing both NaN",
-        "rRuntime": "silent",
-        "rResult": "null and missing both NA"
       },
       {
-        "label": "31b: conditional fill on null vs missing",
-        "tsCompile": "error",
-        "tsRuntime": "error",
-        "tsResult": "N/A",
-        "pyRuntime": "silent",
-        "pyResult": "both filled identically",
-        "rRuntime": "silent",
-        "rResult": "both filled identically"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 33: Duplicate Column Names",
-    "rows": [
-      {
-        "label": "33a: .upper() on duplicate col",
-        "tsCompile": "error",
-        "tsRuntime": "silent",
-        "tsResult": "Last value wins, .upper() w...",
-        "pyRuntime": "error",
-        "pyResult": "N/A",
-        "rRuntime": "error",
-        "rResult": "N/A"
-      }
-    ]
-  },
-  {
-    "title": "Error Class 34: Enum Validation",
-    "rows": [
-      {
-        "label": "34a: filter on invalid enum value",
+        "label": "n: filter on invalid enum value",
         "tsCompile": "error",
         "tsRuntime": "silent",
         "tsResult": "0 rows (silent empty)",
@@ -840,10 +300,150 @@
     ]
   },
   {
-    "title": "Error Class 35: Pivot Column Mismatch",
+    "title": "Category 3: Null & Missing Data",
     "rows": [
       {
-        "label": "35a: arithmetic on pivot null",
+        "label": "a: method call on nullable column",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "NaN propagated silently",
+        "rRuntime": "silent",
+        "rResult": "NA propagated silently"
+      },
+      {
+        "label": "b: arithmetic on nullable column",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "null coerced to 0 silently",
+        "pyRuntime": "silent",
+        "pyResult": "NaN propagated silently",
+        "rRuntime": "silent",
+        "rResult": "NA propagated silently"
+      },
+      {
+        "label": "c: comparison on nullable column",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "null rows silently dropped (1)",
+        "pyRuntime": "silent",
+        "pyResult": "2 NaN rows silently dropped",
+        "rRuntime": "silent",
+        "rResult": "2 NA rows silently dropped"
+      },
+      {
+        "label": "d: arithmetic on nullable before narrowing",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 Infinity from null div",
+        "pyRuntime": "silent",
+        "pyResult": "2 NaN from null div",
+        "rRuntime": "silent",
+        "rResult": "2 NA from null div"
+      },
+      {
+        "label": "e: arithmetic after re-introducing null",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 Infinity after re-null",
+        "pyRuntime": "silent",
+        "pyResult": "4 NaN after re-null div",
+        "rRuntime": "silent",
+        "rResult": "4 NA after re-null div"
+      },
+      {
+        "label": "f: mean on nullable column then arithmetic",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 null*2 coerced to 0",
+        "pyRuntime": "silent",
+        "pyResult": "mean*2 skipped NaN silently",
+        "rRuntime": "silent",
+        "rResult": "mean*2 returned NA: TRUE"
+      },
+      {
+        "label": "g: sum on nullable column then arithmetic",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 null*2 coerced to 0",
+        "pyRuntime": "silent",
+        "pyResult": "sum*2 skipped NaN silently",
+        "rRuntime": "silent",
+        "rResult": "sum*2 returned NA: TRUE"
+      },
+      {
+        "label": "h: min on nullable column then arithmetic",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 null*2 coerced to 0",
+        "pyRuntime": "silent",
+        "pyResult": "min*2 skipped NaN silently",
+        "rRuntime": "silent",
+        "rResult": "min*2 returned NA: TRUE"
+      },
+      {
+        "label": "i: groupby mean on nullable column then arithmetic",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "1 null+1 coerced to 1",
+        "pyRuntime": "silent",
+        "pyResult": "2 NaN+1 still NaN",
+        "rRuntime": "silent",
+        "rResult": "2 NA+1 still NA"
+      },
+      {
+        "label": "j: sum silently skips or returns null",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "Skipped null, returned number",
+        "pyRuntime": "silent",
+        "pyResult": "Skipped 1 NaN, returned 1700",
+        "rRuntime": "silent",
+        "rResult": "sum() returned NA silently"
+      },
+      {
+        "label": "k: arithmetic on null-skipped aggregation result",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "Divided null-skipped sum by 2",
+        "pyRuntime": "silent",
+        "pyResult": "Divided NaN-skipped sum by 2",
+        "rRuntime": "silent",
+        "rResult": "NA propagated through division"
+      },
+      {
+        "label": "l: shift/lag introduces null at boundary",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "lag() introduced 1 undefined",
+        "pyRuntime": "silent",
+        "pyResult": "shift() introduced 1 NaN",
+        "rRuntime": "silent",
+        "rResult": "lag() introduced 1 NA"
+      },
+      {
+        "label": "m: arithmetic on lagged null propagates",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "NaN produced in subtraction",
+        "pyRuntime": "silent",
+        "pyResult": "NaN propagated in subtraction",
+        "rRuntime": "silent",
+        "rResult": "NA propagated in subtraction"
+      },
+      {
+        "label": "n: sort silently places null at end",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "Nulls sorted to end",
+        "pyRuntime": "silent",
+        "pyResult": "NaN silently placed at end",
+        "rRuntime": "silent",
+        "rResult": "NA silently placed at end"
+      },
+      {
+        "label": "o: arithmetic on null from missing pivot combination",
         "tsCompile": "error",
         "tsRuntime": "silent",
         "tsResult": "145-undefined=NaN",
@@ -855,10 +455,10 @@
     ]
   },
   {
-    "title": "Error Class 36: Column Existence Error Messages",
+    "title": "Category 4: Join Safety",
     "rows": [
       {
-        "label": "36a: error with col list",
+        "label": "a: join on key not in left table",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -868,7 +468,7 @@
         "rResult": "N/A"
       },
       {
-        "label": "36b: dot access error msg",
+        "label": "b: join on misspelled key",
         "tsCompile": "error",
         "tsRuntime": "error",
         "tsResult": "N/A",
@@ -876,6 +476,226 @@
         "pyResult": "N/A",
         "rRuntime": "error",
         "rResult": "N/A"
+      },
+      {
+        "label": "c: access missing column post-join",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "d: string method on join-introduced null",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "produced 2 NaN silently",
+        "rRuntime": "silent",
+        "rResult": "produced 2 NA silently"
+      },
+      {
+        "label": "e: arithmetic on join-introduced null",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "produced NaN silently",
+        "pyRuntime": "silent",
+        "pyResult": "produced 2 NaN silently",
+        "rRuntime": "silent",
+        "rResult": "produced 2 NA silently"
+      },
+      {
+        "label": "f: comparison silently excludes null rows",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "excluded undefined rows",
+        "pyRuntime": "silent",
+        "pyResult": "excluded 2 NaN rows",
+        "rRuntime": "silent",
+        "rResult": "excluded 2 NA rows"
+      },
+      {
+        "label": "g: explicit suffix then access original name",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "h: default suffix then access original name",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      }
+    ]
+  },
+  {
+    "title": "Category 5: Schema Composition",
+    "rows": [
+      {
+        "label": "a: non-numeric value in numeric column at load time",
+        "tsCompile": "—",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "mixed types silently accepted",
+        "rRuntime": "warning",
+        "rResult": "non-numeric coerced to NA"
+      },
+      {
+        "label": "b: accessing nonexistent column after schema-validated load",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "c: empty cell in non-null column at load time",
+        "tsCompile": "—",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "2 cells silently became NaN",
+        "rRuntime": "silent",
+        "rResult": "2 cells silently became NA"
+      },
+      {
+        "label": "d: accessing optional column after mismatched row bind",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "NaN-filled 2 missing cols",
+        "rRuntime": "silent",
+        "rResult": "NA-filled 2 missing cols"
+      },
+      {
+        "label": "e: string operation on NaN/NA column after row bind",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "NaN propagated to 2 rows",
+        "rRuntime": "silent",
+        "rResult": "NA propagated to 2 rows"
+      },
+      {
+        "label": "f: implicit type coercion when binding rows with different column types",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "mixed types in column",
+        "pyRuntime": "silent",
+        "pyResult": "coerced to 'object' dtype",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "g: arithmetic on mixed-type column after coerced row bind",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "strings produce NaN",
+        "pyRuntime": "silent",
+        "pyResult": "strings repeated, not math",
+        "rRuntime": "silent",
+        "rResult": "logical coerced to numeric"
+      },
+      {
+        "label": "h: appending row with missing column",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "Missing col filled with NaN",
+        "rRuntime": "silent",
+        "rResult": "Missing col filled with NA"
+      },
+      {
+        "label": "i: appending row with wrong column type",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "Age dtype coerced to object",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      },
+      {
+        "label": "j: string operation on duplicate column name",
+        "tsCompile": "error",
+        "tsRuntime": "silent",
+        "tsResult": "Last value wins, .upper() w...",
+        "pyRuntime": "error",
+        "pyResult": "N/A",
+        "rRuntime": "error",
+        "rResult": "N/A"
+      }
+    ]
+  },
+  {
+    "title": "Category 6: Contextual & Runtime Safety",
+    "rows": [
+      {
+        "label": "a: residual grouping after summarize",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "produced MultiIndex silently",
+        "rRuntime": "silent",
+        "rResult": "gave 2 rows, not 1"
+      },
+      {
+        "label": "b: arithmetic on empty sum",
+        "tsCompile": "—",
+        "tsRuntime": "silent",
+        "tsResult": "[] (0 rows)",
+        "pyRuntime": "silent",
+        "pyResult": "sum()=0, 0*2=0",
+        "rRuntime": "silent",
+        "rResult": "sum()=0, 0*2=0"
+      },
+      {
+        "label": "c: arithmetic on empty mean",
+        "tsCompile": "—",
+        "tsRuntime": "silent",
+        "tsResult": "[] (0 rows)",
+        "pyRuntime": "silent",
+        "pyResult": "mean()=NaN, NaN*2=NaN",
+        "rRuntime": "silent",
+        "rResult": "mean()=NaN, NaN*2=NaN"
+      },
+      {
+        "label": "d: null vs missing conflated",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "null and missing both NaN",
+        "rRuntime": "silent",
+        "rResult": "null and missing both NA"
+      },
+      {
+        "label": "e: conditional fill on null vs missing",
+        "tsCompile": "error",
+        "tsRuntime": "error",
+        "tsResult": "N/A",
+        "pyRuntime": "silent",
+        "pyResult": "both filled identically",
+        "rRuntime": "silent",
+        "rResult": "both filled identically"
       }
     ]
   }
