@@ -1,0 +1,68 @@
+import type { DocEntry } from "../mcp-types.ts";
+
+/** Documents `stats.glm` (package exports `stats` / `s` only; there is no top-level `glm` export on `@tidy-ts/dataframe`). */
+export const glmDocs: Record<string, DocEntry> = {
+  glm: {
+    name: "s.glm",
+    category: "stats",
+    signature: [
+      "glm<Row extends Record<string, number>>({",
+      "  formula: string;",
+      '  family: "gaussian" | "binomial" | "quasibinomial" | "poisson" | "gamma" | "inverse_gaussian" | "quasipoisson";',
+      '  link:',
+      '    | "identity"',
+      '    | "logit"',
+      '    | "probit"',
+      '    | "cauchit"',
+      '    | "log"',
+      '    | "cloglog"',
+      '    | "inverse"',
+      '    | "sqrt"',
+      '    | "inverse_squared";',
+      "  data: DataFrame<Row>;",
+      "  options?: {",
+      "    weights?: number[];",
+      "    naAction?: string;",
+      "    epsilon?: number;",
+      "    maxIter?: number;",
+      "    trace?: boolean;",
+      "  };",
+      "}): GLM<Row>",
+    ].join("\n"),
+    description:
+      "Fit a generalized linear model (WASM-backed). Returns a GLM instance with prediction, summary, residuals, and diagnostics. Numeric columns only: Row must extend Record<string, number>.",
+    imports: ['import { createDataFrame, stats as s } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "formula: Model formula using column names (e.g. \"y ~ x1 + x2\")",
+      "family: Response distribution / quasi-likelihood family",
+      "link: Link function name (must be compatible with family)",
+      "data: DataFrame whose columns appear in the formula (numeric columns)",
+      "options.weights: Optional prior observation weights",
+      "options.naAction, epsilon, maxIter, trace: Optional fitting controls",
+    ],
+    returns:
+      "GLM<Row> — instance methods include .summary(), .predict(newdata?, { type? }), .vcov(), .residuals({ type }), .confint({ level }), etc.",
+    examples: [
+      'const df = createDataFrame({ columns: { vs: [...], mpg: [...], wt: [...] } });',
+      "const model = s.glm({",
+      '  formula: "vs ~ mpg + wt",',
+      '  family: "binomial",',
+      '  link: "logit",',
+      "  data: df,",
+      "});",
+      "const summ = model.summary();",
+      "// In-sample fitted values on the response scale:",
+      'const yhat = model.predict(undefined, { type: "response" });',
+      "// Omit first argument to get training-set fitted values / linear predictors:",
+      '// model.predict(undefined, { type: "link" })',
+      "// Out-of-sample: pass a DataFrame with numeric predictor columns:",
+      '// model.predict(newDf, { type: "response" })',
+    ],
+    related: ["mean", "batch"],
+    bestPractices: [
+      "✓ GOOD: Ensure every column used in the formula is numeric on the DataFrame",
+      "✓ GOOD: Use model.summary() for the coefficient table; use model.predict(undefined, { type }) for in-sample fits",
+      "✓ NOTE: Internal helpers such as glmFit() use plain numeric arrays; app code should use s.glm({ formula, family, link, data, options }) above",
+    ],
+  },
+};

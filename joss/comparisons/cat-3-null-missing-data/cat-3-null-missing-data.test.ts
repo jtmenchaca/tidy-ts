@@ -5,7 +5,7 @@
  * force explicit null handling before arithmetic, aggregation, or
  * comparison?
  *
- * Consolidates error classes: 05, 11, 12, 21, 24, 26, 35.
+ * Consolidates error classes: 05, 11, 12, 21, 24, 26, 31, 35.
  */
 import { expect } from "@std/expect";
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
@@ -60,6 +60,13 @@ const vitals35 = createDataFrame([
   // P002 missing diastolic
 ]);
 
+const labsNullA = createDataFrame([
+  { id: "P1", value: 100, note: null as string | null },
+]);
+const labsNullB = createDataFrame([
+  { id: "P2", value: 200, source: "lab" },
+]);
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Labels & compile outcomes — single flat array across all error classes
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -80,6 +87,8 @@ const LABELS = [
   "m: arithmetic on lagged null propagates",
   "n: sort silently places null at end",
   "o: arithmetic on null from missing pivot combination",
+  "p: null vs missing conflated",
+  "q: conditional fill on null vs missing",
 ];
 
 // All cat-3 cases have @ts-expect-error — every case is caught at compile time
@@ -180,6 +189,15 @@ Deno.test("Cat 3 — Null & Missing Data: Tidy-TS compile-time", () => {
   });
   // @ts-expect-error: number | null can't be subtracted
   wide35.mutate({ pp: (r) => r.systolic - r.diastolic });
+
+  // p: method on nullable+optional column after bindRows
+  const combined31 = labsNullA.bindRows(labsNullB);
+  // @ts-expect-error: note is string | null | undefined
+  expect(() => combined31.mutate({ upper: (r) => r.note.toUpperCase() })).toThrow();
+
+  // q: only check null, miss undefined — .toUpperCase() blocked
+  // @ts-expect-error: after null check, note is still string | undefined
+  expect(() => combined31.mutate({ filled: (r) => r.note === null ? "inconclusive" : r.note.toUpperCase() })).toThrow();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -199,6 +217,10 @@ Deno.test("Cat 3 — Null & Missing Data: Tidy-TS runtime", () => {
   const l26 = labs26 as any;
   // deno-lint-ignore no-explicit-any
   const v35 = vitals35 as any;
+  // deno-lint-ignore no-explicit-any
+  const nA = labsNullA as any;
+  // deno-lint-ignore no-explicit-any
+  const nB = labsNullB as any;
 
   tsResults = [
     // a: method call on null — runtime error (.toFixed on null throws)
@@ -332,6 +354,15 @@ Deno.test("Cat 3 — Null & Missing Data: Tidy-TS runtime", () => {
       v35.pivotWider({ namesFrom: "metric", valuesFrom: "value", expectedColumns: ["systolic", "diastolic"] }).mutate({ pp: (r: any) => r.systolic - r.diastolic });
       return "145-undefined=NaN";
     }),
+    // p: .toUpperCase() on null/undefined — error (cannot read property of null)
+    // deno-lint-ignore no-explicit-any
+    captureOutcome(() => nA.bindRows(nB).mutate({ upper: (r: any) => r.note.toUpperCase() })),
+    // q: only check null, miss undefined — .toUpperCase() on undefined throws
+    captureOutcome(() => {
+      // deno-lint-ignore no-explicit-any
+      nA.bindRows(nB).mutate({ filled: (r: any) => r.note === null ? "inconclusive" : r.note.toUpperCase() });
+      return "filled without checking undefined";
+    }),
   ];
 
   // a: error (method call on null throws)
@@ -359,6 +390,9 @@ Deno.test("Cat 3 — Null & Missing Data: Tidy-TS runtime", () => {
   expect(tsResults[13].outcome).toBe("silent" as Outcome);
   // o: silent (undefined - number = NaN)
   expect(tsResults[14].outcome).toBe("silent" as Outcome);
+  // p–q: error (null/undefined property access)
+  expect(tsResults[15].outcome).toBe("error" as Outcome);
+  expect(tsResults[16].outcome).toBe("error" as Outcome);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -394,6 +428,10 @@ Deno.test("Cat 3 — Null & Missing Data: Python", () => {
   expect(pyResults[13].result).toBe("NaN silently placed at end");
   // o: pivot column mismatch — silent (NaN propagates)
   expect(pyResults[14].outcome).toBe("silent" as Outcome);
+  // p: null and missing both NaN — silent (no distinction)
+  expect(pyResults[15].outcome).toBe("silent" as Outcome);
+  // q: conditional fill treats both NaN identically — silent
+  expect(pyResults[16].outcome).toBe("silent" as Outcome);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -426,6 +464,10 @@ Deno.test("Cat 3 — Null & Missing Data: R", () => {
   expect(rResults[13].outcome).toBe("silent" as Outcome);
   // o: pivot column mismatch — silent (NA propagates)
   expect(rResults[14].outcome).toBe("silent" as Outcome);
+  // p: null and missing both NA — silent (no distinction)
+  expect(rResults[15].outcome).toBe("silent" as Outcome);
+  // q: conditional fill treats both NA identically — silent
+  expect(rResults[16].outcome).toBe("silent" as Outcome);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -44,7 +44,7 @@ const result = orders.leftJoin(customers, "customer_id"); // ~50ms, WASM hash jo
     category: "dataframe",
     signature: "filter() → view with mask, not a copy",
     description:
-      "Filtering does not copy rows. The DataFrame keeps a BitSet mask: a compact array of bits (Uint32Array) with one bit per row. Bit i set to 1 means 'include row i'; 0 means exclude. Chained filters combine masks with bitwise AND. Data is only materialized when you access rows (e.g. print(), toArray(), or pass to a verb that needs physical rows). This keeps memory and allocation low and allows multiple filters without intermediate copies.",
+      "Filtering does not copy rows. The DataFrame keeps a BitSet mask: a compact array of bits (Uint32Array) with one bit per row. Bit i set to 1 means 'include row i'; 0 means exclude. Chained filters combine masks with bitwise AND. Data is only materialized when you access rows (e.g. print(), toRows(), or pass to a verb that needs physical rows). This keeps memory and allocation low and allows multiple filters without intermediate copies.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     returns: "Lazy-filtered DataFrame (view with mask)",
     examples: [
@@ -67,14 +67,14 @@ const result = active.filter(r => r.id > 1);
 
 result.print(); // Materialization happens here: only visible rows are read from columns`,
       `// When is the mask applied? On any operation that needs row-level access:
-// - print(), toArray(), toJSON(), toString()
+// - print(), toRows(), toJSON(), toString()
 // - groupBy() (logical rows per group)
 // - arrange(), slice(), distinct, summarize(), etc.
 // So: filter early and chain; cost is O(n) per filter to compute the mask, then cheap AND.`,
     ],
     bestPractices: [
       "✓ Chain filters when possible; they combine into one mask with AND",
-      "✓ Prefer filter over toArray().filter() to avoid materializing rows",
+      "✓ Prefer filter over toRows().filter() to avoid materializing rows",
       "✓ BitSet size is ~n/32 words; much smaller than copying n rows",
     ],
     related: ["filter", "architecture", "performanceWhenToUse"],
@@ -105,7 +105,7 @@ const narrow = wide.select("a", "c");
 // Dropping b does not copy a or c.`,
     ],
     bestPractices: [
-      "✓ Prefer mutate() over building a new object from toArray() to keep column sharing",
+      "✓ Prefer mutate() over building a new object from toRows() to keep column sharing",
       "✓ select() is cheap; it does not copy the retained columns",
       "✓ Immutability: df is unchanged after df2 = df.mutate(...); df2 holds shared refs",
     ],
@@ -123,9 +123,9 @@ const narrow = wide.select("a", "c");
     ],
     returns: "N/A (guidance)",
     examples: [
-      `// Single column: use df.columnName (direct array), not toArray().map(r => r.x)
+      `// Single column: use df.columnName (direct array), not toRows().map(r => r.x)
 const mean = s.mean(df.x);           // Good: WASM mean on column array
-const bad = df.toArray().map(r => r.x); // Avoid: reconstructs rows, then extracts column`,
+const bad = df.toRows().map(r => r.x); // Avoid: reconstructs rows, then extracts column`,
       `// Stats that need array: use extract() — oneSample expects \`data\`, not \`x\`
 const result = s.test.t.oneSample({ data: df.extract("measurement"), mu: 100 });`,
       `// Joins / sort: use built-in verbs (WASM)
@@ -135,13 +135,13 @@ df.arrange("date", "name"); // WASM sort`,
 df.filter(r => r.a > 0).filter(r => r.b < 10); // Two masks AND'd`,
     ],
     bestPractices: [
-      '✓ Column access: df.x or df["x"] for reading one column; avoid toArray() for that',
+      '✓ Column access: df.x or df["x"] for reading one column; avoid toRows() for that',
       "✓ WASM for scale: joins, arrange, s.mean, s.stdev, s.test.* on large data",
       "✓ extract(): when a function needs a plain array from a column",
       "✓ Chained filters: combine with BitSet AND; no need to merge into one predicate",
     ],
     antiPatterns: [
-      '❌ Using toArray().map(r => r.col) instead of df.col or df.extract("col")',
+      '❌ Using toRows().map((r) => r.col) instead of df.col or df.extract("col")',
       "❌ Hand-written JS join/sort on large DataFrames; use leftJoin/arrange",
     ],
     related: ["architecture", "filter", "leftJoin", "arrange", "extract"],

@@ -2,6 +2,16 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "kill dev ports",
+      "type": "shell",
+      "command": "for port in 3000 3001 5173 5174; do info=$(lsof -i:$port -sTCP:LISTEN 2>/dev/null | tail -n +2); if [ -n \"$info\" ]; then echo \"Port $port:\"; echo \"$info\" | awk '{print \"  PID: \"$2\", Name: \"$1}'; lsof -ti:$port | xargs kill -9 2>/dev/null && echo \"  → Killed\"; else echo \"Port $port: (none)\"; fi; done",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "bun: run current file",
       "type": "shell",
       "command": "bun run ${file}",
@@ -18,7 +28,7 @@
     {
       "label": "deno: run current file",
       "type": "shell",
-      "command": "deno run --no-check --allow-all ${file}",
+      "command": "deno run --allow-all ${workspaceFolder}/scripts/run-with-timer.ts ${file}",
       "group": "build",
       "presentation": {
         "reveal": "always",
@@ -29,8 +39,40 @@
     {
       "label": "deno: test current file",
       "type": "shell",
-      "command": "deno test -A --no-check ${file}",
+      "command": "deno test -A ${file}",
       "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "deno: check current file",
+      "type": "shell",
+      "command": "deno run -A ${workspaceFolder}/scripts/parse-check.ts ${file}",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "python: run current file",
+      "type": "shell",
+      "command": "python3 ${file}",
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "R: run current file",
+      "type": "shell",
+      "command": "Rscript ${file}",
+      "group": "build",
       "presentation": {
         "reveal": "always",
         "panel": "new"

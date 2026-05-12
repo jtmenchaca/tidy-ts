@@ -23,21 +23,22 @@ export const groupingDocs: Record<string, DocEntry> = {
     name: "summarize",
     category: "dataframe",
     signature:
-      "summarize<NewCols>(columns: SummarizeSpec<T, NewCols>): DataFrame<Pick<T, GroupKeys> & NewCols>",
-    description: "Aggregate grouped data. Use after groupBy().",
+      "summarize(summaryFormulas): DataFrame<...>\n// Alias: summarise (same method). Sync only — use summarizeAsync / summariseAsync for async aggregations — packages/dataframe/ts/verbs/aggregate/summarise.types.ts",
+    description:
+      "Aggregate grouped (or ungrouped) data with synchronous summary functions. Each function receives the (group) DataFrame and returns one value per summary column.",
     imports: [
       'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
     ],
     parameters: [
-      "columns: Object mapping new column names to aggregation functions",
-      "Aggregation function receives the grouped DataFrame",
+      "summaryFormulas: Object mapping new column names to sync aggregation functions",
+      "Each function: (groupDf: DataFrame<Row>) => scalar result",
     ],
     returns: "DataFrame with group keys + new columns",
     examples: [
       'df.groupBy("region").summarize({ total: group => s.sum(group.revenue) })',
       'df.groupBy("region").summarize({ count: group => group.nrows(), avg: group => s.mean(group.price) })',
     ],
-    related: ["groupBy", "count", "mutate"],
+    related: ["groupBy", "count", "mutate", "summarizeAsync"],
     antiPatterns: [
       "❌ BAD: group.column.reduce((a, b) => a + b, 0) / group.nrows()",
       "❌ BAD: group.column.reduce((a, b) => a + b, 0)",
@@ -50,6 +51,25 @@ export const groupingDocs: Record<string, DocEntry> = {
       "✓ GOOD: Use s.max(), s.min(), s.stdev() for other aggregations",
       "Access columns directly: group.revenue not group.extract('revenue')",
     ],
+  },
+
+  summarizeAsync: {
+    name: "summarizeAsync",
+    category: "dataframe",
+    signature:
+      "summarizeAsync(summaryFormulas, options?: ConcurrencyOptions): PromisedDataFrame<...>\n// Alias: summariseAsync — packages/dataframe/ts/verbs/aggregate/summarise.types.ts",
+    description:
+      "Async variant of summarize / summarise when any aggregation returns a Promise.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "summaryFormulas: Record of column name → (groupDf) => Promise<unknown> | unknown",
+      "options: Optional ConcurrencyOptions — packages/dataframe/ts/promised-dataframe/concurrency-utils.ts",
+    ],
+    returns: "PromisedDataFrame (or PromisedGroupedDataFrame when called on a grouped frame)",
+    examples: [
+      'await df.groupBy("id").summarizeAsync({ x: async (g) => await remoteSum(g.extract("v")) })',
+    ],
+    related: ["summarize", "mutateAsync"],
   },
 
   count: {

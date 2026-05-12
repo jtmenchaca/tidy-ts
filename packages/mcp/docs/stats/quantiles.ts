@@ -5,16 +5,14 @@ export const quantilesDocs: Record<string, DocEntry> = {
     name: "s.quantile",
     category: "stats",
     signature:
-      "s.quantile(data: number[], probs: number | number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | number[] | null",
+      "s.quantile(data, probs, options?): number | number[] | null\n// data: number | Float64Array | arrays / iterables / nullable variants; probs: number | number[] — full overloads in packages/dataframe/ts/stats/descriptive/quantiles/quantile.ts",
     description:
       "Calculate quantiles of an array of values. Uses R's Type 7 algorithm (default). Accepts single probability or array of probabilities. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "data: Array of numbers or single number",
-      "probs: Probability value(s) between 0 and 1",
-      "options.removeNull: If true, skips null values",
-      "options.removeUndefined: If true, skips undefined values",
-      "options.removeNaN: If true, skips NaN values",
+      "data: Single number, Float64Array, numeric arrays, Iterables, or nullable numeric arrays",
+      "probs: One probability in [0,1] or an array of probabilities",
+      "options.removeNull / removeUndefined / removeNaN: Optional filtering flags",
     ],
     returns:
       "number | number[] | null - Single value or array depending on probs input",
@@ -32,12 +30,12 @@ export const quantilesDocs: Record<string, DocEntry> = {
     name: "s.quartiles",
     category: "stats",
     signature:
-      "s.quartiles(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): [number, number, number] | null",
+      "s.quartiles(values, options?): [number, number, number] | null\n// values: number | readonly number[] | Iterable<number> | nullable arrays — packages/dataframe/ts/stats/descriptive/quantiles/quartiles.ts",
     description:
       "Calculate the quartiles (Q25, median/Q50, Q75) of values. Returns null if no valid values. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: Array of numbers or single number",
+      "values: Single number, numeric arrays, Iterables, or nullable variants (see source)",
       "options.removeNull: If true, skips null values",
       "options.removeUndefined: If true, skips undefined values",
       "options.removeNaN: If true, skips NaN values",

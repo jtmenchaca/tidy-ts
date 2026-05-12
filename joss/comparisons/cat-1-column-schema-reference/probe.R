@@ -264,4 +264,24 @@ results[[length(results) + 1]] <- capture_outcome({
   patients_36 %>% select(dept)
 })
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Residual grouping after summarize
+# ═══════════════════════════════════════════════════════════════════════════════
+
+labs_19 <- tibble(
+  patient_id = c("P001", "P001", "P002", "P002"),
+  test_name = c("BNP", "WBC", "BNP", "WBC"),
+  result_value = c(1250, 15.2, 450, 8.1)
+)
+
+# p: Second summarise on still-grouped result aggregates per-group (not overall)
+results[[length(results) + 1]] <- capture_outcome({
+  grouped <- labs_19 %>% group_by(patient_id, test_name)
+  summary1 <- suppressMessages(grouped %>% summarise(mean_val = mean(result_value)))
+  # This gives per-patient means, NOT an overall mean
+  summary2 <- summary1 %>% summarise(grand_mean = mean(mean_val))
+  nrow_result <- nrow(summary2)
+  paste0("gave ", nrow_result, " rows, not 1")
+})
+
 cat(jsonlite::toJSON(results, auto_unbox = TRUE))

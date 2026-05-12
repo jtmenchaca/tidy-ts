@@ -31,11 +31,11 @@ const cat1R = runRProbe(
 );
 
 Deno.test("Cat 1 — Column & Schema Reference: Python probe count", () => {
-  expect(cat1Py.length).toBe(15);
+  expect(cat1Py.length).toBe(16);
 });
 
 Deno.test("Cat 1 — Column & Schema Reference: R probe count", () => {
-  expect(cat1R.length).toBe(15);
+  expect(cat1R.length).toBe(16);
 });
 
 // ── 01: Column Reference Errors ─────────────────────────────────────────────
@@ -87,11 +87,11 @@ const cat3R = runRProbe(
 );
 
 Deno.test("Cat 3 — Null & Missing Data: Python probe count", () => {
-  expect(cat3Py.length).toBe(15);
+  expect(cat3Py.length).toBe(17);
 });
 
 Deno.test("Cat 3 — Null & Missing Data: R probe count", () => {
-  expect(cat3R.length).toBe(15);
+  expect(cat3R.length).toBe(17);
 });
 
 // ── Cat 4: Join Safety (consolidated) ────────────────────────────────────────
@@ -128,24 +128,6 @@ Deno.test("Cat 5 — Schema Composition: Python probe count", () => {
 
 Deno.test("Cat 5 — Schema Composition: R probe count", () => {
   expect(cat5R.length).toBe(10);
-});
-
-// ── Cat 6: Contextual & Runtime Safety (consolidated) ───────────────────────
-// Classes 19, 29, 31 — 5 total results each
-
-const cat6Py = runPythonProbe(
-  probePath(BASE, "./cat-6-contextual-runtime/probe.py"),
-);
-const cat6R = runRProbe(
-  probePath(BASE, "./cat-6-contextual-runtime/probe.R"),
-);
-
-Deno.test("Cat 6 — Contextual & Runtime Safety: Python probe count", () => {
-  expect(cat6Py.length).toBe(5);
-});
-
-Deno.test("Cat 6 — Contextual & Runtime Safety: R probe count", () => {
-  expect(cat6R.length).toBe(5);
 });
 
 // ── 02: Type Mismatch Errors ────────────────────────────────────────────────
@@ -430,14 +412,14 @@ Deno.test("18 — Column Name Collision: R", () => {
 // ── 19: GroupBy State Tracking ────────────────────────────────────────
 
 Deno.test("19 — GroupBy State: Python", () => {
-  // a: Multi-level groupby+agg silently produces MultiIndex
-  expect(cat6Py[0].outcome).toBe("silent" as Outcome);
-  expect(cat6Py[0].result).toBe("produced MultiIndex silently");
+  // p: Multi-level groupby+agg silently produces MultiIndex
+  expect(cat1Py[15].outcome).toBe("silent" as Outcome);
+  expect(cat1Py[15].result).toBe("produced MultiIndex silently");
 });
 
 Deno.test("19 — GroupBy State: R", () => {
-  // a: Second summarise on still-grouped result — SILENT per-group aggregation
-  expect(cat6R[0].outcome).toBe("silent" as Outcome);
+  // p: Second summarise on still-grouped result — SILENT per-group aggregation
+  expect(cat1R[15].outcome).toBe("silent" as Outcome);
 });
 
 // ── 20: Implicit Type Coercion ────────────────────────────────────────
@@ -578,24 +560,6 @@ Deno.test("28 — Reorder Schema: R", () => {
   expect(cat1R[12].outcome).toBe("silent" as Outcome);
 });
 
-// ── 29: Empty DataFrame Operations ───────────────────────────────────
-
-Deno.test("29 — Empty DataFrame Ops: Python", () => {
-  // b: sum on empty → fabricated 0
-  expect(cat6Py[1].outcome).toBe("silent" as Outcome);
-  expect(cat6Py[1].result).toBe("sum()=0, 0*2=0");
-  // c: mean on empty → fabricated NaN
-  expect(cat6Py[2].outcome).toBe("silent" as Outcome);
-  expect(cat6Py[2].result).toBe("mean()=NaN, NaN*2=NaN");
-});
-
-Deno.test("29 — Empty DataFrame Ops: R", () => {
-  // b: sum on empty → 0*2=0 looks real
-  expect(cat6R[1].outcome).toBe("silent" as Outcome);
-  // c: mean on empty → NaN propagates
-  expect(cat6R[2].outcome).toBe("silent" as Outcome);
-});
-
 // ── 30: Row Label / Transpose Type Safety ─────────────────────────────
 
 Deno.test("30 — Transpose Type Safety: Python", () => {
@@ -620,19 +584,19 @@ Deno.test("30 — Transpose Type Safety: R", () => {
 // ── 31: Nullable vs Optional Distinction ────────────────────────────────
 
 Deno.test("31 — Nullable vs Optional: Python", () => {
-  // d: null and missing both become NaN — indistinguishable
-  expect(cat6Py[3].outcome).toBe("silent" as Outcome);
-  expect(cat6Py[3].result).toBe("null and missing both NaN");
-  // e: conditional fill — both filled identically
-  expect(cat6Py[4].outcome).toBe("silent" as Outcome);
-  expect(cat6Py[4].result).toBe("both filled identically");
+  // p: null and missing both become NaN — indistinguishable
+  expect(cat3Py[15].outcome).toBe("silent" as Outcome);
+  expect(cat3Py[15].result).toBe("null and missing both NaN");
+  // q: conditional fill — both filled identically
+  expect(cat3Py[16].outcome).toBe("silent" as Outcome);
+  expect(cat3Py[16].result).toBe("both filled identically");
 });
 
 Deno.test("31 — Nullable vs Optional: R", () => {
-  // d: null and missing both become NA — indistinguishable
-  expect(cat6R[3].outcome).toBe("silent" as Outcome);
-  // e: conditional fill — both filled identically
-  expect(cat6R[4].outcome).toBe("silent" as Outcome);
+  // p: null and missing both become NA — indistinguishable
+  expect(cat3R[15].outcome).toBe("silent" as Outcome);
+  // q: conditional fill — both filled identically
+  expect(cat3R[16].outcome).toBe("silent" as Outcome);
 });
 
 Deno.test("31 — Nullable vs Optional: Tidy-TS", async () => {

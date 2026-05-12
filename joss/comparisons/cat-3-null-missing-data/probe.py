@@ -224,4 +224,31 @@ with warnings.catch_warnings(record=True) as w:
     else:
         results.append({"outcome": "silent", "message": f"NaN propagates: 145-NaN={p002_pp}", "result": f"145-NaN={p002_pp}"})
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Nullable vs optional distinction
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# p: Empty cell and missing column both become NaN — indistinguishable
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    df1 = pd.DataFrame({"id": ["P001"], "value": [np.nan]})  # explicitly missing
+    df2 = pd.DataFrame({"id": ["P002"]})  # field doesn't exist
+    combined = pd.concat([df1, df2], ignore_index=True)
+    both_nan = bool(combined["value"].isna().all())
+    distinguishable = False
+    if w:
+        results.append({"outcome": "warning", "message": str(w[0].message), "result": None})
+    else:
+        results.append({"outcome": "silent", "message": f"null and missing both NaN, distinguishable: {distinguishable}", "result": "null and missing both NaN"})
+
+# q: conditional fill — only check for explicit null, miss absent column
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    filled = combined["value"].apply(lambda x: "inconclusive" if pd.isna(x) else x)
+    vals = filled.tolist()
+    if w:
+        results.append({"outcome": "warning", "message": str(w[0].message), "result": None})
+    else:
+        results.append({"outcome": "silent", "message": f"both filled same: {vals}", "result": "both filled identically"})
+
 print(json.dumps(results))

@@ -794,7 +794,7 @@ export function runTypeScriptBenchmarks() {
           stats.median(values);
           stats.variance(values);
           stats.stdev(values);
-          stats.unique(values);
+          stats.uniqueCount(values);
         },
         ITERATIONS,
         WARMUP_RUNS,

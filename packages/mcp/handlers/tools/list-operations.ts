@@ -12,12 +12,16 @@ export function list_operations(server: TidyMcp) {
         v.union([
           v.literal("dataframe"),
           v.literal("stats"),
+          v.literal("stats-distributions"),
+          v.literal("stats-tests"),
+          v.literal("stats-compare"),
           v.literal("io"),
           v.literal("shims"),
+          v.literal("string"),
           v.literal("all"),
         ]),
         v.description(
-          'Filter by category: "dataframe" (DataFrame operations), "stats" (statistics), "io" (file I/O), "shims" (cross-runtime compatibility), or "all" (default)',
+          'Filter by category: "dataframe", "stats", "stats-distributions", "stats-tests", "stats-compare", "io", "shims", "string", or "all" (default)',
         ),
       ),
       "all",
@@ -63,7 +67,6 @@ export function list_operations(server: TidyMcp) {
       output += `**Total operations**: ${operations.length}\n\n`;
       output +=
         `Use \`tidy-get-docs\` with an operation name to see detailed documentation.\n`;
-      output += `Use \`tidy-get-example\` to see working code examples.\n`;
 
       return {
         content: [

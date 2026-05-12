@@ -17,14 +17,37 @@ export const displayDocs: Record<string, DocEntry> = {
       'df.print("Sales Analysis:")',
       'result.groupBy("region").summarize({ total: g => s.sum(g.sales) }).print("Regional Totals:")',
     ],
-    related: ["toString", "toArray", "columns", "nrows"],
+    related: ["toString", "toRows", "columns", "nrows"],
     antiPatterns: [
-      "❌ BAD: console.log(df.toArray())",
+      "❌ BAD: console.log(df.toRows()) or logging full row arrays for inspection — use print()",
       "❌ BAD: console.log(df)",
     ],
     bestPractices: [
       "✓ GOOD: df.print() - formatted table output",
       "✓ GOOD: df.print('Title') - with descriptive title",
+    ],
+  },
+
+  toRows: {
+    name: "toRows",
+    category: "dataframe",
+    signature: "toRows(): Row[]",
+    description:
+      "Materialize the DataFrame as a plain array of row objects (respects the current filter mask). Prefer this over the deprecated `toArray()` alias, which delegates to `toRows()`. For display use `print()` / `toString()`; for one column use `df.col` or `extract()`.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [],
+    returns: "Mutable Row[] (one object per visible row)",
+    examples: [
+      "const rows = df.toRows();",
+      "// After filter: only visible rows\nconst active = df.filter((r) => r.status === \"active\").toRows();",
+    ],
+    related: ["print", "toString", "extract", "columns"],
+    bestPractices: [
+      "✓ GOOD: Use toRows() when an API needs plain objects (serialization, tests, small tables)",
+      "✓ GOOD: Prefer column access or extract() over row materialization for large data",
+    ],
+    antiPatterns: [
+      "❌ BAD: toRows().map((r) => r.x) to read one column — use df.x or extract(\"x\")",
     ],
   },
 
@@ -44,7 +67,7 @@ export const displayDocs: Record<string, DocEntry> = {
       'const tableStr = df.toString("Sales Data")',
       "console.log(df.toString()) // Manual printing",
     ],
-    related: ["print", "toArray"],
+    related: ["print", "toRows"],
     bestPractices: [
       "✓ GOOD: Use toString() when you need the string for logging or file output",
       "✓ GOOD: Use print() for direct console output (more convenient)",

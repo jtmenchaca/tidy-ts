@@ -48,6 +48,29 @@ pub fn unique_f64_napi(values: &[f64]) -> Vec<f64> {
     unique_f64_impl(values)
 }
 
+/// Count unique f64 values without allocating result array
+fn n_unique_f64_impl(values: &[f64]) -> u32 {
+    let mut seen = HashSet::with_capacity(values.len() / 2);
+    for &v in values {
+        seen.insert(v.to_bits());
+    }
+    seen.len() as u32
+}
+
+/// WASM export for n_unique f64
+#[cfg(feature = "wasm")]
+#[wasm_bindgen]
+pub fn n_unique_f64(values: &[f64]) -> u32 {
+    n_unique_f64_impl(values)
+}
+
+/// NAPI export for n_unique f64
+#[cfg(feature = "napi-rs")]
+#[napi]
+pub fn n_unique_f64_napi(values: &[f64]) -> u32 {
+    n_unique_f64_impl(values)
+}
+
 /// WASM export for unique i32 values
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]

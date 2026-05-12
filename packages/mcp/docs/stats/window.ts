@@ -43,17 +43,18 @@ export const windowDocs: Record<string, DocEntry> = {
     name: "s.lag",
     category: "stats",
     signature:
-      "s.lag(values: T[], options?: { k?: number; defaultValue?: T }): (T | undefined)[]",
+      "s.lag<T>(values: readonly T[], options: { k?: number; defaultValue: T }): T[]\ns.lag<T>(values: readonly T[], options?: { k?: number; defaultValue?: T }): (T | undefined)[]",
     description:
       "Lag values by k positions (shift forward, filling with default). Takes an array, returns an array.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: Array of values to lag",
+      "values: Readonly or mutable array of values to lag",
       "options: Optional configuration object",
       "  - k: Number of positions to lag (default: 1)",
       "  - defaultValue: Value to fill missing positions (default: undefined)",
     ],
-    returns: "Array with values lagged by k positions",
+    returns:
+      "T[] when defaultValue is provided in options; otherwise (T | undefined)[]",
     examples: [
       "s.lag([1, 2, 3, 4, 5])  // [undefined, 1, 2, 3, 4]",
       "s.lag([1, 2, 3, 4, 5], { k: 2 })  // [undefined, undefined, 1, 2, 3]",
@@ -70,17 +71,18 @@ export const windowDocs: Record<string, DocEntry> = {
     name: "s.lead",
     category: "stats",
     signature:
-      "s.lead(values: T[], options?: { k?: number; defaultValue?: T }): (T | undefined)[]",
+      "s.lead<T>(values: readonly T[], options: { k?: number; defaultValue: T }): T[]\ns.lead<T>(values: readonly T[], options?: { k?: number; defaultValue?: T }): (T | undefined)[]",
     description:
       "Lead values by k positions (shift backward, filling with default). Takes an array, returns an array.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: Array of values to lead",
+      "values: Readonly or mutable array of values to lead",
       "options: Optional configuration object",
       "  - k: Number of positions to lead (default: 1)",
       "  - defaultValue: Value to fill missing positions (default: undefined)",
     ],
-    returns: "Array with values led by k positions",
+    returns:
+      "T[] when defaultValue is provided in options; otherwise (T | undefined)[]",
     examples: [
       "s.lead([1, 2, 3, 4, 5])  // [2, 3, 4, 5, undefined]",
       "s.lead([1, 2, 3, 4, 5], { k: 2 })  // [3, 4, 5, undefined, undefined]",

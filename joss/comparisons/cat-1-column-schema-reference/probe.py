@@ -197,4 +197,24 @@ except KeyError as e:
     msg = str(e)
     results.append({"outcome": "error", "message": msg, "result": None})
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# Residual grouping after summarize
+# ═══════════════════════════════════════════════════════════════════════════════
+
+labs_19 = pd.DataFrame({
+    "patient_id": ["P001", "P001", "P002", "P002"],
+    "test_name": ["BNP", "WBC", "BNP", "WBC"],
+    "result_value": [1250, 15.2, 450, 8.1],
+})
+
+# p: Multi-level groupby + agg silently produces MultiIndex
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    multi = labs_19.groupby(["patient_id", "test_name"]).agg({"result_value": "mean"})
+    is_multi = str(type(multi.index).__name__)
+    if w:
+        results.append({"outcome": "warning", "message": str(w[0].message), "result": is_multi})
+    else:
+        results.append({"outcome": "silent", "message": f"groupby+agg silently produced {is_multi} index", "result": "produced MultiIndex silently"})
+
 print(json.dumps(results))

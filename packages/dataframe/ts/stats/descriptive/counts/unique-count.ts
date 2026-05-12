@@ -1,4 +1,4 @@
-import { unique_f64 } from "../../../wasm/wasm-loader.ts";
+import { n_unique_f64, unique_f64 } from "../../../wasm/wasm-loader.ts";
 import { isNA } from "../../../utilities/mod.ts";
 import { getTypedArray } from "../../helpers.ts";
 
@@ -41,7 +41,7 @@ export function uniqueCount(
   // Fast path: if the column has an attached __typedArray, use it directly
   const typed = getTypedArray(values);
   if (typed) {
-    return unique_f64(typed).length;
+    return n_unique_f64(typed);
   }
 
   // Handle arrays with fast path
@@ -57,8 +57,7 @@ export function uniqueCount(
     // Check if all values are numbers (use WASM for efficiency)
     if (validValues.every((val) => typeof val === "number")) {
       const floatArray = new Float64Array(validValues as number[]);
-      const uniqueValues = unique_f64(floatArray);
-      return uniqueValues.length;
+      return n_unique_f64(floatArray);
     }
 
     // For mixed types or string arrays, use JavaScript Set

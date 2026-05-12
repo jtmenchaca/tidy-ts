@@ -42,7 +42,8 @@ export const normalityDocs: Record<string, DocEntry> = {
     related: [
       "s.test.normality.andersonDarling",
       "s.test.normality.dagostinoPearson",
-      "s.test.normality.kolmogorovSmirnov",
+      "s.test.normality.kolmogorovSmirnovUniform",
+      "s.test.normality.kolmogorovSmirnovTwoSample",
     ],
   },
 

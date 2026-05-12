@@ -1,12 +1,39 @@
 import type { DocEntry } from "../mcp-types.ts";
 
 export const joinsDocs: Record<string, DocEntry> = {
+  joinSemantics: {
+    name: "Join semantics (undefined, keys, suffixes)",
+    category: "dataframe",
+    signature: "Applies to innerJoin, leftJoin, rightJoin, outerJoin, asofJoin, crossJoin",
+    description:
+      "Joins are WASM-backed hash joins (except asofJoin, which matches nearest keys on sorted data). Non-matching cells use `undefined` (not `null`): leftJoin keeps all left rows and sets right-side non-key columns to `undefined` when there is no match; rightJoin mirrors that for the left side; outerJoin can leave either side `undefined`; innerJoin only emits rows with a key match so you do not get `undefined` from a missing join partner. Overlapping non-key column names need `suffixes` (or disambiguate before the join). Use the object form `{ keys: { left, right }, suffixes? }` when key columns differ by name—TypeScript then tracks suffixed column names. Plain Date and Temporal types are valid join key values.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [],
+    returns: "N/A (conceptual)",
+    examples: [
+      "// leftJoin: right columns undefined when no match\nusers.leftJoin(orders, \"user_id\");",
+      "// innerJoin: only rows present in both on the join key(s)\nusers.innerJoin(orders, \"user_id\");",
+      "// outerJoin: either side may be undefined where the other side had no match\nusers.outerJoin(orders, \"user_id\");",
+    ],
+    related: [
+      "innerJoin",
+      "leftJoin",
+      "rightJoin",
+      "outerJoin",
+      "crossJoin",
+      "asofJoin",
+      "removeUndefined",
+      "replaceUndefined",
+    ],
+  },
+
   innerJoin: {
     name: "innerJoin",
     category: "dataframe",
     signature:
-      "innerJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<T & U>\ninnerJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<T & U>",
-    description: "Inner join with another DataFrame. Only keeps matching rows.",
+      "innerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | (keyof Row & keyof OtherRow)[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Prettify<SuffixAwareInnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>>\ninnerJoin<OtherRow>(other: DataFrame<OtherRow>, options: { keys: ...; suffixes?: ... }): DataFrame<...>  // object overload preserves literal suffix types on colliding columns",
+    description:
+      "Inner join: only rows whose join key(s) appear in both DataFrames. Return row shape merges left columns with right columns excluding duplicate join keys; overlapping non-key names use `suffixes` at runtime and the `{ keys, suffixes }` overload tracks resulting column names in types.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "other: DataFrame to join with",
@@ -24,20 +51,21 @@ export const joinsDocs: Record<string, DocEntry> = {
       "    suffixes?: { left?: string; right?: string }",
       "  }",
     ],
-    returns: "DataFrame<T & U> - Only matching rows from both DataFrames",
+    returns:
+      "DataFrame whose row type is the inner-join merge of both schemas (no `undefined` from a missing join partner). Exact type is computed from `Row`, `OtherRow`, key columns, and optional `suffixes`.",
     examples: [
       'df.innerJoin(other, "id")',
       'df.innerJoin(other, ["region", "product"])',
       'df.innerJoin(other, { keys: { left: "user_id", right: "id" } })',
     ],
-    related: ["leftJoin", "rightJoin", "outerJoin"],
+    related: ["joinSemantics", "leftJoin", "rightJoin", "outerJoin", "crossJoin"],
   },
 
   leftJoin: {
     name: "leftJoin",
     category: "dataframe",
     signature:
-      "leftJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<T & Partial<U>>\nleftJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<T & Partial<U>>",
+      "leftJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Prettify<SuffixAwareLeftJoinResult<...>>>\nleftJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Left join with another DataFrame. Keeps all rows from the left DataFrame; columns from the right are `undefined` where there is no key match. This is the most common join type for preserving all records from a primary table while enriching with optional data.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -58,7 +86,7 @@ export const joinsDocs: Record<string, DocEntry> = {
       "  }",
     ],
     returns:
-      "DataFrame<T & Partial<U>> - All left rows with matched right columns (`undefined` if no match)",
+      "All left rows preserved; right-side columns that are not part of the join key become `T | undefined` when there is no matching right row (see `LeftJoinResult` / suffix-aware variants in types).",
     examples: [
       '// Overload 1: Simple API - single column\nconst users = createDataFrame([\n  { user_id: 1, name: "Alice" },\n  { user_id: 2, name: "Bob" },\n]);\nconst orders = createDataFrame([\n  { user_id: 1, product: "Widget", amount: 100 },\n]);\n\nconst result = users.leftJoin(orders, "user_id");\n// All users kept, Bob has undefined for product/amount',
       '// Overload 1: Simple API - multiple columns\nconst sales = createDataFrame([\n  { region: "North", date: "2023-01", revenue: 1000 },\n]);\nconst targets = createDataFrame([\n  { region: "North", date: "2023-01", target: 1200 },\n]);\n\nsales.leftJoin(targets, ["region", "date"])',
@@ -66,7 +94,7 @@ export const joinsDocs: Record<string, DocEntry> = {
       '// Overload 2: Advanced API - multiple different column names\nconst df1 = createDataFrame([\n  { emp_id: 1, dept: "Sales", year: 2023 },\n]);\nconst df2 = createDataFrame([\n  { employee_id: 1, department: "Sales", year: 2023, bonus: 1000 },\n]);\n\ndf1.leftJoin(df2, {\n  keys: {\n    left: ["emp_id", "dept"],\n    right: ["employee_id", "department"],\n  },\n})',
       '// Overload 1: With suffixes option\nusers.leftJoin(orders, "user_id", {\n  suffixes: { left: "_user", right: "_order" },\n})',
     ],
-    related: ["innerJoin", "rightJoin", "outerJoin"],
+    related: ["joinSemantics", "innerJoin", "rightJoin", "outerJoin"],
     bestPractices: [
       "✓ GOOD: Use Overload 1 (simple API) when column names match between DataFrames",
       "✓ GOOD: Use Overload 2 (advanced API) when column names differ or you need explicit control",
@@ -167,14 +195,19 @@ const result = left.leftJoin(right, keyCol);`,
       "❌ Using suffixes when the key columns have different names (use keys: { left, right } instead)",
       "❌ Using keys: { left, right } only to rename columns; that is for matching different key column names",
     ],
-    related: ["leftJoin", "innerJoin", "performanceQuantitative"],
+    related: [
+      "joinSemantics",
+      "leftJoin",
+      "innerJoin",
+      "performanceQuantitative",
+    ],
   },
 
   rightJoin: {
     name: "rightJoin",
     category: "dataframe",
     signature:
-      "rightJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & U>\nrightJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & U>",
+      "rightJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<Prettify<SuffixAwareRightJoinResult<...>>>\nrightJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Right join with another DataFrame. Keeps all rows from the right; columns from the left are `undefined` where there is no key match.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -190,20 +223,20 @@ const result = left.leftJoin(right, keyCol);`,
       "  }",
     ],
     returns:
-      "DataFrame<Partial<T> & U> - All right rows with matched left columns (`undefined` if no match)",
+      "All right rows preserved; left-side non-key columns are `T | undefined` when there is no matching left row (`RightJoinResult` pattern).",
     examples: [
       'df.rightJoin(other, "id")',
       'df.rightJoin(other, ["region", "year"])',
       'df.rightJoin(other, { keys: { left: "user_id", right: "id" } })',
     ],
-    related: ["innerJoin", "leftJoin", "outerJoin"],
+    related: ["joinSemantics", "innerJoin", "leftJoin", "outerJoin"],
   },
 
   outerJoin: {
     name: "outerJoin",
     category: "dataframe",
     signature:
-      "outerJoin<U>(other: DataFrame<U>, on: string | string[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & Partial<U>>\nouterJoin<U>(other: DataFrame<U>, options: { keys: string | string[] | { left: string | string[], right: string | string[] }, suffixes?: { left?: string; right?: string } }): DataFrame<Partial<T> & Partial<U>>",
+      "outerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<Prettify<SuffixAwareOuterJoinResult<...>>>\nouterJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Full outer join. Keeps all rows from both DataFrames; cells from the side with no matching row are `undefined`.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -219,20 +252,50 @@ const result = left.leftJoin(right, keyCol);`,
       "  }",
     ],
     returns:
-      "DataFrame<Partial<T> & Partial<U>> - All rows from both DataFrames (`undefined` for columns from the side with no match)",
+      "All rows from both sides; non-key fields from the side without a match are `undefined` (`FullJoinResult` / suffix-aware variants).",
     examples: [
       'df.outerJoin(other, "id")',
       'df.outerJoin(other, ["region", "year"])',
       'df.outerJoin(other, { keys: { left: "user_id", right: "id" } })',
     ],
-    related: ["innerJoin", "leftJoin", "rightJoin", "asofJoin"],
+    related: ["joinSemantics", "innerJoin", "leftJoin", "rightJoin", "asofJoin"],
+  },
+
+  crossJoin: {
+    name: "crossJoin",
+    category: "dataframe",
+    signature:
+      "crossJoin<OtherRow>(other: DataFrame<OtherRow>, maxRows?: number, suffixes?: { left?: string; right?: string }): DataFrame<Prettify<Row & OtherRow>>",
+    description:
+      "Cartesian product of two DataFrames (every left row paired with every right row). Output size is left.nrows() × right.nrows()—pass `maxRows` as a safety cap. Optional `suffixes` disambiguate overlapping column names.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "other: Right DataFrame",
+      "maxRows: Optional maximum number of output rows (omit for no cap)",
+      "suffixes: Optional { left?, right? } appended to overlapping column names",
+    ],
+    returns:
+      "DataFrame whose rows combine both schemas (`Row & OtherRow` in types); if both sides use the same non-key column names, pass `suffixes` so columns do not collide at runtime.",
+    examples: [
+      "products.crossJoin(colors)",
+      "df1.crossJoin(df2, 10_000) // cap explosion",
+      'df1.crossJoin(df2, undefined, { left: "_a", right: "_b" })',
+    ],
+    related: ["joinSemantics", "innerJoin", "leftJoin"],
+    bestPractices: [
+      "✓ GOOD: Always set maxRows when either side can be large",
+      "✓ GOOD: Prefer innerJoin/leftJoin when you have keys; crossJoin is for combinatorics (scenarios × products, etc.)",
+    ],
+    antiPatterns: [
+      "❌ BAD: crossJoin two wide tables without a row cap—can exhaust memory",
+    ],
   },
 
   asofJoin: {
     name: "asofJoin",
     category: "dataframe",
     signature:
-      "asofJoin<OtherRow extends object, K extends keyof T & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest', tolerance?: number, group_by?: (keyof T & keyof OtherRow)[] }): DataFrame<...>",
+      "asofJoin<OtherRow, K extends keyof Row & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest'; tolerance?: number; group_by?: (keyof Row & keyof OtherRow)[] }): DataFrame<Prettify<SuffixAwareAsofJoinResult<...>>>\nasofJoin(..., options: { ..., suffixes: { left?: string; right?: string } }): DataFrame<...>",
     description:
       "Join DataFrames by nearest key match (as-of join). Joins on a sorted column (typically timestamps), matching each left row with the 'nearest' right row based on direction. Useful for time-series data where exact matches aren't required.",
     imports: [
@@ -240,19 +303,21 @@ const result = left.leftJoin(right, keyCol);`,
     ],
     parameters: [
       "other: DataFrame to join with",
-      "by: Column name to join on (must exist in both DataFrames)",
+      "by: Column name to join on (must exist in both DataFrames; data should be sorted on this column)",
       "options.direction: 'backward' (default) - match prior value, 'forward' - match next value, 'nearest' - closest value",
-      "options.tolerance: Optional maximum time difference allowed (in milliseconds for Dates)",
-      "options.group_by: Optional columns to group by before matching (e.g., by symbol)",
+      "options.tolerance: Optional maximum distance on the `by` column (e.g. ms for Date keys)",
+      "options.group_by: Optional columns to partition matches (e.g. symbol)",
+      "options.suffixes: Optional; when set, overload preserves literal suffixed column names in the result type",
     ],
-    returns: "DataFrame with columns from both DataFrames",
+    returns:
+      "DataFrame merging both sides; non-matched right-side fields follow the left-join-style `| undefined` pattern unless suffixes change column names (see `SuffixAwareAsofJoinResult`).",
     examples: [
       '// Join trades to nearest prior quotes (backward)\nconst trades = createDataFrame([\n  { time: 1, symbol: "AAPL", quantity: 100 },\n  { time: 3, symbol: "AAPL", quantity: 200 },\n]);\nconst quotes = createDataFrame([\n  { time: 0, symbol: "AAPL", price: 150.0 },\n  { time: 2, symbol: "AAPL", price: 151.0 },\n]);\ntrades.asofJoin(quotes, "time", { direction: "backward" })\n// Matches trade at time 1 to quote at time 0, trade at time 3 to quote at time 2',
       '// Forward-looking join\nconst events = createDataFrame([\n  { timestamp: 1, event: "start" },\n]);\nconst logs = createDataFrame([\n  { timestamp: 2, log: "processing" },\n]);\nevents.asofJoin(logs, "timestamp", { direction: "forward" })',
       '// Join with tolerance (within 1000ms)\ntrades.asofJoin(quotes, "time", {\n  direction: "nearest",\n  tolerance: 1000\n})',
       '// Group by symbol before matching\ntrades.asofJoin(quotes, "time", {\n  direction: "backward",\n  group_by: ["symbol"]\n})',
     ],
-    related: ["innerJoin", "leftJoin", "downsample", "upsample"],
+    related: ["joinSemantics", "innerJoin", "leftJoin", "downsample", "upsample"],
     bestPractices: [
       "✓ GOOD: Use for time-series data where exact timestamp matches aren't required",
       "✓ GOOD: Backward direction (default) is most common - matches to prior observations",

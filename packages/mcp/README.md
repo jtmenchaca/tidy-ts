@@ -1,15 +1,21 @@
 # Tidy-TS MCP Server
 
-MCP server providing documentation, code examples, and operation discovery for tidy-ts DataFrames and statistics.
+MCP server providing documentation and operation discovery for tidy-ts DataFrames and statistics (documentation text and examples are embedded in this package).
 
 ## Quick Setup
 
 ### Step 1: Install Globally (One-Time)
 
-From the tidy-ts directory:
+From the repository root (`tidy-ts`):
 
 ```bash
-deno install --global --allow-read --allow-env --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts
+pnpm mcp:install
+```
+
+Equivalent Deno command (from repo root):
+
+```bash
+deno install --global -A --name tidy-ts-mcp --force packages/mcp/cli.ts
 ```
 
 This creates a `tidy-ts-mcp` command available anywhere on your system.
@@ -82,58 +88,65 @@ Command palette > "View: Open MCP Settings" > "Add custom MCP":
 ## Available Tools
 
 ### `tidy-list-operations`
-Lists all DataFrame operations, statistics functions, and I/O by category.
-- Parameter: `category` - "dataframe", "stats", "io", or "all"
+
+Lists operations by category.
+
+- Parameter: `category` — `dataframe`, `stats`, `stats-distributions`, `stats-tests`, `stats-compare`, `io`, `shims`, `string`, or `all` (default).
 
 ### `tidy-get-docs`
+
 Gets detailed documentation with signatures and examples.
-- Parameter: `topic` - Operation name(s) like "mutate" or ["filter", "select"]
 
-### `tidy-get-example`
-Fetches complete, self-contained working code examples.
-- Parameter: `use_case` - Example name like "grouping-aggregation"
-- Available: getting-started, creating-dataframes, filtering-rows, transforming-data, grouping-aggregation, joining-dataframes, stats-descriptive, stats-distributions, and more
+- Parameter: `topic` — Operation name(s), e.g. `"mutate"` or `["filter", "select"]`. Topics match keys in `packages/mcp/docs/` (e.g. `glm`, `mean`, `readCSV`).
 
-**Note:** All examples are self-contained within the MCP server and work independently of the tidy-ts repository. Examples use inline data (no external file dependencies) and can be run anywhere after installing tidy-ts.
+### `tidy-get-file-structure`
+
+Inspects CSV/XLSX structure (headers, preview) before reading.
+
+### `tidy-get-package-version`
+
+Looks up latest versions on JSR or npm for package specifiers like `jsr:@tidy-ts/dataframe` or `npm:lodash`.
 
 ## Usage
 
-Just ask Claude naturally:
+Ask naturally, for example:
+
 - "What DataFrame operations are available?"
 - "Show me docs for mutate and filter"
-- "Give me an example of grouping data"
+- "Document stats.glm"
 
-Claude will automatically call the appropriate tools.
+The client will call the appropriate tools.
 
 ## Updating
 
-If you make changes to the MCP code, reinstall:
+After changing MCP code, reinstall:
 
 ```bash
-deno install --global --allow-read --allow-env --import-map import_map.json --name tidy-ts-mcp --force src/mcp/cli.ts
+pnpm mcp:install
 ```
 
 Then restart your AI tool.
 
 ## For Maintainers
 
-### Add Documentation
-Edit `src/mcp/docs/index.ts` to add new operations to the `DOCS` object.
+### Add documentation
 
-### Add Examples
-Edit `src/mcp/docs/examples.ts` to map new example files.
+Edit files under `packages/mcp/docs/` and ensure new topics are merged in `packages/mcp/docs/index.ts` (the `DOCS` object).
 
 ### Architecture
+
 ```
-src/mcp/
-├── cli.ts                 # Entry point
-├── index.ts              # Server setup
-├── handlers/tools/       # Tool implementations
-└── docs/                 # Documentation data
+packages/mcp/
+├── cli.ts                 # Entry point (stdio)
+├── server-base.ts         # MCP server config
+├── handlers/tools/      # Tool implementations
+└── docs/                 # Documentation data (DocEntry objects)
 ```
 
-### Test Server
+### Run server locally
+
+From repo root:
+
 ```bash
-deno task mcp  # Starts stdio server
-deno run --allow-read --allow-env src/mcp/test-tools.ts  # Runs tests
+pnpm mcp
 ```

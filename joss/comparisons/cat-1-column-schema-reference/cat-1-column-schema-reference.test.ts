@@ -4,10 +4,10 @@
  * Does the column exist? Is it spelled correctly? Is it still available
  * after a transform?
  *
- * Consolidates error classes: 01, 04, 07, 14, 15, 28, 36.
+ * Consolidates error classes: 01, 04, 07, 14, 15, 19, 28, 36.
  */
 import { expect } from "@std/expect";
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
 import {
   captureOutcome,
   type CompileOutcome,
@@ -56,6 +56,12 @@ const patientsReorder = createDataFrame([
 const patientsMsg = createDataFrame([
   { patient_id: "P001", first_name: "Alice", last_name: "Smith" },
 ]);
+const labsGrouped = createDataFrame([
+  { patient_id: "P001", test_name: "BNP", result_value: 1250 },
+  { patient_id: "P001", test_name: "WBC", result_value: 15 },
+  { patient_id: "P002", test_name: "BNP", result_value: 450 },
+  { patient_id: "P002", test_name: "WBC", result_value: 8 },
+]);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Labels & compile outcomes — single flat array across all error classes
@@ -77,6 +83,7 @@ const LABELS = [
   "m: unselected column referenced after select",
   "n: error message lists available columns",
   "o: error message on invalid column access",
+  "p: residual grouping after summarize",
 ];
 
 // All cat-1 cases have @ts-expect-error — every case is caught at compile time
@@ -165,6 +172,14 @@ Deno.test("Cat 1 — Column & Schema Reference: Tidy-TS compile-time", () => {
   // o: error message on invalid column access
   // @ts-expect-error: patientId is not a valid column name
   expect(() => patientsMsg.select("patientId")).toThrow();
+
+  // p: accessing non-summarized column after summarize
+  const grouped = labsGrouped.groupBy("patient_id");
+  const summaryP = grouped.summarize({
+    mean_val: (g) => s.mean(g.result_value),
+  });
+  // @ts-expect-error: test_name not in summarize result
+  expect(() => summaryP.mutate({ t: (r) => r.test_name })).toThrow();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -186,6 +201,8 @@ Deno.test("Cat 1 — Column & Schema Reference: Tidy-TS runtime", () => {
   const pr = patientsReorder as any;
   // deno-lint-ignore no-explicit-any
   const pm = patientsMsg as any;
+  // deno-lint-ignore no-explicit-any
+  const lg = labsGrouped as any;
 
   tsResults = [
     // a: misspelled column name in expression
@@ -231,6 +248,9 @@ Deno.test("Cat 1 — Column & Schema Reference: Tidy-TS runtime", () => {
     // o: error message on invalid column access
     // deno-lint-ignore no-explicit-any
     captureOutcome(() => pm.select("patientId" as any)),
+    // p: accessing non-summarized column after summarize — error
+    // deno-lint-ignore no-explicit-any
+    captureOutcome(() => lg.groupBy("patient_id").summarize({ mean_val: (g: any) => s.mean(g.result_value) }).mutate({ t: (r: any) => r.test_name })),
   ];
 
   for (let i = 0; i < tsResults.length; i++) {
@@ -270,6 +290,8 @@ Deno.test("Cat 1 — Column & Schema Reference: Python", () => {
   // n–o: error messages — all error
   expect(pyResults[13].outcome).toBe("error" as Outcome);
   expect(pyResults[14].outcome).toBe("error" as Outcome);
+  // p: residual grouping — silent (MultiIndex produced)
+  expect(pyResults[15].outcome).toBe("silent" as Outcome);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -302,6 +324,8 @@ Deno.test("Cat 1 — Column & Schema Reference: R", () => {
   // n–o: error messages — all error
   expect(rResults[13].outcome).toBe("error" as Outcome);
   expect(rResults[14].outcome).toBe("error" as Outcome);
+  // p: residual grouping — silent (per-group, not overall)
+  expect(rResults[15].outcome).toBe("silent" as Outcome);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

@@ -45,32 +45,6 @@ export const missingDataDocs: Record<string, DocEntry> = {
     ],
   },
 
-  replaceNA: {
-    name: "replaceNA",
-    category: "dataframe",
-    signature:
-      "replaceNA(mapping: Partial<{ [K in keyof T]: T[K] }>): DataFrame<T>",
-    description:
-      "Replace null/undefined values with fixed values in specified columns. Deprecated: use replaceNull and replaceUndefined instead.",
-    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
-    parameters: ["mapping: Object mapping column names to replacement values"],
-    returns: "DataFrame with replaced values",
-    examples: [
-      'df.replaceNA({ name: "Unknown", age: 0, score: -1 })',
-      "df.replaceNA({ salary: 0 }) // Only replace salary nulls",
-    ],
-    related: [
-      "replaceNull",
-      "replaceUndefined",
-      "removeNull",
-      "removeUndefined",
-    ],
-    bestPractices: [
-      "✓ GOOD: Prefer replaceNull and replaceUndefined for explicit control",
-      "✓ GOOD: Only replaces null and undefined, not other falsy values like 0 or ''",
-    ],
-  },
-
   removeNull: {
     name: "removeNull",
     category: "dataframe",
@@ -90,7 +64,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     ],
     related: ["removeUndefined", "replaceNull", "replaceUndefined"],
     bestPractices: [
-      "✓ GOOD: Use removeNull/removeUndefined when dropping NA rows — types narrow so TypeScript knows fields are non-null/non-undefined",
+      "✓ GOOD: Use removeNull/removeUndefined when dropping rows with null or undefined — types narrow so TypeScript knows fields are non-null/non-undefined",
       "✓ GOOD: Prefer over filter(row => row.x != null) when you need type inference; filter alone does not narrow row types",
     ],
   },
@@ -114,7 +88,7 @@ export const missingDataDocs: Record<string, DocEntry> = {
     ],
     related: ["removeNull", "replaceNull", "replaceUndefined"],
     bestPractices: [
-      "✓ GOOD: Use removeNull/removeUndefined when dropping NA rows — types narrow so TypeScript knows fields are non-null/non-undefined",
+      "✓ GOOD: Use removeNull/removeUndefined when dropping rows with null or undefined — types narrow so TypeScript knows fields are non-null/non-undefined",
       "✓ GOOD: Prefer over filter(row => row.x !== undefined) when you need type inference; filter alone does not narrow row types",
     ],
   },

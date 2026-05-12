@@ -1,22 +1,11 @@
 import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 
 /**
- * Helper type to replace null/undefined types with non-null type from the same column
+ * Transform Row type after fillForward operation.
+ * Identity — fillForward cannot guarantee null/undefined removal because
+ * leading nulls (no prior non-null value) remain unchanged at runtime.
  */
-type FillForwardType<T> = T extends null | undefined ? never
-  : T extends null | undefined | infer U ? U
-  : T;
-
-/**
- * Transform Row type after fillForward operation
- */
-type FillForwardResult<
-  Row extends object,
-  Columns extends readonly (keyof Row & string)[],
-> = {
-  [K in keyof Row]: K extends Columns[number] ? FillForwardType<Row[K]>
-    : Row[K];
-};
+export type FillForwardResult<Row extends object> = Row;
 
 /**
  * Forward fill null/undefined values in specified columns.
@@ -58,4 +47,4 @@ export type FillForwardMethod<Row extends object> = <
 >(
   this: DataFrame<R>,
   ...columnNames: Col[]
-) => DataFrame<Prettify<FillForwardResult<R, [Col]>>>;
+) => DataFrame<Prettify<FillForwardResult<R>>>;

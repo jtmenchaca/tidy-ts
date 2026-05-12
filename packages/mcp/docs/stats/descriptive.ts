@@ -5,12 +5,12 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.mean",
     category: "stats",
     signature:
-      "s.mean(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.mean(values: number | Float64Array | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the arithmetic mean (average) of numeric values. Returns null if no valid values. Type inference narrows return type based on input array type and removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: A single number or array of numbers (or array with nulls/undefined)",
+      "values: Single number, Float64Array, numeric array/iterable, or nullable numeric arrays (additional overload combinations narrow return types; see packages/dataframe/ts/stats/descriptive/central-tendency/mean.ts)",
       "options.removeNull: If true, skips null values",
       "options.removeUndefined: If true, skips undefined values",
       "options.removeNaN: If true, skips NaN values",
@@ -23,7 +23,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
       "s.mean([1, NaN, 3], { removeNaN: true }) // 2",
       'df.groupBy("region").summarize({ avg: group => s.mean(group.sales) })',
     ],
-    related: ["median", "mode", "sd", "round"],
+    related: ["median", "mode", "stdev", "round"],
     antiPatterns: [
       "❌ BAD: values.reduce((a, b) => a + b, 0) / values.length",
     ],
@@ -38,7 +38,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.median",
     category: "stats",
     signature:
-      "s.median(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.median(values: number | Float64Array | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the median (50th percentile). Returns number for clean arrays, or number | null for arrays with nulls/undefined. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -71,7 +71,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.sum",
     category: "stats",
     signature:
-      "s.sum(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.sum(values: number | Float64Array | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the sum of all values. Returns number for clean arrays, number | null for arrays with nulls/undefined. Type inference narrows return type based on input array type and removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -122,17 +122,18 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.max",
     category: "stats",
     signature:
-      "s.max(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.max(values, options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | Date | null\n// Also overloads for Temporal.* comparable columns (PlainDate, Instant, …) — packages/dataframe/ts/stats/aggregate/max.ts",
     description:
-      "Find the maximum value. Returns number for clean arrays, or number | null for arrays with nulls/undefined. Type inference narrows return type based on removal options.",
+      "Find the maximum value. Supports numeric columns, Date, and Temporal.* types; nullable arrays use removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: Array of numbers (or array with nulls/undefined)",
+      "values: Numeric arrays/iterables, Date arrays, Temporal.* columns, single scalars, or nullable variants (full overload list in source)",
       "options.removeNull: If true, skips null values",
       "options.removeUndefined: If true, skips undefined values",
       "options.removeNaN: If true, skips NaN values (otherwise NaN propagates)",
     ],
-    returns: "number for clean arrays, number | null for arrays with nulls",
+    returns:
+      "number | Date | (Temporal comparable) | null depending on input column type and nullability",
     examples: [
       "s.max([1, 2, 3, 4, 5]) // 5 (number)",
       "s.max(df.price) // number (if df.price is clean)",
@@ -152,17 +153,18 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.min",
     category: "stats",
     signature:
-      "s.min(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.min(values, options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | Date | null\n// Also overloads for Temporal.* comparable columns (PlainDate, Instant, …) — packages/dataframe/ts/stats/aggregate/min.ts",
     description:
       "Find the minimum value. Returns number for clean arrays, or number | null for arrays with nulls/undefined. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
     parameters: [
-      "values: Array of numbers (or array with nulls/undefined)",
+      "values: Numeric arrays/iterables, Date arrays, Temporal.* columns, single scalars, or nullable variants (full overload list in source)",
       "options.removeNull: If true, skips null values",
       "options.removeUndefined: If true, skips undefined values",
       "options.removeNaN: If true, skips NaN values (otherwise NaN propagates)",
     ],
-    returns: "number for clean arrays, number | null for arrays with nulls",
+    returns:
+      "number | Date | (Temporal comparable) | null depending on input column type and nullability",
     examples: [
       "s.min([1, 2, 3, 4, 5]) // 1 (number)",
       "s.min(df.price) // number (if df.price is clean)",
@@ -182,7 +184,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.first",
     category: "stats",
     signature:
-      "s.first(values: T[], options?: { removeNull?, removeUndefined? }): T | null",
+      "s.first(value: T): T\ns.first(values: readonly T[] | T[] | Iterable<T> | (T | null | undefined)[] | readonly (T | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean }): T | null\n// Plus Date-specific overloads — see packages/dataframe/ts/stats/aggregate/first.ts",
     description:
       "Get the first value from an array. Returns the first element, or null if array is empty. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -212,7 +214,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.last",
     category: "stats",
     signature:
-      "s.last(values: T[], options?: { removeNull?, removeUndefined? }): T | null",
+      "s.last(value: T): T\ns.last(values: readonly T[] | T[] | Iterable<T> | (T | null | undefined)[] | readonly (T | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean }): T | null\n// Plus Date-specific overloads — see packages/dataframe/ts/stats/aggregate/last.ts",
     description:
       "Get the last value from an array. Returns the last element, or null if array is empty. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -242,7 +244,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.mode",
     category: "stats",
     signature:
-      "s.mode(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.mode(values: number | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the mode (most frequent value) of an array. Returns null if no valid values. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -266,7 +268,7 @@ export const descriptiveDocs: Record<string, DocEntry> = {
     name: "s.product",
     category: "stats",
     signature:
-      "s.product(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.product(values: number | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the product (multiplication) of all values. Returns null if no valid values. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],

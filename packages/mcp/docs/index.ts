@@ -76,8 +76,8 @@ export function getOperationsByCategory(category: string): DocEntry[] {
 }
 
 export function getDocumentation(topic: string): DocEntry | null {
-  // Normalize topic (handle both "mean" and "s.mean")
-  const normalized = topic.replace(/^s\./, "");
+  // Normalize topic (e.g. "mean", "s.mean", "stats.glm" → lookup key "glm")
+  const normalized = topic.replace(/^s\./, "").replace(/^stats\./, "");
 
   // Direct match
   if (DOCS[topic]) return DOCS[topic];

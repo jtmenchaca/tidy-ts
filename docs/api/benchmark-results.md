@@ -1,4 +1,4 @@
-# Benchmark Results - 2026-01-16
+# Benchmark Results - 2026-05-11
 
 Dataset size: 500,000 rows
 
@@ -6,21 +6,21 @@ Dataset size: 500,000 rows
 
 | operation   | tidy-ts        | arquero           | pandas           | polars          | r                |
 |-------------|----------------|-------------------|------------------|-----------------|------------------|
-| bindRows    | 7.32ms (1x)    | 24.00ms (3.3x)    | 1.80ms (0.2x)    | 0.04ms (0x)     | 34.74ms (4.7x)   |
-| creation    | 100.56ms (1x)  | 43.73ms (0.4x)    | 777.46ms (7.7x)  | 14.63ms (0.1x)  | 0.02ms (0x)      |
-| distinct    | 93.17ms (1x)   | 499.07ms (5.4x)   | 58.31ms (0.6x)   | 13.65ms (0.1x)  | 14.37ms (0.2x)   |
-| filter      | 8.02ms (1x)    | 8.67ms (1.1x)     | 11.20ms (1.4x)   | 1.00ms (0.1x)   | 6.05ms (0.8x)    |
-| groupBy     | 36.35ms (1x)   | 45.92ms (1.3x)    | 11.61ms (0.3x)   | 3.26ms (0.1x)   | 363.44ms (10x)   |
-| innerJoin   | 79.17ms (1x)   | 334.26ms (4.2x)   | 39.24ms (0.5x)   | 10.78ms (0.1x)  | 569.30ms (7.2x)  |
-| leftJoin    | 55.79ms (1x)   | 441.77ms (7.9x)   | 50.42ms (0.9x)   | 12.24ms (0.2x)  | 857.89ms (15.4x) |
-| mutate      | 2.51ms (1x)    | 3.61ms (1.4x)     | 2.50ms (1x)      | 0.10ms (0x)     | 0.71ms (0.3x)    |
-| outerJoin   | 98.88ms (1x)   | 1221.50ms (12.4x) | 60.41ms (0.6x)   | 29.30ms (0.3x)  | 817.21ms (8.3x)  |
-| pivotLonger | 186.04ms (1x)  | 226.80ms (1.2x)   | 60.66ms (0.3x)   | 9.48ms (0.1x)   | 38.12ms (0.2x)   |
-| pivotWider  | 3.58ms (1x)    | 2.10ms (0.6x)     | 7.30ms (2x)      | 3.18ms (0.9x)   | 2.99ms (0.8x)    |
-| select      | 0.02ms (1x)    | 0.002ms (0.1x)    | 3.19ms (160x)    | 0.08ms (4x)     | 0.39ms (19x)     |
-| sort        | 129.35ms (1x)  | 403.07ms (3.1x)   | 228.50ms (1.8x)  | 57.35ms (0.4x)  | 23.44ms (0.2x)   |
-| stats       | 278.76ms (1x)  | 322.01ms (1.2x)   | 23.12ms (0.1x)   | 4.87ms (0x)     | 24.22ms (0.1x)   |
-| summarize   | 65.16ms (1x)   | 49.45ms (0.8x)    | 7.10ms (0.1x)    | 1.57ms (0x)     | 10.44ms (0.2x)   |
+| bindRows    | 10.60ms (1x)   | 22.74ms (2.1x)    | 0.48ms (0x)      | 0.02ms (0x)     | 31.47ms (3x)     |
+| creation    | 82.88ms (1x)   | 40.19ms (0.5x)    | 676.64ms (8.2x)  | 9.70ms (0.1x)   | 0.03ms (0x)      |
+| distinct    | 134.06ms (1x)  | 524.29ms (3.9x)   | 46.58ms (0.3x)   | 12.92ms (0.1x)  | 13.92ms (0.1x)   |
+| filter      | 7.58ms (1x)    | 8.43ms (1.1x)     | 1.61ms (0.2x)    | 0.33ms (0x)     | 5.71ms (0.8x)    |
+| groupBy     | 35.69ms (1x)   | 37.01ms (1x)      | 9.00ms (0.3x)    | 2.41ms (0.1x)   | 332.73ms (9.3x)  |
+| innerJoin   | 29.16ms (1x)   | 369.77ms (12.7x)  | 28.76ms (1x)     | 9.74ms (0.3x)   | 417.04ms (14.3x) |
+| leftJoin    | 38.05ms (1x)   | 428.89ms (11.3x)  | 38.69ms (1x)     | 12.42ms (0.3x)  | 664.31ms (17.5x) |
+| mutate      | 1.32ms (1x)    | 4.37ms (3.3x)     | 0.62ms (0.5x)    | 0.12ms (0.1x)   | 0.88ms (0.7x)    |
+| outerJoin   | 139.21ms (1x)  | 1154.01ms (8.3x)  | 51.78ms (0.4x)   | 30.01ms (0.2x)  | 638.70ms (4.6x)  |
+| pivotLonger | 194.87ms (1x)  | 215.44ms (1.1x)   | 44.56ms (0.2x)   | 8.92ms (0x)     | 38.67ms (0.2x)   |
+| pivotWider  | 3.02ms (1x)    | 1.65ms (0.5x)     | 5.97ms (2x)      | 3.08ms (1x)     | 3.10ms (1x)      |
+| select      | 0.01ms (1x)    | 0.002ms (0.2x)    | 0.77ms (77x)     | 0.03ms (3x)     | 0.53ms (53x)     |
+| sort        | 19.39ms (1x)   | 286.00ms (14.7x)  | 183.03ms (9.4x)  | 26.36ms (1.4x)  | 22.35ms (1.2x)   |
+| stats       | 8.19ms (1x)    | 256.32ms (31.3x)  | 18.24ms (2.2x)   | 4.78ms (0.6x)   | 20.62ms (2.5x)   |
+| summarize   | 21.30ms (1x)   | 39.38ms (1.8x)    | 5.49ms (0.3x)    | 1.45ms (0.1x)   | 6.65ms (0.3x)    |
 
 ## Performance Examples
 

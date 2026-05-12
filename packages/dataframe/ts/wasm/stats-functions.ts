@@ -8,6 +8,11 @@ export function unique_f64(values: Float64Array): Float64Array {
   return wasmInternal.unique_f64(values);
 }
 
+export function n_unique_f64(values: Float64Array): number {
+  initWasm();
+  return wasmInternal.n_unique_f64(values);
+}
+
 export function unique_i32(values: Int32Array): Int32Array {
   initWasm();
   return wasmInternal.unique_i32(values);

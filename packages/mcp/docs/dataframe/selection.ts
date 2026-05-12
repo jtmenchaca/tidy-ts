@@ -36,23 +36,44 @@ export const selectionDocs: Record<string, DocEntry> = {
     name: "filter",
     category: "dataframe",
     signature:
-      "filter(predicate: (row: T, index: number) => boolean | Promise<boolean>): DataFrame<T> | PromisedDataFrame<T>",
+      "filter(...predicates): DataFrame<T> | GroupedDataFrame<T, ...>\n// Each predicate: sync (row, index, df) => boolean | null | undefined, OR a boolean mask array aligned to rows — packages/dataframe/ts/verbs/filtering/filter.types.ts",
     description:
-      "Filter rows based on a condition. Supports both sync and async predicates.",
+      "Keep rows where predicates pass (AND). Sync only — use filterAsync when any predicate is async or returns a Promise.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
-      "predicate: Function that returns true to keep the row, false to remove it",
-      "predicate receives: (row, index)",
+      "One or more sync predicates: (row, index, df) => boolean | null | undefined",
+      "Or a single readonly boolean[] / (boolean|null|undefined)[] mask (same length as rows)",
+      "Optional explicit type-predicate form for narrowing row types",
     ],
-    returns: "DataFrame (sync) or PromisedDataFrame (async)",
+    returns: "DataFrame or GroupedDataFrame (never PromisedDataFrame)",
     examples: [
       "df.filter(row => row.age > 25)",
       'df.filter(row => row.region === "North" && row.quantity > 10)',
-      "await df.filter(async row => await isValid(row.id))",
+      "// Async — use filterAsync:",
+      "await df.filterAsync(async (row) => await isValid(row.id))",
       '// Filter and select chained together\nconst sales = createDataFrame([\n  { region: "North", revenue: 1000, cost: 800, profit: 200 },\n  { region: "South", revenue: 1500, cost: 1200, profit: 300 },\n  { region: "North", revenue: 800, cost: 900, profit: -100 },\n]);\n\n// Filter to profitable rows, then select only region and profit\nconst profitable = sales\n  .filter(row => row.profit > 0)\n  .select("region", "profit");\n// Result: Only profitable rows with region and profit columns',
       '// Filter numeric column condition, then select two columns\nconst data = createDataFrame([\n  { id: 1, age: 25, score: 85, status: "active" },\n  { id: 2, age: 30, score: 92, status: "active" },\n  { id: 3, age: 20, score: 78, status: "inactive" },\n]);\n\nconst highScorers = data\n  .filter(row => row.score >= 85)\n  .select("id", "score");\n// Result: Rows with score >= 85, only id and score columns',
     ],
-    related: ["slice", "distinct", "select"],
+    related: ["slice", "distinct", "select", "filterAsync"],
+  },
+
+  filterAsync: {
+    name: "filterAsync",
+    category: "dataframe",
+    signature:
+      "filterAsync(...predicates): PromisedDataFrame<T> | PromisedGroupedDataFrame<...>\nfilterAsync(predicate, options?: ConcurrencyOptions): PromisedDataFrame<T>\n// packages/dataframe/ts/verbs/filtering/filter.types.ts",
+    description:
+      "Same as filter for async predicates (functions returning Promise<boolean | null | undefined>). Always returns a PromisedDataFrame (or grouped variant). Optional ConcurrencyOptions on the single-predicate overload.",
+    imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
+    parameters: [
+      "predicates: One or more async-capable row predicates",
+      "options (single predicate): ConcurrencyOptions — see packages/dataframe/ts/promised-dataframe/concurrency-utils.ts",
+    ],
+    returns: "PromisedDataFrame or PromisedGroupedDataFrame",
+    examples: [
+      "await df.filterAsync(async (row) => (await lookup(row.id)).ok)",
+    ],
+    related: ["filter", "mutateAsync"],
   },
 
   slice: {

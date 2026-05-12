@@ -43,8 +43,8 @@
  * │ replaceUndefined     │ removes undefined from specified cols │ substitutes undef with provided val  │
  * │ removeNull           │ removes null, drops rows with null    │ filters rows where col is null       │
  * │ removeUndefined      │ removes undef, drops rows with undef │ filters rows where col is undefined  │
- * │ fillForward          │ removes null/undef from specified col │ carries last known value forward     │
- * │ fillBackward         │ removes null/undef from specified col │ carries next known value backward    │
+ * │ fillForward          │ preserves Row (leading nulls remain)  │ carries last known value forward     │
+ * │ fillBackward         │ preserves Row (trailing nulls remain) │ carries next known value backward    │
  * │ mean(clean[])        │ number                                │ arithmetic mean                      │
  * │ mean(nullable[])     │ number | null                         │ returns null if any null present     │
  * │ mean(nullable[],     │ number                                │ filters nulls, then computes mean    │
@@ -63,6 +63,7 @@
  *   7. Grouping state       — tracked as a type parameter
  *   8. Chained pipelines    — type flows through multi-step transforms
  *   9. Boundary validation  — Zod schema at I/O
+ *  10. Escape hatches       — where static guarantees end
  */
 
 import {
@@ -153,14 +154,6 @@ const tsData = createDataFrame([
 ]);
 const interpolated = tsData.interpolate("y", "x", "linear");
 type _1k = Expect<IsExact<RowOf<typeof interpolated>, { x: number; y: number | null }>>;
-
-// 1l. removeNull — narrows column type by removing null
-const nullableDF = createDataFrame(
-  [{ id: 1, value: "a" }, { id: 2, value: null }],
-  z.object({ id: z.number(), value: z.string().nullable() }),
-);
-const narrowedByFilter = nullableDF.removeNull("value");
-type _1l = Expect<IsExact<RowOf<typeof narrowedByFilter>, { id: number; value: string }>>;
 
 // ═══════════════════════════════════════════════════════════════════════
 // 2. SCHEMA NARROWING — columns removed
@@ -458,18 +451,26 @@ joined.mutate({ bad: (r) => r.dept_name.toUpperCase() });
 // 6. NULL/UNDEFINED REMOVAL — operation narrows column types
 // ═══════════════════════════════════════════════════════════════════════
 
-// 6a. replaceNull — removes null from column type
+// 6a. removeNull — narrows column type by removing null, drops rows
+const nullableDF = createDataFrame(
+  [{ id: 1, value: "a" }, { id: 2, value: null }],
+  z.object({ id: z.number(), value: z.string().nullable() }),
+);
+const narrowedByFilter = nullableDF.removeNull("value");
+type _6a = Expect<IsExact<RowOf<typeof narrowedByFilter>, { id: number; value: string }>>;
+
+// 6b. replaceNull — removes null from column type
 const nullableData = createDataFrame(
   [{ id: 1, value: 10 }, { id: 2, value: null }],
   z.object({ id: z.number(), value: z.number().nullable() }),
 );
 const cleaned = nullableData.replaceNull({ value: 0 });
-type _6a = Expect<IsExact<
+type _6b = Expect<IsExact<
   RowOf<typeof cleaned>,
   { id: number; value: number }
 >>;
 
-// 6b. replaceNull only removes null, not undefined
+// 6c. replaceNull only removes null, not undefined
 const mixedNullable = createDataFrame(
   [{ id: 1, val: undefined as number | null | undefined }],
   z.object({
@@ -479,37 +480,37 @@ const mixedNullable = createDataFrame(
 );
 const afterReplaceNull = mixedNullable.replaceNull({ val: 0 });
 // null is removed but undefined remains — type is number | undefined
-type _6b = Expect<IsExact<
+type _6c = Expect<IsExact<
   RowOf<typeof afterReplaceNull>,
   { id: number; val?: number | undefined }
 >>;
 
-// 6c. stats.mean with removeNull returns number (not number | null)
+// 6d. stats.mean with removeNull returns number (not number | null)
 const nullableNums = [1, 2, null, 4];
 const cleanMean = stats.mean(nullableNums, { removeNull: true });
-type _6c = Expect<IsExact<typeof cleanMean, number>>;
+type _6d = Expect<IsExact<typeof cleanMean, number>>;
 
-// 6d. stats.mean WITHOUT removeNull returns number | null on nullable input
+// 6e. stats.mean WITHOUT removeNull returns number | null on nullable input
 const nullableMean = stats.mean(nullableNums);
-type _6d = Expect<IsExact<typeof nullableMean, number | null>>;
+type _6e = Expect<IsExact<typeof nullableMean, number | null>>;
 
-// 6e. removeUndefined — removes undefined from column type, drops rows
+// 6f. removeUndefined — removes undefined from column type, drops rows
 const withUndefined = createDataFrame([
   { id: 1, tag: "a" as string | undefined },
   { id: 2, tag: undefined as string | undefined },
 ]);
 const noUndef = withUndefined.removeUndefined("tag");
-type _6e = Expect<IsExact<
+type _6f = Expect<IsExact<
   RowOf<typeof noUndef>,
   { id: number; tag: string }
 >>;
 
-// 6f. stats.mean on clean input returns number (no null in signature)
+// 6g. stats.mean on clean input returns number (no null in signature)
 const cleanNums = [1, 2, 3, 4];
 const guaranteedMean = stats.mean(cleanNums);
-type _6f = Expect<IsExact<typeof guaranteedMean, number>>;
+type _6g = Expect<IsExact<typeof guaranteedMean, number>>;
 
-// 6g. fillForward — removes null/undefined from specified column types
+// 6h. fillForward — preserves row type (leading nulls may remain)
 const gapData = createDataFrame(
   [
     { t: 1, price: 100 as number | null },
@@ -519,16 +520,16 @@ const gapData = createDataFrame(
   z.object({ t: z.number(), price: z.number().nullable() }),
 );
 const filled = gapData.fillForward("price");
-type _6g = Expect<IsExact<
+type _6h = Expect<IsExact<
   RowOf<typeof filled>,
-  { t: number; price: number }
+  { t: number; price: number | null }
 >>;
 
-// 6h. fillBackward — removes null/undefined from specified column types
+// 6i. fillBackward — preserves row type (trailing nulls may remain)
 const backfilled = gapData.fillBackward("price");
-type _6h = Expect<IsExact<
+type _6i = Expect<IsExact<
   RowOf<typeof backfilled>,
-  { t: number; price: number }
+  { t: number; price: number | null }
 >>;
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -658,3 +659,29 @@ strictDF.append({ id: 2, name: 42 });
 strictDF.prepend({ id: 3 });
 // @ts-expect-error — wrong type for "name"
 strictDF.prepend({ id: 3, name: false });
+
+// ═══════════════════════════════════════════════════════════════════════
+// 10. ESCAPE HATCHES — where static guarantees end
+// ═══════════════════════════════════════════════════════════════════════
+//
+// The guarantees above hold when the DataFrame API is used as designed.
+// The following patterns bypass the type system. They are documented here
+// to make the safety claim precise — not to prevent their use.
+
+// 10a. Casting to DataFrame<any> is rejected — the index signature mismatch prevents it
+// @ts-expect-error — DataFrame<BaseRow> is not assignable to DataFrame<any>
+const _10a_casted = df as DataFrame<any>;
+
+// 10b. Casting through `unknown` to a wrong row type compiles but lies at runtime
+const lied = df as unknown as DataFrame<{ x: boolean }>;
+// Compiles — the cast is unchecked
+lied.mutate({ y: (r) => !r.x });
+
+// 10c. Dynamic column names bypass key constraints
+const dynamicKey = "age" as string;
+// string is not assignable to keyof BaseRow — correctly rejected:
+// @ts-expect-error — string is not a valid column name
+df.select(dynamicKey);
+
+// 10d. fillForward/fillBackward cannot narrow nullability (leading/trailing nulls remain)
+// Documented in 6h/6i — the type preserves null because the runtime cannot guarantee removal.

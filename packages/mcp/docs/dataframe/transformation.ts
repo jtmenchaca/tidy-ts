@@ -5,27 +5,70 @@ export const transformationDocs: Record<string, DocEntry> = {
     name: "mutate",
     category: "dataframe",
     signature:
-      "mutate<NewCols>(columns: MutateSpec<T, NewCols>, opts?: { concurrency?: number }): DataFrame<T & NewCols> | PromisedDataFrame<T & NewCols>",
+      "mutate(assignments): DataFrame<...> | GroupedDataFrame<...>\n// Sync only — async formulas must use mutateAsync(); see packages/dataframe/ts/verbs/transformation/mutate/mutate.types.ts",
     description:
-      "Add or transform columns. Supports functions, arrays, and scalars. Can be async.",
+      "Add or transform columns with synchronous formulas, arrays, scalars, or null. TypeScript rejects async functions here (use mutateAsync).",
     imports: [
       'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
     ],
     parameters: [
-      "columns: Object mapping column names to values",
-      "  - Function: (row, index, df) => value",
-      "  - Array: Direct values (must match row count)",
-      "  - Scalar: Repeated for all rows (wrap in function for type inference)",
-      "opts.concurrency: Limit concurrent async operations",
+      "assignments: Object mapping column names to:",
+      "  - Function: (row, index, df) => value (sync only)",
+      "  - Array: per-row values (length must match row count)",
+      "  - Scalar / null: broadcast or clear column",
     ],
-    returns: "DataFrame (sync) or PromisedDataFrame (async)",
+    returns: "DataFrame<T> or GroupedDataFrame (never PromisedDataFrame)",
     examples: [
       "df.mutate({ revenue: row => row.price * row.quantity })",
       'df.mutate({ status: ["Active", "Pending", "Active"] })',
       "df.mutate({ tax_rate: () => 0.08 })",
-      "await df.mutate({ data: async row => await fetch(row.url) }, { concurrency: 3 })",
+      "// Async formulas:",
+      "await df.mutateAsync({ data: async (row) => await fetch(row.url) }, { concurrency: 3 })",
     ],
-    related: ["select", "drop", "transmute"],
+    related: ["mutateOverGroup", "mutateAsync", "select", "drop", "transmute"],
+  },
+
+  mutateOverGroup: {
+    name: "mutateOverGroup",
+    category: "dataframe",
+    signature:
+      "mutateOverGroup(assignments: { [col: string]: (groupDf: DataFrame<R>) => unknown[] }): DataFrame<...> | GroupedDataFrame<...>",
+    description:
+      "After groupBy(), compute new columns from each group's sub-DataFrame. Each function returns an array with one value per row in that group (O(groups) dispatch). Use with window helpers like s.lag / s.lead on groupDf.extract(\"col\").",
+    imports: [
+      'import { createDataFrame, stats as s } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "assignments: Record of column name → (groupDf) => array of length groupDf.nrows()",
+    ],
+    returns: "GroupedDataFrame or DataFrame with new/updated columns",
+    examples: [
+      'df.groupBy("id").mutateOverGroup({',
+      '  prev: (g) => s.lag(g.extract("value"), { defaultValue: 0 }),',
+      "});",
+    ],
+    related: ["groupBy", "mutate", "lag", "lead"],
+  },
+
+  mutateAsync: {
+    name: "mutateAsync",
+    category: "dataframe",
+    signature:
+      "mutateAsync(assignments, options?: ConcurrencyOptions): PromisedDataFrame<...> | PromisedGroupedDataFrame<...>\n// packages/dataframe/ts/verbs/transformation/mutate/mutate.types.ts",
+    description:
+      "Like mutate but allows async formulas (Promises). Optional ConcurrencyOptions for parallel limits / retries.",
+    imports: [
+      'import { createDataFrame } from "@tidy-ts/dataframe";',
+    ],
+    parameters: [
+      "assignments: Column formulas (may be async)",
+      "options: Optional concurrency / batch / retry settings",
+    ],
+    returns: "PromisedDataFrame or PromisedGroupedDataFrame",
+    examples: [
+      "await df.mutateAsync({ data: async (row) => await fetch(row.url).then((r) => r.json()) })",
+    ],
+    related: ["mutate", "filterAsync"],
   },
 
   arrange: {
@@ -53,7 +96,7 @@ export const transformationDocs: Record<string, DocEntry> = {
     signature:
       "distinct<K extends keyof T>(column1: K, ...moreColumns: K[]): DataFrame<Pick<T, K>>",
     description:
-      "Get unique combinations of specified columns (SQL DISTINCT). Returns only the specified columns with unique combinations.",
+      "Get unique combinations of specified columns (SQL DISTINCT). Returns only the specified columns with unique combinations. On a grouped DataFrame, uniqueness is evaluated within each group.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
     parameters: [
       "column1: First column to check for uniqueness (required)",

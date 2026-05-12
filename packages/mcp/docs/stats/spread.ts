@@ -5,7 +5,7 @@ export const spreadDocs: Record<string, DocEntry> = {
     name: "s.stdev",
     category: "stats",
     signature:
-      "s.stdev(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.stdev(values: number | Float64Array | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the sample standard deviation of an array of values. Returns null if insufficient data. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -30,7 +30,7 @@ export const spreadDocs: Record<string, DocEntry> = {
     name: "s.variance",
     category: "stats",
     signature:
-      "s.variance(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.variance(values: number | Float64Array | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the sample variance of an array of values (uses N-1 denominator). Returns null if insufficient data. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -54,7 +54,7 @@ export const spreadDocs: Record<string, DocEntry> = {
     name: "s.range",
     category: "stats",
     signature:
-      "s.range(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.range(values: number | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null",
     description:
       "Calculate the range of values (max - min). Returns null if no valid values. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -77,7 +77,7 @@ export const spreadDocs: Record<string, DocEntry> = {
     name: "s.iqr",
     category: "stats",
     signature:
-      "s.iqr(values: number[], options?: { removeNull?, removeUndefined?, removeNaN? }): number | null",
+      "s.iqr(values: number | readonly number[] | Iterable<number> | (number | null | undefined)[] | readonly (number | null | undefined)[], options?: { removeNull?: boolean; removeUndefined?: boolean; removeNaN?: boolean }): number | null\n// Iterable overloads use CleanNumberIterable in source — packages/dataframe/ts/stats/descriptive/spread/iqr.ts",
     description:
       "Calculate the interquartile range (IQR) of values (Q75 - Q25). Returns null if no valid values. Type inference narrows return type based on removal options.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],

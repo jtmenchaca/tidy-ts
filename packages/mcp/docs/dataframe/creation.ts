@@ -30,10 +30,10 @@ export const creationDocs: Record<string, DocEntry> = {
       "// Use no_types for dynamic/unknown schema",
       "const dfAny = createDataFrame(userData, { no_types: true })",
     ],
-    related: ["readCSV", "readXLSX", "readJSON"],
+    related: ["readCSV", "readXLSX", "readJSON", "zDataFrame"],
     bestPractices: [
       'Always import stats: import { createDataFrame, stats as s } from "@tidy-ts/dataframe"',
-      "Use df.print() to display DataFrames, not console.log(df.toArray())",
+      "Use df.print() to display DataFrames; avoid console.log(df) or dumping full toRows() for inspection",
       "Access columns with df.columnName property (e.g., df.age) instead of manual extraction",
       "Use no_types: true when:",
       "  • Working with dynamic/unknown schema (user-provided data, API responses)",
@@ -45,5 +45,27 @@ export const creationDocs: Record<string, DocEntry> = {
       "❌ BAD: Using no_types when you have not exhausted all other options",
       "❌ BAD: Using no_types when schema is known at compile time",
     ],
+  },
+
+  zDataFrame: {
+    name: "zDataFrame",
+    category: "dataframe",
+    signature:
+      "zDataFrame<T extends z.ZodRawShape>(shape: T): ZodDataFrame<{ [K in keyof T]: z.infer<T[K]> }>",
+    description:
+      "Build a Zod schema that parses columnar input `{ col: z.array(...) }` into a typed DataFrame, or accepts an existing DataFrame (passthrough). Use `.parse()` / `.safeParse()` like any Zod type.",
+    imports: [
+      'import { zDataFrame } from "@tidy-ts/dataframe";',
+      'import { z } from "zod";',
+    ],
+    parameters: [
+      "shape: ZodRawShape — per-column element schemas (wrapped internally as z.array per column)",
+    ],
+    returns: "ZodDataFrame<Row> — a Zod schema whose output is DataFrame<Row>",
+    examples: [
+      "const schema = zDataFrame({ x: z.number(), y: z.string() });",
+      'const df = schema.parse({ x: [1, 2], y: ["a", "b"] });',
+    ],
+    related: ["createDataFrame", "readCSV"],
   },
 };

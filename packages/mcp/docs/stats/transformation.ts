@@ -4,8 +4,16 @@ export const transformationDocs: Record<string, DocEntry> = {
   normalize: {
     name: "s.normalize",
     category: "stats",
-    signature:
-      's.normalize(values: number[], method?: "minmax" | "zscore"): number[] | (number | null)[] OR s.normalize(values: number[], target: number, method?: "minmax" | "zscore"): number | null',
+    signature: [
+      's.normalize(values: number[]): number[]',
+      's.normalize(value: number): number',
+      's.normalize(values: (number | null | undefined)[], method?: "minmax" | "zscore"): (number | null)[]',
+      's.normalize(values: Iterable<number>, method?: "minmax" | "zscore"): number[]',
+      's.normalize(values: Iterable<number | null | undefined>, method?: "minmax" | "zscore"): (number | null)[]',
+      's.normalize(values: number[], target: number, method?: "minmax" | "zscore"): number',
+      's.normalize(values: (number | null | undefined)[], target: number, method?: "minmax" | "zscore"): number | null',
+      "// …additional Iterable target overloads — packages/dataframe/ts/stats/transformation/normalize.ts",
+    ].join("\n"),
     description:
       "Normalize values to 0-1 range using min-max normalization or z-score standardization. Supports finding normalized value for all values or a specific target value.",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
@@ -21,14 +29,14 @@ export const transformationDocs: Record<string, DocEntry> = {
       "s.normalize([10, 20, 30], 20) // 0.5 (20 is halfway between 10 and 30)",
       's.normalize([10, 20, 30], 20, "zscore") // z-score of 20',
     ],
-    related: ["sd", "mean"],
+    related: ["stdev", "mean"],
   },
 
   round: {
     name: "s.round",
     category: "stats",
     signature:
-      "s.round(value: number | null | number[], digits?: number): number | null | number[]",
+      "s.round(value: number | number[] | Iterable<number> | null, digits?: number): number | number[] | null",
     description:
       "Round a number or all values in an array to a specified number of decimal places. Accepts null values and returns null when given null (useful for chaining with s.mean(), s.stdev(), s.max(), s.min(), or s.median() which return number | null).",
     imports: ['import { stats as s } from "@tidy-ts/dataframe";'],
