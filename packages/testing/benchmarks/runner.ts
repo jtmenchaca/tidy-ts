@@ -3,10 +3,13 @@
 
 import { runTypeScriptBenchmarks } from "./typescript.ts";
 
+const benchmarkDir = new URL(".", import.meta.url).pathname;
+
 async function runPythonBenchmarks() {
   try {
     const command = new Deno.Command(".venv/bin/python", {
       args: ["python.py"],
+      cwd: benchmarkDir,
       stdout: "piped",
       stderr: "piped",
     });
@@ -33,6 +36,7 @@ async function runRBenchmarks() {
   try {
     const command = new Deno.Command("Rscript", {
       args: ["r.R"],
+      cwd: benchmarkDir,
       stdout: "piped",
       stderr: "piped",
     });
@@ -162,7 +166,7 @@ async function main() {
   // Save results
   try {
     await Deno.writeTextFile(
-      "results/latest.json",
+      `${benchmarkDir}results/latest.json`,
       JSON.stringify(results, null, 2),
     );
     console.log("✅ Results saved to results/latest.json");
@@ -197,8 +201,8 @@ function generateCSVFiles(results: any) {
 
   // Save CSV files
   try {
-    Deno.writeTextFileSync("results/benchmark_ratios.csv", ratiosCSV);
-    Deno.writeTextFileSync("results/benchmark_times.csv", timesCSV);
+    Deno.writeTextFileSync(`${benchmarkDir}results/benchmark_ratios.csv`, ratiosCSV);
+    Deno.writeTextFileSync(`${benchmarkDir}results/benchmark_times.csv`, timesCSV);
     console.log("✅ CSV files saved:");
     console.log("  - results/benchmark_ratios.csv");
     console.log("  - results/benchmark_times.csv");

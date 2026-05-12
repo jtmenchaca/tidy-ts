@@ -249,25 +249,30 @@ def run_python_benchmarks():
                 'priority': np.random.randint(0, 10, size)
             })
             
+            # Prebuild Polars DataFrames for sort tests
+            pl_numeric = pl.DataFrame(numeric_data)
+            pl_mixed = pl.DataFrame(mixed_data)
+            pl_grouped = pl.DataFrame(grouped_data)
+
             # Test 1: Numeric Fast Path
             pandas_numeric = measure_operation(lambda: numeric_data.sort_values('value'))
-            polars_numeric = measure_operation(lambda: pl.DataFrame(numeric_data).sort('value'))
-            
+            polars_numeric = measure_operation(lambda: pl_numeric.sort('value'))
+
             # Test 2: Multi-column Numeric Fast Path
             pandas_multi_numeric = measure_operation(lambda: numeric_data.sort_values(['value', 'score'], ascending=[True, False]))
-            polars_multi_numeric = measure_operation(lambda: pl.DataFrame(numeric_data).sort(['value', 'score'], descending=[False, True]))
-            
+            polars_multi_numeric = measure_operation(lambda: pl_numeric.sort(['value', 'score'], descending=[False, True]))
+
             # Test 3: String Stable Path
             pandas_string = measure_operation(lambda: mixed_data.sort_values('name'))
-            polars_string = measure_operation(lambda: pl.DataFrame(mixed_data).sort('name'))
-            
+            polars_string = measure_operation(lambda: pl_mixed.sort('name'))
+
             # Test 4: Mixed Types Stable Path
             pandas_mixed = measure_operation(lambda: mixed_data.sort_values(['category', 'value'], ascending=[True, False]))
-            polars_mixed = measure_operation(lambda: pl.DataFrame(mixed_data).sort(['category', 'value'], descending=[False, True]))
-            
+            polars_mixed = measure_operation(lambda: pl_mixed.sort(['category', 'value'], descending=[False, True]))
+
             # Test 5: Grouped Data Stable Path
             pandas_grouped = measure_operation(lambda: grouped_data.groupby('group')['value'].apply(lambda x: x.sort_values(ascending=False)))
-            polars_grouped = measure_operation(lambda: pl.DataFrame(grouped_data).sort(['group', 'value'], descending=[False, True]))
+            polars_grouped = measure_operation(lambda: pl_grouped.sort(['group', 'value'], descending=[False, True]))
             
             # Weighted average
             avg_pandas = (pandas_numeric * 2 + pandas_multi_numeric * 2 + pandas_string + pandas_mixed + pandas_grouped) / 7

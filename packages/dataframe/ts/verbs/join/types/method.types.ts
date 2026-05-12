@@ -593,7 +593,7 @@ export type CrossJoinMethod<Row extends object> = {
     other: RestrictEmptyDataFrame<Row, Other, EmptyDataFrameJoin>,
     maxRows?: number,
     suffixes?: { left?: string; right?: string },
-  ): DataFrame<Row & OtherRow>;
+  ): DataFrame<Prettify<Row & OtherRow>>;
 };
 
 /**

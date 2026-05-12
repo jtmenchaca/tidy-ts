@@ -3,6 +3,7 @@ import {
   unique_i32,
   unique_str,
 } from "../../../wasm/wasm-loader.ts";
+import { getTypedArray } from "../../helpers.ts";
 
 /**
  * Get unique values from an array (WASM-optimized version).
@@ -20,6 +21,13 @@ import {
 export function unique<T>(values: T[]): T[];
 export function unique<T>(values: Iterable<T>): T[];
 export function unique<T>(values: T[] | Iterable<T>): T[] {
+  // Fast path: if the column has an attached __typedArray, use it directly
+  const typed = getTypedArray(values);
+  if (typed) {
+    const uniqueFloats = unique_f64(typed);
+    return Array.from(uniqueFloats) as T[];
+  }
+
   // Handle iterables by materializing to array
   const processArray = Array.isArray(values) ? values : Array.from(values);
   if (processArray.length === 0) return [];

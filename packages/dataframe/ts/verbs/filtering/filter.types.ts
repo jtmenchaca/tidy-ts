@@ -53,6 +53,13 @@ export type RowAfterFilter<Row extends object> = Row;
  * Use `filterAsync` for async predicates.
  */
 export type FilterRowsMethod<Row extends object> = {
+  // ── Type predicate support (explicit narrowing) ────────────────────────
+  // Must be first so TypeScript matches it before the general overloads.
+  <R extends object, Narrowed extends R>(
+    this: DataFrame<R>,
+    predicate: (row: R, index: number, df: DataFrame<R>) => row is Narrowed,
+  ): DataFrame<Narrowed>;
+
   // ── Boolean array predicate (always sync) ──────────────────────────────
   (
     pred: readonly (boolean | null | undefined)[],
@@ -69,12 +76,6 @@ export type FilterRowsMethod<Row extends object> = {
     this: DataFrame<R>,
     ...filterPredicates: Preds
   ): DataFrame<RowAfterFilter<R>>;
-
-  // ── Type predicate support (explicit narrowing) ────────────────────────
-  <R extends object, Narrowed extends R>(
-    this: DataFrame<R>,
-    predicate: (row: R, index: number, df: DataFrame<R>) => row is Narrowed,
-  ): DataFrame<Narrowed>;
 };
 
 /**

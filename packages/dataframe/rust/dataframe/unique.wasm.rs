@@ -1,6 +1,6 @@
 //! Unique values WASM exports
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 #[cfg(feature = "wasm")]
 use wasm_bindgen::prelude::*;
 #[cfg(feature = "napi-rs")]
@@ -8,15 +8,29 @@ use napi_derive::napi;
 
 /// Generic unique function for any hashable type
 pub(crate) fn unique<T: Eq + std::hash::Hash + Clone>(values: &[T]) -> Vec<T> {
-    let mut seen = HashSet::new();
+    let mut seen = HashSet::with_capacity(values.len() / 2);
     let mut result = Vec::new();
-    
+
     for value in values {
         if seen.insert(value) {
             result.push(value.clone());
         }
     }
-    
+
+    result
+}
+
+/// Fast unique for f64 values — works on bits directly to avoid intermediate Vec
+fn unique_f64_impl(values: &[f64]) -> Vec<f64> {
+    let mut seen = HashSet::with_capacity(values.len() / 2);
+    let mut result = Vec::new();
+
+    for &v in values {
+        if seen.insert(v.to_bits()) {
+            result.push(v);
+        }
+    }
+
     result
 }
 
@@ -24,31 +38,14 @@ pub(crate) fn unique<T: Eq + std::hash::Hash + Clone>(values: &[T]) -> Vec<T> {
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
 pub fn unique_f64(values: &[f64]) -> Vec<f64> {
-    // Convert f64 to i64 for uniqueness (handles NaN properly)
-    let int_values: Vec<i64> = values.iter()
-        .map(|&v| v.to_bits() as i64)
-        .collect();
-
-    let unique_ints = unique(&int_values);
-
-    unique_ints.iter()
-        .map(|&v| f64::from_bits(v as u64))
-        .collect()
+    unique_f64_impl(values)
 }
 
 /// NAPI export for unique f64 values
 #[cfg(feature = "napi-rs")]
 #[napi]
 pub fn unique_f64_napi(values: &[f64]) -> Vec<f64> {
-    let int_values: Vec<i64> = values.iter()
-        .map(|&v| v.to_bits() as i64)
-        .collect();
-
-    let unique_ints = unique(&int_values);
-
-    unique_ints.iter()
-        .map(|&v| f64::from_bits(v as u64))
-        .collect()
+    unique_f64_impl(values)
 }
 
 /// WASM export for unique i32 values

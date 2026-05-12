@@ -1,5 +1,6 @@
 import { unique_f64 } from "../../../wasm/wasm-loader.ts";
 import { isNA } from "../../../utilities/mod.ts";
+import { getTypedArray } from "../../helpers.ts";
 
 /**
  * Count the number of unique values in an array
@@ -35,6 +36,12 @@ export function uniqueCount(
   // Handle single value case
   if (typeof values === "number" || typeof values === "string") {
     return 1; // Single value has 1 unique value
+  }
+
+  // Fast path: if the column has an attached __typedArray, use it directly
+  const typed = getTypedArray(values);
+  if (typed) {
+    return unique_f64(typed).length;
   }
 
   // Handle arrays with fast path

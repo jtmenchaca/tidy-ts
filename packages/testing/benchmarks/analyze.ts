@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { createDataFrame, readCSV, stats, writeCSV } from "@tidy-ts/dataframe";
 
+const benchmarkDir = new URL(".", import.meta.url).pathname;
+
 // ============================================================================
 // BENCHMARK ANALYSIS TOOL
 // ============================================================================
@@ -39,7 +41,7 @@ async function main() {
 
     // Load ratios data
     const ratiosData = await readCSV(
-      "results/benchmark_ratios.csv",
+      `${benchmarkDir}results/benchmark_ratios.csv`,
       z.object({
         Programming_Language: z.string(),
         DataFrame_Library: z.string(),
@@ -51,7 +53,7 @@ async function main() {
 
     // Load times data
     const timesData = await readCSV(
-      "results/benchmark_times.csv",
+      `${benchmarkDir}results/benchmark_times.csv`,
       z.object({
         Programming_Language: z.string(),
         DataFrame_Library: z.string(),
@@ -209,7 +211,7 @@ async function main() {
     // EXPORT DETAILED RESULTS
     // ============================================================================
     // Export detailed CSV
-    writeCSV(metrics, "results/analysis_detailed.csv");
+    writeCSV(metrics, `${benchmarkDir}results/analysis_detailed.csv`);
 
     console.log("💾 Detailed analysis saved to: results/analysis_detailed.csv");
     console.log(

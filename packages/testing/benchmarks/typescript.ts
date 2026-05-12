@@ -126,45 +126,38 @@ export function runTypeScriptBenchmarks() {
 
     // Prebuild DataFrames for consistent performance
     console.log("    - Prebuilding DataFrames...");
-    const tidyDf = createDataFrame(data); // Remove tracing overhead
-    const arqueroDf = aq.from(data);
+    const tidyDf = createDataFrame(data);    const arqueroDf = aq.from(data);
 
     // Prebuild specialized dataframes for specific operations
     const numericData = Array.from({ length: size }, (_, i) => ({
-      value: Math.random() * 1000,
+      value: randomBetween(0, 1000, { prng }),
       date: new Date(
-        2020 + Math.floor(Math.random() * 4),
-        Math.floor(Math.random() * 12),
-        Math.floor(Math.random() * 28),
+        2020 + Math.floor(randomBetween(0, 4, { prng })),
+        Math.floor(randomBetween(0, 12, { prng })),
+        Math.floor(randomBetween(0, 28, { prng })),
       ),
-      score: i % 10 === 0 ? null : Math.random() * 100,
+      score: i % 10 === 0 ? null : randomBetween(0, 100, { prng }),
     }));
 
     const mixedData = Array.from({ length: size }, (_, i) => ({
       name: `name_${i % 100}`,
       category: `category_${i % 20}`,
-      value: Math.random() * 1000,
+      value: randomBetween(0, 1000, { prng }),
       active: i % 3 === 0,
     }));
 
     const groupedData = Array.from({ length: size }, (_, i) => ({
       group: `group_${i % 5}`,
-      value: Math.random() * 1000,
-      priority: Math.floor(Math.random() * 10),
+      value: randomBetween(0, 1000, { prng }),
+      priority: Math.floor(randomBetween(0, 10, { prng })),
     }));
 
     // Prebuild all DataFrames for consistent performance
-    const tidyNumericDf = createDataFrame(numericData); // Remove tracing overhead
-    const arqueroNumericDf = aq.from(numericData);
-    const tidyMixedDf = createDataFrame(mixedData); // Remove tracing overhead
-    const arqueroMixedDf = aq.from(mixedData);
-    const tidyGroupedDf = createDataFrame(groupedData); // Remove tracing overhead
-    const arqueroGroupedDf = aq.from(groupedData);
-    const tidyPivotDf = createDataFrame(pivotData); // Remove tracing overhead
-    const arqueroPivotDf = aq.from(pivotData);
-    const leftTidyDf = createDataFrame(leftData); // Remove tracing overhead
-    const rightTidyDf = createDataFrame(rightData); // Remove tracing overhead
-    const leftArqueroDf = aq.from(leftData);
+    const tidyNumericDf = createDataFrame(numericData);    const arqueroNumericDf = aq.from(numericData);
+    const tidyMixedDf = createDataFrame(mixedData);    const arqueroMixedDf = aq.from(mixedData);
+    const tidyGroupedDf = createDataFrame(groupedData);    const arqueroGroupedDf = aq.from(groupedData);
+    const tidyPivotDf = createDataFrame(pivotData);    const arqueroPivotDf = aq.from(pivotData);
+    const leftTidyDf = createDataFrame(leftData);    const rightTidyDf = createDataFrame(rightData);    const leftArqueroDf = aq.from(leftData);
     const rightArqueroDf = aq.from(rightData);
 
     // Prebuild split dataframes for bindRows operations
@@ -181,8 +174,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.creation) {
       console.log("    - Starting creation benchmark...");
       const tidyTime = measure(
-        () => createDataFrame(data), // Remove tracing overhead
-        ITERATIONS,
+        () => createDataFrame(data),        ITERATIONS,
         WARMUP_RUNS,
       );
       console.log("    - Tidy creation done");
@@ -202,9 +194,7 @@ export function runTypeScriptBenchmarks() {
       // Test 1: Simple numeric filtering
       const tidyNumeric = measure(
         () => {
-          const result = tidyDf.filter((row) => row.value > 500);
-          result.printTrace();
-          return result;
+          tidyDf.filter((row) => row.value > 500);
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -222,9 +212,7 @@ export function runTypeScriptBenchmarks() {
       // Test 2: String filtering
       const tidyString = measure(
         () => {
-          const result = tidyDf.filter((row) => row.category === "category_5");
-          result.printTrace();
-          return result;
+          tidyDf.filter((row) => row.category === "category_5");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -243,11 +231,9 @@ export function runTypeScriptBenchmarks() {
       // Test 3: Complex filtering
       const tidyComplex = measure(
         () => {
-          const result = tidyDf.filter((row) =>
+          tidyDf.filter((row) =>
             row.value > 300 && row.score > 50 && row.active
           );
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -281,9 +267,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.select) {
       const tidyTime = measure(
         () => {
-          const result = tidyDf.select("id", "value", "category");
-          result.printTrace();
-          return result;
+          tidyDf.select("id", "value", "category");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -309,9 +293,7 @@ export function runTypeScriptBenchmarks() {
       // Test 1: Numeric Fast Path
       const tidyNumeric = measure(
         () => {
-          const result = tidyNumericDf.arrange("value", "asc");
-          result.printTrace();
-          return result;
+          tidyNumericDf.arrange("value", "asc");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -345,9 +327,7 @@ export function runTypeScriptBenchmarks() {
       // Test 3: String Stable Path
       const tidyString = measure(
         () => {
-          const result = tidyMixedDf.arrange("name", "asc");
-          result.printTrace();
-          return result;
+          tidyMixedDf.arrange("name", "asc");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -364,12 +344,10 @@ export function runTypeScriptBenchmarks() {
       // Test 4: Mixed Types Stable Path
       const tidyMixed = measure(
         () => {
-          const result = tidyMixedDf.arrange(["category", "value"], [
+          tidyMixedDf.arrange(["category", "value"], [
             "asc",
             "desc",
           ]);
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -386,12 +364,10 @@ export function runTypeScriptBenchmarks() {
       // Test 5: Grouped Data Stable Path
       const tidyGrouped = measure(
         () => {
-          const result = tidyGroupedDf.groupBy("group").arrange(
+          tidyGroupedDf.groupBy("group").arrange(
             "value",
             "desc",
           );
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -424,9 +400,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.mutate) {
       const tidyTime = measure(
         () => {
-          const result = tidyDf.mutate({ score_pct: (row) => row.score / 100 });
-          result.printTrace();
-          return result;
+          tidyDf.mutate({ score_pct: (row) => row.score / 100 });
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -453,9 +427,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.distinct) {
       const tidyTime = measure(
         () => {
-          const result = tidyDf.distinct("id", "value", "category");
-          result.printTrace();
-          return result;
+          tidyDf.distinct("id", "value", "category");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -481,9 +453,7 @@ export function runTypeScriptBenchmarks() {
       // Test 1: Single column grouping
       const tidySingle = measure(
         () => {
-          const result = tidyDf.groupBy("category");
-          result.printTrace();
-          return result;
+          tidyDf.groupBy("category");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -500,9 +470,7 @@ export function runTypeScriptBenchmarks() {
       // Test 2: Multiple column grouping
       const tidyMulti = measure(
         () => {
-          const result = tidyDf.groupBy("category", "active");
-          result.printTrace();
-          return result;
+          tidyDf.groupBy("category", "active");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -519,9 +487,7 @@ export function runTypeScriptBenchmarks() {
       // Test 3: High cardinality grouping
       const tidyHighCard = measure(
         () => {
-          const result = tidyDf.groupBy("id");
-          result.printTrace();
-          return result;
+          tidyDf.groupBy("id");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -552,13 +518,11 @@ export function runTypeScriptBenchmarks() {
       // Test 1: Ungrouped summarization
       const tidyUngrouped = measure(
         () => {
-          const result = tidyDf.summarise({
+          tidyDf.summarise({
             count: (df) => df.nrows(),
             avg_value: (df) => stats.mean(df.value),
             total_value: (df) => stats.sum(df.value),
           });
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -579,13 +543,11 @@ export function runTypeScriptBenchmarks() {
       // Test 2: Grouped summarization
       const tidyGrouped = measure(
         () => {
-          const result = tidyDf.groupBy("category").summarise({
+          tidyDf.groupBy("category").summarise({
             count: (group) => group.nrows(),
             avg_value: (group) => stats.mean(group.value),
             total_value: (group) => stats.sum(group.value),
           });
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -606,13 +568,11 @@ export function runTypeScriptBenchmarks() {
       // Test 3: Complex grouped summarization
       const tidyComplex = measure(
         () => {
-          const result = tidyDf.groupBy("category", "active").summarise({
+          tidyDf.groupBy("category", "active").summarise({
             count: (group) => group.nrows(),
             avg_value: (group) => stats.mean(group.value),
             avg_score: (group) => stats.mean(group.score),
           });
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -646,9 +606,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.innerJoin) {
       const tidyTime = measure(
         () => {
-          const result = leftTidyDf.innerJoin(rightTidyDf, "id");
-          result.printTrace();
-          return result;
+          leftTidyDf.innerJoin(rightTidyDf, "id");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -673,11 +631,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.leftJoin) {
       const tidyTime = measure(
         () => {
-          // console.time("leftJoinParallel");
-          const result = leftTidyDf.leftJoin(rightTidyDf, "id");
-          result.printTrace();
-
-          return result;
+          leftTidyDf.leftJoin(rightTidyDf, "id");
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -734,13 +688,11 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.pivotLonger) {
       const tidyTime = measure(
         () => {
-          const result = tidyPivotDf.pivotLonger({
+          tidyPivotDf.pivotLonger({
             cols: ["q1", "q2", "q3", "q4"],
             namesTo: "quarter",
             valuesTo: "sales",
           });
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -776,18 +728,16 @@ export function runTypeScriptBenchmarks() {
         }),
       );
 
-      const tidyLongDf = createDataFrame(longData, { trace: true });
+      const tidyLongDf = createDataFrame(longData);
       const arqueroLongDf = aq.from(longData);
 
       const tidyTime = measure(
         () => {
-          const result = tidyLongDf.pivotWider({
+          tidyLongDf.pivotWider({
             namesFrom: "quarter",
             valuesFrom: "sales",
             expectedColumns: ["q1", "q2", "q3", "q4"],
           });
-          result.printTrace();
-          return result;
         },
         ITERATIONS,
         WARMUP_RUNS,
@@ -812,9 +762,7 @@ export function runTypeScriptBenchmarks() {
     if (OPTIONS.bindRows) {
       const tidyTime = measure(
         () => {
-          const result = df1Tidy.bindRows(df2Tidy);
-          result.printTrace();
-          return result;
+          df1Tidy.bindRows(df2Tidy);
         },
         ITERATIONS,
         WARMUP_RUNS,
