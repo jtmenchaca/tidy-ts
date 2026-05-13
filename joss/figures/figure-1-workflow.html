@@ -46,8 +46,7 @@
 </style>
 </head>
 <body>
-<h1>Figure 1. Tidy-TS Clinical Data Workflow</h1>
-<p class="subtitle">Data flows from external clinical sources through runtime data validation into a compile-time-checked transformation pipeline, then to downstream outputs.</p>
+<div style="height:10px"></div>
 <div class="pipeline">
   <div class="stage zone-external">
     <span class="badge badge-external">Unvalidated</span>
@@ -57,19 +56,19 @@
   <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
   <div class="stage zone-boundary">
     <span class="badge badge-runtime">Runtime check</span>
-    <div class="stage-label">Data Validation Boundary</div>
-    <div class="stage-desc">Runtime validation: rejects unexpected data types, missing required fields, unexpected null values, invalid categorical values. Establishes the data contract for the pipeline.</div>
+    <div class="stage-label">Input Validation</div>
+    <div class="stage-desc">Checks each row against the expected structure when data enters the program. Rejects unexpected data types, missing required fields, unexpected null values, and invalid categorical values.</div>
   </div>
   <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
   <div class="stage zone-typed">
     <span class="badge badge-compile">Compile-time check</span>
-    <div class="stage-label">Typed DataFrame</div>
-    <div class="stage-desc">Tracks exact type of data in each column, including potential for missing or undefined values. Each data operation can update the tracked column data types.</div>
+    <div class="stage-label">DataFrame with Tracked Columns</div>
+    <div class="stage-desc">Tracks the available columns, their types, and whether values may be missing. Each table operation updates the tracked columns accordingly.</div>
   </div>
   <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
   <div class="stage zone-typed">
     <span class="badge badge-compile">Compile-time check</span>
-    <div class="stage-label">Typed Data Transformations</div>
+    <div class="stage-label">Table Operations</div>
     <div class="stage-desc">
       select &middot; drop &middot; mutate &middot; rename &middot; filter &middot; arrange &middot; groupBy &middot; summarize<br>
       join &middot; pivotWider &middot; pivotLonger &middot; bindRows &middot; distinct &middot; fillForward &middot; removeNull &middot; &hellip;
@@ -79,7 +78,7 @@
   <div class="stage zone-typed">
     <span class="badge badge-compile">Compile-time check</span>
     <div class="stage-label">Statistical Analysis</div>
-    <div class="stage-desc">Hypothesis tests, regression (GLM), descriptive statistics &mdash; validated against R within 1e-6</div>
+    <div class="stage-desc">Hypothesis tests, regression (GLM), descriptive statistics</div>
   </div>
   <div class="fork">
     <div class="fork-center"></div><div class="fork-h"></div>

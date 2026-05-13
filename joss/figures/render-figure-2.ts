@@ -1,5 +1,5 @@
 /**
- * Generates Figure 2: How Many Intentional Errors Are Caught? (heatmap).
+ * Generates Figure 2: Detection Rates by Error Category and Ecosystem (heatmap).
  * Run: deno run -A joss/figures/render-figure-2.ts
  *
  * Output: figure-2-heatmap.html
@@ -21,23 +21,23 @@ interface CatData {
 }
 
 const DATA: CatData[] = [
-  { label: ["Wrong", "column names"], n: 16,
+  { label: ["Column", "reference"], n: 16,
     ts: { compile: 16, runtime: 0, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 12, warn: 0, silent: 4 },
     r: { compile: 0, runtime: 12, warn: 0, silent: 4 } },
-  { label: ["Wrong", "data types"], n: 14,
+  { label: ["Type", "errors"], n: 14,
     ts: { compile: 13, runtime: 1, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 5, warn: 0, silent: 9 },
     r: { compile: 0, runtime: 4, warn: 3, silent: 7 } },
-  { label: ["Missing", "values"], n: 17, highlight: true,
+  { label: ["Null &", "missing data"], n: 17, highlight: true,
     ts: { compile: 17, runtime: 0, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 0, warn: 0, silent: 17 },
     r: { compile: 0, runtime: 0, warn: 0, silent: 17 } },
-  { label: ["Mismatched", "merges"], n: 8,
+  { label: ["Join", "errors"], n: 8,
     ts: { compile: 8, runtime: 0, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 5, warn: 0, silent: 3 },
     r: { compile: 0, runtime: 5, warn: 0, silent: 3 } },
-  { label: ["Conflicting", "columns"], n: 10,
+  { label: ["Data", "loading"], n: 10,
     ts: { compile: 8, runtime: 2, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 2, warn: 0, silent: 8 },
     r: { compile: 0, runtime: 4, warn: 1, silent: 5 } },
@@ -134,8 +134,8 @@ function renderHeatmap(): string {
   }
 
   return htmlShell({
-    title: "Figure 2. How Many Intentional Errors Are Caught?",
-    subtitle: "Each cell shows how many intentional errors raised a compile-time or runtime error before producing wrong results. Green = all caught. Red = errors that went unnoticed.",
+    title: "",
+    subtitle: "",
     caption: "",
     body: `<svg class="chart" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">\n${svgBody}</svg>`,
   });

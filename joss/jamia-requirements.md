@@ -48,3 +48,25 @@ No jargon was introduced that wasn't there before
 The heading matches the content
 The subsection connects to the one before and after it
 Never dismiss a reader question by saying "the context grounds it" or "explained earlier." If the line doesn't stand on its own, fix it.
+
+___
+
+Read every phrase. Not sentences — phrases. Evaluate each one independently.
+
+For each phrase, ask: Does a non-technical but engaged JAMIA reader know what this means? Does it introduce a term that hasn't been explained? Does it use different language than the rest of the paper for the same concept? Does it repeat something the previous sentence already said? Is it the right word?
+
+After reviewing the lines, generate at least 3 reader questions. Not softballs — genuine confusion or skepticism a non-technical reader would have.
+
+For each question, default to making a change. The burden is on keeping the text, not on changing it. If a reader would be confused, fix it — don't dismiss it by saying "explained earlier" or "the context grounds it."
+
+After editing, do not move on. Wait for explicit approval.
+
+After completing a subsection, reread the full subsection and verify: each sentence flows from the prior one, no jargon was introduced, the heading matches the content, the subsection connects to the ones before and after it.
+
+Never dismiss a reader question. If the line doesn't stand on its own, fix it.
+
+Check headings. If the paragraph beneath a heading was rewritten to avoid jargon, the heading needs to match.
+
+Check consistency across the paper. If a term was changed in one place, find and update every other occurrence — body text, table captions, table cells, Results, Discussion, Abstract.
+
+Don't characterize something incorrectly. A suite of tests is not a suite of datasets. An audit is not a guarantee. "Performs" is not "catches."
