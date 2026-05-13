@@ -88,6 +88,7 @@ const TS_COMPILE: CompileOutcome[] = [
 let tsResults: ProbeResult[];
 let pyResults: ProbeResult[];
 let rResults: ProbeResult[];
+let polarsResults: ProbeResult[];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Tidy-TS compile-time
@@ -222,6 +223,41 @@ Deno.test("Cat 5 — Schema Composition: Tidy-TS runtime", async () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Pyright (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let pyrightResults: ProbeResult[];
+
+Deno.test("Cat 5 — Schema Composition: Pyright", () => {
+  pyrightResults = runPythonProbe(probePath(BASE, "./probe-pyright.py"));
+  expect(pyrightResults.length).toBe(LABELS.length);
+
+  // Pyright in strict mode catches NONE of the schema composition issues.
+  // pandas-stubs do not encode column-level schema information, so pyright
+  // has no information to flag any of these cases.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(pyrightResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Mypy (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let mypyResults: ProbeResult[];
+
+Deno.test("Cat 5 — Schema Composition: Mypy", () => {
+  mypyResults = runPythonProbe(probePath(BASE, "./probe-mypy.py"));
+  expect(mypyResults.length).toBe(LABELS.length);
+
+  // Mypy in strict mode catches NONE of the schema composition issues.
+  // Like pyright, pandas-stubs do not encode column-level schema information.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(mypyResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Python — single consolidated probe
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -249,6 +285,15 @@ Deno.test("Cat 5 — Schema Composition: Python", () => {
   expect(pyResults[8].outcome).toBe("silent" as Outcome);
   // j: .str.upper() on duplicate col — error
   expect(pyResults[9].outcome).toBe("error" as Outcome);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Polars — runtime probe
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Deno.test("Cat 5 — Schema Composition: Polars", () => {
+  polarsResults = runPythonProbe(probePath(BASE, "./probe-polars.py"));
+  expect(polarsResults.length).toBe(LABELS.length);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -292,6 +337,9 @@ Deno.test("Cat 5 — Schema Composition: Summary", () => {
     tsCompile: TS_COMPILE,
     tidyTS: tsResults,
     python: pyResults,
+    pyright: pyrightResults,
+    mypy: mypyResults,
+    polars: polarsResults,
     r: rResults,
   });
 });

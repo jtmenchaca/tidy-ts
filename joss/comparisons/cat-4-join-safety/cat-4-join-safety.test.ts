@@ -74,6 +74,7 @@ const TS_COMPILE: CompileOutcome[] = [
 let tsResults: ProbeResult[];
 let pyResults: ProbeResult[];
 let rResults: ProbeResult[];
+let polarsResults: ProbeResult[];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Tidy-TS compile-time
@@ -189,6 +190,42 @@ Deno.test("Cat 4 — Join Safety: Tidy-TS runtime", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Pyright (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let pyrightResults: ProbeResult[];
+
+Deno.test("Cat 4 — Join Safety: Pyright", () => {
+  pyrightResults = runPythonProbe(probePath(BASE, "./probe-pyright.py"));
+  expect(pyrightResults.length).toBe(LABELS.length);
+
+  // Pyright in strict mode catches NONE of the join safety issues.
+  // pandas-stubs do not encode join key validation, post-join nullability,
+  // or column name collision information.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(pyrightResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Mypy (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let mypyResults: ProbeResult[];
+
+Deno.test("Cat 4 — Join Safety: Mypy", () => {
+  mypyResults = runPythonProbe(probePath(BASE, "./probe-mypy.py"));
+  expect(mypyResults.length).toBe(LABELS.length);
+
+  // Mypy in strict mode catches NONE of the join safety issues.
+  // Like pyright, pandas-stubs do not encode join key validation,
+  // post-join nullability, or column name collision information.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(mypyResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Python -- single consolidated probe
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -212,6 +249,15 @@ Deno.test("Cat 4 — Join Safety: Python", () => {
   // g-h: column name collision -- both error
   expect(pyResults[6].outcome).toBe("error" as Outcome);
   expect(pyResults[7].outcome).toBe("error" as Outcome);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Polars -- runtime probe
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Deno.test("Cat 4 — Join Safety: Polars", () => {
+  polarsResults = runPythonProbe(probePath(BASE, "./probe-polars.py"));
+  expect(polarsResults.length).toBe(LABELS.length);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -248,6 +294,9 @@ Deno.test("Cat 4 — Join Safety: Summary", () => {
     tsCompile: TS_COMPILE,
     tidyTS: tsResults,
     python: pyResults,
+    pyright: pyrightResults,
+    mypy: mypyResults,
+    polars: polarsResults,
     r: rResults,
   });
 });

@@ -4,6 +4,7 @@ Consolidates error classes 05, 11, 12, 21, 24, 26, 35.
 """
 import json
 import polars as pl
+import warnings
 import os
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))

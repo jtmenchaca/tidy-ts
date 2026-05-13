@@ -90,8 +90,11 @@ const LABELS = [
 const TS_COMPILE: CompileOutcome[] = LABELS.map(() => "error");
 
 let tsResults: ProbeResult[];
+let pyrightResults: ProbeResult[];
+let mypyResults: ProbeResult[];
 let pyResults: ProbeResult[];
 let rResults: ProbeResult[];
+let polarsResults: ProbeResult[];
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Tidy-TS compile-time
@@ -261,6 +264,37 @@ Deno.test("Cat 1 — Column & Schema Reference: Tidy-TS runtime", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Pyright (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Deno.test("Cat 1 — Column & Schema Reference: Pyright", () => {
+  pyrightResults = runPythonProbe(probePath(BASE, "./probe-pyright.py"));
+  expect(pyrightResults.length).toBe(LABELS.length);
+
+  // Pyright in strict mode catches NONE of the column/schema reference issues.
+  // pandas-stubs use generic `str` keys for column access, so pyright has
+  // no information to flag misspelled or missing column names.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(pyrightResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Mypy (Python static type checker) — strict mode with pandas-stubs
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Deno.test("Cat 1 — Column & Schema Reference: Mypy", () => {
+  mypyResults = runPythonProbe(probePath(BASE, "./probe-mypy.py"));
+  expect(mypyResults.length).toBe(LABELS.length);
+
+  // Mypy in strict mode catches NONE of the column/schema reference issues.
+  // Like pyright, pandas-stubs do not encode column names at the type level.
+  for (let i = 0; i < LABELS.length; i++) {
+    expect(mypyResults[i].outcome).toBe("silent" as Outcome);
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Python — single consolidated probe
 // ═══════════════════════════════════════════════════════════════════════════════
 
@@ -292,6 +326,15 @@ Deno.test("Cat 1 — Column & Schema Reference: Python", () => {
   expect(pyResults[14].outcome).toBe("error" as Outcome);
   // p: residual grouping — silent (MultiIndex produced)
   expect(pyResults[15].outcome).toBe("silent" as Outcome);
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Polars — runtime probe
+// ═══════════════════════════════════════════════════════════════════════════════
+
+Deno.test("Cat 1 — Column & Schema Reference: Polars", () => {
+  polarsResults = runPythonProbe(probePath(BASE, "./probe-polars.py"));
+  expect(polarsResults.length).toBe(LABELS.length);
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -339,6 +382,9 @@ Deno.test("Cat 1 — Column & Schema Reference: Summary", () => {
     tsCompile: TS_COMPILE,
     tidyTS: tsResults,
     python: pyResults,
+    pyright: pyrightResults,
+    mypy: mypyResults,
+    polars: polarsResults,
     r: rResults,
   });
 });

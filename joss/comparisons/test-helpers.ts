@@ -98,6 +98,10 @@ export interface ComparisonRow {
   tsResult: string;
   pyRuntime: Outcome | "—";
   pyResult: string;
+  pyPyright: Outcome | "—";
+  pyMypy: Outcome | "—";
+  pyPolars: Outcome | "—";
+  pyPolarsResult: string;
   rRuntime: Outcome | "—";
   rResult: string;
 }
@@ -107,13 +111,16 @@ export interface ComparisonTableData {
   rows: ComparisonRow[];
 }
 
-/** Print a comparison table across Tidy-TS, Python, and R results. */
+/** Print a comparison table across Tidy-TS, Python (runtime, static, polars), and R results. */
 export function printComparisonTable({
   title,
   labels,
   tsCompile,
   tidyTS,
   python,
+  pyright,
+  mypy,
+  polars,
   r,
 }: {
   title: string;
@@ -121,36 +128,52 @@ export function printComparisonTable({
   tsCompile: CompileOutcome[];
   tidyTS: ProbeResult[];
   python: ProbeResult[];
+  pyright?: ProbeResult[];
+  mypy?: ProbeResult[];
+  polars?: ProbeResult[];
   r: ProbeResult[];
 }): ComparisonTableData {
-  const cols = {
+  const cols: Record<string, string> = {
     case: "Case",
     tsCompile: "TS compile",
     tsOutcome: "TS runtime",
     tsResult: "TS result",
     pyOutcome: "Py runtime",
     pyResult: "Py result",
+    ...(pyright ? { pyPyright: "Pyright compile" } : {}),
+    ...(mypy ? { pyMypy: "Mypy compile" } : {}),
+    ...(polars ? { pyPolars: "Polars" } : {}),
+    ...(polars ? { pyPolarsResult: "Polars result" } : {}),
     rOutcome: "R runtime",
     rResult: "R result",
   };
 
   // Build rows
-  const rows = labels.map((label, i) => ({
-    case: label,
-    tsCompile: tsCompile[i] ?? "—",
-    tsOutcome: tidyTS[i]?.outcome ?? "—",
-    tsResult: tidyTS[i] ? fmtResult(tidyTS[i]) : "—",
-    pyOutcome: python[i]?.outcome ?? "—",
-    pyResult: python[i] ? fmtResult(python[i]) : "—",
-    rOutcome: r[i]?.outcome ?? "—",
-    rResult: r[i] ? fmtResult(r[i]) : "—",
-  }));
+  const rows = labels.map((label, i) => {
+    const row: Record<string, string> = {
+      case: label,
+      tsCompile: tsCompile[i] ?? "—",
+      tsOutcome: tidyTS[i]?.outcome ?? "—",
+      tsResult: tidyTS[i] ? fmtResult(tidyTS[i]) : "—",
+      pyOutcome: python[i]?.outcome ?? "—",
+      pyResult: python[i] ? fmtResult(python[i]) : "—",
+      rOutcome: r[i]?.outcome ?? "—",
+      rResult: r[i] ? fmtResult(r[i]) : "—",
+    };
+    if (pyright) row.pyPyright = pyright[i]?.outcome ?? "—";
+    if (mypy) row.pyMypy = mypy[i]?.outcome ?? "—";
+    if (polars) {
+      row.pyPolars = polars[i]?.outcome ?? "—";
+      row.pyPolarsResult = polars[i] ? fmtResult(polars[i]) : "—";
+    }
+    return row;
+  });
 
   // Compute column widths
-  const keys = Object.keys(cols) as (keyof typeof cols)[];
+  const keys = Object.keys(cols);
   const widths: Record<string, number> = {};
   for (const k of keys) {
-    widths[k] = Math.max(cols[k].length, ...rows.map((r) => r[k].length));
+    widths[k] = Math.max(cols[k].length, ...rows.map((r) => r[k]?.length ?? 0));
   }
 
   const pad = (s: string, w: number) => s + " ".repeat(w - s.length);
@@ -161,7 +184,7 @@ export function printComparisonTable({
   console.log(header);
   console.log(sep);
   for (const row of rows) {
-    console.log(keys.map((k) => pad(row[k], widths[k])).join(" | "));
+    console.log(keys.map((k) => pad(row[k] ?? "—", widths[k])).join(" | "));
   }
   console.log();
 
@@ -175,6 +198,10 @@ export function printComparisonTable({
       tsResult: tidyTS[i] ? fmtResult(tidyTS[i]) : "—",
       pyRuntime: (python[i]?.outcome ?? "—") as Outcome | "—",
       pyResult: python[i] ? fmtResult(python[i]) : "—",
+      pyPyright: (pyright?.[i]?.outcome ?? "—") as Outcome | "—",
+      pyMypy: (mypy?.[i]?.outcome ?? "—") as Outcome | "—",
+      pyPolars: (polars?.[i]?.outcome ?? "—") as Outcome | "—",
+      pyPolarsResult: polars?.[i] ? fmtResult(polars[i]) : "—",
       rRuntime: (r[i]?.outcome ?? "—") as Outcome | "—",
       rResult: r[i] ? fmtResult(r[i]) : "—",
     })),
