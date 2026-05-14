@@ -31,7 +31,7 @@ export const joinsDocs: Record<string, DocEntry> = {
     name: "innerJoin",
     category: "dataframe",
     signature:
-      "innerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | (keyof Row & keyof OtherRow)[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Prettify<SuffixAwareInnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>>\ninnerJoin<OtherRow>(other: DataFrame<OtherRow>, options: { keys: ...; suffixes?: ... }): DataFrame<...>  // object overload preserves literal suffix types on colliding columns",
+      "innerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | (keyof Row & keyof OtherRow)[], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<SuffixAwareInnerJoinResult<Row, OtherRow, keyof Row & keyof OtherRow>>\ninnerJoin<OtherRow>(other: DataFrame<OtherRow>, options: { keys: ...; suffixes?: ... }): DataFrame<...>  // object overload preserves literal suffix types on colliding columns",
     description:
       "Inner join: only rows whose join key(s) appear in both DataFrames. Return row shape merges left columns with right columns excluding duplicate join keys; overlapping non-key names use `suffixes` at runtime and the `{ keys, suffixes }` overload tracks resulting column names in types.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -65,7 +65,7 @@ export const joinsDocs: Record<string, DocEntry> = {
     name: "leftJoin",
     category: "dataframe",
     signature:
-      "leftJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<Prettify<SuffixAwareLeftJoinResult<...>>>\nleftJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
+      "leftJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: { left?: string; right?: string } }): DataFrame<SuffixAwareLeftJoinResult<...>>\nleftJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Left join with another DataFrame. Keeps all rows from the left DataFrame; columns from the right are `undefined` where there is no key match. This is the most common join type for preserving all records from a primary table while enriching with optional data.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -207,7 +207,7 @@ const result = left.leftJoin(right, keyCol);`,
     name: "rightJoin",
     category: "dataframe",
     signature:
-      "rightJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<Prettify<SuffixAwareRightJoinResult<...>>>\nrightJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
+      "rightJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<SuffixAwareRightJoinResult<...>>\nrightJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Right join with another DataFrame. Keeps all rows from the right; columns from the left are `undefined` where there is no key match.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -236,7 +236,7 @@ const result = left.leftJoin(right, keyCol);`,
     name: "outerJoin",
     category: "dataframe",
     signature:
-      "outerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<Prettify<SuffixAwareOuterJoinResult<...>>>\nouterJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
+      "outerJoin<OtherRow>(other: DataFrame<OtherRow>, on: (keyof Row & keyof OtherRow) | [...], options?: { suffixes?: ... }): DataFrame<SuffixAwareOuterJoinResult<...>>\nouterJoin<OtherRow>(other, options: { keys: ...; suffixes?: ... }): DataFrame<...>",
     description:
       "Full outer join. Keeps all rows from both DataFrames; cells from the side with no matching row are `undefined`.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -265,7 +265,7 @@ const result = left.leftJoin(right, keyCol);`,
     name: "crossJoin",
     category: "dataframe",
     signature:
-      "crossJoin<OtherRow>(other: DataFrame<OtherRow>, maxRows?: number, suffixes?: { left?: string; right?: string }): DataFrame<Prettify<Row & OtherRow>>",
+      "crossJoin<OtherRow>(other: DataFrame<OtherRow>, maxRows?: number, suffixes?: { left?: string; right?: string }): DataFrame<Row & OtherRow>",
     description:
       "Cartesian product of two DataFrames (every left row paired with every right row). Output size is left.nrows() × right.nrows()—pass `maxRows` as a safety cap. Optional `suffixes` disambiguate overlapping column names.",
     imports: ['import { createDataFrame } from "@tidy-ts/dataframe";'],
@@ -295,7 +295,7 @@ const result = left.leftJoin(right, keyCol);`,
     name: "asofJoin",
     category: "dataframe",
     signature:
-      "asofJoin<OtherRow, K extends keyof Row & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest'; tolerance?: number; group_by?: (keyof Row & keyof OtherRow)[] }): DataFrame<Prettify<SuffixAwareAsofJoinResult<...>>>\nasofJoin(..., options: { ..., suffixes: { left?: string; right?: string } }): DataFrame<...>",
+      "asofJoin<OtherRow, K extends keyof Row & keyof OtherRow>(other: DataFrame<OtherRow>, by: K, options?: { direction?: 'backward' | 'forward' | 'nearest'; tolerance?: number; group_by?: (keyof Row & keyof OtherRow)[] }): DataFrame<SuffixAwareAsofJoinResult<...>>\nasofJoin(..., options: { ..., suffixes: { left?: string; right?: string } }): DataFrame<...>",
     description:
       "Join DataFrames by nearest key match (as-of join). Joins on a sorted column (typically timestamps), matching each left row with the 'nearest' right row based on direction. Useful for time-series data where exact matches aren't required.",
     imports: [

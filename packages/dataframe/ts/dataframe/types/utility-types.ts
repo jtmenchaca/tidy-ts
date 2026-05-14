@@ -27,7 +27,10 @@ export type DataOnly<Row> = { [K in DataKeys<Row>]: Row[K] };
 // Turn a string union into columns, but allow pretty-expansion at the site of use
 export type ColumnsFromUnion<Labels extends string, T> = { [K in Labels]: T };
 
-export type Subset<Type, Key extends keyof Type> = Prettify<Pick<Type, Key>>;
+// deno-lint-ignore ban-types
+export type Subset<Type, Key extends keyof Type> =
+  & { [P in Key]: Type[P] }
+  & {};
 
 export type UnionToIntersection<Union> =
   (Union extends unknown ? (k: Union) => void : never) extends (
@@ -151,11 +154,12 @@ export type DeepMergeNestedProps<T, D extends number = 2> = [D] extends [0] ? T
     )
   : T;
 
-export type UnifyUnion<T> = Prettify<
-  {
+export type UnifyUnion<T> =
+  & {
     [K in keyof MergeUnionAllKeys<T>]: MergeUnionAllKeys<T>[K];
   }
->;
+  // deno-lint-ignore ban-types
+  & {};
 
 // ============================================================================
 // Join Type Utilities
