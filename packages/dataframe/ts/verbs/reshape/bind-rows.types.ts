@@ -18,13 +18,20 @@ import type { DataFrame } from "../../dataframe/index.ts";
  * cannot be applied conditionally per-key in a single mapped type without
  * splitting back into an intersection.
  */
-type MergeRows<Row1, Row2> = {
-  [K in keyof Row1 | keyof Row2]: K extends keyof Row1
-    ? K extends keyof Row2 ? Row1[K] | Row2[K]
-    : Row1[K] | undefined
-    : K extends keyof Row2 ? Row2[K] | undefined
-    : never;
-};
+// deno-lint-ignore ban-types
+type MergeRows<Row1, Row2> =
+  & {
+    [K in keyof Row1 | keyof Row2]: K extends keyof Row1
+      ? K extends keyof Row2 ? Row1[K] | Row2[K]
+      : Row1[K] | undefined
+      : K extends keyof Row2 ? Row2[K] | undefined
+      : never;
+  }
+  // `& {}` makes TS drop the `MergeRows<...>` alias in hover and display
+  // the expanded shape. This is the same trick the standard `Prettify<T>`
+  // helper uses; bundling it into the helper itself avoids an extra
+  // mapped-type instantiation at every call site.
+  & {};
 
 /**
  * Type for the bind_rows method that combines DataFrames vertically.

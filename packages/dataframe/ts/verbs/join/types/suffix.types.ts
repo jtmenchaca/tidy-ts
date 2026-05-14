@@ -67,6 +67,7 @@ type MaybeUndefined<T, Required extends boolean> =
  * @param LReq - Are left non-key columns required?
  * @param RReq - Are right non-key columns required?
  */
+// deno-lint-ignore ban-types
 type JoinWithSuffixes<
   L extends object,
   R extends object,
@@ -75,26 +76,29 @@ type JoinWithSuffixes<
   S extends { left?: string; right?: string } = {},
   LReq extends boolean = true,
   RReq extends boolean = true,
-> = {
-  [
-    Out in
-      | Extract<keyof L, K>
-      | Exclude<keyof L, ConflictingColumns<L, R, K>>
-      | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["left"] extends string ? S["left"] : ""}`
-      | Exclude<keyof R, Extract<keyof L, StrKey> | K>
-      | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["right"] extends string ? S["right"] : ""}`
-  ]: Out extends K ? L[Extract<Out, keyof L>]
-    // Check for L-suffixed conflicting columns first
-    : S["left"] extends string
-      ? Out extends `${infer Base}${S["left"]}`
-        ? Base extends ConflictingColumns<L, R, K>
-          ? Base extends keyof L
-            ? LReq extends true ? L[Base] : L[Base] | undefined
-          : never
+> =
+  & {
+    [
+      Out in
+        | Extract<keyof L, K>
+        | Exclude<keyof L, ConflictingColumns<L, R, K>>
+        | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["left"] extends string ? S["left"] : ""}`
+        | Exclude<keyof R, Extract<keyof L, StrKey> | K>
+        | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["right"] extends string ? S["right"] : ""}`
+    ]: Out extends K ? L[Extract<Out, keyof L>]
+      // Check for L-suffixed conflicting columns first
+      : S["left"] extends string
+        ? Out extends `${infer Base}${S["left"]}`
+          ? Base extends ConflictingColumns<L, R, K>
+            ? Base extends keyof L
+              ? LReq extends true ? L[Base] : L[Base] | undefined
+            : never
+          : SecondaryLookup<L, R, K, S, LReq, RReq, Out>
         : SecondaryLookup<L, R, K, S, LReq, RReq, Out>
-      : SecondaryLookup<L, R, K, S, LReq, RReq, Out>
-    : SecondaryLookup<L, R, K, S, LReq, RReq, Out>;
-};
+      : SecondaryLookup<L, R, K, S, LReq, RReq, Out>;
+  }
+  // Force expanded hover (see SimpleJoinResult's `& {}` comment).
+  & {};
 
 /**
  * Second-stage lookup used by JoinWithSuffixes after the L-suffix check fails.
@@ -149,43 +153,50 @@ type PlainLookup<
  *   - R non-conflicting    → R[P], +undefined if !RReq
  *   - `${conflict}_y`      → R[conflict], +undefined if !RReq
  */
+// deno-lint-ignore ban-types
 type SimpleJoinResult<
   L extends object,
   R extends object,
   K extends keyof L & keyof R,
   LReq extends boolean = true,
   RReq extends boolean = true,
-> = {
-  [
-    Out in
-      | K
-      | Exclude<
-        keyof L,
-        K | ConflictingColumns<L, R, Extract<K, StrKey>>
-      >
-      | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_x`
-      | Exclude<
-        keyof R,
-        K | Extract<keyof L, StrKey>
-      >
-      | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_y`
-  ]: Out extends K ? L[Extract<Out, keyof L>]
-    : Out extends
-      `${infer Base}_x` // L conflicting renamed
-      ? Base extends keyof L
-        ? LReq extends true ? L[Base] : L[Base] | undefined
-      : never
-    : Out extends
-      `${infer Base}_y` // R conflicting renamed
-      ? Base extends keyof R
-        ? RReq extends true ? R[Base] : R[Base] | undefined
-      : never
-    : Out extends keyof L
-      ? LReq extends true ? L[Out] : L[Out] | undefined
-    : Out extends keyof R
-      ? RReq extends true ? R[Out] : R[Out] | undefined
-    : never;
-};
+> =
+  & {
+    [
+      Out in
+        | K
+        | Exclude<
+          keyof L,
+          K | ConflictingColumns<L, R, Extract<K, StrKey>>
+        >
+        | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_x`
+        | Exclude<
+          keyof R,
+          K | Extract<keyof L, StrKey>
+        >
+        | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_y`
+    ]: Out extends K ? L[Extract<Out, keyof L>]
+      : Out extends
+        `${infer Base}_x` // L conflicting renamed
+        ? Base extends keyof L
+          ? LReq extends true ? L[Base] : L[Base] | undefined
+        : never
+      : Out extends
+        `${infer Base}_y` // R conflicting renamed
+        ? Base extends keyof R
+          ? RReq extends true ? R[Base] : R[Base] | undefined
+        : never
+      : Out extends keyof L
+        ? LReq extends true ? L[Out] : L[Out] | undefined
+      : Out extends keyof R
+        ? RReq extends true ? R[Out] : R[Out] | undefined
+      : never;
+  }
+  // `& {}` forces TS to drop the `SimpleJoinResult<...>` alias from hover and
+  // show the expanded shape. Bundling this into the helper definition avoids
+  // an extra mapped-type instantiation at every call site (vs. wrapping each
+  // site in `Prettify<...>`).
+  & {};
 
 // -----------------------------------------------------------------------------
 // Unified dispatcher
