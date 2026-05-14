@@ -2,15 +2,12 @@ import type {
   DataFrame,
   GroupedDataFrame,
   PreserveGrouping,
-  Prettify,
 } from "../../dataframe/index.ts";
 
 type SortDirection = "asc" | "desc";
 
 /** Arrange preserves row shape (ordering only). */
-export type RowAfterArrange<Row extends object> = Prettify<
-  Row
->;
+export type RowAfterArrange<Row extends object> = Row;
 
 /**
  * Sort rows by one or more columns.

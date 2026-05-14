@@ -84,9 +84,9 @@ ${body}
 
 function renderHeatmap(): string {
   const ECOS = [
-    { key: "ts" as const, label: "Tidy-TS" },
-    { key: "py" as const, label: "Python / pandas" },
-    { key: "r" as const, label: "R / tidyverse" },
+    { key: "ts" as const, label: "Tidy-TS (TypeScript)" },
+    { key: "py" as const, label: "Pandas (Python)" },
+    { key: "r" as const, label: "Tidyverse (R)" },
   ];
   const W = 880, H = 410, ML = 180, MR = 30, MT = 50, MB = 50;
   const plotW = W - ML - MR, plotH = H - MT - MB;

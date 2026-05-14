@@ -5,11 +5,6 @@ import type {
   Prettify,
 } from "../../dataframe/index.ts";
 
-export type RowAfterSelect<
-  Row extends object,
-  ColName extends keyof Row,
-> = Prettify<Pick<Row, ColName>>;
-
 export type SelectMethod<Row extends object> = {
   // Rest parameters syntax
   /**
@@ -34,7 +29,7 @@ export type SelectMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     columnName: First,
     ...columnNames: Rest
-  ): PreserveGrouping<R, GroupName, RowAfterSelect<R, First | Rest[number]>>;
+  ): PreserveGrouping<R, GroupName, Prettify<Pick<R, First | Rest[number]>>>;
   /**
    * Select one or more columns from the DataFrame.
    *
@@ -57,5 +52,5 @@ export type SelectMethod<Row extends object> = {
     this: DataFrame<R>,
     columnName: First,
     ...columnNames: Rest
-  ): DataFrame<RowAfterSelect<R, First | Rest[number]>>;
+  ): DataFrame<Prettify<Pick<R, First | Rest[number]>>>;
 };

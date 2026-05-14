@@ -127,7 +127,6 @@ function makeDataFrameProbe<Row extends object>(
     iloc: () => makeDataFrameProbe(df),
 
     // Utility methods
-    dummyCol: () => makeDataFrameProbe(df),
     graph: () => ({}), // Return empty object for graph
     forEach: () => makeDataFrameProbe(df),
     forEachRow: () => makeDataFrameProbe(df),

@@ -1,7 +1,6 @@
 // packages/dataframe/ts/types/helpers/dataframe-helpers.ts
 
 import type { GroupedDataFrame } from "./dataframe.type.ts";
-import type { Prettify } from "./utility-types.ts";
 
 /**
  * Preserve grouping when returning a new row shape:
@@ -13,6 +12,6 @@ export type PreserveGrouping<
   GroupName extends keyof Row,
   NewRow extends object,
 > = GroupedDataFrame<
-  Prettify<NewRow>,
-  Extract<GroupName, keyof Prettify<NewRow>>
+  NewRow,
+  Extract<GroupName, keyof NewRow>
 >;

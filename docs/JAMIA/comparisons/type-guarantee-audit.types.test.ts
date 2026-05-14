@@ -5,53 +5,103 @@
  * Every Expect<IsExact<Actual, Expected>> asserts bidirectional type equality.
  * A @ts-expect-error comment asserts that something is correctly rejected.
  *
- * ┌──────────────────────┬──────────────────────────────────────┬──────────────────────────────────────┐
- * │ Operation            │ Type effect                          │ Runtime effect                       │
- * ├──────────────────────┼──────────────────────────────────────┼──────────────────────────────────────┤
- * │ filter               │ preserves Row                        │ removes rows by predicate            │
- * │ arrange              │ preserves Row                        │ reorders rows                        │
- * │ slice/sliceHead/Tail │ preserves Row                        │ takes subset of rows by position     │
- * │ sliceMin/sliceMax    │ preserves Row                        │ keeps N smallest/largest by column   │
- * │ sliceSample          │ preserves Row                        │ random sample of rows                │
- * │ shuffle              │ preserves Row                        │ randomizes row order                 │
- * │ reorder              │ preserves Row                        │ changes column display order          │
- * │ interpolate          │ preserves Row                        │ fills nulls via interpolation         │
- * │ select               │ Pick<Row, Cols>                      │ column projection                    │
- * │ drop                 │ Omit<Row, Cols>                      │ column removal                       │
- * │ distinct             │ Pick<Row, Cols>                      │ deduplicate + project                │
- * │ mutate (new col)     │ Row & { col: T }                     │ computes new column                  │
- * │ mutate (replace col) │ Row with col type replaced           │ overwrites column values             │
- * │ rename               │ key substitution, types preserved    │ renames column headers               │
- * │ groupBy              │ GroupedDataFrame<Row, Keys>           │ partitions rows by key values        │
- * │ summarise            │ Pick<Row, GroupKeys> & SummaryCols    │ aggregates groups into single rows   │
- * │ summarise (ungrouped)│ SummaryCols only                     │ aggregates all rows into one         │
- * │ count                │ Pick<Row, K> & { count: number }     │ counts rows per group                │
- * │ pivotWider           │ new cols from data, values T | undef │ reshapes long → wide                 │
- * │ pivotLonger          │ gathers cols into name/value pair    │ reshapes wide → long                 │
- * │ unnest               │ array col → element type | null      │ flattens array col into rows         │
- * │ innerJoin            │ merged schema, no undefined           │ matched rows only                    │
- * │ leftJoin             │ right-side cols become T | undefined  │ unmatched right rows filled          │
- * │ rightJoin            │ left-side cols become T | undefined   │ unmatched left rows filled           │
- * │ outerJoin            │ both sides' cols become T | undefined │ all rows, unmatched filled           │
- * │ crossJoin            │ merged schema, no undefined           │ Cartesian product                    │
- * │ asofJoin             │ right-side cols become T | undefined  │ nearest-match join                   │
- * │ join (collision)     │ shared non-key cols get _x/_y suffix  │ renames to avoid ambiguity           │
- * │ join (custom suffix) │ shared non-key cols get custom suffix │ renames to avoid ambiguity           │
- * │ bindRows             │ union cols; unique cols → T | undef   │ vertical concatenation               │
- * │ lag                  │ (T | undefined)[]                     │ shifts values, fills with undefined  │
- * │ replaceNull          │ removes null from specified cols      │ substitutes null with provided value │
- * │ replaceUndefined     │ removes undefined from specified cols │ substitutes undef with provided val  │
- * │ removeNull           │ removes null, drops rows with null    │ filters rows where col is null       │
- * │ removeUndefined      │ removes undef, drops rows with undef │ filters rows where col is undefined  │
- * │ fillForward          │ preserves Row (leading nulls remain)  │ carries last known value forward     │
- * │ fillBackward         │ preserves Row (trailing nulls remain) │ carries next known value backward    │
- * │ mean(clean[])        │ number                                │ arithmetic mean                      │
- * │ mean(nullable[])     │ number | null                         │ returns null if any null present     │
- * │ mean(nullable[],     │ number                                │ filters nulls, then computes mean    │
- * │   {removeNull: true})│                                       │                                      │
- * │ createDataFrame(,zod)│ DataFrame<z.infer<Schema>>            │ Zod validates each row at creation   │
- * │ append/prepend       │ requires exact Row shape              │ validates row shape at runtime       │
- * └──────────────────────┴──────────────────────────────────────┴──────────────────────────────────────┘
+ * ## Notation
+ *
+ * Let R be a row type — the set of named, typed fields in a DataFrame schema.
+ *
+ *   R[C]     Project R onto columns C ⊆ keys(R)   (Pick)
+ *   R \ C    Remove columns C from R               (Omit)
+ *   R ∪ S    Merge schemas R and S                 (intersection type &)
+ *   T | ⊥    T or undefined (⊥ = bottom)
+ *   F | ⊥    Lift: { ∀f ∈ F : f.type | ⊥ }        (add ⊥ to every field)
+ *   L, R     Left / Right row types in joins
+ *   K        Join keys — K ⊆ keys(L) ∩ keys(R)
+ *
+ * ## Typed Dataframe Algebra
+ *
+ * ┌─────────────────────────────────┬──────────────────────────────────────────────────┬──────────────────────────────────────┐
+ * │ Operation                       │ Type rule                                        │ Plain language                       │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 1. SCHEMA PRESERVATION          │ R → R                                            │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ filter                          │ R → R                                            │ Row type unchanged                   │
+ * │ arrange                         │ R → R                                            │ Row type unchanged                   │
+ * │ slice / sliceHead / sliceTail   │ R → R                                            │ Row type unchanged                   │
+ * │ sliceMin / sliceMax             │ R → R                                            │ Row type unchanged                   │
+ * │ sliceSample / shuffle           │ R → R                                            │ Row type unchanged                   │
+ * │ reorder                         │ R → R                                            │ Row type unchanged                   │
+ * │ interpolate                     │ R → R                                            │ Row type unchanged                   │
+ * │ fillForward / fillBackward      │ R → R                                            │ Row type unchanged (nulls may remain)│
+ * │ upsample(t, freq, fill)         │ R → R                                            │ Row type unchanged, fills time gaps   │
+ * │ filterAsync                     │ R → Promise<R>                                   │ Async predicate, same type rule      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 2. SCHEMA NARROWING             │ R → R[C] or R \ C                                │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ select(C)                       │ R → R[C]                                         │ Keep only columns C                  │
+ * │ drop(C)                         │ R → R \ C                                        │ Remove columns C                     │
+ * │ distinct(C)                     │ R → R[C]                                         │ Deduplicate, keep only columns C     │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 3. SCHEMA EXTENSION             │ R → R ∪ new fields                               │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ mutate({k: fn}), k ∉ keys(R)    │ R → R ∪ { k: T }                                 │ Add column k with type T             │
+ * │ mutate({k: fn}), k ∈ keys(R)    │ R → (R \ {k}) ∪ { k: T' }                        │ Replace column k's type with T'      │
+ * │ mutateAsync({k: fn})            │ R → Promise<R ∪ { k: Awaited<T> }>               │ Async mutate, unwraps Promises       │
+ * │ mutateOverGroup({k: gfn})       │ R → R ∪ { k: Elem(gfn(G)) }                      │ Per-group fn returns array, add col   │
+ * │ mutateColumns(cols, fns)        │ R → R ∪ { ∀c∈C,f∈F: pre+c+suf: Ret(f) }          │ Apply fns across cols, named results │
+ * │ rename({a: b})                  │ R → (R \ {a}) ∪ { b: R[a] }                      │ Rename column a to b, keep its type  │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 4. SCHEMA REPLACEMENT           │ R → new schema                                   │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ summarise(S)                    │ R → S                                            │ Only summary columns remain          │
+ * │ groupBy(G).summarise(S)         │ R → R[G] ∪ S                                    │ Group keys + summary columns         │
+ * │ summariseAsync(S)               │ R → Promise<S>                                   │ Async summarise, same type rule      │
+ * │ summariseColumns(cols, fns)     │ R[G] ∪ { ∀c∈C,f∈F: pre+c: Ret(f) }            │ Aggregate across cols, named results │
+ * │ count(G)                        │ R → R[G] ∪ { count: number }                    │ Group keys + count                   │
+ * │ pivotWider(n, v, E)             │ R → (R \ {n,v}) ∪ { ∀e ∈ E : e: R[v] | ⊥ }    │ Spread values into new columns       │
+ * │ pivotLonger(C, nTo, vTo)        │ R → (R \ C) ∪ { nTo: string, vTo: R[c], c ∈ C }│ Gather columns into name/value pairs │
+ * │ unnest(k)                       │ R → (R \ {k}) ∪ { k: Elem(R[k]) | null }       │ Flatten array column into rows       │
+ * │ downsample(t, freq, aggs)       │ R → R[t] ∪ { ∀k∈aggs: k: Ret(aggs[k]) }       │ Aggregate into time buckets          │
+ * │ resample(t, freq, metrics)      │ R → R[t] ∪ { ∀k∈metrics: k: Ret(metrics[k]) } │ Resample with agg or fill per column │
+ * │ transpose(N)                    │ R → { __label__: keys(R),                        │ Rows become columns; column names    │
+ * │                                 │        __types__: R,                              │ become row labels; round-trips via   │
+ * │                                 │        ∀i ∈ [0,N) : row_i: R[keys(R)] }          │ double transpose                     │
+ * │ transpose(N) with labels        │ R → { __label__: keys(R),                        │ Row labels become column names       │
+ * │                                 │        __types__: R,                              │ instead of row_0, row_1, ...         │
+ * │                                 │        ∀l ∈ Labels : l: R[keys(R)] }             │                                      │
+ * │ transpose(transpose(R))         │ restores original R via __types__                 │ Double transpose recovers types      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 5. JOINS                        │ L, R, K → merged schema                          │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ innerJoin(L, R, K)              │ L ∪ (R \ K)                                     │ All fields required                  │
+ * │ leftJoin(L, R, K)               │ L ∪ (R \ K | ⊥)                                │ Right non-keys may be undefined      │
+ * │ rightJoin(L, R, K)              │ (L \ K | ⊥) ∪ R                                │ Left non-keys may be undefined       │
+ * │ outerJoin(L, R, K)              │ L[K] ∪ (L \ K | ⊥) ∪ (R \ K | ⊥)             │ Both sides' non-keys may be undefined│
+ * │ crossJoin(L, R)                 │ L ∪ R                                           │ Cartesian product, all required      │
+ * │ asofJoin(L, R, K)               │ L ∪ (R \ K | ⊥)                                │ Nearest-match, right may be undefined│
+ * │ collision handling               │ shared non-key cols get _x/_y (or custom) suffix│ Suffixed to avoid ambiguity          │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 6. NULL / UNDEFINED             │ narrow or widen field types                      │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ replaceNull({k: v})             │ R → (R \ {k}) ∪ { k: R[k] \ null }               │ Remove null from k's type             │
+ * │ replaceUndefined({k: v})        │ R → (R \ {k}) ∪ { k: R[k] \ ⊥ }                  │ Remove undefined from k's type        │
+ * │ removeNull(k)                   │ R → (R \ {k}) ∪ { k: R[k] \ null }               │ Drop null rows, narrow k's type       │
+ * │ removeUndefined(k)              │ R → (R \ {k}) ∪ { k: R[k] \ ⊥ }                  │ Drop undefined rows, narrow k's type  │
+ * │ lag(T[])                        │ T[] → (T | ⊥)[]                                  │ Shift adds undefined at boundaries    │
+ * │ bindRows(R, S)                  │ { ∀k ∈ keys(R) ∩ keys(S) : R[k],                 │ Shared cols keep type; unique cols    │
+ * │                                 │   ∀k ∈ keys(R) \ keys(S) : R[k] | ⊥,             │ become T | undefined                  │
+ * │                                 │   ∀k ∈ keys(S) \ keys(R) : S[k] | ⊥ }            │                                       │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 7. AGGREGATION                  │ array → scalar                                   │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ mean(number[])                  │ number[] → number                                │ Clean input, clean output            │
+ * │ mean((number | null)[])         │ (number | null)[] → number | null                │ Null propagates                      │
+ * │ mean(…, {removeNull})           │ (number | null)[] → number                       │ Nulls filtered, clean output         │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ 8. BOUNDARY VALIDATION          │ runtime ↔ type system                            │                                      │
+ * ├─────────────────────────────────┼──────────────────────────────────────────────────┼──────────────────────────────────────┤
+ * │ createDataFrame(rows, Zod)      │ → DataFrame<z.infer<Schema>>                    │ Zod validates rows at creation       │
+ * │ append / prepend                │ requires exact R                                 │ Row shape enforced at compile time   │
+ * └─────────────────────────────────┴──────────────────────────────────────────────────┴──────────────────────────────────────┘
  *
  * Assertions below are organized by type effect category:
  *   1. Schema preservation  — operation does not change the row type
@@ -310,6 +360,52 @@ type _4g = Expect<IsExact<
 // 4h. accessing consumed pivot column is rejected
 // @ts-expect-error — "variable" was consumed by pivot
 wide.mutate({ bad: (r) => r.variable });
+
+// 4i. transpose (no labels) — columns become rows, row indices become columns
+const simpleDF = createDataFrame([
+  { x: 1, y: 2, z: 3 },
+  { x: 4, y: 5, z: 6 },
+]);
+const transposed = simpleDF.transpose({ numberOfRows: 2 });
+type _4i = Expect<IsExact<
+  RowOf<typeof transposed>,
+  {
+    __tidy_row_label__: "x" | "y" | "z";
+    __tidy_row_types__: { x: number; y: number; z: number };
+    row_0: number;
+    row_1: number;
+  }
+>>;
+
+// 4j. transpose with row labels — labels become column names
+const labeled = createDataFrame([
+  { name: "Alice", age: 25, score: 95 },
+  { name: "Bob", age: 30, score: 87 },
+]).setRowLabels(["Alice", "Bob"]);
+const labeledTransposed = labeled.transpose({ numberOfRows: 2 });
+type _4j = Expect<IsExact<
+  RowOf<typeof labeledTransposed>,
+  {
+    __tidy_row_label__: "name" | "age" | "score";
+    __tidy_row_types__: { name: string; age: number; score: number };
+    Alice: string | number;
+    Bob: string | number;
+  }
+>>;
+
+// 4k. double transpose — restores original types via __tidy_row_types__
+const doubleTransposed = transposed.transpose({ numberOfRows: 2 });
+type _4k_label = Expect<IsExact<
+  RowOf<typeof doubleTransposed>["__tidy_row_types__"],
+  { row_0: number; row_1: number }
+>>;
+
+// 4l. accessing row_N on transposed result is valid
+transposed.mutate({ doubled: (r) => r.row_0 * 2 });
+
+// 4m. accessing original column name on transposed result is rejected
+// @ts-expect-error — "x" no longer exists as a column after transpose
+transposed.mutate({ bad: (r) => r.x });
 
 // ═══════════════════════════════════════════════════════════════════════
 // 5. NULL/UNDEFINED INTRODUCTION — operation widens column types

@@ -189,34 +189,6 @@ Deno.test("Grouped DataFrame - Comprehensive Functionality Test", () => {
 
   console.log("All slice operations preserved and rebuilt groups");
 
-  // ===== DUMMY_COL WITH GROUP PRESERVATION =====
-  console.log("\n8️⃣ Testing dummy_col() with Group Preservation");
-
-  const dummyWithGroups = groupedBySpecies.dummyCol("homeworld", {
-    expected_categories: [
-      "Tatooine",
-      "Alderaan",
-      "Corellia",
-      "Kashyyyk",
-      "Naboo",
-      "Stewjon",
-      "Unknown",
-    ] as const,
-    prefix: "home_",
-  });
-
-  expect(dummyWithGroups.__groups).toBeDefined();
-  expect(dummyWithGroups.__groups!.groupingColumns).toEqual(["species"]);
-  expect(dummyWithGroups[0]).toHaveProperty("home_Tatooine");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Alderaan");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Corellia");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Kashyyyk");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Naboo");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Stewjon");
-  expect(dummyWithGroups[0]).toHaveProperty("home_Unknown");
-
-  console.log("dummy_col() preserved groups and created dummy columns");
-
   // ===== COMPLEX CHAINED OPERATIONS =====
   console.log("\n9️⃣ Testing Complex Chained Operations");
 

@@ -7,7 +7,7 @@ import { mutate_columns } from "../../verbs/transformation/mutate-columns.verb.t
 import { filter, filterAsync } from "../../verbs/filtering/filter.verb.ts";
 import { select } from "../../verbs/selection/select.verb.ts";
 import { arrange } from "../../verbs/sorting/arrange.verb.ts";
-import { dummy_col } from "../../verbs/utility/dummy-col.verb.ts";
+
 import {
   slice,
   slice_head,
@@ -503,13 +503,6 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
   if (prop === "iloc") {
     return (labels: RowLabel[]) => {
       return (df as any).loc(labels);
-    };
-  }
-
-  if (prop === "dummyCol") {
-    return (col: unknown, options?: unknown) => {
-      const result = (dummy_col as any)(col as any, options as any)(df);
-      return result instanceof Promise ? thenableDataFrame(result) : result;
     };
   }
 

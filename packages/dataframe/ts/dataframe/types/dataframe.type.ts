@@ -14,7 +14,6 @@ import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-col
 // import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
 import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
 import type { RenameMethod } from "../../verbs/transformation/rename.types.ts";
-import type { DummyColMethod } from "../../verbs/utility/dummy-col.types.ts";
 import type {
   PivotLongerMethod,
   PivotWiderMethod,
@@ -708,16 +707,6 @@ export interface DataFrameBase<Row extends object = object>
   count: CountMethod<Row>;
 
   // ---------- Utilities ----------
-  /**
-   * Create boolean dummy columns from a categorical column (one-hot encoding).
-   *
-   * By default drops the original column, derives categories from the data (first-seen order),
-   * and skips null/undefined unless `include_na: true` (then `"null"` / `"undefined"` categories).
-   *
-   * Options include `expected_categories`, `prefix` / `suffix`, `drop_original`, and `include_na`.
-   */
-  dummyCol: DummyColMethod<Row>;
-
   /**
    * Combine DataFrames vertically (stack rows).
    *
