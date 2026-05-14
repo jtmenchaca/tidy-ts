@@ -1,6 +1,6 @@
 [package]
 name         = "tidy-ts-dataframe"
-version      = "1.5.1"
+version      = "1.5.2"
 edition      = "2024"
 description  = "High-performance data frame operations and statistical functions with WebAssembly support"
 authors      = ["Tidy-TS Contributors"]
