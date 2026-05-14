@@ -13,6 +13,48 @@
  * Names are matched against variable declarations, type aliases, function declarations,
  * and other named identifiers. If a name appears multiple times, all occurrences are shown.
  * Line:col positions are 1-based (like your editor shows).
+ *
+ * ─── Setup notes (read this if hovers come back as `any`) ─────────────────────
+ *
+ * The script drives TypeScript's LanguageService directly — it does NOT use
+ * Deno's module graph. To resolve imports it needs:
+ *
+ *   1. A populated `node_modules/` at the repo root containing `typescript`
+ *      and `tsx` (plus tsx's deps: `esbuild`, `@esbuild/*`, `get-tsconfig`,
+ *      `resolve-pkg-maps`). `pnpm install` is the normal way to get these.
+ *      If `pnpm install` is unavailable, a fresh `npm install typescript tsx`
+ *      in any throwaway directory and copying those package folders into the
+ *      repo's `node_modules/` works too.
+ *
+ *   2. Workspace package symlinks for any `@tidy-ts/*` imports, since the
+ *      repo is Deno/JSR-first and there's no published npm package layout
+ *      inside `node_modules/` after step 1 alone. Create them by hand:
+ *        mkdir -p node_modules/@tidy-ts
+ *        ln -sf "$(pwd)/packages/dataframe" node_modules/@tidy-ts/dataframe
+ *        ln -sf "$(pwd)/packages/shims"     node_modules/@tidy-ts/shims
+ *      (Add more as needed: arrow, parquet, etc.)
+ *
+ *   3. Invoke via the local tsx, not `npx tsx` — `npx tsx` downloads its own
+ *      copy and won't see the project's `typescript`, producing
+ *      `Cannot find package 'typescript'`. The package.json script entry
+ *      `pnpm intellisense` works once node_modules is populated; otherwise
+ *      run `./node_modules/.bin/tsx scripts/intellisense.ts <file> <name>`
+ *      directly.
+ *
+ *   4. The findTsConfig() lookup matches `tsconfig.json` / `deno.json` only,
+ *      not `deno.jsonc`. With no matching config the script falls back to
+ *      a default Bundler-resolution compilerOptions block (defined below)
+ *      that is sufficient for resolving the workspace symlinks above.
+ *
+ * If hover output shows `DataFrame<any>` despite the setup above, the file's
+ * import path probably isn't symlinked yet (step 2). If it errors with
+ * `Cannot find package 'typescript'`, step 1 or 3 is the problem.
+ *
+ * Notes on output quirks (unrelated to setup):
+ *   - DataFrames created via `createDataFrame(rows, zodSchema)` may hover as
+ *     `DataFrame<z.infer<S>>` rather than the expanded row — TS doesn't
+ *     auto-expand `z.infer` aliases in QuickInfo. Type identity is still
+ *     correct (the JAMIA audit's IsExact assertions confirm this).
  */
 
 import ts from "typescript";
