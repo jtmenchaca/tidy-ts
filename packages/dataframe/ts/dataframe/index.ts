@@ -36,7 +36,6 @@ export type {
   MakeUndefined,
   Prettify,
   PrettifyDeep,
-  UnifyUnion,
   UnionToIntersection,
 } from "./types/utility-types.ts";
 

@@ -14,14 +14,6 @@ export type {
   StoreAndIndex,
 } from "./core.types.ts";
 
-// Result types
-export type {
-  FullJoinResult,
-  InnerJoinResult,
-  LeftJoinResult,
-  RightJoinResult,
-} from "./result.types.ts";
-
 // Method types
 export type {
   AsofJoinMethod,
@@ -33,12 +25,3 @@ export type {
   OuterJoinMethod,
   RightJoinMethod,
 } from "./method.types.ts";
-
-// Suffix-aware types
-export type {
-  SuffixAwareAsofJoinResult,
-  SuffixAwareInnerJoinResult,
-  SuffixAwareLeftJoinResult,
-  SuffixAwareOuterJoinResult,
-  SuffixAwareRightJoinResult,
-} from "./suffix.types.ts";
