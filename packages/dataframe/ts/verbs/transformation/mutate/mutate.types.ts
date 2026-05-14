@@ -31,7 +31,7 @@ export type MutateAssignments<Row extends object> = Record<
 >;
 
 /** Return type for a single column value. */
-type ColumnValueResult<
+export type ColumnValueResult<
   Row extends object,
   Value,
 > =
@@ -47,68 +47,6 @@ type ColumnValueResult<
     : Value extends null ? never
     // 5) Scalar literal → itself
     : Value;
-
-/**
- * RowAfterMutation<Row, Assignments>
- * Given original row Row and column assignments (functions | arrays | scalars | null),
- * compute the resulting row type. Existing keys present in Assignments are replaced.
- *
- * Uses a single mapped type over `keyof Row | keyof Assignments` instead of
- * `Omit<Row, ...> & { ... }`. The Omit + intersection pattern produces deferred
- * `Exclude<keyof T, ...>` types when Row is a generic type parameter, which blocks
- * key assignability checks (e.g., `.select("id")` after `.mutate(...)` fails because
- * TS can't prove "id" is in `Exclude<keyof T, ...>`). The single mapped type gives
- * `keyof Result = keyof Row | keyof Assignments` directly, which TS can resolve.
- */
-export type RowAfterMutation<
-  Row extends object,
-  // deno-lint-ignore no-explicit-any
-  Assignments extends Record<string, any>,
-> = Prettify<
-  // Row-only keys: homomorphic over Row via `as` clause, preserves optional modifiers.
-  // The `as` filter avoids `Exclude<keyof Row, keyof Assignments>` which defers on generics.
-  & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-  // New/overwritten keys from Assignments
-  & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
->;
-
-/** Like RowAfterMutation but unwraps Promises — used by mutateAsync which resolves them. */
-export type AwaitedRowAfterMutation<
-  Row extends object,
-  // deno-lint-ignore no-explicit-any
-  Assignments extends Record<string, any>,
-> = Prettify<
-  & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-  & { [K in keyof Assignments]: Awaited<ColumnValueResult<Row, Assignments[K]>> }
->;
-
-/** 🔁 Compatibility alias so existing runtime code can keep importing `AddColumns` */
-export type AddColumns<
-  Row extends object,
-  // deno-lint-ignore no-explicit-any
-  Assignments extends Record<string, any>,
-> = RowAfterMutation<Row, Assignments>;
-
-/* Convenience aliases if you like to name the case you're using */
-export type RowAfterSingleCol<
-  Row extends object,
-  NewColName extends string,
-  Value,
-> = RowAfterMutation<Row, { [ColName in NewColName]: Value }>;
-
-export type RowAfterFormulas<
-  Row extends object,
-  Formulas extends Record<
-    string,
-    (row: Row, idx?: number, df?: DataFrame<Row>) => unknown
-  >,
-> = RowAfterMutation<Row, Formulas>;
-
-export type RowAfterAssignments<
-  Row extends object,
-  Assignments extends Record<string, ColumnValue<Row>>,
-> = RowAfterMutation<Row, Assignments>;
-
 
 /**
  * NotAPromise<T> — resolves to `true` when T is definitely not a Promise.
@@ -142,6 +80,19 @@ type AllSync<F> = {
  *
  * Async formulas are rejected at compile time via AllSync on function overloads.
  * Use `mutateAsync` for async formulas.
+ *
+ * Row composition rule (inlined everywhere in this file):
+ *   Result = Prettify<
+ *     & { [K in keyof R as K extends keyof A ? never : K]: R[K] }
+ *     & { [K in keyof A]: ColumnValueResult<R, A[K]> }
+ *   >
+ *
+ * Uses a single mapped type over `keyof Row | keyof Assignments` instead of
+ * `Omit<Row, ...> & { ... }`. The Omit + intersection pattern produces deferred
+ * `Exclude<keyof T, ...>` types when Row is a generic type parameter, which blocks
+ * key assignability checks (e.g., `.select("id")` after `.mutate(...)` fails because
+ * TS can't prove "id" is in `Exclude<keyof T, ...>`). The single mapped type gives
+ * `keyof Result = keyof Row | keyof Assignments` directly, which TS can resolve.
  */
 export interface MutateMethod<Row extends object> {
   // ══════════════════════════════════════════════════════════════════════════
@@ -162,8 +113,17 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas & AllSync<Formulas>,
   ): GroupedDataFrame<
-    RowAfterMutation<R, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+        & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+      )
+    >
   >;
 
   // ── Ungrouped — function formulas (AllSync guard) ───────────────────────
@@ -176,7 +136,12 @@ export interface MutateMethod<Row extends object> {
   >(
     this: DataFrame<R>,
     formulas: Formulas & AllSync<Formulas>,
-  ): DataFrame<RowAfterMutation<R, Formulas>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+    >
+  >;
 
   // ── Grouped — function formulas (no AllSync, catches generic deferral) ──
   <
@@ -190,8 +155,17 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     formulas: Formulas,
   ): GroupedDataFrame<
-    RowAfterMutation<R, Formulas>,
-    Extract<GroupName, keyof RowAfterMutation<R, Formulas>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+        & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+      )
+    >
   >;
 
   // ── Ungrouped — function formulas (no AllSync, catches generic deferral) ─
@@ -204,7 +178,12 @@ export interface MutateMethod<Row extends object> {
   >(
     this: DataFrame<R>,
     formulas: Formulas,
-  ): DataFrame<RowAfterMutation<R, Formulas>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & { [K in keyof Formulas]: ColumnValueResult<R, Formulas[K]> }
+    >
+  >;
 
   // ── Grouped — mixed assignments (functions | arrays | scalars | null) ────
   <
@@ -215,8 +194,17 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    RowAfterMutation<R, Assignments>,
-    Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+        & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+      )
+    >
   >;
 
   // ── Grouped — mixed without scalars (functions | arrays | null) ──────────
@@ -233,8 +221,17 @@ export interface MutateMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    RowAfterMutation<R, Assignments>,
-    Extract<GroupName, keyof RowAfterMutation<R, Assignments>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+        & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+      )
+    >
   >;
 
   // ── Ungrouped — mixed without scalars (functions | arrays | null) ────────
@@ -249,20 +246,35 @@ export interface MutateMethod<Row extends object> {
   >(
     this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<R, Assignments>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+    >
+  >;
 
   // ── Ungrouped — mixed assignments (functions | arrays | scalars | null) ──
   <R extends object, Assignments extends Record<string, ColumnValue<R>>>(
     this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<R, Assignments>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+    >
+  >;
 
   // ── Ungrouped — broadest fallback (includes scalars) ────────────────────
   // deno-lint-ignore no-explicit-any
   <R extends object, Assignments extends Record<string, any>>(
     this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterMutation<R, Assignments>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<R, Assignments[K]> }
+    >
+  >;
 }
 
 /**
@@ -270,6 +282,12 @@ export interface MutateMethod<Row extends object> {
  *
  * Use this when any formula is async (returns a Promise).
  * Supports optional concurrency control.
+ *
+ * Row composition rule (Awaited variant, inlined everywhere):
+ *   Result = Prettify<
+ *     & { [K in keyof R as K extends keyof A ? never : K]: R[K] }
+ *     & { [K in keyof A]: Awaited<ColumnValueResult<R, A[K]>> }
+ *   >
  */
 export interface MutateAsyncMethod<Row extends object> {
   // ── Grouped — function formulas ─────────────────────────────────────────
@@ -285,8 +303,21 @@ export interface MutateAsyncMethod<Row extends object> {
     formulas: Formulas,
     options?: ConcurrencyOptions,
   ): PromisedGroupedDataFrame<
-    AwaitedRowAfterMutation<R, Formulas>,
-    Extract<GroupName, keyof AwaitedRowAfterMutation<R, Formulas>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & {
+        [K in keyof Formulas]: Awaited<ColumnValueResult<R, Formulas[K]>>;
+      }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+        & {
+          [K in keyof Formulas]: Awaited<ColumnValueResult<R, Formulas[K]>>;
+        }
+      )
+    >
   >;
 
   // ── Ungrouped — function formulas ───────────────────────────────────────
@@ -300,7 +331,14 @@ export interface MutateAsyncMethod<Row extends object> {
     this: DataFrame<R>,
     formulas: Formulas,
     options?: ConcurrencyOptions,
-  ): PromisedDataFrame<AwaitedRowAfterMutation<R, Formulas>>;
+  ): PromisedDataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Formulas ? never : K]: R[K] }
+      & {
+        [K in keyof Formulas]: Awaited<ColumnValueResult<R, Formulas[K]>>;
+      }
+    >
+  >;
 
   // ── Grouped — mixed assignments ─────────────────────────────────────────
   <
@@ -312,8 +350,25 @@ export interface MutateAsyncMethod<Row extends object> {
     assignments: Assignments,
     options?: ConcurrencyOptions,
   ): PromisedGroupedDataFrame<
-    AwaitedRowAfterMutation<R, Assignments>,
-    Extract<GroupName, keyof AwaitedRowAfterMutation<R, Assignments>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & {
+        [K in keyof Assignments]: Awaited<
+          ColumnValueResult<R, Assignments[K]>
+        >;
+      }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+        & {
+          [K in keyof Assignments]: Awaited<
+            ColumnValueResult<R, Assignments[K]>
+          >;
+        }
+      )
+    >
   >;
 
   // ── Ungrouped — mixed assignments ───────────────────────────────────────
@@ -321,5 +376,14 @@ export interface MutateAsyncMethod<Row extends object> {
     this: DataFrame<R>,
     assignments: Assignments,
     options?: ConcurrencyOptions,
-  ): PromisedDataFrame<AwaitedRowAfterMutation<R, Assignments>>;
+  ): PromisedDataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & {
+        [K in keyof Assignments]: Awaited<
+          ColumnValueResult<R, Assignments[K]>
+        >;
+      }
+    >
+  >;
 }

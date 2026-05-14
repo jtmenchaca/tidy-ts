@@ -6,8 +6,7 @@ import type {
 
 type SortDirection = "asc" | "desc";
 
-/** Arrange preserves row shape (ordering only). */
-export type RowAfterArrange<Row extends object> = Row;
+// Arrange preserves row shape (ordering only) — Row is used directly below.
 
 /**
  * Sort rows by one or more columns.
@@ -69,7 +68,7 @@ export type ArrangeMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     column: keyof R,
     direction?: "asc" | "desc",
-  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
+  ): PreserveGrouping<R, GroupName, R>;
   /**
    * Sort rows by one or more columns.
    *
@@ -100,7 +99,7 @@ export type ArrangeMethod<Row extends object> = {
   (
     column: keyof Row,
     direction?: "asc" | "desc",
-  ): DataFrame<RowAfterArrange<Row>>;
+  ): DataFrame<Row>;
 
   // Multiple columns overloads (legacy)
   /**
@@ -134,7 +133,7 @@ export type ArrangeMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     columns: (keyof R)[],
     directions?: ("asc" | "desc")[],
-  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
+  ): PreserveGrouping<R, GroupName, R>;
   /**
    * Sort rows by one or more columns.
    *
@@ -165,7 +164,7 @@ export type ArrangeMethod<Row extends object> = {
   (
     columns: (keyof Row)[],
     directions?: ("asc" | "desc")[],
-  ): DataFrame<RowAfterArrange<Row>>;
+  ): DataFrame<Row>;
 
   // New API: rest parameters
   /**
@@ -199,7 +198,7 @@ export type ArrangeMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     column1: keyof R,
     ...columns: (keyof R)[]
-  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
+  ): PreserveGrouping<R, GroupName, R>;
   /**
    * Sort rows by one or more columns.
    *
@@ -230,7 +229,7 @@ export type ArrangeMethod<Row extends object> = {
   (
     column1: keyof Row,
     ...columns: (keyof Row)[]
-  ): DataFrame<RowAfterArrange<Row>>;
+  ): DataFrame<Row>;
 
   // New API: array with directions
   /**
@@ -264,7 +263,7 @@ export type ArrangeMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     columns: (keyof R)[],
     directions?: SortDirection | SortDirection[],
-  ): PreserveGrouping<R, GroupName, RowAfterArrange<R>>;
+  ): PreserveGrouping<R, GroupName, R>;
   /**
    * Sort rows by one or more columns.
    *
@@ -295,5 +294,5 @@ export type ArrangeMethod<Row extends object> = {
   (
     columns: (keyof Row)[],
     directions?: SortDirection | SortDirection[],
-  ): DataFrame<RowAfterArrange<Row>>;
+  ): DataFrame<Row>;
 };

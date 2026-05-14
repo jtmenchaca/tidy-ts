@@ -5,8 +5,8 @@ import type {
   Prettify,
 } from "../../../dataframe/index.ts";
 import type {
-  AddColumns,
   ColumnValue,
+  ColumnValueResult,
   MutateAssignments,
 } from "./mutate.types.ts";
 import { mutateSyncImpl } from "./mutate-sync.ts";
@@ -71,8 +71,17 @@ export function mutate<
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => GroupedDataFrame<
-  AddColumns<Row, Assignments>,
-  Extract<GroupName, keyof AddColumns<Row, Assignments>>
+  Prettify<
+    & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+    & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+  >,
+  Extract<
+    GroupName,
+    keyof (
+      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+    )
+  >
 >;
 
 // ---------- UNGROUPED: object spec of functions (preserve return types) ----------
@@ -106,7 +115,12 @@ export function mutate<
   Assignments extends Record<string, ColumnValue<Row>>,
 >(
   spec: Assignments,
-): (df: DataFrame<Row>) => DataFrame<AddColumns<Row, Assignments>>;
+): (df: DataFrame<Row>) => DataFrame<
+  Prettify<
+    & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+    & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+  >
+>;
 
 /* =================================================================================
   mutate implementation — sync only. Use mutateAsync for async functions.
@@ -209,8 +223,19 @@ export function mutateAsync<
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
   GroupedDataFrame<
-    AddColumns<Row, Assignments>,
-    Extract<GroupName, keyof AddColumns<Row, Assignments>>
+    Prettify<
+      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+        & {
+          [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]>;
+        }
+      )
+    >
   >
 >;
 
@@ -224,7 +249,14 @@ export function mutateAsync<
   options?: ConcurrencyOptions,
 ): (
   df: DataFrame<Row>,
-) => Promise<DataFrame<AddColumns<Row, Assignments>>>;
+) => Promise<
+  DataFrame<
+    Prettify<
+      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
+      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
+    >
+  >
+>;
 
 /* =================================================================================
   mutateAsync implementation

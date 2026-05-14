@@ -48,32 +48,6 @@ export type Frequency =
 export type AggregationFunction<T extends object> = (...args: any[]) => any;
 
 /**
- * Result row type after downsampling.
- * Uses ReturnType directly like summarise to properly infer return types.
- * The conditional type ensures ReturnType is properly evaluated.
- *
- * Note: TimeCol is excluded from aggregations mapping to ensure it's always typed as Date,
- * even if it appears in the aggregations object.
- */
-export type RowAfterDownsample<
-  Row extends Record<string, unknown>,
-  TimeCol extends keyof Row,
-  // deno-lint-ignore no-explicit-any
-  Aggregations extends Record<string, (...args: any[]) => any>,
-> = Prettify<
-  & {
-    [K in Exclude<keyof Aggregations, TimeCol>]: Aggregations[K] extends (
-      // deno-lint-ignore no-explicit-any
-      ...args: any[]
-    ) => infer R ? R
-      : ReturnType<Aggregations[K]>;
-  }
-  & {
-    [K in TimeCol]: Date;
-  }
->;
-
-/**
  * Arguments for downsample operation.
  */
 export type DownsampleArgs<
@@ -110,12 +84,15 @@ export interface DownsampleMethod<Row extends object> {
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
     Prettify<
-      & Pick<R, GroupName> // Include group columns
-      & RowAfterDownsample<
-        R & Record<string, unknown>,
-        TimeCol,
-        Aggregations
-      > // Include downsampled columns
+      & Pick<R, GroupName>
+      & {
+        [K in Exclude<keyof Aggregations, TimeCol>]: Aggregations[K] extends (
+          // deno-lint-ignore no-explicit-any
+          ...args: any[]
+        ) => infer Ret ? Ret
+          : ReturnType<Aggregations[K]>;
+      }
+      & { [K in TimeCol]: Date }
     >
   >;
 
@@ -134,6 +111,15 @@ export interface DownsampleMethod<Row extends object> {
     this: DataFrame<R>,
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
-    RowAfterDownsample<R & Record<string, unknown>, TimeCol, Aggregations>
+    Prettify<
+      & {
+        [K in Exclude<keyof Aggregations, TimeCol>]: Aggregations[K] extends (
+          // deno-lint-ignore no-explicit-any
+          ...args: any[]
+        ) => infer Ret ? Ret
+          : ReturnType<Aggregations[K]>;
+      }
+      & { [K in TimeCol]: Date }
+    >
   >;
 }

@@ -100,36 +100,6 @@ type FillReturnType<Fn> = Fn extends (values: unknown[]) => infer R
   : unknown;
 
 /**
- * Compute the result row type after resampling.
- * Maps each key in options to its computed return type.
- * Similar to RowAfterMutation but for resampling operations.
- */
-type RowAfterResample<
-  Row extends object,
-  TimeCol extends keyof Row,
-  Options extends ResampleOptions<Row>,
-> = Prettify<
-  & Pick<Row, TimeCol> // Always preserve time column
-  & {
-    // Map each key in options (excluding "method" and time column) to its return type
-    [K in keyof Options as K extends "method" | TimeCol ? never : K]:
-      Options[K] extends AggregationFunction<Row>
-        ? AggregationReturnType<Options[K]>
-        : Options[K] extends FillMethod ? FillReturnType<Options[K]>
-        : Options[K] extends number | null ? Options[K]
-        : unknown;
-  }
-  // For upsampling with global method, preserve other columns
-  & (Options extends { method?: FillMethod } ? {
-      [K in keyof Row as K extends TimeCol ? never : K]?: FillReturnType<
-        Options["method"]
-      >;
-    }
-    // deno-lint-ignore ban-types
-    : {})
->;
-
-/**
  * Named arguments for resample method.
  */
 export type ResampleArgs<
@@ -261,8 +231,23 @@ export type ResampleMethod<Row extends object> = {
     args: ResampleArgs<R, TimeCol, Options>,
   ): DataFrame<
     Prettify<
-      & Pick<R, GroupName> // Include group columns
-      & RowAfterResample<R, TimeCol, Options> // Include resampled columns
+      & Pick<R, GroupName>
+      & Pick<R, TimeCol>
+      & {
+        [K in keyof Options as K extends "method" | TimeCol ? never : K]:
+          Options[K] extends AggregationFunction<R>
+            ? AggregationReturnType<Options[K]>
+            : Options[K] extends FillMethod ? FillReturnType<Options[K]>
+            : Options[K] extends number | null ? Options[K]
+            : unknown;
+      }
+      & (Options extends { method?: FillMethod } ? {
+          [K in keyof R as K extends TimeCol ? never : K]?: FillReturnType<
+            Options["method"]
+          >;
+        }
+        // deno-lint-ignore ban-types
+        : {})
     >
   >;
 
@@ -331,5 +316,24 @@ export type ResampleMethod<Row extends object> = {
   >(
     this: DataFrame<R>,
     args: ResampleArgs<R, TimeCol, Options>,
-  ): DataFrame<RowAfterResample<R, TimeCol, Options>>;
+  ): DataFrame<
+    Prettify<
+      & Pick<R, TimeCol>
+      & {
+        [K in keyof Options as K extends "method" | TimeCol ? never : K]:
+          Options[K] extends AggregationFunction<R>
+            ? AggregationReturnType<Options[K]>
+            : Options[K] extends FillMethod ? FillReturnType<Options[K]>
+            : Options[K] extends number | null ? Options[K]
+            : unknown;
+      }
+      & (Options extends { method?: FillMethod } ? {
+          [K in keyof R as K extends TimeCol ? never : K]?: FillReturnType<
+            Options["method"]
+          >;
+        }
+        // deno-lint-ignore ban-types
+        : {})
+    >
+  >;
 };

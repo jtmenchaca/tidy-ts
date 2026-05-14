@@ -22,30 +22,6 @@ type AsyncSummaryFormula<Row extends object> = (
   df: DataFrame<Row>,
 ) => Promise<unknown> | unknown;
 
-export type RowAfterSummariseUngrouped<
-  Row extends object,
-  SummaryFormulas extends Record<string, SummaryFormula<Row> | AsyncSummaryFormula<Row>>,
-> = Prettify<
-  {
-    [ColName in keyof SummaryFormulas]: Awaited<
-      ReturnType<SummaryFormulas[ColName]>
-    >;
-  }
->;
-
-export type RowAfterSummariseGrouped<
-  Row extends object,
-  GroupName extends keyof Row,
-  SummaryFormulas extends Record<string, SummaryFormula<Row> | AsyncSummaryFormula<Row>>,
-> = Prettify<
-  & Pick<Row, GroupName>
-  & {
-    [ColName in keyof SummaryFormulas]: Awaited<
-      ReturnType<SummaryFormulas[ColName]>
-    >;
-  }
->;
-
 /**
  * Synchronous summarise — always returns DataFrame.
  * Use `summariseAsync` for async aggregation functions.
@@ -63,13 +39,28 @@ export type SummariseMethod<Row extends object> =
       >(
         this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
-      ): DataFrame<RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>>;
+      ): DataFrame<
+        Prettify<
+          & Pick<R, GroupName>
+          & {
+            [ColName in keyof SummaryFormulas]: Awaited<
+              ReturnType<SummaryFormulas[ColName]>
+            >;
+          }
+        >
+      >;
 
       // ── Regular DataFrame ─────────────────────────────────────────────
       <R extends object, SummaryFormulas extends Record<string, SummaryFormula<R>>>(
         this: DataFrame<R>,
         summaryFormulas: SummaryFormulas,
-      ): DataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
+      ): DataFrame<
+        {
+          [ColName in keyof SummaryFormulas]: Awaited<
+            ReturnType<SummaryFormulas[ColName]>
+          >;
+        }
+      >;
     }
   >;
 
@@ -90,12 +81,27 @@ export type SummariseAsyncMethod<Row extends object> =
       >(
         this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<RowAfterSummariseGrouped<R, GroupName, SummaryFormulas>>;
+      ): PromisedDataFrame<
+        Prettify<
+          & Pick<R, GroupName>
+          & {
+            [ColName in keyof SummaryFormulas]: Awaited<
+              ReturnType<SummaryFormulas[ColName]>
+            >;
+          }
+        >
+      >;
 
       // ── Regular DataFrame ─────────────────────────────────────────────
       <R extends object, SummaryFormulas extends Record<string, AsyncSummaryFormula<R>>>(
         this: DataFrame<R>,
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<RowAfterSummariseUngrouped<R, SummaryFormulas>>;
+      ): PromisedDataFrame<
+        {
+          [ColName in keyof SummaryFormulas]: Awaited<
+            ReturnType<SummaryFormulas[ColName]>
+          >;
+        }
+      >;
     }
   >;

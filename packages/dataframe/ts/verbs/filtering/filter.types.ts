@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type {
   PromisedDataFrame,
@@ -45,12 +44,11 @@ type AsyncRowFilter<Row extends object> =
  * Future enhancements could leverage runtime pattern detection for common cases.
  */
 
-/** Filtering preserves row shape (values change, shape doesn't). */
-export type RowAfterFilter<Row extends object> = Row;
-
 /**
  * Synchronous filter — always returns DataFrame or GroupedDataFrame.
  * Use `filterAsync` for async predicates.
+ *
+ * Filter preserves row shape — values change, shape doesn't.
  */
 export type FilterRowsMethod<Row extends object> = {
   // ── Type predicate support (explicit narrowing) ────────────────────────
@@ -63,19 +61,19 @@ export type FilterRowsMethod<Row extends object> = {
   // ── Boolean array predicate (always sync) ──────────────────────────────
   (
     pred: readonly (boolean | null | undefined)[],
-  ): DataFrame<RowAfterFilter<Row>>;
+  ): DataFrame<Row>;
 
   // ── Grouped DataFrame — sync predicates ───────────────────────────────
   <R extends object, GroupName extends keyof R, Preds extends readonly RowFilter<R>[]>(
     this: GroupedDataFrame<R, GroupName>,
     ...filterPredicates: Preds
-  ): GroupedDataFrame<RowAfterFilter<R>, GroupName>;
+  ): GroupedDataFrame<R, GroupName>;
 
   // ── Regular DataFrame — sync predicates ───────────────────────────────
   <R extends object, Preds extends readonly RowFilter<R>[]>(
     this: DataFrame<R>,
     ...filterPredicates: Preds
-  ): DataFrame<RowAfterFilter<R>>;
+  ): DataFrame<R>;
 };
 
 /**
@@ -93,17 +91,17 @@ export type FilterAsyncMethod<Row extends object> = {
       df: DataFrame<R>,
     ) => Promise<boolean | null | undefined> | boolean | null | undefined,
     options: ConcurrencyOptions,
-  ): PromisedDataFrame<RowAfterFilter<R>>;
+  ): PromisedDataFrame<R>;
 
   // ── Grouped DataFrame — async predicates ──────────────────────────────
   <R extends object, GroupName extends keyof R, Preds extends readonly AsyncRowFilter<R>[]>(
     this: GroupedDataFrame<R, GroupName>,
     ...filterPredicates: Preds
-  ): PromisedGroupedDataFrame<RowAfterFilter<R>, GroupName>;
+  ): PromisedGroupedDataFrame<R, GroupName>;
 
   // ── Regular DataFrame — async predicates ──────────────────────────────
   <R extends object, Preds extends readonly AsyncRowFilter<R>[]>(
     this: DataFrame<R>,
     ...filterPredicates: Preds
-  ): PromisedDataFrame<RowAfterFilter<R>>;
+  ): PromisedDataFrame<R>;
 };

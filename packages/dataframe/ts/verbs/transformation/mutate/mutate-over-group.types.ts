@@ -24,18 +24,6 @@ type GroupExprResult<Value> = Value extends (
   ? Element
   : unknown;
 
-/**
- * Row type after applying mutateOverGroup assignments.
- */
-type RowAfterGroupMutation<
-  Row extends object,
-  // deno-lint-ignore no-explicit-any
-  Assignments extends Record<string, any>,
-> = Prettify<
-  & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-  & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
->;
-
 export interface MutateOverGroupMethod<Row extends object> {
   // Grouped
   <
@@ -46,8 +34,17 @@ export interface MutateOverGroupMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    RowAfterGroupMutation<R, Assignments>,
-    Extract<GroupName, keyof RowAfterGroupMutation<R, Assignments>>
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
+    >,
+    Extract<
+      GroupName,
+      keyof (
+        & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+        & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
+      )
+    >
   >;
 
   // Ungrouped
@@ -57,5 +54,10 @@ export interface MutateOverGroupMethod<Row extends object> {
   >(
     this: DataFrame<R>,
     assignments: Assignments,
-  ): DataFrame<RowAfterGroupMutation<R, Assignments>>;
+  ): DataFrame<
+    Prettify<
+      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
+      & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
+    >
+  >;
 }

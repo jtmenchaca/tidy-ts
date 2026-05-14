@@ -1,44 +1,6 @@
 // packages/dataframe/ts/types/verbs/pivot.ts
 import type { DataFrame, Prettify } from "../../dataframe/index.ts";
 
-export type RowAfterPivotWider<
-  Row extends object,
-  NamesFrom extends keyof Row,
-  ValuesFrom extends keyof Row,
-  ColNames extends readonly string[],
-  ValuesFn,
-  Prefix extends string = "",
-> = Prettify<
-  // keep everything except the pivot axes
-  & {
-    [
-      ColName in keyof Row as ColName extends NamesFrom | ValuesFrom ? never
-        : ColName
-    ]: Row[ColName];
-  }
-  // add the generated columns (optionally through an aggregator)
-  & {
-    [ColName in ColNames[number] as `${Prefix}${ColName}`]:
-      // deno-lint-ignore no-explicit-any
-      ValuesFn extends (values: any) => infer Result ? Result : Row[ValuesFrom] | undefined;
-  }
->;
-
-export type RowAfterPivotLonger<
-  Row extends object,
-  ColNames extends readonly (keyof Row)[],
-  NamesTo extends string,
-  ValuesTo extends string,
-> = Prettify<
-  & {
-    [
-      ColName in keyof Row as ColName extends ColNames[number] ? never : ColName
-    ]: Row[ColName];
-  }
-  & { [ColName in NamesTo]: string }
-  & { [ColName in ValuesTo]: Row[ColNames[number]] }
->;
-
 /**
  * Pivot DataFrame from long to wide format.
  *
@@ -65,14 +27,20 @@ export type PivotWiderMethod<Row extends object> = {
     },
   ): DataFrame<
     Prettify<
-      RowAfterPivotWider<
-        R,
-        NamesFrom,
-        ValuesFrom,
-        ExpectedCols,
-        ValuesFn,
-        Prefix
-      >
+      // keep everything except the pivot axes
+      & {
+        [
+          ColName in keyof R as ColName extends NamesFrom | ValuesFrom ? never
+            : ColName
+        ]: R[ColName];
+      }
+      // add the generated columns (optionally through an aggregator)
+      & {
+        [ColName in ExpectedCols[number] as `${Prefix}${ColName}`]:
+          // deno-lint-ignore no-explicit-any
+          ValuesFn extends (values: any) => infer Result ? Result
+            : R[ValuesFrom] | undefined;
+      }
     >
   >;
 
@@ -125,6 +93,15 @@ export type PivotLongerMethod<Row extends object> = {
       namesPattern?: RegExp;
     },
   ): DataFrame<
-    Prettify<RowAfterPivotLonger<R, ColNames, NamesTo, ValuesTo>>
+    Prettify<
+      & {
+        [
+          ColName in keyof R as ColName extends ColNames[number] ? never
+            : ColName
+        ]: R[ColName];
+      }
+      & { [ColName in NamesTo]: string }
+      & { [ColName in ValuesTo]: R[ColNames[number]] }
+    >
   >;
 };

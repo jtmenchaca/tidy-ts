@@ -4,8 +4,6 @@ import type {
   PreserveGrouping,
   Prettify,
 } from "../../dataframe/index.ts";
-import type { RowAfterMutation } from "./mutate/mutate.types.ts";
-import type { RowAfterDrop } from "../selection/drop.types.ts";
 
 /**
  * Keys that are actually provided (exclude optionals that are undefined)
@@ -50,22 +48,6 @@ type OldKeyForNewKey<
 }[ProvidedKeys<RenameMap>];
 
 /**
- * Build mutate assignments from rename map: { newKey: (r) => r.oldKey }
- * Iterate over new keys first to preserve literal types (like mutate does)
- * Excludes identity renames (where old key equals new key)
- */
-type MutateAssignmentsFromRename<
-  Row extends object,
-  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
-> = {
-  [NewKey in NewKeyValues<Row, RenameMap>]: (
-    row: Row,
-  ) => OldKeyForNewKey<Row, RenameMap, NewKey> extends keyof Row
-    ? Row[OldKeyForNewKey<Row, RenameMap, NewKey>]
-    : never;
-};
-
-/**
  * Get the keys that should be dropped (old keys that are actually being renamed)
  * Excludes identity renames (where old key equals new key)
  */
@@ -78,22 +60,6 @@ type KeysToDrop<
     : never
     : never;
 }[ProvidedKeys<RenameMap>];
-
-/** Strongly-typed rename result using mutate + drop composition. */
-export type RowAfterRename<
-  Row extends object,
-  RenameMap extends Partial<Record<keyof Row, PropertyKey>>,
-> = Row extends unknown ? Prettify<
-    RowAfterDrop<
-      RowAfterMutation<Row, MutateAssignmentsFromRename<Row, RenameMap>>,
-      & KeysToDrop<Row, RenameMap>
-      & keyof RowAfterMutation<
-        Row,
-        MutateAssignmentsFromRename<Row, RenameMap>
-      >
-    >
-  >
-  : never;
 
 export type RenameMethod<Row extends object> = {
   /**
@@ -125,7 +91,24 @@ export type RenameMethod<Row extends object> = {
   >(
     this: GroupedDataFrame<R, GroupName>,
     mapping: RenameMap,
-  ): PreserveGrouping<R, GroupName, RowAfterRename<R, RenameMap>>;
+  ): PreserveGrouping<
+    R,
+    GroupName,
+    R extends unknown ? Prettify<
+        & {
+          [
+            K in keyof R as K extends KeysToDrop<R, RenameMap> ? never : K
+          ]: R[K];
+        }
+        & {
+          [N in NewKeyValues<R, RenameMap>]:
+            OldKeyForNewKey<R, RenameMap, N> extends keyof R
+              ? R[OldKeyForNewKey<R, RenameMap, N>]
+              : never;
+        }
+      >
+      : never
+  >;
 
   /**
    * Rename columns in the DataFrame.
@@ -152,5 +135,20 @@ export type RenameMethod<Row extends object> = {
   <R extends object, const RenameMap extends Partial<Record<keyof R, PropertyKey>>>(
     this: DataFrame<R>,
     mapping: RenameMap,
-  ): DataFrame<RowAfterRename<R, RenameMap>>;
+  ): DataFrame<
+    R extends unknown ? Prettify<
+        & {
+          [
+            K in keyof R as K extends KeysToDrop<R, RenameMap> ? never : K
+          ]: R[K];
+        }
+        & {
+          [N in NewKeyValues<R, RenameMap>]:
+            OldKeyForNewKey<R, RenameMap, N> extends keyof R
+              ? R[OldKeyForNewKey<R, RenameMap, N>]
+              : never;
+        }
+      >
+      : never
+  >;
 };

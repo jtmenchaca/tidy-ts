@@ -15,13 +15,8 @@ export { mutate, mutateAsync } from "./mutate.overloads.ts";
 
 // Re-export types
 export type {
-  AddColumns,
   ColumnValue,
   MutateAssignments,
   MutateAsyncMethod,
   MutateMethod,
-  RowAfterAssignments,
-  RowAfterFormulas,
-  RowAfterMutation,
-  RowAfterSingleCol,
 } from "./mutate.types.ts";

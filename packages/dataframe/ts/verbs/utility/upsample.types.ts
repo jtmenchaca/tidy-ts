@@ -30,21 +30,6 @@ export type UpsampleArgs<
 };
 
 /**
- * Compute the result row type after upsampling.
- * Preserves the time column and all other columns from the original row.
- */
-type RowAfterUpsample<
-  Row extends object,
-  TimeCol extends keyof Row,
-> = Prettify<
-  & Pick<Row, TimeCol> // Preserve time column
-  & {
-    // Preserve all other columns
-    [K in keyof Row as K extends TimeCol ? never : K]: Row[K];
-  }
->;
-
-/**
  * Method signature for upsample on DataFrame.
  *
  * Upsamples time-series data by filling gaps to a higher frequency.
@@ -103,8 +88,9 @@ export type UpsampleMethod<Row extends object> = {
     args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
   ): DataFrame<
     Prettify<
-      & Pick<R, GroupName> // Include group columns
-      & RowAfterUpsample<R, TimeCol> // Include upsampled columns
+      & Pick<R, GroupName>
+      & Pick<R, TimeCol>
+      & { [K in keyof R as K extends TimeCol ? never : K]: R[K] }
     >
   >;
 
@@ -157,5 +143,10 @@ export type UpsampleMethod<Row extends object> = {
   >(
     this: DataFrame<R>,
     args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
-  ): DataFrame<RowAfterUpsample<R, TimeCol>>;
+  ): DataFrame<
+    Prettify<
+      & Pick<R, TimeCol>
+      & { [K in keyof R as K extends TimeCol ? never : K]: R[K] }
+    >
+  >;
 };
