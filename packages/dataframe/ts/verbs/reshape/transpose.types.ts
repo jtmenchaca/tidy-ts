@@ -4,7 +4,6 @@ import type {
   DataFrame,
   DataKeys,
   DataOnly,
-  Prettify,
   PrettifyDeep,
   UnionToIntersection,
 } from "../../dataframe/index.ts";
@@ -107,14 +106,9 @@ export type TransposeMethod<Row extends object> = {
         PrettifyDeep<
           & {
             "__tidy_row_label__": DataKeys<R>; // ← prints as "first_row" | "second_row"
-          }
-          & {
-            // Wrap the mapped type so it expands to { first_row: T; second_row: T }
-            "__tidy_row_types__": Prettify<
-              ColumnsFromUnion<
-                DataKeys<R>,
-                R[DataKeys<R>]
-              >
+            "__tidy_row_types__": ColumnsFromUnion<
+              DataKeys<R>,
+              R[DataKeys<R>]
             >;
           }
           & RowTypes
@@ -123,13 +117,13 @@ export type TransposeMethod<Row extends object> = {
       // Case 2: Single transpose with row labels — use labels as columns
     : DataFrame<
       PrettifyDeep<
-        & { "__tidy_row_label__": DataKeys<R> }
-        & { "__tidy_row_types__": Prettify<DataOnly<R>> } // ← expands to { name: string; age: number; … }
-        & Prettify<
-          ColumnsFromUnion<
-            Labels,
-            DataOnly<R>[DataKeys<R>]
-          >
+        & {
+          "__tidy_row_label__": DataKeys<R>;
+          "__tidy_row_types__": DataOnly<R>; // ← expands to { name: string; age: number; … }
+        }
+        & ColumnsFromUnion<
+          Labels,
+          DataOnly<R>[DataKeys<R>]
         >
       >
     >

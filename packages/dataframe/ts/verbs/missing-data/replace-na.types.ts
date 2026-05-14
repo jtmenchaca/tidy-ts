@@ -1,4 +1,4 @@
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Helper type to replace null/undefined types with the replacement value type.
@@ -19,13 +19,11 @@ export type ReplaceNaMethod<Row extends object> = <
   this: DataFrame<R>,
   mapping: M,
 ) => DataFrame<
-  Prettify<
-    {
-      [K in keyof R]: K extends keyof M
-        ? ReplaceNullType<R[K], NonNullable<M[K]>>
-        : R[K];
-    }
-  >
+  {
+    [K in keyof R]: K extends keyof M
+      ? ReplaceNullType<R[K], NonNullable<M[K]>>
+      : R[K];
+  }
 >;
 
 /** replaceNull method type for DataFrames */
@@ -36,13 +34,11 @@ export type ReplaceNullMethod<Row extends object> = <
   this: DataFrame<R>,
   mapping: M,
 ) => DataFrame<
-  Prettify<
-    {
-      [K in keyof R]: K extends keyof M
-        ? Exclude<R[K], null> | NonNullable<M[K]>
-        : R[K];
-    }
-  >
+  {
+    [K in keyof R]: K extends keyof M
+      ? Exclude<R[K], null> | NonNullable<M[K]>
+      : R[K];
+  }
 >;
 
 /** replaceUndefined method type for DataFrames */
@@ -53,11 +49,10 @@ export type ReplaceUndefinedMethod<Row extends object> = <
   this: DataFrame<R>,
   mapping: M,
 ) => DataFrame<
-  Prettify<
-    {
-      [K in keyof R]: K extends keyof M
-        ? Exclude<R[K], undefined> | NonNullable<M[K]>
-        : R[K];
-    }
-  >
+  {
+    [K in keyof R]: K extends keyof M
+      ? Exclude<R[K], undefined> | NonNullable<M[K]>
+      : R[K];
+  }
 >;
+

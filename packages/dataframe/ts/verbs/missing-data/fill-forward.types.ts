@@ -1,17 +1,13 @@
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
-
-/**
- * Transform Row type after fillForward operation.
- * Identity — fillForward cannot guarantee null/undefined removal because
- * leading nulls (no prior non-null value) remain unchanged at runtime.
- */
-export type FillForwardResult<Row extends object> = Row;
+import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Forward fill null/undefined values in specified columns.
  *
  * Replaces null/undefined values with the last non-null value before them.
  * Useful for time-series data where you want to carry forward the last known value.
+ *
+ * Row shape is preserved — fillForward cannot guarantee null/undefined removal
+ * because leading nulls (no prior non-null value) remain unchanged at runtime.
  *
  * @param columnNames - Column name(s) to forward fill
  * @returns DataFrame with forward-filled values replacing nulls
@@ -47,4 +43,4 @@ export type FillForwardMethod<Row extends object> = <
 >(
   this: DataFrame<R>,
   ...columnNames: Col[]
-) => DataFrame<Prettify<FillForwardResult<R>>>;
+) => DataFrame<R>;
