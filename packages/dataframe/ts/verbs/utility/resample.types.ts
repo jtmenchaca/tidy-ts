@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type {
   ColumnTypeMismatchDate,
@@ -230,25 +229,28 @@ export type ResampleMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     args: ResampleArgs<R, TimeCol, Options>,
   ): DataFrame<
-    Prettify<
-      & Pick<R, GroupName>
-      & Pick<R, TimeCol>
-      & {
-        [K in keyof Options as K extends "method" | TimeCol ? never : K]:
-          Options[K] extends AggregationFunction<R>
+    {
+      [
+        K in
+          | GroupName
+          | TimeCol
+          | Exclude<keyof Options, "method" | TimeCol>
+          | (Options extends { method?: FillMethod }
+            ? Exclude<keyof R, TimeCol>
+            : never)
+      ]: K extends TimeCol ? R[TimeCol]
+        : K extends GroupName ? R[K]
+        : K extends Exclude<keyof Options, "method" | TimeCol>
+          ? Options[K] extends AggregationFunction<R>
             ? AggregationReturnType<Options[K]>
-            : Options[K] extends FillMethod ? FillReturnType<Options[K]>
-            : Options[K] extends number | null ? Options[K]
-            : unknown;
-      }
-      & (Options extends { method?: FillMethod } ? {
-          [K in keyof R as K extends TimeCol ? never : K]?: FillReturnType<
-            Options["method"]
-          >;
-        }
-        // deno-lint-ignore ban-types
-        : {})
-    >
+          : Options[K] extends FillMethod ? FillReturnType<Options[K]>
+          : Options[K] extends number | null ? Options[K]
+          : unknown
+        : Options extends { method?: FillMethod }
+          ? K extends keyof R ? FillReturnType<Options["method"]> | undefined
+          : never
+        : never;
+    }
   >;
 
   /**
@@ -317,23 +319,25 @@ export type ResampleMethod<Row extends object> = {
     this: DataFrame<R>,
     args: ResampleArgs<R, TimeCol, Options>,
   ): DataFrame<
-    Prettify<
-      & Pick<R, TimeCol>
-      & {
-        [K in keyof Options as K extends "method" | TimeCol ? never : K]:
-          Options[K] extends AggregationFunction<R>
+    {
+      [
+        K in
+          | TimeCol
+          | Exclude<keyof Options, "method" | TimeCol>
+          | (Options extends { method?: FillMethod }
+            ? Exclude<keyof R, TimeCol>
+            : never)
+      ]: K extends TimeCol ? R[TimeCol]
+        : K extends Exclude<keyof Options, "method" | TimeCol>
+          ? Options[K] extends AggregationFunction<R>
             ? AggregationReturnType<Options[K]>
-            : Options[K] extends FillMethod ? FillReturnType<Options[K]>
-            : Options[K] extends number | null ? Options[K]
-            : unknown;
-      }
-      & (Options extends { method?: FillMethod } ? {
-          [K in keyof R as K extends TimeCol ? never : K]?: FillReturnType<
-            Options["method"]
-          >;
-        }
-        // deno-lint-ignore ban-types
-        : {})
-    >
+          : Options[K] extends FillMethod ? FillReturnType<Options[K]>
+          : Options[K] extends number | null ? Options[K]
+          : unknown
+        : Options extends { method?: FillMethod }
+          ? K extends keyof R ? FillReturnType<Options["method"]> | undefined
+          : never
+        : never;
+    }
   >;
 };

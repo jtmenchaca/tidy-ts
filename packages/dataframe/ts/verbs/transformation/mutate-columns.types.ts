@@ -1,8 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
-  UnionToIntersection,
 } from "../../dataframe/index.ts";
 
 /** Element-wise types for mutate_columns (fn receives a single value) */
@@ -12,7 +10,12 @@ export type ElementColumnTypeMap = {
   boolean: boolean;
 };
 
-/** Compute generated column names + return types */
+/**
+ * Compute generated column names + return types as a single mapped type.
+ * For each def `{ prefix?, suffix?, fn }` in the array, generate keys
+ * `${prefix}${col}${suffix}` (with prefix/suffix optional) for each input
+ * column, with value = the return type of that def's `fn`.
+ */
 type GenerateColumnNamesWithTypes<
   ColNames extends readonly string[],
   NewColDefs extends readonly {
@@ -21,24 +24,23 @@ type GenerateColumnNamesWithTypes<
     // deno-lint-ignore no-explicit-any
     fn: (...args: any[]) => any;
   }[],
-> = UnionToIntersection<
-  {
-    [Index in keyof NewColDefs]: NewColDefs[Index] extends {
+> = {
+  [
+    Def in NewColDefs[number] as Def extends {
       prefix?: infer Prefix;
       suffix?: infer Suffix;
-      // deno-lint-ignore no-explicit-any
-      fn: (...args: any[]) => infer Result;
-    } ? Prefix extends string ? Suffix extends string ? {
-            [ColName in ColNames[number] as `${Prefix}${ColName}${Suffix}`]:
-              Result;
-          }
-        : { [ColName in ColNames[number] as `${Prefix}${ColName}`]: Result }
-      : Suffix extends string
-        ? { [ColName in ColNames[number] as `${ColName}${Suffix}`]: Result }
-      : { [ColName in ColNames[number]]: Result }
-      : never;
-  }[number]
->;
+    } ? Prefix extends string ? Suffix extends string
+          ? `${Prefix}${ColNames[number]}${Suffix}`
+        : `${Prefix}${ColNames[number]}`
+        : Suffix extends string ? `${ColNames[number]}${Suffix}`
+        : ColNames[number]
+      : never
+  ]: Def extends {
+    // deno-lint-ignore no-explicit-any
+    fn: (...args: any[]) => infer Result;
+  } ? Result
+    : never;
+};
 
 export type MutateColumnsMethod<Row extends object> = {
   // Grouped
@@ -60,10 +62,19 @@ export type MutateColumnsMethod<Row extends object> = {
       newColumns: NewColDefs;
     },
   ): GroupedDataFrame<
-    Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>,
+    {
+      [
+        K in
+          | keyof R
+          | keyof GenerateColumnNamesWithTypes<ColNames, NewColDefs>
+      ]: K extends keyof GenerateColumnNamesWithTypes<ColNames, NewColDefs>
+        ? GenerateColumnNamesWithTypes<ColNames, NewColDefs>[K]
+        : K extends keyof R ? R[K]
+        : never;
+    },
     Extract<
       GroupName,
-      keyof Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
+      keyof R | keyof GenerateColumnNamesWithTypes<ColNames, NewColDefs>
     >
   >;
 
@@ -85,6 +96,15 @@ export type MutateColumnsMethod<Row extends object> = {
       newColumns: NewColDefs;
     },
   ): DataFrame<
-    Prettify<R & GenerateColumnNamesWithTypes<ColNames, NewColDefs>>
+    {
+      [
+        K in
+          | keyof R
+          | keyof GenerateColumnNamesWithTypes<ColNames, NewColDefs>
+      ]: K extends keyof GenerateColumnNamesWithTypes<ColNames, NewColDefs>
+        ? GenerateColumnNamesWithTypes<ColNames, NewColDefs>[K]
+        : K extends keyof R ? R[K]
+        : never;
+    }
   >;
 };

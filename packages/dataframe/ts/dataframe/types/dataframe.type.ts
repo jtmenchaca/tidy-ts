@@ -71,7 +71,6 @@ import type { InterpolateMethod } from "../../verbs/missing-data/interpolate.typ
 import type { ResampleMethod } from "../../verbs/utility/resample.types.ts";
 import type { DownsampleMethod } from "../../verbs/utility/downsample.types.ts";
 import type { UpsampleMethod } from "../../verbs/utility/upsample.types.ts";
-// import type { FilterNaMethod } from "../../verbs/missing-data/filter-na.types.ts";
 import type { AppendMethod } from "../../verbs/reshape/append.types.ts";
 import type { PrependMethod } from "../../verbs/reshape/prepend.types.ts";
 import type { ShuffleMethod } from "../../verbs/sorting/shuffle.types.ts";

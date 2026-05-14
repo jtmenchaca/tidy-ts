@@ -2,8 +2,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
-  UnionToIntersection,
 } from "../../dataframe/index.ts";
 /** Column type map used by summarise_columns / mutate_columns. */
 export type ColumnTypeMap = {
@@ -12,26 +10,35 @@ export type ColumnTypeMap = {
   boolean: boolean[];
 };
 
-/** Map columns with PREFIX only (e.g. "mean_" + "score"). */
+/**
+ * Map columns with PREFIX only (e.g. "mean_" + "score").
+ *
+ * Single mapped type rather than `UnionToIntersection<...>`. For each prefix
+ * `P` in the user-supplied newColumns array, generate keys `${P}${ColName}`
+ * for each input column, with value = the return type of the def whose
+ * prefix matches `P`. Looks up the matching def via `Extract<...>`.
+ */
 export type MapColsWithPrefix<
   ColNames extends readonly string[],
   // deno-lint-ignore no-explicit-any
   NewColDefs extends readonly { prefix: string; fn: (...a: any[]) => any }[],
-> = UnionToIntersection<
-  {
-    [Index in keyof NewColDefs]: NewColDefs[Index] extends {
-      prefix: infer Prefix;
-      // deno-lint-ignore no-explicit-any
-      fn: (...a: any[]) => infer Result;
-    }
-      ? Prefix extends string
-        ? { [ColName in ColNames[number] as `${Prefix}${ColName}`]: Result }
-      : never
-      : never;
-  }[number]
->;
+> = {
+  [
+    P in NewColDefs[number]["prefix"] as `${P}${ColNames[number]}`
+  ]: Extract<NewColDefs[number], { prefix: P }> extends {
+    // deno-lint-ignore no-explicit-any
+    fn: (...a: any[]) => infer Result;
+  } ? Result
+    : never;
+};
 
-/** Map columns with optional PREFIX and SUFFIX ("pre" + col + "post"). */
+/**
+ * Map columns with optional PREFIX and SUFFIX ("pre" + col + "post").
+ *
+ * Same single-mapped-type idea as above, but the discriminator key is the
+ * (prefix, suffix) pair, since either can be absent. We model the pair by
+ * extracting via a literal `{prefix, suffix}` shape on each def.
+ */
 export type MapColsWithPrefixSuffix<
   ColNames extends readonly string[],
   NewColDefs extends readonly {
@@ -40,24 +47,23 @@ export type MapColsWithPrefixSuffix<
     // deno-lint-ignore no-explicit-any
     fn: (...a: any[]) => any;
   }[],
-> = UnionToIntersection<
-  {
-    [Index in keyof NewColDefs]: NewColDefs[Index] extends {
-      prefix?: infer Prefix;
-      suffix?: infer Suffix;
-      // deno-lint-ignore no-explicit-any
-      fn: (...a: any[]) => infer Result;
-    } ? Prefix extends string ? Suffix extends string ? {
-            [ColName in ColNames[number] as `${Prefix}${ColName}${Suffix}`]:
-              Result;
-          }
-        : { [ColName in ColNames[number] as `${Prefix}${ColName}`]: Result }
-      : Suffix extends string
-        ? { [ColName in ColNames[number] as `${ColName}${Suffix}`]: Result }
-      : { [ColName in ColNames[number]]: Result }
-      : never;
-  }[number]
->;
+> = {
+  [
+    Pair in NewColDefs[number] as Pair extends {
+      prefix?: infer P;
+      suffix?: infer S;
+    } ? P extends string ? S extends string
+          ? `${P}${ColNames[number]}${S}`
+        : `${P}${ColNames[number]}`
+        : S extends string ? `${ColNames[number]}${S}`
+        : ColNames[number]
+      : never
+  ]: Pair extends {
+    // deno-lint-ignore no-explicit-any
+    fn: (...a: any[]) => infer Result;
+  } ? Result
+    : never;
+};
 
 export type SummariseColumnsMethod<Row extends object> = {
   // Grouped: keep group keys, add generated columns
@@ -79,7 +85,16 @@ export type SummariseColumnsMethod<Row extends object> = {
       newColumns: NewColDefs;
     },
   ): DataFrame<
-    Prettify<Pick<R, GroupName> & MapColsWithPrefix<ColNames, NewColDefs>>
+    {
+      [
+        K in
+          | GroupName
+          | keyof MapColsWithPrefix<ColNames, NewColDefs>
+      ]: K extends keyof MapColsWithPrefix<ColNames, NewColDefs>
+        ? MapColsWithPrefix<ColNames, NewColDefs>[K]
+        : K extends keyof R ? R[K]
+        : never;
+    }
   >;
 
   // Ungrouped: keep all original columns, add generated columns
@@ -97,5 +112,16 @@ export type SummariseColumnsMethod<Row extends object> = {
       columns: ColNames;
       newColumns: NewColDefs;
     },
-  ): DataFrame<Prettify<Row & MapColsWithPrefix<ColNames, NewColDefs>>>;
+  ): DataFrame<
+    {
+      [
+        K in
+          | keyof Row
+          | keyof MapColsWithPrefix<ColNames, NewColDefs>
+      ]: K extends keyof MapColsWithPrefix<ColNames, NewColDefs>
+        ? MapColsWithPrefix<ColNames, NewColDefs>[K]
+        : K extends keyof Row ? Row[K]
+        : never;
+    }
+  >;
 };

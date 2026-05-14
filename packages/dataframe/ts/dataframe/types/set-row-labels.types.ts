@@ -1,4 +1,4 @@
-import type { DataFrame, Prettify } from "../index.ts";
+import type { DataFrame } from "../index.ts";
 import type { RowLabel } from "./row-labels.ts";
 import type { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
 
@@ -8,4 +8,11 @@ export type SetRowLabelsMethod<Row extends object> = <
 >(
   this: DataFrame<R>,
   labels: Labels,
-) => DataFrame<Prettify<R & { [K in typeof ROW_LABEL]: Labels[number] }>>;
+) => DataFrame<
+  {
+    [K in keyof R | typeof ROW_LABEL]: K extends typeof ROW_LABEL
+      ? Labels[number]
+      : K extends keyof R ? R[K]
+      : never;
+  }
+>;

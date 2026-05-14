@@ -1,7 +1,6 @@
 // Survival analysis WASM bindings
 
 import { initWasm, wasmInternal } from "./wasm-init.ts";
-import type { Prettify } from "../dataframe/types/utility-types.ts";
 
 // ── Result interfaces ──────────────────────────────────────────────────────
 
@@ -198,7 +197,7 @@ export function coxph({
   init?: number[];
   nocenter?: boolean;
 }
-): Prettify<CoxphResult> {
+): CoxphResult {
   initWasm();
   return wasmInternal.coxph_wasm(
     JSON.stringify(time),
@@ -347,7 +346,7 @@ export function coxphCounting({
   status: number[];
   covariates: Record<string, number[]>;
   options?: CoxphCountingOptions;
-}): Prettify<CoxphResult> {
+}): CoxphResult {
   initWasm();
   const o = options ?? {};
   return wasmInternal.coxph_counting_wasm(

@@ -1,8 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import type {
-  DataFrame,
-  Prettify,
-} from "../dataframe/index.ts";
+import type { DataFrame } from "../dataframe/index.ts";
 import type { TidyGraphWidget } from "./graph-types.ts";
 import { vegaLiteWidget } from "./scatter-widget.ts";
 import { saveGraphAsPNG, saveGraphAsSVG } from "./export-utils.ts";
@@ -242,18 +239,16 @@ export type CommonConfig = {
  * Internal config type used for runtime - includes all chart options.
  * Not exposed to users to maintain type safety.
  */
-type InternalConfig = Prettify<
-  CommonConfig & {
-    /** Line chart specific options */
-    line?: LineChartConfig;
-    /** Scatter plot specific options */
-    scatter?: ScatterChartConfig;
-    /** Bar chart specific options */
-    bar?: BarChartConfig;
-    /** Area chart specific options */
-    area?: AreaChartConfig;
-  }
->;
+type InternalConfig = CommonConfig & {
+  /** Line chart specific options */
+  line?: LineChartConfig;
+  /** Scatter plot specific options */
+  scatter?: ScatterChartConfig;
+  /** Bar chart specific options */
+  bar?: BarChartConfig;
+  /** Area chart specific options */
+  area?: AreaChartConfig;
+};
 
 /* chart-specific mappings + configs */
 
@@ -277,12 +272,10 @@ export type ScatterMappings<T> = {
  * Configuration options specific to scatter plots.
  * Includes common options plus scatter-specific options only.
  */
-export type ScatterConfig = Prettify<
-  CommonConfig & {
-    /** Scatter plot specific options */
-    scatter?: ScatterChartConfig;
-  }
->;
+export type ScatterConfig = CommonConfig & {
+  /** Scatter plot specific options */
+  scatter?: ScatterChartConfig;
+};
 
 /**
  * Column mappings for line charts.
@@ -303,12 +296,10 @@ export type LineMappings<T> = {
  * Configuration options specific to line charts.
  * Includes common options plus line-specific options only.
  */
-export type LineConfig = Prettify<
-  CommonConfig & {
-    /** Line chart specific options */
-    line?: LineChartConfig;
-  }
->;
+export type LineConfig = CommonConfig & {
+  /** Line chart specific options */
+  line?: LineChartConfig;
+};
 
 /**
  * Column mappings for bar charts.
@@ -329,12 +320,10 @@ export type BarMappings<T> = {
  * Configuration options specific to bar charts.
  * Includes common options plus bar-specific options only.
  */
-export type BarConfig = Prettify<
-  CommonConfig & {
-    /** Bar chart specific options */
-    bar?: BarChartConfig;
-  }
->;
+export type BarConfig = CommonConfig & {
+  /** Bar chart specific options */
+  bar?: BarChartConfig;
+};
 
 /**
  * Column mappings for area charts.
@@ -355,12 +344,10 @@ export type AreaMappings<T> = {
  * Configuration options specific to area charts.
  * Includes common options plus area-specific options only.
  */
-export type AreaConfig = Prettify<
-  CommonConfig & {
-    /** Area chart specific options */
-    area?: AreaChartConfig;
-  }
->;
+export type AreaConfig = CommonConfig & {
+  /** Area chart specific options */
+  area?: AreaChartConfig;
+};
 
 /**
  * Scatter plot configuration options.

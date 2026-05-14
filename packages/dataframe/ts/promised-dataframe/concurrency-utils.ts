@@ -5,13 +5,11 @@
  * overwhelming servers and provide better resource management.
  */
 
-import type { Prettify } from "../dataframe/types/utility-types.ts";
-
 /**
  * Retry strategy using exponential backoff.
  * Delay = baseDelay * backoffMultiplier^attempt
  */
-export type ExponentialBackoff = Prettify<{
+export type ExponentialBackoff = {
   /** Backoff strategy identifier */
   backoff: "exponential";
 
@@ -32,13 +30,13 @@ export type ExponentialBackoff = Prettify<{
 
   /** Called before each retry attempt */
   onRetry?: (error: unknown, attempt: number, taskIndex: number) => void;
-}>;
+};
 
 /**
  * Retry strategy using linear backoff.
  * Delay = baseDelay * attempt
  */
-export type LinearBackoff = Prettify<{
+export type LinearBackoff = {
   backoff: "linear";
 
   /** Maximum number of retry attempts (default: 3) */
@@ -55,12 +53,12 @@ export type LinearBackoff = Prettify<{
 
   /** Called before each retry attempt */
   onRetry?: (error: unknown, attempt: number, taskIndex: number) => void;
-}>;
+};
 
 /**
  * Retry strategy using a custom backoff function.
  */
-export type CustomBackoff = Prettify<{
+export type CustomBackoff = {
   backoff: "custom";
 
   /** Maximum number of retry attempts (default: 3) */
@@ -74,7 +72,7 @@ export type CustomBackoff = Prettify<{
 
   /** Called before each retry attempt */
   onRetry?: (error: unknown, attempt: number, taskIndex: number) => void;
-}>;
+};
 
 /**
  * Supported retry strategies.
