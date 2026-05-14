@@ -1,10 +1,4 @@
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
-
-/**
- * Transform Row type after interpolate operation.
- * Identity — interpolation doesn't change the column types.
- */
-export type InterpolateResult<Row extends object> = Row;
+import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Interpolate null/undefined values in a column using linear or spline interpolation.
@@ -13,6 +7,8 @@ export type InterpolateResult<Row extends object> = Row;
  * Interpolates missing values by estimating them based on surrounding known values.
  * Unlike forward/backward fill (which copy values), interpolation calculates intermediate
  * values using mathematical methods.
+ *
+ * Row shape is preserved — interpolation only changes values, not types.
  *
  * @param valueColumn - Column name containing values to interpolate (numbers or Dates)
  * @param xColumn - Column name containing x-axis values (numeric or Date, required)
@@ -57,4 +53,4 @@ export type InterpolateMethod = <
   valueColumn: ValueCol,
   xColumn: XCol,
   method: "linear" | "spline",
-) => DataFrame<Prettify<InterpolateResult<R>>>;
+) => DataFrame<R>;
