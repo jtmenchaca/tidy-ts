@@ -1,5 +1,4 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
-import type { Prettify, Subset } from "@tidy-ts/dataframe";
 
 const df = createDataFrame([
   { name: "Alice", age: 25, city: "NYC", score: 85 },
@@ -19,10 +18,6 @@ const dropped = df.drop("city");
 
 // select uses Pick without Prettify (RowAfterSelect = Pick<Row, ColName>)
 const selected = df.select("name", "age");
-
-// Subset = Prettify<Pick<Type, Key>> — test directly
-type TestSubset = Subset<{ a: number; b: string; c: boolean }, "a" | "b">;
-const subsetVal: TestSubset = { a: 1, b: "x" };
 
 // === INTERSECTION FLATTENING (the core use case) ===
 // mutate uses Prettify<Row & { newCol: type }>

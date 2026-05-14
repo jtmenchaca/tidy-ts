@@ -6,9 +6,6 @@
 // Shape and Object Manipulation
 // ============================================================================
 
-// deno-lint-ignore ban-types
-export type Prettify<Type> = { [Key in keyof Type]: Type[Key] } & {};
-
 // Force *nested* properties to expand too
 export type PrettifyDeep<T> = T extends object
   // deno-lint-ignore ban-types

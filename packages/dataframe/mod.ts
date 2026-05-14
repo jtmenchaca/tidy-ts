@@ -3,19 +3,12 @@ export { str } from "./ts/stats/strings/str.ts";
 export {
   createDataFrame,
   type DataFrame,
-  type DataFrameBase,
-  type DataFrameOptions,
   type GroupedDataFrame,
   type PromisedDataFrame,
   type PromisedGroupedDataFrame,
   zDataFrame,
-  type ZodDataFrame,
 } from "./ts/dataframe/index.ts";
 export { concatDataFrames } from "./ts/verbs/reshape/bind-rows.verb.ts";
-export type {
-  ConcurrencyOptions,
-  RetryConfig,
-} from "./ts/promised-dataframe/concurrency-utils.ts";
 // I/O functions with conditional loading
 export {
   peek,

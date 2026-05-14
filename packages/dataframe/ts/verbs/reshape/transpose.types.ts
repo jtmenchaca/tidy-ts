@@ -4,8 +4,6 @@ import type {
   DataFrame,
   DataKeys,
   DataOnly,
-  PrettifyDeep,
-  UnionToIntersection,
 } from "../../dataframe/index.ts";
 
 /**
@@ -21,49 +19,30 @@ export const ROW_LABEL = "__tidy_row_label__" as const;
 export const ROW_TYPES = "__tidy_row_types__" as const;
 
 /**
- * Generate row column names using the EXACT same pattern as summarise_columns.
- * Takes a tuple of numbers and generates exact column names like row_0, row_1, row_2.
+ * Generate row column names like row_0, row_1, row_2 from a tuple of numbers.
  */
 export type MapRowNumbers<
   RowNumbers extends readonly number[],
-> = UnionToIntersection<
-  {
-    [Index in keyof RowNumbers]: RowNumbers[Index] extends number
-      ? { [ColName in `row_${RowNumbers[Index]}`]: unknown }
-      : never;
-  }[number]
->;
+> = { [K in `row_${RowNumbers[number]}`]: unknown };
 
 /**
- * Generate row column names with types, following summarise_columns pattern exactly.
+ * Generate row column names with types from a tuple of numbers.
  */
 export type MapRowNumbersWithTypes<
   RowNumbers extends readonly number[],
   T = unknown,
-> = UnionToIntersection<
-  {
-    [Index in keyof RowNumbers]: RowNumbers[Index] extends number
-      ? { [ColName in `row_${RowNumbers[Index]}`]: T }
-      : never;
-  }[number]
->;
+> = { [K in `row_${RowNumbers[number]}`]: T };
 
 /**
- * Generate exact column names from row labels (when row labels are set)
+ * Generate exact column names from row labels (when row labels are set).
  */
 export type MapRowLabels<
   RowLabels extends readonly string[],
   T = unknown,
-> = UnionToIntersection<
-  {
-    [Index in keyof RowLabels]: RowLabels[Index] extends string
-      ? { [ColName in RowLabels[Index]]: T }
-      : never;
-  }[number]
->;
+> = { [K in RowLabels[number]]: T };
 
 /**
- * Convert a string union to an object with those strings as keys
+ * Convert a string union to an object with those strings as keys.
  */
 export type MapStringUnionToColumns<
   Labels extends string,
@@ -102,40 +81,28 @@ export type TransposeMethod<Row extends object> = {
     },
   ): // Case 3: Double transpose — restore exact types
   R extends { "__tidy_row_label__": infer Labels extends string }
-    ? R extends { "__tidy_row_types__": infer RowTypes } ? DataFrame<
-        PrettifyDeep<
-          & {
-            "__tidy_row_label__": DataKeys<R>; // ← prints as "first_row" | "second_row"
-            "__tidy_row_types__": ColumnsFromUnion<
-              DataKeys<R>,
-              R[DataKeys<R>]
-            >;
-          }
-          & RowTypes
-        >
-      >
+    ? R extends { "__tidy_row_types__": infer RowTypes extends object } ? DataFrame<{
+        [K in "__tidy_row_label__" | "__tidy_row_types__" | keyof RowTypes]:
+          K extends "__tidy_row_label__" ? DataKeys<R>
+          : K extends "__tidy_row_types__" ? ColumnsFromUnion<DataKeys<R>, R[DataKeys<R>]>
+          : K extends keyof RowTypes ? RowTypes[K]
+          : never;
+      }>
       // Case 2: Single transpose with row labels — use labels as columns
-    : DataFrame<
-      PrettifyDeep<
-        & {
-          "__tidy_row_label__": DataKeys<R>;
-          "__tidy_row_types__": DataOnly<R>; // ← expands to { name: string; age: number; … }
-        }
-        & ColumnsFromUnion<
-          Labels,
-          DataOnly<R>[DataKeys<R>]
-        >
-      >
-    >
+    : DataFrame<{
+        [K in "__tidy_row_label__" | "__tidy_row_types__" | Labels]:
+          K extends "__tidy_row_label__" ? DataKeys<R>
+          : K extends "__tidy_row_types__" ? DataOnly<R>
+          : DataOnly<R>[DataKeys<R>];
+      }>
     // Case 1: First transpose — store row types, generate row_* columns
-    : DataFrame<
-      PrettifyDeep<
-        & { "__tidy_row_label__": keyof R }
-        & { "__tidy_row_types__": R }
-        & MapRowNumbersWithTypes<
-          GenerateNumberTuple<ExpectedRows>,
-          R[keyof R]
-        >
-      >
-    >;
+    : DataFrame<{
+        [K in
+          | "__tidy_row_label__"
+          | "__tidy_row_types__"
+          | keyof MapRowNumbersWithTypes<GenerateNumberTuple<ExpectedRows>, R[keyof R]>
+        ]: K extends "__tidy_row_label__" ? keyof R
+          : K extends "__tidy_row_types__" ? R
+          : R[keyof R];
+      }>;
 };

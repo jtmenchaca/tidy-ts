@@ -99,8 +99,8 @@ export type RenameMethod<Row extends object> = {
             | Exclude<keyof R, KeysToDrop<R, RenameMap>>
             | NewKeyValues<R, RenameMap>
         ]: K extends NewKeyValues<R, RenameMap>
-          ? OldKeyForNewKey<R, RenameMap, K> extends keyof R
-            ? R[OldKeyForNewKey<R, RenameMap, K>]
+          ? OldKeyForNewKey<R, RenameMap, Extract<K, PropertyKey>> extends keyof R
+            ? R[OldKeyForNewKey<R, RenameMap, Extract<K, PropertyKey>>]
             : never
           : K extends keyof R ? R[K]
           : never;
@@ -140,8 +140,8 @@ export type RenameMethod<Row extends object> = {
             | Exclude<keyof R, KeysToDrop<R, RenameMap>>
             | NewKeyValues<R, RenameMap>
         ]: K extends NewKeyValues<R, RenameMap>
-          ? OldKeyForNewKey<R, RenameMap, K> extends keyof R
-            ? R[OldKeyForNewKey<R, RenameMap, K>]
+          ? OldKeyForNewKey<R, RenameMap, Extract<K, PropertyKey>> extends keyof R
+            ? R[OldKeyForNewKey<R, RenameMap, Extract<K, PropertyKey>>]
             : never
           : K extends keyof R ? R[K]
           : never;

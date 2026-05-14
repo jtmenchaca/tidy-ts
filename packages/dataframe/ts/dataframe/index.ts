@@ -34,7 +34,6 @@ export type {
   ExcludeKeysAndMakeUndefined,
   KeyUnion,
   MakeUndefined,
-  Prettify,
   PrettifyDeep,
   UnionToIntersection,
 } from "./types/utility-types.ts";

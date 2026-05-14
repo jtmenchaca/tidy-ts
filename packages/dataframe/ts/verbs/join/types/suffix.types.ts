@@ -1,7 +1,5 @@
 // Unified suffix-aware join types
 // Consolidates inner/left/right/outer/asof into a single generic JoinResult.
-import type { MakeUndefined } from "../../../dataframe/index.ts";
-
 // -----------------------------------------------------------------------------
 // Helpers (unchanged)
 // -----------------------------------------------------------------------------
@@ -43,66 +41,12 @@ type HasDefinedSuffixes<Options> = Options extends
   : false;
 
 // -----------------------------------------------------------------------------
-// Optionality helper: wrap T in MakeUndefined when Required is false
-// -----------------------------------------------------------------------------
-
-type MaybeUndefined<T, Required extends boolean> =
-  Required extends true ? T : MakeUndefined<T>;
-
-// -----------------------------------------------------------------------------
-// Unified: custom suffixes path
+// Value-resolution helpers for the custom-suffix path
 // -----------------------------------------------------------------------------
 
 /**
- * Generic join result with custom suffixes — written as a single mapped type
- * so the result displays flat in hover without needing `Prettify<...>`.
- *
- * Output keys = (join keys) ∪ (L non-conflicting) ∪ (`${conflict}${S.left}`)
- *             ∪ (R non-conflicting, not in L) ∪ (`${conflict}${S.right}`).
- *
- * @param L - Left row type
- * @param R - Right row type
- * @param K - Join key names (subset of keyof L & keyof R)
- * @param S - Suffix config { left?: string; right?: string }
- * @param LReq - Are left non-key columns required?
- * @param RReq - Are right non-key columns required?
- */
-// deno-lint-ignore ban-types
-type JoinWithSuffixes<
-  L extends object,
-  R extends object,
-  K extends StrKey,
-  // deno-lint-ignore ban-types
-  S extends { left?: string; right?: string } = {},
-  LReq extends boolean = true,
-  RReq extends boolean = true,
-> =
-  & {
-    [
-      Out in
-        | Extract<keyof L, K>
-        | Exclude<keyof L, ConflictingColumns<L, R, K>>
-        | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["left"] extends string ? S["left"] : ""}`
-        | Exclude<keyof R, Extract<keyof L, StrKey> | K>
-        | `${Extract<ConflictingColumns<L, R, K>, StrKey>}${S["right"] extends string ? S["right"] : ""}`
-    ]: Out extends K ? L[Extract<Out, keyof L>]
-      // Check for L-suffixed conflicting columns first
-      : S["left"] extends string
-        ? Out extends `${infer Base}${S["left"]}`
-          ? Base extends ConflictingColumns<L, R, K>
-            ? Base extends keyof L
-              ? LReq extends true ? L[Base] : L[Base] | undefined
-            : never
-          : SecondaryLookup<L, R, K, S, LReq, RReq, Out>
-        : SecondaryLookup<L, R, K, S, LReq, RReq, Out>
-      : SecondaryLookup<L, R, K, S, LReq, RReq, Out>;
-  }
-  // Force expanded hover (see SimpleJoinResult's `& {}` comment).
-  & {};
-
-/**
- * Second-stage lookup used by JoinWithSuffixes after the L-suffix check fails.
- * Tries R-suffix match, then plain L/R non-conflicting columns.
+ * Second-stage lookup for custom suffixes: tries R-suffix match, then plain
+ * L/R non-conflicting columns.
  */
 type SecondaryLookup<
   L extends object,
@@ -133,75 +77,6 @@ type PlainLookup<
   : Out extends keyof R ? RReq extends true ? R[Out] : R[Out] | undefined
   : never;
 
-// -----------------------------------------------------------------------------
-// Unified: default _x/_y suffixes path
-// -----------------------------------------------------------------------------
-
-/**
- * Generic join result with default _x/_y suffixes.
- *
- * Written as a single mapped type so the result displays flat in hover
- * without needing an outer `Prettify<...>` wrap.
- *
- * Output keys = (join keys) ∪ (L non-conflicting non-key) ∪ (`${conflict}_x`)
- *             ∪ (R non-conflicting non-key) ∪ (`${conflict}_y`).
- *
- * Dispatch rule:
- *   - join key K           → L[K]  (always required)
- *   - L non-conflicting    → L[P], +undefined if !LReq
- *   - `${conflict}_x`      → L[conflict], +undefined if !LReq
- *   - R non-conflicting    → R[P], +undefined if !RReq
- *   - `${conflict}_y`      → R[conflict], +undefined if !RReq
- */
-// deno-lint-ignore ban-types
-type SimpleJoinResult<
-  L extends object,
-  R extends object,
-  K extends keyof L & keyof R,
-  LReq extends boolean = true,
-  RReq extends boolean = true,
-> =
-  & {
-    [
-      Out in
-        | K
-        | Exclude<
-          keyof L,
-          K | ConflictingColumns<L, R, Extract<K, StrKey>>
-        >
-        | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_x`
-        | Exclude<
-          keyof R,
-          K | Extract<keyof L, StrKey>
-        >
-        | `${Extract<ConflictingColumns<L, R, Extract<K, StrKey>>, string>}_y`
-    ]: Out extends K ? L[Extract<Out, keyof L>]
-      : Out extends
-        `${infer Base}_x` // L conflicting renamed
-        ? Base extends keyof L
-          ? LReq extends true ? L[Base] : L[Base] | undefined
-        : never
-      : Out extends
-        `${infer Base}_y` // R conflicting renamed
-        ? Base extends keyof R
-          ? RReq extends true ? R[Base] : R[Base] | undefined
-        : never
-      : Out extends keyof L
-        ? LReq extends true ? L[Out] : L[Out] | undefined
-      : Out extends keyof R
-        ? RReq extends true ? R[Out] : R[Out] | undefined
-      : never;
-  }
-  // `& {}` forces TS to drop the `SimpleJoinResult<...>` alias from hover and
-  // show the expanded shape. Bundling this into the helper definition avoids
-  // an extra mapped-type instantiation at every call site (vs. wrapping each
-  // site in `Prettify<...>`).
-  & {};
-
-// -----------------------------------------------------------------------------
-// Unified dispatcher
-// -----------------------------------------------------------------------------
-
 // Resolve join keys: prefer Options.keys if present, fall back to K
 type ResolveJoinKeys<
   L extends object,
@@ -212,6 +87,14 @@ type ResolveJoinKeys<
   ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R>
   : Extract<K, StrKey>;
 
+// -----------------------------------------------------------------------------
+// Unified dispatcher
+//
+// The two mapped types (custom-suffix and default _x/_y) are inlined directly
+// into the conditional branches so TS has no named alias to display — hovering
+// always shows the expanded shape without needing `& {}`.
+// -----------------------------------------------------------------------------
+
 type SuffixAwareJoinResult<
   L extends object,
   R extends object,
@@ -221,17 +104,67 @@ type SuffixAwareJoinResult<
   LReq extends boolean = true,
   RReq extends boolean = true,
 > = HasDefinedSuffixes<Options> extends true
-  ? JoinWithSuffixes<
-      L, R,
-      ResolveJoinKeys<L, R, K, Options>,
-      ExtractSuffixes<Options>,
-      LReq, RReq
-    >
-  : SimpleJoinResult<
-      L, R,
-      Options extends { keys: infer _K } ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R> : K,
-      LReq, RReq
-    >;
+  // ── custom suffixes path ──────────────────────────────────────────────
+  ? {
+    [
+      Out in
+        | Extract<keyof L, ResolveJoinKeys<L, R, K, Options>>
+        | Exclude<keyof L, ConflictingColumns<L, R, ResolveJoinKeys<L, R, K, Options>>>
+        | `${Extract<ConflictingColumns<L, R, ResolveJoinKeys<L, R, K, Options>>, StrKey>}${ExtractSuffixes<Options>["left"] extends string ? ExtractSuffixes<Options>["left"] : ""}`
+        | Exclude<keyof R, Extract<keyof L, StrKey> | ResolveJoinKeys<L, R, K, Options>>
+        | `${Extract<ConflictingColumns<L, R, ResolveJoinKeys<L, R, K, Options>>, StrKey>}${ExtractSuffixes<Options>["right"] extends string ? ExtractSuffixes<Options>["right"] : ""}`
+    ]: Out extends ResolveJoinKeys<L, R, K, Options>
+        ? L[Extract<Out, keyof L>]
+      : ExtractSuffixes<Options>["left"] extends string
+        ? Out extends `${infer Base}${ExtractSuffixes<Options>["left"]}`
+          ? Base extends ConflictingColumns<L, R, ResolveJoinKeys<L, R, K, Options>>
+            ? Base extends keyof L
+              ? LReq extends true ? L[Base] : L[Base] | undefined
+            : never
+          : SecondaryLookup<L, R, ResolveJoinKeys<L, R, K, Options>, ExtractSuffixes<Options>, LReq, RReq, Out>
+        : SecondaryLookup<L, R, ResolveJoinKeys<L, R, K, Options>, ExtractSuffixes<Options>, LReq, RReq, Out>
+      : SecondaryLookup<L, R, ResolveJoinKeys<L, R, K, Options>, ExtractSuffixes<Options>, LReq, RReq, Out>;
+  }
+  // ── default _x / _y path ─────────────────────────────────────────────
+  : {
+    [
+      Out in
+        | ResolvedK<L, R, K, Options>
+        | Exclude<
+          keyof L,
+          ResolvedK<L, R, K, Options> | ConflictingColumns<L, R, Extract<ResolvedK<L, R, K, Options>, StrKey>>
+        >
+        | `${Extract<ConflictingColumns<L, R, Extract<ResolvedK<L, R, K, Options>, StrKey>>, string>}_x`
+        | Exclude<
+          keyof R,
+          ResolvedK<L, R, K, Options> | Extract<keyof L, StrKey>
+        >
+        | `${Extract<ConflictingColumns<L, R, Extract<ResolvedK<L, R, K, Options>, StrKey>>, string>}_y`
+    ]: Out extends ResolvedK<L, R, K, Options> ? L[Extract<Out, keyof L>]
+      : Out extends `${infer Base}_x`
+        ? Base extends keyof L
+          ? LReq extends true ? L[Base] : L[Base] | undefined
+        : never
+      : Out extends `${infer Base}_y`
+        ? Base extends keyof R
+          ? RReq extends true ? R[Base] : R[Base] | undefined
+        : never
+      : Out extends keyof L
+        ? LReq extends true ? L[Out] : L[Out] | undefined
+      : Out extends keyof R
+        ? RReq extends true ? R[Out] : R[Out] | undefined
+      : never;
+  };
+
+/** Resolve K for the default _x/_y path: use Options.keys if present, else K */
+type ResolvedK<
+  L extends object,
+  R extends object,
+  K extends keyof L & keyof R,
+  Options,
+> = Options extends { keys: infer _K }
+  ? Extract<ExtractJoinKeys<Options>, keyof L & keyof R>
+  : K;
 
 // -----------------------------------------------------------------------------
 // Per-join-type exports (thin wrappers)

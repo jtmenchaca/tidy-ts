@@ -203,7 +203,7 @@ const tsData = createDataFrame([
   { x: 3, y: 30 as number | null },
 ]);
 const interpolated = tsData.interpolate("y", "x", "linear");
-type _1k = Expect<IsExact<RowOf<typeof interpolated>, { x: number; y: number | null }>>;
+type _1k = Expect<IsExact<RowOf<typeof interpolated>, { x: number; y: number | null }>>; 
 
 // ═══════════════════════════════════════════════════════════════════════
 // 2. SCHEMA NARROWING — columns removed
@@ -419,7 +419,7 @@ const employees = createDataFrame([
 const departments = createDataFrame([
   { dept_id: 10, dept_name: "Engineering" },
   { dept_id: 20, dept_name: "Sales" },
-]);
+]); 
 const joined = employees.leftJoin(departments, "dept_id");
 type _5a = Expect<IsExact<
   RowOf<typeof joined>,

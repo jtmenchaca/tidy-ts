@@ -1,37 +1,76 @@
 import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
- * Merge two row types for bindRows. Written as a single mapped type so the
- * result displays flat in hover without needing `Prettify<...>`.
+ * Merge two row types for bindRows as a single mapped type.
  *
  * Rule:
- *   - Key in both Row1 and Row2: value is `Row1[K] | Row2[K]` (undefined
- *     propagates naturally if either side allows it).
- *   - Key only in Row1: value is `Row1[K] | undefined` — runtime rows from
- *     Row2 won't have the key set, so callers must handle undefined.
- *   - Key only in Row2: symmetric.
+ *   - Key in both: value is `Row1[K] | Row2[K]`
+ *   - Key only in Row1: `Row1[K] | undefined`
+ *   - Key only in Row2: `Row2[K] | undefined`
  *
- * Compared to an intersection of 4 mapped types with the `?:` modifier on
- * optional-in-either keys, this form makes those keys required-with-undefined
- * instead of optional. The JAMIA audit assertions (`b: string | undefined`,
- * `c: boolean | undefined`) match this form exactly. The optional `?:` modifier
- * cannot be applied conditionally per-key in a single mapped type without
- * splitting back into an intersection.
+ * Used only as a building block for MergeRows3/MergeRows4. The 2-arg
+ * overloads inline the mapped type directly at the call site so TS
+ * displays the expanded shape on hover without needing `& {}`.
  */
-// deno-lint-ignore ban-types
-type MergeRows<Row1, Row2> =
-  & {
-    [K in keyof Row1 | keyof Row2]: K extends keyof Row1
-      ? K extends keyof Row2 ? Row1[K] | Row2[K]
-      : Row1[K] | undefined
-      : K extends keyof Row2 ? Row2[K] | undefined
-      : never;
-  }
-  // `& {}` makes TS drop the `MergeRows<...>` alias in hover and display
-  // the expanded shape. This is the same trick the standard `Prettify<T>`
-  // helper uses; bundling it into the helper itself avoids an extra
-  // mapped-type instantiation at every call site.
-  & {};
+type MergeRows<Row1, Row2> = {
+  [K in keyof Row1 | keyof Row2]: K extends keyof Row1
+    ? K extends keyof Row2 ? Row1[K] | Row2[K]
+    : Row1[K] | undefined
+    : K extends keyof Row2 ? Row2[K] | undefined
+    : never;
+};
+
+/**
+ * 3-way merge: inline single mapped type, no recursion needed.
+ * Each key is present in some subset of {R1, R2, R3}; missing sides
+ * contribute `undefined`.
+ */
+type MergeRows3<R1, R2, R3> = {
+  [K in keyof R1 | keyof R2 | keyof R3]:
+    K extends keyof R1
+      ? K extends keyof R2
+        ? K extends keyof R3 ? R1[K] | R2[K] | R3[K]
+        : R1[K] | R2[K] | undefined
+      : K extends keyof R3 ? R1[K] | undefined | R3[K]
+      : R1[K] | undefined
+    : K extends keyof R2
+      ? K extends keyof R3 ? R2[K] | R3[K] | undefined
+      : R2[K] | undefined
+    : K extends keyof R3 ? R3[K] | undefined
+    : never;
+};
+
+/**
+ * 4-way merge: inline single mapped type.
+ * Uses MergeRows internally for the first pair, then expands the
+ * remaining two rows in a single mapped type — keeps hover flat.
+ */
+type MergeRows4<R1, R2, R3, R4> = {
+  [K in keyof R1 | keyof R2 | keyof R3 | keyof R4]:
+    K extends keyof R1
+      ? K extends keyof R2
+        ? K extends keyof R3
+          ? K extends keyof R4 ? R1[K] | R2[K] | R3[K] | R4[K]
+          : R1[K] | R2[K] | R3[K] | undefined
+        : K extends keyof R4 ? R1[K] | R2[K] | undefined | R4[K]
+        : R1[K] | R2[K] | undefined
+      : K extends keyof R3
+        ? K extends keyof R4 ? R1[K] | undefined | R3[K] | R4[K]
+        : R1[K] | undefined | R3[K] | undefined
+      : K extends keyof R4 ? R1[K] | undefined | undefined | R4[K]
+      : R1[K] | undefined
+    : K extends keyof R2
+      ? K extends keyof R3
+        ? K extends keyof R4 ? R2[K] | R3[K] | R4[K] | undefined
+        : R2[K] | R3[K] | undefined
+      : K extends keyof R4 ? R2[K] | undefined | R4[K] | undefined
+      : R2[K] | undefined
+    : K extends keyof R3
+      ? K extends keyof R4 ? R3[K] | R4[K] | undefined
+      : R3[K] | undefined
+    : K extends keyof R4 ? R4[K] | undefined
+    : never;
+};
 
 /**
  * Type for the bind_rows method that combines DataFrames vertically.
@@ -62,7 +101,13 @@ export type BindRowsMethod<Row extends object> = {
   <R extends object, OtherRow extends object>(
     this: DataFrame<R>,
     other: DataFrame<OtherRow>,
-  ): DataFrame<MergeRows<R, OtherRow>>;
+  ): DataFrame<{
+    [K in keyof R | keyof OtherRow]: K extends keyof R
+      ? K extends keyof OtherRow ? R[K] | OtherRow[K]
+      : R[K] | undefined
+      : K extends keyof OtherRow ? OtherRow[K] | undefined
+      : never;
+  }>;
 
   /**
    * Combine DataFrames vertically (stack rows).
@@ -78,7 +123,7 @@ export type BindRowsMethod<Row extends object> = {
     this: DataFrame<R>,
     other1: DataFrame<OtherRow1>,
     other2: DataFrame<OtherRow2>,
-  ): DataFrame<MergeRows<MergeRows<R, OtherRow1>, OtherRow2>>;
+  ): DataFrame<MergeRows3<R, OtherRow1, OtherRow2>>;
 
   /**
    * Combine DataFrames vertically (stack rows).
@@ -96,9 +141,7 @@ export type BindRowsMethod<Row extends object> = {
     other1: DataFrame<OtherRow1>,
     other2: DataFrame<OtherRow2>,
     other3: DataFrame<OtherRow3>,
-  ): DataFrame<
-    MergeRows<MergeRows<MergeRows<R, OtherRow1>, OtherRow2>, OtherRow3>
-  >;
+  ): DataFrame<MergeRows4<R, OtherRow1, OtherRow2, OtherRow3>>;
 
   /**
    * Combine DataFrames vertically (stack rows) — variadic fallback.
@@ -119,11 +162,17 @@ export type BindRowsMethod<Row extends object> = {
 export type ConcatDataFramesFunction = {
   <R1 extends object, R2 extends object>(
     dataFrames: [DataFrame<R1>, DataFrame<R2>],
-  ): DataFrame<MergeRows<R1, R2>>;
+  ): DataFrame<{
+    [K in keyof R1 | keyof R2]: K extends keyof R1
+      ? K extends keyof R2 ? R1[K] | R2[K]
+      : R1[K] | undefined
+      : K extends keyof R2 ? R2[K] | undefined
+      : never;
+  }>;
 
   <R1 extends object, R2 extends object, R3 extends object>(
     dataFrames: [DataFrame<R1>, DataFrame<R2>, DataFrame<R3>],
-  ): DataFrame<MergeRows<MergeRows<R1, R2>, R3>>;
+  ): DataFrame<MergeRows3<R1, R2, R3>>;
 
   <
     R1 extends object,
@@ -132,7 +181,7 @@ export type ConcatDataFramesFunction = {
     R4 extends object,
   >(
     dataFrames: [DataFrame<R1>, DataFrame<R2>, DataFrame<R3>, DataFrame<R4>],
-  ): DataFrame<MergeRows<MergeRows<MergeRows<R1, R2>, R3>, R4>>;
+  ): DataFrame<MergeRows4<R1, R2, R3, R4>>;
 
   <R extends object>(
     dataFrames: DataFrame<R>[],
