@@ -2,7 +2,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../../dataframe/index.ts";
 import {
   cowStore,
@@ -24,8 +23,8 @@ export function mutate_group<
 >(colName: K, expr: (df: DataFrame<T>) => V): (
   df: GroupedDataFrame<T, G>,
 ) => GroupedDataFrame<
-  Prettify<T & Record<K, V>>,
-  Extract<G, keyof Prettify<T & Record<K, V>>>
+  { [P in keyof T | K]: P extends K ? V : P extends keyof T ? T[P] : never },
+  Extract<G, keyof T | K>
 >;
 
 export function mutate_group<
@@ -34,7 +33,9 @@ export function mutate_group<
   V,
 >(colName: K, expr: (df: DataFrame<T>) => V): (
   df: DataFrame<T>,
-) => DataFrame<Prettify<T & Record<K, V>>>;
+) => DataFrame<
+  { [P in keyof T | K]: P extends K ? V : P extends keyof T ? T[P] : never }
+>;
 
 // Implementation
 export function mutate_group(

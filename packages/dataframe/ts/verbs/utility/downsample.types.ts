@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 
 /**
@@ -83,17 +82,18 @@ export interface DownsampleMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
-    Prettify<
-      & Pick<R, GroupName>
-      & {
-        [K in Exclude<keyof Aggregations, TimeCol>]: Aggregations[K] extends (
-          // deno-lint-ignore no-explicit-any
-          ...args: any[]
-        ) => infer Ret ? Ret
-          : ReturnType<Aggregations[K]>;
-      }
-      & { [K in TimeCol]: Date }
-    >
+    {
+      [K in GroupName | Exclude<keyof Aggregations, TimeCol> | TimeCol]:
+        K extends TimeCol ? Date
+          : K extends keyof Aggregations
+            ? Aggregations[K] extends (
+              // deno-lint-ignore no-explicit-any
+              ...args: any[]
+            ) => infer Ret ? Ret
+            : ReturnType<Aggregations[K]>
+          : K extends keyof R ? R[K]
+          : never;
+    }
   >;
 
   /**
@@ -111,15 +111,16 @@ export interface DownsampleMethod<Row extends object> {
     this: DataFrame<R>,
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
   ): DataFrame<
-    Prettify<
-      & {
-        [K in Exclude<keyof Aggregations, TimeCol>]: Aggregations[K] extends (
-          // deno-lint-ignore no-explicit-any
-          ...args: any[]
-        ) => infer Ret ? Ret
-          : ReturnType<Aggregations[K]>;
-      }
-      & { [K in TimeCol]: Date }
-    >
+    {
+      [K in Exclude<keyof Aggregations, TimeCol> | TimeCol]:
+        K extends TimeCol ? Date
+          : K extends keyof Aggregations
+            ? Aggregations[K] extends (
+              // deno-lint-ignore no-explicit-any
+              ...args: any[]
+            ) => infer Ret ? Ret
+            : ReturnType<Aggregations[K]>
+          : never;
+    }
   >;
 }

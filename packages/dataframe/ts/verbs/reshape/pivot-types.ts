@@ -1,5 +1,5 @@
 // packages/dataframe/ts/types/verbs/pivot.ts
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
 
 /**
  * Pivot DataFrame from long to wide format.
@@ -26,22 +26,16 @@ export type PivotWiderMethod<Row extends object> = {
       namesPrefix?: Prefix;
     },
   ): DataFrame<
-    Prettify<
-      // keep everything except the pivot axes
-      & {
-        [
-          ColName in keyof R as ColName extends NamesFrom | ValuesFrom ? never
-            : ColName
-        ]: R[ColName];
-      }
-      // add the generated columns (optionally through an aggregator)
-      & {
-        [ColName in ExpectedCols[number] as `${Prefix}${ColName}`]:
+    {
+      [K in
+        | Exclude<keyof R, NamesFrom | ValuesFrom>
+        | `${Prefix}${ExpectedCols[number]}`]: K extends keyof R ? R[K]
+          : K extends `${Prefix}${ExpectedCols[number]}`
           // deno-lint-ignore no-explicit-any
-          ValuesFn extends (values: any) => infer Result ? Result
-            : R[ValuesFrom] | undefined;
-      }
-    >
+            ? ValuesFn extends (values: any) => infer Result ? Result
+            : R[ValuesFrom] | undefined
+          : never;
+    }
   >;
 
   <
@@ -57,17 +51,14 @@ export type PivotWiderMethod<Row extends object> = {
       namesPrefix?: string;
     },
   ): DataFrame<
-    Prettify<
-      & {
-        // Keep all columns except names_from and values_from
-        [K in keyof R as K extends NamesFrom | ValuesFrom ? never : K]:
-          R[K];
-      }
-      & {
-        // Add dynamic columns as unknown
-        [key: string]: unknown;
-      }
-    >
+    & {
+      // Keep all columns except names_from and values_from
+      [K in Exclude<keyof R, NamesFrom | ValuesFrom>]: R[K];
+    }
+    & {
+      // Add dynamic columns as unknown
+      [key: string]: unknown;
+    }
   >;
 };
 
@@ -93,15 +84,12 @@ export type PivotLongerMethod<Row extends object> = {
       namesPattern?: RegExp;
     },
   ): DataFrame<
-    Prettify<
-      & {
-        [
-          ColName in keyof R as ColName extends ColNames[number] ? never
-            : ColName
-        ]: R[ColName];
-      }
-      & { [ColName in NamesTo]: string }
-      & { [ColName in ValuesTo]: R[ColNames[number]] }
-    >
+    {
+      [K in Exclude<keyof R, ColNames[number]> | NamesTo | ValuesTo]:
+        K extends NamesTo ? string
+          : K extends ValuesTo ? R[ColNames[number]]
+          : K extends keyof R ? R[K]
+          : never;
+    }
   >;
 };

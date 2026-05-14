@@ -2,7 +2,6 @@ import type {
   DataFrame,
   GroupedDataFrame,
   PreserveGrouping,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type {
   EmptyDataFrameDrop,
@@ -54,7 +53,11 @@ export type DropMethod<Row extends object> = {
   <R extends object, GroupName extends keyof R, ColName extends keyof R>(
     this: GroupedDataFrame<R, GroupName>,
     ...columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>
-  ): PreserveGrouping<R, GroupName, Prettify<Omit<R, ColName>>>;
+  ): PreserveGrouping<
+    R,
+    GroupName,
+    { [K in keyof R as K extends ColName ? never : K]: R[K] }
+  >;
 
   /**
    * Remove one or more columns from the DataFrame.
@@ -81,5 +84,5 @@ export type DropMethod<Row extends object> = {
   <R extends object, ColName extends keyof R>(
     this: DataFrame<R>,
     ...columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>
-  ): DataFrame<Prettify<Omit<R, ColName>>>;
+  ): DataFrame<{ [K in keyof R as K extends ColName ? never : K]: R[K] }>;
 };

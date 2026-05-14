@@ -2,7 +2,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type {
   EmptyDataFrameSummarise,
@@ -40,14 +39,13 @@ export type SummariseMethod<Row extends object> =
         this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
       ): DataFrame<
-        Prettify<
-          & Pick<R, GroupName>
-          & {
-            [ColName in keyof SummaryFormulas]: Awaited<
-              ReturnType<SummaryFormulas[ColName]>
-            >;
-          }
-        >
+        {
+          [K in GroupName | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas
+              ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof R ? R[K]
+              : never;
+        }
       >;
 
       // ── Regular DataFrame ─────────────────────────────────────────────
@@ -82,14 +80,13 @@ export type SummariseAsyncMethod<Row extends object> =
         this: GroupedDataFrame<R, GroupName>,
         summaryFormulas: SummaryFormulas,
       ): PromisedDataFrame<
-        Prettify<
-          & Pick<R, GroupName>
-          & {
-            [ColName in keyof SummaryFormulas]: Awaited<
-              ReturnType<SummaryFormulas[ColName]>
-            >;
-          }
-        >
+        {
+          [K in GroupName | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas
+              ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof R ? R[K]
+              : never;
+        }
       >;
 
       // ── Regular DataFrame ─────────────────────────────────────────────

@@ -2,7 +2,6 @@ import type {
   DataFrame,
   GroupedDataFrame,
   PreserveGrouping,
-  Prettify,
 } from "../../dataframe/index.ts";
 
 /**
@@ -94,19 +93,18 @@ export type RenameMethod<Row extends object> = {
   ): PreserveGrouping<
     R,
     GroupName,
-    R extends unknown ? Prettify<
-        & {
-          [
-            K in keyof R as K extends KeysToDrop<R, RenameMap> ? never : K
-          ]: R[K];
-        }
-        & {
-          [N in NewKeyValues<R, RenameMap>]:
-            OldKeyForNewKey<R, RenameMap, N> extends keyof R
-              ? R[OldKeyForNewKey<R, RenameMap, N>]
-              : never;
-        }
-      >
+    R extends unknown ? {
+        [
+          K in
+            | Exclude<keyof R, KeysToDrop<R, RenameMap>>
+            | NewKeyValues<R, RenameMap>
+        ]: K extends NewKeyValues<R, RenameMap>
+          ? OldKeyForNewKey<R, RenameMap, K> extends keyof R
+            ? R[OldKeyForNewKey<R, RenameMap, K>]
+            : never
+          : K extends keyof R ? R[K]
+          : never;
+      }
       : never
   >;
 
@@ -136,19 +134,18 @@ export type RenameMethod<Row extends object> = {
     this: DataFrame<R>,
     mapping: RenameMap,
   ): DataFrame<
-    R extends unknown ? Prettify<
-        & {
-          [
-            K in keyof R as K extends KeysToDrop<R, RenameMap> ? never : K
-          ]: R[K];
-        }
-        & {
-          [N in NewKeyValues<R, RenameMap>]:
-            OldKeyForNewKey<R, RenameMap, N> extends keyof R
-              ? R[OldKeyForNewKey<R, RenameMap, N>]
-              : never;
-        }
-      >
+    R extends unknown ? {
+        [
+          K in
+            | Exclude<keyof R, KeysToDrop<R, RenameMap>>
+            | NewKeyValues<R, RenameMap>
+        ]: K extends NewKeyValues<R, RenameMap>
+          ? OldKeyForNewKey<R, RenameMap, K> extends keyof R
+            ? R[OldKeyForNewKey<R, RenameMap, K>]
+            : never
+          : K extends keyof R ? R[K]
+          : never;
+      }
       : never
   >;
 };

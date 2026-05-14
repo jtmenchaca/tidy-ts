@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../../dataframe/index.ts";
 
 /**
@@ -34,17 +33,13 @@ export interface MutateOverGroupMethod<Row extends object> {
     this: GroupedDataFrame<R, GroupName>,
     assignments: Assignments,
   ): GroupedDataFrame<
-    Prettify<
-      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
-      & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
-    >,
-    Extract<
-      GroupName,
-      keyof (
-        & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
-        & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
-      )
-    >
+    {
+      [K in keyof R | keyof Assignments]:
+        K extends keyof Assignments ? GroupExprResult<Assignments[K]>
+          : K extends keyof R ? R[K]
+          : never;
+    },
+    Extract<GroupName, keyof R | keyof Assignments>
   >;
 
   // Ungrouped
@@ -55,9 +50,11 @@ export interface MutateOverGroupMethod<Row extends object> {
     this: DataFrame<R>,
     assignments: Assignments,
   ): DataFrame<
-    Prettify<
-      & { [K in keyof R as K extends keyof Assignments ? never : K]: R[K] }
-      & { [K in keyof Assignments]: GroupExprResult<Assignments[K]> }
-    >
+    {
+      [K in keyof R | keyof Assignments]:
+        K extends keyof Assignments ? GroupExprResult<Assignments[K]>
+          : K extends keyof R ? R[K]
+          : never;
+    }
   >;
 }

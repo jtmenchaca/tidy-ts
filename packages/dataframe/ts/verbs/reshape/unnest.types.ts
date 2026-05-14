@@ -1,4 +1,4 @@
-import type { DataFrame, Prettify } from "../../dataframe/index.ts";
+import type { DataFrame } from "../../dataframe/index.ts";
 import type {
   RestrictEmptyDataFrame,
 } from "../../dataframe/types/error-types.ts";
@@ -28,10 +28,13 @@ type ArrayColumns<Row extends object> = {
 
 /**
  * Helper type to unnest a single array column, replacing it with its element type | null
- * (null accounts for empty arrays)
+ * (null accounts for empty arrays). Written as a single mapped type so the result
+ * displays flat in hover without needing Prettify.
  */
 type UnnestColumn<Row, Col extends keyof Row> = IsArray<Row[Col]> extends true
-  ? Omit<Row, Col> & { [K in Col]: ArrayElement<Row[Col]> | null }
+  ? {
+    [K in keyof Row]: K extends Col ? ArrayElement<Row[Col]> | null : Row[K];
+  }
   : Row;
 
 /**
@@ -83,7 +86,7 @@ export type UnnestMethod<Row extends object> = {
   <R extends object, Col extends ArrayColumns<R>>(
     this: DataFrame<R>,
     column: RestrictEmptyDataFrame<R, Col, EmptyDataFrameUnnest>,
-  ): DataFrame<Prettify<UnnestColumn<R, Col>>>;
+  ): DataFrame<UnnestColumn<R, Col>>;
 
   /**
    * Unnest multiple array columns, creating one row per combination of array elements.
@@ -113,7 +116,7 @@ export type UnnestMethod<Row extends object> = {
   <R extends object, Cols extends readonly ArrayColumns<R>[]>(
     this: DataFrame<R>,
     columns: RestrictEmptyDataFrame<R, Cols, EmptyDataFrameUnnest>,
-  ): DataFrame<Prettify<UnnestMultipleColumns<R, Cols>>>;
+  ): DataFrame<UnnestMultipleColumns<R, Cols>>;
 };
 
 /**

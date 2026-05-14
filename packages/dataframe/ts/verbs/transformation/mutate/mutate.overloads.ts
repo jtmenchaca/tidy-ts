@@ -2,7 +2,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../../dataframe/index.ts";
 import type {
   ColumnValue,
@@ -47,17 +46,13 @@ export function mutate<
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => GroupedDataFrame<
-  Prettify<
-    & Omit<Row, keyof Formulas>
-    & { [ColName in keyof Formulas]: ReturnType<Formulas[ColName]> }
-  >,
-  Extract<
-    GroupName,
-    keyof Prettify<
-      & Omit<Row, keyof Formulas>
-      & { [ColName in keyof Formulas]: ReturnType<Formulas[ColName]> }
-    >
-  >
+  {
+    [K in keyof Row | keyof Formulas]:
+      K extends keyof Formulas ? ReturnType<Formulas[K]>
+        : K extends keyof Row ? Row[K]
+        : never;
+  },
+  Extract<GroupName, keyof Row | keyof Formulas>
 >;
 
 // ---------- GROUPED: broad MutateExpr fallback (functions | arrays | null) ----------
@@ -71,17 +66,13 @@ export function mutate<
 ): (
   df: GroupedDataFrame<Row, GroupName>,
 ) => GroupedDataFrame<
-  Prettify<
-    & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-    & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
-  >,
-  Extract<
-    GroupName,
-    keyof (
-      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
-    )
-  >
+  {
+    [K in keyof Row | keyof Assignments]:
+      K extends keyof Assignments ? ColumnValueResult<Row, Assignments[K]>
+        : K extends keyof Row ? Row[K]
+        : never;
+  },
+  Extract<GroupName, keyof Row | keyof Assignments>
 >;
 
 // ---------- UNGROUPED: object spec of functions (preserve return types) ----------
@@ -102,10 +93,12 @@ export function mutate<
 ): (
   df: DataFrame<Row>,
 ) => DataFrame<
-  Prettify<
-    & Omit<Row, keyof Formulas>
-    & { [ColName in keyof Formulas]: ReturnType<Formulas[ColName]> }
-  >
+  {
+    [K in keyof Row | keyof Formulas]:
+      K extends keyof Formulas ? ReturnType<Formulas[K]>
+        : K extends keyof Row ? Row[K]
+        : never;
+  }
 >;
 
 // ---------- UNGROUPED: broad MutateExpr fallback (functions | arrays | null) ----------
@@ -116,10 +109,12 @@ export function mutate<
 >(
   spec: Assignments,
 ): (df: DataFrame<Row>) => DataFrame<
-  Prettify<
-    & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-    & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
-  >
+  {
+    [K in keyof Row | keyof Assignments]:
+      K extends keyof Assignments ? ColumnValueResult<Row, Assignments[K]>
+        : K extends keyof Row ? Row[K]
+        : never;
+  }
 >;
 
 /* =================================================================================
@@ -167,19 +162,13 @@ export function mutateAsync<
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
   GroupedDataFrame<
-    Prettify<
-      & Omit<Row, keyof Formulas>
-      & { [ColName in keyof Formulas]: Awaited<ReturnType<Formulas[ColName]>> }
-    >,
-    Extract<
-      GroupName,
-      keyof Prettify<
-        & Omit<Row, keyof Formulas>
-        & {
-          [ColName in keyof Formulas]: Awaited<ReturnType<Formulas[ColName]>>;
-        }
-      >
-    >
+    {
+      [K in keyof Row | keyof Formulas]:
+        K extends keyof Formulas ? Awaited<ReturnType<Formulas[K]>>
+          : K extends keyof Row ? Row[K]
+          : never;
+    },
+    Extract<GroupName, keyof Row | keyof Formulas>
   >
 >;
 
@@ -203,10 +192,12 @@ export function mutateAsync<
   df: DataFrame<Row>,
 ) => Promise<
   DataFrame<
-    Prettify<
-      & Omit<Row, keyof Formulas>
-      & { [ColName in keyof Formulas]: Awaited<ReturnType<Formulas[ColName]>> }
-    >
+    {
+      [K in keyof Row | keyof Formulas]:
+        K extends keyof Formulas ? Awaited<ReturnType<Formulas[K]>>
+          : K extends keyof Row ? Row[K]
+          : never;
+    }
   >
 >;
 
@@ -223,19 +214,13 @@ export function mutateAsync<
   df: GroupedDataFrame<Row, GroupName>,
 ) => Promise<
   GroupedDataFrame<
-    Prettify<
-      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
-    >,
-    Extract<
-      GroupName,
-      keyof (
-        & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-        & {
-          [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]>;
-        }
-      )
-    >
+    {
+      [K in keyof Row | keyof Assignments]:
+        K extends keyof Assignments ? ColumnValueResult<Row, Assignments[K]>
+          : K extends keyof Row ? Row[K]
+          : never;
+    },
+    Extract<GroupName, keyof Row | keyof Assignments>
   >
 >;
 
@@ -251,10 +236,12 @@ export function mutateAsync<
   df: DataFrame<Row>,
 ) => Promise<
   DataFrame<
-    Prettify<
-      & { [K in keyof Row as K extends keyof Assignments ? never : K]: Row[K] }
-      & { [K in keyof Assignments]: ColumnValueResult<Row, Assignments[K]> }
-    >
+    {
+      [K in keyof Row | keyof Assignments]:
+        K extends keyof Assignments ? ColumnValueResult<Row, Assignments[K]>
+          : K extends keyof Row ? Row[K]
+          : never;
+    }
   >
 >;
 

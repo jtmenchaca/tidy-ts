@@ -2,7 +2,6 @@ import type {
   DataFrame,
   GroupedDataFrame,
   PreserveGrouping,
-  Prettify,
 } from "../../dataframe/index.ts";
 
 export type SelectMethod<Row extends object> = {
@@ -29,7 +28,7 @@ export type SelectMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     columnName: First,
     ...columnNames: Rest
-  ): PreserveGrouping<R, GroupName, Prettify<Pick<R, First | Rest[number]>>>;
+  ): PreserveGrouping<R, GroupName, { [K in First | Rest[number]]: R[K] }>;
   /**
    * Select one or more columns from the DataFrame.
    *
@@ -52,5 +51,5 @@ export type SelectMethod<Row extends object> = {
     this: DataFrame<R>,
     columnName: First,
     ...columnNames: Rest
-  ): DataFrame<Prettify<Pick<R, First | Rest[number]>>>;
+  ): DataFrame<{ [K in First | Rest[number]]: R[K] }>;
 };

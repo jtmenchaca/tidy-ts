@@ -1,13 +1,20 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type {
   MissingColumnDummyCol,
   ValidateColumnExists,
 } from "../../dataframe/types/error-types.ts";
 
+/**
+ * Result row type after dummyCol expansion.
+ * Single mapped type — flat in hover without Prettify.
+ *
+ * Keys:
+ *   - if DropOriginal: (keyof Row minus ColName) | generated category columns
+ *   - otherwise:        keyof Row | generated category columns
+ */
 type DummyColResult<
   Row extends object,
   ColName extends string,
@@ -15,13 +22,15 @@ type DummyColResult<
   Prefix extends string,
   Suffix extends string,
   DropOriginal extends boolean,
-> = Prettify<
-  & (DropOriginal extends true ? Omit<Row, ColName & keyof Row> : Row)
-  & {
-    [Category in Categories[number] as `${Prefix}${Category}${Suffix}`]:
-      boolean;
-  }
->;
+> = {
+  [
+    K in
+      | (DropOriginal extends true ? Exclude<keyof Row, ColName> : keyof Row)
+      | `${Prefix}${Categories[number]}${Suffix}`
+  ]: K extends keyof Row ? Row[K]
+    : K extends `${Prefix}${Categories[number]}${Suffix}` ? boolean
+    : never;
+};
 
 export type DummyColMethod<Row extends object> = {
   // Grouped overloads (preserve groups)
@@ -68,8 +77,8 @@ export type DummyColMethod<Row extends object> = {
       include_na?: boolean;
     },
   ): GroupedDataFrame<
-    Prettify<R & Record<string, boolean>>,
-    Extract<GroupName, keyof Prettify<R & Record<string, boolean>>>
+    { [K in keyof R | string]: K extends keyof R ? R[K] : boolean },
+    Extract<GroupName, keyof R | string>
   >;
 
   // Regular DataFrame overloads
@@ -103,5 +112,7 @@ export type DummyColMethod<Row extends object> = {
       drop_original?: boolean;
       include_na?: boolean;
     },
-  ): DataFrame<Prettify<R & Record<string, boolean>>>;
+  ): DataFrame<
+    { [K in keyof R | string]: K extends keyof R ? R[K] : boolean }
+  >;
 };

@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  Prettify,
 } from "../../dataframe/index.ts";
 import type { Frequency } from "./downsample.types.ts";
 
@@ -86,13 +85,7 @@ export type UpsampleMethod<Row extends object> = {
   >(
     this: GroupedDataFrame<R, GroupName>,
     args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
-  ): DataFrame<
-    Prettify<
-      & Pick<R, GroupName>
-      & Pick<R, TimeCol>
-      & { [K in keyof R as K extends TimeCol ? never : K]: R[K] }
-    >
-  >;
+  ): DataFrame<{ [K in keyof R]: R[K] }>;
 
   /**
    * Upsample time-series data to a higher frequency (regular DataFrame).
@@ -143,10 +136,5 @@ export type UpsampleMethod<Row extends object> = {
   >(
     this: DataFrame<R>,
     args: UpsampleArgs<R & Record<string, unknown>, TimeCol>,
-  ): DataFrame<
-    Prettify<
-      & Pick<R, TimeCol>
-      & { [K in keyof R as K extends TimeCol ? never : K]: R[K] }
-    >
-  >;
+  ): DataFrame<{ [K in keyof R]: R[K] }>;
 };
