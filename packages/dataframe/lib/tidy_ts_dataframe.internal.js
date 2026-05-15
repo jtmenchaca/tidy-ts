@@ -2280,6 +2280,18 @@ export function median_wasm(data) {
 }
 
 /**
+ * WASM export for n_unique f64
+ * @param {Float64Array} values
+ * @returns {number}
+ */
+export function n_unique_f64(values) {
+  const ptr0 = passArrayF64ToWasm0(values, wasm.__wbindgen_malloc);
+  const len0 = WASM_VECTOR_LEN;
+  const ret = wasm.n_unique_f64(ptr0, len0);
+  return ret >>> 0;
+}
+
+/**
  * @param {Uint32Array[]} left_columns
  * @param {Uint32Array[]} right_columns
  * @returns {JoinIdxU32}

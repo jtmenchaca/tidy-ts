@@ -582,6 +582,11 @@ export function mean_wasm(values: Float64Array): number;
  */
 export function median_wasm(data: Float64Array): number;
 
+/**
+ * WASM export for n_unique f64
+ */
+export function n_unique_f64(values: Float64Array): number;
+
 export function outer_join_typed_multi_u32(
   left_columns: Uint32Array[],
   right_columns: Uint32Array[],
