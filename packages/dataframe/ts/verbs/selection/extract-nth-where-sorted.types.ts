@@ -1,4 +1,4 @@
-import type { DataFrame, GroupedDataFrame } from "../../dataframe/index.ts";
+import type { GroupedDataFrame } from "../../dataframe/index.ts";
 import type {
   EmptyDataFrameExtract,
   RestrictEmptyDataFrame,
@@ -10,20 +10,18 @@ import type {
  * Provides overloads for single value extraction (rank = 1) and ranked value extraction (rank > 1).
  * Follows the same pattern as extractHead with proper type safety and error handling.
  */
-export type ExtractNthWhereSortedMethod = {
-  <R extends object, ColName extends keyof R, SortColName extends keyof R>(
-    this: DataFrame<R>,
-    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
-    sortBy: RestrictEmptyDataFrame<R, SortColName, EmptyDataFrameExtract>,
+export type ExtractNthWhereSortedMethod<Row extends object> = {
+  <ColName extends keyof Row, SortColName extends keyof Row>(
+    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+    sortBy: RestrictEmptyDataFrame<Row, SortColName, EmptyDataFrameExtract>,
     direction: "asc" | "desc",
-  ): R[ColName] | undefined;
-  <R extends object, ColName extends keyof R, SortColName extends keyof R>(
-    this: DataFrame<R>,
-    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
-    sortBy: RestrictEmptyDataFrame<R, SortColName, EmptyDataFrameExtract>,
+  ): Row[ColName] | undefined;
+  <ColName extends keyof Row, SortColName extends keyof Row>(
+    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+    sortBy: RestrictEmptyDataFrame<Row, SortColName, EmptyDataFrameExtract>,
     direction: "asc" | "desc",
     rank: number,
-  ): R[ColName] | undefined;
+  ): Row[ColName] | undefined;
 };
 
 /**
@@ -32,7 +30,7 @@ export type ExtractNthWhereSortedMethod = {
  * Provides the same overloads as the regular DataFrame method but operates within each group.
  * Returns a single value from the group after sorting by the specified column.
  */
-export type ExtractNthWhereSortedGroupedMethod = {
+export type ExtractNthWhereSortedGroupedMethod<Row extends object> = {
   <
     R extends object,
     GroupName extends keyof R,

@@ -1,4 +1,11 @@
-import type { DataFrame } from "../../dataframe/index.ts";
+import type { DataFrame, Prettify } from "../../dataframe/index.ts";
+
+// Narrow a nested field: replace R[K1][K2] with Exclude<R[K1][K2], Remove>
+type NarrowNested<R, K1 extends keyof R, K2 extends keyof R[K1], Remove> = Prettify<
+  Omit<R, K1> & {
+    [F in K1]: Prettify<Omit<R[K1], K2> & { [N in K2]: Exclude<R[K1][N], Remove> }>;
+  }
+>;
 
 /** @deprecated Use RemoveNullMethod and RemoveUndefinedMethod instead. */
 export type RemoveNAMethod<Row extends object> = {
@@ -6,20 +13,14 @@ export type RemoveNAMethod<Row extends object> = {
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    {
-      [K in keyof R]: K extends Field ? Exclude<R[K], null | undefined>
-        : R[K];
-    }
+    Prettify<R & { [K in Field]: Exclude<R[K], null | undefined> }>
   >;
   <R extends object, Field extends keyof R>(
     this: DataFrame<R>,
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    {
-      [K in keyof R]: K extends Field ? Exclude<R[K], null | undefined>
-        : R[K];
-    }
+    Prettify<R & { [K in Field]: Exclude<R[K], null | undefined> }>
   >;
 };
 
@@ -28,23 +29,14 @@ export type RemoveNullMethod<Row extends object> = {
   <R extends object, K1 extends keyof R, K2 extends keyof R[K1]>(
     this: DataFrame<R>,
     path: readonly [K1, K2],
-  ): DataFrame<
-    {
-      [K in keyof R]: K extends K1
-        ? {
-          [N in keyof R[K1]]: N extends K2 ? Exclude<R[K1][N], null>
-            : R[K1][N];
-        }
-        : R[K];
-    }
-  >;
+  ): DataFrame<NarrowNested<R, K1, K2, null>>;
 
   // Top-level single field
   <R extends object, Field extends keyof R>(
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], null> : R[K] }
+    Prettify<R & { [K in Field]: Exclude<R[K], null> }>
   >;
   // Top-level multiple fields (rest parameters)
   <R extends object, Field extends keyof R>(
@@ -52,7 +44,7 @@ export type RemoveNullMethod<Row extends object> = {
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], null> : R[K] }
+    Prettify<R & { [K in Field]: Exclude<R[K], null> }>
   >;
 };
 
@@ -61,23 +53,14 @@ export type RemoveUndefinedMethod<Row extends object> = {
   <R extends object, K1 extends keyof R, K2 extends keyof R[K1]>(
     this: DataFrame<R>,
     path: readonly [K1, K2],
-  ): DataFrame<
-    {
-      [K in keyof R]: K extends K1
-        ? {
-          [N in keyof R[K1]]: N extends K2 ? Exclude<R[K1][N], undefined>
-            : R[K1][N];
-        }
-        : R[K];
-    }
-  >;
+  ): DataFrame<NarrowNested<R, K1, K2, undefined>>;
 
   // Top-level single field
   <R extends object, Field extends keyof R>(
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], undefined> : R[K] }
+    Prettify<R & { [K in Field]: Exclude<R[K], undefined> }>
   >;
   // Top-level multiple fields (rest parameters)
   <R extends object, Field extends keyof R>(
@@ -85,6 +68,6 @@ export type RemoveUndefinedMethod<Row extends object> = {
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], undefined> : R[K] }
+    Prettify<R & { [K in Field]: Exclude<R[K], undefined> }>
   >;
 };

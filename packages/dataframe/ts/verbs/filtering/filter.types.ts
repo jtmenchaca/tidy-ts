@@ -44,37 +44,36 @@ type AsyncRowFilter<Row extends object> =
  * Future enhancements could leverage runtime pattern detection for common cases.
  */
 
+/** Filtering preserves row shape (values change, shape doesn't). */
+export type RowAfterFilter<Row extends object> = Row;
+
 /**
  * Synchronous filter — always returns DataFrame or GroupedDataFrame.
  * Use `filterAsync` for async predicates.
- *
- * Filter preserves row shape — values change, shape doesn't.
  */
-export type FilterRowsMethod = {
-  // ── Type predicate support (explicit narrowing) ────────────────────────
-  // Must be first so TypeScript matches it before the general overloads.
-  <R extends object, Narrowed extends R>(
-    this: DataFrame<R>,
-    predicate: (row: R, index: number, df: DataFrame<R>) => row is Narrowed,
-  ): DataFrame<Narrowed>;
-
+export type FilterRowsMethod<Row extends object> = {
   // ── Boolean array predicate (always sync) ──────────────────────────────
-  <R extends object>(
-    this: DataFrame<R>,
+  (
     pred: readonly (boolean | null | undefined)[],
-  ): DataFrame<R>;
+  ): DataFrame<RowAfterFilter<Row>>;
 
   // ── Grouped DataFrame — sync predicates ───────────────────────────────
   <R extends object, GroupName extends keyof R, Preds extends readonly RowFilter<R>[]>(
     this: GroupedDataFrame<R, GroupName>,
     ...filterPredicates: Preds
-  ): GroupedDataFrame<R, GroupName>;
+  ): GroupedDataFrame<RowAfterFilter<R>, GroupName>;
 
   // ── Regular DataFrame — sync predicates ───────────────────────────────
   <R extends object, Preds extends readonly RowFilter<R>[]>(
     this: DataFrame<R>,
     ...filterPredicates: Preds
-  ): DataFrame<R>;
+  ): DataFrame<RowAfterFilter<R>>;
+
+  // ── Type predicate support (explicit narrowing) ────────────────────────
+  <R extends object, Narrowed extends R>(
+    this: DataFrame<R>,
+    predicate: (row: R, index: number, df: DataFrame<R>) => row is Narrowed,
+  ): DataFrame<Narrowed>;
 };
 
 /**
@@ -82,7 +81,7 @@ export type FilterRowsMethod = {
  * Use this when any predicate is async (returns a Promise).
  * Supports optional concurrency control.
  */
-export type FilterAsyncMethod = {
+export type FilterAsyncMethod<Row extends object> = {
   // ── With concurrency options ────────────────────────────────────────────
   <R extends object>(
     this: DataFrame<R>,
@@ -92,17 +91,17 @@ export type FilterAsyncMethod = {
       df: DataFrame<R>,
     ) => Promise<boolean | null | undefined> | boolean | null | undefined,
     options: ConcurrencyOptions,
-  ): PromisedDataFrame<R>;
+  ): PromisedDataFrame<RowAfterFilter<R>>;
 
   // ── Grouped DataFrame — async predicates ──────────────────────────────
   <R extends object, GroupName extends keyof R, Preds extends readonly AsyncRowFilter<R>[]>(
     this: GroupedDataFrame<R, GroupName>,
     ...filterPredicates: Preds
-  ): PromisedGroupedDataFrame<R, GroupName>;
+  ): PromisedGroupedDataFrame<RowAfterFilter<R>, GroupName>;
 
   // ── Regular DataFrame — async predicates ──────────────────────────────
   <R extends object, Preds extends readonly AsyncRowFilter<R>[]>(
     this: DataFrame<R>,
     ...filterPredicates: Preds
-  ): PromisedDataFrame<R>;
+  ): PromisedDataFrame<RowAfterFilter<R>>;
 };
