@@ -1,6 +1,6 @@
 {
   "name": "@tidy-ts/dataframe-win32-x64",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "description": "Native binary for @tidy-ts/dataframe on Windows x64",
   "os": ["win32"],
   "cpu": ["x64"],
