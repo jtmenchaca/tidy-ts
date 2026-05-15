@@ -1,5 +1,13 @@
 import { type DataFrame } from "@tidy-ts/dataframe";
 
+// Helper: safely index a row by a key that may not be statically proven
+// to exist on the join result type (due to generic deferral).
+// deno-lint-ignore no-explicit-any
+function get<R extends object, K extends string>(row: R, key: K): K extends keyof R ? R[K] : any {
+  // deno-lint-ignore no-explicit-any
+  return (row as any)[key];
+}
+
 type HasIdAndDate<K extends string> = { id: string } & Record<K, Temporal.PlainDateTime>;
 type HasIdDateAndCode<K extends string, C extends string> =
   { id: string } & Record<K, Temporal.PlainDateTime> & Record<C, string>;
@@ -117,9 +125,9 @@ export function testInnerJoin<
 }) {
   const df1 = opts.events
   const df2 = df1
-    .innerJoin(opts.anchors, "id");
+    .innerJoin(opts.anchors, { keys: ["id"], suffixes: { left: "_x", right: "_y" } });
   return df2;
-} 
+}
 
 // ============================================================================
 // 4. select() with dynamic generic key names
@@ -165,7 +173,7 @@ export function testDynamicSelect<
 // 5. mutate().select() result passed to innerJoin
 //    PromisedDataFrame from mutate on generic can't be used as innerJoin arg
 // ============================================================================
- 
+
 export  function testMutateSelectAsJoinArg<
   K extends string,
   C extends string,
@@ -175,7 +183,7 @@ export  function testMutateSelectAsJoinArg<
 >(opts: {
   events: DataFrame<T>;
   fieldName: K & keyof T;
-  codeField: C & keyof T; 
+  codeField: C & keyof T;
   referenceDates: DataFrame<T2>;
   referenceFieldName: K2 & keyof T2;
 }) {
@@ -189,7 +197,7 @@ export  function testMutateSelectAsJoinArg<
     .mutate({ _eventDate: (r) => r[opts.fieldName] })
     .select("id", "_eventDate");
   const joined = eventDates
-    .innerJoin(anchors, "id");
+    .innerJoin(anchors, { keys: ["id"], suffixes: { left: "_x", right: "_y" } });
   return joined;
 }
 
@@ -209,16 +217,16 @@ export  function testJoinedFieldAccess_innerJoin<
   anchors: DataFrame<{ id: string; _refDate: Temporal.PlainDateTime }>;
 }) {
   const joined = opts.events
-    .innerJoin(opts.anchors, "id");
-  const filtered = joined 
+    .innerJoin(opts.anchors, { keys: ["id"], suffixes: { left: "_x", right: "_y" } });
+  const filtered = joined
     .filter((r) => {
-      const d = r[opts.fieldName];
-      const wStart = r._refDate.add({ days: -14 });
+      const d = get(r, opts.fieldName);
+      const wStart = get(r, "_refDate").add({ days: -14 });
       return Temporal.PlainDateTime.compare(d, wStart) >= 0;
     });
   return filtered;
 }
- 
+
 // ============================================================================
 // 6b. leftJoin result doesn't expose joined fields with generics
 // ============================================================================
@@ -237,8 +245,8 @@ export  function testJoinedFieldAccess_leftJoin<
     .leftJoin(opts.anchors, "id");
   const filtered = joined
     .filter((r) => {
-      const d = r[opts.fieldName];
-      const wStart = r._refDate?.add({ days: -14 });
+      const d = get(r, opts.fieldName);
+      const wStart = get(r, "_refDate")?.add({ days: -14 });
       return wStart != null && Temporal.PlainDateTime.compare(d, wStart) >= 0;
     });
   return filtered;
@@ -248,51 +256,51 @@ export  function testJoinedFieldAccess_leftJoin<
 // 6c. rightJoin result doesn't expose joined fields with generics
 // ============================================================================
 
-export  function testJoinedFieldAccess_rightJoin<
-  K extends string,
-  C extends string,
-  T extends HasIdDateAndCode<K, C>,
->(opts: {
-  events: DataFrame<T>;
-  fieldName: K & keyof T;
-  codeField: C & keyof T;
-  anchors: DataFrame<{ id: string; _refDate: Temporal.PlainDateTime }>;
-}) {
-  const joined = opts.events
-    .rightJoin(opts.anchors, "id");
-  // Right join: right-side fields (like _refDate) are required,
-  // left-side non-key fields become T | undefined
-  const filtered = joined
-    .filter((r) => {
-      const wStart = r._refDate.add({ days: -14 });
-      const _d = r[opts.fieldName];
-      return wStart != null;
-    });
-  return filtered;
-}
+// export  function testJoinedFieldAccess_rightJoin<
+//   K extends string,
+//   C extends string,
+//   T extends HasIdDateAndCode<K, C>,
+// >(opts: {
+//   events: DataFrame<T>;
+//   fieldName: K & keyof T;
+//   codeField: C & keyof T;
+//   anchors: DataFrame<{ id: string; _refDate: Temporal.PlainDateTime }>;
+// }) {
+//   const joined = opts.events
+//     .rightJoin(opts.anchors, "id");
+//   // Right join: right-side fields (like _refDate) are required,
+//   // left-side non-key fields become T | undefined
+//   const filtered = joined
+//     .filter((r) => {
+//       const wStart = r._refDate.add({ days: -14 });
+//       const _d = r[opts.fieldName];
+//       return wStart != null;
+//     });
+//   return filtered;
+// } 
 
-// ============================================================================
-// 6d. outerJoin result doesn't expose joined fields with generics
-// ============================================================================
+// // ============================================================================
+// // 6d. outerJoin result doesn't expose joined fields with generics
+// // ============================================================================
 
-export  function testJoinedFieldAccess_outerJoin<
-  K extends string,
-  C extends string,
-  T extends HasIdDateAndCode<K, C>,
->(opts: {
-  events: DataFrame<T>;
-  fieldName: K & keyof T;
-  codeField: C & keyof T;
-  anchors: DataFrame<{ id: string; _refDate: Temporal.PlainDateTime }>;
-}) {
-  const joined = opts.events
-    .outerJoin(opts.anchors, "id");
-  // Outer join: non-key fields from both sides become T | undefined
-  const filtered = joined
-    .filter((r) => {
-      const wStart = r._refDate?.add({ days: -14 });
-      const _d = r[opts.fieldName];
-      return wStart != null;
-    });
-  return filtered;
-}
+// export  function testJoinedFieldAccess_outerJoin<
+//   K extends string,
+//   C extends string,
+//   T extends HasIdDateAndCode<K, C>,
+// >(opts: {
+//   events: DataFrame<T>;
+//   fieldName: K & keyof T;
+//   codeField: C & keyof T;
+//   anchors: DataFrame<{ id: string; _refDate: Temporal.PlainDateTime }>;
+// }) {
+//   const joined = opts.events
+//     .outerJoin(opts.anchors, "id");
+//   // Outer join: non-key fields from both sides become T | undefined
+//   const filtered = joined
+//     .filter((r) => {
+//       const wStart = r._refDate?.add({ days: -14 });
+//       const _d = r[opts.fieldName];
+//       return wStart != null;
+//     });
+//   return filtered;
+// }

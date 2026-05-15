@@ -1,5 +1,8 @@
 // Join method signatures
-import type { DataFrame } from "../../../dataframe/index.ts";
+import type {
+  DataFrame,
+  Prettify,
+} from "../../../dataframe/index.ts";
 import type {
   EmptyDataFrameJoin,
   RestrictEmptyDataFrame,
@@ -11,7 +14,13 @@ import type {
   RowOfLike,
   SimpleJoinOptions,
 } from "./core.types.ts";
-import type { SuffixAwareJoinResult } from "./suffix.types.ts";
+import type {
+  SuffixAwareAsofJoinResult,
+  SuffixAwareInnerJoinResult,
+  SuffixAwareLeftJoinResult,
+  SuffixAwareOuterJoinResult,
+  SuffixAwareRightJoinResult,
+} from "./suffix.types.ts";
 
 // -----------------------------------------------------------------------------
 // Method Signatures
@@ -72,7 +81,7 @@ export type InnerJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, true, true>
+    Prettify<SuffixAwareInnerJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -110,14 +119,14 @@ export type InnerJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    SuffixAwareJoinResult<
+    Prettify<
+      SuffixAwareInnerJoinResult<
         Row,
         OtherRow,
         keyof Row & keyof OtherRow,
-        { keys: Keys; suffixes: Suffixes },
-        true,
-        true
+        { keys: Keys; suffixes: Suffixes }
       >
+    >
   >;
 };
 
@@ -149,7 +158,7 @@ export type InnerJoinDuckDBMethod<Row extends object> = {
     on: K | K[],
     options?: JoinOptions,
   ): Promise<
-    DataFrame<SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, true, true>>
+    DataFrame<Prettify<SuffixAwareInnerJoinResult<Row, OtherRow, K>>>
   >;
 };
 
@@ -206,7 +215,7 @@ export type LeftJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, true, false>
+    Prettify<SuffixAwareLeftJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -243,14 +252,14 @@ export type LeftJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    SuffixAwareJoinResult<
+    Prettify<
+      SuffixAwareLeftJoinResult<
         Row,
         OtherRow,
         keyof Row & keyof OtherRow,
-        { keys: Keys; suffixes: Suffixes },
-        true,
-        false
+        { keys: Keys; suffixes: Suffixes }
       >
+    >
   >;
 };
 
@@ -288,9 +297,7 @@ export type LeftJoinParallelMethod<Row extends object> = {
       suffixes?: { left?: string; right?: string };
       workers?: number;
     },
-  ): Promise<DataFrame<
-    SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, true, false>
-  >>;
+  ): Promise<DataFrame<Prettify<Row & Partial<OtherRow>>>>;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
   /**
@@ -327,14 +334,14 @@ export type LeftJoinParallelMethod<Row extends object> = {
     >,
   ): Promise<
     DataFrame<
-      SuffixAwareJoinResult<
+      Prettify<
+        SuffixAwareLeftJoinResult<
           Row,
           OtherRow,
           keyof Row & keyof OtherRow,
-          { keys: Keys; suffixes: Suffixes },
-          true,
-          false
+          { keys: Keys; suffixes: Suffixes }
         >
+      >
     >
   >;
 };
@@ -392,7 +399,7 @@ export type RightJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, false, true>
+    Prettify<SuffixAwareRightJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -429,14 +436,14 @@ export type RightJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    SuffixAwareJoinResult<
+    Prettify<
+      SuffixAwareRightJoinResult<
         Row,
         OtherRow,
         keyof Row & keyof OtherRow,
-        { keys: Keys; suffixes: Suffixes },
-        false,
-        true
+        { keys: Keys; suffixes: Suffixes }
       >
+    >
   >;
 };
 
@@ -493,7 +500,7 @@ export type OuterJoinMethod<Row extends object> = {
     >,
     options?: SimpleJoinOptions,
   ): DataFrame<
-    SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, false, false>
+    Prettify<SuffixAwareOuterJoinResult<Row, OtherRow, K>>
   >;
 
   // Advanced API: object with keys and options (suffix-aware with literal type preservation)
@@ -530,14 +537,14 @@ export type OuterJoinMethod<Row extends object> = {
       EmptyDataFrameJoin
     >,
   ): DataFrame<
-    SuffixAwareJoinResult<
+    Prettify<
+      SuffixAwareOuterJoinResult<
         Row,
         OtherRow,
         keyof Row & keyof OtherRow,
-        { keys: Keys; suffixes: Suffixes },
-        false,
-        false
+        { keys: Keys; suffixes: Suffixes }
       >
+    >
   >;
 };
 
@@ -586,12 +593,7 @@ export type CrossJoinMethod<Row extends object> = {
     other: RestrictEmptyDataFrame<Row, Other, EmptyDataFrameJoin>,
     maxRows?: number,
     suffixes?: { left?: string; right?: string },
-  ): DataFrame<{
-    [K in keyof Row | keyof OtherRow]: K extends keyof OtherRow
-      ? OtherRow[K]
-      : K extends keyof Row ? Row[K]
-      : never;
-  }>;
+  ): DataFrame<Prettify<Row & OtherRow>>;
 };
 
 /**
@@ -654,7 +656,7 @@ export type AsofJoinMethod<Row extends object> = {
       tolerance?: number;
       group_by?: (keyof Row & keyof OtherRow)[];
     },
-  ): DataFrame<SuffixAwareJoinResult<Row, OtherRow, K, Record<string, never>, true, false>>;
+  ): DataFrame<Prettify<SuffixAwareAsofJoinResult<Row, OtherRow, K>>>;
 
   // Suffix-aware asof join with const assertions to preserve literal types
   /**
@@ -695,13 +697,13 @@ export type AsofJoinMethod<Row extends object> = {
       suffixes: Suffixes;
     },
   ): DataFrame<
-    SuffixAwareJoinResult<
+    Prettify<
+      SuffixAwareAsofJoinResult<
         Row,
         OtherRow,
-        K,
-        { suffixes: Suffixes },
-        true,
-        false
+        Extract<K, string>,
+        { suffixes: Suffixes }
       >
+    >
   >;
 };

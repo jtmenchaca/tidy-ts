@@ -6,6 +6,9 @@
 // Shape and Object Manipulation
 // ============================================================================
 
+// deno-lint-ignore ban-types
+export type Prettify<Type> = { [Key in keyof Type]: Type[Key] } & {};
+
 // Force *nested* properties to expand too
 export type PrettifyDeep<T> = T extends object
   // deno-lint-ignore ban-types
@@ -24,6 +27,8 @@ export type DataOnly<Row> = { [K in DataKeys<Row>]: Row[K] };
 // Turn a string union into columns, but allow pretty-expansion at the site of use
 export type ColumnsFromUnion<Labels extends string, T> = { [K in Labels]: T };
 
+export type Subset<Type, Key extends keyof Type> = Prettify<Pick<Type, Key>>;
+
 export type UnionToIntersection<Union> =
   (Union extends unknown ? (k: Union) => void : never) extends (
     k: infer Intersection,
@@ -31,6 +36,21 @@ export type UnionToIntersection<Union> =
     : never;
 
 export type KeyUnion<Type> = Type extends Type ? keyof Type : never;
+
+// ============================================================================
+// Union Type Utilities
+// ============================================================================
+
+/** Extract value type from a union of objects at a specific key */
+export type ValueUnion<Type, Key extends PropertyKey> = Type extends unknown
+  ? Type extends Record<Key, unknown> ? Type[Key]
+  : never
+  : never;
+
+/** Merge all keys from a union of object types */
+export type MergeUnionAllKeys<Type> = {
+  [Key in keyof Type]: ValueUnion<Type, Key>;
+};
 
 // ============================================================================
 // Mutability and Widening
@@ -130,6 +150,12 @@ export type DeepMergeNestedProps<T, D extends number = 2> = [D] extends [0] ? T
         )
     )
   : T;
+
+export type UnifyUnion<T> = Prettify<
+  {
+    [K in keyof MergeUnionAllKeys<T>]: MergeUnionAllKeys<T>[K];
+  }
+>;
 
 // ============================================================================
 // Join Type Utilities
