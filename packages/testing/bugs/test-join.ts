@@ -165,7 +165,7 @@ export function testDynamicSelect<
 // 5. mutate().select() result passed to innerJoin
 //    PromisedDataFrame from mutate on generic can't be used as innerJoin arg
 // ============================================================================
-
+ 
 export  function testMutateSelectAsJoinArg<
   K extends string,
   C extends string,
@@ -175,7 +175,7 @@ export  function testMutateSelectAsJoinArg<
 >(opts: {
   events: DataFrame<T>;
   fieldName: K & keyof T;
-  codeField: C & keyof T;
+  codeField: C & keyof T; 
   referenceDates: DataFrame<T2>;
   referenceFieldName: K2 & keyof T2;
 }) {
@@ -210,7 +210,7 @@ export  function testJoinedFieldAccess_innerJoin<
 }) {
   const joined = opts.events
     .innerJoin(opts.anchors, "id");
-  const filtered = joined
+  const filtered = joined 
     .filter((r) => {
       const d = r[opts.fieldName];
       const wStart = r._refDate.add({ days: -14 });
@@ -218,7 +218,7 @@ export  function testJoinedFieldAccess_innerJoin<
     });
   return filtered;
 }
-
+ 
 // ============================================================================
 // 6b. leftJoin result doesn't expose joined fields with generics
 // ============================================================================

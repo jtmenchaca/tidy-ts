@@ -1,10 +1,9 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  PreserveGrouping,
 } from "../../dataframe/index.ts";
 
-export type SelectMethod<Row extends object> = {
+export type SelectMethod = {
   // Rest parameters syntax
   /**
    * Select one or more columns from the DataFrame.
@@ -28,7 +27,7 @@ export type SelectMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     columnName: First,
     ...columnNames: Rest
-  ): PreserveGrouping<R, GroupName, { [K in First | Rest[number]]: R[K] }>;
+  ): GroupedDataFrame<{ [K in First | Rest[number]]: R[K] }, GroupName extends First | Rest[number] ? GroupName : never>;
   /**
    * Select one or more columns from the DataFrame.
    *

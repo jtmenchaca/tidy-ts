@@ -97,6 +97,22 @@ export type PromisedDataFrame<Row extends object> =
     | "summarize"
     | "summariseAsync"
     | "summarizeAsync"
+    | "slice"
+    | "sliceHead"
+    | "sliceTail"
+    | "sliceMin"
+    | "sliceMax"
+    | "sliceSample"
+    | "sample"
+    | "head"
+    | "tail"
+    | "shuffle"
+    | "drop"
+    | "rename"
+    | "reorder"
+    | "year"
+    | "month"
+    | "day"
   >
   & DataFrameColumns<Row>
   & PromiseLike<DataFrame<Row>>
@@ -219,6 +235,70 @@ export type PromisedDataFrame<Row extends object> =
       ): PromisedDataFrame<Row>;
       (column: keyof Row, direction?: "asc" | "desc"): PromisedDataFrame<Row>;
     };
+
+    // Slice methods
+    slice: {
+      (start: number, end?: number): PromisedDataFrame<Row>;
+    };
+    sliceHead: {
+      (count: number): PromisedDataFrame<Row>;
+    };
+    sliceTail: {
+      (count: number): PromisedDataFrame<Row>;
+    };
+    sliceMin: {
+      (columnName: keyof Row, count: number): PromisedDataFrame<Row>;
+    };
+    sliceMax: {
+      (columnName: keyof Row, count: number): PromisedDataFrame<Row>;
+    };
+    sliceSample: {
+      (count: number, seed?: number): PromisedDataFrame<Row>;
+    };
+    sample: {
+      (count: number, seed?: number): PromisedDataFrame<Row>;
+    };
+    head: {
+      (count: number): PromisedDataFrame<Row>;
+    };
+    tail: {
+      (count: number): PromisedDataFrame<Row>;
+    };
+
+    shuffle: {
+      (seed?: number): PromisedDataFrame<Row>;
+    };
+
+    drop: {
+      <ColName extends keyof Row>(
+        ...columns: ColName[]
+      ): PromisedDataFrame<Omit<Row, ColName>>;
+      <ColName extends keyof Row>(
+        columns: ColName[],
+      ): PromisedDataFrame<Omit<Row, ColName>>;
+    };
+
+    rename: {
+      <RenameMap extends Partial<Record<keyof Row, string>>>(
+        renameMap: RenameMap,
+      ): PromisedDataFrame<
+        Omit<Row, keyof RenameMap> & { [K in keyof RenameMap as RenameMap[K] extends string ? RenameMap[K] : never]: K extends keyof Row ? Row[K] : never }
+      >;
+    };
+
+    reorder: {
+      (columns: (keyof Row)[]): PromisedDataFrame<Row>;
+    };
+
+    year: {
+      (column: keyof Row): PromisedDataFrame<Row>;
+    };
+    month: {
+      (column: keyof Row): PromisedDataFrame<Row>;
+    };
+    day: {
+      (column: keyof Row): PromisedDataFrame<Row>;
+    };
   };
 
 /**
@@ -291,6 +371,22 @@ export type PromisedGroupedDataFrame<
     | "summarize"
     | "summariseAsync"
     | "summarizeAsync"
+    | "slice"
+    | "sliceHead"
+    | "sliceTail"
+    | "sliceMin"
+    | "sliceMax"
+    | "sliceSample"
+    | "sample"
+    | "head"
+    | "tail"
+    | "shuffle"
+    | "drop"
+    | "rename"
+    | "reorder"
+    | "year"
+    | "month"
+    | "day"
   >
   & DataFrameColumns<Row>
   & PromiseLike<GroupedDataFrame<Row, K>>
@@ -394,5 +490,70 @@ export type PromisedGroupedDataFrame<
       <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
         summaryFormulas: SummaryFormulas,
       ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+    };
+
+    // Slice methods
+    slice: {
+      (start: number, end?: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sliceHead: {
+      (count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sliceTail: {
+      (count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sliceMin: {
+      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sliceMax: {
+      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sliceSample: {
+      (count: number, seed?: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    sample: {
+      (count: number, seed?: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    head: {
+      (count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+    tail: {
+      (count: number): PromisedGroupedDataFrame<Row, K>;
+    };
+
+    shuffle: {
+      (seed?: number): PromisedGroupedDataFrame<Row, K>;
+    };
+
+    drop: {
+      <ColName extends keyof Row>(
+        ...columns: ColName[]
+      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<K, keyof Omit<Row, ColName>>>;
+      <ColName extends keyof Row>(
+        columns: ColName[],
+      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<K, keyof Omit<Row, ColName>>>;
+    };
+
+    rename: {
+      <RenameMap extends Partial<Record<keyof Row, string>>>(
+        renameMap: RenameMap,
+      ): PromisedGroupedDataFrame<
+        Omit<Row, keyof RenameMap> & { [M in keyof RenameMap as RenameMap[M] extends string ? RenameMap[M] : never]: M extends keyof Row ? Row[M] : never },
+        Extract<K, keyof (Omit<Row, keyof RenameMap> & { [M in keyof RenameMap as RenameMap[M] extends string ? RenameMap[M] : never]: M extends keyof Row ? Row[M] : never })>
+      >;
+    };
+
+    reorder: {
+      (columns: (keyof Row)[]): PromisedGroupedDataFrame<Row, K>;
+    };
+
+    year: {
+      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
+    };
+    month: {
+      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
+    };
+    day: {
+      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
     };
   };

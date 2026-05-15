@@ -1,13 +1,12 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  PreserveGrouping,
 } from "../../dataframe/index.ts";
-export type ReorderMethod<Row extends object> = {
+export type ReorderMethod = {
   <R extends object, GroupName extends keyof R>(
     this: GroupedDataFrame<R, GroupName>,
     columnNames: Array<keyof R>,
-  ): PreserveGrouping<R, GroupName, R>;
+  ): GroupedDataFrame<R, GroupName>;
 
   <R extends object>(
     this: DataFrame<R>,

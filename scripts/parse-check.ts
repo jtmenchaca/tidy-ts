@@ -42,6 +42,10 @@ for (const line of text.split("\n")) {
     if (currentError.length) errors.push(currentError.join("\n"));
     currentError = [line];
     inError = true;
+  } else if (/^error:/.test(line)) {
+    if (currentError.length) errors.push(currentError.join("\n"));
+    currentError = [line];
+    inError = true;
   } else if (inError) {
     const atMatch = line.match(/at file:\/\/\/(.*):(\d+):(\d+)/);
     if (atMatch && !currentError.some((l) => l.includes("→"))) {
@@ -55,6 +59,15 @@ for (const line of text.split("\n")) {
       errors.push(currentError.join("\n"));
       currentError = /^TS\d+\s+\[ERROR\]/.test(line) ? [line] : [];
       inError = /^TS\d+\s+\[ERROR\]/.test(line);
+    } else if (line.trim() === "") {
+      // Empty line ends a parse-error block
+      if (currentError.length && !currentError[0].startsWith("TS")) {
+        errors.push(currentError.join("\n"));
+        currentError = [];
+        inError = false;
+      }
+    } else {
+      currentError.push(line);
     }
   }
 }
@@ -62,20 +75,24 @@ if (currentError.length) errors.push(currentError.join("\n"));
 
 const summaryMatch = text.match(/Found (\d+) errors?\./);
 
-if (errors.length === 0 && !summaryMatch) {
+if (errors.length === 0 && !summaryMatch && code === 0) {
   await spinner.stop("✓ No type errors");
   process.exit(0);
 }
 
 await spinner.stop(`✗ Type errors found`);
 
-for (const err of errors) {
-  console.log(err);
-  console.log();
-}
-
-if (summaryMatch) {
-  console.log(summaryMatch[0]);
+if (errors.length === 0) {
+  // Non-zero exit but no parsed errors — show raw output as fallback
+  console.log(text.trim());
+} else {
+  for (const err of errors) {
+    console.log(err);
+    console.log();
+  }
+  if (summaryMatch) {
+    console.log(summaryMatch[0]);
+  }
 }
 
 process.exit(code);

@@ -50,7 +50,7 @@ type AsyncRowFilter<Row extends object> =
  *
  * Filter preserves row shape — values change, shape doesn't.
  */
-export type FilterRowsMethod<Row extends object> = {
+export type FilterRowsMethod = {
   // ── Type predicate support (explicit narrowing) ────────────────────────
   // Must be first so TypeScript matches it before the general overloads.
   <R extends object, Narrowed extends R>(
@@ -59,9 +59,10 @@ export type FilterRowsMethod<Row extends object> = {
   ): DataFrame<Narrowed>;
 
   // ── Boolean array predicate (always sync) ──────────────────────────────
-  (
+  <R extends object>(
+    this: DataFrame<R>,
     pred: readonly (boolean | null | undefined)[],
-  ): DataFrame<Row>;
+  ): DataFrame<R>;
 
   // ── Grouped DataFrame — sync predicates ───────────────────────────────
   <R extends object, GroupName extends keyof R, Preds extends readonly RowFilter<R>[]>(
@@ -81,7 +82,7 @@ export type FilterRowsMethod<Row extends object> = {
  * Use this when any predicate is async (returns a Promise).
  * Supports optional concurrency control.
  */
-export type FilterAsyncMethod<Row extends object> = {
+export type FilterAsyncMethod = {
   // ── With concurrency options ────────────────────────────────────────────
   <R extends object>(
     this: DataFrame<R>,

@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  PreserveGrouping,
 } from "../../dataframe/index.ts";
 
 /**
@@ -60,7 +59,7 @@ type KeysToDrop<
     : never;
 }[ProvidedKeys<RenameMap>];
 
-export type RenameMethod<Row extends object> = {
+export type RenameMethod = {
   /**
    * Rename columns in the DataFrame.
    *
@@ -90,9 +89,7 @@ export type RenameMethod<Row extends object> = {
   >(
     this: GroupedDataFrame<R, GroupName>,
     mapping: RenameMap,
-  ): PreserveGrouping<
-    R,
-    GroupName,
+  ): GroupedDataFrame<
     R extends unknown ? {
         [
           K in
@@ -105,7 +102,8 @@ export type RenameMethod<Row extends object> = {
           : K extends keyof R ? R[K]
           : never;
       }
-      : never
+      : never,
+    GroupName extends Exclude<keyof R, KeysToDrop<R, RenameMap>> ? GroupName : never
   >;
 
   /**

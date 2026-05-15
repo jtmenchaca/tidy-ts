@@ -1,7 +1,6 @@
 import type {
   DataFrame,
   GroupedDataFrame,
-  PreserveGrouping,
 } from "../../dataframe/index.ts";
 import type {
   EmptyDataFrameDrop,
@@ -26,7 +25,7 @@ import type {
  * // Drop from grouped DataFrames
  * df.groupBy("category").drop("internalId")
  */
-export type DropMethod<Row extends object> = {
+export type DropMethod = {
   // Rest parameters syntax
   /**
    * Remove one or more columns from the DataFrame.
@@ -53,10 +52,9 @@ export type DropMethod<Row extends object> = {
   <R extends object, GroupName extends keyof R, ColName extends keyof R>(
     this: GroupedDataFrame<R, GroupName>,
     ...columnNames: RestrictEmptyDataFrame<R, ColName[], EmptyDataFrameDrop>
-  ): PreserveGrouping<
-    R,
-    GroupName,
-    { [K in keyof R as K extends ColName ? never : K]: R[K] }
+  ): GroupedDataFrame<
+    { [K in keyof R as K extends ColName ? never : K]: R[K] },
+    GroupName extends ColName ? never : GroupName
   >;
 
   /**

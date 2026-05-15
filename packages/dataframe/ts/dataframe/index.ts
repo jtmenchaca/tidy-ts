@@ -25,8 +25,6 @@ export {
   withGroupsRebuilt,
 } from "./implementation/with-groups.ts";
 
-export type { PreserveGrouping } from "./types/dataframe-type-helpers.ts";
-
 export type {
   ColumnsFromUnion,
   DataKeys,

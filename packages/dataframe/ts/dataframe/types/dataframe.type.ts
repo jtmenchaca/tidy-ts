@@ -270,7 +270,7 @@ export interface DataFrameBase<Row extends object = object>
    *   row.prop !== undefined
    * );
    */
-  filter: FilterRowsMethod<Row>;
+  filter: FilterRowsMethod;
 
   /**
    * Async filter — always returns PromisedDataFrame or PromisedGroupedDataFrame.
@@ -279,7 +279,7 @@ export interface DataFrameBase<Row extends object = object>
    *
    * Filtering preserves row shape (values do not change, only which rows are kept).
    */
-  filterAsync: FilterAsyncMethod<Row>;
+  filterAsync: FilterAsyncMethod;
 
   /**
    * Select one or more columns from the DataFrame.
@@ -299,7 +299,7 @@ export interface DataFrameBase<Row extends object = object>
    * // Select on grouped DataFrames
    * df.groupBy("category").select("value", "price")
    */
-  select: SelectMethod<Row>;
+  select: SelectMethod;
 
   /**
    * Extract all values from a column as a plain array.
@@ -316,7 +316,7 @@ export interface DataFrameBase<Row extends object = object>
    * // Pass to a library expecting an array
    * const labels = df.extract("label")
    */
-  extract: ExtractMethod<Row>;
+  extract: ExtractMethod;
 
   /**
    * Extract the first n values from a column.
@@ -332,7 +332,7 @@ export interface DataFrameBase<Row extends object = object>
    * // First three values
    * df.extractHead("value", 3)
    */
-  extractHead: ExtractHeadMethod<Row>;
+  extractHead: ExtractHeadMethod;
 
   /**
    * Extract the last n values from a column.
@@ -348,7 +348,7 @@ export interface DataFrameBase<Row extends object = object>
    * // Last five observations
    * df.extractTail("reading", 5)
    */
-  extractTail: ExtractTailMethod<Row>;
+  extractTail: ExtractTailMethod;
 
   /**
    * Extract the value at a specific index from a column.
@@ -362,7 +362,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.extractNth("value", 42)
    */
-  extractNth: ExtractNthMethod<Row>;
+  extractNth: ExtractNthMethod;
 
   /**
    * Extract a random sample of up to n values from a column.
@@ -374,7 +374,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.extractSample("name", 3)
    */
-  extractSample: ExtractSampleMethod<Row>;
+  extractSample: ExtractSampleMethod;
 
   /**
    * Extract unique values from a column as an array.
@@ -388,7 +388,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.extractUnique("age")
    */
-  extractUnique: ExtractUniqueMethod<Row>;
+  extractUnique: ExtractUniqueMethod;
 
   /**
    * Sort by one column, then read the value from another column at a given rank (1-based).
@@ -398,7 +398,7 @@ export interface DataFrameBase<Row extends object = object>
    * Omit the rank argument to use `1`. Nullish values in the sort column are sorted to the end.
    * Returns `undefined` if there are no rows or rank is out of range.
    */
-  extractNthWhereSorted: ExtractNthWhereSortedMethod<Row>;
+  extractNthWhereSorted: ExtractNthWhereSortedMethod;
 
   /**
    * Sort rows by one or more columns.
@@ -422,10 +422,10 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").arrange("price", "desc")
    */
-  arrange: ArrangeMethod<Row>;
+  arrange: ArrangeMethod;
 
   /** Same as `arrange` — sort rows by one or more columns. */
-  sort: ArrangeMethod<Row>;
+  sort: ArrangeMethod;
 
   /**
    * Get unique combinations of specified columns (SQL DISTINCT).
@@ -443,7 +443,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("year").distinct("product")
    */
-  distinct: DistinctMethod<Row>;
+  distinct: DistinctMethod;
 
   /**
    * Rename columns in the DataFrame.
@@ -467,7 +467,7 @@ export interface DataFrameBase<Row extends object = object>
    * // Works with grouped DataFrames
    * df.groupBy("category").rename({ value: "val" })
    */
-  rename: RenameMethod<Row>;
+  rename: RenameMethod;
 
   /**
    * Remove one or more columns from the DataFrame.
@@ -484,7 +484,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").drop("internalId")
    */
-  drop: DropMethod<Row>;
+  drop: DropMethod;
 
   /**
    * Reorder columns explicitly.
@@ -496,7 +496,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.reorder(["city", "name"])
    */
-  reorder: ReorderMethod<Row>;
+  reorder: ReorderMethod;
 
   // ---------- Joins ----------
   /**
@@ -862,7 +862,7 @@ export interface DataFrameBase<Row extends object = object>
    * - Returns a new DataFrame
    * - On grouped DataFrames, shuffles within each group and preserves grouping
    */
-  shuffle: ShuffleMethod<Row>;
+  shuffle: ShuffleMethod;
 
   // ---------- Pivoting ----------
   /**
@@ -918,7 +918,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").slice(0, 5)
    */
-  slice: SliceRowsMethod<Row>;
+  slice: SliceRowsMethod;
 
   /**
    * Get the first N rows.
@@ -931,7 +931,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").sliceHead(3)
    */
-  sliceHead: SliceHeadMethod<Row>;
+  sliceHead: SliceHeadMethod;
 
   /**
    * Get the last N rows.
@@ -944,7 +944,7 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").sliceTail(2)
    */
-  sliceTail: SliceTailMethod<Row>;
+  sliceTail: SliceTailMethod;
 
   /**
    * Get rows with the smallest values in a column.
@@ -957,14 +957,14 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").sliceMin("price", 3)
    */
-  sliceMin: SliceMinMethod<Row>;
+  sliceMin: SliceMinMethod;
 
   /**
    * Get rows with the largest values in a column.
    *
    * On grouped DataFrames, takes the N largest rows per group.
    */
-  sliceMax: SliceMaxMethod<Row>;
+  sliceMax: SliceMaxMethod;
 
   /**
    * Random sample of N rows (without replacement within the sampled pool).
@@ -980,13 +980,13 @@ export interface DataFrameBase<Row extends object = object>
    * @example
    * df.groupBy("category").sliceSample(5)
    */
-  sliceSample: SliceSampleMethod<Row>;
+  sliceSample: SliceSampleMethod;
   /** @deprecated Use sliceSample instead */
-  sample: SliceSampleMethod<Row>;
+  sample: SliceSampleMethod;
   /** @deprecated Use sliceHead instead */
-  head: SliceHeadMethod<Row>;
+  head: SliceHeadMethod;
   /** @deprecated Use sliceTail instead */
-  tail: SliceTailMethod<Row>;
+  tail: SliceTailMethod;
 
   // ---------- Graph ----------
   graph(spec: GraphOptions<Row>): TidyGraphWidget;
@@ -1101,7 +1101,7 @@ export type DataFrameWithRowLabels<
  */
 export type GroupedDataFrame<
   Row extends object,
-  GroupKeys extends keyof Row = keyof Row,
+  GroupKeys extends PropertyKey = keyof Row,
 > = DataFrame<Row> & {
   __groups: {
     // Core grouping info

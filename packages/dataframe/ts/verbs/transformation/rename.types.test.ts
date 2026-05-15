@@ -175,7 +175,7 @@ const optionalData = createDataFrame(
 const renamedOptional = optionalData.rename({ required: "req" });
 const _renamedOptionalTypeCheck: DataFrame<{
   req: string;
-  optional?: number;
+  optional: number | undefined;
 }> = renamedOptional;
 
 // 16. Test rename with nullable types

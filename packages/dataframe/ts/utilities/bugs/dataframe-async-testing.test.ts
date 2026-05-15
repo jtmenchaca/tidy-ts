@@ -675,7 +675,7 @@ Deno.test("complex async chain", async () => {
     { id: 3, value: 20 },
     { id: 4, value: 25 },
   ]);
-
+ 
   const result = await df
     .filterAsync(async (row) => await checkThresholdAsync(row.value))
     .mutateAsync({

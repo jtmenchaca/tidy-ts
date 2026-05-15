@@ -1,4 +1,5 @@
 // packages/dataframe/ts/types/verbs/extract.ts
+import type { DataFrame } from "../../dataframe/index.ts";
 import type {
   EmptyDataFrameExtract,
   RestrictEmptyDataFrame,
@@ -7,62 +8,70 @@ import type {
 /**
  * Extract all values from a column as an array.
  */
-export type ExtractMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
-  ): Row[ColName][];
+export type ExtractMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
+  ): R[ColName][];
 };
 
 /**
  * Extract the first n values from a column.
  */
-export type ExtractHeadMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+export type ExtractHeadMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     n: 1,
-  ): Row[ColName] | undefined;
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+  ): R[ColName] | undefined;
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     n: number,
-  ): Row[ColName][];
+  ): R[ColName][];
 };
 
 /**
  * Extract the last n values from a column.
  */
-export type ExtractTailMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+export type ExtractTailMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     n: 1,
-  ): Row[ColName] | undefined;
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+  ): R[ColName] | undefined;
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     n: number,
-  ): Row[ColName][];
+  ): R[ColName][];
 };
 
 /**
  * Extract the value at a specific index from a column.
  */
-export type ExtractNthMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+export type ExtractNthMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     index: number,
-  ): Row[ColName] | undefined;
+  ): R[ColName] | undefined;
 };
 
 /**
  * Extract a random sample of n values from a column.
  */
-export type ExtractSampleMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
+export type ExtractSampleMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
     n: number,
-  ): Row[ColName][];
+  ): R[ColName][];
 };
 
-export type ExtractUniqueMethod<Row extends object> = {
-  <ColName extends keyof Row>(
-    column: RestrictEmptyDataFrame<Row, ColName, EmptyDataFrameExtract>,
-  ): Row[ColName][];
+export type ExtractUniqueMethod = {
+  <R extends object, ColName extends keyof R>(
+    this: DataFrame<R>,
+    column: RestrictEmptyDataFrame<R, ColName, EmptyDataFrameExtract>,
+  ): R[ColName][];
 };

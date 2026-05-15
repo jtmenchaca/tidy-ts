@@ -11,7 +11,6 @@ const departments = createDataFrame([
   { dept_id: 10, dept_name: "Engineering" },
   { dept_id: 20, dept_name: "Sales" },
 ]);
-
 // ── 1. No overlapping non-key columns ──────────────────────────────────
 
 const noOverlap = employees.innerJoin(departments, "dept_id");
