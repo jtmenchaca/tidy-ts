@@ -205,7 +205,7 @@ export  function testMutateSelectAsJoinArg<
 // 6. innerJoin result doesn't expose joined fields with generics
 //    r._refDate / r._wStart not accessible on InnerJoinResult<T, concrete>
 // ============================================================================
-
+ 
 export  function testJoinedFieldAccess_innerJoin<
   K extends string,
   C extends string,

@@ -2,16 +2,7 @@ import type {
   DataFrame,
   GroupedDataFrame,
   PreserveGrouping,
-  Prettify,
 } from "../../dataframe/index.ts";
-
-/** Distinct returns only the specified columns (SQL-like behavior). */
-export type RowAfterDistinct<
-  Row extends object,
-  Cols extends keyof Row,
-> = Prettify<
-  Pick<Row, Cols>
->;
 
 /**
  * Get unique combinations of specified columns (SQL DISTINCT).
@@ -56,7 +47,7 @@ export type DistinctMethod<Row extends object> = {
     this: GroupedDataFrame<R, GroupName>,
     column1: Cols,
     ...moreColumns: Cols[]
-  ): PreserveGrouping<R, GroupName, RowAfterDistinct<R, Cols>>;
+  ): PreserveGrouping<R, GroupName, { [K in Cols]: R[K] }>;
 
   /**
    * Get unique combinations of specified columns (SQL DISTINCT).
@@ -81,5 +72,5 @@ export type DistinctMethod<Row extends object> = {
     this: DataFrame<R>,
     column1: Cols,
     ...moreColumns: Cols[]
-  ): DataFrame<RowAfterDistinct<R, Cols>>;
+  ): DataFrame<{ [K in Cols]: R[K] }>;
 };

@@ -14,7 +14,6 @@ import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-col
 // import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
 import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
 import type { RenameMethod } from "../../verbs/transformation/rename.types.ts";
-import type { DummyColMethod } from "../../verbs/utility/dummy-col.types.ts";
 import type {
   PivotLongerMethod,
   PivotWiderMethod,
@@ -72,7 +71,6 @@ import type { InterpolateMethod } from "../../verbs/missing-data/interpolate.typ
 import type { ResampleMethod } from "../../verbs/utility/resample.types.ts";
 import type { DownsampleMethod } from "../../verbs/utility/downsample.types.ts";
 import type { UpsampleMethod } from "../../verbs/utility/upsample.types.ts";
-// import type { FilterNaMethod } from "../../verbs/missing-data/filter-na.types.ts";
 import type { AppendMethod } from "../../verbs/reshape/append.types.ts";
 import type { PrependMethod } from "../../verbs/reshape/prepend.types.ts";
 import type { ShuffleMethod } from "../../verbs/sorting/shuffle.types.ts";
@@ -487,7 +485,7 @@ export interface DataFrameBase<Row extends object = object>
    * df.groupBy("category").drop("internalId")
    */
   drop: DropMethod<Row>;
-
+ 
   /**
    * Reorder columns explicitly.
    *
@@ -708,16 +706,6 @@ export interface DataFrameBase<Row extends object = object>
   count: CountMethod<Row>;
 
   // ---------- Utilities ----------
-  /**
-   * Create boolean dummy columns from a categorical column (one-hot encoding).
-   *
-   * By default drops the original column, derives categories from the data (first-seen order),
-   * and skips null/undefined unless `include_na: true` (then `"null"` / `"undefined"` categories).
-   *
-   * Options include `expected_categories`, `prefix` / `suffix`, `drop_original`, and `include_na`.
-   */
-  dummyCol: DummyColMethod<Row>;
-
   /**
    * Combine DataFrames vertically (stack rows).
    *
