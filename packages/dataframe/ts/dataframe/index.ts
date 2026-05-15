@@ -31,12 +31,9 @@ export type {
   ColumnsFromUnion,
   DataKeys,
   DataOnly,
-  ExcludeKeysAndMakeUndefined,
   KeyUnion,
-  MakeUndefined,
   Prettify,
   PrettifyDeep,
-  UnifyUnion,
   UnionToIntersection,
 } from "./types/utility-types.ts";
 

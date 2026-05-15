@@ -27,8 +27,6 @@ export type DataOnly<Row> = { [K in DataKeys<Row>]: Row[K] };
 // Turn a string union into columns, but allow pretty-expansion at the site of use
 export type ColumnsFromUnion<Labels extends string, T> = { [K in Labels]: T };
 
-export type Subset<Type, Key extends keyof Type> = Prettify<Pick<Type, Key>>;
-
 export type UnionToIntersection<Union> =
   (Union extends unknown ? (k: Union) => void : never) extends (
     k: infer Intersection,
@@ -36,21 +34,6 @@ export type UnionToIntersection<Union> =
     : never;
 
 export type KeyUnion<Type> = Type extends Type ? keyof Type : never;
-
-// ============================================================================
-// Union Type Utilities
-// ============================================================================
-
-/** Extract value type from a union of objects at a specific key */
-export type ValueUnion<Type, Key extends PropertyKey> = Type extends unknown
-  ? Type extends Record<Key, unknown> ? Type[Key]
-  : never
-  : never;
-
-/** Merge all keys from a union of object types */
-export type MergeUnionAllKeys<Type> = {
-  [Key in keyof Type]: ValueUnion<Type, Key>;
-};
 
 // ============================================================================
 // Mutability and Widening
@@ -133,56 +116,13 @@ export type DeepMergeNestedProps<T, D extends number = 2> = [D] extends [0] ? T
               Dec<D>
             >;
           }
-        // both present
-        : (
-          & {
-            [K in RequiredKeysFromUnion<T>]: DeepMergeNestedProps<
-              DropUndefined<ValueUnionOrU<T, K>>,
-              Dec<D>
-            >;
+        // both present — single mapped type avoids intersection cost
+        : {
+            [K in Extract<RequiredKeysFromUnion<T> | OptionalKeysFromUnion<T>, PropertyKey>]:
+              K extends RequiredKeysFromUnion<T>
+                ? DeepMergeNestedProps<DropUndefined<ValueUnionOrU<T, K>>, Dec<D>>
+                : DeepMergeNestedProps<DropUndefined<ValueUnionOrU<T, K>>, Dec<D>> | undefined;
           }
-          & {
-            [K in OptionalKeysFromUnion<T>]?: DeepMergeNestedProps<
-              DropUndefined<ValueUnionOrU<T, K>>,
-              Dec<D>
-            >;
-          }
-        )
     )
   : T;
 
-export type UnifyUnion<T> = Prettify<
-  {
-    [K in keyof MergeUnionAllKeys<T>]: MergeUnionAllKeys<T>[K];
-  }
->;
-
-// ============================================================================
-// Join Type Utilities
-// ============================================================================
-
-/**
- * Convert all properties in a type to be required but allow undefined values.
- * This is different from Partial<T> which makes properties optional (?:)
- *
- * @example
- * type Before = { name: string; age: number }
- * type WithPartial = Partial<Before>        // { name?: string; age?: number }
- * type WithUndefined = MakeUndefined<Before> // { name: string | undefined; age: number | undefined }
- */
-export type MakeUndefined<T> = {
-  [K in keyof T]: T[K] | undefined;
-};
-
-/**
- * Remove specified keys from a type and make remaining properties undefined-able.
- * Used for join operations where certain keys are excluded from the optional side.
- *
- * @example
- * type Row = { id: number; name: string; value: number }
- * type Result = ExcludeKeysAndMakeUndefined<Row, "id">
- * // Result: { name: string | undefined; value: number | undefined }
- */
-export type ExcludeKeysAndMakeUndefined<T, K extends keyof T> = MakeUndefined<
-  Omit<T, K>
->;

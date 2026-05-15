@@ -1,6 +1,7 @@
 // packages/dataframe/ts/core/thenable.ts
 import type {
   DataFrame,
+  DataFrameBase,
   DataFrameColumns,
   GroupedDataFrame,
 } from "../../dataframe/index.ts";
@@ -27,10 +28,58 @@ import type {
  * 1. Type system sees the overridden signatures during compilation
  * 2. Runtime proxy behavior is irrelevant to TypeScript's type inference
  * 3. Awaited<ReturnType<...>> properly handles mixed sync/async function parameters
- *
- * DEBUGGING TECHNIQUE: Use `deno task intellisense file:line:char` to verify types
- * rather than relying on console.log which only shows runtime behavior.
  */
+
+/** Methods omitted from DataFrame and re-declared with PromisedDataFrame return types. */
+type OmittedMethods =
+  | "mutate"
+  | "mutateAsync"
+  | "filter"
+  | "filterAsync"
+  | "select"
+  | "arrange"
+  | "sort"
+  | "print"
+  | "extract"
+  | "extractHead"
+  | "extractTail"
+  | "extractNth"
+  | "extractSample"
+  | "extractUnique"
+  | "extractNthWhereSorted"
+  | "forEach"
+  | "forEachRow"
+  | "forEachRowAsync"
+  | "forEachCol"
+  | "forEachColAsync"
+  | "graph"
+  | "getRowLabels"
+  | "setRowLabels"
+  | "loc"
+  | "iloc"
+  | "getTrace"
+  | "printTrace"
+  | "distinct"
+  | "summarise"
+  | "summarize"
+  | "summariseAsync"
+  | "summarizeAsync"
+  | "slice"
+  | "sliceHead"
+  | "sliceTail"
+  | "sliceMin"
+  | "sliceMax"
+  | "sliceSample"
+  | "sample"
+  | "head"
+  | "tail"
+  | "shuffle"
+  | "drop"
+  | "rename"
+  | "reorder"
+  | "year"
+  | "month"
+  | "day";
 
 /**
  * A PromisedDataFrame is a Promise-like wrapper around DataFrame that enables async operations.
@@ -63,57 +112,7 @@ import type {
  * ```
  */
 export type PromisedDataFrame<Row extends object> =
-  & Omit<
-    DataFrame<Row>,
-    | "mutate"
-    | "mutateAsync"
-    | "filter"
-    | "filterAsync"
-    | "select"
-    | "arrange"
-    | "sort"
-    | "print"
-    | "extract"
-    | "extractHead"
-    | "extractTail"
-    | "extractNth"
-    | "extractSample"
-    | "extractUnique"
-    | "extractNthWhereSorted"
-    | "forEach"
-    | "forEachRow"
-    | "forEachRowAsync"
-    | "forEachCol"
-    | "forEachColAsync"
-    | "graph"
-    | "getRowLabels"
-    | "setRowLabels"
-    | "loc"
-    | "iloc"
-    | "getTrace"
-    | "printTrace"
-    | "distinct"
-    | "summarise"
-    | "summarize"
-    | "summariseAsync"
-    | "summarizeAsync"
-    | "slice"
-    | "sliceHead"
-    | "sliceTail"
-    | "sliceMin"
-    | "sliceMax"
-    | "sliceSample"
-    | "sample"
-    | "head"
-    | "tail"
-    | "shuffle"
-    | "drop"
-    | "rename"
-    | "reorder"
-    | "year"
-    | "month"
-    | "day"
-  >
+  & Omit<DataFrameBase<Row>, OmittedMethods>
   & DataFrameColumns<Row>
   & PromiseLike<DataFrame<Row>>
   & {
@@ -122,7 +121,7 @@ export type PromisedDataFrame<Row extends object> =
       <Cols extends keyof Row>(
         column1: Cols,
         ...moreColumns: Cols[]
-      ): PromisedDataFrame<Pick<Row, Cols>>;
+      ): PromisedDataFrame<{ [K in Cols]: Row[K] }>;
     };
 
     // Override mutate to always return PromisedDataFrame with awaited types
@@ -135,11 +134,23 @@ export type PromisedDataFrame<Row extends object> =
       >(
         formulas: Formulas,
       ): PromisedDataFrame<
-        Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> }
+        {
+          [K in keyof Row | keyof Formulas]:
+            K extends keyof Formulas ? Awaited<ReturnType<Formulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
       >;
       <Assignments extends object>(
         assignments: Assignments,
-      ): PromisedDataFrame<Row & Assignments>;
+      ): PromisedDataFrame<
+        {
+          [K in keyof Row | keyof Assignments]:
+            K extends keyof Assignments ? Assignments[K]
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
+      >;
     };
 
     // Override filter to always return PromisedDataFrame (supports both sync and async predicates)
@@ -166,10 +177,10 @@ export type PromisedDataFrame<Row extends object> =
       <First extends keyof Row, const Rest extends readonly (keyof Row)[]>(
         columnName: First,
         ...columnNames: Rest
-      ): PromisedDataFrame<Pick<Row, First | Rest[number]>>;
+      ): PromisedDataFrame<{ [K in First | Rest[number]]: Row[K] }>;
       <ColName extends keyof Row>(
         columns: ColName[],
-      ): PromisedDataFrame<Pick<Row, ColName>>;
+      ): PromisedDataFrame<{ [K in ColName]: Row[K] }>;
     };
 
     // mutateAsync on PromisedDataFrame — same as mutate, always returns PromisedDataFrame
@@ -182,7 +193,12 @@ export type PromisedDataFrame<Row extends object> =
       >(
         formulas: Formulas,
       ): PromisedDataFrame<
-        Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> }
+        {
+          [K in keyof Row | keyof Formulas]:
+            K extends keyof Formulas ? Awaited<ReturnType<Formulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
       >;
     };
 
@@ -272,17 +288,25 @@ export type PromisedDataFrame<Row extends object> =
     drop: {
       <ColName extends keyof Row>(
         ...columns: ColName[]
-      ): PromisedDataFrame<Omit<Row, ColName>>;
+      ): PromisedDataFrame<{ [K in keyof Row as K extends ColName ? never : K]: Row[K] }>;
       <ColName extends keyof Row>(
         columns: ColName[],
-      ): PromisedDataFrame<Omit<Row, ColName>>;
+      ): PromisedDataFrame<{ [K in keyof Row as K extends ColName ? never : K]: Row[K] }>;
     };
 
     rename: {
       <RenameMap extends Partial<Record<keyof Row, string>>>(
         renameMap: RenameMap,
       ): PromisedDataFrame<
-        Omit<Row, keyof RenameMap> & { [K in keyof RenameMap as RenameMap[K] extends string ? RenameMap[K] : never]: K extends keyof Row ? Row[K] : never }
+        {
+          [K in
+            | Exclude<keyof Row, keyof RenameMap>
+            | { [M in keyof RenameMap]: RenameMap[M] extends string ? RenameMap[M] : never }[keyof RenameMap]
+          ]: K extends keyof Row ? Row[K]
+            : K extends { [M in keyof RenameMap]: RenameMap[M] extends string ? RenameMap[M] : never }[keyof RenameMap]
+              ? Row[Extract<{ [M in keyof RenameMap]: RenameMap[M] extends K ? M : never }[keyof RenameMap], keyof Row>]
+            : never;
+        }
       >;
     };
 
@@ -310,7 +334,7 @@ export type PromisedDataFrame<Row extends object> =
  * **Important**: To get back to a regular GroupedDataFrame, simply `await` the PromisedGroupedDataFrame.
  *
  * @template Row - The type of each row in the DataFrame
- * @template K - The keys that the DataFrame is grouped by
+ * @template GK - The keys that the DataFrame is grouped by
  *
  * @example
  * ```typescript
@@ -335,68 +359,18 @@ export type PromisedDataFrame<Row extends object> =
  */
 export type PromisedGroupedDataFrame<
   Row extends object,
-  K extends keyof Row,
+  GK extends keyof Row,
 > =
-  & Omit<
-    DataFrame<Row>,
-    | "mutate"
-    | "mutateAsync"
-    | "filter"
-    | "filterAsync"
-    | "select"
-    | "arrange"
-    | "sort"
-    | "print"
-    | "extract"
-    | "extractHead"
-    | "extractTail"
-    | "extractNth"
-    | "extractSample"
-    | "extractUnique"
-    | "extractNthWhereSorted"
-    | "forEach"
-    | "forEachRow"
-    | "forEachRowAsync"
-    | "forEachCol"
-    | "forEachColAsync"
-    | "graph"
-    | "getRowLabels"
-    | "setRowLabels"
-    | "loc"
-    | "iloc"
-    | "getTrace"
-    | "printTrace"
-    | "distinct"
-    | "summarise"
-    | "summarize"
-    | "summariseAsync"
-    | "summarizeAsync"
-    | "slice"
-    | "sliceHead"
-    | "sliceTail"
-    | "sliceMin"
-    | "sliceMax"
-    | "sliceSample"
-    | "sample"
-    | "head"
-    | "tail"
-    | "shuffle"
-    | "drop"
-    | "rename"
-    | "reorder"
-    | "year"
-    | "month"
-    | "day"
-  >
+  & Omit<DataFrameBase<Row>, OmittedMethods>
   & DataFrameColumns<Row>
-  & PromiseLike<GroupedDataFrame<Row, K>>
+  & PromiseLike<GroupedDataFrame<Row, GK>>
   & {
     // Override distinct for PromisedGroupedDataFrame
     distinct: {
       <Cols extends keyof Row>(
         column1: Cols,
         ...moreColumns: Cols[]
-      ): PromisedGroupedDataFrame<Pick<Row, Cols>, Extract<K, keyof Pick<Row, Cols>>>;
+      ): PromisedGroupedDataFrame<{ [K in Cols]: Row[K] }, Extract<GK, Cols>>;
     };
 
     // Override mutate to always return PromisedGroupedDataFrame
@@ -409,11 +383,13 @@ export type PromisedGroupedDataFrame<
       >(
         formulas: Formulas,
       ): PromisedGroupedDataFrame<
-        Row & { [K in keyof Formulas]: ReturnType<Formulas[K]> },
-        Extract<
-          K,
-          keyof (Row & { [K in keyof Formulas]: ReturnType<Formulas[K]> })
-        >
+        {
+          [K in keyof Row | keyof Formulas]:
+            K extends keyof Formulas ? ReturnType<Formulas[K]>
+              : K extends keyof Row ? Row[K]
+              : never;
+        },
+        Extract<GK, keyof Row | keyof Formulas>
       >;
     };
 
@@ -433,7 +409,7 @@ export type PromisedGroupedDataFrame<
           ) => Promise<boolean | null | undefined>)
           | ReadonlyArray<boolean | null | undefined>
         >
-      ): PromisedGroupedDataFrame<Row, K>;
+      ): PromisedGroupedDataFrame<Row, GK>;
     };
 
     mutateAsync: {
@@ -445,11 +421,13 @@ export type PromisedGroupedDataFrame<
       >(
         formulas: Formulas,
       ): PromisedGroupedDataFrame<
-        Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> },
-        Extract<
-          K,
-          keyof (Row & { [K in keyof Formulas]: Awaited<ReturnType<Formulas[K]>> })
-        >
+        {
+          [K in keyof Row | keyof Formulas]:
+            K extends keyof Formulas ? Awaited<ReturnType<Formulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        },
+        Extract<GK, keyof Row | keyof Formulas>
       >;
     };
 
@@ -468,92 +446,128 @@ export type PromisedGroupedDataFrame<
           ) => Promise<boolean | null | undefined>)
           | ReadonlyArray<boolean | null | undefined>
         >
-      ): PromisedGroupedDataFrame<Row, K>;
+      ): PromisedGroupedDataFrame<Row, GK>;
     };
 
     summarise: {
       <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+      ): PromisedDataFrame<
+        {
+          [K in GK | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
+      >;
     };
     summarize: {
       <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+      ): PromisedDataFrame<
+        {
+          [K in GK | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
+      >;
     };
     summariseAsync: {
       <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+      ): PromisedDataFrame<
+        {
+          [K in GK | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
+      >;
     };
     summarizeAsync: {
       <SummaryFormulas extends Record<string, (df: DataFrame<Row>) => unknown>>(
         summaryFormulas: SummaryFormulas,
-      ): PromisedDataFrame<Pick<Row, K> & { [F in keyof SummaryFormulas]: Awaited<ReturnType<SummaryFormulas[F]>> }>;
+      ): PromisedDataFrame<
+        {
+          [K in GK | keyof SummaryFormulas]:
+            K extends keyof SummaryFormulas ? Awaited<ReturnType<SummaryFormulas[K]>>
+              : K extends keyof Row ? Row[K]
+              : never;
+        }
+      >;
     };
 
     // Slice methods
     slice: {
-      (start: number, end?: number): PromisedGroupedDataFrame<Row, K>;
+      (start: number, end?: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sliceHead: {
-      (count: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sliceTail: {
-      (count: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sliceMin: {
-      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, K>;
+      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sliceMax: {
-      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, K>;
+      (columnName: keyof Row, count: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sliceSample: {
-      (count: number, seed?: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number, seed?: number): PromisedGroupedDataFrame<Row, GK>;
     };
     sample: {
-      (count: number, seed?: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number, seed?: number): PromisedGroupedDataFrame<Row, GK>;
     };
     head: {
-      (count: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number): PromisedGroupedDataFrame<Row, GK>;
     };
     tail: {
-      (count: number): PromisedGroupedDataFrame<Row, K>;
+      (count: number): PromisedGroupedDataFrame<Row, GK>;
     };
 
     shuffle: {
-      (seed?: number): PromisedGroupedDataFrame<Row, K>;
+      (seed?: number): PromisedGroupedDataFrame<Row, GK>;
     };
 
     drop: {
       <ColName extends keyof Row>(
         ...columns: ColName[]
-      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<K, keyof Omit<Row, ColName>>>;
+      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<GK, keyof Omit<Row, ColName>>>;
       <ColName extends keyof Row>(
         columns: ColName[],
-      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<K, keyof Omit<Row, ColName>>>;
+      ): PromisedGroupedDataFrame<Omit<Row, ColName>, Extract<GK, keyof Omit<Row, ColName>>>;
     };
 
     rename: {
       <RenameMap extends Partial<Record<keyof Row, string>>>(
         renameMap: RenameMap,
       ): PromisedGroupedDataFrame<
-        Omit<Row, keyof RenameMap> & { [M in keyof RenameMap as RenameMap[M] extends string ? RenameMap[M] : never]: M extends keyof Row ? Row[M] : never },
-        Extract<K, keyof (Omit<Row, keyof RenameMap> & { [M in keyof RenameMap as RenameMap[M] extends string ? RenameMap[M] : never]: M extends keyof Row ? Row[M] : never })>
+        {
+          [K in
+            | Exclude<keyof Row, keyof RenameMap>
+            | { [M in keyof RenameMap]: RenameMap[M] extends string ? RenameMap[M] : never }[keyof RenameMap]
+          ]: K extends keyof Row ? Row[K]
+            : K extends { [M in keyof RenameMap]: RenameMap[M] extends string ? RenameMap[M] : never }[keyof RenameMap]
+              ? Row[Extract<{ [M in keyof RenameMap]: RenameMap[M] extends K ? M : never }[keyof RenameMap], keyof Row>]
+            : never;
+        },
+        Extract<GK, Exclude<keyof Row, keyof RenameMap> | { [M in keyof RenameMap]: RenameMap[M] extends string ? RenameMap[M] : never }[keyof RenameMap]>
       >;
     };
 
     reorder: {
-      (columns: (keyof Row)[]): PromisedGroupedDataFrame<Row, K>;
+      (columns: (keyof Row)[]): PromisedGroupedDataFrame<Row, GK>;
     };
 
     year: {
-      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
+      (column: keyof Row): PromisedGroupedDataFrame<Row, GK>;
     };
     month: {
-      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
+      (column: keyof Row): PromisedGroupedDataFrame<Row, GK>;
     };
     day: {
-      (column: keyof Row): PromisedGroupedDataFrame<Row, K>;
+      (column: keyof Row): PromisedGroupedDataFrame<Row, GK>;
     };
   };
