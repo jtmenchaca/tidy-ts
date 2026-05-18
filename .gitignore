@@ -69,3 +69,13 @@ examples/fixtures/test-output.xlsx
 
 # Changelog (generated, not committed)
 changelog/
+
+# RPython dataset (large, not ours to redistribute)
+docs/JAMIA/comparisons/RPython-main/
+
+# Personal itinerary
+image.png
+DCAAR-masthead-airlie.jpg
+itinerary.md
+itinerary.html
+render-itinerary.ts

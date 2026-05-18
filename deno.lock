@@ -3,12 +3,14 @@
   "specifiers": {
     "jsr:@std/assert@^1.0.14": "1.0.16",
     "jsr:@std/csv@^1.0.6": "1.0.6",
+    "jsr:@std/encoding@*": "1.0.10",
     "jsr:@std/encoding@^1.0.10": "1.0.10",
     "jsr:@std/expect@*": "1.0.17",
     "jsr:@std/expect@^1.0.15": "1.0.17",
     "jsr:@std/internal@^1.0.10": "1.0.12",
     "jsr:@std/internal@^1.0.12": "1.0.12",
-    "jsr:@std/path@*": "1.1.4"
+    "jsr:@std/path@*": "1.1.4",
+    "jsr:@std/path@1.0.8": "1.0.8"
   },
   "jsr": {
     "@std/assert@1.0.16": {
@@ -32,6 +34,9 @@
     },
     "@std/internal@1.0.12": {
       "integrity": "972a634fd5bc34b242024402972cd5143eac68d8dffaca5eaa4dba30ce17b027"
+    },
+    "@std/path@1.0.8": {
+      "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
     },
     "@std/path@1.1.4": {
       "integrity": "1d2d43f39efb1b42f0b1882a25486647cb851481862dc7313390b2bb044314b5",
@@ -204,7 +209,7 @@
       "packages/arrow": {
         "dependencies": [
           "jsr:@tidy-ts/dataframe@^1.1.0",
-          "jsr:@tidy-ts/shims@1.5.6",
+          "jsr:@tidy-ts/shims@1.5.7",
           "npm:@uwdata/flechette@^2.2.3",
           "npm:zod@^4.1.8"
         ],
@@ -222,10 +227,7 @@
           "jsr:@std/expect@^1.0.15",
           "jsr:@std/path@^1.0.8",
           "jsr:@std/random@~0.1.2",
-          "jsr:@tidy-ts/shims@1.5.6",
-          "npm:vega-embed@^7.0.2",
-          "npm:vega-lite@^6.4.1",
-          "npm:vega@^6.2.0",
+          "jsr:@tidy-ts/shims@1.5.7",
           "npm:zod@^4.1.8"
         ],
         "packageJson": {
@@ -315,6 +317,15 @@
           ]
         }
       },
+      "packages/graph": {
+        "dependencies": [
+          "jsr:@tidy-ts/dataframe@1.5.7",
+          "jsr:@tidy-ts/shims@1.5.7",
+          "npm:vega-embed@^7.0.2",
+          "npm:vega-lite@^6.4.1",
+          "npm:vega@^6.2.0"
+        ]
+      },
       "packages/mcp": {
         "packageJson": {
           "dependencies": [
@@ -329,7 +340,7 @@
       "packages/parquet": {
         "dependencies": [
           "jsr:@tidy-ts/dataframe@^1.1.0",
-          "jsr:@tidy-ts/shims@1.5.6",
+          "jsr:@tidy-ts/shims@1.5.7",
           "npm:hyparquet-compressors@^1.1.1",
           "npm:hyparquet-writer@~0.11.2",
           "npm:hyparquet@^1.23.2",

@@ -164,6 +164,9 @@ importers:
       '@tidy-ts/dataframe-win32-x64':
         specifier: workspace:*
         version: link:packages/npm-win32-x64
+      '@tidy-ts/graph':
+        specifier: workspace:*
+        version: link:packages/graph
       '@tidy-ts/shims':
         specifier: workspace:*
         version: link:packages/shims
@@ -373,15 +376,6 @@ importers:
       '@tidy-ts/dataframe-darwin-arm64':
         specifier: workspace:*
         version: link:../npm-darwin-arm64
-      vega:
-        specifier: ^6.2.0
-        version: 6.2.0
-      vega-embed:
-        specifier: ^7.0.2
-        version: 7.1.0(vega-lite@6.4.1(vega@6.2.0))(vega@6.2.0)
-      vega-lite:
-        specifier: ^6.4.1
-        version: 6.4.1(vega@6.2.0)
 
   packages/docs:
     dependencies:
@@ -610,6 +604,25 @@ importers:
         version: 7.3.0(@types/node@22.19.3)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)
 
   packages/examples: {}
+
+  packages/graph:
+    dependencies:
+      '@tidy-ts/dataframe':
+        specifier: workspace:*
+        version: link:../dataframe
+      '@tidy-ts/shims':
+        specifier: workspace:*
+        version: link:../shims
+    optionalDependencies:
+      vega:
+        specifier: ^6.2.0
+        version: 6.2.0
+      vega-embed:
+        specifier: ^7.0.2
+        version: 7.1.0(vega-lite@6.4.1(vega@6.2.0))(vega@6.2.0)
+      vega-lite:
+        specifier: ^6.4.1
+        version: 6.4.1(vega@6.2.0)
 
   packages/mcp:
     dependencies:

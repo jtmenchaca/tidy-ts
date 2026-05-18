@@ -29,17 +29,12 @@ await esbuild.build({
     "@tidy-ts/shims/*",
     "@tidy-ts/dataframe-*",
     "zod",
-    "vega",
-    "vega-embed",
-    "vega-lite",
   ],
 });
 
 // Copy WASM files and supporting assets next to the JS output
 cpSync(join(DF_DIR, "lib/tidy_ts_dataframe.wasm"), join(DIST_DIR, "tidy_ts_dataframe.wasm"));
 cpSync(join(DF_DIR, "lib/tidy_ts_dataframe.internal.js"), join(DIST_DIR, "tidy_ts_dataframe.internal.js"));
-cpSync(join(DF_DIR, "ts/graph/resvg-wasm-2.6.3-alpha.0_bg.wasm"), join(DIST_DIR, "resvg-wasm-2.6.3-alpha.0_bg.wasm"));
-cpSync(join(DF_DIR, "ts/graph/fonts"), join(DIST_DIR, "fonts"), { recursive: true });
 
 // Fix WASM paths in bundled JS — original code has ../../lib/tidy_ts_dataframe.wasm
 // which won't resolve from dist/. Rewrite to ./tidy_ts_dataframe.wasm since it's alongside.
@@ -134,7 +129,6 @@ const bundle = await rollup({
     "zod",
     /^@tidy-ts\/shims/,
     /^@tidy-ts\/dataframe-/,
-    /^vega/,
   ],
   onwarn(warning) {
     if (warning.code !== "CIRCULAR_DEPENDENCY") {
@@ -178,9 +172,6 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
   optionalDependencies: {
     "@tidy-ts/dataframe-darwin-arm64": pkg.version,
     "@tidy-ts/dataframe-win32-x64": pkg.version,
-    "vega": "^6.2.0",
-    "vega-embed": "^7.0.2",
-    "vega-lite": "^6.4.1",
   },
 }, null, 2));
 

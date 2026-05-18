@@ -76,9 +76,6 @@ import { ROW_LABEL } from "../../verbs/reshape/transpose.types.ts";
 // DataFrame creation utilities
 import { createColumnarDataFrameFromStore } from "./create-dataframe.ts";
 
-// Graph
-import { graph } from "../../graph/graph.ts";
-
 // Side effects
 import {
   for_each_col,
@@ -504,10 +501,6 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (labels: RowLabel[]) => {
       return (df as any).loc(labels);
     };
-  }
-
-  if (prop === "graph") {
-    return (...args: Parameters<typeof graph>) => graph(...args)(df as any);
   }
 
   if (prop === "forEach" || prop === "forEachRow") {

@@ -10,6 +10,20 @@ import { readFile } from "@tidy-ts/shims";
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
 
 /**
+ * Deduplicate header names by appending _2, _3, etc. to duplicates.
+ * e.g. ["A", "B", "", "", "A", "B"] → ["A", "B", "", "_1", "A_2", "B_2"]
+ */
+function deduplicateHeaders(headers: string[]): string[] {
+  const counts = new Map<string, number>();
+  return headers.map((h) => {
+    const prev = counts.get(h) ?? 0;
+    counts.set(h, prev + 1);
+    if (prev === 0) return h;
+    return `${h}_${prev + 1}`;
+  });
+}
+
+/**
  * Safely read a file or convert ArrayBuffer/File/Blob to Uint8Array
  * Supports file paths (Node.js/Deno) or ArrayBuffer/File/Blob (all environments including browsers)
  * This prevents "Deno is not defined" errors when the module is imported
@@ -706,7 +720,7 @@ function parseXLSXContent<S extends z.ZodObject<any>>(
   const trim = opts.trim ?? true;
 
   const [headerRow, ...body] = rows;
-  const headersFromXlsx = headerRow.map((h) => h.trim());
+  const headersFromXlsx = deduplicateHeaders(headerRow.map((h) => h.trim()));
   const headersFromSchema = schemaHeaders(wrappedSchema.shape);
 
   const missing = headersFromSchema.filter(
@@ -848,7 +862,7 @@ async function readXLSXImpl<S extends z.ZodObject<any>>(
       return createDataFrame([], { no_types: true });
     }
 
-    const headers = rawRows[0].map((h) => String(h).trim());
+    const headers = deduplicateHeaders(rawRows[0].map((h) => String(h).trim()));
     const rows: Record<string, unknown>[] = [];
 
     for (let i = 1; i < rawRows.length; i++) {

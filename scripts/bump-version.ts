@@ -70,6 +70,14 @@ replaceInFile("packages/dataframe/deno.jsonc", [
   [/("@tidy-ts\/shims[^"]*"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
 ]);
 
+// Graph
+jsonVersion("packages/graph/package.json");
+replaceInFile("packages/graph/deno.jsonc", [
+  [/("version"\s*:\s*")[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
+  [/("@tidy-ts\/shims[^"]*"\s*:\s*"jsr:@tidy-ts\/shims@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
+  [/("@tidy-ts\/dataframe[^"]*"\s*:\s*"jsr:@tidy-ts\/dataframe@)[\d]+\.[\d]+\.[\d]+[^"]*"/g, `$1${NEW_VERSION}"`],
+]);
+
 // Shims
 jsonVersion("packages/shims/package.json");
 jsonVersion("packages/shims/deno.jsonc");
@@ -88,6 +96,9 @@ replaceInFile("packages/parquet/deno.jsonc", [
 
 // Build script shims dependency
 replaceInFile("scripts/build-dataframe-npm.ts", [
+  [/("@tidy-ts\/shims"\s*:\s*")[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
+]);
+replaceInFile("scripts/build-graph-npm.ts", [
   [/("@tidy-ts\/shims"\s*:\s*")[\d]+\.[\d]+\.[\d]+[^"]*"/, `$1${NEW_VERSION}"`],
 ]);
 

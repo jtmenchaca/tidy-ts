@@ -13,9 +13,6 @@
     "@std/csv": "jsr:@std/csv@^1.0.6"
   },
   "optionalDependencies": {
-    "@tidy-ts/dataframe-darwin-arm64": "workspace:*",
-    "vega": "^6.2.0",
-    "vega-embed": "^7.0.2",
-    "vega-lite": "^6.4.1"
+    "@tidy-ts/dataframe-darwin-arm64": "workspace:*"
   }
 }

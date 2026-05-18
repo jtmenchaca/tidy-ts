@@ -110,6 +110,9 @@ overrides:
   # Native platform packages
   "@tidy-ts/dataframe-darwin-arm64": $@tidy-ts/dataframe-darwin-arm64
 
+  # Workspace packages
+  "@tidy-ts/graph": $@tidy-ts/graph
+
   # JSR packages
   "@std/csv": $@std/csv
   "@std/encoding": $@std/encoding

@@ -1,5 +1,5 @@
 // deno-lint-ignore-file no-explicit-any
-import type { DataFrame } from "../dataframe/index.ts";
+import type { DataFrame } from "@tidy-ts/dataframe";
 import type { TidyGraphWidget } from "./graph-types.ts";
 import { vegaLiteWidget } from "./scatter-widget.ts";
 import { saveGraphAsPNG, saveGraphAsSVG } from "./export-utils.ts";
@@ -842,47 +842,43 @@ function buildVegaSpec(
    ────────────────────────────────────────────────────────────────────────── */
 
 export function graph<T extends Record<string, unknown>>(
-  spec: GraphOptions<T>,
-) {
-  return (df: DataFrame<T>): TidyGraphWidget => {
-    // Cast to internal GraphOptions type for backwards compatibility
-    const graphSpec = spec as GraphOptions<T>;
-    const { data, fields } = toVegaData(df, graphSpec);
-    const vlSpec = buildVegaSpec(data, graphSpec, fields);
+  { df, ...spec }: { df: DataFrame<T> } & GraphOptions<T>,
+): TidyGraphWidget {
+  const { data, fields } = toVegaData(df, spec as GraphOptions<T>);
+  const vlSpec = buildVegaSpec(data, spec as GraphOptions<T>, fields);
 
-    const specForWidget = { ...vlSpec };
-    delete specForWidget.data;
+  const specForWidget = { ...vlSpec };
+  delete specForWidget.data;
 
-    const widgetInstance = vegaLiteWidget(
-      data,
-      specForWidget,
-    ) as TidyGraphWidget;
+  const widgetInstance = vegaLiteWidget(
+    data,
+    specForWidget,
+  ) as TidyGraphWidget;
 
-    // Jupyter-independent, server-side file saves:
-    widgetInstance.saveSVG = async (
-      { filename, width, height, background },
-    ) => {
-      await saveGraphAsSVG(df, graphSpec, {
-        filename,
-        width,
-        height,
-        background,
-      });
-    };
-    widgetInstance.savePNG = async (
-      { filename, width, height, background, scale },
-    ) => {
-      await saveGraphAsPNG(df, graphSpec, {
-        filename,
-        width,
-        height,
-        background,
-        scale,
-      });
-    };
-
-    return widgetInstance;
+  // Jupyter-independent, server-side file saves:
+  widgetInstance.saveSVG = async (
+    { filename, width, height, background },
+  ) => {
+    await saveGraphAsSVG(df, spec as GraphOptions<T>, {
+      filename,
+      width,
+      height,
+      background,
+    });
   };
+  widgetInstance.savePNG = async (
+    { filename, width, height, background, scale },
+  ) => {
+    await saveGraphAsPNG(df, spec as GraphOptions<T>, {
+      filename,
+      width,
+      height,
+      background,
+      scale,
+    });
+  };
+
+  return widgetInstance;
 }
 
 /**
@@ -890,20 +886,18 @@ export function graph<T extends Record<string, unknown>>(
  * Returns both the Vega-Lite specification and the data for React-Vega integration.
  */
 export function graphReact<T extends Record<string, unknown>>(
-  spec: GraphOptions<T>,
-) {
-  return (df: DataFrame<T>): { spec: any; data: any[] } => {
-    const graphSpec = spec as GraphOptions<T>;
-    const { data, fields } = toVegaData(df, graphSpec);
-    const vlSpec = buildVegaSpec(data, graphSpec, fields);
+  { df, ...spec }: { df: DataFrame<T> } & GraphOptions<T>,
+): { spec: any; data: any[] } {
+  const graphSpec = spec as GraphOptions<T>;
+  const { data, fields } = toVegaData(df, graphSpec);
+  const vlSpec = buildVegaSpec(data, graphSpec, fields);
 
-    // Remove the data from spec since we return it separately for React
-    const reactSpec = { ...vlSpec };
-    delete reactSpec.data;
+  // Remove the data from spec since we return it separately for React
+  const reactSpec = { ...vlSpec };
+  delete reactSpec.data;
 
-    return {
-      spec: reactSpec,
-      data: data,
-    };
+  return {
+    spec: reactSpec,
+    data: data,
   };
 }

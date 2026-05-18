@@ -1,0 +1,14 @@
+{
+  "name": "@tidy-ts/graph",
+  "version": "1.5.7",
+  "exports": "./mod.ts",
+  "license": "MIT",
+  "imports": {
+    "@tidy-ts/dataframe": "jsr:@tidy-ts/dataframe@1.5.7",
+    "@tidy-ts/shims": "jsr:@tidy-ts/shims@1.5.7",
+    "vega": "npm:vega@^6.2.0",
+    "vega-embed": "npm:vega-embed@^7.0.2",
+    "vega-lite": "npm:vega-lite@^6.4.1"
+  },
+  "exclude": ["dist/"]
+}

@@ -1,4 +1,5 @@
 import { createDataFrame } from "@tidy-ts/dataframe";
+import { graph } from "@tidy-ts/graph";
 
 Deno.test("Standalone graph export functions", async () => {
   /**
@@ -17,7 +18,8 @@ Deno.test("Standalone graph export functions", async () => {
   ]);
 
   // Create a bar chart
-  const chart = df.graph({
+  const chart = graph({
+    df,
     type: "bar",
     mappings: { x: "name", y: "score" },
     config: {

@@ -1,5 +1,7 @@
 # Tidy-TS Architecture
 
+WHEN SPECIFIED TO EDIT A BATCH OF FILES INDIVIDUALLY, DO NOT USE SCRIPTS.  FOLLOW INSTRUCTIONS CAREFULLY. 
+
 Please understand that Deno, Bun, and node all successfully run the napi-rs .node module and fallback to the WASM as needed.  This package is fully Bun and node compatible.
 
 - **Temporary scripts**: When you need to write and run a transformation script, write it to `/tmp` using the Write tool and then run it with `deno run -A /tmp/script.ts`. This avoids approval prompts. Never use heredocs in bash to create scripts.
@@ -154,3 +156,17 @@ pnpm check-versions     # Check JSR version status
 # Benchmarks
 pnpm benchmark          # Run and analyze benchmarks
 ```
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as local markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical role names used as-is (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context layout: `CONTEXT-MAP.md` at the repo root points to per-context glossaries (currently: JAMIA evaluation work at `docs/JAMIA/comparisons/CONTEXT.md`). See `docs/agents/domain.md`.

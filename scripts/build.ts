@@ -65,6 +65,7 @@ const steps: Step[] = [
   { label: "Building native addon [win32-x64]", cmd: ["pnpm", "napibuild:win32-x64"], skip: async () => !(await needsRustBuild) },
   { label: "Type checking shims", cmd: ["pnpm", "check:shims"] },
   { label: "Type checking dataframe", cmd: ["pnpm", "check:dataframe"] },
+  { label: "Type checking graph", cmd: ["pnpm", "check:graph"] },
   { label: "Testing dataframe", cmd: ["pnpm", "test:dataframe"] },
   { label: "Building npm packages", cmd: ["pnpm", "build:npm"] },
   { label: "Committing build artifacts", cmd: ["sh", "-c", "git add packages/dataframe/lib/ && git commit -m 'build'"] },

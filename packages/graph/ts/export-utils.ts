@@ -55,7 +55,7 @@ function buildStandaloneVlSpec(
   opts?: { width?: number; height?: number; background?: string },
 ): Record<string, any> {
   // Reuse your existing pipeline to get (specWithoutData, rows)
-  const { spec: specNoData, data } = graphReact(spec)(df);
+  const { spec: specNoData, data } = graphReact({ df, ...spec });
   const { width, height } = normalizeSize(specNoData, opts);
 
   return {

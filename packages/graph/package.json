@@ -1,0 +1,19 @@
+{
+  "name": "@tidy-ts/graph",
+  "version": "1.5.7",
+  "type": "module",
+  "main": "mod.ts",
+  "exports": {
+    ".": "./mod.ts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@tidy-ts/dataframe": "workspace:*",
+    "@tidy-ts/shims": "workspace:*"
+  },
+  "optionalDependencies": {
+    "vega": "^6.2.0",
+    "vega-embed": "^7.0.2",
+    "vega-lite": "^6.4.1"
+  }
+}

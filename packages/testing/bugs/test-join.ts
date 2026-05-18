@@ -247,7 +247,7 @@ export  function testJoinedFieldAccess_leftJoin<
     .filter((r) => {
       const d = get(r, opts.fieldName);
       const wStart = get(r, "_refDate")?.add({ days: -14 });
-      return wStart != null && Temporal.PlainDateTime.compare(d, wStart) >= 0;
+      return wStart != null && d != null && Temporal.PlainDateTime.compare(d, wStart) >= 0;
     });
   return filtered;
 }

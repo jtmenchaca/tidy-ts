@@ -1,4 +1,5 @@
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { graph } from "@tidy-ts/graph";
 
 Deno.test("README examples validation", () => {
   console.log("=== Testing README Examples ===\n");
@@ -159,48 +160,48 @@ Deno.test("Data Visualization examples validation", async () => {
   ]);
 
   // Create a chart with multiple aesthetics and comprehensive configuration
-  const chart = sales
-    .mutate({
-      revenue: (r) => r.quantity * r.price,
-      profit: (r) => r.quantity * r.price * 0.2,
-    })
-    .graph({
-      type: "scatter",
-      mappings: {
-        x: "revenue",
-        y: "quantity",
-        color: "region",
-        size: "profit",
+  const enriched = sales.mutate({
+    revenue: (r) => r.quantity * r.price,
+    profit: (r) => r.quantity * r.price * 0.2,
+  });
+  const chart = graph({
+    df: enriched,
+    type: "scatter",
+    mappings: {
+      x: "revenue",
+      y: "quantity",
+      color: "region",
+      size: "profit",
+    },
+    config: {
+      layout: {
+        title: "Sales Analysis",
+        description: "Revenue vs quantity by region, sized by profit",
+        width: 700,
+        height: 400,
       },
-      config: {
-        layout: {
-          title: "Sales Analysis",
-          description: "Revenue vs quantity by region, sized by profit",
-          width: 700,
-          height: 400,
-        },
-        xAxis: {
-          label: "Revenue ($)",
-          domain: [0, 2200],
-        },
-        yAxis: {
-          label: "Quantity",
-          domain: [0, 25],
-        },
-        scatter: {
-          pointSize: 100,
-          pointOpacity: 0.8,
-        },
-        color: { scheme: "professional" },
-        legend: {
-          show: true,
-          position: "right",
-        },
-        grid: {
-          show: true,
-        },
+      xAxis: {
+        label: "Revenue ($)",
+        domain: [0, 2200],
       },
-    });
+      yAxis: {
+        label: "Quantity",
+        domain: [0, 25],
+      },
+      scatter: {
+        pointSize: 100,
+        pointOpacity: 0.8,
+      },
+      color: { scheme: "professional" },
+      legend: {
+        show: true,
+        position: "right",
+      },
+      grid: {
+        show: true,
+      },
+    },
+  });
 
   console.log("Chart created successfully ✓");
   console.log(`Chart type: ${chart.constructor.name}`);

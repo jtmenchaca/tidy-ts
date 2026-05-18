@@ -1,5 +1,3 @@
-import type { GraphOptions } from "../../graph/graph.ts";
-import type { TidyGraphWidget } from "../../graph/graph-types.ts";
 import type { RowLabel } from "./row-labels.ts";
 import type { RemoveNAMethod, RemoveNullMethod, RemoveUndefinedMethod } from "../../verbs/filtering/remove-na.types.ts";
 import type { SetRowLabelsMethod } from "./set-row-labels.types.ts";
@@ -987,9 +985,6 @@ export interface DataFrameBase<Row extends object = object>
   head: SliceHeadMethod<Row>;
   /** @deprecated Use sliceTail instead */
   tail: SliceTailMethod<Row>;
-
-  // ---------- Graph ----------
-  graph(spec: GraphOptions<Row>): TidyGraphWidget;
 
   // ---------- Side-effects ----------
   /**
