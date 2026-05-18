@@ -1,25 +1,49 @@
 /**
- * RPython SO#17151210 — numpy loadtxt skip first row
- * Effect: Crash
+ * ID: SO#17151210
+ * Language: Python
  * Bug class: Data loading
- *
- * Python bug: CSV has comment lines (#) and a header row (x,y,z). User uses
- * np.loadtxt(comments='#', skiprows=1) but the header row "x,y,z" is not a
- * comment and not skipped enough — numpy crashes: "could not convert string to
- * float: x". The non-numeric header was included in the numeric parse.
- *
- * In tidy-ts, readCSV with a Zod schema validates at runtime (z.number() rejects
- * "x" at parse). At the type level, if the schema uses z.string() (wrong schema),
- * downstream numeric operations on the resulting string columns are rejected.
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: numpy loadtxt fails on header/comment rows. Non-numeric content in numeric load.
  */
-import { readCSV, stats as s } from "@tidy-ts/dataframe";
-import { z } from "zod";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// If loaded with wrong schema (string instead of number), the DataFrame
-// columns are typed as string — downstream numeric ops are rejected.
-const wrongSchema = z.object({ x: z.string(), y: z.string(), z: z.string() });
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
 
-readCSV("x,y,z\n1,2,3\n4,5,6", wrongSchema).then((df) => {
-  // @ts-expect-error — string[] is not assignable to number[]
-  s.mean(df.extract("x"));
-});
+const foreignScript = `
+import numpy as np
+import tempfile, os
+
+content = """# Comment 1
+# Comment 2
+x,y,z
+1,2,3
+4,5,6
+7,8,9
+"""
+
+tmpfile = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+tmpfile.write(content)
+tmpfile.close()
+
+try:
+    FH = np.loadtxt(tmpfile.name, comments='#', delimiter=',', skiprows=1)
+finally:
+    os.unlink(tmpfile.name)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
+// If the loader produced string columns (wrong skip rule, header parsed as data),
+// downstream numeric operations are rejected by the type system.
+const df = createDataFrame([
+  { x: "x", y: "y", z: "z" },
+  { x: "1", y: "2", z: "3" },
+  { x: "4", y: "5", z: "6" },
+]);
+
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(df.extract("x"));

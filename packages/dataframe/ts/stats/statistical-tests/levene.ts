@@ -39,7 +39,7 @@ import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
  * ```
  */
 export function leveneTest(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<OneWayAnovaTestResult> {
   if (groups.length < 2) {
@@ -77,7 +77,7 @@ export function leveneTest(
  * @returns true if variances appear equal, false if significantly different
  */
 function hasEqualVariances(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): boolean {
   try {

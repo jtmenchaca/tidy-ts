@@ -22,7 +22,7 @@ export function proportionsToEachOther({
   contingencyTable,
   alpha = 0.05,
 }: {
-  contingencyTable: number[][];
+  contingencyTable: readonly (readonly number[])[];
   alpha?: number;
 }): PrettifyDeep<ChiSquareIndependenceTestResult> {
   return chiSquareTest({

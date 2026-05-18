@@ -35,13 +35,43 @@ export type Frequency =
   };
 
 /**
- * Aggregation function for downsampling.
- * Must be a function that receives values and returns a single aggregated value.
+ * Aggregation spec for downsampling.
  *
- * Examples:
- * - stats.mean, stats.sum, stats.min, stats.max, stats.first, stats.last (takes array/values)
- * - Custom function: (values: unknown[]) => value (receives array of values)
- * - Custom function: (group: GroupedDataFrame) => value (receives grouped DataFrame)
+ * Every entry uses the explicit `{ column, fn }` form so there is exactly
+ * one way to write an aggregation and no implicit column-picking magic.
+ *
+ * - `column` — source column to read values from for each time bucket.
+ * - `fn` — function applied to the bucket's values (e.g. `stats.mean`, `stats.sum`).
+ * - The output column name is the key in the `aggregations` record.
+ *
+ * Example:
+ * ```ts
+ * df.downsample({
+ *   timeColumn: "timestamp",
+ *   frequency: "1D",
+ *   aggregations: {
+ *     // simple case: output column matches source column
+ *     price:  { column: "price",  fn: stats.mean },
+ *     volume: { column: "volume", fn: stats.sum },
+ *     // multiple outputs from one source (OHLC)
+ *     open:   { column: "price", fn: stats.first },
+ *     high:   { column: "price", fn: stats.max },
+ *     low:    { column: "price", fn: stats.min },
+ *     close:  { column: "price", fn: stats.last },
+ *   },
+ * });
+ * ```
+ */
+// deno-lint-ignore no-explicit-any
+export type AggregationFn = (...args: any[]) => any;
+
+export type AggregationSpec<SourceCol extends string = string> = {
+  column: SourceCol;
+  fn: AggregationFn;
+};
+
+/**
+ * @deprecated Use AggregationFn / AggregationSpec instead.
  */
 // deno-lint-ignore no-explicit-any
 export type AggregationFunction<T extends object> = (...args: any[]) => any;
@@ -62,6 +92,13 @@ export type DownsampleArgs<
 };
 
 /**
+ * Helper: infer the value type produced by an aggregation spec's `fn`.
+ */
+// deno-lint-ignore no-explicit-any
+type SpecReturn<Spec> = Spec extends { fn: (...args: any[]) => infer Ret } ? Ret
+  : never;
+
+/**
  * Method signature for downsample on DataFrame.
  * Uses the same pattern as resample to preserve function return types and group columns.
  */
@@ -73,11 +110,7 @@ export interface DownsampleMethod<Row extends object> {
     R extends object,
     GroupName extends keyof R,
     TimeCol extends keyof R & string,
-    Aggregations extends Record<
-      string,
-      // deno-lint-ignore no-explicit-any
-      (...args: any[]) => any
-    >,
+    Aggregations extends Record<string, AggregationSpec<keyof R & string>>,
   >(
     this: GroupedDataFrame<R, GroupName>,
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
@@ -85,12 +118,7 @@ export interface DownsampleMethod<Row extends object> {
     {
       [K in GroupName | Exclude<keyof Aggregations, TimeCol> | TimeCol]:
         K extends TimeCol ? Date
-          : K extends keyof Aggregations
-            ? Aggregations[K] extends (
-              // deno-lint-ignore no-explicit-any
-              ...args: any[]
-            ) => infer Ret ? Ret
-            : ReturnType<Aggregations[K]>
+          : K extends keyof Aggregations ? SpecReturn<Aggregations[K]>
           : K extends keyof R ? R[K]
           : never;
     }
@@ -102,11 +130,7 @@ export interface DownsampleMethod<Row extends object> {
   <
     R extends object,
     TimeCol extends keyof R & string,
-    Aggregations extends Record<
-      string,
-      // deno-lint-ignore no-explicit-any
-      (...args: any[]) => any
-    >,
+    Aggregations extends Record<string, AggregationSpec<keyof R & string>>,
   >(
     this: DataFrame<R>,
     args: DownsampleArgs<R & Record<string, unknown>, TimeCol, Aggregations>,
@@ -114,12 +138,7 @@ export interface DownsampleMethod<Row extends object> {
     {
       [K in Exclude<keyof Aggregations, TimeCol> | TimeCol]:
         K extends TimeCol ? Date
-          : K extends keyof Aggregations
-            ? Aggregations[K] extends (
-              // deno-lint-ignore no-explicit-any
-              ...args: any[]
-            ) => infer Ret ? Ret
-            : ReturnType<Aggregations[K]>
+          : K extends keyof Aggregations ? SpecReturn<Aggregations[K]>
           : never;
     }
   >;

@@ -139,6 +139,116 @@ test("readCSV · throws on invalid row", async () => {
   await expect(readCSV(bad, Row, { skipEmptyLines: true })).rejects.toThrow();
 });
 
+test("readCSV · z.date() handles ISO 8601 datetime strings", async () => {
+  // Regression: toDate previously only handled YYYY-MM-DD and produced
+  // NaN dates on full ISO timestamps like 2024-03-04T09:30:00.000Z.
+  const csv = `timestamp,value
+2024-03-04T09:30:00.000Z,1
+2024-03-04T10:30:00.000Z,2`;
+
+  const Row = z.object({
+    timestamp: z.date(),
+    value: z.number(),
+  });
+
+  const df = await readCSV(csv, Row);
+  expect(df.nrows()).toBe(2);
+  expect(df.timestamp[0]).toBeInstanceOf(Date);
+  expect(df.timestamp[0]?.toISOString()).toBe("2024-03-04T09:30:00.000Z");
+  expect(df.timestamp[1]?.toISOString()).toBe("2024-03-04T10:30:00.000Z");
+});
+
+test("readCSV · throws on duplicate headers with teaching message (default)", async () => {
+  // The fixture's header row is: name,value,name,value
+  const Row = z.object({ name: z.string(), value: z.number() });
+
+  await expect(
+    readCSV(
+      "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+      Row,
+    ),
+  ).rejects.toThrow(/duplicate headers detected/);
+
+  // The error message must teach the opt-in path and show suffixed names.
+  await expect(
+    readCSV(
+      "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+      Row,
+    ),
+  ).rejects.toThrow(/allowDuplicateHeaders: true/);
+
+  await expect(
+    readCSV(
+      "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+      Row,
+    ),
+  ).rejects.toThrow(/name_2/);
+});
+
+test("readCSV · allowDuplicateHeaders renames duplicates with _2 suffix", async () => {
+  // Fixture: name,value,name,value
+  //          a,1,x,100
+  //          b,2,y,200
+  //          c,3,z,300
+  // Schema picks the first pair only — second pair (name_2/value_2) is dropped.
+  const FirstPair = z.object({ name: z.string(), value: z.number() });
+  const df1 = await readCSV(
+    "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+    FirstPair,
+    { allowDuplicateHeaders: true },
+  );
+  expect(df1.nrows()).toBe(3);
+  expect(df1.name).toEqual(["a", "b", "c"]);
+  expect(df1.value).toEqual([1, 2, 3]);
+
+  // Same fixture, schema picks the second pair only.
+  const SecondPair = z.object({ name_2: z.string(), value_2: z.number() });
+  const df2 = await readCSV(
+    "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+    SecondPair,
+    { allowDuplicateHeaders: true },
+  );
+  expect(df2.name_2).toEqual(["x", "y", "z"]);
+  expect(df2.value_2).toEqual([100, 200, 300]);
+
+  // All four columns at once.
+  const Both = z.object({
+    name: z.string(),
+    value: z.number(),
+    name_2: z.string(),
+    value_2: z.number(),
+  });
+  const df3 = await readCSV(
+    "./packages/dataframe/ts/io/fixtures/duplicate-headers.csv",
+    Both,
+    { allowDuplicateHeaders: true },
+  );
+  expect(df3.name).toEqual(["a", "b", "c"]);
+  expect(df3.name_2).toEqual(["x", "y", "z"]);
+});
+
+test("readCSV · partial schema maps by header name, not position", async () => {
+  // Regression: previously a schema with fewer columns than the CSV would
+  // read cells positionally, so a schema {species, island} on a CSV whose
+  // first two columns were studyname,sampleNumber would silently fill
+  // species ← studyname and island ← sampleNumber.
+  const csv = `studyname,sampleNumber,species,island
+PAL0708,1,Adelie,Torgersen
+PAL0708,2,Gentoo,Biscoe`;
+
+  const Row = z.object({
+    species: z.string(),
+    island: z.string(),
+  });
+
+  const df = await readCSV(csv, Row);
+  expect(df.nrows()).toBe(2);
+  expect(df.species[0]).toBe("Adelie");
+  expect(df.species[1]).toBe("Gentoo");
+  expect(df.island[0]).toBe("Torgersen");
+  expect(df.island[1]).toBe("Biscoe");
+});
+
 /*───────────────────────────────────────────────────────────────────────────┐
 │  6 · file reading with readCSV()                                          │
 └───────────────────────────────────────────────────────────────────────────*/

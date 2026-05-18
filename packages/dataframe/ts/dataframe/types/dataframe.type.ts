@@ -10,7 +10,6 @@ import type { MutateColumnsMethod } from "../../verbs/transformation/mutate-colu
 import type { SummariseAsyncMethod, SummariseMethod } from "../../verbs/aggregate/summarise.types.ts";
 import type { SummariseColumnsMethod } from "../../verbs/aggregate/summarise-columns.types.ts";
 // import type { CrossTabulateMethod } from "../../verbs/aggregate/cross_tabulate.types.ts";
-import type { CountMethod } from "../../verbs/aggregate/count.types.ts";
 import type { RenameMethod } from "../../verbs/transformation/rename.types.ts";
 import type {
   PivotLongerMethod,
@@ -669,39 +668,6 @@ export interface DataFrameBase<Row extends object = object>
   /** Same as `summariseColumns`. */
   summarizeColumns: SummariseColumnsMethod<Row>;
   // crossTabulate: CrossTabulateMethod<Row>;
-
-  /**
-   * Count rows by unique combinations of column values.
-   *
-   * Groups by the specified columns and returns counts in a new column `count`.
-   * Shorthand for `groupBy(...columns).summarise({ count: g => g.nrows() })`.
-   *
-   * @param column - First column name to group by
-   * @param additionalColumns - Additional column names to group by
-   * @returns DataFrame with grouping columns plus a `count` column
-   *
-   * @example
-   * df.count("category")
-   *
-   * @example
-   * df.count("category", "status")
-   *
-   * @example
-   * const df = createDataFrame([
-   *   { region: "North", product: "A" },
-   *   { region: "North", product: "A" },
-   *   { region: "South", product: "B" },
-   * ]);
-   * df.count("region", "product")
-   *
-   * @remarks
-   * - Returns a DataFrame with the grouping columns plus a `count` column
-   * - Equivalent to `groupBy(...columns).summarise({ count: g => g.nrows() })`
-   * - Always groups by the given columns on the underlying row set (same as chaining
-   *   `groupBy` then `summarise`); it does not add a nested grouping on top of an
-   *   existing `GroupedDataFrame`
-   */
-  count: CountMethod<Row>;
 
   // ---------- Utilities ----------
   /**

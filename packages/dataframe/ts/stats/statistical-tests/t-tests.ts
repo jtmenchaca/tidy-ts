@@ -34,7 +34,7 @@ export function tTestOneSample({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  data: number[];
+  data: readonly number[];
   mu?: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
@@ -71,8 +71,8 @@ export function tTestIndependent({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   equalVar?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
@@ -109,8 +109,8 @@ export function tTestPaired({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): PrettifyDeep<PairedTTestResult> {

@@ -21,6 +21,39 @@ import {
 } from "./calendar.ts";
 import { applyAggregation } from "./sample-helpers.ts";
 
+type AggregationFn = (...args: any[]) => any;
+type AggregationSpec = { column: string; fn: AggregationFn };
+
+/**
+ * Resolve an aggregation entry to its source column + function.
+ *
+ * Every entry must be the explicit `{ column, fn }` form. A plain function is
+ * rejected so there is no implicit "key matches a column" shortcut and no
+ * silent fallback to picking a column for you.
+ */
+function resolveAggregation(
+  outputCol: string,
+  spec: AggregationSpec | AggregationFn,
+  availableColumns: readonly string[],
+): { sourceCol: string; fn: AggregationFn } {
+  if (typeof spec === "function") {
+    throw new Error(
+      `downsample: aggregation for "${outputCol}" must be the object form ` +
+        `{ column: <sourceCol>, fn: <aggregator> }. ` +
+        `Use { column: "${outputCol}", fn: <aggregator> } if the source ` +
+        `column has the same name. ` +
+        `(Available columns: ${availableColumns.join(", ")}.)`,
+    );
+  }
+  if (!availableColumns.includes(spec.column)) {
+    throw new Error(
+      `downsample: aggregation for "${outputCol}" references source column ` +
+        `"${spec.column}", which does not exist (available: ${availableColumns.join(", ")}).`,
+    );
+  }
+  return { sourceCol: spec.column, fn: spec.fn };
+}
+
 /**
  * Internal downsample implementation: Group by time buckets and apply aggregations.
  */
@@ -29,7 +62,7 @@ function downsampleImpl(
   timeColumn: any,
   frequency: Frequency,
   frequencyMs: number,
-  aggregations: Record<string, (...args: any[]) => any>,
+  aggregations: Record<string, AggregationSpec>,
   startDate?: Date,
   endDate?: Date,
 ): any {
@@ -177,57 +210,12 @@ function downsampleImpl(
 
         for (const [colName, aggregation] of Object.entries(aggregations)) {
           if (colName === timeColName) continue;
-
-          const col = colName;
-
-          // Check if column exists in data - use it directly
-          if (availableColumns.includes(colName)) {
-            resultRow[colName] = applyAggregation(
-              bucketDf,
-              col,
-              aggregation,
-            );
-          } else {
-            // Column doesn't exist - find appropriate source column
-            const numericColumns = availableColumns.filter(
-              (c) =>
-                c !== timeColName && !Object.hasOwn(groupKeys, c) &&
-                bucketRows.some((r: any) => typeof r[c] === "number"),
-            );
-
-            if (numericColumns.length === 1) {
-              // Only one numeric column - use it as the source
-              const sourceCol = numericColumns[0];
-              resultRow[colName] = applyAggregation(
-                bucketDf,
-                sourceCol,
-                aggregation,
-              );
-            } else if (numericColumns.length > 1) {
-              // Multiple numeric columns - ambiguous, use first one
-              const sourceCol = numericColumns[0];
-              resultRow[colName] = applyAggregation(
-                bucketDf,
-                sourceCol,
-                aggregation,
-              );
-            } else {
-              // No numeric columns - try any column
-              const otherColumns = availableColumns.filter((c) =>
-                c !== timeColName && !Object.hasOwn(groupKeys, c)
-              );
-              if (otherColumns.length > 0) {
-                const sourceCol = otherColumns[0];
-                resultRow[colName] = applyAggregation(
-                  bucketDf,
-                  sourceCol,
-                  aggregation,
-                );
-              } else {
-                resultRow[colName] = null;
-              }
-            }
-          }
+          const { sourceCol, fn } = resolveAggregation(
+            colName,
+            aggregation,
+            availableColumns,
+          );
+          resultRow[colName] = applyAggregation(bucketDf, sourceCol, fn);
         }
 
         allResults.push(resultRow);
@@ -391,59 +379,12 @@ function downsampleImpl(
 
     for (const [colName, aggregation] of Object.entries(aggregations)) {
       if (colName === timeColName) continue; // Skip time column
-
-      // Check if colName exists as a column in the data
-      const col = colName;
-      if (availableColumns.includes(colName)) {
-        // Column exists - aggregate it
-        resultRow[colName] = applyAggregation(
-          bucketDf,
-          col,
-          aggregation,
-        );
-      } else {
-        // Column doesn't exist - try to find a source column to aggregate
-        // For now, if there's only one numeric column (besides time), use that
-        // Otherwise, we need to infer or use the first available column
-        const numericColumns = availableColumns.filter(
-          (c) =>
-            c !== timeColName &&
-            bucketRows.some((r: any) => typeof r[c] === "number"),
-        );
-
-        if (numericColumns.length === 1) {
-          // Single numeric column - use it as source
-          const sourceCol = numericColumns[0];
-          resultRow[colName] = applyAggregation(
-            bucketDf,
-            sourceCol,
-            aggregation,
-          );
-        } else if (numericColumns.length > 0) {
-          // Multiple numeric columns - use the first one (could be improved)
-          const sourceCol = numericColumns[0];
-          resultRow[colName] = applyAggregation(
-            bucketDf,
-            sourceCol,
-            aggregation,
-          );
-        } else {
-          // No numeric columns found - try first non-time column
-          const otherColumns = availableColumns.filter((c) =>
-            c !== timeColName
-          );
-          if (otherColumns.length > 0) {
-            const sourceCol = otherColumns[0];
-            resultRow[colName] = applyAggregation(
-              bucketDf,
-              sourceCol,
-              aggregation,
-            );
-          } else {
-            resultRow[colName] = null;
-          }
-        }
-      }
+      const { sourceCol, fn } = resolveAggregation(
+        colName,
+        aggregation,
+        availableColumns,
+      );
+      resultRow[colName] = applyAggregation(bucketDf, sourceCol, fn);
     }
 
     result.push(resultRow);
@@ -463,7 +404,7 @@ function downsampleCalendarTemporal(
   rows: any[],
   timeColumn: any,
   frequency: Frequency,
-  aggregations: Record<string, (...args: any[]) => any>,
+  aggregations: Record<string, AggregationSpec>,
 ): any {
   const timeColName = String(timeColumn);
   const freq = parseFrequencyForCalendar(frequency);
@@ -527,30 +468,12 @@ function downsampleCalendarTemporal(
 
     for (const [colName, aggregation] of Object.entries(aggregations)) {
       if (colName === timeColName) continue;
-      const col = colName;
-
-      if (availableColumns.includes(colName)) {
-        resultRow[colName] = applyAggregation(
-          bucketDf,
-          col,
-          aggregation,
-        );
-      } else {
-        const numericColumns = availableColumns.filter(
-          (c) =>
-            c !== timeColName &&
-            bucketRows.some((r: any) => typeof r[c] === "number"),
-        );
-        if (numericColumns.length > 0) {
-          resultRow[colName] = applyAggregation(
-            bucketDf,
-            numericColumns[0],
-            aggregation,
-          );
-        } else {
-          resultRow[colName] = null;
-        }
-      }
+      const { sourceCol, fn } = resolveAggregation(
+        colName,
+        aggregation,
+        availableColumns,
+      );
+      resultRow[colName] = applyAggregation(bucketDf, sourceCol, fn);
     }
     result.push(resultRow);
   }

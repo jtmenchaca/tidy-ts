@@ -1,15 +1,28 @@
 /**
- * RPython SO#31745509 — Using str.contains on pandas dataframe with nullable column
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In pandas, str.contains on a column with NaN returns NaN for those rows.
- * Applying ~ (NOT) on NaN crashes. The user must handle nulls explicitly.
- *
- * In tidy-ts, a nullable string column is typed as string | null. Calling
- * string methods without null-checking is a compile-time error.
+ * ID: SO#31745509
+ * Language: Python
+ * Bug class: Nullable
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: str.contains on nullable column returns NaN, bitwise NOT fails on NaN. Missing values break operations.
  */
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({'V': ['File corruption', 'Registry error', np.nan, 'File missing', 'Other issue']})
+filtered = df[~df['V'].str.contains("File|Registry")]
+print(filtered)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { v: "File corruption" as string | null },
@@ -19,9 +32,5 @@ const df = createDataFrame([
   { v: "Other issue" },
 ]);
 
-// @ts-expect-error — 'v' is possibly 'null'
-const wrong = df.filter((r) => !r.v.includes("File"));
-
-// Fix: null-check first
-const filtered = df.filter((r) => r.v !== null && !r.v.includes("File") && !r.v.includes("Registry"));
-filtered.print();
+// @ts-expect-error — (string | null)[] is not assignable to number[]
+s.mean(df.extract("v"));

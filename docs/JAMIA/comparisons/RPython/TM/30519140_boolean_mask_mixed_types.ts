@@ -1,17 +1,27 @@
 /**
- * RPython SO#30519140 — pandas DataFrame set value on boolean mask
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, df[mask] = 30 attempts to set a value across all columns matching
- * a boolean mask. On a mixed-type DataFrame (int + string columns), this crashes
- * because assigning an integer to a string column is not valid. The user didn't
- * account for the column types before proceeding.
- *
- * In tidy-ts, mutate allows returning number | string, but downstream operations
- * that expect a specific type force the user to narrow first.
+ * ID: SO#30519140
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Boolean mask on mixed-dtype DataFrame fails. Type inconsistency across columns.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({'A': [1, 2, 3], 'B': ['a', 'b', 'f']})
+mask = df.isin([1, 3, 12, 'a'])
+df[mask] = 30
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { a: 1, b: "a" },
@@ -19,10 +29,7 @@ const df = createDataFrame([
   { a: 3, b: "f" },
 ]);
 
-// mutate allows mixed return — the column becomes number | string
 const mixed = df.mutate({ b: (r) => r.a === 1 ? 30 : r.b });
 
-// But downstream, attempting to use that column as number[] fails —
-// the user is forced to account for the mixed type before proceeding
 // @ts-expect-error — (string | number)[] is not assignable to number[]
-const wrong = s.mean(mixed.extract("b"));
+s.mean(mixed.extract("b"));

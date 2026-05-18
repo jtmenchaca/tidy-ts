@@ -1,16 +1,27 @@
 /**
- * RPython SO#31521526 — Convert currency to float (and parentheses indicate negative amounts)
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, currency strings with parentheses "(3,000.00)" crash on
- * astype(float) because the format is not handled. The column is string
- * but the user treats it as numeric.
- *
- * In tidy-ts, the column is typed as string. Numeric operations are
- * rejected until the user explicitly parses the values.
+ * ID: SO#31521526
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Currency string "(1,234.56)" can't convert to float. String format vs numeric type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({'Currency': ['$1.00', '$2,000.00', '(3,000.00)']})
+df[['Currency']] = df[['Currency']].replace(r'[\\$,]', '', regex=True).astype(float)
+print(df)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { currency: "$1.00" },
@@ -18,18 +29,5 @@ const df = createDataFrame([
   { currency: "(3,000.00)" },
 ]);
 
-// currency is string — numeric operations are rejected
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.sum(df.extract("currency"));
-
-// Fix: explicit parse with format handling
-const parsed = df.mutate({
-  amount: (r) => {
-    const clean = r.currency.replace(/[$,]/g, "");
-    if (clean.startsWith("(") && clean.endsWith(")")) {
-      return -parseFloat(clean.slice(1, -1));
-    }
-    return parseFloat(clean);
-  },
-});
-console.log(s.sum(parsed.extract("amount")));
+s.sum(df.extract("currency"));

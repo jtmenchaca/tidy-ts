@@ -1,16 +1,37 @@
 /**
- * RPython SO#29278153 — scale_y_continuous on factor y-axis
- * Effect: Crash
- * Bug class: Type coercion
- *
- * R bug: pivot_longer (melt) produces a "variable" column that is factor/character.
- * Applying scale_y_continuous to this factor y crashes: "Discrete value supplied to
- * continuous scale."
- *
- * In tidy-ts, the variable column from pivotLonger is typed as string. Passing it to
- * a function requiring number[] is a compile-time error.
+ * ID: SO#29278153
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: String/factor column passed to continuous y-axis. Typed y mapping requires `number \| null \| undefined`.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(ggplot2)
+
+meltDF <- data.frame(
+  MW = c(3.9, 6.4, 7.4, 8.1, 9, 9.4, 3.9, 6.4),
+  variable = factor(
+    c("10", "10", "33.95", "33.95", "58.66", "58.66", "84.42", "84.42"),
+    levels = c("10", "33.95", "58.66", "84.42")
+  ),
+  value = c(1, 1, 1, 1, 0, 0, 0, 0)
+)
+
+ggplot(meltDF[meltDF$value == 1, ], aes(x = MW, y = variable)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0, 1200), breaks = c(0, 400, 800, 1200)) +
+  scale_y_continuous(limits = c(0, 1200), breaks = c(0, 400, 800, 1200))
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const meltDF = createDataFrame([
   { mw: 3.9, variable: "10", value: 1 },
@@ -18,8 +39,5 @@ const meltDF = createDataFrame([
   { mw: 5.2, variable: "20", value: 2 },
 ]);
 
-// The SO user's intent: continuous y-scale on the "variable" column.
-// ggplot2 crashes because variable is factor, not numeric.
-// tidy-ts: correlation with string variable as y requires number[].
-// @ts-expect-error — string[] is not assignable to number[]
-s.test.correlation.pearson({ x: meltDF.extract("mw"), y: meltDF.extract("variable") });
+// @ts-expect-error — Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'.
+s.mean(meltDF.extract("variable"));

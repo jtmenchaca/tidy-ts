@@ -1,16 +1,27 @@
 /**
- * RPython SO#11561932 — json.dumps(list(np.arange(5))) fails while .tolist() works
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In numpy, list() preserves numpy scalar types (int64) which are not JSON
- * serializable. .tolist() converts to native Python ints.
- *
- * In tidy-ts, all values are native JS types. There are no wrapper scalar types.
- * JSON.stringify works on number[] directly. The bug is structurally absent.
- * The type system still catches passing wrong column types to numeric operations.
+ * ID: SO#11561932
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: numpy int32 in list not JSON serializable. Same native type pattern.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import json
+import numpy as np
+
+arr = np.arange(5)
+json.dumps(list(arr))
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { idx: 0, label: "a" },
@@ -18,10 +29,5 @@ const df = createDataFrame([
   { idx: 2, label: "c" },
 ]);
 
-// Values are native JS — JSON.stringify works
-const indices = df.extract("idx"); // number[]
-console.log(JSON.stringify(indices));
-
-// Type system catches wrong column type in numeric operations
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.sum(df.extract("label"));
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.sum(df.extract("label"));

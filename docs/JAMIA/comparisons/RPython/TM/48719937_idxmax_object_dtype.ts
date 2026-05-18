@@ -1,16 +1,33 @@
 /**
- * RPython SO#48719937 — TypeError: reduction operation 'argmax' not allowed for this dtype
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, idxmax() fails on object-dtype columns. The column contains
- * numeric values stored as strings due to DataFrame construction with wrong
- * index size (extra NaN rows coerce column to object).
- *
- * In tidy-ts, the column type is explicit. If the column is string,
- * numeric reductions are rejected at compile time.
+ * ID: SO#48719937
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: idxmax() on object-dtype column fails. Numeric reduction on wrong type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+c_params = [0.01, 0.1, 1, 10, 100]
+results = pd.DataFrame(index=range(len(c_params), 2), columns=['C_parameter', 'Mean recall score'])
+results['C_parameter'] = c_params
+
+recall_scores = [0.95, 0.90, 0.92, 0.92, 0.92]
+for j, score in enumerate(recall_scores):
+    results.iloc[j, 1] = score
+
+best = results.loc[results['Mean recall score'].idxmax()]['C_parameter']
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const results = createDataFrame([
   { C_parameter: 0.01, mean_recall: "0.95" },
@@ -20,10 +37,5 @@ const results = createDataFrame([
   { C_parameter: 100, mean_recall: "0.92" },
 ]);
 
-// mean_recall is string — numeric reduction is rejected
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.max(results.extract("mean_recall"));
-
-// Fix: parse the column first
-const parsed = results.mutate({ recall_num: (r) => parseFloat(r.mean_recall) });
-console.log(s.max(parsed.extract("recall_num")));
+s.max(results.extract("mean_recall"));

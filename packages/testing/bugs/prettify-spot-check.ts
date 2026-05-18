@@ -23,8 +23,8 @@ const selected = df.select("name", "age");
 // mutate uses Prettify<Row & { newCol: type }>
 const mutated = df.mutate({ revenue: (r) => r.age * r.score });
 
-// count uses Prettify<Pick<R, K> & { count: number }>
-const counted = df.groupBy("city").count();
+// summarize with count uses Prettify<Pick<R, K> & { count: number }>
+const counted = df.groupBy("city").summarize({ count: (g) => g.nrows() });
 
 // === DOUBLE WRAPS ===
 // pivotLonger: PivotLongerResult already Prettifies, then wrapped again

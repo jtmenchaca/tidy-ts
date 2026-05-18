@@ -1,18 +1,36 @@
 /**
- * RPython SO#26614465 — pd.notnull on list column returns array, breaks if-condition
- * Effect: Crash
- * Bug class: Nullable type
- *
- * Python bug: pd.notnull() on a cell containing a list returns an array of booleans
- * (one per element) instead of a single True. Using this in an if-condition crashes:
- * "The truth value of an array is ambiguous." The user expected a scalar null check
- * but got an array because the cell value is itself array-like.
- *
- * In tidy-ts, a column typed as number[] | null makes the nullability explicit.
- * Accessing properties on the nullable value without a null check is caught at
- * compile time — the user must explicitly narrow with !== null.
+ * ID: SO#26614465
+ * Language: Python
+ * Bug class: Nullable
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: pd.notnull on list returns array, breaks if-condition. Null-check returns unexpected type.
  */
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({
+    "A": ["one", "two", "three"],
+    "C": [["foo", "bar"], np.nan, ["baz"]],
+})
+
+def my_func(row):
+    pass
+
+df[['A', 'C']].apply(
+    lambda x: my_func(x) if pd.notnull(x.iloc[1]) else x, axis=1
+)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { a: "one", c: [1, 2, 3] as number[] | null },
@@ -20,8 +38,5 @@ const df = createDataFrame([
   { a: "three", c: [4, 5] as number[] | null },
 ]);
 
-// The SO user's intent: apply function only if cell is not null.
-// pd.notnull(x[1]) on a list returns an array, which can't be used as a bool.
-// tidy-ts: c is number[] | null. Accessing .length without null check fails.
-// @ts-expect-error — 'c' is possibly 'null'
-df.mutate({ len: (r) => r.c.length });
+// @ts-expect-error — Argument of type '(number[] | null)[]' is not assignable to parameter of type 'NumbersWithNullable'.
+s.mean(df.extract("c"));

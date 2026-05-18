@@ -1,15 +1,27 @@
 /**
- * RPython SO#14023423 — How to preProcess features when some of them are factors?
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In R, caret::preProcess("center", "scale") crashes on factor columns because
- * it requires all numeric input but doesn't enforce this at compile time.
- *
- * In tidy-ts, statistical functions like s.mean() or s.sd() require number[].
- * Passing a string column is a compile-time error.
+ * ID: SO#14023423
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: caret preProcess fails on factor columns. Numeric function on non-numeric type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(earth)
+library(caret)
+data(etitanic)
+
+a <- preProcess(etitanic, method = c("center", "scale"))
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const passengers = createDataFrame([
   { pclass: "1st", survived: 1, age: 29, sex: "female" },
@@ -17,9 +29,5 @@ const passengers = createDataFrame([
   { pclass: "3rd", survived: 0, age: 22, sex: "male" },
 ]);
 
-// @ts-expect-error — string[] is not assignable to number[]
-const wrongMean = s.mean(passengers.extract("pclass"));
-
-// Only numeric columns can be centered/scaled
-const ageMean = s.mean(passengers.extract("age"));
-console.log({ ageMean });
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(passengers.extract("pclass"));

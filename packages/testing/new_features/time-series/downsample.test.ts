@@ -13,8 +13,8 @@ Deno.test("downsample() - downsample hourly to daily", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      volume: stats.sum,
+      price: { column: "price", fn: stats.mean },
+      volume: { column: "volume", fn: stats.sum },
     },
   });
 
@@ -42,11 +42,11 @@ Deno.test("downsample() - downsample with different aggregations (OHLC)", () => 
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      open: stats.first, // First price
-      high: stats.max, // Highest price
-      low: stats.min, // Lowest price
-      close: stats.last, // Last price
-      mean: stats.mean, // Average price
+      open: { column: "price", fn: stats.first }, // First price
+      high: { column: "price", fn: stats.max }, // Highest price
+      low: { column: "price", fn: stats.min }, // Lowest price
+      close: { column: "price", fn: stats.last }, // Last price
+      mean: { column: "price", fn: stats.mean }, // Average price
     },
   });
 
@@ -56,6 +56,39 @@ Deno.test("downsample() - downsample with different aggregations (OHLC)", () => 
   expect(result[0].low).toBe(100);
   expect(result[0].close).toBe(120);
   expect(result[0].mean).toBe(123.33333333333333); // (100 + 150 + 120) / 3
+});
+
+Deno.test("downsample() - throws when aggregation is a plain function (must be { column, fn })", () => {
+  const df = createDataFrame([
+    { timestamp: new Date("2023-01-01T10:00:00Z"), price: 100, volume: 10 },
+    { timestamp: new Date("2023-01-01T11:00:00Z"), price: 150, volume: 20 },
+  ]);
+
+  expect(() =>
+    // The TS type rejects a plain function at compile time; this also
+    // verifies the runtime guard catches it for plain-JS / `as any` callers.
+    df.downsample({
+      timeColumn: "timestamp",
+      frequency: "1D",
+      // deno-lint-ignore no-explicit-any
+      aggregations: { open: stats.first as any },
+    })
+  ).toThrow(/must be the object form/);
+});
+
+Deno.test("downsample() - throws when { column, fn } references missing column", () => {
+  const df = createDataFrame([
+    { timestamp: new Date("2023-01-01T10:00:00Z"), price: 100 },
+  ]);
+
+  expect(() =>
+    df.downsample({
+      timeColumn: "timestamp",
+      frequency: "1D",
+      // deno-lint-ignore no-explicit-any
+      aggregations: { avg_volume: { column: "volume" as any, fn: stats.mean } },
+    })
+  ).toThrow(/references source column "volume", which does not exist/);
 });
 
 Deno.test("downsample() - downsample to weekly", () => {
@@ -70,7 +103,7 @@ Deno.test("downsample() - downsample to weekly", () => {
     timeColumn: "timestamp",
     frequency: "1W",
     aggregations: {
-      sales: stats.sum,
+      sales: { column: "sales", fn: stats.sum },
     },
   });
 
@@ -91,7 +124,7 @@ Deno.test("downsample() - downsample to 15-minute intervals", () => {
     timeColumn: "timestamp",
     frequency: "15min",
     aggregations: {
-      value: stats.mean,
+      value: { column: "value", fn: stats.mean },
     },
   });
 
@@ -106,7 +139,7 @@ Deno.test("downsample() - handle empty DataFrame", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      value: stats.mean,
+      value: { column: "value", fn: stats.mean },
     },
   });
 
@@ -122,7 +155,7 @@ Deno.test("downsample() - handle single row", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      value: stats.mean,
+      value: { column: "value", fn: stats.mean },
     },
   });
 
@@ -142,8 +175,8 @@ Deno.test("downsample() - with grouped data", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      timestamp: stats.first,
+      price: { column: "price", fn: stats.mean },
+      timestamp: { column: "timestamp", fn: stats.first },
     },
   });
 
@@ -168,8 +201,8 @@ Deno.test("downsample() - downsample with startDate before first data point", ()
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      volume: stats.sum,
+      price: { column: "price", fn: stats.mean },
+      volume: { column: "volume", fn: stats.sum },
     },
     startDate: new Date("2023-01-01T00:00:00Z"),
   });
@@ -206,8 +239,8 @@ Deno.test("downsample() - downsample with startDate after first data point (trun
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      volume: stats.sum,
+      price: { column: "price", fn: stats.mean },
+      volume: { column: "volume", fn: stats.sum },
     },
     startDate: new Date("2023-01-03T00:00:00Z"),
   });
@@ -240,8 +273,8 @@ Deno.test("downsample() - downsample with endDate after last data point", () => 
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      volume: stats.sum,
+      price: { column: "price", fn: stats.mean },
+      volume: { column: "volume", fn: stats.sum },
     },
     endDate: new Date("2023-01-05T23:59:59Z"),
   });
@@ -268,8 +301,8 @@ Deno.test("downsample() - downsample with both startDate and endDate", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
-      volume: stats.sum,
+      price: { column: "price", fn: stats.mean },
+      volume: { column: "volume", fn: stats.sum },
     },
     startDate: new Date("2023-01-01T00:00:00Z"),
     endDate: new Date("2023-01-05T23:59:59Z"),
@@ -311,7 +344,7 @@ Deno.test("downsample() - downsample with only startDate (use last data point as
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
     startDate: new Date("2023-01-01T00:00:00Z"),
   });
@@ -341,7 +374,7 @@ Deno.test("downsample() - downsample with only endDate (use first data point as 
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
     endDate: new Date("2023-01-05T23:59:59Z"),
   });
@@ -373,7 +406,7 @@ Deno.test("downsample() - with grouped data and startDate/endDate", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
     startDate: new Date("2023-01-01T00:00:00Z"),
     endDate: new Date("2023-01-05T23:59:59Z"),
@@ -417,7 +450,7 @@ Deno.test("downsample() - downsample aligns to fiscal year boundaries", () => {
     timeColumn: "timestamp",
     frequency: "1M",
     aggregations: {
-      sales: stats.sum,
+      sales: { column: "sales", fn: stats.sum },
     },
     startDate: new Date("2023-04-01T00:00:00Z"),
     endDate: new Date("2023-06-30T23:59:59Z"),

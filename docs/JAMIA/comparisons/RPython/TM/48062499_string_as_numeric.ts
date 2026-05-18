@@ -1,16 +1,31 @@
 /**
- * RPython SO#48062499 — numeric data arrives as strings, sorts lexicographically
- *
- * In pandas/numpy, a string array sorts as "103" < "34.17" (lexicographic)
- * with no error. Plots render with wrong y-axis order silently.
- *
- * In tidy-ts, if a column is string, passing it to a numeric operation
- * (like s.mean or s.test) is a compile-time error. The type system forces
- * explicit conversion before numeric use.
+ * ID: SO#48062499
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: IF
+ * In study: Yes
+ * Inclusion rationale: Y-axis data plotted as strings, not sorted numerically. String where number expected. Data processing error visible in output.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// Data arrives as strings (simulating CSV read without type parsing)
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import numpy as np
+
+Solar = ["50.35", "41.01", "69.16", "94.5", "111.9",
+         "103", "98.6", "36.45", "34.74", "34.17", "34.6"]
+
+order = np.argsort(Solar)
+sorted_solar = np.array(Solar)[order]
+print(list(sorted_solar))
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
 const df = createDataFrame([
   { time: "07:00", solar: "50.35" },
   { time: "08:00", solar: "41.01" },
@@ -20,14 +35,5 @@ const df = createDataFrame([
   { time: "12:00", solar: "103" },
 ]);
 
-// Schema is { time: string, solar: string }
-// Attempting numeric operations on string column fails at compile time:
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("solar"));
-
-// The fix: explicit conversion — no silent lexicographic sorting possible
-const numeric = df.mutate({ solar: (r) => parseFloat(r.solar) });
-// Now solar is number — arrange and stats work correctly
-const sorted = numeric.arrange("solar", "asc");
-const avg = s.mean(numeric.extract("solar"));
-console.log(avg);
+s.mean(df.extract("solar"));

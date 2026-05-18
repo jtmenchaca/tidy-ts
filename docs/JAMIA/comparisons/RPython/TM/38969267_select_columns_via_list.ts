@@ -1,13 +1,28 @@
 /**
- * RPython SO#38969267 — Selecting columns via a list of column names
- * Effect: Crash
- * Bug class: Implicit column selection
- *
- * In pandas, df[list] with a non-existent column name crashes at runtime.
- *
- * In tidy-ts, select() only accepts column names that exist on the row type.
+ * ID: SO#38969267
+ * Language: Python
+ * Bug class: Column ref
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Selecting columns via list fails when column doesn't exist. Column reference error.
  */
 import { createDataFrame } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6], "c": [7, 8, 9]})
+cols = ["a", "b", "missing_col"]
+df_new = df[cols]
+print(df_new)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { a: 1, b: 4, c: 7 },
@@ -15,11 +30,7 @@ const df = createDataFrame([
   { a: 3, b: 6, c: 9 },
 ]);
 
-const columnList = ["a", "b", "missing_col"] as const;
-
-// @ts-expect-error — "missing_col" is not a key of the row type
-const wrong = df.select(...columnList);
-
-const correct = df.select("a", "b");
-
-correct.print();
+if (false as boolean) {
+  // @ts-expect-error — Argument of type '"missing_col"' is not assignable to parameter of type '"a" | "b" | "c"'.
+  df.select("a", "b", "missing_col");
+}

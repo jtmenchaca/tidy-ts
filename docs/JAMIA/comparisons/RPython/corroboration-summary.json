@@ -1,0 +1,125 @@
+{
+  "metadata": {
+    "evaluationDate": "2026-05-18",
+    "corpus": "RPython (ESEC/FSE 2023), TM subset",
+    "pythonRuntime": "Python 3.14.5",
+    "rRuntime": "R 4.6.0",
+    "denoRuntime": "deno 2.7.14 (stable, release, aarch64-apple-darwin)",
+    "runnerScript": "docs/JAMIA/comparisons/RPython/verify.ts",
+    "gitCommit": "5079562a"
+  },
+  "inclusionFunnel": {
+    "corpus": 164,
+    "tmReproductionsOnDisk": 3,
+    "included": 3,
+    "excluded": 161,
+    "cdaIllustrativeReproductions": 0
+  },
+  "categoryDistribution": {
+    "Column reference": 0,
+    "Value type": 3,
+    "Missing value": 0,
+    "Join": 0,
+    "Data loading": 0,
+    "Schema composition": 0
+  },
+  "unmappedBugClasses": {},
+  "perCategoryMechanism": {
+    "Column reference": {
+      "compiler": 0,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    },
+    "Value type": {
+      "compiler": 3,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    },
+    "Missing value": {
+      "compiler": 0,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    },
+    "Join": {
+      "compiler": 0,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    },
+    "Data loading": {
+      "compiler": 0,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    },
+    "Schema composition": {
+      "compiler": 0,
+      "zod schema validation": 0,
+      "runtime API guard": 0,
+      "none — language structural absence": 0,
+      "none — library API design": 0,
+      "none — bug still exists": 0
+    }
+  },
+  "reproductionStatus": {
+    "Reproduces": 3,
+    "No longer reproduces": 0,
+    "Variant": 0
+  },
+  "detectionOutcome": {
+    "compile-time error": 3,
+    "runtime error": 0,
+    "runtime warning": 0,
+    "silent continuation": 0,
+    "not applicable": 0
+  },
+  "included": [
+    {
+      "id": "SO#10495898",
+      "language": "R",
+      "category": "Value type",
+      "runtimeConsequence": "IF",
+      "reproductionStatus": "Reproduces",
+      "detectionOutcome": "compile-time error",
+      "detectionMechanism": "compiler",
+      "catchExplanation": "Type '{ x: string; y: number; d: string; }' is not assignable to type 'Record<string, number>'",
+      "filePath": "RPython/TM/10495898_ggplot_string_x_axis.ts"
+    },
+    {
+      "id": "SO#10805643",
+      "language": "R",
+      "category": "Value type",
+      "runtimeConsequence": "Crash",
+      "reproductionStatus": "Reproduces",
+      "detectionOutcome": "compile-time error",
+      "detectionMechanism": "compiler",
+      "catchExplanation": "Type 'string[]' is not assignable to type 'number[]'",
+      "filePath": "RPython/TM/10805643_boxplot_continuous_color.ts"
+    },
+    {
+      "id": "SO#11561932",
+      "language": "Python",
+      "category": "Value type",
+      "runtimeConsequence": "Crash",
+      "reproductionStatus": "Reproduces",
+      "detectionOutcome": "compile-time error",
+      "detectionMechanism": "compiler",
+      "catchExplanation": "Type 'string[]' is not assignable to type 'number[]'",
+      "filePath": "RPython/TM/11561932_numpy_int_json.ts"
+    }
+  ],
+  "cdaIllustrative": []
+}

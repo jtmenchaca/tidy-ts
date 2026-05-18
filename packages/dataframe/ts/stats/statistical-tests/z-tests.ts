@@ -32,7 +32,7 @@ export function zTestOneSample({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  data: number[];
+  data: readonly number[];
   popMean: number;
   popStd: number;
   alternative?: "two-sided" | "less" | "greater";
@@ -70,8 +70,8 @@ export function zTestTwoSample({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  data1: number[];
-  data2: number[];
+  data1: readonly number[];
+  data2: readonly number[];
   popStd1: number;
   popStd2: number;
   alternative?: "two-sided" | "less" | "greater";

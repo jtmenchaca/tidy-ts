@@ -165,7 +165,9 @@ Deno.test("no_types - distinct and count", () => {
   const distinct = df.distinct("category");
   expect(distinct.nrows()).toBe(2);
 
-  const counted = df.count("category");
+  const counted = df.groupBy("category").summarize({
+    count: (g) => g.nrows(),
+  });
   expect(counted.nrows()).toBe(2);
   // deno-lint-ignore no-explicit-any
   expect(counted.toArray().find((r: any) => r.category === "A")?.count).toBe(

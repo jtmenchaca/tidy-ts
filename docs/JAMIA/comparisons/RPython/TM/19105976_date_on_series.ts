@@ -1,16 +1,27 @@
 /**
- * RPython SO#19105976 — Get MM-DD-YYYY from pandas Timestamp
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, user calls .date() on a Series (column-level) instead of on
- * individual Timestamp elements. The method doesn't exist on Series.
- *
- * In tidy-ts, mutate operates on individual row values. There is no confusion
- * between column-level and element-level operations. The type system ensures
- * you call methods appropriate to the value type.
+ * ID: SO#19105976
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: .date() called on Series instead of element. Typed mutate enforces value-level operations.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+dates = pd.to_datetime(pd.Series(['2023-01-15', '2023-02-20', '2023-03-25']))
+
+result = dates.date()
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { created_date: "2023-01-15 10:30:00", amount: 100 },
@@ -18,13 +29,5 @@ const df = createDataFrame([
   { created_date: "2023-03-25 09:45:00", amount: 300 },
 ]);
 
-// mutate operates on individual values — no Series/element confusion
-const result = df.mutate({
-  date_only: (r) => r.created_date.split(" ")[0],
-});
-
-// The date column is string — numeric ops are caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("created_date"));
-
-result.print();
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(df.extract("created_date"));

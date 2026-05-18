@@ -16,7 +16,7 @@ export function fishersExactTest({
   oddsRatio = 1.0,
   alpha = 0.05,
 }: {
-  contingencyTable: number[][];
+  contingencyTable: readonly (readonly number[])[];
   alternative?: "two-sided" | "less" | "greater";
   oddsRatio?: number;
   alpha?: number;

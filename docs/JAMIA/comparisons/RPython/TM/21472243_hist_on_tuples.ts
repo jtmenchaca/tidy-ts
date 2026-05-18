@@ -1,19 +1,36 @@
 /**
- * RPython SO#21472243 — plt.hist on (word, count) tuple list
- * Effect: Crash
+ * ID: SO#21472243
+ * Language: Python
  * Bug class: Value type
- *
- * Python bug: User passes a list of (word, count) tuples directly to plt.hist().
- * Histogram requires flat numeric data for binning; tuples crash with
- * "can't convert to float."
- *
- * In tidy-ts, the data is structured as separate columns. Passing the string
- * word column to a numeric function (analogous to hist needing numbers) is
- * rejected at compile time.
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: plt.hist on object-dtype data fails reduce. Numeric operation on string/object data.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// Same data as the .py: (word, count) pairs — structured as a DataFrame
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+top_words_10 = [
+    (" whitefield", 65299),
+    (" bellandur", 57061),
+    (" kundalahalli", 51769),
+    (" marathahalli", 50639),
+    (" electronic city", 44041),
+]
+
+plt.hist(top_words_10, label="True")
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
 const df = createDataFrame([
   { word: "whitefield", count: 65299 },
   { word: "bellandur", count: 57061 },
@@ -22,7 +39,5 @@ const df = createDataFrame([
   { word: "electronic city", count: 44041 },
 ]);
 
-// The .py passes the whole tuple list to plt.hist().
-// The equivalent mistake: passing the string column to a numeric operation.
-// @ts-expect-error — string[] is not assignable to number[]
+// @ts-expect-error — Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'.
 s.mean(df.extract("word"));

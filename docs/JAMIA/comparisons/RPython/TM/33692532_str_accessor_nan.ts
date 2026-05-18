@@ -1,15 +1,28 @@
 /**
- * RPython SO#33692532 — Pandas error "Can only use .str accessor with string values"
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In pandas, .str accessor fails on columns containing NaN because the column
- * is object dtype with mixed string/NaN content.
- *
- * In tidy-ts, a nullable string column is typed as string|null. Calling string
- * methods without null-checking is a compile-time error.
+ * ID: SO#33692532
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: .str accessor on column with NaN fails. Wrong accessor for column state (nullable).
  */
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({'data': ['100M', '5M', '75M', np.nan, '90M']})
+result = df['data'].str.extract(r'(\\d+)').astype(float)
+print(result)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { data: "100M" as string | null },
@@ -19,16 +32,5 @@ const df = createDataFrame([
   { data: "90M" },
 ]);
 
-// @ts-expect-error — 'data' is possibly 'null'
-const wrong = df.mutate({ num: (r) => r.data.match(/(\d+)/) });
-
-// Fix: null-check first
-const parsed = df.mutate({
-  numeric: (r) => {
-    if (r.data === null) return null;
-    const match = r.data.match(/(\d+)/);
-    return match ? parseFloat(match[1]) : null;
-  },
-});
-
-parsed.print();
+// @ts-expect-error — (string | null)[] is not assignable to number[]
+s.mean(df.extract("data"));

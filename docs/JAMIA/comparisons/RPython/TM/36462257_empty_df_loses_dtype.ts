@@ -1,26 +1,35 @@
 /**
- * RPython SO#36462257 — Create Empty Dataframe in Pandas specifying column types
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, pd.DataFrame() cannot accept per-column dtypes at construction.
- * Users must create empty and then cast, risking schema drift.
- *
- * In tidy-ts, the schema is defined by the row type. Column types are inferred
- * from the data provided. There is no separate "dtype" specification that can
- * diverge from the actual data.
+ * ID: SO#36462257
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Empty DataFrame loses dtype specification. Schema lost through operation.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// Schema is defined by the row shape — types are explicit and consistent
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame(
+    index=['pbp'],
+    columns=['contract', 'state', 'membership', 'raf'],
+    dtype=['str', 'str', 'int', 'float']
+)
+print(df)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
 const df = createDataFrame([
   { contract: "H1234", state: "CA", membership: 500, raf: 1.05 },
   { contract: "H5678", state: "TX", membership: 300, raf: 0.92 },
 ]);
 
-// Numeric columns are number, string columns are string — no ambiguity
-console.log(s.mean(df.extract("raf")));
-
-// Attempting numeric ops on string columns is caught at compile time
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("contract"));
+s.mean(df.extract("contract"));

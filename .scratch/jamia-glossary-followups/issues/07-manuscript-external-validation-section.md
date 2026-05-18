@@ -18,7 +18,7 @@ The defense rests on the RPython corpus (ESEC/FSE 2023): a third-party-curated s
 
 The section should report:
 
-1. **Corpus**: source (RPython, ESEC/FSE 2023), size (~1,400 snippets across TM/TM_DFB/CDA), what was excluded at the corpus level and why.
+1. **Corpus**: source (RPython, ESEC/FSE 2023). Scope is the **TM (Type Mismatch) subset** — 164 StackOverflow bugs curated by an independent research group whose root cause is a type mismatch. State explicitly that the other RPython subsets (CDA, APIC, SM, IDAP_IB) are **out of scope** for this evaluation; their broader scopes (e.g., CDA's "Confusing Data Analytics") would dilute the corroboration of a thesis specifically about type-system catches. Mention that three CDA reproductions exist in the repo as illustrative examples but are not part of the inclusion-evaluation denominator.
 2. **Inclusion process**: pre-registered rules from `RPython/rules.md`, denominator → numerator at each stage (e.g., "164 TM snippets examined → N mapped to our six categories → M excluded as visualization-only / language-plumbing / etc.").
 3. **Mapping distribution**: a table showing how included snippets distribute across the six categories, alongside the per-category counts from the comparison suite. Discuss any categories the corpus over- or under-represents relative to the suite. This is the central result of Contribution B.
 4. **Tidy-TS detection rate on included snippets, per category, with mechanism breakdown**: pulled from the migrated frontmatter (issue 05). Four mechanism categories reported distinctly:
@@ -37,7 +37,8 @@ Supplementary material should include the full `INCLUSION_EVALUATION.md` table a
 
 - [ ] New section exists in the manuscript with the five elements above.
 - [ ] Section opens with the explicit non-comparability disclaimer (quoted in this issue).
-- [ ] All counts in the section trace to `INCLUSION_EVALUATION.md` (migrated to the new frontmatter schema in issue 05).
+- [ ] Corpus scope is stated as TM (164 snippets); other RPython subsets explicitly noted as out of scope with rationale; CDA reproductions described as illustrative-only.
+- [ ] All counts in the section trace to `corroboration-summary.json` produced by issue 05c.
 - [ ] Detection-rate numbers explicitly separate compiler catches from Zod catches from `none — language structural absence` from `none — library API design` from `none — bug still exists`. No conflation.
 - [ ] Reporting leads with distribution and per-category breakdown — not a single aggregate percentage.
 - [ ] The "no inter-rater check" limitation is stated plainly with the independence argument as the alternative defense.
@@ -46,5 +47,5 @@ Supplementary material should include the full `INCLUSION_EVALUATION.md` table a
 
 ## Blocked by
 
-- Issue 05 (the numbers must come from migrated frontmatter; the schema split must be done so the catch-mechanism breakdown is computable).
+- Issue 05c (the manuscript pulls numbers from the generated `corroboration-summary.json`; without programmatic generation the prose would drift as frontmatter evolves).
 - Issue 06 (canonical vocabulary established in the rest of the paper before this section adopts it, to avoid mid-paper drift).

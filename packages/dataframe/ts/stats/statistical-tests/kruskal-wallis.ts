@@ -17,7 +17,7 @@ export type { KruskalWallisTestResult } from "./types.ts";
  * @returns Test result with statistic, p-value, and degrees of freedom
  */
 export function kruskalWallisTest(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<KruskalWallisTestResult> {
   // Validate input
@@ -66,8 +66,8 @@ export function kruskalWallisTestByGroup({
   groups,
   alpha = 0.05,
 }: {
-  data: number[];
-  groups: (string | number)[];
+  data: readonly number[];
+  groups: readonly (string | number)[];
   alpha?: number;
 }): PrettifyDeep<KruskalWallisTestResult> {
   if (data.length !== groups.length) {

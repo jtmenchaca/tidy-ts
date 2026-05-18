@@ -1,16 +1,32 @@
 /**
- * RPython SO#20625982 — split-apply-combine on pandas timedelta column
- * Effect: DC (silent data corruption)
- * Bug class: Implicit column selection
- *
- * In pandas, groupby().mean() silently drops timedelta columns from output.
- * The column vanishes with no error or warning.
- *
- * In tidy-ts, summarize() requires explicitly specifying every output column.
- * There is no implicit column selection that could silently drop data.
- * Attempting to pass a string column to s.mean() is caught at compile time.
+ * ID: SO#20625982
+ * Language: Python
+ * Bug class: Column ref
+ * Runtime consequence: DC
+ * In study: Yes
+ * Inclusion rationale: groupby.mean() silently drops timedelta column from output. Column vanishes with no error.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+data = pd.DataFrame(np.random.rand(10, 2), columns=['f1', 'f2'])
+data['td'] = pd.to_timedelta(np.random.rand(10) * 1e7, unit='ns')
+data['group'] = ['A', 'B'] * 5
+
+result = data.groupby('group').mean(numeric_only=True)
+assert "td" not in result.columns
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const data = createDataFrame([
   { f1: 0.99, f2: 0.95, td_ns: 3066000, group: "A" },
@@ -20,15 +36,5 @@ const data = createDataFrame([
   { f1: 0.85, f2: 0.18, td_ns: 396000, group: "A" },
 ]);
 
-// Each output column is explicitly named in summarize — nothing silently dropped
-const result = data.groupBy("group").summarize({
-  mean_f1: (g) => s.mean(g.extract("f1")),
-  mean_f2: (g) => s.mean(g.extract("f2")),
-  mean_td_ns: (g) => s.mean(g.extract("td_ns")),
-});
-
-// Passing the string group column to mean is caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(data.extract("group"));
-
-result.print();
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(data.extract("group"));

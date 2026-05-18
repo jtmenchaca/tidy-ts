@@ -1,16 +1,31 @@
 /**
- * RPython SO#29298577 — How to convert string to datetime with nulls
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In pandas, a date column containing literal string 'nan' crashes strptime.
- * The user doesn't know the column has non-date content mixed in.
- *
- * In tidy-ts, the column is typed as string. Parsing requires explicit
- * handling of invalid values. The type system forces you to account for
- * the possibility that parsing fails.
+ * ID: SO#29298577
+ * Language: Python
+ * Bug class: Data loading
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: String 'nan' in date column fails to_datetime. Mixed content at load boundary.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import datetime as dt
+
+df = pd.DataFrame({
+    'Date': ['2014-10-20 10:44:31', '2014-10-23 09:33:46', 'nan', '2014-10-01 09:38:45']
+})
+
+df['Date'] = df['Date'].apply(lambda x: dt.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'))
+print(df)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { date: "2014-10-20 10:44:31" },
@@ -19,15 +34,5 @@ const df = createDataFrame([
   { date: "2014-10-01 09:38:45" },
 ]);
 
-// date is string — numeric operations are caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("date"));
-
-// Explicit parse with null handling for invalid dates
-const parsed = df.mutate({
-  timestamp: (r) => {
-    const ms = Date.parse(r.date);
-    return Number.isNaN(ms) ? null : ms;
-  },
-});
-parsed.print();
+// @ts-expect-error — Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'.
+s.mean(df.extract("date"));

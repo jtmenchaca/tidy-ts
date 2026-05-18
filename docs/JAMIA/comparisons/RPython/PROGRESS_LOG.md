@@ -8,7 +8,7 @@ Tracking progress on creating .py/.R + .ts reproduction pairs for the JAMIA pape
 
 1. Work through bugs listed in `INCLUSION_EVALUATION.md` in table order (not cherry-picked)
 2. For each bug:
-   - Read the SO snippet from `docs/JAMIA/comparisons/RPython-main/TM_snippets.json` (or `CDA_snippets.json`)
+   - Read the SO snippet from `docs/JAMIA/comparisons/RPython/TM_snippets.json` (or via `lookup-snippet.ts`)
    - Write a `.py` (or `.R`) file reproducing the bug
    - Write a `.ts` file showing the tidy-ts equivalent with `@ts-expect-error` where applicable
    - Run `python3` (or use the venv) to verify the .py reproduces
@@ -24,7 +24,7 @@ Tracking progress on creating .py/.R + .ts reproduction pairs for the JAMIA pape
   - Use `docs/JAMIA/comparisons/RPython/venv/bin/python3` for scripts needing sklearn
   - System `python3` works for pandas/numpy (already installed system-wide)
 - **Deno**: `deno check <file.ts>` for type checking
-- **Source data**: `docs/JAMIA/comparisons/RPython-main/` (gitignored, large JSON files)
+- **Source data**: `docs/JAMIA/comparisons/RPython/TM_snippets.json` (this is the only corpus subset in scope; other subsets removed from the working tree)
   - `TM_snippets.json` — 164 Type Mismatch bugs
   - `CDA_snippets.json` — 848 Confusing Data Analytics bugs
   - `TM_DFB_snippets.json` — 110 TM x DataFrame Bug subset

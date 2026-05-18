@@ -32,7 +32,7 @@ Deno.test("downsample - Instant with hourly to daily (native)", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
   });
 
@@ -61,7 +61,7 @@ Deno.test("downsample - Instant (polyfill)", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
   });
 
@@ -92,7 +92,7 @@ Deno.test("downsample - ZonedDateTime (native)", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
   });
 
@@ -113,7 +113,7 @@ Deno.test("downsample - PlainDate daily (calendar path)", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1D",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(2);
@@ -135,7 +135,7 @@ Deno.test("downsample - PlainDate monthly (calendar path)", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1M",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(3);
@@ -156,7 +156,7 @@ Deno.test("downsample - PlainDate (polyfill)", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1D",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(2);
@@ -175,7 +175,7 @@ Deno.test("downsample - PlainDate (polyfill) monthly", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1M",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(2);
@@ -202,7 +202,7 @@ Deno.test("downsample - PlainDateTime hourly (calendar path)", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1H",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(2);
@@ -231,7 +231,7 @@ Deno.test("downsample - PlainDateTime (polyfill)", () => {
   const result = df.downsample({
     timeColumn: "timestamp",
     frequency: "1H",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   expect(result.nrows()).toBe(2);
@@ -255,7 +255,7 @@ Deno.test("downsample - PlainTime throws", () => {
     df.downsample({
       timeColumn: "timestamp",
       frequency: "1H",
-      aggregations: { price: stats.mean },
+      aggregations: { price: { column: "price", fn: stats.mean } },
     })
   ).toThrow("PlainTime");
 });

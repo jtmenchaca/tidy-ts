@@ -1,16 +1,29 @@
 /**
- * RPython SO#30944577 — Check if string is in a pandas DataFrame
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, str.contains() returns a Series of booleans. Using it in an
- * if-statement crashes because a Series is not a scalar boolean.
- *
- * In tidy-ts, filter() takes a predicate that operates on individual rows
- * and returns boolean. There is no Series/scalar confusion — the predicate
- * always returns a single boolean per row.
+ * ID: SO#30944577
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: str.contains returns Series used as scalar bool. Typed filter operates on values, returns boolean.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+BabyDataSet = [('Bob', 968), ('Jessica', 155), ('Mary', 77), ('John', 578), ('Mel', 973)]
+a = pd.DataFrame(data=BabyDataSet, columns=['Names', 'Births'])
+
+if a['Names'].str.contains('Mel'):
+    print("Mel is there")
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { name: "Bob", births: 968 },
@@ -20,10 +33,5 @@ const df = createDataFrame([
   { name: "Mel", births: 973 },
 ]);
 
-// filter predicate returns boolean per row — no ambiguity
-const hasMel = df.filter((r) => r.name.includes("Mel"));
-hasMel.print();
-
-// Type system catches passing string column to numeric ops
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("name"));
+s.mean(df.extract("name"));

@@ -150,7 +150,9 @@ function countEncountersOverlapping<
       return Temporal.PlainDateTime.compare(s, opts.end) <= 0 &&
         Temporal.PlainDateTime.compare(e, opts.start) >= 0;
     });
-  const counts = filtered.count("id");
+  const counts = filtered.groupBy("id").summarize({
+    count: (g) => g.nrows(),
+  });
   return opts.roster.leftJoin(counts, { keys: { left: "id", right: "id" } })
     .mutate({ value: (r) => r.count ?? 0 })
     .select("id", "value");
@@ -227,7 +229,8 @@ function _consecutiveValues(opts: {
         s.cumsum(df.extract("_streakStart") as number[])[i],
     })
     .filter((r) => r._match === 1)
-    .count("id", "_streakId")
+    .groupBy("id", "_streakId")
+    .summarize({ count: (g) => g.nrows() })
     .filter((r) => r.count >= opts.minCount)
     .distinct("id");
 

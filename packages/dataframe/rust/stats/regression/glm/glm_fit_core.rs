@@ -514,9 +514,12 @@ pub fn glm_fit(
             0.0
         },
         adjusted_r_squared: if nulldev > 0.0 && y.len() > p {
+            // adj.R² = 1 - (1 - R²) * (n-1)/(n-k)
+            //       = 1 - (devold/nulldev) * (n-1)/(n-k)
+            // (since R² = 1 - devold/nulldev, so 1 - R² = devold/nulldev)
             let n = y.len() as f64;
             let k = p as f64;
-            1.0 - (1.0 - (devold / nulldev)) * (n - 1.0) / (n - k)
+            1.0 - (devold / nulldev) * (n - 1.0) / (n - k)
         } else {
             0.0
         },
@@ -530,7 +533,16 @@ pub fn glm_fit(
         } else {
             0.0
         },
-        f_p_value: 0.0, // TODO: Calculate F-test p-value
+        f_p_value: if resdf > 0 && nulldf > resdf && nulldev > devold {
+            // Two-tailed F-test upper tail: pf(F, df1, df2, lower.tail=FALSE)
+            let f = ((nulldev - devold) / (nulldf - resdf) as f64)
+                / (devold / resdf as f64);
+            let df1 = (nulldf - resdf) as f64;
+            let df2 = resdf as f64;
+            crate::stats::distributions::f_distribution::pf(f, df1, df2, false, false)
+        } else {
+            f64::NAN
+        },
         n_observations: y.len(),
         response_variable_name: "y".to_string(),
         predictor_variable_names: (0..p).map(|i| format!("x{}", i)).collect(),

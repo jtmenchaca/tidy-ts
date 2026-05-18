@@ -28,7 +28,7 @@ export function proportionTestOneSample({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  data: boolean[];
+  data: readonly boolean[];
   hypothesizedProportion: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
@@ -67,8 +67,8 @@ export function proportionTestTwoSample({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  data1: boolean[];
-  data2: boolean[];
+  data1: readonly boolean[];
+  data2: readonly boolean[];
   pooled?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;

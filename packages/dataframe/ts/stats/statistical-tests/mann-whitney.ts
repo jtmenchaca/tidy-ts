@@ -15,8 +15,8 @@ export function mannWhitneyTest({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   exact?: boolean;
   continuityCorrection?: boolean;
   alternative?: "two-sided" | "less" | "greater";

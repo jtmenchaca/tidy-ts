@@ -35,11 +35,17 @@ iter <- model$iter
 converged <- model$converged
 
 # Extract diagnostic statistics
-r_squared <- if (!is.null(model_summary$r.squared)) model_summary$r.squared else 0.0
-adj_r_squared <- if (!is.null(model_summary$adj.r.squared)) model_summary$adj.r.squared else 0.0
-f_statistic <- if (!is.null(model_summary$fstatistic)) model_summary$fstatistic[1] else 0.0
-f_p_value <- if (!is.null(model_summary$fstatistic)) pf(model_summary$fstatistic[1], model_summary$fstatistic[2], model_summary$fstatistic[3], lower.tail = FALSE) else 0.0
-residual_standard_error <- if (!is.null(model_summary$sigma)) model_summary$sigma else 0.0
+# Note: summary(glm()) doesn't populate r.squared/adj.r.squared/fstatistic for
+# the gaussian family — those live on summary(lm()). For a gaussian/identity GLM
+# the LM and GLM fits are identical, so we use lm() here as the canonical source.
+lm_fit <- lm(y ~ group)
+lm_summary <- summary(lm_fit)
+r_squared <- lm_summary$r.squared
+adj_r_squared <- lm_summary$adj.r.squared
+f_statistic <- lm_summary$fstatistic[1]
+f_p_value <- pf(lm_summary$fstatistic[1], lm_summary$fstatistic[2], lm_summary$fstatistic[3], lower.tail = FALSE)
+residual_standard_error <- lm_summary$sigma
+n_observations <- length(y)
 dispersion_parameter <- model_summary$dispersion
 
 # Extract covariance matrix
@@ -76,8 +82,9 @@ cat(sprintf("P-values: [%.5f, %.5f]\n", coefs[1,4], coefs[2,4]))
 cat(sprintf("Deviance: %.4f | AIC: %.4f\n", deviance, aic))
 cat(sprintf("Null deviance: %.4f | Residual df: %d\n", null_deviance, df_residual))
 cat(sprintf("Rank: %d | Iterations: %d | Converged: %s\n", rank, iter, converged))
-cat(sprintf("R-squared: %.4f | Adj R-squared: %.4f\n", r_squared, adj_r_squared))
-cat(sprintf("Residual SE: %.4f | Dispersion: %.4f\n", residual_standard_error, dispersion_parameter))
+cat(sprintf("R-squared: %.15g | Adj R-squared: %.15g\n", r_squared, adj_r_squared))
+cat(sprintf("F-statistic: %.15g | F p-value: %.15g\n", f_statistic, f_p_value))
+cat(sprintf("Residual SE: %.15g | Dispersion: %.15g | n: %d\n", residual_standard_error, dispersion_parameter, n_observations))
 cat(sprintf("Family: %s | Link: %s\n", family_name, link_name))
 cat("Covariance matrix:\n")
 for (i in 1:nrow(cov_matrix)) {

@@ -77,9 +77,12 @@ Deno.test("stats.backwardFill() - can be used in downsample with wrapper", () =>
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: (values: unknown[]) => {
-        const filled = stats.backwardFill(values);
-        return filled[filled.length - 1]; // Return last filled value
+      price: {
+        column: "price",
+        fn: (values: unknown[]) => {
+          const filled = stats.backwardFill(values);
+          return filled[filled.length - 1]; // Return last filled value
+        },
       },
     },
   });

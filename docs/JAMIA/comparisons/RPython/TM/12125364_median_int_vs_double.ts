@@ -1,36 +1,38 @@
 /**
- * RPython SO#12125364 — Why does median trip up data.table (integer vs double)?
- * Effect: Crash
- * Bug class: Int/double distinction
- *
- * In R data.table, median() returns integer for odd-length groups and double for
- * even-length groups. data.table requires consistent types across groups, causing
- * a crash.
- *
- * In JavaScript, there is no int/double distinction — all numbers are `number`.
- * This class of bug does not exist. The type system still catches unrelated
- * misuse (e.g., passing a string column to s.median()).
+ * ID: SO#12125364
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: median() returns int for odd-length groups, double for even-length. data.table crashes on inconsistent return types across groups. Not verified with R runtime — .R file written from SO code.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(data.table)
+
+dt <- data.table(
+  patients = c(1:3, 1:2),
+  weekdays = c("Mon", "Mon", "Mon", "Tue", "Tue")
+)
+
+dt[, median(patients), by = weekdays]
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const data = createDataFrame([
-  { day: "Mon", n: 3 },
-  { day: "Mon", n: 5 },
-  { day: "Mon", n: 2 },
-  { day: "Tue", n: 7 },
-  { day: "Tue", n: 4 },
-  { day: "Wed", n: 6 },
-  { day: "Wed", n: 1 },
-  { day: "Wed", n: 8 },
+  { weekdays: "Mon", patients: 1 },
+  { weekdays: "Mon", patients: 2 },
+  { weekdays: "Mon", patients: 3 },
+  { weekdays: "Tue", patients: 1 },
+  { weekdays: "Tue", patients: 2 },
 ]);
 
-// s.median() returns number regardless of group size — no int/double conflict
-const result = data.groupBy("day").summarize({
-  patient_encounters: (g) => s.median(g.extract("n")),
-});
-
-// Passing a string column to median is still caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.median(data.extract("day"));
-
-result.print();
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.median(data.extract("weekdays"));

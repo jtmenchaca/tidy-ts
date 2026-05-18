@@ -27,8 +27,8 @@ export function kolmogorovSmirnovTest({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): PrettifyDeep<KolmogorovSmirnovTestResult> {
@@ -69,7 +69,7 @@ export function kolmogorovSmirnovUniformTest({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
+  x: readonly number[];
   min?: number;
   max?: number;
   alternative?: "two-sided" | "less" | "greater";

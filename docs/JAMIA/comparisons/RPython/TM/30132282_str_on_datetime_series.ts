@@ -1,28 +1,31 @@
 /**
- * RPython SO#30132282 — datetime to string with series in pandas
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, .str accessor on a datetime Series crashes. The user wants to
- * format the dates as strings but uses the wrong accessor for the dtype.
- *
- * In tidy-ts, dates stored as strings are typed as string — string methods
- * work. Dates stored as numbers can't have string methods called on them.
+ * ID: SO#30132282
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: .str accessor on datetime Series. Wrong accessor for column type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+dates = pd.to_datetime(pd.Series(['20010101', '20010331']), format='%Y%m%d')
+dates.str
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
-  { date_str: "2001-01-01", amount: 100 },
-  { date_str: "2001-03-31", amount: 200 },
+  { date: new Date("2001-01-01"), amount: 100 },
+  { date: new Date("2001-03-31"), amount: 200 },
 ]);
 
-// date_str is string — string operations work in mutate
-const formatted = df.mutate({
-  year: (r) => r.date_str.slice(0, 4),
-});
-
-// Numeric operations on string column are caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("date_str"));
-
-formatted.print();
+// @ts-expect-error — Date[] is not assignable to number[]
+s.mean(df.extract("date"));

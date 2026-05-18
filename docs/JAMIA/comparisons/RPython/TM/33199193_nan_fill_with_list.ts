@@ -1,17 +1,32 @@
 /**
- * RPython SO#33199193 — How to fill DataFrame NaN values with empty list []
- * Effect: Crash
- * Bug class: Nullable type
- *
- * Python bug: A column contains lists in some rows and NaN in others. Calling
- * df.fillna([]) crashes: "TypeError: Invalid 'to_replace' type: 'float'" because
- * pandas fillna doesn't support filling with a list value — the NaN is float type
- * and can't be replaced with a list through the standard API.
- *
- * In tidy-ts, if a column has type number[][] | null, the null must be handled
- * explicitly. Operations requiring strict number[][] catch the nullable type.
+ * ID: SO#33199193
+ * Language: Python
+ * Bug class: Nullable
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: NaN in list-type column can't be filled with empty list. Missing value handling type mismatch.
  */
-import { createDataFrame } from "@tidy-ts/dataframe";
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({
+    "date": ["2011-04-23", "2011-04-24", "2011-04-25", "2011-04-26", "2011-04-27"],
+    "ids": [[0, 1, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3], np.nan, [0, 1, 2, 3]],
+})
+
+result = df.fillna([])
+print(result)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { date: "2011-04-23", ids: [0, 1, 2, 3] as number[] | null },
@@ -21,9 +36,5 @@ const df = createDataFrame([
   { date: "2011-04-27", ids: [0, 1, 2, 3] as number[] | null },
 ]);
 
-// The SO user's intent: fill NaN values in the ids column with [].
-// pandas crashes because fillna doesn't handle list replacement.
-// tidy-ts: the ids column is number[] | null. Accessing .length on it requires
-// handling the null case — the type system forces explicit null handling.
-// @ts-expect-error — 'ids' is possibly 'null'
-df.mutate({ count: (r) => r.ids.length });
+// @ts-expect-error — (number[] | null)[] is not assignable to number[]
+s.mean(df.extract("ids"));

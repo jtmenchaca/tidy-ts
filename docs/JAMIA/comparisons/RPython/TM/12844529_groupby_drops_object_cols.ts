@@ -1,14 +1,32 @@
 /**
- * RPython SO#12844529 — No numeric types to aggregate - change in groupby() behaviour?
- * Effect: DC (silent data corruption)
- * Bug class: Implicit column selection
- *
- * In pandas, groupby().mean() silently drops object-dtype columns, returning
- * an empty DataFrame if all columns are strings.
- *
- * In tidy-ts, s.mean() on a string[] is a compile-time error. You must convert first.
+ * ID: SO#12844529
+ * Language: Python
+ * Bug class: Column ref
+ * Runtime consequence: DC
+ * In study: Yes
+ * Inclusion rationale: groupby aggregate silently drops object-dtype columns. Output missing columns, no warning.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'city': ['NYC', 'NYC', 'LA', 'LA'],
+    'temp': ['72', '75', '80', '82'],
+    'humidity': ['45', '50', '60', '55'],
+})
+
+result = df.groupby('city').mean(numeric_only=True)
+assert "temp" not in result.columns and "humidity" not in result.columns
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { city: "NYC", temp: "72", humidity: "45" },
@@ -17,18 +35,5 @@ const df = createDataFrame([
   { city: "LA", temp: "82", humidity: "55" },
 ]);
 
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("temp"));
-
-// Fix: explicit conversion
-const numeric = df.mutate({
-  temp: (r) => parseFloat(r.temp),
-  humidity: (r) => parseFloat(r.humidity),
-});
-
-const result = numeric.groupBy("city").summarize({
-  mean_temp: (g) => s.mean(g.extract("temp")),
-  mean_humidity: (g) => s.mean(g.extract("humidity")),
-});
-
-result.print();
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(df.extract("temp"));

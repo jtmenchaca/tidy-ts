@@ -1,16 +1,38 @@
 /**
- * RPython SO#35560433 — geom_smooth not working/showing up
- * Effect: IF (silent incorrect functionality)
- * Bug class: Type coercion
- *
- * R bug: day column is character (e.g., "05/22"). geom_smooth(method='lm') silently
- * fails to produce a trend line because linear regression requires a numeric x-axis.
- * ggplot2 does not error — it just renders nothing for the smooth layer.
- *
- * In tidy-ts, attempting to run a linear correlation or regression with string x-values
- * is a compile-time error — the user must parse dates to numeric before fitting.
+ * ID: SO#35560433
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: IF
+ * In study: Yes
+ * Inclusion rationale: geom_smooth fails silently on character dates. String column where temporal/numeric expected for regression.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(ggplot2)
+
+b <- data.frame(
+  day = c("05/22", "05/23", "05/24", "05/25", "05/26", "05/27", "05/28",
+          "05/29", "05/30", "05/31", "06/01", "06/02"),
+  temp = c(10.1, 8.7, 11.4, 11.4, 11.6, 10.7, 9.6, 11.0, 10.0, 10.7, 9.5, 10.3)
+)
+
+gg2 <- ggplot(b, aes(x = day, y = temp, color = temp)) +
+  geom_point(stat = "identity", aes(colour = temp), size = 3) +
+  geom_smooth(method = "lm") +
+  scale_colour_gradient(low = "yellow", high = "#de2d26")
+
+built <- ggplot_build(gg2)
+smooth_layer_data <- built$data[[2]]
+stopifnot(nrow(smooth_layer_data) == 0)
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const b = createDataFrame([
   { day: "05/22", temp: 10.1 },
@@ -27,9 +49,5 @@ const b = createDataFrame([
   { day: "06/02", temp: 10.3 },
 ]);
 
-// The SO user's intent: fit a linear trend (geom_smooth(method='lm')) over time.
-// With string day, ggplot2 silently produces no smooth line.
-// tidy-ts: s.glm requires Row extends Record<string, number>. A DataFrame with
-// string columns does not satisfy this constraint — the model fit is rejected.
-// @ts-expect-error — Type '{ day: string; temp: number; }' does not satisfy 'Record<string, number>'
+// @ts-expect-error — Type '{ day: string; temp: number; }' is not assignable to type 'Record<string, number>'
 s.glm({ formula: "temp ~ day", family: "gaussian", link: "identity", data: b });

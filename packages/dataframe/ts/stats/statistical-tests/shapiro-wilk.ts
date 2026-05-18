@@ -12,7 +12,7 @@ export function shapiroWilkTest({
   data,
   alpha = 0.05,
 }: {
-  data: number[];
+  data: readonly number[];
   alpha?: number;
 }): PrettifyDeep<ShapiroWilkTestResult> {
   const cleanData = data.filter((x) => isFinite(x));

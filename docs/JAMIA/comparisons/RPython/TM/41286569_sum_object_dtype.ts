@@ -1,15 +1,32 @@
 /**
- * RPython SO#41286569 — Get total of Pandas column
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, df['MyColumn'].sum() on an object-dtype column concatenates
- * strings instead of adding numbers. The user thinks they have numeric data.
- *
- * In tidy-ts, the column is typed as string. Passing string[] to s.sum()
- * is a compile-time error.
+ * ID: SO#41286569
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: DC
+ * In study: Yes
+ * Inclusion rationale: df.sum() on object-dtype column concatenates strings instead of adding numbers. Numeric op on wrong type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'X': ['A', 'B', 'C', 'D'],
+    'MyColumn': ['84', '76', '28', '19'],
+    'Y': [13.0, 77.0, 69.0, 20.0],
+})
+
+result = df['MyColumn'].sum()
+print(f"sum() result: {result!r}")
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { X: "A", MyColumn: "84", Y: 13.0 },
@@ -18,10 +35,5 @@ const df = createDataFrame([
   { X: "D", MyColumn: "19", Y: 20.0 },
 ]);
 
-// MyColumn is string — s.sum() rejects string[]
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.sum(df.extract("MyColumn"));
-
-// Fix: parse first, then sum
-const parsed = df.mutate({ MyColumn_num: (r) => parseFloat(r.MyColumn) });
-console.log(s.sum(parsed.extract("MyColumn_num")));
+s.sum(df.extract("MyColumn"));

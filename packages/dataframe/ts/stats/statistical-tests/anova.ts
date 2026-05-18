@@ -21,7 +21,7 @@ import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
  * @returns ANOVA test results
  */
 export function anovaOneWay(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<OneWayAnovaTestResult> {
   if (groups.length < 2) {
@@ -53,7 +53,7 @@ export function anovaOneWay(
  * @returns ANOVA test results using Welch's method that doesn't assume equal variances
  */
 export function welchAnovaOneWay(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<WelchAnovaTestResult> {
   if (groups.length < 2) {
@@ -91,7 +91,7 @@ function _twoWayAnovaFactorA({
   data,
   alpha = 0.05,
 }: {
-  data: number[][][];
+  data: readonly (readonly (readonly number[])[])[];
   alpha?: number;
 }): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
@@ -153,7 +153,7 @@ function _twoWayAnovaFactorB({
   data,
   alpha = 0.05,
 }: {
-  data: number[][][];
+  data: readonly (readonly (readonly number[])[])[];
   alpha?: number;
 }): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
@@ -215,7 +215,7 @@ function _twoWayAnovaInteraction({
   data,
   alpha = 0.05,
 }: {
-  data: number[][][];
+  data: readonly (readonly (readonly number[])[])[];
   alpha?: number;
 }): PrettifyDeep<OneWayAnovaTestResult> {
   if (data.length < 2) {
@@ -277,7 +277,7 @@ export function twoWayAnova({
   data,
   alpha = 0.05,
 }: {
-  data: number[][][];
+  data: readonly (readonly (readonly number[])[])[];
   alpha?: number;
 }): PrettifyDeep<TwoWayAnovaTestResult> {
   if (data.length < 2) {

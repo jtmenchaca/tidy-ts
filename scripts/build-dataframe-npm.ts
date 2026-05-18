@@ -166,7 +166,7 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
   bugs: { url: "https://github.com/jtmenchaca/tidy-ts/issues" },
   keywords: ["dataframe", "data-analysis", "statistics", "typescript", "glm", "regression", "tidy-data"],
   dependencies: {
-    "@tidy-ts/shims": "1.5.8",
+    "@tidy-ts/shims": "1.5.9",
     "zod": "^4.1.8",
   },
   optionalDependencies: {

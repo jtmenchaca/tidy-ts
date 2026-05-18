@@ -16,8 +16,8 @@ export function kendallTest({
   alpha = 0.05,
   exact,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
   exact?: boolean;

@@ -1,15 +1,37 @@
 /**
- * RPython SO#30063190 — dplyr with POSIXlt date columns
- * Effect: Crash
- * Bug class: Nullable type
- *
- * R bug: dplyr group_by/summarise on POSIXlt columns crashes because dplyr cannot
- * handle the list-of-lists internal structure of POSIXlt. The fix is as.POSIXct().
- *
- * In tidy-ts, date strings must be parsed to Temporal types before temporal operations.
- * Using unparsed date strings in numeric groupBy summaries is rejected at compile time.
+ * ID: SO#30063190
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: POSIXlt date column incompatible with dplyr. Tidy-ts uses single consistent Temporal type.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(dplyr)
+
+df <- data.frame(
+  transaction_date = c("01.01.2010", "15.01.2010", "01.02.2010"),
+  install_date = c("01.01.2010", "01.01.2010", "01.02.2010"),
+  value = c(10, 20, 15)
+)
+
+df$transaction_date <- strptime(df$transaction_date, "%d.%m.%Y")
+df$install_date <- strptime(df$install_date, "%d.%m.%Y")
+df$days <- as.numeric(difftime(df$transaction_date, df$install_date, units = "days"))
+
+df %>%
+  group_by(transaction_date) %>%
+  summarise(total = sum(value))
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { transaction_date: "01.01.2010", install_date: "01.01.2010", value: 10 },
@@ -17,8 +39,5 @@ const df = createDataFrame([
   { transaction_date: "01.02.2010", install_date: "01.01.2010", value: 15 },
 ]);
 
-// The SO user's intent: group_by(install_date) then summarise transaction_date.
-// dplyr crashes on POSIXlt internals.
-// tidy-ts: correlating date strings with values requires numeric x.
 // @ts-expect-error — string[] is not assignable to number[]
-s.test.correlation.pearson({ x: df.extract("transaction_date"), y: df.extract("value") });
+s.mean(df.extract("transaction_date"));

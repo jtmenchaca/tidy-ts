@@ -1,15 +1,31 @@
 /**
- * RPython SO#47333227 — Pandas: ValueError: cannot convert float NaN to integer
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In pandas, NaN in a column prevents astype(int) because NaN has no integer
- * representation. The user must filter nulls first.
- *
- * In tidy-ts, a column with nulls is typed as number | null. Operations
- * that require non-null values (like Math.round()) force the user to handle nulls.
+ * ID: SO#47333227
+ * Language: Python
+ * Bug class: Nullable
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: NaN in column prevents astype(int). Missing values block type conversion.
  */
 import { createDataFrame } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({
+    'x': [1.0, 2.0, np.nan, 4.0, 5.0],
+    'y': [10, 20, 30, 40, 50],
+})
+
+df[['x']] = df[['x']].astype(int)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { x: 1.0 as number | null, y: 10 },
@@ -19,10 +35,5 @@ const df = createDataFrame([
   { x: 5.0, y: 50 },
 ]);
 
-// x is number | null — calling Math.round without null-check is an error
 // @ts-expect-error — 'x' is possibly 'null'
-const wrong = df.mutate({ x_int: (r) => Math.round(r.x) });
-
-// Fix: handle nulls in the mutate
-const fixed = df.mutate({ x_int: (r) => (r.x === null ? null : Math.round(r.x)) });
-fixed.print();
+df.mutate({ x_int: (r) => Math.round(r.x) });

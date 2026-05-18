@@ -218,6 +218,51 @@ Deno.test("readXLSX - error on missing columns", async () => {
   }
 });
 
+Deno.test("readXLSX - throws on duplicate headers with teaching message (default)", async () => {
+  // Fixture header row: name,value,name,value
+  const schema = z.object({ name: z.string(), value: z.number() });
+
+  try {
+    await readXLSX(
+      "packages/dataframe/ts/io/fixtures/duplicate-headers.xlsx",
+      schema,
+    );
+    throw new Error("Expected error to be thrown");
+  } catch (error) {
+    const msg = (error as Error).message;
+    expect(msg).toContain("duplicate headers detected");
+    expect(msg).toContain("allowDuplicateHeaders: true");
+    expect(msg).toContain("name_2");
+  }
+});
+
+Deno.test("readXLSX - allowDuplicateHeaders renames duplicates with _2 suffix", async () => {
+  // Fixture: name,value,name,value with body rows like a,1,x,100
+  const FirstPair = z.object({ name: z.string(), value: z.number() });
+  const df1 = await readXLSX(
+    "packages/dataframe/ts/io/fixtures/duplicate-headers.xlsx",
+    FirstPair,
+    { allowDuplicateHeaders: true },
+  );
+  expect(df1.nrows()).toBeGreaterThan(0);
+  // First column data — exact values depend on the XLSX fixture but we can
+  // verify the right columns were loaded by checking the second-pair schema:
+  const Both = z.object({
+    name: z.string(),
+    value: z.number(),
+    name_2: z.string(),
+    value_2: z.number(),
+  });
+  const df2 = await readXLSX(
+    "packages/dataframe/ts/io/fixtures/duplicate-headers.xlsx",
+    Both,
+    { allowDuplicateHeaders: true },
+  );
+  expect(df2.columns()).toEqual(["name", "value", "name_2", "value_2"]);
+  // First and second `name` columns must contain different values.
+  expect(df2.name).not.toEqual(df2.name_2);
+});
+
 /*───────────────────────────────────────────────────────────────────────────┐
 │  no_types option tests                                                     │
 └───────────────────────────────────────────────────────────────────────────*/

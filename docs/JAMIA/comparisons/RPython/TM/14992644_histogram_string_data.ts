@@ -1,15 +1,31 @@
 /**
- * RPython SO#14992644 — Turn Pandas DataFrame of strings into histogram
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas/numpy, np.histogram on string data crashes because numeric
- * operations (min, max, add) fail on strings.
- *
- * In tidy-ts, string columns are typed as string[]. Passing them to
- * numeric operations is a compile-time error.
+ * ID: SO#14992644
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Histogram on string DataFrame columns fails. Numeric operation on string data.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import numpy as np
+
+df = pd.DataFrame({
+    's1': ['a', 'b', 'a', 'c', 'a', 'b'],
+    's2': ['a', 'f', 'a', 'd', 'a', 'f'],
+})
+
+counts, bins = np.histogram(df['s1'].values)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { s1: "a", s2: "a" },
@@ -18,6 +34,5 @@ const df = createDataFrame([
   { s1: "c", s2: "d" },
 ]);
 
-// s1 is string — numeric operations are rejected
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("s1"));
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(df.extract("s1"));

@@ -1,17 +1,29 @@
 /**
- * RPython SO#50916422 — TypeError: Object of type 'int64' is not JSON serializable
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, values extracted via .iloc[] are numpy scalar types (int64, float64).
- * json.dumps() rejects them because they are not native Python types.
- *
- * In tidy-ts, extracted values are native JS types (number, string, boolean).
- * JSON.stringify works on all native types. The bug is structurally absent —
- * there are no "numpy scalar" wrapper types in JS. The type system still
- * catches passing non-serializable types (like functions) to JSON operations.
+ * ID: SO#50916422
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: numpy int64 extracted from DataFrame not JSON serializable. Tidy-ts values are native JS types.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+import json
+
+df = pd.DataFrame({'store': ['A', 'B', 'C'], 'count': [10, 12, 5]})
+
+record = {'name': df['store'].iloc[0], 'count': df['count'].iloc[0]}
+json.dumps(record)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { store: "A", count: 10 },
@@ -19,10 +31,5 @@ const df = createDataFrame([
   { store: "C", count: 5 },
 ]);
 
-// Values are native JS number — JSON.stringify works directly
-const counts = df.extract("count"); // number[]
-console.log(JSON.stringify(counts));
-
-// Type system still guards: passing string[] where number[] expected
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.sum(df.extract("store"));
+s.sum(df.extract("store"));

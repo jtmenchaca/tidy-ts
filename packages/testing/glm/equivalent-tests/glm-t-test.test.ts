@@ -103,4 +103,31 @@ Deno.test("GLM T-Test Equivalent", () => {
   expect(glmResult.family.family).toBe("gaussian");
   expect(glmResult.family.link).toBe("identity");
   expect(glmResult.rank).toBe(2);
+
+  // -- model.summary() includes R²/F/RSE/n (reference values from
+  //    summary(lm(y ~ group)) — see glm-t-test.test.R) --
+  const R_R_SQUARED = 0.863841773904251;
+  const R_ADJ_R_SQUARED = 0.850225951294676;
+  const R_F_STATISTIC = 63.4439650599429;
+  const R_F_P_VALUE = 1.22333895250931e-5;
+  const R_RESIDUAL_STANDARD_ERROR = 2.17090610882491;
+  const R_N_OBSERVATIONS = 12;
+
+  const summary = glmResult.summary();
+  assertClose(summary.r_squared, R_R_SQUARED, TOL, "summary.r_squared");
+  assertClose(
+    summary.adjusted_r_squared,
+    R_ADJ_R_SQUARED,
+    TOL,
+    "summary.adjusted_r_squared",
+  );
+  assertClose(summary.f_statistic, R_F_STATISTIC, TOL, "summary.f_statistic");
+  assertClose(summary.f_p_value, R_F_P_VALUE, TOL, "summary.f_p_value");
+  assertClose(
+    summary.residual_standard_error,
+    R_RESIDUAL_STANDARD_ERROR,
+    TOL,
+    "summary.residual_standard_error",
+  );
+  expect(summary.n_observations).toBe(R_N_OBSERVATIONS);
 });

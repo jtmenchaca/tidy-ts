@@ -36,7 +36,7 @@ export interface KruskalWallisWithPostHocResult
  */
 function runPostHocTest(
   testType: "anova" | "welch_anova" | "kruskal_wallis",
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   mainResult:
     | OneWayAnovaTestResult
     | WelchAnovaTestResult
@@ -92,7 +92,7 @@ export function centralTendencyToEachOther({
   alpha,
   assumeEqualVariances,
 }: {
-  groups: number[][];
+  groups: readonly (readonly number[])[];
   parametric: "parametric";
   alpha?: number;
   assumeEqualVariances?: boolean;
@@ -105,7 +105,7 @@ export function centralTendencyToEachOther({
   alpha,
   design,
 }: {
-  data: number[][][];
+  data: readonly (readonly (readonly number[])[])[];
   parametric: "parametric";
   design: "two-way";
   alpha?: number;
@@ -116,7 +116,7 @@ export function centralTendencyToEachOther({
   parametric,
   alpha,
 }: {
-  groups: number[][];
+  groups: readonly (readonly number[])[];
   parametric: "nonparametric";
   alpha?: number;
 }): PrettifyDeep<KruskalWallisWithPostHocResult>;
@@ -127,7 +127,7 @@ export function centralTendencyToEachOther({
   alpha,
   assumeEqualVariances,
 }: {
-  groups: number[][];
+  groups: readonly (readonly number[])[];
   parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   assumeEqualVariances?: boolean;
@@ -141,8 +141,8 @@ export function centralTendencyToEachOther({
   design,
   assumeEqualVariances,
 }: {
-  groups?: number[][];
-  data?: number[][][];
+  groups?: readonly (readonly number[])[];
+  data?: readonly (readonly (readonly number[])[])[];
   parametric?: "parametric" | "nonparametric" | "auto";
   alpha?: number;
   design?: "one-way" | "two-way";

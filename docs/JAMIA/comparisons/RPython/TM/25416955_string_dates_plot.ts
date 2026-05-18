@@ -1,15 +1,31 @@
 /**
- * RPython SO#25416955 — Plot pandas dates in matplotlib
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, datetime column read from CSV as strings can't be used for
- * date arithmetic or time-axis plotting without explicit conversion.
- *
- * In tidy-ts, the column is typed as string. Attempting numeric operations
- * (which would be needed for date arithmetic) is caught at compile time.
+ * ID: SO#25416955
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Matplotlib date axis from string column not parsed. String where date expected.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'time': ['2014-07-10 11:49:14', '2014-07-10 11:50:14', '2014-07-10 11:51:14'],
+    'amount': [45, 45, 21],
+})
+
+diff = df['time'].iloc[1] - df['time'].iloc[0]
+print(f"diff: {diff}")
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { time: "2014-07-10 11:49:14", amount: 45 },
@@ -17,9 +33,5 @@ const df = createDataFrame([
   { time: "2014-07-10 11:51:14", amount: 21 },
 ]);
 
-// time is string — numeric operations are rejected
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("time"));
-
-// Correct: use time as a string grouping key or parse explicitly
-console.log(s.mean(df.extract("amount")));
+s.mean(df.extract("time"));

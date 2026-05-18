@@ -292,11 +292,15 @@ test("Grouping - Count Shorthand", () => {
     },
   ]);
 
-  const countBySpecies = people.count("species");
+  const countBySpecies = people.groupBy("species").summarize({
+    count: (g) => g.nrows(),
+  });
   expect(countBySpecies.nrows()).toBe(3);
   expect(countBySpecies.columns()).toContain("species");
   expect(countBySpecies.columns()).toContain("count");
 
-  const countBySpeciesAndYear = people.count("species", "year");
+  const countBySpeciesAndYear = people.groupBy("species", "year").summarize({
+    count: (g) => g.nrows(),
+  });
   expect(countBySpeciesAndYear.nrows()).toBe(4);
 });

@@ -8,37 +8,40 @@ RPython effect codes: DC = data corruption (silent), IF = incorrect functionalit
 
 ---
 
-## Column Schema
+## Reproduction format
 
-Each `.R` or `.py` reproduction file contains a parseable frontmatter block as the source of truth:
+Each reproduction is a **single self-contained `.ts` file** under `RPython/TM/<SO_ID>_<slug>.ts`. The file (a) carries a JSDoc header with six canonical frontmatter fields, (b) inlines the original-language (pandas or R) reproduction as a string and runs it via `runForeign` from `RPython/run-foreign.ts`, and (c) demonstrates the Tidy-TS equivalent with a single `@ts-expect-error` line on the catch site. See `docs/JAMIA/comparisons/CONTEXT.md` for the canonical glossary; see `RPython/TM/25416955_string_dates_plot.ts` for the canonical template.
 
-```r
-# ID: SO#21714867
-# Language: R
-# Bug class: Nullable
-# Runtime consequence: DC
-# In study: Yes
-# Inclusion rationale: ifelse with NA_integer_ reinterprets double bits as integer; silent corruption
-# Reproduction status: Fixed (dplyr 1.1+ coerces correctly; original produced garbage like 1074266112)
-# Type system catch: `number` rejects `number | null`
-```
+```typescript
+/**
+ * ID: SO#33199193
+ * Language: Python
+ * Bug class: Nullable
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: NaN in list-type column can't be filled with empty list; fillna rejects non-scalar
+ */
+import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-```python
-# ID: SO#33199193
-# Language: Python
-# Bug class: Nullable
-# Runtime consequence: Crash
-# In study: Yes
-# Inclusion rationale: NaN in list-type column can't be filled with empty list; fillna rejects non-scalar
-# Reproduction status: Live
-# Type system catch: `number[] | null` rejects `.length` without narrowing
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `<minimal pandas/R reproduction from the source snippet>`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
+const df = createDataFrame([/* minimal data shape matching the foreign script */]);
+
+// @ts-expect-error — <verbatim TypeScript error message>
+<the operation that triggers the catch>;
 ```
 
 Rules:
-- The `.R`/`.py` file is the canonical metadata source for each bug
-- The `.ts` file demonstrates the type system catch but carries no metadata
-- The evaluation table below is generated from these frontmatter blocks
-- Every key is required; use `N/A` for Reproduction status and Type system catch on excluded bugs
+- Only the six JSDoc fields are written by hand: `ID`, `Language`, `Bug class`, `Runtime consequence`, `In study`, `Inclusion rationale`.
+- All Tidy-TS-side fields (`Reproduction status`, `Tidy-TS detection outcome`, `Tidy-TS detection mechanism`, `Tidy-TS catch explanation`) are **derived** by `verify.ts` from observed file behavior: the result of `deno check`, the exit code and stderr of the inlined foreign script, the presence/absence of `@ts-expect-error`, and any `[tidy-ts]` runtime-guard output.
+- Excluded bugs (`In study: No`) have no reproduction file. Their metadata lives only in this document's "Excluded" tables.
 
 ### Fields
 
@@ -62,7 +65,7 @@ Rules:
 | `Environment` | Version differences, encoding, platform-specific behavior |
 | `Not data` | numpy array manipulation, language semantics outside data analysis |
 
-**Runtime consequence** — What happens when the original bug runs. Enum:
+**Runtime consequence** — What the bug does in its original language. Enum (also called the original-language consequence in CONTEXT.md):
 
 | Value | Description |
 |---|---|
@@ -70,25 +73,52 @@ Rules:
 | `IF` | Incorrect functionality — program produces wrong behavior, no error |
 | `Crash` | Program stops with a runtime error message |
 
-**In study** — Is this bug included in our evaluation. Enum: `Yes` | `No`.
+**In study** — Is this bug included in the evaluation. Enum: `Yes` | `No`.
 
 **Inclusion rationale** — Why it's in or out. Free text, one sentence.
 - If Yes: what type error the user made (e.g., "String column passed to numeric model function")
 - If No: why it's outside scope (e.g., "ggplot2 rendering API; no data processing equivalent")
 
-**Reproduction status** — Whether the bug still triggers today. Enum:
+**Reproduction status** — What the reproduction runner observes today. Describes behavior, not cause. Required only on included bugs. Enum:
 
 | Value | Description |
 |---|---|
-| `Live` | Bug still reproduces on current library versions |
-| `Fixed` | Bug was patched upstream; parenthetical notes what changed |
-| `Variant` | Original was fixed; we reproduce the same error class differently; parenthetical notes how |
-| `N/A` | Bug is not in study |
+| `Reproduces` | The reproduction file runs and the bug triggers as originally recorded (Runtime consequence matches what the file does today) |
+| `No longer reproduces` | The reproduction file runs without the recorded failure. No claim is made about *why* it no longer triggers |
+| `Variant` | The reproduction triggers a bug of a different class than originally recorded (e.g., recorded as Crash, now silent DC) |
 
-**Type system catch** — What tidy-ts type constraint rejects the bad input. Free text, one phrase.
-- Example: "`Record<string, number>` rejects string column"
-- Example: "`number` rejects `number | null`"
-- `N/A` if bug is not in study
+**Tidy-TS detection outcome** — Whether Tidy-TS catches the bug. Required only on included bugs. Enum:
+
+| Value | Description |
+|---|---|
+| `compile-time error` | TypeScript compiler rejects the code before it runs |
+| `runtime error` | Program runs and stops with an error message (e.g., Zod validator throws on bad input) |
+| `runtime warning` | Program prints a warning and continues |
+| `silent continuation` | Program continues without error or warning, producing incorrect output |
+| `not applicable` | The original bug class cannot occur in tidy-ts; there is no operation to catch |
+
+**Tidy-TS detection mechanism** — How Tidy-TS catches the bug (or why it doesn't). Required only on included bugs. Enum:
+
+| Value | Description | Implied outcome |
+|---|---|---|
+| `compiler` | TypeScript compiler rejects an expression because the type rules are violated | `compile-time error` |
+| `zod schema validation` | Zod schema attached to `readCSV` / load rejects the input | `runtime error` (Zod throws at load) |
+| `runtime API guard` | A tidy-ts runtime guard (e.g., `append` shape check, proxy column access) rejects the operation | `runtime error` |
+| `none — language structural absence` | The bug class requires a language feature TS/JS does not have (e.g., R's int/double distinction). Cannot occur regardless of library. Does not count as a catch. | `not applicable` |
+| `none — library API design` | The bug class exists in the language but tidy-ts chose a different API design (e.g., `.replaceAll()` is unambiguously substring; no operator overloading). Credit, but acknowledge another TS library could reintroduce the bug. Does not count as a catch. | `not applicable` |
+| `none — bug still exists` | Tidy-TS reproduces the same failure mode and does not catch it. Honest non-catch. Counts toward a limitations subtotal. | `silent continuation` or `runtime error` |
+
+The three "none" sub-values are meaningfully different and are not collapsed in aggregate tables.
+
+**Tidy-TS catch explanation** — One-phrase prose. Required only on included bugs. Format depends on mechanism:
+- `compiler` / `zod schema validation` / `runtime API guard` → "[type or runtime rule] rejects [bad operation]" — e.g., `` `number` rejects `number | null` ``
+- `none — language structural absence` → "Language has no [feature]; bug class cannot occur"
+- `none — library API design` → "tidy-ts API uses [different design]; bug class avoided by API choice"
+- `none — bug still exists` → "tidy-ts reproduces [failure]; not caught"
+
+### Excluded bugs
+
+Excluded bugs (those with `In study: No`) carry only `ID`, `Language`, `Bug class`, `Runtime consequence`, `In study: No`, and `Inclusion rationale`. They do not carry `Reproduction status`, `Tidy-TS detection outcome`, `Tidy-TS detection mechanism`, or `Tidy-TS catch explanation` — there is no reproduction file and no measurement to record.
 
 ---
 
@@ -116,6 +146,71 @@ Of the 78 included bugs, 11 (14%) had silent outcomes (DC or IF) and 67 (86%) cr
 Note: "Value type" dominates because these datasets were specifically curated as "Type Mismatch" root cause bugs. The other RPython subsets (APIC, CDA, IDAP_IB, SM) would yield different category distributions.
 
 Category sub-counts sum to 81 (> 78 unique IDs) because 3 bugs are classified in both value type and data loading (they involve type errors that manifest at the data loading boundary).
+
+---
+
+<!-- BEGIN GENERATED: do not edit between this marker and END GENERATED. Regenerate with `deno run -A docs/JAMIA/comparisons/RPython/generate-tables.ts`. -->
+
+## Reproducibility metadata
+
+- Evaluation date: 2026-05-18
+- Corpus: RPython (ESEC/FSE 2023), TM subset (164 snippets)
+- Python: Python 3.14.5
+- R: R 4.6.0
+- Deno: deno 2.7.14 (stable, release, aarch64-apple-darwin)
+- Runner: docs/JAMIA/comparisons/RPython/verify.ts (commit 5079562a)
+
+## Inclusion funnel
+
+| Stage | Count |
+|---|---:|
+| TM corpus | 164 |
+| Reproductions on disk (TM) | 3 |
+| Included (`In study: Yes`) | 3 |
+| Excluded (no reproduction file; see Evaluation table below) | 161 |
+| CDA illustrative-only | 0 |
+
+## Category distribution (included only)
+
+| Category | Count |
+|---|---:|
+| Column reference | 0 |
+| Value type | 3 |
+| Missing value | 0 |
+| Join | 0 |
+| Data loading | 0 |
+| Schema composition | 0 |
+
+## Per-category Tidy-TS detection mechanism
+
+| Category | compiler | zod schema validation | runtime API guard | none — language structural absence | none — library API design | none — bug still exists |
+| --- | --- | --- | --- | --- | --- | --- |
+| Column reference | 0 | 0 | 0 | 0 | 0 | 0 |
+| Value type | 3 | 0 | 0 | 0 | 0 | 0 |
+| Missing value | 0 | 0 | 0 | 0 | 0 | 0 |
+| Join | 0 | 0 | 0 | 0 | 0 | 0 |
+| Data loading | 0 | 0 | 0 | 0 | 0 | 0 |
+| Schema composition | 0 | 0 | 0 | 0 | 0 | 0 |
+
+## Reproduction status (included only)
+
+| Status | Count |
+|---|---:|
+| Reproduces | 3 |
+| No longer reproduces | 0 |
+| Variant | 0 |
+
+## Tidy-TS detection outcome (included only)
+
+| Outcome | Count |
+|---|---:|
+| compile-time error | 3 |
+| runtime error | 0 |
+| runtime warning | 0 |
+| silent continuation | 0 |
+| not applicable | 0 |
+
+<!-- END GENERATED -->
 
 ---
 

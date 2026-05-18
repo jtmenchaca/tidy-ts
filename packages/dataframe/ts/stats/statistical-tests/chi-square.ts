@@ -15,7 +15,7 @@ export function chiSquareTest({
   contingencyTable,
   alpha = 0.05,
 }: {
-  contingencyTable: number[][];
+  contingencyTable: readonly (readonly number[])[];
   alpha?: number;
 }): PrettifyDeep<ChiSquareIndependenceTestResult> {
   if (contingencyTable.length < 2 || contingencyTable[0].length < 2) {
@@ -54,8 +54,8 @@ export function chiSquareGoodnessOfFitTest({
   expected,
   alpha = 0.05,
 }: {
-  observed: number[];
-  expected: number[];
+  observed: readonly number[];
+  expected: readonly number[];
   alpha?: number;
 }): PrettifyDeep<ChiSquareGoodnessOfFitTestResult> {
   if (observed.length !== expected.length) {

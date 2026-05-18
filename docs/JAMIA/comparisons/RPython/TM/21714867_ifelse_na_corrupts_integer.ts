@@ -1,18 +1,34 @@
 /**
- * RPython SO#21714867 — replace NA in a dplyr chain
- * Effect: DC (silent data corruption)
- * Bug class: Nullable type
- *
- * R bug: In dplyr, mutate(G = ifelse(is.na(G), mean(G, na.rm=TRUE), G)) on an
- * integer column. mean() returns double, but ifelse preserves the type of the
- * "yes" branch (integer). When the double mean is coerced to integer via memory
- * reinterpretation, it produces garbage values (e.g., 1074266112 instead of 47).
- * This is silent data corruption — no error, just wrong numbers.
- *
- * In tidy-ts, a summarize/mutate that conditionally returns null produces
- * number | null. Downstream use in strict-number contexts catches the mismatch.
+ * ID: SO#21714867
+ * Language: R
+ * Bug class: Nullable
+ * Runtime consequence: DC
+ * In study: Yes
+ * Inclusion rationale: ifelse with NA_integer_ reinterprets double bits as integer; silent corruption
  */
-import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { createDataFrame } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(dplyr)
+
+df <- data.frame(
+  yearID = c(2004L, 2006L, 2007L, 2008L, 2012L),
+  teamID = c("SFN", "CHN", "CHA", "BOS", "NYA"),
+  G = c(11L, 43L, 2L, 5L, NA_integer_)
+)
+
+result <- df %>%
+  mutate(G = ifelse(is.na(G), mean(G, na.rm = TRUE), G))
+
+print(result)
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { yearId: 2004, teamId: "SFN", g: 11 },
@@ -22,17 +38,9 @@ const df = createDataFrame([
   { yearId: 2012, teamId: "NYA", g: null as number | null },
 ]);
 
-// The SO user's intent: replace NA with group mean.
-// R silently corrupts because double→integer reinterpretation produces garbage.
-// tidy-ts: the column is number | null. groupBy summary that may be null stays nullable.
 const filled = df.mutate({
-  gFilled: (r) => {
-    if (r.g !== null) return r.g;
-    // In real code you'd compute group mean; the point is the return type includes null
-    return null;
-  },
+  gFilled: (r) => (r.g !== null ? r.g : null),
 });
 
-// filled.gFilled is number | null. Math.round requires strict number.
-// @ts-expect-error — Argument of type 'number | null' is not assignable to parameter of type 'number'
+// @ts-expect-error — Argument of type 'number | null' is not assignable to parameter of type 'number'.
 filled.mutate({ rounded: (r) => Math.round(r.gFilled) });

@@ -57,8 +57,8 @@ Deno.test("Demo 1: Downsample hourly prices to daily averages", () => {
       timeColumn: "timestamp",
       frequency: "1D",
       aggregations: {
-        avg_price: stats.mean, // Average price per day
-        total_volume: stats.sum, // Total volume per day
+        avg_price: { column: "price", fn: stats.mean }, // Average price per day
+        total_volume: { column: "volume", fn: stats.sum }, // Total volume per day
       },
     })
     .select("timestamp", "avg_price", "total_volume"); // Show only relevant columns
@@ -134,10 +134,10 @@ Deno.test("Demo 3: Create OHLC bars from tick data", () => {
     timeColumn: "timestamp",
     frequency: "1H",
     aggregations: {
-      open: stats.first, // First price in the hour
-      high: stats.max, // Highest price in the hour
-      low: stats.min, // Lowest price in the hour
-      close: stats.last, // Last price in the hour
+      open: { column: "price", fn: stats.first }, // First price in the hour
+      high: { column: "price", fn: stats.max }, // Highest price in the hour
+      low: { column: "price", fn: stats.min }, // Lowest price in the hour
+      close: { column: "price", fn: stats.last }, // Last price in the hour
     },
   });
 
@@ -176,7 +176,7 @@ Deno.test("Demo 4: Resample multiple stocks at once", () => {
       timeColumn: "timestamp",
       frequency: "1D",
       aggregations: {
-        daily_avg: stats.mean,
+        daily_avg: { column: "price", fn: stats.mean },
       },
     });
 
@@ -210,7 +210,7 @@ Deno.test("Demo 5: Calendar months (not 30-day periods)", () => {
     timeColumn: "timestamp",
     frequency: "1M", // Calendar months, not 30-day periods!
     aggregations: {
-      total_sales: stats.sum,
+      total_sales: { column: "sales", fn: stats.sum },
     },
   });
 
@@ -244,7 +244,7 @@ Deno.test("Demo 6: Specify exact date ranges", () => {
     timeColumn: "timestamp",
     frequency: "1M",
     aggregations: {
-      monthly_revenue: stats.sum,
+      monthly_revenue: { column: "revenue", fn: stats.sum },
     },
     startDate: new Date("2024-04-01T00:00:00Z"), // Start of fiscal Q2
     endDate: new Date("2024-06-30T23:59:59Z"), // End of fiscal Q2

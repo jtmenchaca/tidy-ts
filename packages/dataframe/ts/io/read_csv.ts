@@ -1,6 +1,10 @@
 // CSV reading with Zod schema validation and type inference
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
-import { type CSVOptions, parseCSV } from "./csv-parser.ts";
+import {
+  type CSVOptions,
+  parseCSV,
+  resolveHeaderNames,
+} from "./csv-parser.ts";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
 import { open, readTextFile, stat } from "@tidy-ts/shims";
@@ -118,15 +122,24 @@ const toNumber = (s: string): number => Number(s);
 const toBoolean = (s: string): boolean =>
   ["true", "1"].includes(s.toLowerCase());
 const toDate = (s: string): Date => {
-  // Parse date as local date to avoid timezone issues
+  // Strings with a 'T' or whitespace separator are full timestamps (ISO 8601
+  // datetime, RFC 3339, etc.). Hand those to the native parser, which honours
+  // the embedded timezone (or treats the value as local when none is given).
+  if (s.includes("T") || /\s/.test(s)) {
+    const parsed = new Date(s);
+    if (isNaN(parsed.getTime())) {
+      throw new Error(`Invalid date: ${s}`);
+    }
+    return parsed;
+  }
+
+  // Bare YYYY-MM-DD: parse as local date to avoid the UTC-midnight surprise
+  // that `new Date("2024-01-01")` produces.
   const [year, month, day] = s.split("-").map(Number);
   const date = new Date(year, month - 1, day); // month is 0-indexed
-
-  // Check if the date is valid
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date: ${s}`);
   }
-
   return date;
 };
 
@@ -207,7 +220,13 @@ function parseCSVContent<S extends z.ZodObject<any>>(
   const trim = opts.trim ?? true;
 
   const [headerRow, ...body] = parseLines(csv, opts);
-  const headersFromCsv = headerRow.map((h) => h.trim());
+  // Duplicate headers throw by default — the error names them and shows the
+  // opt-in escape hatch (`allowDuplicateHeaders: true`) with suffixed names.
+  const headersFromCsv = resolveHeaderNames(
+    headerRow.map((h) => h.trim()),
+    opts.allowDuplicateHeaders ?? false,
+    "CSV",
+  );
   const headersFromSchema = schemaHeaders(wrappedSchema.shape);
 
   const missing = headersFromSchema.filter(
@@ -218,11 +237,17 @@ function parseCSVContent<S extends z.ZodObject<any>>(
     throw new Error(`Missing required columns: ${missing.join(", ")}`);
   }
 
+  // Map each schema header to its index in the CSV header row so a partial
+  // schema (fewer columns than the CSV) still reads the right cell per row.
+  const csvHeaderIndex = new Map<string, number>();
+  headersFromCsv.forEach((h, i) => csvHeaderIndex.set(h, i));
+
   const valid: z.infer<S>[] = [];
 
   body.forEach((cells, idx) => {
     const obj: Record<string, unknown> = {};
-    headersFromSchema.forEach((h, col) => {
+    headersFromSchema.forEach((h) => {
+      const col = csvHeaderIndex.get(h)!;
       obj[h] = cells[col] ?? "";
     });
 

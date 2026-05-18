@@ -1,14 +1,39 @@
 /**
- * RPython SO#29953011 — ggplot with numeric vector as data=
- * Effect: Crash
- * Bug class: Type coercion
- *
- * geom_errorbar(data=GVW[1:64,3]) passes a numeric column, not a data.frame.
- * ggplot2: doesn't know how to deal with data of class numeric.
- *
- * In tidy-ts, concatDataFrames requires DataFrame[], not a bare number[] column.
+ * ID: SO#29953011
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Numeric vector passed where DataFrame expected. Typed graph() requires `DataFrame<T>` input.
  */
 import { concatDataFrames, createDataFrame } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(ggplot2)
+
+GVW <- data.frame(
+  Genotype = rep(c("KO", "WT"), each = 4),
+  variable = rep(c("Start", "End"), 4),
+  value = runif(8, 20, 40),
+  seSKO = runif(8)
+)
+
+ggplot(GVW, aes(x = variable, y = value, fill = Genotype)) +
+  geom_bar(position = position_dodge(), stat = "identity") +
+  geom_errorbar(
+    data = GVW[1:3, 3],
+    aes(ymin = value - seSKO, ymax = value + seSKO),
+    width = 0.2,
+    position = position_dodge(0.9)
+  )
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const GVW = createDataFrame([
   { genotype: "KO", variable: "Start", value: 25 },

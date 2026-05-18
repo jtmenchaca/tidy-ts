@@ -455,11 +455,11 @@ class GLM<Row extends Record<string, number>> {
   }
 
   /**
-   * Get model summary with coefficient table
+   * Get model summary with coefficient table and goodness-of-fit statistics.
    *
-   * Returns formatted summary with coefficients, standard errors, z/t-values, and p-values
-   *
-   * @returns Summary object with coefficient table and model statistics
+   * Returns coefficient table (estimate, std_error, statistic, p_value, names),
+   * deviance / df, AIC, R-squared and adjusted R-squared, the overall F-test,
+   * residual standard error, and sample size.
    */
   summary(): {
     coefficients: {
@@ -475,6 +475,12 @@ class GLM<Row extends Record<string, number>> {
     df_null: number;
     df_residual: number;
     aic: number;
+    r_squared: number;
+    adjusted_r_squared: number;
+    f_statistic: number;
+    f_p_value: number;
+    residual_standard_error: number;
+    n_observations: number;
     family: string;
     link: string;
   } {
@@ -504,6 +510,12 @@ class GLM<Row extends Record<string, number>> {
       df_null: this.result.dfNull,
       df_residual: this.result.dfResidual,
       aic: this.result.aic,
+      r_squared: this.result.rSquared,
+      adjusted_r_squared: this.result.adjustedRSquared,
+      f_statistic: this.result.fStatistic,
+      f_p_value: this.result.fPValue,
+      residual_standard_error: this.result.residualStandardError,
+      n_observations: this.result.nObservations,
       family: this.result.family.family,
       link: this.result.family.link,
     };

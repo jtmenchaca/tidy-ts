@@ -1,20 +1,34 @@
 /**
- * RPython SO#6063876 — scatter plot colorbar with tuple RGBA colors
- * Effect: Crash
+ * ID: SO#6063876
+ * Language: Python
  * Bug class: Value type
- *
- * Python bug: `plt.scatter(c=colorlist)` with `plt.colorbar()` crashes because
- * the colorbar needs a numeric scalar mapping (c must be a float array for the
- * colormap to map values). The user passed RGBA tuples from `cm(i/20)` which
- * are not numeric scalars.
- *
- * In tidy-ts, if color values are strings (RGBA representations), they cannot
- * be passed to numeric functions that expect a scalar color value array.
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Scatter colorbar needs float array, got tuple list. Type mismatch.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// Same structure as the .py: x, y coordinates with color values
-// The .py generates RGBA tuples from a colormap — in tidy-ts these would be strings
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+cm = matplotlib.colormaps["RdYlBu"]
+colors = [cm(1.0 * i / 20) for i in range(20)]
+xy = list(range(20))
+plt.subplot(111)
+colorlist = [colors[x // 2] for x in xy]
+plt.scatter(xy, xy, c=colorlist, s=35, vmin=0, vmax=20)
+plt.colorbar()
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
 const df = createDataFrame([
   { x: 0, y: 0, color: "rgba(0.8,0.2,0.1,1)" },
   { x: 5, y: 5, color: "rgba(0.5,0.5,0.1,1)" },
@@ -23,7 +37,5 @@ const df = createDataFrame([
   { x: 19, y: 19, color: "rgba(0.9,0.1,0.1,1)" },
 ]);
 
-// The .py user wants colorbar to scale the colors numerically (needs c as number[]).
-// Passing string RGBA values where a numeric color scale is required fails.
 // @ts-expect-error — string[] is not assignable to number[]
 s.mean(df.extract("color"));

@@ -1,16 +1,36 @@
 /**
- * RPython SO#24706677 — sklearn GradientBoostingClassifier with string features
- * Effect: Crash
- * Bug class: Type coercion
- *
- * Python bug: GradientBoostingClassifier.fit(X, y) requires all numeric features.
- * One column contains strings (e.g., iris species names mixed with numeric features).
- * sklearn crashes: "could not convert string to float".
- *
- * In tidy-ts, statistical modeling functions require number[] inputs. Passing a string
- * column where a numeric feature vector is expected is a compile-time error.
+ * ID: SO#24706677
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: sklearn GradientBoosting doesn't handle string/categorical features. Numeric expected.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+from sklearn import datasets
+from sklearn.ensemble import GradientBoostingClassifier
+import pandas
+
+iris = datasets.load_iris()
+X = iris.data[(iris.target == 0) | (iris.target == 1)]
+Y = iris.target[(iris.target == 0) | (iris.target == 1)]
+
+train_indices = list(range(40)) + list(range(50, 90))
+X_train = pandas.DataFrame(X[train_indices])
+X_train[0] = ["a"] * 40 + ["b"] * 40
+y_train = Y[train_indices]
+
+GradientBoostingClassifier(learning_rate=0.01, max_depth=8, n_estimators=50).fit(X_train, y_train)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const X_train = createDataFrame([
   { feature0: "setosa", feature1: 5.1, feature2: 3.5, feature3: 1.4, feature4: 0.2 },
@@ -18,9 +38,5 @@ const X_train = createDataFrame([
   { feature0: "virginica", feature1: 7.0, feature2: 3.2, feature3: 4.7, feature4: 1.4 },
 ]);
 
-// The SO user's intent: fit a model using all features including the string column.
-// sklearn.fit() requires numeric arrays — the string feature crashes it.
-// tidy-ts: s.glm requires Row extends Record<string, number>. A DataFrame with
-// a string column does not satisfy this constraint — the model fit is rejected.
-// @ts-expect-error — Type '{ feature0: string; ... }' does not satisfy 'Record<string, number>'
+// @ts-expect-error — Type 'DataFrame<{ feature0: string; ... }>' is not assignable to type 'DataFrame<Record<string, number>>'.
 s.glm({ formula: "feature1 ~ feature0 + feature2", family: "gaussian", link: "identity", data: X_train });

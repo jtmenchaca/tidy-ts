@@ -100,7 +100,13 @@ The rationale prose for each scenario in OVERVIEW.md should make the three High 
 ### RPython corroboration
 
 **Corpus**:
-The RPython dataset (ESEC/FSE 2023), a third-party-curated collection of real-world StackOverflow bugs in R and Python data-analysis code. Source-of-truth lives in `RPython-main/*.json` (gitignored).
+The RPython dataset (ESEC/FSE 2023), a third-party-curated collection of real-world StackOverflow bugs in R and Python data-analysis code. The in-scope TM subset lives at `RPython/TM_snippets.json` alongside the reproductions. Out-of-scope subsets (CDA, APIC, SM, IDAP_IB, TM_DFB) remain in `RPython-main/*.json` (gitignored) for reference but are not loaded by the verifier or generator.
+
+**TM (Type Mismatch) subset**:
+The 164-snippet subset of RPython curated for bugs whose root cause is a type mismatch. The corpus scope for this work's external corroboration. TM_DFB (110 snippets) is fully contained in TM and adds no new bugs. The other RPython subsets (CDA, APIC, SM, IDAP_IB) are **out of scope** — they cover broader phenomena (e.g., CDA's "Confusing Data Analytics") whose mix of API confusion, data-shape issues, and type-related bugs would dilute the corroboration of a thesis specifically about type-system catches.
+
+**CDA reproductions**:
+Three reproductions (`22591174`, `38516481`, `42719749`) exist in `RPython/CDA/` from earlier exploratory work, predating the decision to scope to TM. They are kept as illustrative examples that the same patterns arise outside the type-mismatch-curated subset, but they are NOT part of the inclusion evaluation denominator. The manuscript should describe them as illustrative, not as evidence of CDA-wide claims.
 
 **Snippet**:
 One raw entry in the corpus, identified `SO#<id>`. Untouched. The unit of corpus analysis (denominators and category distributions are over snippets).
@@ -111,28 +117,48 @@ The act, or the assigned value, of classifying a snippet against the rules in `R
 _Avoid_: assignment, label.
 
 **Reproduction**:
-A derived `.py`/`.R` + `.ts` pair the authors wrote that re-runs a snippet's bug to verify it still triggers (or to record that it no longer does) and demonstrates the Tidy-TS equivalent. Every *included* snippet gets one reproduction.
-_Avoid_: example, pair.
+A single self-contained `.ts` file the authors write per included snippet. The file (a) inlines the original-language (pandas or R) reproduction as a string and runs it via `runForeign` from `RPython/run-foreign.ts`, and (b) demonstrates the Tidy-TS equivalent with a single `@ts-expect-error` on the catch line. Running the file with `deno run -A` emits both signals on stdout — the foreign exit code (`[pandas] exit=N | ...`) and any tidy-ts runtime guard messages — and `deno check` independently verifies the compile-time catch. Every *included* snippet gets one reproduction.
+_Avoid_: example, pair, `.py`/`.ts` pair.
+
+**Reproduction frontmatter (canonical)**:
+Each reproduction `.ts` file carries a JSDoc header with six fields, in this order: `ID`, `Language`, `Bug class`, `Runtime consequence`, `In study`, `Inclusion rationale`. These are the only fields written by hand. All Tidy-TS-side fields (`Tidy-TS detection outcome`, `Tidy-TS detection mechanism`, `Tidy-TS catch explanation`, `Reproduction status`) are **derived** by the generator from observed behavior — see "Derived fields" below. This separation eliminates `.py`/`.ts` drift: the catch explanation cannot describe an aspirational mechanism because it is computed from the file's actual `@ts-expect-error` comment text.
 
 **Original-language consequence**:
 What the snippet's bug does in the language it was originally reported in. Enum: `DC` (silent data corruption) / `IF` (silent incorrect functionality) / `Crash` (program stops). From RPython metadata; distinct from `detection outcome`, which describes the candidate library's behavior on our reproduction.
 _Avoid_: effect, behavior, outcome (bare).
 
 **Reproduction status**:
-Whether the bug still triggers when run today. Enum: `Live` / `Fixed` / `Variant` / `N/A`.
+What the reproduction runner observes today. Describes behavior, not cause. Enum:
+- `Reproduces` — the reproduction file runs and the bug triggers as originally recorded (original-language consequence matches the frontmatter).
+- `No longer reproduces` — the reproduction file runs without the recorded failure (clean exit if it was Crash; correct output if it was DC/IF). No claim is made about *why* it no longer triggers (upstream patch, API change, intentional behavior — not always knowable).
+- `Variant` — the reproduction triggers a bug, but of a different class than originally recorded (e.g., recorded as Crash, now silent DC).
 
-### Frontmatter fields (per reproduction)
+Only set on reproduction files. Excluded snippets do not carry this field.
 
-Each reproduction's `.py`/`.R` file carries a frontmatter block that drives the analysis tables. Three fields describe what Tidy-TS does, and they are recorded separately:
+### Derived fields (per reproduction)
 
-**Tidy-TS detection outcome**:
-Frontmatter field. Same enum as `detection outcome`. Answers *whether* Tidy-TS catches the bug.
+These fields appear in generated tables but are NOT written by hand in the reproduction `.ts` file. The generator (`generate-tables.ts`) computes them from observed behavior, eliminating drift between hand-authored prose and actual file content.
 
-**Tidy-TS detection mechanism**:
-Frontmatter field. Enum: `compiler` / `zod schema validation` / `runtime API guard` / `none — language structural absence` / `none — library API design` / `none — bug still exists`. Answers *how* Tidy-TS catches it (or why it doesn't). The three "none" sub-values capture meaningfully different non-catches; do not collapse them.
+**Tidy-TS detection outcome** (derived):
+Computed by `verify.ts` from how the reproduction `.ts` behaves under `deno check` and `deno run -A`. Same enum as `detection outcome`.
+- `deno check` reports an active `@ts-expect-error` → `compile-time error`
+- No `@ts-expect-error` and tidy-ts runtime prints a `[tidy-ts]` guard message → `runtime error`
+- No catch of any kind observed → `silent continuation`
+- Bug class structurally cannot occur in TS/JS → `not applicable`
 
-**Tidy-TS catch explanation**:
-Frontmatter field. One-phrase prose. Format follows the mechanism:
+**Tidy-TS detection mechanism** (derived):
+Enum: `compiler` / `zod schema validation` / `runtime API guard` / `none — language structural absence` / `none — library API design` / `none — bug still exists`. The three "none" sub-values capture meaningfully different non-catches; do not collapse them.
+- `@ts-expect-error` present and effective → `compiler`
+- `readCSV` + Zod schema in the file → `zod schema validation`
+- tidy-ts runtime guard fires (e.g., `[tidy-ts]` prefix in stdout) → `runtime API guard`
+- File documents the bug class as impossible in TS/JS → `none — language structural absence`
+- File documents the bug class as avoided by tidy-ts API design → `none — library API design`
+- File reproduces the failure without catching it → `none — bug still exists`
+
+**Tidy-TS catch explanation** (derived):
+The verbatim text of the `@ts-expect-error` comment, if present. For non-catches, derived from the mechanism per the format rules below. Because this is extracted from the file's actual catch line, the explanation cannot describe an aspirational mechanism the file does not exercise.
+
+Format by mechanism:
 - `compiler` / `zod schema validation` / `runtime API guard` → "[type or runtime rule] rejects [bad operation]"; example: `` `number` rejects `number | null` ``.
 - `language structural absence` → "Language has no [feature]; bug class cannot occur."
 - `library API design` → "tidy-ts API uses [different design]; bug class avoided by API choice."
@@ -194,6 +220,19 @@ The six categories are the unit of organization for scenarios and the dimension 
 
 Total: 65 scenarios.
 
+**Note on directory structure:** scenarios live in five physical directories under `local/` (`local/cat-1-*` through `local/cat-5-*`) reflecting the historical five-category split. The six-category logical structure is applied at the reporting layer; specifically, scenarios `5a`/`5b`/`5c` remain Data Loading and scenarios `5d`–`5j` are reported under Schema Composition (and may be referred to as `6a`–`6g` in tables). Directory layout is not restructured — the renumbering is purely a reporting concern. The `local/` sibling of `RPython/` marks the author-designed comparison-suite reproductions; `RPython/` holds the external-corroboration reproductions.
+
+## Reproducibility metadata
+
+Every generated table (comparison-suite results and RPython corroboration tables) must record the following provenance so the numbers can be reproduced:
+
+- **Corpus vintage** — RPython dataset version + retrieval date (the JSON files in `RPython-main/`).
+- **Library versions** — every comparator pinned: Tidy-TS, pandas, tidyverse, Polars, Arquero, mypy, pyright, plus Python and R runtimes. Recorded from the lockfiles / pinned requirements files.
+- **Evaluation date** — when the runner produced the table.
+- **Runner script + commit** — path + git commit hash of the generator script.
+
+Generated tables include this as a header block. The `corroboration-summary.json` (issue 05c) carries it as a top-level metadata object. A reader running the same scripts on the same pinned versions at a later date should produce identical tables, or a clearly different table whose differences can be attributed to a specific upstream change.
+
 ## Relationships
 
 - A **scenario** belongs to exactly one **category**.
@@ -210,7 +249,7 @@ Total: 65 scenarios.
 > **Reviewer:** "And how do you know Tidy-TS would catch the included ones?"
 > **Author:** "For every included snippet we have a **reproduction** — a `.py` and `.ts` pair you can run. Each carries a frontmatter line for **Tidy-TS detection outcome**, **detection mechanism**, and a one-phrase **catch explanation**."
 > **Reviewer:** "What about bugs that don't have a TypeScript equivalent?"
-> **Author:** "Those are recorded as **structurally absent** in the mechanism field. We don't count them as catches."
+> **Author:** "Those are recorded in the **mechanism** field as either **language structural absence** (the failure mode requires a language feature TS/JS doesn't have, like R's int/double distinction) or **library API design** (TS could in principle have the bug, but tidy-ts's API made a different design choice). Neither counts as a catch. Separately, **bug still exists** means tidy-ts reproduces the same failure — an honest non-catch we record explicitly."
 
 ## Flagged ambiguities
 
@@ -234,3 +273,4 @@ Total: 65 scenarios.
 - **Methods section adds one credibility sentence about severity rating.** The manuscript records that severity was assigned by the first author and reviewed against each criterion individually, with the per-scenario rationale recorded in the public table to allow re-rating by readers. This is the credibility move that replaces inter-rater agreement.
 - **Equivalence-fair rule with six conditions** governs all comparator implementations. The most load-bearing condition is #4 (silent outcomes must programmatically assert what is corrupted, not merely the absence of error).
 - **Two-contributions framing with disjoint manuscript sections.** Section B (External Validation) opens with an explicit non-comparability disclaimer and reports distribution + per-category breakdown rather than a single headline percentage.
+- **Reproductions are single self-contained `.ts` files.** Originally each snippet had a paired `.py`/`.R` + `.ts`; sample audits found systematic drift where the catch explanation described an aspirational mechanism the `.ts` did not actually exercise (e.g., claiming `` `Temporal` rejects `string` `` when the file caught at `s.mean` on `string[]`). Resolved by collapsing to one self-contained `.ts` per snippet that inlines the original-language reproduction via `runForeign` from `RPython/run-foreign.ts`. The Tidy-TS detection fields are derived from observed file behavior, not hand-written, so drift between claimed and demonstrated catch is structurally impossible.

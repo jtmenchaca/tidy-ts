@@ -1,15 +1,32 @@
 /**
- * RPython SO#7920688 — non-joins with data.tables
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In R data.table, which=TRUE returns NA for non-matching keys. Using these
- * NAs in negative indexing crashes. The user doesn't handle the NA positions.
- *
- * In tidy-ts, join operations produce typed DataFrames directly. There are
- * no implicit NA index positions to mishandle. Anti-join is done via filter.
+ * ID: SO#7920688
+ * Language: R
+ * Bug class: Join
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: data.table join key type mismatch (int vs double). Join key types must match.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(data.table)
+
+dt1 <- data.table(A1 = letters[1:10], B1 = sample(1:5, 10, replace = TRUE))
+dt2 <- data.table(A2 = letters[c(1:5, 11:15)], B2 = sample(1:5, 10, replace = TRUE))
+
+setkey(dt1, A1)
+setkey(dt2, A2)
+
+positions <- dt1[dt2, which = TRUE]
+dt1[-positions]
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const dt1 = createDataFrame([
   { a: "a", b: 1 },
@@ -19,12 +36,5 @@ const dt1 = createDataFrame([
   { a: "g", b: 3 },
 ]);
 
-const dt2Keys = new Set(["a", "b", "k"]);
-
-// Anti-join via filter — explicit, no NA confusion
-const antiJoin = dt1.filter((r) => !dt2Keys.has(r.a));
-antiJoin.print();
-
-// Type system catches passing string key column to numeric ops
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.sum(dt1.extract("a"));
+s.sum(dt1.extract("a"));

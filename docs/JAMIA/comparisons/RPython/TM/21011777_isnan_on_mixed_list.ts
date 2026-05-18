@@ -1,15 +1,27 @@
 /**
- * RPython SO#21011777 — How can I remove NaN from list Python/NumPy
- * Effect: Crash
- * Bug class: Nullable type
- *
- * In Python, math.isnan() and np.isnan() fail on mixed lists containing
- * strings and NaN. The type system doesn't prevent passing mixed data to isnan.
- *
- * In tidy-ts, a column with nulls is typed as string | null. Null-checking
- * uses === null, which works on any type. There is no isnan confusion.
+ * ID: SO#21011777
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: NaN mixed into list prevents clean removal — math.isnan fails on non-float elements. Mixed types.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import math
+
+countries = [float('nan'), 'USA', 'UK', 'France']
+
+cleaned = [x for x in countries if not math.isnan(x)]
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { country: null as string | null },
@@ -18,9 +30,5 @@ const df = createDataFrame([
   { country: "France" },
 ]);
 
-// @ts-expect-error — 'country' is possibly 'null'
-const wrong = df.mutate({ upper: (r) => r.country.toUpperCase() });
-
-// Fix: filter nulls, then operate on guaranteed strings
-const cleaned = df.filter((r) => r.country !== null);
-cleaned.print();
+// @ts-expect-error — Type '(string | null)[]' is not assignable to type 'number[]'
+s.mean(df.extract("country"));

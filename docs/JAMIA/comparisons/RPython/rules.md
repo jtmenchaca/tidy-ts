@@ -1,32 +1,34 @@
-# RPython Bug Evaluation Rules
+# RPython Snippet Evaluation Rules
 
-Rules for classifying bugs from the RPython dataset (ESEC/FSE 2023, arxiv 2306.08632) for use as external validation of the error taxonomy in the JAMIA comparison suite.
+Rules for classifying **snippets** from the RPython dataset (ESEC/FSE 2023, arxiv 2306.08632) as external corroboration of the error taxonomy in the JAMIA **comparison suite**.
+
+> Canonical glossary: `docs/JAMIA/comparisons/CONTEXT.md`. Key terms: **snippet** (raw RPython entry), **mapping** (the act or value of classifying a snippet against these rules), **reproduction** (the `.py`/`.R` + `.ts` pair the authors write for an included snippet). The six categories are **Column reference**, **Value type**, **Missing value**, **Join**, **Data loading**, **Schema composition**.
 
 ## Purpose
 
-The JAMIA paper's comparison suite contains 65 author-designed error scenarios. The RPython dataset provides an independently curated corpus of ~1,400 real-world StackOverflow bugs in R and Python data analytics code. We use it to assess whether the error categories in our comparison suite reflect real-world bug patterns, and to show that scope honestly — what maps and what doesn't.
+The comparison suite contains 65 author-designed **scenarios**. The RPython corpus provides an independently curated set of real-world StackOverflow bugs in R and Python data-analysis code. We use the RPython **TM (Type Mismatch) subset** — 164 snippets — to assess whether the error categories in the comparison suite reflect real-world bug patterns, and to show the scope honestly (what maps and what doesn't). Other RPython subsets (CDA, APIC, SM, IDAP_IB) are **out of scope** — their broader topics dilute the corroboration of a thesis specifically about type-system catches.
 
 ## Primary question
 
-**Is this bug relevant to the paper's thesis that common data processing errors go undetected and produce incorrect output?**
+**Is this snippet relevant to the paper's thesis that common data-processing errors go undetected and produce incorrect output?**
 
 ## Inclusion criteria (all must be met)
 
-1. **Data processing context** — The bug occurs during data analysis work: loading, selecting, joining, grouping, summarizing, filtering, mutating, or otherwise transforming tabular data. Not visualization rendering, not FFI/interop, not IDE/tooling.
+1. **Data-processing context** — The bug occurs during data-analysis work: loading, selecting, joining, grouping, summarizing, filtering, mutating, or otherwise transforming tabular data. Not visualization rendering, not FFI/interop, not IDE/tooling.
 
 2. **Silent or misleading outcome** — The bug either:
    - Produces incorrect output with no error or warning (silent continuation), OR
-   - Produces an error that is confusing/misleading enough that the root cause is non-obvious
+   - Produces an error that is confusing/misleading enough that the root cause is non-obvious.
 
-   Bugs where the program immediately crashes with a clear error message are less relevant — the existing language already caught it.
+   Snippets where the program immediately crashes with a clear error message are less relevant — the existing language already caught it.
 
 3. **Systematic, not incidental** — The error would affect every dataset or group that meets the condition, not a one-off edge case tied to a specific API version, platform, or environment.
 
-4. **Cross-language evaluable** — The underlying operation (aggregation, join, column selection, type conversion, null handling, etc.) exists in all three ecosystems (TypeScript/tidy-ts, Python/pandas, R/tidyverse). The bug can't be purely about R metaprogramming (NSE), numpy memory layout, or a library with no equivalent.
+4. **Cross-library evaluable** — The underlying operation (aggregation, join, column selection, type conversion, null handling, etc.) exists in all primary libraries (tidy-ts, pandas, tidyverse). The bug can't be purely about R metaprogramming (NSE), numpy memory layout, or a library with no equivalent.
 
-## Classification (for included bugs)
+## Classification (for included snippets)
 
-Map each included bug to the paper's 5 error categories:
+Map each included snippet to one of the six categories:
 
 | Category | Description | Examples |
 |----------|-------------|----------|
@@ -35,8 +37,9 @@ Map each included bug to the paper's 5 error categories:
 | **Missing value** | NA/NaN/null introduced or carried through without handling; changes behavior of aggregation, comparison, or arithmetic | NaN propagating through calculations; missing values silently excluded from comparisons |
 | **Join** | Key type mismatch, missing values introduced by join, schema changes after join | Joining on int vs string keys; columns becoming nullable after left join |
 | **Data loading** | Schema inference errors, wrong types inferred from file, mixed types in column | CSV reader inferring string column as numeric; scientific notation strings parsed as float |
+| **Schema composition** | Errors when datasets are combined (`bindRows`, `append`, duplicate keys); column-type unions and shape mismatches | Binding rows with different column types coerces to object dtype; appending a row with a missing column |
 
-If a bug meets all inclusion criteria but doesn't fit these 5 categories, flag it as a potential new category.
+If a snippet meets all inclusion criteria but doesn't fit these six categories, flag it as a potential new category in the PR description.
 
 ## Exclusion reasons (any one is sufficient)
 
@@ -56,26 +59,34 @@ These patterns require careful judgment:
 - **Return type inconsistency** (median returns int sometimes, double other times) — Include if it causes silent downstream errors. The inconsistency itself isn't the issue; the silent downstream consequence is.
 - **Schema loss** (empty DataFrame loses types, groupby drops columns) — Include. This is directly about data processing producing unexpected structure.
 
-## What to record for each bug
+## What to record for each snippet
 
-| Field | Description |
-|-------|-------------|
-| **SO ID** | StackOverflow question ID |
-| **Language** | Python or R |
-| **Description** | One-line description of the bug |
-| **Included** | Yes or No |
-| **Reason** | If excluded: which exclusion reason. If included: which of the 5 categories. |
-| **Outcome** | In the original language: silent continuation, runtime error, or runtime warning |
-| **Novel** | Whether the pattern is already represented in the 65-test comparison suite or is a novel pattern |
+Every snippet's classification is recorded in the frontmatter of its reproduction file (for included snippets) or in `INCLUSION_EVALUATION.md`'s exclusion table (for excluded snippets). See the Column Schema section of `INCLUSION_EVALUATION.md` for full field definitions; summary:
+
+| Field | When required | Description |
+|-------|---|---|
+| `ID` | always | StackOverflow question ID, `SO#<n>` |
+| `Language` | always | `R` or `Python` |
+| `Bug class` | always | One of the bug-class enum values (see INCLUSION_EVALUATION.md) |
+| `Runtime consequence` | always | What happens in the original language: `DC` / `IF` / `Crash` |
+| `In study` | always | `Yes` or `No` |
+| `Inclusion rationale` | always | One sentence — if Yes, which of the six categories and the type error involved; if No, the exclusion reason |
+| `Reproduction status` | included only | `Reproduces` / `No longer reproduces` / `Variant` — what the verification runner observes |
+| `Tidy-TS detection outcome` | included only | `compile-time error` / `runtime error` / `runtime warning` / `silent continuation` / `not applicable` |
+| `Tidy-TS detection mechanism` | included only | `compiler` / `zod schema validation` / `runtime API guard` / `none — language structural absence` / `none — library API design` / `none — bug still exists` |
+| `Tidy-TS catch explanation` | included only | One phrase; format depends on mechanism (see INCLUSION_EVALUATION.md) |
+
+Excluded snippets do not carry the four `Tidy-TS …` fields or `Reproduction status` — there is no reproduction file and no measurement to record.
 
 ## Reporting
 
-Report the full distribution transparently:
+The corroboration tables (issue 05c) are generated programmatically from the frontmatter. They report the full distribution transparently:
 
-- Total bugs examined
-- Number and percentage that map to each of the 5 categories
-- Number and percentage excluded, broken down by exclusion reason
-- For included bugs: breakdown of outcome type (silent vs error vs warning)
-- Any novel patterns not represented in the existing 65-test suite
+- Total snippets examined (164 in the TM subset)
+- Inclusion funnel: in-scope → included / excluded, with exclusion reasons broken down
+- Distribution of included snippets across the six categories
+- Per-category Tidy-TS catch breakdown by mechanism (`compiler` / `zod schema validation` / `runtime API guard` / `none — language structural absence` / `none — library API design` / `none — bug still exists`)
+- Reproduction-status breakdown (`Reproduces` / `No longer reproduces` / `Variant`)
+- Any novel patterns not represented in the existing 65-scenario comparison suite (flagged in the PR description)
 
-The value is in showing that the same error categories that dominate the comparison suite also appear organically in real-world StackOverflow questions, as identified by an independent research group. The bugs that don't map are equally informative — they show the boundaries of what compile-time checking addresses, consistent with the paper's limitations section.
+The value is in showing that the same error categories that dominate the comparison suite also appear organically in real-world StackOverflow questions, as identified by an independent research group. The snippets that don't map are equally informative — they show the boundaries of what compile-time checking addresses, consistent with the paper's limitations section.

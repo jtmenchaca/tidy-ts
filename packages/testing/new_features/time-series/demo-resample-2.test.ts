@@ -7,6 +7,7 @@
  */
 
 import { createDataFrame, type DataFrame, stats } from "@tidy-ts/dataframe";
+import { graph } from "@tidy-ts/graph";
 
 const formatMonthYear = (value: unknown) => {
   const date = value instanceof Date
@@ -176,15 +177,16 @@ Deno.test("Demo: Healthcare Topic Completion Rate Over Time", async () => {
       timeColumn: "snapshot_date",
       frequency: "1W",
       aggregations: {
-        completion_rate: stats.last,
-        overdue_rate: stats.last,
-        total_topics: stats.last,
+        completion_rate: { column: "completion_rate", fn: stats.last },
+        overdue_rate: { column: "overdue_rate", fn: stats.last },
+        total_topics: { column: "total_topics", fn: stats.last },
       },
     });
 
   // Step 4: Create a graph showing completion rate over time
 
-  const chart = weeklyCompletionRate.graph({
+  const chart = graph({
+    df: weeklyCompletionRate,
     type: "line",
     mappings: {
       x: "snapshot_date",
@@ -261,7 +263,7 @@ Deno.test("Demo: Completion Rate by Topic Type Over Time", async () => {
       timeColumn: "snapshot_date",
       frequency: "1W",
       aggregations: {
-        completion_rate: stats.last,
+        completion_rate: { column: "completion_rate", fn: stats.last },
       },
     })
     .rename({
@@ -269,7 +271,8 @@ Deno.test("Demo: Completion Rate by Topic Type Over Time", async () => {
     });
 
   // Create a multi-series line chart
-  const chartByTopic = weeklyByTopic.graph({
+  const chartByTopic = graph({
+    df: weeklyByTopic,
     type: "line",
     mappings: {
       x: "snapshot_date",

@@ -22,7 +22,7 @@ import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
  * @returns Post-hoc test results with pairwise comparisons
  */
 export function gamesHowellTest(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<GamesHowellTestResult> {
   // Clean data and check group sizes

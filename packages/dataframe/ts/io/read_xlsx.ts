@@ -2,26 +2,13 @@
 import { z, ZodDefault, ZodNullable, ZodOptional, type ZodTypeAny } from "zod";
 import { createDataFrame, type DataFrame } from "../dataframe/index.ts";
 import type { NAOpts } from "./types.ts";
+import { resolveHeaderNames } from "./csv-parser.ts";
 import { readFile } from "@tidy-ts/shims";
 
 /*───────────────────────────────────────────────────────────────────────────┐
 │  0 · shared utils                                                          │
 └───────────────────────────────────────────────────────────────────────────*/
 const DEFAULT_NA = ["", "NA", "NaN", "null", "undefined"] as const;
-
-/**
- * Deduplicate header names by appending _2, _3, etc. to duplicates.
- * e.g. ["A", "B", "", "", "A", "B"] → ["A", "B", "", "_1", "A_2", "B_2"]
- */
-function deduplicateHeaders(headers: string[]): string[] {
-  const counts = new Map<string, number>();
-  return headers.map((h) => {
-    const prev = counts.get(h) ?? 0;
-    counts.set(h, prev + 1);
-    if (prev === 0) return h;
-    return `${h}_${prev + 1}`;
-  });
-}
 
 /**
  * Safely read a file or convert ArrayBuffer/File/Blob to Uint8Array
@@ -711,7 +698,7 @@ function autoWrapSchema<T extends z.ZodObject<any>>(schema: T): T {
 function parseXLSXContent<S extends z.ZodObject<any>>(
   rows: string[][],
   schema: S,
-  opts: NAOpts = {},
+  opts: NAOpts & { allowDuplicateHeaders?: boolean } = {},
 ): z.infer<S>[] {
   // Auto-wrap the schema with zxlsx helpers if not already wrapped
   const wrappedSchema = autoWrapSchema(schema);
@@ -720,7 +707,13 @@ function parseXLSXContent<S extends z.ZodObject<any>>(
   const trim = opts.trim ?? true;
 
   const [headerRow, ...body] = rows;
-  const headersFromXlsx = deduplicateHeaders(headerRow.map((h) => h.trim()));
+  // Duplicate headers throw by default — the error names them and shows the
+  // opt-in escape hatch (`allowDuplicateHeaders: true`) with suffixed names.
+  const headersFromXlsx = resolveHeaderNames(
+    headerRow.map((h) => h.trim()),
+    opts.allowDuplicateHeaders ?? false,
+    "XLSX",
+  );
   const headersFromSchema = schemaHeaders(wrappedSchema.shape);
 
   const missing = headersFromSchema.filter(
@@ -790,6 +783,15 @@ function parseXLSXContent<S extends z.ZodObject<any>>(
 interface ReadXLSXOpts extends NAOpts {
   sheet?: string | number;
   skip?: number;
+  /**
+   * When true, repeated header names are renamed by suffixing _2, _3, etc.
+   * (e.g. `["name", "value", "name", "value"]` → `["name", "value", "name_2", "value_2"]`).
+   * The user's schema must address those suffixed names explicitly.
+   *
+   * When false (default), repeated header names throw with a clear message
+   * pointing at the duplicate column indices and the suggested fix.
+   */
+  allowDuplicateHeaders?: boolean;
 }
 
 /**
@@ -862,7 +864,11 @@ async function readXLSXImpl<S extends z.ZodObject<any>>(
       return createDataFrame([], { no_types: true });
     }
 
-    const headers = deduplicateHeaders(rawRows[0].map((h) => String(h).trim()));
+    const headers = resolveHeaderNames(
+      rawRows[0].map((h) => String(h).trim()),
+      actualOpts.allowDuplicateHeaders ?? false,
+      "XLSX",
+    );
     const rows: Record<string, unknown>[] = [];
 
     for (let i = 1; i < rawRows.length; i++) {

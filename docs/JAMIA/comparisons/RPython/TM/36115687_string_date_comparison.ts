@@ -1,17 +1,37 @@
 /**
- * RPython SO#36115687 — PySpark: filtering DataFrame by date field where date is string
- * Effect: IF (silent incorrect functionality)
- * Bug class: Type coercion
- *
- * In PySpark/pandas, dates stored as strings are compared using string ordering.
- * Non-ISO date formats like "7/2/2015" produce wrong results with > comparison
- * because "11/5/2015" < "6/30/2015" lexicographically.
- *
- * In tidy-ts, dates stored as strings are typed as string. The type system
- * catches attempts to use them in numeric operations. Date comparison requires
- * explicit parsing.
+ * ID: SO#36115687
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: IF
+ * In study: Yes
+ * Inclusion rationale: PySpark filtering dates stored as strings — comparison uses string ordering not date ordering. Silent wrong results.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'date': ['1/15/2015', '2/3/2015', '12/1/2014', '7/20/2015', '11/5/2015'],
+    'value': [100, 200, 300, 400, 500],
+})
+
+cutoff = '6/30/2015'
+filtered = df[df['date'] > cutoff]
+print(filtered)
+
+true_dates = pd.to_datetime(df['date'])
+true_cutoff = pd.to_datetime(cutoff)
+expected_count = int((true_dates > true_cutoff).sum())
+assert len(filtered) < expected_count, "string compare silently drops dates after cutoff"
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { date: "1/15/2015", value: 100 },
@@ -21,12 +41,5 @@ const df = createDataFrame([
   { date: "11/5/2015", value: 500 },
 ]);
 
-// date is string — numeric operations are rejected
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("date"));
-
-// Correct: parse dates explicitly, then filter
-const parsed = df.mutate({ date_ms: (r) => new Date(r.date).getTime() });
-const cutoff = new Date("6/30/2015").getTime();
-const filtered = parsed.filter((r) => r.date_ms > cutoff);
-filtered.print();
+s.mean(df.extract("date"));

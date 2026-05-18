@@ -15,8 +15,8 @@ export function pearsonTest({
   alternative = "two-sided",
   alpha = 0.05,
 }: {
-  x: number[];
-  y: number[];
+  x: readonly number[];
+  y: readonly number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
 }): PrettifyDeep<PearsonCorrelationTestResult> {

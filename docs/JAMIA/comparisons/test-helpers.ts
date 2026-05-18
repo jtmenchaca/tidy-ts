@@ -14,6 +14,40 @@ export interface ProbeResult {
   result: unknown;
 }
 
+/**
+ * Assert that a probe result is a silent continuation AND that the corrupted
+ * output matches an expected marker. A bare `outcome === "silent"` is not
+ * sufficient — it could mean the operation produced wrong data OR that the
+ * operation was actually correct. The corruption marker (`marker`) is checked
+ * against the captured message to confirm the expected wrong output appeared.
+ *
+ * Required by issue 08 (equivalence rule #4 in CONTEXT.md): every silent
+ * outcome must programmatically assert what is corrupted, not merely that no
+ * exception was raised.
+ *
+ * Pass either a string (substring match) or a RegExp.
+ */
+export function expectSilentCorruption(
+  result: ProbeResult,
+  marker: string | RegExp,
+  scenarioLabel?: string,
+): void {
+  const context = scenarioLabel ? ` [${scenarioLabel}]` : "";
+  if (result.outcome !== "silent") {
+    throw new Error(
+      `expectSilentCorruption${context}: expected outcome "silent", got "${result.outcome}". Message: ${result.message}`,
+    );
+  }
+  const matches = typeof marker === "string"
+    ? result.message.includes(marker)
+    : marker.test(result.message);
+  if (!matches) {
+    throw new Error(
+      `expectSilentCorruption${context}: outcome was silent but corruption marker not found. Expected message to match ${marker}; got: ${result.message}`,
+    );
+  }
+}
+
 /** Run an R probe script and parse its JSON output. */
 export function runRProbe(scriptPath: string): ProbeResult[] {
   const cmd = new Deno.Command("Rscript", {

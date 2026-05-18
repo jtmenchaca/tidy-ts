@@ -47,7 +47,7 @@ export function dagostinoPearsonTest({
   data,
   alpha = 0.05,
 }: {
-  data: number[];
+  data: readonly number[];
   alpha?: number;
 }): PrettifyDeep<DAgostinoPearsonTestResult> {
   const cleanData = data.filter((x) => isFinite(x));

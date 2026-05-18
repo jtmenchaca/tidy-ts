@@ -1,15 +1,30 @@
 /**
- * RPython SO#42013903 — ufunc 'multiply' error with values from raw_input
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In Python, raw_input/input returns a string. Using it in numpy arithmetic
- * crashes because numpy can't multiply string × float64.
- *
- * In tidy-ts, if data comes in as strings, s.mean() or arithmetic in mutate()
- * will produce a compile-time error because string is not number.
+ * ID: SO#42013903
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: raw_input returns string, used in numpy multiply. String where number expected.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import numpy as np
+
+x = np.linspace(0., 9., 10)
+
+a = "9.8"
+v = "5.0"
+
+y = v * x - 0.5 * a * x**2.
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { x: 0, acceleration: "9.8", velocity: "5.0" },
@@ -18,13 +33,4 @@ const df = createDataFrame([
 ]);
 
 // @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("acceleration"));
-
-// Fix: explicit conversion
-const numeric = df.mutate({
-  a: (r) => parseFloat(r.acceleration),
-  v: (r) => parseFloat(r.velocity),
-  y: (r) => parseFloat(r.velocity) * r.x - 0.5 * parseFloat(r.acceleration) * r.x ** 2,
-});
-
-numeric.print();
+s.mean(df.extract("acceleration"));

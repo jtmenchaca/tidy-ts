@@ -20,7 +20,7 @@ Deno.test("downsample - grouped on filtered data", () => {
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
   });
 
@@ -57,7 +57,7 @@ Deno.test("downsample - grouped, filter removes some rows within groups", () => 
     timeColumn: "timestamp",
     frequency: "1D",
     aggregations: {
-      price: stats.mean,
+      price: { column: "price", fn: stats.mean },
     },
   });
 
@@ -86,7 +86,7 @@ Deno.test("downsample - filter keeps all rows, grouped", () => {
   const result = allKept.groupBy("symbol").downsample({
     timeColumn: "timestamp",
     frequency: "1D",
-    aggregations: { price: stats.mean },
+    aggregations: { price: { column: "price", fn: stats.mean } },
   });
 
   const out = [...result].map((r: any) => ({ symbol: r.symbol, price: r.price }));

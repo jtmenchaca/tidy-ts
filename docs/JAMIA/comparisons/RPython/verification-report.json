@@ -1,0 +1,156 @@
+{
+  "metadata": {
+    "evaluationDate": "2026-05-18",
+    "corpus": "RPython (ESEC/FSE 2023), TM subset",
+    "pythonRuntime": "Python 3.14.5",
+    "rRuntime": "R 4.6.0",
+    "denoRuntime": "deno 2.7.14 (stable, release, aarch64-apple-darwin)",
+    "runnerScript": "docs/JAMIA/comparisons/RPython/verify.ts",
+    "gitCommit": "5079562a"
+  },
+  "files": [
+    {
+      "path": "RPython/TM/10495898_ggplot_string_x_axis.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#10495898",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "String column on x-axis for line chart causes wrong ordering. Typed line x mapping would flag non-ordinal type.",
+        "raw": {
+          "ID": "SO#10495898",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "String column on x-axis for line chart causes wrong ordering. Typed line x mapping would flag non-ordinal type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/10495898_ggplot_string_x_axis.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[R] exit=0 | \n",
+        "stderr": "[NAPI] Formula updated for categorical vars: y ~ xone + xthree + xtwo\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type '{ x: string; y: number; d: string; }' is not assignable to type 'Record<string, number>'"
+    },
+    {
+      "path": "RPython/TM/10805643_boxplot_continuous_color.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#10805643",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Numeric column passed to discrete color aesthetic. Typed graph API enforces `color: ColumnSpec<T, string | number>` with explicit scale mapping.",
+        "raw": {
+          "ID": "SO#10805643",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Numeric column passed to discrete color aesthetic. Typed graph API enforces `color: ColumnSpec<T, string | number>` with explicit scale mapping."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/10805643_boxplot_continuous_color.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[R] exit=1 | Execution halted\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Execution halted"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/11561932_numpy_int_json.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#11561932",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "numpy int32 in list not JSON serializable. Same native type pattern.",
+        "raw": {
+          "ID": "SO#11561932",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "numpy int32 in list not JSON serializable. Same native type pattern."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/11561932_numpy_int_json.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | when serializing list item 0\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "when serializing list item 0"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    }
+  ],
+  "summary": {
+    "totalFiles": 3,
+    "tmFiles": 3,
+    "cdaFiles": 0,
+    "tsCheckCounts": {
+      "passes": 3
+    },
+    "reproductionStatusCounts": {
+      "Reproduces": 3
+    },
+    "detectionOutcomeCounts": {
+      "compile-time error": 3
+    },
+    "detectionMechanismCounts": {
+      "compiler": 3
+    }
+  }
+}

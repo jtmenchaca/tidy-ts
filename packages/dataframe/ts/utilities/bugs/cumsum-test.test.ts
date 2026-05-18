@@ -86,7 +86,8 @@ Deno.test("consecutiveEventValuesMatch", () => {
     .mutate({ streakStart: (row) => row.match === 1 && row.prevMatch === 0 ? 1 : 0 })
     .groupBy("id").mutate({ streakId: (_, i, df) => s.cumsum(df.extract("streakStart"))[i] })
     .filter((row) => row.match === 1)
-    .count("id", "streakId")
+    .groupBy("id", "streakId")
+    .summarize({ count: (g) => g.nrows() })
     .filter((row) => row.count >= MIN_STREAK)
     .distinct("id");
 

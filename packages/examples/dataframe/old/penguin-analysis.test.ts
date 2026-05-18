@@ -16,12 +16,18 @@ test("Penguin analysis with count functionality", async () => {
     PenguinSchema,
   );
 
-  const speciesCount = penguins.count("species");
+  const speciesCount = penguins.groupBy("species").summarize({
+    count: (g) => g.nrows(),
+  });
   speciesCount.print();
 
-  const islandCount = penguins.count("island");
+  const islandCount = penguins.groupBy("island").summarize({
+    count: (g) => g.nrows(),
+  });
   islandCount.print();
 
-  const speciesIslandCount = penguins.count("species", "island");
+  const speciesIslandCount = penguins.groupBy("species", "island").summarize({
+    count: (g) => g.nrows(),
+  });
   speciesIslandCount.print();
 });

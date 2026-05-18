@@ -163,7 +163,7 @@ export function isNonNormal(data: number[], alpha = 0.05): boolean {
  * Uses the Brown-Forsythe modification of Levene's test (deviations from medians)
  * which is more robust to non-normality than the original Levene's test.
  */
-export function hasEqualVariances(groups: number[][], alpha = 0.05): boolean {
+export function hasEqualVariances(groups: readonly (readonly number[])[], alpha = 0.05): boolean {
   try {
     // Use Brown-Forsythe test (already implemented in leveneTest)
     const result = leveneTest(groups, alpha);

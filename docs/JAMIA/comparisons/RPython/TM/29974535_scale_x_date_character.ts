@@ -1,16 +1,32 @@
 /**
- * RPython SO#29974535 — scale_x_date on character MonthDay axis
- * Effect: Crash
- * Bug class: Type coercion
- *
- * R bug: ggplot2 scale_x_date() requires Date objects. Character MonthDay strings
- * (e.g., "01-Jan") crash: "Invalid input: date_trans works with objects of class
- * Date only."
- *
- * In tidy-ts, string date columns cannot be used in numeric/temporal statistical
- * operations. The type system rejects strings where numbers are required.
+ * ID: SO#29974535
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Character date column on x-axis gives wrong ordering. Typed x-axis mapping expects temporal or numeric for ordered axes.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(ggplot2)
+library(scales)
+
+Date <- seq(as.Date("2010/1/1"), as.Date("2014/1/1"), "week")
+Y <- rnorm(length(Date), mean = 100, sd = 1)
+df <- data.frame(Date, Y)
+df$MonthDay <- format(df$Date, "%d-%b")
+
+p <- ggplot(data = df, mapping = aes(x = MonthDay, y = Y)) + geom_point()
+p + scale_x_date(labels = date_format("%d-%b"))
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { monthDay: "01-Jan", y: 100 },
@@ -19,8 +35,5 @@ const df = createDataFrame([
   { monthDay: "22-Jan", y: 103 },
 ]);
 
-// The SO user's intent: plot y over time with a date-formatted x-axis.
-// ggplot2 crashes because monthDay is character, not Date.
-// tidy-ts: using string x in a trend computation requires numeric x.
 // @ts-expect-error — string[] is not assignable to number[]
-s.test.correlation.pearson({ x: df.extract("monthDay"), y: df.extract("y") });
+s.mean(df.extract("monthDay"));

@@ -1,15 +1,27 @@
 /**
- * RPython SO#29643820 — How to change type of target column when doing := by group
- * Effect: Crash
- * Bug class: Int/double distinction
- *
- * In R data.table, assigning mean() (double) to an integer column crashes because
- * "Type of RHS ('double') must match LHS ('integer')".
- *
- * In tidy-ts, all numbers are `number` — no int/double distinction.
- * The type system still catches passing non-numeric columns to mean.
+ * ID: SO#29643820
+ * Language: R
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Assigning mean() (double) to integer column in data.table fails. Type of aggregation result doesn't match column type. Not verified with R runtime — .R file written from SO code.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (R) ───────────────────────────────────────────────────
+
+const foreignScript = `
+library(data.table)
+
+db <- data.table(id = rep(1:2, each = 5), x = 1:10, y = runif(10))
+db[, x := mean(y), by = id]
+print(db)
+`;
+
+printForeignResult("r", runForeign("r", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const db = createDataFrame([
   { id: "1", x: 1, y: 0.47 },
@@ -20,13 +32,5 @@ const db = createDataFrame([
   { id: "2", x: 8, y: 0.23 },
 ]);
 
-// Assigning mean (a number) to x (a number) — no type conflict
-const result = db.groupBy("id").summarize({
-  x: (g) => s.mean(g.extract("y")),
-});
-
-// Passing string column to mean is caught
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(db.extract("id"));
-
-result.print();
+// @ts-expect-error — Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'.
+s.mean(db.extract("id"));

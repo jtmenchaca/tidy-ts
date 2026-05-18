@@ -1,16 +1,30 @@
 /**
- * RPython SO#17950374 — Converting a column within pandas DataFrame from int to string
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, concatenating a string column with an int column using + crashes.
- * The user must explicitly convert with .astype(str) first.
- *
- * In tidy-ts, string + number produces string in JS. The resulting column
- * is typed as string. Downstream numeric operations on that column are
- * rejected at compile time.
+ * ID: SO#17950374
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Concatenating int column with string fails. Type mismatch in string operation.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'id': [1, 2, 3],
+    'prefix': ['A', 'B', 'C'],
+})
+
+df['combined'] = df['prefix'] + df['id']
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { id: 1, prefix: "A" },
@@ -18,11 +32,7 @@ const df = createDataFrame([
   { id: 3, prefix: "C" },
 ]);
 
-// Concatenation produces a string column
-const result = df.mutate({
-  combined: (r) => r.prefix + r.id,
-});
+const result = df.mutate({ combined: (r) => r.prefix + r.id });
 
-// The combined column is string — numeric operations are rejected downstream
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(result.extract("combined"));
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(result.extract("combined"));

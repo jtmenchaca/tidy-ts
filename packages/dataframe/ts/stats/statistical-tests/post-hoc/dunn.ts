@@ -22,7 +22,7 @@ import type { PrettifyDeep } from "../../../dataframe/types/utility-types.ts";
  * @returns Post-hoc test results with pairwise comparisons (rank-based)
  */
 export function dunnTest(
-  groups: number[][],
+  groups: readonly (readonly number[])[],
   alpha = 0.05,
 ): PrettifyDeep<DunnTestResult> {
   // Clean data and check group sizes

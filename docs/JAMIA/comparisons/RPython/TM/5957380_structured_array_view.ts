@@ -1,30 +1,39 @@
 /**
- * RPython SO#5957380 — structured array .view(float64) reads garbage
- * Effect: DC (silent data corruption)
- * Bug class: Type coercion
- *
- * numpy bug: A structured array with named float32 fields is viewed as float64
- * via `.view(np.float64)`. This reinterprets memory — two 32-bit floats are
- * read as one 64-bit float, producing garbage values silently.
- * The fix is `np.column_stack([data["a_soil"], data["b_soil"]])`.
- *
- * In tidy-ts, there is no memory reinterpretation. Each column is independently
- * typed. If you try to pass a structured row object where a flat number[] is
- * expected, the type system catches it — you must extract columns individually.
+ * ID: SO#5957380
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Structured array to regular ndarray conversion fails. Type conversion error.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
 
-// Same data as the .py: structured with named float fields
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import numpy as np
+
+data = np.array(
+    [
+        (0.01479368, 0.00668112, 0.0, 0.0),
+        (0.01479368, 0.00668112, 0.0, 0.0),
+    ],
+    dtype=[("a_soil", "<f4"), ("b_soil", "<f4"), ("Ea_V", "<f4"), ("Kcc", "<f4")],
+)
+
+data_array = data.view(np.float64).reshape(data.shape + (-1,))
+print(data_array)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
+
 const data = createDataFrame([
   { a_soil: 0.01479368, b_soil: 0.00668112, Ea_V: 0.0, Kcc: 0.0 },
   { a_soil: 0.01479368, b_soil: 0.00668112, Ea_V: 0.0, Kcc: 0.0 },
 ]);
 
-// The .py user's mistake: .view(float64) on the whole structured array
-// to get a flat numeric 2D array. In tidy-ts, extract() returns individual
-// typed columns — there's no way to "reinterpret" the whole row as flat numbers.
-
-// If the user tries to pass extracted row objects (not flat numbers) to a
-// function expecting number[], the type system catches it.
 // @ts-expect-error — object[] is not assignable to number[]
-s.mean(data.rows());
+s.mean(data.toRows());

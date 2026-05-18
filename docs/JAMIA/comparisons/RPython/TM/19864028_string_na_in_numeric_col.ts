@@ -1,16 +1,29 @@
 /**
- * RPython SO#19864028 — Convert numerical data in pandas DataFrame to floats in the presence of strings
- * Effect: Crash
- * Bug class: Type coercion
- *
- * In pandas, a column containing 'na' as a string alongside numeric strings
- * crashes on astype(float). The user doesn't know the column has non-numeric content.
- *
- * In tidy-ts, the column is typed as string. parseFloat on "na" returns NaN,
- * which is a valid number. But the column must be explicitly parsed — you can't
- * accidentally treat strings as numbers.
+ * ID: SO#19864028
+ * Language: Python
+ * Bug class: Value type
+ * Runtime consequence: Crash
+ * In study: Yes
+ * Inclusion rationale: Column contains 'na' string alongside numbers, preventing float conversion. Mixed types.
  */
 import { createDataFrame, stats as s } from "@tidy-ts/dataframe";
+import { printForeignResult, runForeign } from "../run-foreign.ts";
+
+// Foreign reproduction (pandas) ──────────────────────────────────────────────
+
+const foreignScript = `
+import pandas as pd
+
+df = pd.DataFrame({
+    'cap': ['5.2', 'na', '2.2', '7.6', '7.5', '3.0']
+})
+
+df['cap'] = df['cap'].astype(float)
+`;
+
+printForeignResult("python", runForeign("python", foreignScript));
+
+// Tidy-TS equivalent ─────────────────────────────────────────────────────────
 
 const df = createDataFrame([
   { cap: "5.2" },
@@ -21,10 +34,5 @@ const df = createDataFrame([
   { cap: "3.0" },
 ]);
 
-// cap is string — cannot pass to numeric operations
-// @ts-expect-error — string[] is not assignable to number[]
-const wrong = s.mean(df.extract("cap"));
-
-// Fix: explicit parse (NaN for non-numeric)
-const parsed = df.mutate({ cap_num: (r) => parseFloat(r.cap) });
-console.log(s.mean(parsed.extract("cap_num"))); // NaN propagates from "na"
+// @ts-expect-error — Type 'string[]' is not assignable to type 'number[]'
+s.mean(df.extract("cap"));

@@ -31,7 +31,7 @@ export function andersonDarlingTest({
   data,
   alpha = 0.05,
 }: {
-  data: number[];
+  data: readonly number[];
   alpha?: number;
 }): PrettifyDeep<AndersonDarlingTestResult> {
   const cleanData = data.filter((x) => isFinite(x));
