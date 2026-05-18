@@ -9,6 +9,14 @@ node_modules/
 output/
 packages/dataframe/dist
 packages/shims/dist
+packages/graph/dist
+
+# Generated declaration files (tsc may emit into the source tree on stray runs;
+# the canonical .d.ts ships from the dist/ output of build-*-npm.ts scripts).
+# NOTE: shims/ and graph/ts/ contain hand-written .d.ts (vendored temporal-polyfill,
+# resvg-wasm type stub, etc.), so we only ignore the dataframe source tree.
+packages/dataframe/mod.d.ts
+packages/dataframe/ts/**/*.d.ts
 
 
 examples/dataframe/output/

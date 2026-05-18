@@ -1,1 +1,0 @@
-export declare function handleMethodForwarding(prop: string | number | symbol, p: Promise<any>, resolveVerb: (prop: string | number | symbol, df: any) => any, chainFn: (df: any) => any, chainGroupedFn: (gdf: any) => any): any;
