@@ -11,6 +11,7 @@ export function list_operations(server: TidyMcp) {
       v.pipe(
         v.union([
           v.literal("dataframe"),
+          v.literal("graph"),
           v.literal("stats"),
           v.literal("stats-distributions"),
           v.literal("stats-tests"),
@@ -21,7 +22,7 @@ export function list_operations(server: TidyMcp) {
           v.literal("all"),
         ]),
         v.description(
-          'Filter by category: "dataframe", "stats", "stats-distributions", "stats-tests", "stats-compare", "io", "shims", "string", or "all" (default)',
+          'Filter by category: "dataframe", "graph", "stats", "stats-distributions", "stats-tests", "stats-compare", "io", "shims", "string", or "all" (default)',
         ),
       ),
       "all",

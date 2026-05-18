@@ -1,5 +1,6 @@
 import { statsDocs } from "./stats/index.ts";
 import { dataframeDocs } from "./dataframe/index.ts";
+import { graphDocs } from "./graph/index.ts";
 import { ioDocs } from "./io/index.ts";
 import { shimsDocs } from "./shims/index.ts";
 import { stringDocs } from "./string/index.ts";
@@ -11,6 +12,9 @@ import type { DocEntry } from "./mcp-types.ts";
 export const DOCS: Record<string, DocEntry> = {
   // DataFrame methods
   ...dataframeDocs,
+
+  // Charting via @tidy-ts/graph
+  ...graphDocs,
 
   // I/O functions
   ...ioDocs,
@@ -47,6 +51,7 @@ function getKeysByCategory(
 // Category groupings for list-operations (derived from doc entries)
 export const CATEGORIES = {
   dataframe: getKeysByCategory(DOCS, "dataframe"),
+  graph: getKeysByCategory(DOCS, "graph"),
   io: getKeysByCategory(DOCS, "io"),
   stats: getKeysByCategory(DOCS, "stats"),
   "stats-distributions": getKeysByCategory(DOCS, "stats-distributions"),
@@ -60,6 +65,7 @@ export const CATEGORIES = {
 // Human-readable category names (single source of truth)
 export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   dataframe: "DataFrame Operations",
+  graph: "Charting & Visualization (@tidy-ts/graph)",
   stats: "Statistics Functions",
   "stats-distributions": "Probability Distributions",
   "stats-tests": "Statistical Tests",

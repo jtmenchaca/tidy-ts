@@ -10,7 +10,6 @@ export { reshapingDocs } from "./reshaping.ts";
 export { timeSeriesDocs } from "./time-series.ts";
 export { missingDataDocs } from "./missing-data.ts";
 export { profilingDocs } from "./profiling.ts";
-export { visualizationDocs } from "./visualization.ts";
 export { setupDocs } from "./setup.ts";
 export { performanceDocs } from "./performance.ts";
 
@@ -26,7 +25,6 @@ import { reshapingDocs } from "./reshaping.ts";
 import { timeSeriesDocs } from "./time-series.ts";
 import { missingDataDocs } from "./missing-data.ts";
 import { profilingDocs } from "./profiling.ts";
-import { visualizationDocs } from "./visualization.ts";
 import { setupDocs } from "./setup.ts";
 import { performanceDocs } from "./performance.ts";
 
@@ -42,7 +40,6 @@ export const dataframeDocs = {
   ...timeSeriesDocs,
   ...missingDataDocs,
   ...profilingDocs,
-  ...visualizationDocs,
   ...setupDocs,
   ...performanceDocs,
 };

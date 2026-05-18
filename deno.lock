@@ -209,7 +209,7 @@
       "packages/arrow": {
         "dependencies": [
           "jsr:@tidy-ts/dataframe@^1.1.0",
-          "jsr:@tidy-ts/shims@1.5.7",
+          "jsr:@tidy-ts/shims@1.5.8",
           "npm:@uwdata/flechette@^2.2.3",
           "npm:zod@^4.1.8"
         ],
@@ -227,7 +227,7 @@
           "jsr:@std/expect@^1.0.15",
           "jsr:@std/path@^1.0.8",
           "jsr:@std/random@~0.1.2",
-          "jsr:@tidy-ts/shims@1.5.7",
+          "jsr:@tidy-ts/shims@1.5.8",
           "npm:zod@^4.1.8"
         ],
         "packageJson": {
@@ -319,8 +319,8 @@
       },
       "packages/graph": {
         "dependencies": [
-          "jsr:@tidy-ts/dataframe@1.5.7",
-          "jsr:@tidy-ts/shims@1.5.7",
+          "jsr:@tidy-ts/dataframe@1.5.8",
+          "jsr:@tidy-ts/shims@1.5.8",
           "npm:vega-embed@^7.0.2",
           "npm:vega-lite@^6.4.1",
           "npm:vega@^6.2.0"
@@ -340,7 +340,7 @@
       "packages/parquet": {
         "dependencies": [
           "jsr:@tidy-ts/dataframe@^1.1.0",
-          "jsr:@tidy-ts/shims@1.5.7",
+          "jsr:@tidy-ts/shims@1.5.8",
           "npm:hyparquet-compressors@^1.1.1",
           "npm:hyparquet-writer@~0.11.2",
           "npm:hyparquet@^1.23.2",

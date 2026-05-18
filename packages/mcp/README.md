@@ -91,7 +91,7 @@ Command palette > "View: Open MCP Settings" > "Add custom MCP":
 
 Lists operations by category.
 
-- Parameter: `category` — `dataframe`, `stats`, `stats-distributions`, `stats-tests`, `stats-compare`, `io`, `shims`, `string`, or `all` (default).
+- Parameter: `category` — `dataframe`, `graph`, `stats`, `stats-distributions`, `stats-tests`, `stats-compare`, `io`, `shims`, `string`, or `all` (default).
 
 ### `tidy-get-docs`
 
