@@ -1,53 +1,35 @@
 /**
- * Run an inlined foreign-runtime script (Python or R) from inside a `.ts`
- * reproduction file. Returns the exit code and the last stderr line, which
- * are the two signals the JAMIA verifier classifies on.
+ * Re-export the shared comparator runners. The canonical home is
+ * `../runners.ts`; both `RPython/` and `local/` scenarios import from there.
  *
- * Each RPython reproduction is now a single self-contained `.ts` file that
- * inlines its original-language counterpart as a string and runs it through
- * this helper, then demonstrates the tidy-ts equivalent. Having one file
- * eliminates `.py`/`.ts` drift — the catch explanation lives next to the
- * catch line, the foreign reproduction lives in the same module.
+ * Preserved for backward compatibility with the original RPython reproductions
+ * that imported `runForeign` and `printForeignResult` from this path. New
+ * reproductions should import from `../runners.ts` directly.
+ *
+ * Note: `printForeignResult`'s signature changed in `runners.ts`. The first
+ * argument is now a `ComparatorLabel` (`"pandas" | "tidyverse" | "Polars"`
+ * etc.), not the runtime (`"python" | "r"`). To keep existing call sites
+ * working unchanged, this module wraps the new helper with a small adapter
+ * that maps `"python"` → `"pandas"` and `"r"` → `"tidyverse"`.
  */
+import {
+  type ComparatorLabel,
+  type ForeignRunResult,
+  type ForeignRuntime,
+  printForeignResult as printForeignResultByLabel,
+  runForeign as runForeignRaw,
+} from "../runners.ts";
 
-export interface ForeignRunResult {
-  exitCode: number;
-  lastStderrLine: string;
-  stdout: string;
-  stderr: string;
+export type { ForeignRunResult };
+
+export function runForeign(runtime: ForeignRuntime, script: string): ForeignRunResult {
+  return runForeignRaw(runtime, script);
 }
 
-export function runForeign(
-  runtime: "python" | "r",
-  script: string,
-): ForeignRunResult {
-  const cmd = runtime === "python" ? "python3" : "Rscript";
-  const args = runtime === "python" ? ["-c", script] : ["-e", script];
-  const proc = new Deno.Command(cmd, { args, stdout: "piped", stderr: "piped" });
-  const { code, stdout, stderr } = proc.outputSync();
-  const decoder = new TextDecoder();
-  const stderrText = decoder.decode(stderr);
-  const lastStderrLine = stderrText.trim().split("\n").at(-1) ?? "";
-  return {
-    exitCode: code,
-    lastStderrLine,
-    stdout: decoder.decode(stdout),
-    stderr: stderrText,
-  };
-}
-
-/**
- * Print a one-line summary of a foreign run. Reproductions call this so the
- * verifier sees a uniform stdout shape across all files. The shape is:
- *
- *   [<runtime>] exit=<code> | <last stderr line>
- *
- * which is grep-able by the verifier and human-readable.
- */
-export function printForeignResult(
-  runtime: "python" | "r",
-  result: ForeignRunResult,
-): void {
-  const label = runtime === "python" ? "pandas" : "R";
-  console.log(`[${label}] exit=${result.exitCode} | ${result.lastStderrLine}`);
+export function printForeignResult(runtime: ForeignRuntime, result: ForeignRunResult): void {
+  // Existing RPython files call `printForeignResult("python", ...)` for
+  // pandas and `printForeignResult("r", ...)` for tidyverse. Map to the
+  // canonical labels used in the new runners module.
+  const label: ComparatorLabel = runtime === "python" ? "pandas" : "tidyverse";
+  printForeignResultByLabel(label, result);
 }

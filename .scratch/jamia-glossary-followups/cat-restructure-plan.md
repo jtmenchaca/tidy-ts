@@ -51,10 +51,16 @@ Each scenario `.ts` file follows this structure exactly:
  * Severity criteria: AV=Y PS=Y PO=Y
  * Rationale: result_value - reference_high produces NaN for every null-bearing row. Alters the derived column (AV), affects every row where reference_high is null (PS), and the column contains a mix of valid numbers and NaN that looks plausible in a lab-value context (PO).
  */
+import * as aq from "npm:arquero";
 import { stats as s } from "@tidy-ts/dataframe";
 import { labs05 } from "../data.ts";
-import { runForeign, printForeignResult } from "../../runners.ts";
-import { runStaticChecker, printStaticCheckerResult } from "../../runners.ts";
+import {
+  printForeignResult,
+  printStaticCheckerResult,
+  runForeign,
+  runInProcess,
+  runStaticChecker,
+} from "../../runners.ts";
 
 // pandas ────────────────────────────────────────────────────────────────────
 const pandasScript = `
@@ -66,7 +72,7 @@ labs = pd.DataFrame({
 })
 labs["deviation"] = labs["result_value"] - labs["reference_high"]
 `;
-printForeignResult("python", runForeign("python", pandasScript));
+printForeignResult("pandas", runForeign("python", pandasScript));
 
 // tidyverse ────────────────────────────────────────────────────────────────
 const rScript = `
@@ -78,7 +84,7 @@ labs <- tibble(
 )
 labs <- labs %>% mutate(deviation = result_value - reference_high)
 `;
-printForeignResult("r", runForeign("r", rScript));
+printForeignResult("tidyverse", runForeign("r", rScript));
 
 // Polars ────────────────────────────────────────────────────────────────────
 const polarsScript = `
@@ -90,24 +96,25 @@ labs = pl.DataFrame({
 })
 labs = labs.with_columns((pl.col("result_value") - pl.col("reference_high")).alias("deviation"))
 `;
-printForeignResult("polars", runForeign("python", polarsScript));
+printForeignResult("Polars", runForeign("python", polarsScript));
 
 // mypy / pyright (static checkers on pandas code) ───────────────────────────
 printStaticCheckerResult("mypy", runStaticChecker("mypy", pandasScript));
 printStaticCheckerResult("pyright", runStaticChecker("pyright", pandasScript));
 
 // Arquero ────────────────────────────────────────────────────────────────────
-import * as aq from "npm:arquero";
-const arqueroTable = aq.table({
-  patient_id: ["P001", "P002"],
-  result_value: [100, 200],
-  reference_high: [120, null],
-});
-const arqueroResult = arqueroTable.derive({ deviation: (d: { result_value: number; reference_high: number | null }) => d.result_value - d.reference_high });
-console.log(`[Arquero] exit=0 | rows=${arqueroResult.numRows()}`);
-// NOTE: Arquero accepts the operation silently. The result column will contain
-// NaN where reference_high is null. The verifier classifies this as
-// `silent continuation` for Arquero.
+runInProcess(
+  "Arquero",
+  () => aq.table({
+    patient_id: ["P001", "P002"],
+    result_value: [100, 200],
+    reference_high: [120, null],
+  }).derive({
+    deviation: (d: { result_value: number; reference_high: number | null }) =>
+      d.result_value - d.reference_high,
+  }),
+  (table) => `rows=${table.numRows()}`,
+);
 
 // Tidy-TS ────────────────────────────────────────────────────────────────────
 // @ts-expect-error — Argument of type '(number | null)[]' is not assignable to parameter of type 'number[]'
@@ -156,23 +163,35 @@ export const labs11 = createDataFrame([
 
 The constants are lifted verbatim from the current `cat-N-*.test.ts` "Shared data" section. Constants used by exactly one scenario can be inlined into that scenario's `.ts` file instead of `data.ts`.
 
-## New runner module: `local/runners.ts`
+## Runner module: `comparisons/runners.ts` (already built)
 
-This file is created once. It exports three helpers, all of which print uniform `[<comparator>] exit=N | <last stderr line>` lines:
+The shared module exists at `docs/JAMIA/comparisons/runners.ts`. Both `local/` and `RPython/` scenarios import from it. Existing RPython files keep working via a thin re-export in `RPython/run-foreign.ts`. The eight comparator labels (`pandas`, `tidyverse`, `Polars`, `mypy`, `pyright`, `Arquero`, `Tidy-TS`, plus any others added later) are exported as a `ComparatorLabel` union type.
+
+Public surface:
 
 ```typescript
-export function runForeign(runtime: "python" | "r", script: string): ForeignRunResult;
-export function printForeignResult(comparator: "python" | "r" | "polars", result: ForeignRunResult): void;
+// Foreign subprocess (python3 or Rscript)
+runForeign(runtime: "python" | "r", script: string): ForeignRunResult
+printForeignResult(label: ComparatorLabel, result: ForeignRunResult): void
 
-export function runStaticChecker(checker: "mypy" | "pyright", pythonScript: string): StaticCheckerResult;
-export function printStaticCheckerResult(checker: "mypy" | "pyright", result: StaticCheckerResult): void;
+// Static checkers on a Python script (writes temp .py, invokes mypy/pyright, cleans up)
+runStaticChecker(checker: "mypy" | "pyright", pythonScript: string): StaticCheckerResult
+printStaticCheckerResult(checker: "mypy" | "pyright", result: StaticCheckerResult): void
+
+// In-process comparators (Arquero, Tidy-TS runtime guards)
+printRuntimeOutcome(label: ComparatorLabel, ok: boolean, message: string, kind?: "clean" | "warning"): void
+runInProcess<T>(label: ComparatorLabel, fn: () => T, messageFn: (value: T) => string): void
 ```
 
-`runStaticChecker` writes the Python script to a temp file under `Deno.makeTempFile({ suffix: ".py" })`, runs `mypy --strict <tmp>` or `pyright --outputjson <tmp>`, and captures the exit code + error count. The temp file is deleted after the run.
+Uniform stdout line shape from every helper: `[<label>] exit=<N> | <message>`.
 
-`printForeignResult("polars", ...)` is identical to `runForeign("python", ...)` plus a `[Polars]` label so the verifier can attribute the signal correctly.
+### Notes for agents using the helpers
 
-These helpers live in `local/` (sibling of `cat-*` directories) so the per-scenario files import them via `../../runners.ts`. They are conceptually a superset of the existing `RPython/run-foreign.ts` helpers; once written, the RPython files can import from `local/runners.ts` too (single source of truth).
+- **Polars uses `runForeign("python", ...)`** but is labelled `Polars` via `printForeignResult("Polars", result)`. The runtime is `python`; the label is `Polars`. Don't conflate them.
+- **Static checker installation.** `runStaticChecker` checks whether `mypy` / `pyright` is on `PATH`. If absent, it returns `exit=127` and a `<checker> not installed` summary line. Scenarios must not require checkers to be installed; the verifier classifies `not installed` as inconclusive and records it as such.
+- **mypy strict mode.** Invoked as `mypy --strict --no-error-summary <tmp>`. The strict flag is required because the manuscript reports mypy results in strict mode.
+- **pyright JSON output.** Invoked as `pyright --outputjson <tmp>`. The error count is parsed from the JSON summary.
+- **Arquero blocks use `runInProcess`** since Arquero runs in the same Deno process. The scenario imports Arquero via `npm:arquero` and uses `runInProcess` to wrap the operation that exercises the bug.
 
 ## New verifier: `local/verify-local.ts`
 
@@ -192,6 +211,179 @@ Sibling of `RPython/verify.ts`. Walks every `local/cat-N-*/scenarios/*.ts`. For 
 Reads `local-verification-report.json` and emits the comparison-suite tables that currently live in OVERVIEW.md and Table 2 / Table 3 of the manuscript. The tables are inserted between `<!-- BEGIN GENERATED -->` / `<!-- END GENERATED -->` markers in OVERVIEW.md.
 
 The headline counts (the 62/65 number, severity breakdown, per-category counts across comparators) all come from this generated output.
+
+## Pitfalls discovered while writing the demonstration scenarios (READ THIS BEFORE WRITING ANY SCENARIO FILE)
+
+Three demonstration scenarios are already on disk and passing end-to-end:
+
+- `local/cat-1-column-schema-reference/scenarios/1a_misspelled_column_in_expression.ts`
+- `local/cat-1-column-schema-reference/scenarios/1e_original_column_after_aggregation.ts`
+- `local/cat-1-column-schema-reference/scenarios/1k_unselected_column_after_distinct.ts`
+
+These are the **canonical templates**. Every new scenario must match their shape. The pitfalls below were all hit (and resolved) writing those three. Future agents must avoid each one.
+
+### Pitfall 1: Arquero import path and column-type annotations
+
+**Wrong:**
+```typescript
+import * as aq from "npm:arquero";
+// ...
+.derive({ full_name: (d: { patientId: string; last_name: string }) => d.patientId + " " + d.last_name })
+```
+
+**Right:**
+```typescript
+import * as aq from "arquero";
+// ...
+.derive({ full_name: (d) => d.patientId + " " + d.last_name })
+```
+
+Two issues here:
+
+- **Use `from "arquero"`, never `from "npm:arquero"`.** Arquero is declared in this repo's root `package.json` (per the workspace setup in `repo-setup.md`); the bare specifier resolves correctly through the pnpm workspace. The `npm:` prefix is wrong here.
+- **Do not annotate callback parameters in Arquero `derive`, `filter`, etc.** Arquero is column-untyped by design — `d` is effectively `any`, and the library compiles the function source at runtime. Adding `(d: { patientId: string })` is *fabricating* a type the table doesn't have, and worse, it tricks the reader into thinking Arquero offered type safety it never had. Idiomatic Arquero code in TypeScript is `(d) => d.col_name`, full stop. No type cast (`as any`, `as ColumnTable`), no type annotation. Let Deno infer; Arquero's TS types are loose enough that `d.unknown_column` compiles.
+
+### Pitfall 2: tidy-ts runtime guard kills the process
+
+**Wrong:**
+```typescript
+// @ts-expect-error — Property 'patientId' does not exist on type
+patients.mutate({ full_name: (r) => r.patientId + " " + r.last_name });
+```
+
+This compiles fine (the `@ts-expect-error` is honored), but tidy-ts has a **runtime proxy guard** that throws when you access an undeclared column. The line then propagates an `Error` out of the top-level script, the Deno process exits non-zero, and any subsequent code in the file never runs. The verifier sees a partial-run signal at best, and the Tidy-TS layer gets misrecorded.
+
+**Right:**
+```typescript
+runInProcess(
+  "Tidy-TS",
+  () =>
+    patients.mutate({
+      // @ts-expect-error — Property 'patientId' does not exist on type
+      full_name: (r) => r.patientId + " " + r.last_name,
+    }),
+  (df) => `rows=${df.nrows()}`,
+);
+```
+
+Wrap the tidy-ts catch in `runInProcess("Tidy-TS", ...)`. This:
+- Preserves the `@ts-expect-error` (still verified by `deno check`).
+- Captures the runtime guard's `Error` into a `[Tidy-TS] exit=1 | <message>` line.
+- Lets the file exit 0 overall so the verifier can read all comparator signals.
+
+This is the **only correct shape for the Tidy-TS block**. Always use `runInProcess`. Always.
+
+### Pitfall 3: The `@ts-expect-error` must be on the line that actually fails
+
+**Wrong:**
+```typescript
+runInProcess(
+  "Tidy-TS",
+  // @ts-expect-error — physician not in distinct result
+  () => unique.mutate({ doc: (r) => r.physician }),
+  (df) => `rows=${df.nrows()}`,
+);
+```
+
+The `@ts-expect-error` here annotates the arrow-function expression, not the actual `r.physician` access. `deno check` may report it as "unused expect-error" because the error is generated *inside* the callback, not on this line.
+
+**Right:**
+```typescript
+runInProcess(
+  "Tidy-TS",
+  () =>
+    // @ts-expect-error — physician not in distinct result
+    unique.mutate({ doc: (r) => r.physician }),
+  (df) => `rows=${df.nrows()}`,
+);
+```
+
+Place `@ts-expect-error` immediately above the line that produces the type error — usually the line where the offending `.mutate(...)` or `.filter(...)` call sits. Verify by running `deno check`; if it reports `Unused '@ts-expect-error' directive`, move the directive.
+
+### Pitfall 4: Foreign script literals must include their own setup data
+
+**Wrong:** assume the foreign script can read `../data.ts` or any TS module:
+```typescript
+const pandasScript = `
+import pandas as pd
+df = <use the patients constant from ../data.ts somehow>
+`;
+```
+
+This is impossible. Python and R subprocesses have no access to the host Deno process's modules.
+
+**Right:** every foreign script literal duplicates the data inline:
+```typescript
+const pandasScript = `
+import pandas as pd
+patients = pd.DataFrame({
+    "patient_id": ["P001"],
+    "first_name": ["Alice"],
+    "last_name": ["Smith"],
+})
+patients["full_name"] = patients["patientId"] + " " + patients["last_name"]
+`;
+```
+
+The Tidy-TS side of the same scenario *can* import from `../data.ts` for typed shared constants, but the foreign scripts inline their own data verbatim. This is duplication-by-design (the cost of full-uniformity per the Option B decision).
+
+### Pitfall 5: Polars uses `runForeign("python", ...)` but is labelled `"Polars"`
+
+**Wrong:**
+```typescript
+printForeignResult("python", runForeign("polars", polarsScript));
+```
+
+There is no `"polars"` runtime — Polars is a Python library that runs via `python3`.
+
+**Right:**
+```typescript
+printForeignResult("Polars", runForeign("python", polarsScript));
+```
+
+The first argument to `runForeign` is the **runtime** (`"python"` or `"r"`). The first argument to `printForeignResult` is the **comparator label** (`"pandas"` | `"tidyverse"` | `"Polars"` | etc.). Different concepts; don't conflate. Same applies to `"tidyverse"` label with `"r"` runtime.
+
+### Pitfall 6: mypy and pyright "no errors" is the expected result for almost every scenario
+
+The supplementary checkers (mypy, pyright) lack column-level type information for pandas DataFrames. They will report `[mypy] exit=0 | no errors` and `[pyright] exit=0 | no errors` on essentially every scenario in this suite, because the bug is at the column/value level and the stubs don't track that. This is **not a bug in the scenario file**; it is exactly the headline finding of Supplemental Table 1 in the manuscript ("Neither tool caught any of the 65 errors at compile time").
+
+Do not "fix" this by adding type annotations to the pandas script that would help mypy/pyright. The whole point is that *real pandas code does not carry those annotations* and the checkers miss the bug. Faking annotations would invalidate the comparison.
+
+### Pitfall 7: `runInProcess` must wrap any tidy-ts call that touches non-existent columns OR has runtime guards
+
+Tidy-ts is the only library in the suite with both compile-time AND runtime defenses. The compile-time `@ts-expect-error` is necessary for the verifier to detect the catch via `deno check`. The runtime guard fires when the code runs anyway (with the `@ts-expect-error` silencing the compiler, the runtime is left as the second-line defense). If the tidy-ts block is not wrapped in `runInProcess`, the runtime guard's thrown `Error` will kill the script before subsequent comparators' signals can be emitted.
+
+If the catch is *purely* compile-time (no runtime guard fires — rare; most tidy-ts catches have both), `runInProcess` is still required because the verifier needs a `[Tidy-TS]` line to attribute the compile-time catch to the right comparator column.
+
+### Pitfall 8: Do not use `find` over the user's home directory
+
+If you need to locate a package, a config, or a fixture, read the project's manifests (`package.json`, `pnpm-workspace.yaml`, `deno.jsonc`) directly. Do not run `find /Users/...` or `find ~` — these scans take minutes and traverse unrelated trees. Per `repo-setup.md`, this repo is a pnpm-workspace monorepo; all dependency versions live in the root `package.json` and package paths are predictable from the workspace layout.
+
+### Pitfall 9: Scenarios with no Arquero analog should *omit* the Arquero block honestly
+
+Not every category has an obvious Arquero equivalent — Arquero doesn't expose `pivot_wider` in the same shape, for example. If you cannot write a faithful Arquero analog for the scenario's intent, omit the Arquero block entirely and add a one-line comment under the section divider explaining why. Do not write a contrived block that doesn't exercise the same task. The verifier handles missing Arquero blocks correctly — the comparator row will read "no signal" for Arquero on that scenario, which is the honest record.
+
+### Pitfall 10: Section dividers and comment style — copy from the demonstrations
+
+The three demonstration scenarios use exact unicode box-drawing dividers (`────────…`) and a fixed comment style. Copy them verbatim. Do not invent new divider characters, do not omit them, do not add prose between sections. The verifier and any future static linter on these files relies on the predictable shape.
+
+### Pitfall 11: Severity criteria field format
+
+The `Severity criteria` JSDoc field uses space-separated `KEY=Y/N` pairs from OVERVIEW.md:
+
+```
+ * Severity criteria: AV=Y PS=Y PO=Y
+```
+
+For Low scenarios, include the triggering Low signal (`OI`, `NA`, or `SC`):
+
+```
+ * Severity criteria: AV=Y PS=Y PO=N OI=Y
+```
+
+Lift this verbatim from OVERVIEW.md's per-scenario classification table. Do not invent values.
+
+---
 
 ## Agent rollout
 
@@ -233,59 +425,121 @@ Each agent owns one category directory. Per agent:
 ## Agent prompt template (for phase 2 — adapt per category)
 
 ```
-**Context.** We are restructuring the JAMIA comparison suite's category-N tests from a single per-category harness to per-scenario self-contained `.ts` files (matching the design used in RPython/). Each scenario file inlines every comparator: pandas, tidyverse, Polars, mypy, pyright, Arquero, and the Tidy-TS catch. The verifier walks scenario files and derives detection outcomes from observed runtime/compile signals.
+**Context.** We are restructuring the JAMIA comparison suite's category-N tests from a single per-category harness to per-scenario self-contained `.ts` files. Each scenario file inlines every comparator (pandas, tidyverse, Polars, mypy, pyright, Arquero) and demonstrates the Tidy-TS catch in the same file. The verifier walks scenario files and derives detection outcomes from observed runtime/compile signals.
 
-The canonical template is `RPython/TM/25416955_string_dates_plot.ts` extended to multiple comparators per the plan at `.scratch/jamia-glossary-followups/cat-restructure-plan.md`. The shared runners helper is `local/runners.ts`. The shared typed Tidy-TS data is `local/cat-N-*/data.ts`.
+**MANDATORY READS BEFORE WRITING A SINGLE LINE OF CODE.** Reading these three references is not optional — they encode pitfalls already discovered. Skipping them will produce broken files.
 
-**Scope.** Convert all scenarios in `local/cat-N-*/` to per-scenario `.ts` files under `local/cat-N-*/scenarios/`. After conversion, delete the harness `cat-N-*.test.ts` and all `probe.*` files in the category directory.
+1. `.scratch/jamia-glossary-followups/cat-restructure-plan.md` — this plan in full. The "Pitfalls discovered while writing the demonstration scenarios" section enumerates 11 specific traps; you must avoid each.
+2. `docs/JAMIA/comparisons/local/cat-1-column-schema-reference/scenarios/1a_misspelled_column_in_expression.ts` — canonical template for a Low-severity, all-comparators-crash scenario.
+3. `docs/JAMIA/comparisons/local/cat-1-column-schema-reference/scenarios/1k_unselected_column_after_distinct.ts` — canonical template for a High-severity, comparators-silent scenario where only Tidy-TS catches.
 
-**REQUIRED reads before writing any file:**
-1. `local/cat-N-*/cat-N-*.test.ts` — the current harness. Extract LABELS, INTENTS, shared data, and the Deno.test blocks for each comparator.
-2. `docs/JAMIA/comparisons/OVERVIEW.md` — find the per-scenario classification table for category N. Extract Severity, Severity criteria, and Rationale for each scenario.
-3. `local/runners.ts` — the helpers `runForeign`, `printForeignResult`, `runStaticChecker`, `printStaticCheckerResult`.
-4. `local/cat-N-*/data.ts` — the shared typed DataFrame constants.
-5. `RPython/TM/25416955_string_dates_plot.ts` — the simplest example of the self-contained design.
-6. `RPython/TM_snippets.json` — NOT applicable to local/ cat scenarios (those are author-designed, not RPython snippets).
+These three files are passing end-to-end. Copy their shape exactly.
+
+**Additional required reads** (extract specific content from each):
+
+4. `docs/JAMIA/comparisons/local/cat-N-*/cat-N-*.test.ts` — the existing harness for your category. Extract LABELS, INTENTS, shared data, and each comparator's per-scenario logic.
+5. `docs/JAMIA/comparisons/OVERVIEW.md` — find the per-scenario classification table for category N. Extract Severity, Severity criteria, and Rationale for each scenario.
+6. `docs/JAMIA/comparisons/runners.ts` — the helpers `runForeign`, `printForeignResult`, `runStaticChecker`, `printStaticCheckerResult`, `runInProcess`. The exports are `ComparatorLabel`-typed; do not invent labels.
+7. `docs/JAMIA/comparisons/local/cat-N-*/probe.py`, `probe.R`, `probe-polars.py`, `probe-arquero.ts`, `probe-mypy.py`, `probe-pyright.py` — the source code for each per-scenario block. Lift verbatim.
+
+**Scope.** Convert all scenarios in `local/cat-N-*/` to per-scenario `.ts` files under `local/cat-N-*/scenarios/`. After conversion is verified end-to-end, delete the harness `cat-N-*.test.ts` and all `probe.*` files in the category directory. Do NOT delete the probes until all scenarios in the category are converted, verified passing, and you have run the new files in sequence to confirm no regressions.
 
 **Per-scenario workflow:**
 
-1. For each scenario in the harness (one per LABELS array entry, typically 8–17 scenarios per category):
-   a. Create `local/cat-N-*/scenarios/<id>_<slug>.ts`.
-   b. Write the 7-field JSDoc header with values lifted verbatim from OVERVIEW.md.
-   c. Write the pandas block: lift the minimal scenario code from `probe.py`, place it in a template literal, run via `runForeign("python", ...)`.
-   d. Write the tidyverse block: same approach with `probe.R`.
-   e. Write the Polars block: same with `probe-polars.py`.
-   f. Write the mypy block: pass the pandas script to `runStaticChecker("mypy", ...)`.
-   g. Write the pyright block: same with pyright.
-   h. Write the Arquero block: lift from `probe-arquero.ts` if present; emit `[Arquero] exit=N | <message>` via console.log. If Arquero has no equivalent for this scenario, write a brief comment explaining why and skip the block.
-   i. Write the Tidy-TS block: lift the `@ts-expect-error` line and the bug-triggering operation from the harness's Tidy-TS compile-time Deno.test block. Use the shared data import from `../data.ts`.
-2. Run `deno check <new file>` and confirm pass. If the `@ts-expect-error` comment doesn't match the actual TypeScript error, update it to the verbatim message.
-3. Run `deno run -A <new file>` and confirm:
-   - `[pandas] exit=N | ...` line printed
-   - `[r] exit=N | ...` line printed
-   - `[Polars] exit=N | ...` line printed
-   - `[mypy] exit=N | ...` line printed
-   - `[pyright] exit=N | ...` line printed
-   - `[Arquero] exit=N | ...` line printed (if Arquero block included)
-   - File exits 0 overall (the `@ts-expect-error` silences the compile error; all foreign signals are captured non-fatally).
+For each scenario in the harness (one per LABELS array entry, typically 8–17 scenarios per category):
+
+1. **Create `local/cat-N-*/scenarios/<id>_<slug>.ts`.** Slug is short, snake_case, lifted from the LABELS entry. Example: `1k_unselected_column_after_distinct.ts`.
+
+2. **Write the 7-field JSDoc header.** Lift values verbatim from OVERVIEW.md:
+   ```typescript
+   /**
+    * ID: 1k
+    * Category: Column reference
+    * Label: unselected column referenced after distinct
+    * Intent: Deduplicate encounters by patient and access columns not specified in the deduplication keys.
+    * Severity: High
+    * Severity criteria: AV=Y PS=Y PO=Y
+    * Rationale: <verbatim rationale text from OVERVIEW.md>
+    */
+   ```
+
+3. **Imports — exactly four lines, in this order**:
+   ```typescript
+   import * as aq from "arquero";  // NOT "npm:arquero" — see Pitfall 1
+   import { createDataFrame } from "@tidy-ts/dataframe";
+   import {
+     printForeignResult,
+     printStaticCheckerResult,
+     runForeign,
+     runInProcess,
+     runStaticChecker,
+   } from "../../../runners.ts";
+   ```
+
+4. **Write the pandas block** (a divider comment, then a template literal, then `printForeignResult("pandas", runForeign("python", ...))`). Lift the minimal triggering pandas code from `probe.py`.
+
+5. **Write the tidyverse block.** Same shape: `printForeignResult("tidyverse", runForeign("r", rScript))`.
+
+6. **Write the Polars block.** Same shape: `printForeignResult("Polars", runForeign("python", polarsScript))`. Note: Polars uses the `"python"` runtime — see Pitfall 5.
+
+7. **Write the mypy/pyright blocks.** Pass the pandas script (the same string already declared) to `runStaticChecker`. Two lines each:
+   ```typescript
+   printStaticCheckerResult("mypy", runStaticChecker("mypy", pandasScript));
+   printStaticCheckerResult("pyright", runStaticChecker("pyright", pandasScript));
+   ```
+
+8. **Write the Arquero block.** Use `runInProcess("Arquero", () => …, table => `rows=${table.numRows()}`)`. No type annotations on `(d) => d.col` callbacks — see Pitfall 1. Do NOT cast (no `as any`, no `as ColumnTable`). If Arquero has no faithful analog for this scenario's intent, omit the block entirely and write a one-line comment explaining why — see Pitfall 9.
+
+9. **Write the Tidy-TS block** — **MUST be wrapped in `runInProcess("Tidy-TS", ...)`**. See Pitfall 2: an un-wrapped tidy-ts call that triggers the runtime guard kills the script before subsequent signals can be printed. The `@ts-expect-error` directive goes immediately above the line where the type error appears — see Pitfall 3. Use the shared typed data from `../data.ts` if present, or create the DataFrame inline if not.
+
+   ```typescript
+   const myData = createDataFrame([…]);
+   runInProcess(
+     "Tidy-TS",
+     () =>
+       // @ts-expect-error — <verbatim TypeScript error message from `deno check`>
+       myData.mutate({ … }),
+     (df) => `rows=${df.nrows()}`,
+   );
+   ```
+
+**After writing the file, verify in this order:**
+
+1. `deno check <new file>` — must report `Check <path>` with no errors. If it reports `Unused '@ts-expect-error' directive`, the directive is on the wrong line — move it to the line that actually produces the type error (Pitfall 3).
+2. `deno run -A <new file>` — must complete with exit code 0 and emit one signal line per comparator in this order:
+   - `[pandas] exit=N | …`
+   - `[tidyverse] exit=N | …`
+   - `[Polars] exit=N | …`
+   - `[mypy] exit=N | …`
+   - `[pyright] exit=N | …`
+   - `[Arquero] exit=N | …` (omit if Arquero block omitted)
+   - `[Tidy-TS] exit=N | …`
+
+   If the file does NOT exit 0, you have not wrapped the Tidy-TS block correctly. Re-read Pitfall 2.
 
 **Strict rules:**
-- The JSDoc header has exactly 7 fields in fixed order. No design commentary paragraphs.
-- The 6 comparator blocks (pandas, tidyverse, Polars, mypy, pyright, Arquero) appear in fixed order. The Tidy-TS block is last.
-- Exactly one `@ts-expect-error`. Its comment is the verbatim TypeScript error.
-- No "correct path" demos, no console.log of working code, no bridging prose.
-- Shared data is imported from `../data.ts`; foreign scripts duplicate the data inline (foreign runtimes can't read TS modules).
-- If Arquero has no equivalent operation, that's documented but does not block the conversion.
-- The new scenarios directory is `local/cat-N-*/scenarios/`; the old harness and probes are deleted after the per-scenario files are verified passing.
+
+- 7-field JSDoc header in fixed order. No design commentary paragraph.
+- 4 imports as shown. No others.
+- 6 comparator blocks (pandas, tidyverse, Polars, mypy, pyright, Arquero) in fixed order. Tidy-TS block last.
+- Section dividers are exactly `// <Name> ──────────…` with unicode box-drawing characters lifted from the canonical templates (1a, 1k). Copy them verbatim.
+- Exactly one `@ts-expect-error` per file, on the line that produces the actual type error.
+- Tidy-TS block always uses `runInProcess`. No exceptions.
+- Arquero block uses `runInProcess` and zero type annotations / zero type casts on callback parameters.
+- mypy / pyright report "no errors" on essentially every scenario — this is correct and is the headline finding (Pitfall 6). Do not "fix" this by adding annotations to the pandas script.
+- Shared data is imported from `../data.ts` (Tidy-TS side only). Foreign scripts duplicate data inline as Python/R literals — Pitfall 4.
+- Don't use `find` over wide trees. Read project manifests directly — Pitfall 8.
+
+**Do not delete probes until all scenarios are verified.** Sequence: write all scenarios → run each → confirm all 7 signal lines emit cleanly → THEN delete the harness and probe files in one final cleanup commit.
 
 **Report back** when finished. For each scenario:
-- Scenario ID
-- File path
+- Scenario ID and file path
 - `deno check` result (passes / fails)
-- `deno run -A` result (exit code + which comparator lines were printed)
-- Any anomalies (e.g., Arquero block omitted with reason; scenario data not in `data.ts` so inlined per-file; etc.)
+- `deno run -A` exit code and the comparator lines emitted
+- Arquero block included / omitted (with reason if omitted)
+- Any anomalies — flag explicitly; do not hide them
 
-Summary line: `converted: N / total: M / arquero-skipped: K / anomalies: J`.
+Summary line: `converted: N / total: M / arquero-omitted: K / anomalies: J`.
 
 **Your assigned category:** `local/cat-N-*` (substitute N).
 ```

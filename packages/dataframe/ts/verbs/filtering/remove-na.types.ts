@@ -6,20 +6,16 @@ export type RemoveNAMethod<Row extends object> = {
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    {
-      [K in keyof R]: K extends Field ? Exclude<R[K], null | undefined>
-        : R[K];
-    }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], null | undefined> }
   >;
   <R extends object, Field extends keyof R>(
     this: DataFrame<R>,
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    {
-      [K in keyof R]: K extends Field ? Exclude<R[K], null | undefined>
-        : R[K];
-    }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], null | undefined> }
   >;
 };
 
@@ -29,13 +25,11 @@ export type RemoveNullMethod<Row extends object> = {
     this: DataFrame<R>,
     path: readonly [K1, K2],
   ): DataFrame<
-    {
-      [K in keyof R]: K extends K1
-        ? {
-          [N in keyof R[K1]]: N extends K2 ? Exclude<R[K1][N], null>
-            : R[K1][N];
-        }
-        : R[K];
+    & Omit<R, K1>
+    & {
+      [K in K1]-?: & Omit<R[K1], K2> & {
+        [N in K2]-?: Exclude<R[K1][N & keyof R[K1]], null>;
+      };
     }
   >;
 
@@ -44,7 +38,8 @@ export type RemoveNullMethod<Row extends object> = {
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], null> : R[K] }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], null> }
   >;
   // Top-level multiple fields (rest parameters)
   <R extends object, Field extends keyof R>(
@@ -52,7 +47,8 @@ export type RemoveNullMethod<Row extends object> = {
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], null> : R[K] }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], null> }
   >;
 };
 
@@ -62,13 +58,11 @@ export type RemoveUndefinedMethod<Row extends object> = {
     this: DataFrame<R>,
     path: readonly [K1, K2],
   ): DataFrame<
-    {
-      [K in keyof R]: K extends K1
-        ? {
-          [N in keyof R[K1]]: N extends K2 ? Exclude<R[K1][N], undefined>
-            : R[K1][N];
-        }
-        : R[K];
+    & Omit<R, K1>
+    & {
+      [K in K1]-?: & Omit<R[K1], K2> & {
+        [N in K2]-?: Exclude<R[K1][N & keyof R[K1]], undefined>;
+      };
     }
   >;
 
@@ -77,7 +71,8 @@ export type RemoveUndefinedMethod<Row extends object> = {
     this: DataFrame<R>,
     field: Field,
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], undefined> : R[K] }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], undefined> }
   >;
   // Top-level multiple fields (rest parameters)
   <R extends object, Field extends keyof R>(
@@ -85,6 +80,7 @@ export type RemoveUndefinedMethod<Row extends object> = {
     field: Field,
     ...fields: Field[]
   ): DataFrame<
-    { [K in keyof R]: K extends Field ? Exclude<R[K], undefined> : R[K] }
+    & Omit<R, Field>
+    & { [K in Field]-?: Exclude<R[K], undefined> }
   >;
 };

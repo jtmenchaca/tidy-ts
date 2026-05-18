@@ -138,13 +138,19 @@ function parseFrontmatter(content: string): Frontmatter {
 
 function parseForeignSignal(stdout: string): ForeignSignal {
   // Lines look like: `[pandas] exit=1 | TypeError: ...`
-  //               or `[R] exit=0 | `
-  const match = stdout.match(/^\[(pandas|R)\] exit=(-?\d+)\s*\|\s*(.*)$/m);
+  //               or `[tidyverse] exit=0 | `
+  // Older RPython files may still emit `[R]`; accept both for compatibility.
+  const match = stdout.match(/^\[(pandas|tidyverse|R)\] exit=(-?\d+)\s*\|\s*(.*)$/m);
   if (!match) {
     return { language: "unknown", exitCode: -1, lastStderrLine: "" };
   }
+  const labelToLanguage: Record<string, "pandas" | "R"> = {
+    pandas: "pandas",
+    tidyverse: "R",
+    R: "R",
+  };
   return {
-    language: match[1] as "pandas" | "R",
+    language: labelToLanguage[match[1]] ?? "unknown",
     exitCode: parseInt(match[2], 10),
     lastStderrLine: match[3].trim(),
   };
