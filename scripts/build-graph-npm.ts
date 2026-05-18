@@ -146,7 +146,7 @@ writeFileSync(join(DIST_DIR, "package.json"), JSON.stringify({
   keywords: ["dataframe", "graph", "chart", "vega", "vega-lite", "visualization", "tidy-ts"],
   dependencies: {
     "@tidy-ts/dataframe": pkg.version,
-    "@tidy-ts/shims": "1.5.7",
+    "@tidy-ts/shims": "1.5.8",
   },
   optionalDependencies: {
     "vega": "^6.2.0",
