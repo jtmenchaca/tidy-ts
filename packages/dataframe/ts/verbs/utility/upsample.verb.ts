@@ -1,5 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import {
+  createDataFrame,
+  materializeIndex,
+  withGroupsRebuilt,
+} from "../../dataframe/index.ts";
 import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import type { FillMethod } from "./upsample.types.ts";
@@ -8,10 +12,11 @@ import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
 import {
   type CalendarTemporal,
   floorCalendarTemporal,
-  generateCalendarTemporalSequence,
+  generateCalendarTemporalValues,
   isCalendarTemporal,
   isWallClockTemporalWithoutCalendar,
   parseFrequencyForCalendar,
+  reconstructEpochTime,
   toEpochMs,
 } from "../../stats/temporal-helpers.ts";
 
@@ -24,6 +29,7 @@ function upsampleImpl(
   _frequency: Frequency,
   frequencyMs: number,
   fillMethod: FillMethod,
+  timeSample: unknown,
   startDate?: Date,
   endDate?: Date,
 ): any {
@@ -117,7 +123,7 @@ function upsampleImpl(
       for (const bucketTime of sequence) {
         const resultRow: any = {
           ...groupKeys, // Include group keys
-          [timeColName]: new Date(bucketTime),
+          [timeColName]: reconstructEpochTime(bucketTime, timeSample),
         };
 
         // Fill columns based on fillMethod
@@ -177,11 +183,12 @@ function upsampleImpl(
           return a[colName] < b[colName] ? -1 : 1;
         }
       }
-      // Then by time
-      return a[timeColName].getTime() - b[timeColName].getTime();
+      // Then by time (epoch comparison works for Date, Instant, ZonedDateTime)
+      return toEpochMs(a[timeColName]) - toEpochMs(b[timeColName]);
     });
 
-    return createDataFrame(allResults);
+    const out = createDataFrame(allResults);
+    return withGroupsRebuilt(df, allResults, out);
   }
 
   // Ungrouped: Process all rows together
@@ -241,7 +248,7 @@ function upsampleImpl(
 
   for (const bucketTime of sequence) {
     const resultRow: any = {
-      [timeColName]: new Date(bucketTime),
+      [timeColName]: reconstructEpochTime(bucketTime, timeSample),
     };
 
     // Fill columns based on fillMethod
@@ -291,24 +298,20 @@ function upsampleImpl(
 }
 
 /**
- * Calendar-path upsample for PlainDate/PlainDateTime.
- * Uses string bucket keys and native Temporal add()/compare().
+ * Bucket-fill a single (already-partitioned) set of rows by calendar frequency.
+ * Returns result rows that include `extraColumns` (e.g. group keys) on every
+ * output row. Does not handle grouping itself.
  */
-function upsampleCalendarTemporal(
+function calendarFillRows(
   rows: any[],
   timeColumn: any,
-  frequency: Frequency,
+  freq: ReturnType<typeof parseFrequencyForCalendar>,
   fillMethod: FillMethod,
-): any {
+  extraColumns: Record<string, unknown> = {},
+): any[] {
+  if (!freq) return [];
   const timeColName = String(timeColumn);
-  const freq = parseFrequencyForCalendar(frequency);
-  if (!freq) {
-    throw new Error(
-      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
-    );
-  }
 
-  // Find min/max Temporal values
   let minVal: CalendarTemporal | null = null;
   let maxVal: CalendarTemporal | null = null;
   for (const row of rows) {
@@ -318,19 +321,16 @@ function upsampleCalendarTemporal(
     if (!maxVal || ts.constructor.compare(ts, maxVal) > 0) maxVal = ts;
   }
 
-  if (!minVal || !maxVal) {
-    return createDataFrame([]);
-  }
+  if (!minVal || !maxVal) return [];
 
   const startFloored = floorCalendarTemporal(minVal, freq);
   const endFloored = floorCalendarTemporal(maxVal, freq);
-  const sequence = generateCalendarTemporalSequence(
+  const bucketValues = generateCalendarTemporalValues(
     startFloored,
     endFloored,
     freq,
   );
 
-  // Build a lookup: ISO string key → row values
   const rowByKey = new Map<string, any>();
   for (const row of rows) {
     const ts = row[timeColumn];
@@ -339,23 +339,24 @@ function upsampleCalendarTemporal(
     rowByKey.set(key, row);
   }
 
-  // Generate result with fill
   const result: any[] = [];
   const firstRow = rows[0];
 
-  for (let i = 0; i < sequence.length; i++) {
-    const bucketKey = sequence[i];
-    const resultRow: any = { [timeColName]: bucketKey };
+  for (let i = 0; i < bucketValues.length; i++) {
+    const bucketValue = bucketValues[i];
+    const resultRow: any = { ...extraColumns, [timeColName]: bucketValue };
 
     for (const key of Object.keys(firstRow)) {
       if (key === timeColName) continue;
+      // Group keys are sourced from extraColumns; don't overwrite with the
+      // sample firstRow value (which may differ from the bucket's group).
+      if (key in extraColumns) continue;
       const colName = key;
 
       if (fillMethod === "forward") {
-        // Find most recent value at or before this bucket
         let value: unknown = undefined;
         for (let j = i; j >= 0; j--) {
-          const match = rowByKey.get(sequence[j]);
+          const match = rowByKey.get(bucketValues[j].toString());
           if (match) {
             value = match[colName];
             break;
@@ -363,10 +364,9 @@ function upsampleCalendarTemporal(
         }
         resultRow[key] = value !== undefined ? value : firstRow[colName];
       } else {
-        // Backward fill: find next value at or after this bucket
         let value: unknown = undefined;
-        for (let j = i; j < sequence.length; j++) {
-          const match = rowByKey.get(sequence[j]);
+        for (let j = i; j < bucketValues.length; j++) {
+          const match = rowByKey.get(bucketValues[j].toString());
           if (match) {
             value = match[colName];
             break;
@@ -380,7 +380,74 @@ function upsampleCalendarTemporal(
     result.push(resultRow);
   }
 
-  return createDataFrame(result);
+  return result;
+}
+
+function upsampleCalendarTemporal(
+  df: any,
+  rows: any[],
+  timeColumn: any,
+  frequency: Frequency,
+  fillMethod: FillMethod,
+): any {
+  const freq = parseFrequencyForCalendar(frequency);
+  if (!freq) {
+    throw new Error(
+      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
+    );
+  }
+
+  const groupedDf = df as any;
+  if (groupedDf.__groups) {
+    const { head, next, keyRow, groupingColumns, size, usesRawIndices } =
+      groupedDf.__groups;
+    const store = groupedDf.__store;
+    const baseIndex = usesRawIndices
+      ? null
+      : materializeIndex(store.length, groupedDf.__view);
+
+    const allResults: any[] = [];
+    for (let g = 0; g < size; g++) {
+      const groupIndices = collectGroupPhysicalIndices({
+        head,
+        next,
+        groupIndex: g,
+        usesRawIndices,
+        baseIndex,
+      });
+      const groupRows: any[] = [];
+      for (const physIdx of groupIndices) {
+        const row: any = {};
+        for (const colName of store.columnNames) {
+          row[colName] = store.columns[colName][physIdx];
+        }
+        groupRows.push(row);
+      }
+      if (groupRows.length === 0) continue;
+
+      const groupKeys: Record<string, unknown> = {};
+      const keyPhys = keyRow[g];
+      for (const col of groupingColumns) {
+        groupKeys[String(col)] = store.columns[String(col)][keyPhys];
+      }
+      allResults.push(
+        ...calendarFillRows(
+          groupRows,
+          timeColumn,
+          freq,
+          fillMethod,
+          groupKeys,
+        ),
+      );
+    }
+
+    const out = createDataFrame(allResults);
+    return withGroupsRebuilt(df, allResults, out);
+  }
+
+  return createDataFrame(
+    calendarFillRows(rows, timeColumn, freq, fillMethod),
+  );
 }
 
 /**
@@ -413,6 +480,7 @@ export function upsample(
     }
     if (isCalendarTemporal(firstTimestamp)) {
       return upsampleCalendarTemporal(
+        df,
         rows,
         args.timeColumn,
         args.frequency,
@@ -427,6 +495,7 @@ export function upsample(
       args.frequency,
       frequencyMs,
       args.fillMethod,
+      firstTimestamp,
       args.startDate,
       args.endDate,
     );

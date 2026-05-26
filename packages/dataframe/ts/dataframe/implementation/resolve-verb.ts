@@ -83,7 +83,6 @@ import {
   for_each_row_async,
 } from "../../verbs/utility/for-each.verb.ts";
 import { print } from "../../verbs/utility/print.verb.ts";
-import { profile } from "../../verbs/utility/profile.verb.ts";
 
 // Row binding
 import { bind_rows } from "../../verbs/reshape/bind-rows.verb.ts";
@@ -521,11 +520,6 @@ export function resolveVerb(prop: PropertyKey, df: unknown) {
     return (...a: unknown[]) => {
       // print always returns the same df for reference equality
       return (print as any)(...a)(df);
-    };
-  }
-  if (prop === "profile") {
-    return () => {
-      return profile(df as any);
     };
   }
   if (prop === "ungroup") {

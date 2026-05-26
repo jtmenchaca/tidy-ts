@@ -3,9 +3,6 @@
  * Category: Column reference
  * Label: unselected column referenced after distinct
  * Intent: Deduplicate encounters by patient and access columns not specified in the deduplication keys.
- * Severity: High
- * Severity criteria: AV=Y PS=Y PO=Y
- * Rationale: Py/R silent. pandas `drop_duplicates` keeps all columns with arbitrary row choices; R `distinct` keeps unselected columns with arbitrary values. The retained columns have values selected from duplicated groups — this alters downstream joins/group-bys (AV), affects every duplicated group identically (PS), and produces a valid-looking table with plausible values (PO).
  */
 import * as aq from "arquero";
 import { createDataFrame } from "@tidy-ts/dataframe";

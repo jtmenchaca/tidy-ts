@@ -59,38 +59,32 @@ export function qpareto({
   return wasm_qpareto(probability, scale, shape, lowerTail, probabilityIsLog);
 }
 
-export function rpareto({
-  scale,
-  shape,
-}: {
+export function rpareto(args: {
   scale: number;
   shape: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rpareto(args: {
+  scale: number;
+  shape: number;
+  seed?: number;
 }): number;
 export function rpareto({
   scale,
   shape,
   sampleSize,
-}: {
-  scale: number;
-  shape: number;
-  sampleSize: number;
-}): number[];
-export function rpareto({
-  scale,
-  shape,
-  sampleSize = 1,
+  seed,
 }: {
   scale: number;
   shape: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) return wasm_rpareto(scale, shape);
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rpareto(scale, shape));
+  if (sampleSize === undefined) {
+    return wasm_rpareto(scale, shape, 1, seed)[0];
   }
-  return results;
+  return wasm_rpareto(scale, shape, sampleSize, seed);
 }
 
 export function paretoData({

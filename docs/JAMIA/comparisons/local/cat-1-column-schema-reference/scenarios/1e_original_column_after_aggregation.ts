@@ -3,9 +3,6 @@
  * Category: Column reference
  * Label: original column referenced after aggregation
  * Intent: Group encounters by patient, summarize counts, then re-reference an original encounter column.
- * Severity: Low
- * Severity criteria: AV=Y PS=Y PO=N OI=Y
- * Rationale: After summarize, the original column no longer exists — accessing it yields undefined for every summary row. All three error.
  */
 import * as aq from "arquero";
 import { createDataFrame } from "@tidy-ts/dataframe";

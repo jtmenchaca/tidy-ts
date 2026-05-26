@@ -63,36 +63,30 @@ export function qzipf({
   );
 }
 
-export function rzipf({
-  numberOfElements,
-  exponent,
-}: {
+export function rzipf(args: {
   numberOfElements: number;
   exponent: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rzipf(args: {
+  numberOfElements: number;
+  exponent: number;
+  seed?: number;
 }): number;
 export function rzipf({
   numberOfElements,
   exponent,
   sampleSize,
-}: {
-  numberOfElements: number;
-  exponent: number;
-  sampleSize: number;
-}): number[];
-export function rzipf({
-  numberOfElements,
-  exponent,
-  sampleSize = 1,
+  seed,
 }: {
   numberOfElements: number;
   exponent: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) return wasm_rzipf(numberOfElements, exponent);
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rzipf(numberOfElements, exponent));
+  if (sampleSize === undefined) {
+    return wasm_rzipf(numberOfElements, exponent, 1, seed)[0];
   }
-  return results;
+  return wasm_rzipf(numberOfElements, exponent, sampleSize, seed);
 }

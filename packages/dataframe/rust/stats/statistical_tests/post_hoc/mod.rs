@@ -5,6 +5,7 @@
 
 pub mod dunn;
 pub mod games_howell;
+pub mod studentized_range;
 pub mod tukey_hsd;
 pub mod types;
 pub mod wasm;
@@ -12,5 +13,6 @@ pub mod wasm;
 // Re-export main functions
 pub use dunn::dunn_test;
 pub use games_howell::games_howell;
-pub use tukey_hsd::{ptukey_exact, tukey_hsd};
+pub use studentized_range::{ptukey, qtukey};
+pub use tukey_hsd::tukey_hsd;
 pub use types::{DunnTestResult, GamesHowellTestResult, PairwiseComparison, TukeyHsdTestResult};

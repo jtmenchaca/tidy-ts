@@ -4169,214 +4169,378 @@ export function wasm_qzipf(p, n, s, lower_tail, log_p) {
 }
 
 /**
- * WASM export for beta random number generation
+ * Draw `n` samples from `Beta(shape1, shape2)`. See `wasm_rnorm` doc comment
+ * for seed semantics.
  * @param {number} shape1
  * @param {number} shape2
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rbeta(shape1, shape2) {
-  const ret = wasm.wasm_rbeta(shape1, shape2);
-  return ret;
+export function wasm_rbeta(shape1, shape2, n, seed) {
+  const ret = wasm.wasm_rbeta(
+    shape1,
+    shape2,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for binomial random number generation
  * @param {number} size
  * @param {number} prob
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rbinom(size, prob) {
-  const ret = wasm.wasm_rbinom(size, prob);
-  return ret;
+export function wasm_rbinom(size, prob, n, seed) {
+  const ret = wasm.wasm_rbinom(
+    size,
+    prob,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for chi-squared random number generation
  * @param {number} df
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rchisq(df) {
-  const ret = wasm.wasm_rchisq(df);
-  return ret;
+export function wasm_rchisq(df, n, seed) {
+  const ret = wasm.wasm_rchisq(
+    df,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
  * @param {number} location
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rdirac(location) {
-  const ret = wasm.wasm_rdirac(location);
-  return ret;
+export function wasm_rdirac(location, n, seed) {
+  const ret = wasm.wasm_rdirac(
+    location,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
  * @param {number} location
  * @param {number} scale
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rev1(location, scale) {
-  const ret = wasm.wasm_rev1(location, scale);
-  return ret;
+export function wasm_rev1(location, scale, n, seed) {
+  const ret = wasm.wasm_rev1(
+    location,
+    scale,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for exponential random number generation
  * @param {number} rate
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rexp(rate) {
-  const ret = wasm.wasm_rexp(rate);
-  return ret;
+export function wasm_rexp(rate, n, seed) {
+  const ret = wasm.wasm_rexp(
+    rate,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for F distribution random number generation
  * @param {number} df1
  * @param {number} df2
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rf(df1, df2) {
-  const ret = wasm.wasm_rf(df1, df2);
-  return ret;
+export function wasm_rf(df1, df2, n, seed) {
+  const ret = wasm.wasm_rf(
+    df1,
+    df2,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for gamma random number generation
  * @param {number} shape
  * @param {number} rate
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rgamma(shape, rate) {
-  const ret = wasm.wasm_rgamma(shape, rate);
-  return ret;
+export function wasm_rgamma(shape, rate, n, seed) {
+  const ret = wasm.wasm_rgamma(
+    shape,
+    rate,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for geometric random number generation
  * @param {number} prob
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rgeom(prob) {
-  const ret = wasm.wasm_rgeom(prob);
-  return ret;
+export function wasm_rgeom(prob, n, seed) {
+  const ret = wasm.wasm_rgeom(
+    prob,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for hypergeometric random number generation
  * @param {number} m
  * @param {number} n
  * @param {number} k
- * @returns {number}
+ * @param {number} count
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rhyper(m, n, k) {
-  const ret = wasm.wasm_rhyper(m, n, k);
-  return ret;
+export function wasm_rhyper(m, n, k, count, seed) {
+  const ret = wasm.wasm_rhyper(
+    m,
+    n,
+    k,
+    count,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for log-normal random number generation
  * @param {number} meanlog
  * @param {number} sdlog
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rlnorm(meanlog, sdlog) {
-  const ret = wasm.wasm_rlnorm(meanlog, sdlog);
-  return ret;
+export function wasm_rlnorm(meanlog, sdlog, n, seed) {
+  const ret = wasm.wasm_rlnorm(
+    meanlog,
+    sdlog,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for negative binomial random number generation
  * @param {number} r
  * @param {number} prob
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rnbinom(r, prob) {
-  const ret = wasm.wasm_rnbinom(r, prob);
-  return ret;
+export function wasm_rnbinom(r, prob, n, seed) {
+  const ret = wasm.wasm_rnbinom(
+    r,
+    prob,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for normal random number generation
+ * Draw `n` samples from `Normal(mean, sd)` in a single call.
+ *
+ * With `seed = Some(s)` the sequence is fully reproducible (one RNG state
+ * advances across every draw — same contract as R's `set.seed(s); rnorm(n)`
+ * and numpy's `default_rng(s).normal(size=n)`). With `seed = None` uses
+ * `thread_rng()` for non-determinism. The caller passes `n = 1` for a
+ * single draw.
  * @param {number} mean
  * @param {number} sd
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rnorm(mean, sd) {
-  const ret = wasm.wasm_rnorm(mean, sd);
-  return ret;
+export function wasm_rnorm(mean, sd, n, seed) {
+  const ret = wasm.wasm_rnorm(
+    mean,
+    sd,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
  * @param {number} scale
  * @param {number} shape
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rpareto(scale, shape) {
-  const ret = wasm.wasm_rpareto(scale, shape);
-  return ret;
+export function wasm_rpareto(scale, shape, n, seed) {
+  const ret = wasm.wasm_rpareto(
+    scale,
+    shape,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for Poisson random number generation
  * @param {number} lambda
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rpois(lambda) {
-  const ret = wasm.wasm_rpois(lambda);
-  return ret;
+export function wasm_rpois(lambda, n, seed) {
+  const ret = wasm.wasm_rpois(
+    lambda,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for t distribution random number generation
  * @param {number} df
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rt(df) {
-  const ret = wasm.wasm_rt(df);
-  return ret;
+export function wasm_rt(df, n, seed) {
+  const ret = wasm.wasm_rt(df, n, isLikeNone(seed) ? 0x100000001 : seed >>> 0);
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for uniform random number generation
  * @param {number} min
  * @param {number} max
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_runif(min, max) {
-  const ret = wasm.wasm_runif(min, max);
-  return ret;
+export function wasm_runif(min, max, n, seed) {
+  const ret = wasm.wasm_runif(
+    min,
+    max,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for Weibull random number generation
  * @param {number} shape
  * @param {number} scale
- * @returns {number}
+ * @param {number} n
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rweibull(shape, scale) {
-  const ret = wasm.wasm_rweibull(shape, scale);
-  return ret;
+export function wasm_rweibull(shape, scale, n, seed) {
+  const ret = wasm.wasm_rweibull(
+    shape,
+    scale,
+    n,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
- * WASM export for Wilcoxon random number generation
  * @param {number} m
  * @param {number} n
- * @returns {number}
+ * @param {number} count
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rwilcox(m, n) {
-  const ret = wasm.wasm_rwilcox(m, n);
-  return ret;
+export function wasm_rwilcox(m, n, count, seed) {
+  const ret = wasm.wasm_rwilcox(
+    m,
+    n,
+    count,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**
  * @param {number} n
  * @param {number} s
- * @returns {number}
+ * @param {number} count
+ * @param {number | null} [seed]
+ * @returns {Float64Array}
  */
-export function wasm_rzipf(n, s) {
-  const ret = wasm.wasm_rzipf(n, s);
-  return ret;
+export function wasm_rzipf(n, s, count, seed) {
+  const ret = wasm.wasm_rzipf(
+    n,
+    s,
+    count,
+    isLikeNone(seed) ? 0x100000001 : seed >>> 0,
+  );
+  var v1 = getArrayF64FromWasm0(ret[0], ret[1]).slice();
+  wasm.__wbindgen_free(ret[0], ret[1] * 8, 8);
+  return v1;
 }
 
 /**

@@ -66,10 +66,12 @@ Deno.test("getCalendarTemporalBucket - PlainDate monthly", () => {
   expect(bucket).toBe("2023-06-01");
 });
 
-Deno.test("getCalendarTemporalBucket - PlainDate quarterly", () => {
+Deno.test("getCalendarTemporalBucket - PlainDate quarterly (via 3M)", () => {
   const ts = NativeTemporal.PlainDate.from("2023-08-15");
-  const bucket = getCalendarTemporalBucket(ts, "1Q");
-  // August is month 8, Q3 starts at month 7
+  // Quarterly bucketing is expressed as 3-month bucketing. August (month 8)
+  // falls in the bucket that started in July (month 7) when months are
+  // grouped in threes starting at month 1.
+  const bucket = getCalendarTemporalBucket(ts, "3M");
   expect(bucket).toBe("2023-07-01");
 });
 

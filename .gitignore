@@ -44,7 +44,8 @@ tmp/
 .DS_Store
 **/.DS_Store
 .cargo/
-.claude/
+.claude/settings.json
+.claude/settings.local.json
 .obsidian/
 
 # Python
@@ -69,14 +70,19 @@ packages/testing/runtimes/public/tidy-ts-bundle.js.map
 # Playwright test results
 packages/testing/test-results/
 
-Claude.md/
-.claude/
 
 tmp/src/dataframe/ts/io/fixtures/T214*.xlsx
 examples/fixtures/test-output.xlsx
 
 # Changelog (generated, not committed)
 changelog/
+
+# @tidy-ts/ai per-node cache: default sqliteDatastore lands here when
+# nothing calls setDatastore() explicitly. WAL/SHM sidecar files included.
+.tidy-ai-cache.db
+.tidy-ai-cache.db-journal
+.tidy-ai-cache.db-shm
+.tidy-ai-cache.db-wal
 
 # RPython dataset (large, not ours to redistribute)
 docs/JAMIA/comparisons/RPython-main/

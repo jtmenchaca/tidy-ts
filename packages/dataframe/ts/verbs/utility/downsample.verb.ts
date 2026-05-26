@@ -1,5 +1,9 @@
 // deno-lint-ignore-file no-explicit-any
-import { createDataFrame, materializeIndex } from "../../dataframe/index.ts";
+import {
+  createDataFrame,
+  materializeIndex,
+  withGroupsRebuilt,
+} from "../../dataframe/index.ts";
 import { throwColumnNotFound } from "../../utilities/errors.ts";
 import { collectGroupPhysicalIndices } from "../verb-helpers.ts";
 import type { Frequency } from "./downsample.types.ts";
@@ -7,10 +11,11 @@ import { frequencyToMs, getTimeBucket } from "./time-bucket.ts";
 import {
   type CalendarTemporal,
   floorCalendarTemporal,
-  generateCalendarTemporalSequence,
+  generateCalendarTemporalValues,
   isCalendarTemporal,
   isWallClockTemporalWithoutCalendar,
   parseFrequencyForCalendar,
+  reconstructEpochTime,
   toEpochMs,
 } from "../../stats/temporal-helpers.ts";
 import {
@@ -56,6 +61,10 @@ function resolveAggregation(
 
 /**
  * Internal downsample implementation: Group by time buckets and apply aggregations.
+ *
+ * `timeSample` is a representative non-null value from the input time column —
+ * the output buckets are reconstructed in the same type (Date / Instant /
+ * ZonedDateTime) via `reconstructEpochTime`.
  */
 function downsampleImpl(
   df: any,
@@ -63,6 +72,7 @@ function downsampleImpl(
   frequency: Frequency,
   frequencyMs: number,
   aggregations: Record<string, AggregationSpec>,
+  timeSample: unknown,
   startDate?: Date,
   endDate?: Date,
 ): any {
@@ -205,7 +215,7 @@ function downsampleImpl(
         const bucketDf = createDataFrame(bucketRows) as any;
         const resultRow: any = {
           ...groupKeys, // Include group keys
-          [timeColName]: new Date(bucketTime),
+          [timeColName]: reconstructEpochTime(bucketTime, timeSample),
         };
 
         for (const [colName, aggregation] of Object.entries(aggregations)) {
@@ -231,11 +241,14 @@ function downsampleImpl(
           return a[colName] < b[colName] ? -1 : 1;
         }
       }
-      // Then by time
-      return a[timeColName].getTime() - b[timeColName].getTime();
+      // Then by time (epoch comparison works for Date, Instant, ZonedDateTime)
+      return toEpochMs(a[timeColName]) - toEpochMs(b[timeColName]);
     });
 
-    return createDataFrame(allResults);
+    // Preserve grouping: rebuild groups from the source so the caller can
+    // chain mutateOverGroup / summarize without cross-group bleed.
+    const out = createDataFrame(allResults);
+    return withGroupsRebuilt(df, allResults, out);
   }
 
   // Ungrouped: Group rows by time bucket
@@ -374,7 +387,7 @@ function downsampleImpl(
   for (const [bucketTime, bucketRows] of allBuckets.entries()) {
     const bucketDf = createDataFrame(bucketRows) as any;
     const resultRow: any = {
-      [timeColName]: new Date(bucketTime),
+      [timeColName]: reconstructEpochTime(bucketTime, timeSample),
     };
 
     for (const [colName, aggregation] of Object.entries(aggregations)) {
@@ -390,31 +403,32 @@ function downsampleImpl(
     result.push(resultRow);
   }
 
-  // Sort by time
-  result.sort((a, b) => a[timeColName].getTime() - b[timeColName].getTime());
+  // Sort by time (epoch comparison works for Date, Instant, ZonedDateTime)
+  result.sort((a, b) => toEpochMs(a[timeColName]) - toEpochMs(b[timeColName]));
 
   return createDataFrame(result);
 }
 
 /**
  * Calendar-path downsample for PlainDate/PlainDateTime.
- * Uses string bucket keys (ISO strings) and native Temporal operations.
+ * Emits bucket keys as the same Temporal type that came in (no string keys
+ * leak out into the result).
  */
-function downsampleCalendarTemporal(
+/**
+ * Bucket a single (already-partitioned) set of rows by calendar frequency.
+ * Returns result rows that include `extraColumns` (e.g. group keys) on every
+ * output row. Does not handle grouping itself.
+ */
+function calendarBucketRows(
   rows: any[],
   timeColumn: any,
-  frequency: Frequency,
+  freq: ReturnType<typeof parseFrequencyForCalendar>,
   aggregations: Record<string, AggregationSpec>,
-): any {
+  extraColumns: Record<string, unknown> = {},
+): any[] {
+  if (!freq) return [];
   const timeColName = String(timeColumn);
-  const freq = parseFrequencyForCalendar(frequency);
-  if (!freq) {
-    throw new Error(
-      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
-    );
-  }
 
-  // Group rows by string bucket key
   const buckets = new Map<string, any[]>();
   let firstTemporal: CalendarTemporal | null = null;
   let lastTemporal: CalendarTemporal | null = null;
@@ -444,27 +458,26 @@ function downsampleCalendarTemporal(
     buckets.get(key)!.push(row);
   }
 
-  if (!firstTemporal || !lastTemporal) {
-    return createDataFrame([]);
-  }
+  if (!firstTemporal || !lastTemporal) return [];
 
-  // Generate all bucket keys in the range
   const startFloored = floorCalendarTemporal(firstTemporal, freq);
   const endFloored = floorCalendarTemporal(lastTemporal, freq);
-  const allKeys = generateCalendarTemporalSequence(
+  const allBucketValues = generateCalendarTemporalValues(
     startFloored,
     endFloored,
     freq,
   );
 
-  // Apply aggregations to each bucket
   const result: any[] = [];
   const availableColumns = rows.length > 0 ? Object.keys(rows[0]) : [];
 
-  for (const bucketKey of allKeys) {
-    const bucketRows = buckets.get(bucketKey) || [];
+  for (const bucketValue of allBucketValues) {
+    const bucketRows = buckets.get(bucketValue.toString()) || [];
     const bucketDf = createDataFrame(bucketRows) as any;
-    const resultRow: any = { [timeColName]: bucketKey };
+    const resultRow: any = {
+      ...extraColumns,
+      [timeColName]: bucketValue,
+    };
 
     for (const [colName, aggregation] of Object.entries(aggregations)) {
       if (colName === timeColName) continue;
@@ -478,7 +491,73 @@ function downsampleCalendarTemporal(
     result.push(resultRow);
   }
 
-  return createDataFrame(result);
+  return result;
+}
+
+function downsampleCalendarTemporal(
+  df: any,
+  rows: any[],
+  timeColumn: any,
+  frequency: Frequency,
+  aggregations: Record<string, AggregationSpec>,
+): any {
+  const freq = parseFrequencyForCalendar(frequency);
+  if (!freq) {
+    throw new Error(
+      'Cannot use raw millisecond frequency with calendar Temporal types. Use a string frequency like "1D", "1M", etc.',
+    );
+  }
+
+  const groupedDf = df as any;
+  // Grouped path: partition rows by group, bucket each partition, re-group result.
+  if (groupedDf.__groups) {
+    const { head, next, keyRow, groupingColumns, size, usesRawIndices } =
+      groupedDf.__groups;
+    const store = groupedDf.__store;
+    const baseIndex = usesRawIndices
+      ? null
+      : materializeIndex(store.length, groupedDf.__view);
+
+    const allResults: any[] = [];
+    for (let g = 0; g < size; g++) {
+      const groupIndices = collectGroupPhysicalIndices({
+        head,
+        next,
+        groupIndex: g,
+        usesRawIndices,
+        baseIndex,
+      });
+      const groupRows: any[] = [];
+      for (const physIdx of groupIndices) {
+        const row: any = {};
+        for (const colName of store.columnNames) {
+          row[colName] = store.columns[colName][physIdx];
+        }
+        groupRows.push(row);
+      }
+      const groupKeys: Record<string, unknown> = {};
+      const keyPhys = keyRow[g];
+      for (const col of groupingColumns) {
+        groupKeys[String(col)] = store.columns[String(col)][keyPhys];
+      }
+      allResults.push(
+        ...calendarBucketRows(
+          groupRows,
+          timeColumn,
+          freq,
+          aggregations,
+          groupKeys,
+        ),
+      );
+    }
+
+    const out = createDataFrame(allResults);
+    return withGroupsRebuilt(df, allResults, out);
+  }
+
+  return createDataFrame(
+    calendarBucketRows(rows, timeColumn, freq, aggregations),
+  );
 }
 
 /**
@@ -513,6 +592,7 @@ export function downsample(
     }
     if (isCalendarTemporal(firstTimestamp)) {
       return downsampleCalendarTemporal(
+        df,
         rows,
         args.timeColumn,
         args.frequency,
@@ -527,6 +607,7 @@ export function downsample(
       args.frequency,
       frequencyMs,
       args.aggregations,
+      firstTimestamp,
       args.startDate,
       args.endDate,
     );

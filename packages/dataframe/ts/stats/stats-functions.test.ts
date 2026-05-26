@@ -136,7 +136,7 @@ Deno.test("Stats Functions for mutate - lag, lead, cumulative, ranking", () => {
   const nextSalesArray = stats.lead(salesArray, { defaultValue: 0 });
   const runningTotalArray = stats.cumsum(salesArray);
   const runningMaxArray = stats.cummax(salesArray);
-  const salesRankArray = stats.rank(salesArray, "average", true);
+  const salesRankArray = stats.rank(salesArray, { ties: "average", desc: true });
   const salesDenseRankArray = stats.denseRank(salesArray, { desc: true });
 
   // Use all functions in mutate operations

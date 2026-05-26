@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>LITERATURE_LOOKUP — topology</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #fafafa; color: #222; margin: 0; padding: 32px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px 0; }
+  .sub-title { font-size: 13px; color: #666; margin-bottom: 24px; }
+  svg { display: block; background: white; border: 1px solid #eee; border-radius: 8px; }
+
+  text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #1a1a1a; }
+
+  /* Card */
+  .node-body {
+    fill: white;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+  }
+  .node-body-BranchingNode { stroke: #e0a352; }
+  .node-body-StartNode, .node-body-EndNode { stroke: #94a3b8; }
+
+  /* Header band — colored only via fill, no separate clipping needed
+     since the path is hand-shaped to be flat-bottomed. */
+  .node-header { fill: #f8fafc; stroke: none; }
+  .node-header-LlmNode { fill: #f1f5f9; }
+  .node-header-BranchingNode { fill: #fff7ed; }
+  .node-header-StartNode, .node-header-EndNode { fill: #eef2ff; }
+
+  .header-divider { stroke: #e4e4e7; stroke-width: 1; }
+  .col-divider { stroke: #e4e4e7; stroke-width: 1; stroke-dasharray: 2 3; }
+
+  /* Container metadata (Map/ParallelMap/Catch/Flow/ParallelFlow strip) */
+  .container-meta {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+    font-style: italic;
+  }
+
+  /* Subflow panel + caption */
+  .subflow-panel {
+    fill: #fafafa;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .subflow-caption {
+    fill: #fff7ed;
+    stroke: #fed7aa;
+    stroke-width: 1;
+  }
+  .subflow-id {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+  }
+  .subflow-citation {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #b45309;
+    font-style: italic;
+  }
+
+  /* Tools panel (AgentNode) */
+  .tools-panel {
+    fill: #f5f3ff;
+    stroke: #c4b5fd;
+    stroke-width: 1;
+  }
+  .tools-header {
+    fill: #6d28d9;
+  }
+  .tool-sig {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #1e1b4b;
+  }
+  /* MCPToolBox row — slightly distinct so it doesn't look like a fake
+     ServerTool with an empty signature. */
+  .tool-box-sig {
+    font-style: italic;
+    fill: #4338ca;
+  }
+  .tool-desc {
+    font-size: 10px;
+    fill: #6b7280;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  /* Typography */
+  .node-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #18181b;
+  }
+  .node-sub {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+  .section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #a1a1aa;
+    font-weight: 600;
+  }
+
+  .field-name {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #27272a;
+  }
+  .field-type {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+
+  .port { fill: white; stroke: #64748b; stroke-width: 1.5; }
+  .port-in  { fill: #f8fafc; stroke: #94a3b8; }
+  .port-out { fill: #64748b; stroke: #475569; }
+
+  /* Edges */
+  .edge-control { stroke: #18181b; stroke-width: 1.5; }
+  .edge-data { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .edge-label {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .branch-label { fill: #b45309; font-weight: 600; }
+  .data-label { fill: #71717a; }
+</style>
+</head>
+<body>
+  <h1>LITERATURE_LOOKUP</h1>
+  <div class="sub-title">v1.0.0</div>
+
+  <svg viewBox="0 -40 869 384" width="869" height="384">
+    <defs>
+      <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+      </marker>
+      <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+      </marker>
+    </defs>
+    
+    <g>
+      <path class="edge edge-control" d="M 185 112 L 265 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 618 132 L 698 132" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+    
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="40" y="40" width="145" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 48 40 H 177 A 8 8 0 0 1 185 48 V 80 H 40 V 48 A 8 8 0 0 1 48 40 Z" />
+<text class="node-name" x="112.5" y="62" text-anchor="middle">start</text>
+<line class="header-divider" x1="40" y1="80" x2="185" y2="80" />
+      <text class="section-label" x="173" y="92" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="185" cy="112" r="4" />
+<text class="field-name" x="115" y="116" text-anchor="end">condition</text>
+<text class="field-type" x="173" y="116" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="265" y="40" width="353" height="264" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 273 40 H 610 A 8 8 0 0 1 618 48 V 80 H 265 V 48 A 8 8 0 0 1 273 40 Z" />
+<text class="node-name" x="441.5" y="56" text-anchor="middle">literature_lookup</text>
+<text class="node-sub" x="441.5" y="69" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="265" y1="80" x2="618" y2="80" />
+      <text class="section-label" x="277" y="92">inputs</text>
+<text class="section-label" x="606" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="448.5" y1="86" x2="448.5" y2="298" />
+      <circle class="port port-in" cx="265" cy="112" r="4" />
+<text class="field-name" x="277" y="116">condition</text>
+<text class="field-type" x="398" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="618" cy="112" r="4" />
+<text class="field-name" x="534" y="116" text-anchor="end">pmids</text>
+<text class="field-type" x="606" y="116" text-anchor="end">string[]</text>
+<circle class="port port-out" cx="618" cy="132" r="4" />
+<text class="field-name" x="548" y="136" text-anchor="end">summary</text>
+<text class="field-type" x="606" y="136" text-anchor="end">string</text>
+      
+      <rect class="tools-panel" x="277" y="166" width="329" height="138" rx="6" ry="6" /><text class="section-label tools-header" x="285" y="179">tools (1) + toolboxes (1)</text><text class="tool-sig" x="285" y="199">summarize_findings(findings: string[]) → string</text><text class="tool-desc" x="285" y="213">Produce a one-sentence summary of the</text><text class="tool-desc" x="285" y="227">findings array.</text><text class="tool-sig tool-box-sig" x="285" y="253">pubmed (mcp stdio) [2 tools]</text><text class="tool-desc" x="285" y="267">PubMed MCP server — search and fetch</text><text class="tool-desc" x="285" y="281">articles.</text>
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="698" y="40" width="131" height="112" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 706 40 H 821 A 8 8 0 0 1 829 48 V 80 H 698 V 48 A 8 8 0 0 1 706 40 Z" />
+<text class="node-name" x="763.5" y="62" text-anchor="middle">end</text>
+<line class="header-divider" x1="698" y1="80" x2="829" y2="80" />
+      <text class="section-label" x="710" y="92">inputs</text>
+      
+      <circle class="port port-in" cx="698" cy="112" r="4" />
+<text class="field-name" x="710" y="116">pmids</text>
+<text class="field-type" x="817" y="116" text-anchor="end">string[]</text>
+<circle class="port port-in" cx="698" cy="132" r="4" />
+<text class="field-name" x="710" y="136">summary</text>
+<text class="field-type" x="817" y="136" text-anchor="end">string</text>
+      
+      
+    </g>
+  </svg>
+</body>
+</html>

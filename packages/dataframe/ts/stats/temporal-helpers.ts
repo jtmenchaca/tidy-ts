@@ -61,6 +61,73 @@ export function toEpochMs(value: unknown): number {
 }
 
 // ---------------------------------------------------------------------------
+// Reconstructing epoch-based time values back into their original type
+// ---------------------------------------------------------------------------
+
+/**
+ * A sample value carries enough information to rebuild its own type from an
+ * epoch ms. This duck-types over JS Date and the relevant Temporal classes
+ * without importing the Temporal global directly.
+ */
+type EpochSample = unknown;
+
+/**
+ * Reconstruct an epoch-bucket value into the same kind of time-like object
+ * the caller had on input. Epoch-path time-series verbs (downsample, upsample,
+ * asof_join, ...) use this so the output time column preserves the input
+ * column's type rather than collapsing to JS `Date`.
+ *
+ *  - `Date`                  → `new Date(epochMs)`
+ *  - `Temporal.Instant`      → `Instant.fromEpochMilliseconds(epochMs)`
+ *  - `Temporal.ZonedDateTime`→ reconstructed in the same time zone via the
+ *                              sample's `.toInstant().constructor` (so we
+ *                              don't have to import the Temporal global)
+ *  - anything else           → `new Date(epochMs)` (safe fallback)
+ *
+ * Wall-clock types (`PlainDate`, `PlainDateTime`) don't have epoch values
+ * and are handled by the calendar-path of each verb, not this helper.
+ */
+export function reconstructEpochTime(
+  epochMs: number,
+  sample: EpochSample,
+): Date | object {
+  if (sample == null) return new Date(epochMs);
+
+  // ZonedDateTime: has `timeZoneId` and `toInstant()`. Go via Instant.
+  if (
+    typeof (sample as { timeZoneId?: unknown }).timeZoneId === "string" &&
+    typeof (sample as { toInstant?: unknown }).toInstant === "function"
+  ) {
+    const tz = (sample as { timeZoneId: string }).timeZoneId;
+    const sampleInstant = (sample as { toInstant(): unknown }).toInstant();
+    const InstantCtor = (sampleInstant as { constructor: unknown })
+      .constructor as
+      | { fromEpochMilliseconds(ms: number): unknown }
+      | undefined;
+    if (InstantCtor && typeof InstantCtor.fromEpochMilliseconds === "function") {
+      const newInstant = InstantCtor.fromEpochMilliseconds(epochMs) as {
+        toZonedDateTimeISO(tz: string): object;
+      };
+      return newInstant.toZonedDateTimeISO(tz);
+    }
+    return new Date(epochMs);
+  }
+
+  // Instant: has `epochMilliseconds` and constructor.fromEpochMilliseconds.
+  if (hasEpochMilliseconds(sample)) {
+    const ctor = (sample as { constructor: unknown }).constructor as
+      | { fromEpochMilliseconds(ms: number): unknown }
+      | undefined;
+    if (ctor && typeof ctor.fromEpochMilliseconds === "function") {
+      return ctor.fromEpochMilliseconds(epochMs) as object;
+    }
+  }
+
+  // Default (Date / unknown / string / number): JS Date.
+  return new Date(epochMs);
+}
+
+// ---------------------------------------------------------------------------
 // Calendar-path Temporal helpers (PlainDate, PlainDateTime)
 // ---------------------------------------------------------------------------
 
@@ -118,42 +185,77 @@ export function isWallClockTemporalWithoutCalendar(
  * Parsed calendar frequency for Temporal calendar-path operations.
  */
 export interface CalendarFrequencyParsed {
-  unit: "S" | "min" | "H" | "D" | "W" | "M" | "Q" | "Y";
+  unit: "S" | "min" | "H" | "D" | "W" | "M" | "Y";
   value: number;
+}
+
+/**
+ * Duck-typed check for `Temporal.Duration`. Looks for the distinguishing
+ * combination of numeric `years` / `months` / `days` etc. plus the `total`
+ * method, so we don't have to import the Temporal global.
+ */
+export function isTemporalDuration(value: unknown): boolean {
+  if (value == null || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.years === "number" &&
+    typeof v.months === "number" &&
+    typeof v.days === "number" &&
+    typeof v.hours === "number" &&
+    typeof v.minutes === "number" &&
+    typeof v.seconds === "number" &&
+    typeof v.milliseconds === "number" &&
+    typeof v.total === "function"
+  );
 }
 
 /**
  * Parse a Frequency into a unit + value for calendar-path operations.
  * Returns null if the frequency is a raw number (ms) which can't map
- * to calendar units without ambiguity.
+ * to calendar units without ambiguity, or if a `Temporal.Duration` has
+ * multiple non-zero units (which we can't reduce to a single bucket unit).
  */
 export function parseFrequencyForCalendar(
-  frequency: string | number | { value: number; unit: string },
+  frequency: string | number | object,
 ): CalendarFrequencyParsed | null {
   if (typeof frequency === "number") return null;
 
-  if (typeof frequency === "object") {
-    const unitMap: Record<string, CalendarFrequencyParsed["unit"]> = {
-      s: "S",
-      min: "min",
-      h: "H",
-      d: "D",
-      w: "W",
-      M: "M",
-      Q: "Q",
-      Y: "Y",
+  if (isTemporalDuration(frequency)) {
+    const d = frequency as unknown as {
+      years: number;
+      months: number;
+      weeks: number;
+      days: number;
+      hours: number;
+      minutes: number;
+      seconds: number;
+      milliseconds: number;
     };
-    const mapped = unitMap[frequency.unit];
-    if (!mapped) return null;
-    return { unit: mapped, value: frequency.value };
+    // Pick the coarsest non-zero unit. If multiple are non-zero, refuse
+    // (the caller can't translate that to a single calendar-bucket size).
+    const candidates: Array<[number, CalendarFrequencyParsed["unit"]]> = [
+      [d.years, "Y"],
+      [d.months, "M"],
+      [d.weeks, "W"],
+      [d.days, "D"],
+      [d.hours, "H"],
+      [d.minutes, "min"],
+      [d.seconds, "S"],
+    ];
+    const nonZero = candidates.filter(([v]) => v !== 0);
+    if (nonZero.length !== 1) return null;
+    if (d.milliseconds !== 0) return null;
+    return { value: nonZero[0][0], unit: nonZero[0][1] };
   }
+
+  if (typeof frequency !== "string") return null;
 
   const match = frequency.match(/^(\d+)([A-Za-z]+)$/);
   if (!match) return null;
 
   const value = parseInt(match[1], 10);
   const unit = match[2] as CalendarFrequencyParsed["unit"];
-  if (!["S", "min", "H", "D", "W", "M", "Q", "Y"].includes(unit)) {
+  if (!["S", "min", "H", "D", "W", "M", "Y"].includes(unit)) {
     return null;
   }
   return { unit, value };
@@ -175,22 +277,6 @@ export function floorCalendarTemporal(
       return value.with({
         year: flooredYear,
         month: 1,
-        day: 1,
-        hour: 0,
-        minute: 0,
-        second: 0,
-        millisecond: 0,
-        microsecond: 0,
-        nanosecond: 0,
-      });
-    }
-    case "Q": {
-      // Quarter: months 1-3 → Q1, 4-6 → Q2, etc.
-      const quarter = Math.floor((value.month - 1) / 3);
-      const flooredQuarter = Math.floor(quarter / n) * n;
-      const qMonth = flooredQuarter * 3 + 1;
-      return value.with({
-        month: qMonth,
         day: 1,
         hour: 0,
         minute: 0,
@@ -306,8 +392,6 @@ function addCalendarTemporalPeriod(
   switch (unit) {
     case "Y":
       return value.add({ months: n * 12 });
-    case "Q":
-      return value.add({ months: n * 3 });
     case "M":
       return value.add({ months: n });
     case "W":
@@ -339,6 +423,25 @@ export function generateCalendarTemporalSequence(
     current = addCalendarTemporalPeriod(current, freq);
   }
   return keys;
+}
+
+/**
+ * Generate a sequence of CalendarTemporal bucket values (objects, not strings)
+ * from start to end (inclusive). Use when the consumer needs the original
+ * Temporal type back instead of an ISO string.
+ */
+export function generateCalendarTemporalValues(
+  start: CalendarTemporal,
+  end: CalendarTemporal,
+  freq: CalendarFrequencyParsed,
+): CalendarTemporal[] {
+  const values: CalendarTemporal[] = [];
+  let current = start;
+  while (current.constructor.compare(current, end) <= 0) {
+    values.push(current);
+    current = addCalendarTemporalPeriod(current, freq);
+  }
+  return values;
 }
 
 /**

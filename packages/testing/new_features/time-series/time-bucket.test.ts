@@ -1,4 +1,5 @@
 import { expect } from "@std/expect";
+import { Temporal } from "@tidy-ts/shims/temporal-polyfill";
 import {
   frequencyToMs,
   getTimeBucket,
@@ -14,52 +15,56 @@ Deno.test("frequencyToMs() - converts number (milliseconds) directly", () => {
   expect(frequencyToMs(86400000)).toBe(86400000);
 });
 
-Deno.test("frequencyToMs() - converts object format with seconds", () => {
-  expect(frequencyToMs({ value: 1, unit: "s" })).toBe(1000);
-  expect(frequencyToMs({ value: 30, unit: "s" })).toBe(30000);
+Deno.test("frequencyToMs() - Temporal.Duration with seconds", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ seconds: 1 }))).toBe(1000);
+  expect(frequencyToMs(Temporal.Duration.from({ seconds: 30 }))).toBe(30000);
 });
 
-Deno.test("frequencyToMs() - converts object format with minutes", () => {
-  expect(frequencyToMs({ value: 1, unit: "min" })).toBe(60 * 1000);
-  expect(frequencyToMs({ value: 15, unit: "min" })).toBe(15 * 60 * 1000);
+Deno.test("frequencyToMs() - Temporal.Duration with minutes", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ minutes: 1 }))).toBe(60 * 1000);
+  expect(frequencyToMs(Temporal.Duration.from({ minutes: 15 }))).toBe(
+    15 * 60 * 1000,
+  );
 });
 
-Deno.test("frequencyToMs() - converts object format with hours", () => {
-  expect(frequencyToMs({ value: 1, unit: "h" })).toBe(60 * 60 * 1000);
-  expect(frequencyToMs({ value: 2, unit: "h" })).toBe(2 * 60 * 60 * 1000);
+Deno.test("frequencyToMs() - Temporal.Duration with hours", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ hours: 1 }))).toBe(
+    60 * 60 * 1000,
+  );
+  expect(frequencyToMs(Temporal.Duration.from({ hours: 2 }))).toBe(
+    2 * 60 * 60 * 1000,
+  );
 });
 
-Deno.test("frequencyToMs() - converts object format with days", () => {
-  expect(frequencyToMs({ value: 1, unit: "d" })).toBe(24 * 60 * 60 * 1000);
-  expect(frequencyToMs({ value: 7, unit: "d" })).toBe(7 * 24 * 60 * 60 * 1000);
-});
-
-Deno.test("frequencyToMs() - converts object format with weeks", () => {
-  expect(frequencyToMs({ value: 1, unit: "w" })).toBe(
+Deno.test("frequencyToMs() - Temporal.Duration with days", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ days: 1 }))).toBe(
+    24 * 60 * 60 * 1000,
+  );
+  expect(frequencyToMs(Temporal.Duration.from({ days: 7 }))).toBe(
     7 * 24 * 60 * 60 * 1000,
   );
-  expect(frequencyToMs({ value: 2, unit: "w" })).toBe(
+});
+
+Deno.test("frequencyToMs() - Temporal.Duration with weeks", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ weeks: 1 }))).toBe(
+    7 * 24 * 60 * 60 * 1000,
+  );
+  expect(frequencyToMs(Temporal.Duration.from({ weeks: 2 }))).toBe(
     14 * 24 * 60 * 60 * 1000,
   );
 });
 
-Deno.test("frequencyToMs() - converts object format with months (approximate)", () => {
-  expect(frequencyToMs({ value: 1, unit: "M" })).toBe(
+Deno.test("frequencyToMs() - Temporal.Duration with months (approximate)", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ months: 1 }))).toBe(
     30 * 24 * 60 * 60 * 1000,
   );
-  expect(frequencyToMs({ value: 3, unit: "M" })).toBe(
+  expect(frequencyToMs(Temporal.Duration.from({ months: 3 }))).toBe(
     90 * 24 * 60 * 60 * 1000,
   );
 });
 
-Deno.test("frequencyToMs() - converts object format with quarters (approximate)", () => {
-  expect(frequencyToMs({ value: 1, unit: "Q" })).toBe(
-    90 * 24 * 60 * 60 * 1000,
-  );
-});
-
-Deno.test("frequencyToMs() - converts object format with years (approximate)", () => {
-  expect(frequencyToMs({ value: 1, unit: "Y" })).toBe(
+Deno.test("frequencyToMs() - Temporal.Duration with years (approximate)", () => {
+  expect(frequencyToMs(Temporal.Duration.from({ years: 1 }))).toBe(
     365 * 24 * 60 * 60 * 1000,
   );
 });
@@ -97,11 +102,6 @@ Deno.test("frequencyToMs() - converts string format with weeks", () => {
 Deno.test("frequencyToMs() - converts string format with months (approximate)", () => {
   expect(frequencyToMs("1M")).toBe(30 * 24 * 60 * 60 * 1000);
   expect(frequencyToMs("3M")).toBe(90 * 24 * 60 * 60 * 1000);
-});
-
-Deno.test("frequencyToMs() - converts string format with quarters (approximate)", () => {
-  expect(frequencyToMs("1Q")).toBe(90 * 24 * 60 * 60 * 1000);
-  expect(frequencyToMs("2Q")).toBe(180 * 24 * 60 * 60 * 1000);
 });
 
 Deno.test("frequencyToMs() - converts string format with years (approximate)", () => {
@@ -299,8 +299,8 @@ Deno.test("Integration - frequency string to bucket (15 minutes)", () => {
   expect(bucket).toBe(new Date("2023-01-01T10:15:00Z").getTime());
 });
 
-Deno.test("Integration - frequency object to bucket (2 hours)", () => {
-  const frequency = { value: 2, unit: "h" as const };
+Deno.test("Integration - Temporal.Duration to bucket (2 hours)", () => {
+  const frequency = Temporal.Duration.from({ hours: 2 });
   const frequencyMs = frequencyToMs(frequency);
   const timestamp = new Date("2023-01-01T15:45:00Z");
   const bucket = getTimeBucket(timestamp, frequencyMs);

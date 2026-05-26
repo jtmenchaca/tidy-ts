@@ -15,7 +15,6 @@ docs/JAMIA/
 │   ├── alt-text.docx
 │   └── disclosures.docx
 ├── comparisons/                                                # comparison suite (Supplementary Material)
-│   ├── OVERVIEW.md                                             # methodology, taxonomy, severity framework
 │   ├── README.md
 │   ├── all-tables.json / all-tables.md                         # collected results
 │   ├── type-guarantee-audit.types.test.ts                      # Supplementary A

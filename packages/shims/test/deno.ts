@@ -35,7 +35,7 @@ export function wrappedTest(
           });
         });
 
-        let timeoutId: number = -1; // Store the timeout ID for cleanup
+        let timeoutId: ReturnType<typeof setTimeout> | -1 = -1;
 
         try {
           if (opts.timeout) {

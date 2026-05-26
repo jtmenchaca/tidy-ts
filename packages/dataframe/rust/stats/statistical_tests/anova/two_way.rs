@@ -3,7 +3,120 @@ use super::super::super::core::types::{
     TestStatistic, TestStatisticName, TwoWayAnovaTestResult,
 };
 use super::super::super::core::{TailType, calculate_p, eta_squared};
+use crate::stats::regression::family::GaussianFamily;
+use crate::stats::regression::glm::glm_fit_core::glm_fit;
+use crate::stats::regression::glm::types_control::GlmControl;
 use statrs::distribution::FisherSnedecor;
+
+/// Compute Type I sequential sums-of-squares for `~ A + B + A:B` via
+/// `glm_fit`'s QR effects (matches R `aov(y ~ A * B) |> summary()`).
+///
+/// Returns `(ss_a, ss_b, ss_ab)`. The error SS is computed separately
+/// (within-cell variation) and the total SS is recovered as the sum.
+///
+/// Design matrix uses treatment contrasts (R default `contr.treatment`):
+/// intercept, (a-1) A indicators (level 0 = reference, levels 1..a-1 each get
+/// their own 0/1 column), (b-1) B indicators, (a-1)*(b-1) interaction columns.
+/// Type I SS is contrast-invariant — see R `aov.R` line 348 (`sum(effects[i,]^2)`
+/// where `effects` are the elements of `Q' y` corresponding to columns of each
+/// term in the QR decomposition).
+fn type_i_ss(
+    data: &[Vec<Vec<f64>>],
+    a_levels: usize,
+    b_levels: usize,
+    total_n: usize,
+) -> Result<(f64, f64, f64), String> {
+    let n = total_n;
+    // Number of design-matrix columns: 1 + (a-1) + (b-1) + (a-1)(b-1) = a * b.
+    let p_a = a_levels - 1;
+    let p_b = b_levels - 1;
+    let p_ab = p_a * p_b;
+    let p = 1 + p_a + p_b + p_ab;
+
+    // assign[col] -> term id: 0 intercept, 1 A, 2 B, 3 AB.
+    // Column order: [intercept, A1..A(a-1), B1..B(b-1), (A:B) row-major over (a-1)*(b-1)].
+    let mut assign: Vec<usize> = Vec::with_capacity(p);
+    assign.push(0);
+    for _ in 0..p_a {
+        assign.push(1);
+    }
+    for _ in 0..p_b {
+        assign.push(2);
+    }
+    for _ in 0..p_ab {
+        assign.push(3);
+    }
+
+    // Build x as row-major Vec<Vec<f64>> per glm_fit's expected layout (x[row][col]).
+    let mut x: Vec<Vec<f64>> = Vec::with_capacity(n);
+    let mut y: Vec<f64> = Vec::with_capacity(n);
+    for (i_a, a_level) in data.iter().enumerate() {
+        for (i_b, cell_data) in a_level.iter().enumerate() {
+            for &obs in cell_data {
+                y.push(obs);
+                let mut row = vec![0.0; p];
+                row[0] = 1.0; // intercept
+                // A indicators: column for i_a is 1 when i_a == k+1 (k = 0..p_a-1).
+                if i_a > 0 && i_a <= p_a {
+                    row[1 + (i_a - 1)] = 1.0;
+                }
+                // B indicators
+                if i_b > 0 && i_b <= p_b {
+                    row[1 + p_a + (i_b - 1)] = 1.0;
+                }
+                // A:B interactions (product of the two indicator columns)
+                if i_a > 0 && i_b > 0 && i_a <= p_a && i_b <= p_b {
+                    let interaction_offset = 1 + p_a + p_b;
+                    row[interaction_offset + (i_a - 1) * p_b + (i_b - 1)] = 1.0;
+                }
+                x.push(row);
+            }
+        }
+    }
+
+    // Fit Gaussian/identity; one IRLS iteration suffices, glm_fit will return
+    // `effects` as the QR-decomposed Q' y for the (pivoted) design matrix.
+    let fit = glm_fit(
+        x,
+        y,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Box::new(GaussianFamily::identity()),
+        GlmControl::default(),
+        true,
+        None,
+    )?;
+
+    // Type I SS per term = sum(effects[j]^2 for j where the j-th pivoted column
+    // belongs to that term). `effects` is `Q' y` of length n; the first `rank`
+    // entries correspond to the basis columns in pivoted order.
+    //
+    // glm_fit's `qr.pivot` is 1-indexed (R/Fortran convention — see L443 of
+    // glm_fit_core.rs which exposes the raw LINPACK pivot without the -1 shift).
+    // Convert to 0-indexed here.
+    let pivot_1based: &Vec<usize> = &fit.qr.pivot;
+    let effects = &fit.effects;
+
+    let mut ss_by_term = [0.0_f64; 4]; // [intercept, A, B, AB]
+    let rank = fit.qr_rank.min(effects.len());
+    for j in 0..rank {
+        // The j-th effect corresponds to the j-th pivoted column.
+        let orig_col_1based = pivot_1based[j];
+        if orig_col_1based == 0 {
+            continue;
+        }
+        let orig_col = orig_col_1based - 1;
+        if orig_col < assign.len() {
+            let term = assign[orig_col];
+            ss_by_term[term] += effects[j] * effects[j];
+        }
+    }
+
+    Ok((ss_by_term[1], ss_by_term[2], ss_by_term[3]))
+}
 
 /// Result for two-way ANOVA containing separate F-statistics and p-values for each factor and interaction
 #[derive(Debug, Clone)]
@@ -139,29 +252,12 @@ pub fn anova_two_way(data: &[Vec<Vec<f64>>], alpha: f64) -> Result<TwoWayAnovaTe
         .map(|&x| (x - grand_mean).powi(2))
         .sum();
 
-    // SS_A (main effect of factor A)
-    let ss_a: f64 = a_means
-        .iter()
-        .zip(a_n.iter())
-        .map(|(&mean, &n)| n as f64 * (mean - grand_mean).powi(2))
-        .sum();
-
-    // SS_B (main effect of factor B)
-    let ss_b: f64 = b_means
-        .iter()
-        .zip(b_n.iter())
-        .map(|(&mean, &n)| n as f64 * (mean - grand_mean).powi(2))
-        .sum();
-
-    // SS_AB (interaction effect)
-    let mut ss_ab = 0.0;
-    for i in 0..a_levels {
-        for j in 0..b_levels {
-            let expected_mean = a_means[i] + b_means[j] - grand_mean;
-            let interaction_effect = cell_means[i][j] - expected_mean;
-            ss_ab += cell_n[i][j] as f64 * interaction_effect.powi(2);
-        }
-    }
+    // Type I sequential SS via Q'y from glm_fit's QR decomposition.
+    // Matches R `aov(y ~ A * B) |> summary()`. Order is A, then B, then A:B —
+    // this corresponds to the order in `data` (outer = factor A).
+    // For balanced designs all SS-types agree; for unbalanced designs Type I
+    // depends on the order of entry (which is fixed here as A first, then B).
+    let (ss_a, ss_b, ss_ab) = type_i_ss(data, a_levels, b_levels, total_n)?;
 
     // SS_Error (within cells)
     let mut ss_error = 0.0;

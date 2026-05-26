@@ -214,13 +214,14 @@ The headline counts (the 62/65 number, severity breakdown, per-category counts a
 
 ## Pitfalls discovered while writing the demonstration scenarios (READ THIS BEFORE WRITING ANY SCENARIO FILE)
 
-Three demonstration scenarios are already on disk and passing end-to-end:
+Four demonstration scenarios are already on disk and passing end-to-end. They cover the patterns each new scenario will need:
 
-- `local/cat-1-column-schema-reference/scenarios/1a_misspelled_column_in_expression.ts`
-- `local/cat-1-column-schema-reference/scenarios/1e_original_column_after_aggregation.ts`
-- `local/cat-1-column-schema-reference/scenarios/1k_unselected_column_after_distinct.ts`
+- `local/cat-1-column-schema-reference/scenarios/1a_misspelled_column_in_expression.ts` — Low severity, all comparators crash. Simplest sync template.
+- `local/cat-1-column-schema-reference/scenarios/1e_original_column_after_aggregation.ts` — Low severity, multi-step pipeline (groupBy + summarize + access). Sync.
+- `local/cat-1-column-schema-reference/scenarios/1k_unselected_column_after_distinct.ts` — **High severity**: six comparators silently accept the bug, only Tidy-TS catches. Sync. This is the manuscript's headline-result shape.
+- `local/cat-5-schema-composition/scenarios/5a_non_numeric_value_in_numeric_column_at_load.ts` — **Async** (Tidy-TS uses `readCSV` with a Zod schema). Demonstrates `runInProcessAsync` and `aq.fromCSV` for the Arquero block. tidyverse emits a warning (visible in the signal line as `Warning: One or more parsing issues...`).
 
-These are the **canonical templates**. Every new scenario must match their shape. The pitfalls below were all hit (and resolved) writing those three. Future agents must avoid each one.
+These are the **canonical templates**. Every new scenario must match the shape of whichever template best fits its kind (sync vs async, Low vs High severity). The pitfalls below were all hit (and resolved) writing these four. Future agents must avoid each one.
 
 ### Pitfall 1: Arquero import path and column-type annotations
 
@@ -367,7 +368,89 @@ Not every category has an obvious Arquero equivalent — Arquero doesn't expose 
 
 The three demonstration scenarios use exact unicode box-drawing dividers (`────────…`) and a fixed comment style. Copy them verbatim. Do not invent new divider characters, do not omit them, do not add prose between sections. The verifier and any future static linter on these files relies on the predictable shape.
 
-### Pitfall 11: Severity criteria field format
+### Pitfall 11: Async Tidy-TS blocks need `runInProcessAsync`, not `runInProcess`
+
+**Wrong:**
+```typescript
+try {
+  await readCSV(csv, schema);
+  printRuntimeOutcome("Tidy-TS", true, "loaded without error");
+} catch (e) {
+  const msg = e instanceof Error ? e.message.split("\n")[0] : String(e);
+  printRuntimeOutcome("Tidy-TS", false, msg);
+}
+```
+
+This works but reinvents the wheel — and the hand-rolled `split("\n")[0]` truncates multi-line errors (like a Zod issues array) mid-bracket, producing a malformed signal line like `Row 2 validation failed: [` that the verifier can't parse cleanly.
+
+**Right:**
+```typescript
+await runInProcessAsync(
+  "Tidy-TS",
+  () => readCSV(csv, schema),
+  (df) => `rows=${df.nrows()}`,
+);
+```
+
+`runInProcessAsync` handles the try/catch, flattens multi-line error messages to a single space-separated line, and caps the message at 200 chars so the signal stays grep-able. Use it whenever the Tidy-TS or Arquero block needs `await`.
+
+### Pitfall 12: Arquero blocks must exercise the same intent as the scenario
+
+The scenario's intent (from the JSDoc header) is what the comparator block must demonstrate. For a "Load a CSV where a numeric column contains 'pending'" scenario, the Arquero block must *parse a CSV*, not construct a pre-built table.
+
+**Wrong:** for a CSV-loading scenario, building a literal table:
+```typescript
+aq.table({ lab_id: ["L1", "L2", "L3"], result_value: [100, "pending", 200] });
+```
+This bypasses the actual bug (which is parsing-time type inference). It records a "row count" message that doesn't reflect the type-inference behavior at all.
+
+**Right:** use the Arquero API that mirrors the scenario's intent. For CSV loading:
+```typescript
+aq.fromCSV("lab_id,result_value\nL1,100\nL2,pending\nL3,200\n")
+```
+And expose the corruption in the message:
+```typescript
+(table) => `rows=${table.numRows()} dtype=${typeof table.get("result_value", 0)}`
+```
+The signal becomes `[Arquero] exit=0 | rows=3 dtype=string`, showing the silent string-coercion that is the actual bug.
+
+Key Arquero APIs to reach for, by intent:
+- "Load from CSV" → `aq.fromCSV(...)` (sync, string input) or `aq.loadCSV(...)` (async, URL/path)
+- "Construct a literal table" → `aq.table({ ... })`
+- "Group, then aggregate" → `.groupby(...).rollup({ ... })` or `.count()`
+- "Filter / mutate (= derive)" → `.filter(d => ...)` / `.derive({ x: d => ... })`
+- "Sort" → `.orderby(...)`
+- "Distinct" → `.dedupe(...)`
+- "Concat / row-bind" → `.concat(otherTable)`
+
+Pick the API that matches the scenario's task. Don't substitute a different API just because it's easier.
+
+### Pitfall 13: Warning signals must surface, not be buried under hint lines
+
+The runners detect structured runtime warnings (Python `UserWarning:`, R `Warning message:`) anywhere in stderr — but earlier the helper only emitted the *literal last* stderr line, which for R is the hint `  problems(dat)` rather than the warning header. The fixed helper (`pickSignalLine`) now:
+
+1. Searches all of stderr for `Warning:` / `Warning message:` / `UserWarning:` markers, and emits the warning text when found.
+2. Falls back to the actual Python error class line (`TypeError: ...`, `KeyError: ...`).
+3. Falls back to `Execution halted` for R.
+4. Finally falls back to the literal last non-empty line.
+
+Scenario authors don't have to do anything special — the helper is already updated. But: if you see a signal line like `[tidyverse] exit=0 |   problems(dat)` (just whitespace + a hint), the helper has regressed and the fix needs to be revisited. Report it instead of working around it in the scenario file.
+
+### Pitfall 14: For CSV-loading scenarios, Tidy-TS uses `readCSV` (async) with a Zod schema
+
+The Tidy-TS block for CSV-loading scenarios (cat 5: Data loading) is:
+
+```typescript
+await runInProcessAsync(
+  "Tidy-TS",
+  () => readCSV("csv,content,here\nrow1,a,b", LabSchema),
+  (df) => `rows=${df.nrows()}`,
+);
+```
+
+The Zod schema lives in `local/cat-5-*/data.ts` as `export const LabSchema = z.object({ ... })`. When the CSV row violates the schema, `readCSV` throws — `runInProcessAsync` catches, flattens, emits `[Tidy-TS] exit=1 | <flattened message>`. Do not write the try/catch by hand.
+
+### Pitfall 15: Severity criteria field format
 
 The `Severity criteria` JSDoc field uses space-separated `KEY=Y/N` pairs from OVERVIEW.md:
 
@@ -439,7 +522,7 @@ These three files are passing end-to-end. Copy their shape exactly.
 
 4. `docs/JAMIA/comparisons/local/cat-N-*/cat-N-*.test.ts` — the existing harness for your category. Extract LABELS, INTENTS, shared data, and each comparator's per-scenario logic.
 5. `docs/JAMIA/comparisons/OVERVIEW.md` — find the per-scenario classification table for category N. Extract Severity, Severity criteria, and Rationale for each scenario.
-6. `docs/JAMIA/comparisons/runners.ts` — the helpers `runForeign`, `printForeignResult`, `runStaticChecker`, `printStaticCheckerResult`, `runInProcess`. The exports are `ComparatorLabel`-typed; do not invent labels.
+6. `docs/JAMIA/comparisons/runners.ts` — the helpers `runForeign`, `printForeignResult`, `runStaticChecker`, `printStaticCheckerResult`, `runInProcess`, `runInProcessAsync`. The exports are `ComparatorLabel`-typed; do not invent labels.
 7. `docs/JAMIA/comparisons/local/cat-N-*/probe.py`, `probe.R`, `probe-polars.py`, `probe-arquero.ts`, `probe-mypy.py`, `probe-pyright.py` — the source code for each per-scenario block. Lift verbatim.
 
 **Scope.** Convert all scenarios in `local/cat-N-*/` to per-scenario `.ts` files under `local/cat-N-*/scenarios/`. After conversion is verified end-to-end, delete the harness `cat-N-*.test.ts` and all `probe.*` files in the category directory. Do NOT delete the probes until all scenarios in the category are converted, verified passing, and you have run the new files in sequence to confirm no regressions.
@@ -471,10 +554,12 @@ For each scenario in the harness (one per LABELS array entry, typically 8–17 s
      printForeignResult,
      printStaticCheckerResult,
      runForeign,
-     runInProcess,
+     runInProcess,         // sync Arquero / Tidy-TS blocks
+     runInProcessAsync,    // async blocks (e.g. readCSV) — Pitfall 11
      runStaticChecker,
    } from "../../../runners.ts";
    ```
+   For most scenarios you'll use `runInProcess` only — omit `runInProcessAsync` from the import list if no block needs `await`. For cat-5 Data Loading scenarios that use `await readCSV(...)`, import `runInProcessAsync` and follow Pitfall 14.
 
 4. **Write the pandas block** (a divider comment, then a template literal, then `printForeignResult("pandas", runForeign("python", ...))`). Lift the minimal triggering pandas code from `probe.py`.
 
@@ -488,9 +573,9 @@ For each scenario in the harness (one per LABELS array entry, typically 8–17 s
    printStaticCheckerResult("pyright", runStaticChecker("pyright", pandasScript));
    ```
 
-8. **Write the Arquero block.** Use `runInProcess("Arquero", () => …, table => `rows=${table.numRows()}`)`. No type annotations on `(d) => d.col` callbacks — see Pitfall 1. Do NOT cast (no `as any`, no `as ColumnTable`). If Arquero has no faithful analog for this scenario's intent, omit the block entirely and write a one-line comment explaining why — see Pitfall 9.
+8. **Write the Arquero block.** Use `runInProcess("Arquero", () => …, table => `rows=${table.numRows()}`)`. The Arquero call **must exercise the same intent as the scenario** — for a CSV-loading scenario use `aq.fromCSV(...)`, not `aq.table(...)`. See Pitfall 12 for an intent→API map. No type annotations on `(d) => d.col` callbacks — see Pitfall 1. Do NOT cast (no `as any`, no `as ColumnTable`). If Arquero has no faithful analog for this scenario's intent, omit the block entirely and write a one-line comment explaining why — see Pitfall 9.
 
-9. **Write the Tidy-TS block** — **MUST be wrapped in `runInProcess("Tidy-TS", ...)`**. See Pitfall 2: an un-wrapped tidy-ts call that triggers the runtime guard kills the script before subsequent signals can be printed. The `@ts-expect-error` directive goes immediately above the line where the type error appears — see Pitfall 3. Use the shared typed data from `../data.ts` if present, or create the DataFrame inline if not.
+9. **Write the Tidy-TS block** — **MUST be wrapped in `runInProcess("Tidy-TS", ...)` (or `runInProcessAsync` for async calls like `readCSV`)**. See Pitfalls 2 and 11. The `@ts-expect-error` directive goes immediately above the line where the type error appears — see Pitfall 3. Use the shared typed data from `../data.ts` if present, or create the DataFrame inline if not.
 
    ```typescript
    const myData = createDataFrame([…]);
@@ -524,8 +609,8 @@ For each scenario in the harness (one per LABELS array entry, typically 8–17 s
 - 6 comparator blocks (pandas, tidyverse, Polars, mypy, pyright, Arquero) in fixed order. Tidy-TS block last.
 - Section dividers are exactly `// <Name> ──────────…` with unicode box-drawing characters lifted from the canonical templates (1a, 1k). Copy them verbatim.
 - Exactly one `@ts-expect-error` per file, on the line that produces the actual type error.
-- Tidy-TS block always uses `runInProcess`. No exceptions.
-- Arquero block uses `runInProcess` and zero type annotations / zero type casts on callback parameters.
+- Tidy-TS block always uses `runInProcess` (or `runInProcessAsync` for async calls — Pitfall 11). No exceptions; never write try/catch by hand.
+- Arquero block uses `runInProcess` and zero type annotations / zero type casts on callback parameters. The Arquero API used must match the scenario intent (Pitfall 12).
 - mypy / pyright report "no errors" on essentially every scenario — this is correct and is the headline finding (Pitfall 6). Do not "fix" this by adding annotations to the pandas script.
 - Shared data is imported from `../data.ts` (Tidy-TS side only). Foreign scripts duplicate data inline as Python/R literals — Pitfall 4.
 - Don't use `find` over wide trees. Read project manifests directly — Pitfall 8.

@@ -117,10 +117,11 @@ Deno.test("downsample - PlainDate daily (calendar path)", () => {
   });
 
   expect(result.nrows()).toBe(2);
-  // Bucket keys are ISO strings
-  expect(result[0].timestamp).toBe("2023-01-01");
+  // Bucket time column preserves the input Temporal type (PlainDate here)
+  expect(result[0].timestamp.toString()).toBe("2023-01-01");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDate");
   expect(result[0].price).toBe(105); // (100 + 110) / 2
-  expect(result[1].timestamp).toBe("2023-01-02");
+  expect(result[1].timestamp.toString()).toBe("2023-01-02");
   expect(result[1].price).toBe(120);
 });
 
@@ -139,11 +140,12 @@ Deno.test("downsample - PlainDate monthly (calendar path)", () => {
   });
 
   expect(result.nrows()).toBe(3);
-  expect(result[0].timestamp).toBe("2023-01-01");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDate");
   expect(result[0].price).toBe(105); // (100 + 110) / 2
-  expect(result[1].timestamp).toBe("2023-02-01");
+  expect(result[1].timestamp.toString()).toBe("2023-02-01");
   expect(result[1].price).toBe(120);
-  expect(result[2].timestamp).toBe("2023-03-01");
+  expect(result[2].timestamp.toString()).toBe("2023-03-01");
   expect(result[2].price).toBe(130);
 });
 
@@ -179,8 +181,9 @@ Deno.test("downsample - PlainDate (polyfill) monthly", () => {
   });
 
   expect(result.nrows()).toBe(2);
-  expect(result[0].timestamp).toBe("2023-01-01");
-  expect(result[1].timestamp).toBe("2023-02-01");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDate");
+  expect(result[1].timestamp.toString()).toBe("2023-02-01");
 });
 
 Deno.test("downsample - PlainDateTime hourly (calendar path)", () => {
@@ -206,9 +209,10 @@ Deno.test("downsample - PlainDateTime hourly (calendar path)", () => {
   });
 
   expect(result.nrows()).toBe(2);
-  expect(result[0].timestamp).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDateTime");
   expect(result[0].price).toBe(105); // (100 + 110) / 2
-  expect(result[1].timestamp).toBe("2023-01-01T11:00:00");
+  expect(result[1].timestamp.toString()).toBe("2023-01-01T11:00:00");
   expect(result[1].price).toBe(120);
 });
 
@@ -235,9 +239,10 @@ Deno.test("downsample - PlainDateTime (polyfill)", () => {
   });
 
   expect(result.nrows()).toBe(2);
-  expect(result[0].timestamp).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDateTime");
   expect(result[0].price).toBe(105);
-  expect(result[1].timestamp).toBe("2023-01-01T11:00:00");
+  expect(result[1].timestamp.toString()).toBe("2023-01-01T11:00:00");
   expect(result[1].price).toBe(120);
 });
 

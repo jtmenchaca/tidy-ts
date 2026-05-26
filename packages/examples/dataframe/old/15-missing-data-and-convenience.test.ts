@@ -241,7 +241,7 @@ test("Missing Data and Convenience Functions - Progressive Examples", async () =
       running_max: (_row, index, df) => stats.cummax(df.score)[index],
       running_min: (_row, index, df) => stats.cummin(df.score)[index],
       // Add ranking
-      score_rank: (_row, index, df) => stats.rank(df.score, "average")[index],
+      score_rank: (_row, index, df) => stats.rank(df.score, { ties: "average" })[index],
       score_dense_rank: (_row, index, df) => stats.denseRank(df.score)[index],
     });
 
@@ -330,7 +330,7 @@ NA,3.8
     // Step 3: Add rankings and cumulative statistics
     .mutate({
       score_percentile: (_row, index, df) => {
-        const rank = stats.rank(df.score, "average")[index];
+        const rank = stats.rank(df.score, { ties: "average" })[index];
         return stats.round(((rank || 0) / df.nrows()) * 100, 1);
       },
       running_average: (_row, index, df) => {

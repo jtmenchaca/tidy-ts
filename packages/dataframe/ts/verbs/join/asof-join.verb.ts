@@ -127,6 +127,7 @@ function buildOutputStoreAsof(
   joinKey: string,
   suffixLeft: string,
   suffixRight: string,
+  groupKeys: readonly string[] = [],
 ): ColumnarStore {
   const n = leftPickRight.length;
 
@@ -139,11 +140,18 @@ function buildOutputStoreAsof(
     rightBase[i] = rv == null ? NA_U32 : right.index[rv];
   }
 
-  // Process left columns (apply suffix to conflicting non-key columns)
+  // The join key (time column) and any `group_by` partition keys behave as
+  // equi-join keys: rows only match when the values agree, so the left and
+  // right copies are identical. Keep the left copy and drop the right copy
+  // (no `_x`/`_y` collision) — same convention as inner/left/right joins on
+  // their join keys.
+  const equiKeys = new Set<string>([joinKey, ...groupKeys]);
+
+  // Process left columns (apply suffix to conflicting non-equi-key columns)
   const rightNameSet = new Set(right.store.columnNames);
   const leftConflictSet = new Set<string>();
   for (const name of left.store.columnNames) {
-    if (name !== joinKey && rightNameSet.has(name)) {
+    if (!equiKeys.has(name) && rightNameSet.has(name)) {
       leftConflictSet.add(name);
     }
   }
@@ -159,18 +167,16 @@ function buildOutputStoreAsof(
     useNullable: false,
   });
 
-  // Process right columns (exclude join key; handle conflicts with suffixes)
+  // Process right columns: drop the join key and all group_by keys (they're
+  // already on the left side and equal by construction). For remaining
+  // columns, apply suffix on conflicts.
   const leftNameSet = new Set(left.store.columnNames);
-  const rightColumnsToProcess = right.store.columnNames.filter((name: string) =>
-    name !== joinKey
+  const rightColumnsToProcess = right.store.columnNames.filter(
+    (name: string) => !equiKeys.has(name),
   );
   const rightConflictSet = new Set<string>();
-
-  // Identify conflicts for right columns
   for (const name of rightColumnsToProcess) {
-    if (leftNameSet.has(name)) {
-      rightConflictSet.add(name);
-    }
+    if (leftNameSet.has(name)) rightConflictSet.add(name);
   }
 
   const rightResult = processJoinColumns({
@@ -180,7 +186,7 @@ function buildOutputStoreAsof(
     nameSet: new Set(rightColumnsToProcess),
     conflictSet: rightConflictSet,
     keySet: new Set<string>(),
-    dropKeys: new Set([joinKey]), // Join key is already handled by exclusion above
+    dropKeys: equiKeys, // Already excluded above; here for clarity / safety
     suffix: suffixRight,
     useNullable: true, // Unmatched right indices; output cells from the right are `undefined`
   });
@@ -385,6 +391,7 @@ export function asof_join(
       key,
       suffixLeft,
       suffixRight,
+      groupNames,
     );
 
     const outDf = createColumnarDataFrameFromStore(outStore) as any;

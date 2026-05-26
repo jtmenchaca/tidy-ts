@@ -3,28 +3,38 @@ use crate::stats::core::types::{
 };
 use statrs::distribution::{ContinuousCDF, FisherSnedecor};
 
+/// Centering strategy for Levene's test.
+///
+/// - `Median` — Brown-Forsythe modification (robust to non-normality). Matches
+///   R `car::leveneTest(..., center = median)`, which is the modern default.
+/// - `Mean` — Classical Levene (1960). Matches R `leveneTest(..., center = mean)`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LeveneCenter {
+    Median,
+    Mean,
+}
+
 /// Levene's test for equality of variances
 ///
 /// ALGORITHM OVERVIEW:
-/// 1. Calculate group medians (Brown-Forsythe modification for robustness)
-/// 2. Compute absolute deviations from each group's median
+/// 1. Calculate the per-group center (median for Brown-Forsythe, mean for classical Levene)
+/// 2. Compute absolute deviations from each group's center
 /// 3. Perform one-way ANOVA on these deviations
 /// 4. F-statistic tests if group means of deviations differ significantly
 /// 5. Significant F-test indicates unequal variances across groups
 ///
 /// Tests the null hypothesis that all groups have equal variances.
-/// Uses the absolute deviations from group medians (Brown-Forsythe modification)
-/// which is more robust to non-normality than using means.
 ///
 /// # Arguments
 /// * `groups` - Vector of groups, each containing numeric data
 /// * `alpha` - Significance level (default: 0.05)
-///
-/// # Returns
-/// * `OneWayAnovaTestResult` - F-statistic, p-value, degrees of freedom
-///   - Significant result (p < alpha) indicates unequal variances
-///   - Non-significant result suggests equal variances
-pub fn levene_test<T, I>(groups: &[I], alpha: f64) -> Result<OneWayAnovaTestResult, String>
+/// * `center` - Centering strategy: `LeveneCenter::Median` (Brown-Forsythe, default in
+///   modern usage) or `LeveneCenter::Mean` (classical Levene)
+pub fn levene_test<T, I>(
+    groups: &[I],
+    alpha: f64,
+    center: LeveneCenter,
+) -> Result<OneWayAnovaTestResult, String>
 where
     T: Into<f64> + Copy + PartialOrd,
     I: AsRef<[T]>,
@@ -50,32 +60,31 @@ where
         })
         .collect::<Result<Vec<_>, _>>()?;
 
-    // STEP 3: Calculate group medians (Brown-Forsythe modification)
-    // Using medians instead of means makes the test more robust to outliers
-    // and non-normal distributions. This is the key difference from classic Levene's test.
-    let group_medians: Vec<f64> = data_groups
+    // STEP 3: Calculate the per-group center.
+    // Median → Brown-Forsythe (robust to non-normality and outliers).
+    // Mean   → classical Levene.
+    let group_centers: Vec<f64> = data_groups
         .iter()
-        .map(|group| {
-            let mut sorted = group.clone();
-            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-            let n = sorted.len();
-            // Calculate median: average of two middle values if even length, middle value if odd
-            if n % 2 == 0 {
-                (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
-            } else {
-                sorted[n / 2]
+        .map(|group| match center {
+            LeveneCenter::Median => {
+                let mut sorted = group.clone();
+                sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+                let n = sorted.len();
+                if n % 2 == 0 {
+                    (sorted[n / 2 - 1] + sorted[n / 2]) / 2.0
+                } else {
+                    sorted[n / 2]
+                }
             }
+            LeveneCenter::Mean => group.iter().sum::<f64>() / (group.len() as f64),
         })
         .collect();
 
-    // STEP 4: Calculate absolute deviations from group medians
-    // Transform each observation to its absolute distance from its group's median
-    // This converts the variance test into a test of whether these deviations
-    // have equal means across groups (which indicates equal variances)
+    // STEP 4: Absolute deviations from each group's center.
     let deviations: Vec<Vec<f64>> = data_groups
         .iter()
-        .zip(group_medians.iter())
-        .map(|(group, &median)| group.iter().map(|&x| (x - median).abs()).collect())
+        .zip(group_centers.iter())
+        .map(|(group, &c)| group.iter().map(|&x| (x - c).abs()).collect())
         .collect();
 
     // STEP 5: Prepare data for ANOVA - flatten all deviations into single vector

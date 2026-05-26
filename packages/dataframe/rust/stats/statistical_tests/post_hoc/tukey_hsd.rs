@@ -1,147 +1,12 @@
 //! Tukey's Honestly Significant Difference (HSD) test
 //!
 //! Post-hoc test for pairwise comparisons after significant one-way ANOVA.
-//! Assumes equal variances and uses the studentized range distribution.
+//! Assumes equal variances and uses the studentized range distribution
+//! (`ptukey` / `qtukey` in [`super::studentized_range`]).
 
+use super::studentized_range::{ptukey, qtukey};
 use super::types::{PairwiseComparison, TukeyHsdTestResult};
 use crate::stats::core::types::{ConfidenceInterval, TestStatistic};
-use statrs::distribution::ContinuousCDF;
-use std::f64::consts::PI;
-
-/// Standard normal PDF
-fn phi(z: f64) -> f64 {
-    (1.0 / (2.0 * PI).sqrt()) * (-0.5 * z * z).exp()
-}
-
-/// Standard normal CDF (using approximation)
-fn big_phi(z: f64) -> f64 {
-    if z < -8.0 {
-        return 0.0;
-    }
-    if z > 8.0 {
-        return 1.0;
-    }
-
-    // Use statrs for accurate standard normal CDF
-    use statrs::distribution::{ContinuousCDF, Normal};
-    let normal = Normal::new(0.0, 1.0).unwrap();
-    normal.cdf(z)
-}
-
-/// Gamma function using statrs
-fn gamma(x: f64) -> f64 {
-    use statrs::function::gamma::gamma as statrs_gamma;
-    statrs_gamma(x)
-}
-
-/// Studentized range quantile function (inverse CDF) via bisection
-/// Returns q such that ptukey_exact(q, k, nu) = p
-fn qtukey(p: f64, k: f64, nu: f64) -> f64 {
-    if p <= 0.0 { return 0.0; }
-    if p >= 1.0 { return f64::INFINITY; }
-
-    let mut lo = 0.0_f64;
-    let mut hi = 20.0_f64;
-
-    // Bisection search
-    for _ in 0..100 {
-        let mid = (lo + hi) / 2.0;
-        let cdf = ptukey_exact(mid, k, nu);
-        if cdf < p {
-            lo = mid;
-        } else {
-            hi = mid;
-        }
-        if (hi - lo) < 1e-10 {
-            break;
-        }
-    }
-    (lo + hi) / 2.0
-}
-
-/// Studentized range CDF implementation based on the mathematical definition
-/// F_R(q;k,ν) = (sqrt(2π) k ν^(ν/2)) / (Γ(ν/2) 2^(ν/2-1)) ∫[0,∞] s^(ν-1) φ(√ν s) [∫[-∞,∞] φ(z) [Φ(z+qs) - Φ(z)]^(k-1) dz] ds
-pub fn ptukey_exact(q: f64, k: f64, nu: f64) -> f64 {
-    if q <= 0.0 {
-        return 0.0;
-    }
-    if q >= 20.0 {
-        return 1.0; // For very large q, CDF approaches 1
-    }
-
-    // Pre-calculate constants
-    let sqrt_2pi = (2.0 * PI).sqrt();
-    let sqrt_nu = nu.sqrt();
-    let gamma_nu_2 = gamma(nu / 2.0);
-    let power_2 = 2.0_f64.powf(nu / 2.0 - 1.0);
-    let nu_power = nu.powf(nu / 2.0);
-
-    let constant = (sqrt_2pi * k * nu_power) / (gamma_nu_2 * power_2);
-
-    // Numerical integration over s using Simpson's rule
-    let n_steps = 200;
-    let s_max = 10.0; // Integration limit for s
-    let ds = s_max / n_steps as f64;
-
-    let mut integral_s = 0.0;
-
-    for i in 0..=n_steps {
-        let s = i as f64 * ds;
-        if s == 0.0 {
-            continue; // Skip s=0 to avoid division issues
-        }
-
-        // Calculate s^(ν-1) * φ(√ν s)
-        let s_term = s.powf(nu - 1.0) * phi(sqrt_nu * s);
-
-        // Inner integral over z using numerical integration
-        let n_z_steps = 100;
-        let z_min = -8.0;
-        let z_max = 8.0;
-        let dz = (z_max - z_min) / n_z_steps as f64;
-
-        let mut integral_z = 0.0;
-
-        for j in 0..=n_z_steps {
-            let z = z_min + j as f64 * dz;
-            let phi_z = phi(z);
-            let cdf_diff = big_phi(z + q * s) - big_phi(z);
-
-            if cdf_diff > 0.0 {
-                let term = phi_z * cdf_diff.powf(k - 1.0);
-
-                // Simpson's rule weights
-                let weight = if j == 0 || j == n_z_steps {
-                    1.0
-                } else if j % 2 == 1 {
-                    4.0
-                } else {
-                    2.0
-                };
-                integral_z += weight * term;
-            }
-        }
-
-        integral_z *= dz / 3.0; // Simpson's rule
-
-        // Simpson's rule weights for outer integral
-        let weight = if i == 0 || i == n_steps {
-            1.0
-        } else if i % 2 == 1 {
-            4.0
-        } else {
-            2.0
-        };
-        integral_s += weight * s_term * integral_z;
-    }
-
-    integral_s *= ds / 3.0; // Simpson's rule
-
-    let result = constant * integral_s;
-
-    // Clamp result to [0, 1]
-    result.max(0.0).min(1.0)
-}
 
 /// Performs Tukey's HSD test for multiple comparisons
 ///
@@ -219,32 +84,36 @@ where
     // For Tukey HSD, we need to use the studentized range distribution
     // For now, we'll calculate p-values individually using the correct method
 
-    for i in 0..n_groups {
-        for j in (i + 1)..n_groups {
+    // Match R's TukeyHSD convention: lower-triangle iteration produces
+    // pairs labeled `"higher-lower"` with mean_diff = mean[higher] - mean[lower].
+    // R source: TukeyHSD.R L66-75 — `center <- outer(means, means, "-")`
+    // then `keep <- lower.tri(center)` and labels are `outer(nms, nms, paste, sep="-")[keep]`.
+    for j in 0..n_groups {
+        for i in (j + 1)..n_groups {
             let (mean_i, n_i, _) = group_stats[i];
             let (mean_j, n_j, _) = group_stats[j];
 
+            // mean_diff = mean(higher-indexed) - mean(lower-indexed), matches R.
             let mean_diff = mean_i - mean_j;
             let se = (pooled_variance * (1.0 / n_i as f64 + 1.0 / n_j as f64)).sqrt();
 
             // Calculate q-statistic (studentized range statistic)
             // For Tukey HSD: q = sqrt(2) * |mean_diff| / SE
-            // This matches the built-in TukeyHSD function in R
             let q_statistic = (mean_diff.abs() / se) * (2.0_f64).sqrt();
 
-            // Calculate p-value using proper studentized range distribution
-            let cdf_value = ptukey_exact(q_statistic, n_groups as f64, df_within);
+            // Calculate p-value using R's studentized range distribution
+            // (Copenhaver-Holland 1988, ported from r-source-trunk/src/nmath/ptukey.c).
+            // For Tukey HSD on one ANOVA: rr=1, cc=n_groups.
+            let cdf_value = ptukey(q_statistic, 1.0, n_groups as f64, df_within);
             let p_value = 1.0 - cdf_value;
 
             // For Tukey HSD, the p-value from studentized range is already adjusted
             let adjusted_p = p_value;
 
-            // Confidence interval using studentized range critical value
-            // R formula: diff ± qtukey(1-alpha, k, df) * sqrt(MSE/n_per_group)
-            // Since se = sqrt(MSE*(1/n_i + 1/n_j)) and for the CI we need
-            // qtukey * sqrt(MSE/n) = qtukey * se/sqrt(2) (for balanced groups)
-            // General: ci_margin = qtukey(1-alpha, k, df) / sqrt(2) * se
-            let q_critical = qtukey(1.0 - alpha, n_groups as f64, df_within);
+            // Confidence interval using studentized range critical value:
+            //   ci_margin = qtukey(1 - alpha, 1, n_groups, df) / sqrt(2) * se
+            // where se = sqrt(MSE * (1/n_i + 1/n_j)) (matches R's TukeyHSD output).
+            let q_critical = qtukey(1.0 - alpha, 1.0, n_groups as f64, df_within);
             let ci_margin = q_critical / (2.0_f64).sqrt() * se;
             let ci_lower = mean_diff - ci_margin;
             let ci_upper = mean_diff + ci_margin;

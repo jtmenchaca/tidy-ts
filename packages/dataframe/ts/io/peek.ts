@@ -19,6 +19,27 @@ interface PeekXLSXOptions extends PeekOptions {
   sheet?: string | number;
 }
 
+/**
+ * Render the headers as Zod schema entries suitable for copy-paste into
+ * `z.object({ ... })`.
+ *
+ * - Empty header names are omitted (you can't write a Zod key for `""`; if
+ *   the user passes `allowDuplicateHeaders: true` they'll get `name_2`,
+ *   `name_3`, … which DO have valid identifier names).
+ * - Header names that aren't valid identifiers (contain dots, hyphens,
+ *   spaces, start with a digit, …) get quoted as string keys.
+ */
+function formatSchemaFields(headers: readonly string[]): string {
+  const lines: string[] = [];
+  for (const h of headers) {
+    if (h === "") continue;
+    const isValidIdent = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(h);
+    const key = isValidIdent ? h : JSON.stringify(h);
+    lines.push(`${key}: z.string()`);
+  }
+  return lines.join(",\n  ");
+}
+
 interface PeekCSVOptions extends PeekOptions {
   /** Field delimiter/comma character (default: ",") */
   comma?: string;
@@ -108,7 +129,7 @@ ${previewTable}
 **Example Schema:**
 \`\`\`typescript
 const schema = z.object({
-  ${metadata.headers.map((h) => `${h}: z.string()`).join(",\n  ")}
+  ${formatSchemaFields(metadata.headers)}
 });
 const df = await readXLSX("${path}", schema${
     sheet !== undefined ? `, { sheet: ${JSON.stringify(sheet)} }` : ""
@@ -192,7 +213,7 @@ ${previewTable}
 **Example Schema:**
 \`\`\`typescript
 const schema = z.object({
-  ${metadata.headers.map((h) => `${h}: z.string()`).join(",\n  ")}
+  ${formatSchemaFields(metadata.headers)}
 });
 const df = await readCSV("${path}", schema);
 \`\`\`

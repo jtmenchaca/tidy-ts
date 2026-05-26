@@ -103,11 +103,12 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
     // Count concordant and discordant pairs
     let (concordant, discordant, ties_x, ties_y, ties_xy) = count_pairs(x, y);
 
-    // Calculate tau using the standard formula
+    // tau_a = (C - D) / total_pairs — used by R's exact-test q computation,
+    // not reported in the result.
     let total_pairs = (n * (n - 1) / 2) as f64;
-    let tau = (concordant - discordant) as f64 / total_pairs;
+    let tau_a = (concordant - discordant) as f64 / total_pairs;
 
-    // Calculate S statistic for variance calculation  
+    // Calculate S statistic for variance calculation
     let _s_raw = (concordant - discordant) as f64;
 
     // Variance with tie corrections
@@ -163,6 +164,21 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
     // Check if we have ties
     let _has_ties = ties_x > 0 || ties_y > 0 || ties_xy > 0;
 
+    // tau-b: R's reported Kendall coefficient when there are ties (see
+    // r-source-trunk/src/library/stats/man/cor.Rd L109: "When there are ties,
+    // Kendall's tau_b is computed").
+    //   tau_b = (C - D) / sqrt((P - n_x_ties) * (P - n_y_ties))
+    // where P = n*(n-1)/2 and n_x_ties / n_y_ties are the counts of pairs tied
+    // on x or y respectively. When there are no ties this collapses to tau_a.
+    let n_x_ties = t2_sum / 2.0; // sum_i [count_i * (count_i - 1) / 2] over tied groups in x
+    let n_y_ties = u2_sum / 2.0;
+    let tau_b_denom = ((total_pairs - n_x_ties) * (total_pairs - n_y_ties)).sqrt();
+    let tau = if tau_b_denom > 0.0 {
+        (concordant - discordant) as f64 / tau_b_denom
+    } else {
+        tau_a
+    };
+
     // Determine whether to use exact test
     // If exact is None, R uses TRUE by default
     // If exact is Some(true), use exact test if possible (n < 50 and no ties)
@@ -176,7 +192,7 @@ pub fn kendall_test(x: &[f64], y: &[f64], alternative: AlternativeType, alpha: f
     let (test_statistic, statistic_name, p_value) = if use_exact {
         // Exact test: use T statistic like R
         // R: q <- round((r + 1) * n * (n - 1) / 4)
-        let q = ((tau + 1.0) * n_f * (n_f - 1.0) / 4.0).round();
+        let q = ((tau_a + 1.0) * n_f * (n_f - 1.0) / 4.0).round();
         
         let p = match alternative {
             AlternativeType::TwoSided => {

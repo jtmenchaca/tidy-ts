@@ -120,46 +120,46 @@ export function qhyper({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the hypergeometric distribution (integers)
  */
-export function rhyper({
-  populationSuccesses,
-  populationFailures,
-  drawSize,
-}: {
+export function rhyper(args: {
   populationSuccesses: number;
   populationFailures: number;
   drawSize: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rhyper(args: {
+  populationSuccesses: number;
+  populationFailures: number;
+  drawSize: number;
+  seed?: number;
 }): number;
 export function rhyper({
   populationSuccesses,
   populationFailures,
   drawSize,
   sampleSize,
-}: {
-  populationSuccesses: number;
-  populationFailures: number;
-  drawSize: number;
-  sampleSize: number;
-}): number[];
-export function rhyper({
-  populationSuccesses,
-  populationFailures,
-  drawSize,
-  sampleSize = 1,
+  seed,
 }: {
   populationSuccesses: number;
   populationFailures: number;
   drawSize: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rhyper(populationSuccesses, populationFailures, drawSize);
+  if (sampleSize === undefined) {
+    return wasm_rhyper(
+      populationSuccesses,
+      populationFailures,
+      drawSize,
+      1,
+      seed,
+    )[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(
-      wasm_rhyper(populationSuccesses, populationFailures, drawSize),
-    );
-  }
-  return results;
+  return wasm_rhyper(
+    populationSuccesses,
+    populationFailures,
+    drawSize,
+    sampleSize,
+    seed,
+  );
 }

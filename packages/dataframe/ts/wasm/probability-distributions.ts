@@ -35,9 +35,14 @@ export function wasm_qnorm(
   return wasmInternal.wasm_qnorm(p, mean, sd, lowerTail, giveLog);
 }
 
-export function wasm_rnorm(mean: number, sd: number): number {
+export function wasm_rnorm(
+  mean: number,
+  sd: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rnorm(mean, sd);
+  return wasmInternal.wasm_rnorm(mean, sd, n, seed);
 }
 
 // Beta Distribution
@@ -73,9 +78,14 @@ export function wasm_qbeta(
   return wasmInternal.wasm_qbeta(p, shape1, shape2, lowerTail, giveLog);
 }
 
-export function wasm_rbeta(shape1: number, shape2: number): number {
+export function wasm_rbeta(
+  shape1: number,
+  shape2: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rbeta(shape1, shape2);
+  return wasmInternal.wasm_rbeta(shape1, shape2, n, seed);
 }
 
 // Gamma Distribution
@@ -111,9 +121,14 @@ export function wasm_qgamma(
   return wasmInternal.wasm_qgamma(p, shape, rate, lowerTail, giveLog);
 }
 
-export function wasm_rgamma(shape: number, rate: number): number {
+export function wasm_rgamma(
+  shape: number,
+  rate: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rgamma(shape, rate);
+  return wasmInternal.wasm_rgamma(shape, rate, n, seed);
 }
 
 // Chi-Squared Distribution
@@ -142,9 +157,13 @@ export function wasm_qchisq(
   return wasmInternal.wasm_qchisq(p, df, lowerTail, giveLog);
 }
 
-export function wasm_rchisq(df: number): number {
+export function wasm_rchisq(
+  df: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rchisq(df);
+  return wasmInternal.wasm_rchisq(df, n, seed);
 }
 
 // F Distribution
@@ -180,9 +199,14 @@ export function wasm_qf(
   return wasmInternal.wasm_qf(p, df1, df2, lowerTail, giveLog);
 }
 
-export function wasm_rf(df1: number, df2: number): number {
+export function wasm_rf(
+  df1: number,
+  df2: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rf(df1, df2);
+  return wasmInternal.wasm_rf(df1, df2, n, seed);
 }
 
 // Student's t Distribution
@@ -211,9 +235,13 @@ export function wasm_qt(
   return wasmInternal.wasm_qt(p, df, lowerTail, giveLog);
 }
 
-export function wasm_rt(df: number): number {
+export function wasm_rt(
+  df: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rt(df);
+  return wasmInternal.wasm_rt(df, n, seed);
 }
 
 // Exponential Distribution
@@ -242,9 +270,13 @@ export function wasm_qexp(
   return wasmInternal.wasm_qexp(p, rate, lowerTail, giveLog);
 }
 
-export function wasm_rexp(rate: number): number {
+export function wasm_rexp(
+  rate: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rexp(rate);
+  return wasmInternal.wasm_rexp(rate, n, seed);
 }
 
 // Poisson Distribution
@@ -277,9 +309,13 @@ export function wasm_qpois(
   return wasmInternal.wasm_qpois(p, lambda, lowerTail, giveLog);
 }
 
-export function wasm_rpois(lambda: number): number {
+export function wasm_rpois(
+  lambda: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rpois(lambda);
+  return wasmInternal.wasm_rpois(lambda, n, seed);
 }
 
 // Binomial Distribution
@@ -315,9 +351,14 @@ export function wasm_qbinom(
   return wasmInternal.wasm_qbinom(p, size, prob, lowerTail, giveLog);
 }
 
-export function wasm_rbinom(size: number, prob: number): number {
+export function wasm_rbinom(
+  size: number,
+  prob: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rbinom(size, prob);
+  return wasmInternal.wasm_rbinom(size, prob, n, seed);
 }
 
 // Uniform Distribution
@@ -353,9 +394,14 @@ export function wasm_qunif(
   return wasmInternal.wasm_qunif(p, min, max, lowerTail, giveLog);
 }
 
-export function wasm_runif(min: number, max: number): number {
+export function wasm_runif(
+  min: number,
+  max: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_runif(min, max);
+  return wasmInternal.wasm_runif(min, max, n, seed);
 }
 
 // Weibull Distribution
@@ -391,9 +437,14 @@ export function wasm_qweibull(
   return wasmInternal.wasm_qweibull(p, shape, scale, lowerTail, giveLog);
 }
 
-export function wasm_rweibull(shape: number, scale: number): number {
+export function wasm_rweibull(
+  shape: number,
+  scale: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rweibull(shape, scale);
+  return wasmInternal.wasm_rweibull(shape, scale, n, seed);
 }
 
 // Geometric Distribution
@@ -426,9 +477,13 @@ export function wasm_qgeom(
   return wasmInternal.wasm_qgeom(p, prob, lowerTail, giveLog);
 }
 
-export function wasm_rgeom(prob: number): number {
+export function wasm_rgeom(
+  prob: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rgeom(prob);
+  return wasmInternal.wasm_rgeom(prob, n, seed);
 }
 
 // Hypergeometric Distribution
@@ -467,9 +522,15 @@ export function wasm_qhyper(
   return wasmInternal.wasm_qhyper(p, m, n, k, lowerTail, giveLog);
 }
 
-export function wasm_rhyper(m: number, n: number, k: number): number {
+export function wasm_rhyper(
+  m: number,
+  n: number,
+  k: number,
+  count: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rhyper(m, n, k);
+  return wasmInternal.wasm_rhyper(m, n, k, count, seed);
 }
 
 // Log-normal Distribution
@@ -505,9 +566,14 @@ export function wasm_qlnorm(
   return wasmInternal.wasm_qlnorm(p, meanlog, sdlog, lowerTail, giveLog);
 }
 
-export function wasm_rlnorm(meanlog: number, sdlog: number): number {
+export function wasm_rlnorm(
+  meanlog: number,
+  sdlog: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rlnorm(meanlog, sdlog);
+  return wasmInternal.wasm_rlnorm(meanlog, sdlog, n, seed);
 }
 
 // Negative Binomial Distribution
@@ -543,9 +609,14 @@ export function wasm_qnbinom(
   return wasmInternal.wasm_qnbinom(p, r, prob, lowerTail, giveLog);
 }
 
-export function wasm_rnbinom(r: number, prob: number): number {
+export function wasm_rnbinom(
+  r: number,
+  prob: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rnbinom(r, prob);
+  return wasmInternal.wasm_rnbinom(r, prob, n, seed);
 }
 
 // Wilcoxon Distribution
@@ -581,9 +652,14 @@ export function wasm_qwilcox(
   return wasmInternal.wasm_qwilcox(p, m, n, lowerTail, giveLog);
 }
 
-export function wasm_rwilcox(m: number, n: number): number {
+export function wasm_rwilcox(
+  m: number,
+  n: number,
+  count: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rwilcox(m, n);
+  return wasmInternal.wasm_rwilcox(m, n, count, seed);
 }
 
 // EV1 (Gumbel Maximum) Distribution
@@ -619,9 +695,14 @@ export function wasm_qev1(
   return wasmInternal.wasm_qev1(p, location, scale, lowerTail, giveLog);
 }
 
-export function wasm_rev1(location: number, scale: number): number {
+export function wasm_rev1(
+  location: number,
+  scale: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rev1(location, scale);
+  return wasmInternal.wasm_rev1(location, scale, n, seed);
 }
 
 // Zipf Distribution
@@ -657,9 +738,14 @@ export function wasm_qzipf(
   return wasmInternal.wasm_qzipf(p, n, s, lowerTail, giveLog);
 }
 
-export function wasm_rzipf(n: number, s: number): number {
+export function wasm_rzipf(
+  n: number,
+  s: number,
+  count: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rzipf(n, s);
+  return wasmInternal.wasm_rzipf(n, s, count, seed);
 }
 
 // Dirac Delta Distribution
@@ -692,9 +778,13 @@ export function wasm_qdirac(
   return wasmInternal.wasm_qdirac(p, location, lowerTail, giveLog);
 }
 
-export function wasm_rdirac(location: number): number {
+export function wasm_rdirac(
+  location: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rdirac(location);
+  return wasmInternal.wasm_rdirac(location, n, seed);
 }
 
 // Pareto Distribution
@@ -730,7 +820,12 @@ export function wasm_qpareto(
   return wasmInternal.wasm_qpareto(p, scale, shape, lowerTail, giveLog);
 }
 
-export function wasm_rpareto(scale: number, shape: number): number {
+export function wasm_rpareto(
+  scale: number,
+  shape: number,
+  n: number,
+  seed?: number,
+): number[] {
   initWasm();
-  return wasmInternal.wasm_rpareto(scale, shape);
+  return wasmInternal.wasm_rpareto(scale, shape, n, seed);
 }

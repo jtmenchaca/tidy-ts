@@ -92,40 +92,32 @@ export function qweibull({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the Weibull distribution
  */
-export function rweibull({
-  shape,
-  scale,
-}: {
-  shape: number;
-  scale?: number;
-}): number;
-export function rweibull({
-  shape,
-  scale,
-  sampleSize,
-}: {
+export function rweibull(args: {
   shape: number;
   scale?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rweibull(args: {
+  shape: number;
+  scale?: number;
+  seed?: number;
+}): number;
 export function rweibull({
   shape,
   scale = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   shape: number;
   scale?: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rweibull(shape, scale);
+  if (sampleSize === undefined) {
+    return wasm_rweibull(shape, scale, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rweibull(shape, scale));
-  }
-  return results;
+  return wasm_rweibull(shape, scale, sampleSize, seed);
 }
 
 /**

@@ -398,7 +398,12 @@ impl GlmResult {
         let p = self.coefficients.len();
         let alpha = 1.0 - level;
 
-        // Match R: use qnorm for final cutoff
+        // Match R's confint.profile.glm: cutoff is qnorm regardless of
+        // family. See r-source-trunk/src/library/stats/R/confint.R L87 and
+        // the comment at L85: "Hmm: This could have a df correction if
+        // there's an estimated dispersion parameter / Leave for now."
+        // R's `lm()` objects route to confint.lm (which uses qt), but
+        // `glm(..., family=gaussian)` objects route here and use qnorm.
         let cutoff = qnorm(1.0 - alpha / 2.0, 0.0, 1.0, true, false);
 
         // Match R's confint.glm: profile uses alpha/4 for better interpolation

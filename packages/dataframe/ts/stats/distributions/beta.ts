@@ -92,40 +92,32 @@ export function qbeta({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the beta distribution
  */
-export function rbeta({
-  alpha,
-  beta,
-}: {
+export function rbeta(args: {
   alpha: number;
   beta: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rbeta(args: {
+  alpha: number;
+  beta: number;
+  seed?: number;
 }): number;
 export function rbeta({
   alpha,
   beta,
   sampleSize,
-}: {
-  alpha: number;
-  beta: number;
-  sampleSize: number;
-}): number[];
-export function rbeta({
-  alpha,
-  beta,
-  sampleSize = 1,
+  seed,
 }: {
   alpha: number;
   beta: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rbeta(alpha, beta);
+  if (sampleSize === undefined) {
+    return wasm_rbeta(alpha, beta, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rbeta(alpha, beta));
-  }
-  return results;
+  return wasm_rbeta(alpha, beta, sampleSize, seed);
 }
 
 /**

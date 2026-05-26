@@ -3,50 +3,34 @@ import type { OneWayAnovaTestResult } from "./types.ts";
 import type { PrettifyDeep } from "../../dataframe/types/utility-types.ts";
 
 /**
- * Levene's test for equality of variances
+ * Levene's test for equality of variances.
  *
- * Tests the null hypothesis that all groups have equal variances.
- * Uses the Brown-Forsythe modification (deviations from medians) which
- * is more robust to non-normality than the original Levene's test.
+ * Tests the null hypothesis that all groups have equal variances. `center`
+ * selects the centering strategy:
  *
- * Use this test to:
- * - Check the equal variances assumption for ANOVA
- * - Decide between regular ANOVA and Welch's ANOVA
- * - Validate assumptions for pooled t-tests
+ * - `"median"` (default) — Brown-Forsythe modification (robust to non-normality
+ *   and outliers). Matches R `car::leveneTest(..., center = median)`.
+ * - `"mean"` — classical Levene (1960). Matches R `car::leveneTest(..., center = mean)`.
  *
  * Interpretation:
- * - p < alpha: Reject null hypothesis → variances are significantly different
- * - p ≥ alpha: Fail to reject null → no evidence of unequal variances
- *
- * @param groups Array of groups, where each group is an array of numbers
- * @param alpha Significance level (default: 0.05)
- * @returns Test result with F-statistic, p-value, and effect size
+ * - p < alpha: Reject null → variances are significantly different
+ * - p ≥ alpha: Fail to reject → no evidence of unequal variances
  *
  * @example
  * ```typescript
- * const group1 = [1, 2, 3, 4, 5];
- * const group2 = [6, 7, 8, 9, 10];  // similar variance
- * const group3 = [1, 5, 10, 15, 20]; // different variance
- *
- * const result = leveneTest([group1, group2, group3]);
- * console.log(`p-value: ${result.pValue}`);
- *
- * if (result.pValue < 0.05) {
- *   console.log("Use Welch ANOVA (unequal variances)");
- * } else {
- *   console.log("Use regular ANOVA (equal variances)");
- * }
+ * const result = leveneTest([group1, group2, group3]);                    // default: median
+ * const classical = leveneTest([group1, group2, group3], 0.05, "mean");   // classical Levene
  * ```
  */
 export function leveneTest(
   groups: readonly (readonly number[])[],
   alpha = 0.05,
+  center: "median" | "mean" = "median",
 ): PrettifyDeep<OneWayAnovaTestResult> {
   if (groups.length < 2) {
     throw new Error("Levene's test requires at least 2 groups");
   }
 
-  // Validate and clean data
   const cleanGroups = groups.map((group, i) => {
     const cleaned = group.filter((x) => Number.isFinite(x));
     if (cleaned.length < 2) {
@@ -55,15 +39,14 @@ export function leveneTest(
     return cleaned;
   });
 
-  // Flatten data for WASM
   const flatData = cleanGroups.flat();
   const groupSizes = cleanGroups.map((group) => group.length);
 
-  // Call WASM function
   return levene_test_wasm(
     new Float64Array(flatData),
     new Uint32Array(groupSizes),
     alpha,
+    center,
   );
 }
 

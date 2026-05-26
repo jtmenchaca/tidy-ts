@@ -60,11 +60,19 @@ pub struct WilcoxonWTest {
 
 impl WilcoxonWTest {
     /// Run Wilcoxon signed rank test on samples `x` and `y`.
+    ///
+    /// - `exact`: `None` lets R's rule decide (exact iff n < 50 AND no ties AND
+    ///   no zero differences). `Some(true)` forces exact (errors if not feasible).
+    ///   `Some(false)` forces the asymptotic normal approximation.
+    /// - `correct`: continuity correction on the asymptotic path. Ignored on the
+    ///   exact path. Default `true` (matches R's `wilcox.test` default).
     pub fn paired(
         x: &[f64],
         y: &[f64],
         alpha: f64,
         alternative: &str,
+        exact: Option<bool>,
+        correct: bool,
     ) -> Result<WilcoxonSignedRankTestResult, String> {
         // Calculate all differences (for Cohen's d)
         let all_diffs: Vec<f64> = x.iter().zip(y).map(|(x, y)| x - y).collect();
@@ -90,9 +98,13 @@ impl WilcoxonWTest {
         let has_ties = tie_correction > 0;
         let has_zeroes = zeroes > 0;
 
-        // Decide whether to use exact or asymptotic method (like R does)
-        // R uses exact when n < 50 AND no ties AND no zeroes
-        let use_exact = n < 50.0 && !has_ties && !has_zeroes;
+        // R logic from wilcox.test.R: exact <- (n < 50) && no ties && no zeroes
+        // unless the user passes exact = TRUE/FALSE explicitly.
+        let use_exact = match exact {
+            Some(true) => true,
+            Some(false) => false,
+            None => n < 50.0 && !has_ties && !has_zeroes,
+        };
 
         let (p_value, method) = if use_exact {
             // Exact p-value using SignedRank distribution
@@ -127,14 +139,18 @@ impl WilcoxonWTest {
             let nties_correction = tie_correction as f64;
             let sigma = (n * (n + 1.0) * (2.0 * n + 1.0) / 24.0 - nties_correction / 48.0).sqrt();
 
-            // Apply continuity correction
-            let correction = match alternative {
-                "two-sided" => {
-                    if z_raw > 0.0 { 0.5 } else { -0.5 }
-                },
-                "greater" => 0.5,
-                "less" => -0.5,
-                _ => 0.0,
+            // Apply continuity correction (matches R when correct=TRUE).
+            let correction = if correct {
+                match alternative {
+                    "two-sided" => {
+                        if z_raw > 0.0 { 0.5 } else { -0.5 }
+                    }
+                    "greater" => 0.5,
+                    "less" => -0.5,
+                    _ => 0.0,
+                }
+            } else {
+                0.0
             };
 
             let z = (z_raw - correction) / sigma;
@@ -165,19 +181,22 @@ impl WilcoxonWTest {
             (p_val, WilcoxonMethod::Asymptotic)
         };
 
-        // Calculate Cohen's d effect size (matching R's effsize package with paired=TRUE, within=FALSE)
-        // R's effsize::cohen.d uses ALL differences (including zeros) not just non-zero ones
-        // Cohen's d = mean(all_differences) / sd(all_differences)
-        let n_all = all_diffs.len() as f64;
-        let mean_diff = all_diffs.iter().sum::<f64>() / n_all;
-        let variance_diff = all_diffs.iter().map(|&d| (d - mean_diff).powi(2)).sum::<f64>() / (n_all - 1.0);
-        let sd_diff = variance_diff.sqrt();
-
-        let cohens_d = if sd_diff == 0.0 {
+        // Matched-pairs rank-biserial correlation (canonical rank-based effect size
+        // for the signed-rank test; matches R's effectsize::rank_biserial on paired data):
+        //   r_rb = (W+ - W-) / (W+ + W-)
+        // where W+ = v_statistic (sum of positive ranks) and W- = total_ranks - W+.
+        // Equivalent: r_rb = (2*W+ - n*(n+1)/2) / (n*(n+1)/2). Falls back to 0 when
+        // there are no non-zero differences.
+        let total_ranks = n * (n + 1.0) / 2.0;
+        let w_minus = total_ranks - v_statistic;
+        let rank_biserial = if total_ranks == 0.0 {
             0.0
         } else {
-            mean_diff / sd_diff
+            (v_statistic - w_minus) / total_ranks
         };
+
+        // Silence the unused-binding warning now that we don't compute Cohen's d.
+        let _ = all_diffs;
 
         Ok(WilcoxonSignedRankTestResult {
             test_statistic: TestStatistic {
@@ -191,8 +210,8 @@ impl WilcoxonWTest {
             alpha,
             error_message: None,
             effect_size: EffectSize {
-                value: cohens_d,
-                name: EffectSizeType::CohensD.as_str().to_string(),
+                value: rank_biserial,
+                name: EffectSizeType::RankBiserialCorrelation.as_str().to_string(),
             },
         })
     }
@@ -206,7 +225,7 @@ mod tests {
     fn paired() {
         let x = vec![8.0, 6.0, 5.5, 11.0, 8.5, 5.0, 6.0, 6.0];
         let y = vec![8.5, 9.0, 6.5, 10.5, 9.0, 7.0, 6.5, 7.0];
-        let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
+        let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided", None, true).unwrap();
         // R: wilcox.test(x, y, paired=TRUE, exact=FALSE, correct=TRUE) → p=0.03322777
         // Has ties in abs_diffs, so uses normal approximation with continuity correction
         assert!((test.p_value - 0.03322777).abs() < 1e-6);
@@ -216,7 +235,7 @@ mod tests {
     fn paired_2() {
         let x = vec![209.0, 200.0, 177.0, 169.0, 159.0, 169.0, 187.0, 198.0];
         let y = vec![151.0, 168.0, 147.0, 164.0, 166.0, 163.0, 176.0, 188.0];
-        let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided").unwrap();
+        let test = WilcoxonWTest::paired(&x, &y, 0.05, "two-sided", None, true).unwrap();
         // R: wilcox.test(x, y, paired=TRUE) → exact p=0.0390625 (no ties, n<50)
         assert!((test.p_value - 0.0390625).abs() < 1e-6);
     }

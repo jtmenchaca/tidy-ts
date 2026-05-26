@@ -14,6 +14,25 @@ use web_sys::console;
 #[cfg(feature = "napi-rs")]
 use napi_derive::napi;
 
+/// Build the actionable error returned when a non-numeric column reaches the
+/// GLM data-parsing path. The TypeScript layer's branded type rejects this at
+/// compile time; this runtime guard is defense-in-depth for callers that bypass
+/// the type system (e.g. `as any`, no-type readers, dynamic frames).
+///
+/// We deliberately do NOT auto-encode categoricals here: silently picking the
+/// alphabetically-first level as the reference is a foot-gun (the user thinks
+/// they are modeling "species effect" and ends up modeling "species effect
+/// relative to Adelie"). The user must encode reference levels explicitly.
+fn non_numeric_column_error(column_name: &str) -> String {
+    format!(
+        "[tidy-ts] Column \"{name}\" is non-numeric. s.glm requires numeric \
+         columns only — encode categoricals explicitly, e.g.\n  \
+         df.mutate({{ {name}<LevelName>: r => r.{name} === \"<LevelName>\" ? 1 : 0 }})\n\
+         You must choose the reference level yourself; tidy-ts will not pick one.",
+        name = column_name
+    )
+}
+
 /// WASM export for GLM fitting
 ///
 /// Fits a generalized linear model using the provided formula and data.
@@ -36,37 +55,22 @@ pub fn glm_fit_wasm(
     data_json: &str,
     options_json: Option<String>,
 ) -> Result<JsValue, JsValue> {
-    // Parse data from JSON
-    let (data, categorical_vars) = parse_data_json(data_json)
+    // Parse data from JSON. Errors out with an actionable message if any
+    // column is non-numeric — see non_numeric_column_error.
+    let data = parse_data_json(data_json)
         .map_err(|e| {
             console::log_1(&format!("[WASM] Data parsing error: {}", e).into());
             JsValue::from_str(&e)
         })?;
 
-    // Parse formula using existing parser and handle categorical variables
+    // Parse formula. Predictors must already match numeric column names; the
+    // GLM does not synthesize dummies from string columns.
     let parsed_formula = parse_formula(formula)
         .map_err(|e| {
             console::log_1(&format!("[WASM] Formula parsing error: {}", e).into());
             JsValue::from_str(&e)
         })?;
-
-    // Update the formula to replace categorical variables with dummy variable names
-    let updated_formula = if !categorical_vars.is_empty() {
-        update_formula_with_dummy_names(&parsed_formula.formula, &categorical_vars)
-    } else {
-        parsed_formula.formula.clone()
-    };
-
-    // Log formula transformation if categorical variables are present
-    if !categorical_vars.is_empty() {
-        console::log_1(
-            &format!(
-                "[WASM] Formula updated for categorical vars: {}",
-                updated_formula
-            )
-            .into(),
-        );
-    }
+    let updated_formula = parsed_formula.formula.clone();
 
     // Create family object
     let family = create_family(family_name, link_name)
@@ -130,34 +134,22 @@ pub fn glm_fit_napi(
     data_json: String,
     options_json: Option<String>,
 ) -> Result<String, napi::Error> {
-    // Parse data from JSON
-    let (data, categorical_vars) = parse_data_json(&data_json)
+    // Parse data from JSON. Errors out with an actionable message if any
+    // column is non-numeric — see non_numeric_column_error.
+    let data = parse_data_json(&data_json)
         .map_err(|e| {
             eprintln!("[NAPI] Data parsing error: {}", e);
             napi::Error::from_reason(e)
         })?;
 
-    // Parse formula using existing parser and handle categorical variables
+    // Parse formula. Predictors must already match numeric column names; the
+    // GLM does not synthesize dummies from string columns.
     let parsed_formula = parse_formula(&formula)
         .map_err(|e| {
             eprintln!("[NAPI] Formula parsing error: {}", e);
             napi::Error::from_reason(e)
         })?;
-
-    // Update the formula to replace categorical variables with dummy variable names
-    let updated_formula = if !categorical_vars.is_empty() {
-        update_formula_with_dummy_names(&parsed_formula.formula, &categorical_vars)
-    } else {
-        parsed_formula.formula.clone()
-    };
-
-    // Log formula transformation if categorical variables are present
-    if !categorical_vars.is_empty() {
-        eprintln!(
-            "[NAPI] Formula updated for categorical vars: {}",
-            updated_formula
-        );
-    }
+    let updated_formula = parsed_formula.formula.clone();
 
     // Create family object
     let family = create_family(&family_name, &link_name)
@@ -211,136 +203,27 @@ pub fn glm_fit_napi(
         .map_err(|e| napi::Error::from_reason(e.to_string()))
 }
 
-/// Update formula to replace categorical variable names with dummy variable names.
+/// Parse data from JSON string into a numeric column map.
 ///
-/// This function takes a formula that may contain categorical variables and expands it
-/// to use dummy variables instead. For each categorical variable, dummy variables are
-/// created for all levels except the first (which serves as the reference category).
-///
-/// # Arguments
-/// * `formula` - The original formula string (e.g., "y ~ x1 + x2 * x3")
-/// * `categorical_vars` - Map of variable names to their categorical levels
-///
-/// # Returns
-/// A new formula string with categorical variables replaced by dummy variables
-///
-/// # Examples
-/// - `x2` with levels ["A", "B", "C"] becomes `x2B + x2C`
-/// - `x1 * x2` with categorical `x2` becomes `x1 * x2B + x1 * x2C`
-fn update_formula_with_dummy_names(
-    formula: &str,
-    categorical_vars: &HashMap<String, Vec<String>>,
-) -> String {
-    let parsed = match parse_formula(formula) {
-        Ok(p) => p,
-        Err(_) => return formula.to_string(),
-    };
-
-    let mut updated_predictors = Vec::new();
-
-    for predictor in &parsed.predictors {
-        if predictor == "(Intercept)" {
-            continue; // Skip intercept - handled automatically by GLM core
-        }
-
-        if predictor.contains(':') {
-            // Handle interaction terms
-            let interaction_vars: Vec<&str> = predictor.split(':').collect();
-            let var_expansions: Vec<Vec<String>> = interaction_vars
-                .iter()
-                .map(|&var| {
-                    if let Some(categories) = categorical_vars.get(var) {
-                        categories
-                            .iter()
-                            .skip(1)
-                            .map(|cat| format!("{}{}", var, cat))
-                            .collect()
-                    } else {
-                        vec![var.to_string()]
-                    }
-                })
-                .collect();
-
-            let combinations = generate_interaction_combinations(&var_expansions);
-            updated_predictors.extend(combinations);
-        } else {
-            // Handle simple terms
-            if let Some(categories) = categorical_vars.get(predictor) {
-                let dummies: Vec<String> = categories
-                    .iter()
-                    .skip(1)
-                    .map(|cat| format!("{}{}", predictor, cat))
-                    .collect();
-                updated_predictors.extend(dummies);
-            } else {
-                updated_predictors.push(predictor.clone());
-            }
-        }
-    }
-
-    format!("{} ~ {}", parsed.response, updated_predictors.join(" + "))
-}
-
-/// Generate all combinations for interaction terms with dummy variables.
-///
-/// Takes a list of variable expansions (each variable may expand to multiple dummy variables)
-/// and generates all possible interaction combinations.
-///
-/// # Arguments
-/// * `var_expansions` - Vector where each element is a list of dummy variables for one original variable
-///
-/// # Returns
-/// Vector of all possible interaction combinations joined with ":"
-///
-/// # Examples
-/// Input: `[["x1"], ["x2B", "x2C"]]` → Output: `["x1:x2B", "x1:x2C"]`
-fn generate_interaction_combinations(var_expansions: &[Vec<String>]) -> Vec<String> {
-    match var_expansions.len() {
-        0 => vec![],
-        1 => var_expansions[0].clone(),
-        _ => {
-            let first = &var_expansions[0];
-            let rest_combinations = generate_interaction_combinations(&var_expansions[1..]);
-
-            first
-                .iter()
-                .flat_map(|item| {
-                    if rest_combinations.is_empty() {
-                        vec![item.clone()]
-                    } else {
-                        rest_combinations
-                            .iter()
-                            .map(|combo| format!("{}:{}", item, combo))
-                            .collect()
-                    }
-                })
-                .collect()
-        }
-    }
-}
-
-/// Parse data from JSON string into numeric data and categorical variable information.
-///
-/// Processes JSON data to identify categorical variables (string arrays) and converts them
-/// to dummy variables, while preserving numeric variables as-is.
+/// Every column must be a numeric array. String columns (or any non-finite,
+/// non-numeric value) trigger the actionable error from
+/// `non_numeric_column_error`. The user is expected to encode categoricals
+/// explicitly with their own choice of reference level before calling GLM —
+/// tidy-ts does not auto-encode.
 ///
 /// # Arguments
 /// * `json` - JSON string containing data as object with column names as keys
 ///
 /// # Returns
-/// Tuple of:
-/// - HashMap of numeric data (including dummy variables for categoricals)
-/// - HashMap mapping original categorical variable names to their levels
+/// HashMap of column name → f64 vector, or an error message describing the
+/// first non-numeric column encountered.
 ///
 /// # Examples
-/// Input: `{"x": [1,2,3], "y": ["A","B","A"]}`
-/// Output: `({"x": [1,2,3], "yB": [0,1,0]}, {"y": ["A","B"]})`
-fn parse_data_json(
-    json: &str,
-) -> Result<(HashMap<String, Vec<f64>>, HashMap<String, Vec<String>>), String> {
+/// Input: `{"x": [1,2,3], "y": [4,5,6]}` → `{"x": [1,2,3], "y": [4,5,6]}`
+/// Input: `{"x": [1,2,3], "y": ["A","B","A"]}` → Err(non_numeric_column_error("y"))
+fn parse_data_json(json: &str) -> Result<HashMap<String, Vec<f64>>, String> {
     use serde_json::Value;
 
-    // Parse JSON properly using serde_json
     let parsed: Value =
         serde_json::from_str(json).map_err(|e| format!("JSON parsing error: {}", e))?;
 
@@ -349,63 +232,38 @@ fn parse_data_json(
         .ok_or_else(|| format!("Expected JSON object, got: {:?}", parsed))?;
 
     let mut data = HashMap::new();
-    let mut categorical_vars = HashMap::new();
 
-    // First pass: identify categorical variables and collect unique values
     for (key, value) in obj.iter() {
-        if let Some(array) = value.as_array() {
-            if !array.is_empty() {
-                if array[0].is_string() {
-                    // This is a categorical variable
-                    let mut unique_values = std::collections::HashSet::new();
-                    for item in array.iter() {
-                        if let Some(s) = item.as_str() {
-                            unique_values.insert(s.to_string());
-                        }
-                    }
-                    let mut sorted_values: Vec<String> = unique_values.into_iter().collect();
-                    sorted_values.sort();
-                    categorical_vars.insert(key.clone(), sorted_values);
-                }
-            }
+        let array = value
+            .as_array()
+            .ok_or_else(|| format!("Column \"{}\" is not an array", key))?;
+
+        // Detect string columns up-front so we surface the actionable
+        // categorical guidance, not a generic "non-numeric value" error.
+        if array.iter().any(|item| item.is_string()) {
+            return Err(non_numeric_column_error(key));
         }
+
+        let values: Result<Vec<f64>, String> = array
+            .iter()
+            .map(|item| {
+                item.as_f64().ok_or_else(|| {
+                    // Booleans / nulls / objects also hit this path. Same
+                    // remedy applies in spirit (encode explicitly), but we
+                    // keep the message specific to "non-numeric value" so
+                    // the user can debug nulls separately from strings.
+                    format!(
+                        "[tidy-ts] Column \"{}\" contains a non-numeric value: {:?}. \
+                         s.glm requires numeric columns only.",
+                        key, item
+                    )
+                })
+            })
+            .collect();
+        data.insert(key.clone(), values?);
     }
 
-    // Second pass: convert data to numeric, creating dummy variables for categoricals
-    for (key, value) in obj.iter() {
-        if let Some(array) = value.as_array() {
-            if let Some(categories) = categorical_vars.get(key) {
-                // Convert categorical to dummy variables (exclude first category as reference)
-                for (_i, category) in categories.iter().enumerate().skip(1) {
-                    let dummy_name = format!("{}{}", key, category);
-                    let dummy_values: Vec<f64> = array
-                        .iter()
-                        .map(|item| {
-                            if let Some(s) = item.as_str() {
-                                if s == category { 1.0 } else { 0.0 }
-                            } else {
-                                0.0
-                            }
-                        })
-                        .collect();
-                    data.insert(dummy_name, dummy_values);
-                }
-            } else {
-                // Convert numeric array
-                let values: Result<Vec<f64>, String> = array
-                    .iter()
-                    .map(|item| {
-                        item.as_f64().ok_or_else(|| {
-                            format!("Non-numeric value in column '{}': {:?}", key, item)
-                        })
-                    })
-                    .collect();
-                data.insert(key.clone(), values?);
-            }
-        }
-    }
-
-    Ok((data, categorical_vars))
+    Ok(data)
 }
 
 /// Parse options from JSON string

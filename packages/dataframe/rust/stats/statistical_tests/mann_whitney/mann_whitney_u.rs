@@ -191,11 +191,14 @@ impl MannWhitneyUTest {
             }
         };
 
-        // Calculate effect size using R's helper function approach
-        let expected_u = n_xy / 2.0;
+        // Variance of U under H0 (used by the asymptotic CI below).
         let var_u = n_xy * (n + 1.0) / 12.0;
-        let z_stat = (estimate_small - expected_u) / var_u.sqrt();
-        let effect_size = z_stat / n.sqrt();
+
+        // Canonical rank-biserial correlation (Wendt 1972, R's effectsize::rank_biserial):
+        //   r_rb = 1 - 2U / (n_x * n_y)
+        // where U here is `estimate_small` (= R's W statistic = U_x = sum_ranks_x - n_x*(n_x+1)/2).
+        // Positive r means group x tends to be ranked higher than y.
+        let effect_size = 1.0 - 2.0 * estimate_small / n_xy;
 
         // Calculate test statistic (U statistic)
         let test_statistic = estimate_small;

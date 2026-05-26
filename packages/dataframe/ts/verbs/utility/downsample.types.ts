@@ -1,3 +1,4 @@
+import type { Temporal } from "@tidy-ts/shims/temporal-polyfill";
 import type {
   DataFrame,
   GroupedDataFrame,
@@ -6,18 +7,25 @@ import type {
 /**
  * Frequency specification for time-series operations.
  *
- * Supports common time periods as strings (e.g., "1H", "6H", "15min")
- * or as objects (e.g., { value: 6, unit: "h" }) or as raw milliseconds (number).
+ * Three accepted shapes:
+ * 1. **String** — `<number><unit>` where unit is one of `S`, `min`, `H`, `D`,
+ *    `W`, `M`, `Y`. Examples: `"15min"`, `"1H"`, `"1D"`, `"1M"` (one month),
+ *    `"1Y"`. Convenient for inline literals.
+ * 2. **Number** — raw milliseconds.
+ * 3. **`Temporal.Duration`** — unambiguous and recommended when working with
+ *    Temporal time columns end-to-end. Examples:
+ *    `Temporal.Duration.from({ minutes: 5 })`,
+ *    `Temporal.Duration.from({ days: 1 })`,
+ *    `Temporal.Duration.from({ months: 1 })`,
+ *    `Temporal.Duration.from("PT15M")` (ISO 8601).
  *
- * Pattern: `<number><unit>` where unit is:
- * - S: seconds
- * - min: minutes
- * - H: hours
- * - D: days
- * - W: weeks
- * - M: months (calendar-aware)
- * - Q: quarters (calendar-aware)
- * - Y: years (calendar-aware)
+ * Calendar-aware vs fixed-duration:
+ * - `M` / `Y` (or Duration `months` / `years`) → calendar-aware bucketing on
+ *   `Temporal.PlainDate` / `PlainDateTime` columns; on epoch types (`Date`,
+ *   `Instant`, `ZonedDateTime`) they fall back to approximate fixed lengths
+ *   (30 days / 365 days).
+ * - `S` / `min` / `H` / `D` / `W` (or Duration `seconds` / `minutes` / `hours`
+ *   / `days` / `weeks`) → fixed-duration on all column types.
  */
 export type Frequency =
   | `${number}S`
@@ -26,13 +34,9 @@ export type Frequency =
   | `${number}D`
   | `${number}W`
   | `${number}M`
-  | `${number}Q`
   | `${number}Y`
   | number
-  | {
-    value: number;
-    unit: "ms" | "s" | "min" | "h" | "d" | "w" | "M" | "Q" | "Y";
-  };
+  | Temporal.Duration;
 
 /**
  * Aggregation spec for downsampling.
@@ -105,6 +109,8 @@ type SpecReturn<Spec> = Spec extends { fn: (...args: any[]) => infer Ret } ? Ret
 export interface DownsampleMethod<Row extends object> {
   /**
    * Downsample grouped DataFrame - preserves group columns in result.
+   * The time column keeps its input type (Date / Temporal.Instant /
+   * Temporal.ZonedDateTime / Temporal.PlainDate / Temporal.PlainDateTime).
    */
   <
     R extends object,
@@ -117,7 +123,7 @@ export interface DownsampleMethod<Row extends object> {
   ): DataFrame<
     {
       [K in GroupName | Exclude<keyof Aggregations, TimeCol> | TimeCol]:
-        K extends TimeCol ? Date
+        K extends TimeCol ? NonNullable<R[K & keyof R]>
           : K extends keyof Aggregations ? SpecReturn<Aggregations[K]>
           : K extends keyof R ? R[K]
           : never;
@@ -126,6 +132,8 @@ export interface DownsampleMethod<Row extends object> {
 
   /**
    * Downsample regular DataFrame.
+   * The time column keeps its input type (Date / Temporal.Instant /
+   * Temporal.ZonedDateTime / Temporal.PlainDate / Temporal.PlainDateTime).
    */
   <
     R extends object,
@@ -137,7 +145,7 @@ export interface DownsampleMethod<Row extends object> {
   ): DataFrame<
     {
       [K in Exclude<keyof Aggregations, TimeCol> | TimeCol]:
-        K extends TimeCol ? Date
+        K extends TimeCol ? NonNullable<R[K & keyof R]>
           : K extends keyof Aggregations ? SpecReturn<Aggregations[K]>
           : never;
     }

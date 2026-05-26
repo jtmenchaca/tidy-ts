@@ -23,8 +23,8 @@ interface CatData {
 const DATA: CatData[] = [
   { label: ["Column", "reference"], n: 16,
     ts: { compile: 16, runtime: 0, warn: 0, silent: 0 },
-    py: { compile: 0, runtime: 12, warn: 0, silent: 4 },
-    r: { compile: 0, runtime: 12, warn: 0, silent: 4 } },
+    py: { compile: 0, runtime: 14, warn: 0, silent: 2 },
+    r: { compile: 0, runtime: 14, warn: 0, silent: 2 } },
   { label: ["Type", "errors"], n: 14,
     ts: { compile: 13, runtime: 1, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 5, warn: 0, silent: 9 },
@@ -32,7 +32,7 @@ const DATA: CatData[] = [
   { label: ["Null &", "missing data"], n: 17, highlight: true,
     ts: { compile: 17, runtime: 0, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 0, warn: 0, silent: 17 },
-    r: { compile: 0, runtime: 0, warn: 0, silent: 17 } },
+    r: { compile: 0, runtime: 2, warn: 0, silent: 15 } },
   { label: ["Join", "errors"], n: 8,
     ts: { compile: 8, runtime: 0, warn: 0, silent: 0 },
     py: { compile: 0, runtime: 5, warn: 0, silent: 3 },
@@ -125,7 +125,7 @@ function renderHeatmap(): string {
   // Totals
   const ty = MT + DATA.length * cellH + 12;
   svgBody += `<text x="${ML - 10}" y="${ty + 14}" text-anchor="end" font-size="11" fill="#333" font-weight="600">Total caught</text>\n`;
-  const caughtTotals = { ts: 65, py: 24, r: 29 };
+  const caughtTotals = { ts: 65, py: 26, r: 33 };
   for (let ei = 0; ei < ECOS.length; ei++) {
     const eco = ECOS[ei];
     const v = caughtTotals[eco.key];

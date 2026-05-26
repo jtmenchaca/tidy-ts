@@ -74,11 +74,14 @@ where
     let mut comparisons = Vec::new();
     let _n_comparisons = n_groups * (n_groups - 1) / 2;
     
-    for i in 0..n_groups {
-        for j in (i + 1)..n_groups {
+    // Match R's TukeyHSD convention (also used in `posthocTGH` / DescTools::ScheffeTest):
+    // lower-triangle iteration, label `"higher-lower"`, mean_diff = mean[higher] - mean[lower].
+    for j in 0..n_groups {
+        for i in (j + 1)..n_groups {
             let (mean_i, n_i, var_i) = group_stats[i];
             let (mean_j, n_j, var_j) = group_stats[j];
-            
+
+            // mean_diff = mean(higher-indexed) - mean(lower-indexed), matches R.
             let mean_diff = mean_i - mean_j;
             
             // Calculate Welch's standard error
@@ -98,8 +101,9 @@ where
             // p-value = P(Q > sqrt(2) * |t|, k, df) where Q is studentized range
             let q_statistic = t_statistic * (2.0_f64).sqrt();
             
-            // Use the same studentized range CDF function as in Tukey HSD
-            let cdf_value = super::ptukey_exact(q_statistic, n_groups as f64, df);
+            // Use R's studentized range CDF (Copenhaver-Holland 1988 port).
+            // For post-hoc on one ANOVA: rr=1, cc=n_groups.
+            let cdf_value = super::ptukey(q_statistic, 1.0, n_groups as f64, df);
             let p_value = 1.0 - cdf_value;
             
             // For Games-Howell, the p-value from studentized range is already adjusted

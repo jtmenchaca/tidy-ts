@@ -96,32 +96,30 @@ export function qlnorm({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the log-normal distribution
  */
-export function rlnorm(): number;
-export function rlnorm({
-  meanLog,
-  standardDeviationLog,
-  sampleSize,
-}: {
+export function rlnorm(args: {
   meanLog?: number;
   standardDeviationLog?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rlnorm(args?: {
+  meanLog?: number;
+  standardDeviationLog?: number;
+  seed?: number;
+}): number;
 export function rlnorm({
   meanLog = 0,
   standardDeviationLog = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   meanLog?: number;
   standardDeviationLog?: number;
   sampleSize?: number;
+  seed?: number;
 } = {}): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rlnorm(meanLog, standardDeviationLog);
+  if (sampleSize === undefined) {
+    return wasm_rlnorm(meanLog, standardDeviationLog, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rlnorm(meanLog, standardDeviationLog));
-  }
-  return results;
+  return wasm_rlnorm(meanLog, standardDeviationLog, sampleSize, seed);
 }

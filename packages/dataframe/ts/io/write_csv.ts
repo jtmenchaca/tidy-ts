@@ -1,6 +1,33 @@
 import { currentRuntime, Runtime, writeTextFileSync } from "@tidy-ts/shims";
 import { stringify } from "@std/csv/stringify";
 import type { DataFrame } from "../dataframe/index.ts";
+import { isComparable } from "../stats/helpers.ts";
+
+/**
+ * Pre-process a row's cell values before passing them to @std/csv/stringify.
+ *
+ * `stringify` calls `JSON.stringify` on object cells, which for `Date` /
+ * `Temporal.*` values produces a quoted ISO string (e.g. `'"2024-03-04"'`).
+ * CSV then escapes those embedded quotes, yielding cells like `"""2024-03-04"""`.
+ *
+ * Convert these to plain ISO strings up-front so they serialize as `2024-03-04`
+ * (or `"2024-03-04T09:30:00Z"` only if the value naturally contains commas/quotes).
+ */
+function normalizeRowForCSV(row: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key in row) {
+    const v = row[key];
+    if (v instanceof Date) {
+      out[key] = v.toISOString();
+    } else if (isComparable(v)) {
+      // Temporal.PlainDate, PlainDateTime, Instant, ZonedDateTime, ...
+      out[key] = (v as { toString(): string }).toString();
+    } else {
+      out[key] = v;
+    }
+  }
+  return out;
+}
 
 /**
  * Convert a DataFrame to CSV string format using @std/csv/stringify
@@ -12,7 +39,7 @@ function dataFrameToCSV<T extends Record<string, unknown>>(
     return "";
   }
 
-  const data = dataFrame.toArray();
+  const data = dataFrame.toArray().map(normalizeRowForCSV);
   const columns = dataFrame.columns();
 
   return stringify(data, {

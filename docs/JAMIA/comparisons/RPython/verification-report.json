@@ -6,7 +6,7 @@
     "rRuntime": "R 4.6.0",
     "denoRuntime": "deno 2.7.14 (stable, release, aarch64-apple-darwin)",
     "runnerScript": "docs/JAMIA/comparisons/RPython/verify.ts",
-    "gitCommit": "5079562a"
+    "gitCommit": "2b4cd69c"
   },
   "files": [
     {
@@ -36,7 +36,7 @@
       "tsCheckStatus": "passes",
       "run": {
         "exitCode": 0,
-        "stdout": "[R] exit=0 | \n",
+        "stdout": "[tidyverse] exit=0 | \n",
         "stderr": "[NAPI] Formula updated for categorical vars: y ~ xone + xthree + xtwo\n"
       },
       "foreign": {
@@ -78,13 +78,13 @@
       "tsCheckStatus": "passes",
       "run": {
         "exitCode": 0,
-        "stdout": "[R] exit=1 | Execution halted\n",
+        "stdout": "[tidyverse] exit=1 | Error in scale_colour_manual(): Continuous value supplied to a discrete scale.\n",
         "stderr": ""
       },
       "foreign": {
         "language": "R",
         "exitCode": 1,
-        "lastStderrLine": "Execution halted"
+        "lastStderrLine": "Error in scale_colour_manual(): Continuous value supplied to a discrete scale."
       },
       "tidyTsRuntimeGuardFired": false,
       "reproductionFileCrashed": false,
@@ -120,13 +120,13 @@
       "tsCheckStatus": "passes",
       "run": {
         "exitCode": 0,
-        "stdout": "[pandas] exit=1 | when serializing list item 0\n",
+        "stdout": "[pandas] exit=1 | TypeError: Object of type int64 is not JSON serializable\n",
         "stderr": ""
       },
       "foreign": {
         "language": "pandas",
         "exitCode": 1,
-        "lastStderrLine": "when serializing list item 0"
+        "lastStderrLine": "TypeError: Object of type int64 is not JSON serializable"
       },
       "tidyTsRuntimeGuardFired": false,
       "reproductionFileCrashed": false,
@@ -134,23 +134,3216 @@
       "tidyTsDetectionOutcomeObserved": "compile-time error",
       "tidyTsDetectionMechanismObserved": "compiler",
       "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/12125364_median_int_vs_double.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#12125364",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "median() returns int for odd-length groups, double for even-length. data.table crashes on inconsistent return types across groups. Not verified with R runtime — .R file written from SO code.",
+        "raw": {
+          "ID": "SO#12125364",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "median() returns int for odd-length groups, double for even-length. data.table crashes on inconsistent return types across groups. Not verified with R runtime — .R file written from SO code."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/12125364_median_int_vs_double.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | %notin%\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "%notin%"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/12588986_inplace_add_object_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#12588986",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Inplace add on numpy object array with float64 fails. Type conflict in arithmetic.",
+        "raw": {
+          "ID": "SO#12588986",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Inplace add on numpy object array with float64 fails. Type conflict in arithmetic."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/12588986_inplace_add_object_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type '(string | number)[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/12844529_groupby_drops_object_cols.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#12844529",
+        "language": "Python",
+        "bugClass": "Column ref",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "groupby aggregate silently drops object-dtype columns. Output missing columns, no warning.",
+        "raw": {
+          "ID": "SO#12844529",
+          "Language": "Python",
+          "Bug class": "Column ref",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "groupby aggregate silently drops object-dtype columns. Output missing columns, no warning."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/12844529_groupby_drops_object_cols.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"72\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/14023423_preprocess_factor_cols.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#14023423",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "caret preProcess fails on factor columns. Numeric function on non-numeric type.",
+        "raw": {
+          "ID": "SO#14023423",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "caret preProcess fails on factor columns. Numeric function on non-numeric type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/14023423_preprocess_factor_cols.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | Loading required package: lattice\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"1st\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "Loading required package: lattice"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/14992644_histogram_string_data.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#14992644",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Histogram on string DataFrame columns fails. Numeric operation on string data.",
+        "raw": {
+          "ID": "SO#14992644",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Histogram on string DataFrame columns fails. Numeric operation on string data."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/14992644_histogram_string_data.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"a\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/15138973_value_counts_nan.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#15138973",
+        "language": "Python",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "value_counts().max() fails because NaN in results. Missing values propagate into aggregation.",
+        "raw": {
+          "ID": "SO#15138973",
+          "Language": "Python",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "value_counts().max() fails because NaN in results. Missing values propagate into aggregation."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/15138973_value_counts_nan.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"apple\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type '(string | null)[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/15799162_resample_multiindex.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#15799162",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Resampling requires DatetimeIndex, got MultiIndex with dates. Wrong index type.",
+        "raw": {
+          "ID": "SO#15799162",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Resampling requires DatetimeIndex, got MultiIndex with dates. Wrong index type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/15799162_resample_multiindex.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: MultiIndex has no single backing array. Use 'MultiIndex.to_numpy()' to get a NumPy array of tuples.\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: MultiIndex has no single backing array. Use 'MultiIndex.to_numpy()' to get a NumPy array of tuples."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/16067144_fillna_float_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#16067144",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "fillna on float column with string requires astype(object), silently converting all columns to object dtype.",
+        "raw": {
+          "ID": "SO#16067144",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "fillna on float column with string requires astype(object), silently converting all columns to object dtype."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/16067144_fillna_float_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"UNKNOWN\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/16988526_csv_infers_float.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#16988526",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "CSV reader infers '1234E5' as float instead of string. Silent wrong type at load. Original bug fixed in pandas 0.11.1, but same class of bug reproduced with leading-zero identifiers ('007' → 7).",
+        "raw": {
+          "ID": "SO#16988526",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "CSV reader infers '1234E5' as float instead of string. Silent wrong type at load. Original bug fixed in pandas 0.11.1, but same class of bug reproduced with leading-zero identifiers ('007' → 7)."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/16988526_csv_infers_float.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"007\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/17151210_loadtxt_header_row.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#17151210",
+        "language": "Python",
+        "bugClass": "Data loading",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "numpy loadtxt fails on header/comment rows. Non-numeric content in numeric load.",
+        "raw": {
+          "ID": "SO#17151210",
+          "Language": "Python",
+          "Bug class": "Data loading",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "numpy loadtxt fails on header/comment rows. Non-numeric content in numeric load."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/17151210_loadtxt_header_row.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: could not convert string 'x' to float64 at row 0, column 1.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"x\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: could not convert string 'x' to float64 at row 0, column 1."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/17690738_datetime_to_int_series.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#17690738",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Assigning datetime to integer-indexed Series. Type mismatch on assignment.",
+        "raw": {
+          "ID": "SO#17690738",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Assigning datetime to integer-indexed Series. Type mismatch on assignment."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/17690738_datetime_to_int_series.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: Invalid value '2008-12-20 00:00:00' for dtype 'int64'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2008-12-20\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: Invalid value '2008-12-20 00:00:00' for dtype 'int64'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/17950374_int_to_string_concat.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#17950374",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Concatenating int column with string fails. Type mismatch in string operation.",
+        "raw": {
+          "ID": "SO#17950374",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Concatenating int column with string fails. Type mismatch in string operation."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/17950374_int_to_string_concat.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: operation 'add' not supported for dtype 'str' with dtype 'int64'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"A1\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: operation 'add' not supported for dtype 'str' with dtype 'int64'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/18401112_string_labels_roc_auc.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#18401112",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "String labels ('0','1') instead of int labels for roc_auc_score. Wrong type at data load.",
+        "raw": {
+          "ID": "SO#18401112",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "String labels ('0','1') instead of int labels for roc_auc_score. Wrong type at data load."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/18401112_string_labels_roc_auc.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ModuleNotFoundError: No module named 'sklearn'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"0\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ModuleNotFoundError: No module named 'sklearn'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/19105976_date_on_series.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#19105976",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": ".date() called on Series instead of element. Typed mutate enforces value-level operations.",
+        "raw": {
+          "ID": "SO#19105976",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": ".date() called on Series instead of element. Typed mutate enforces value-level operations."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/19105976_date_on_series.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | AttributeError: 'Series' object has no attribute 'date'. Did you mean: 'update'?\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2023-01-15 10:30:00\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "AttributeError: 'Series' object has no attribute 'date'. Did you mean: 'update'?"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/19864028_string_na_in_numeric_col.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#19864028",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Column contains 'na' string alongside numbers, preventing float conversion. Mixed types.",
+        "raw": {
+          "ID": "SO#19864028",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Column contains 'na' string alongside numbers, preventing float conversion. Mixed types."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/19864028_string_na_in_numeric_col.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: could not convert string to float: 'na'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"5.2\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: could not convert string to float: 'na'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/20625982_groupby_drops_timedelta.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#20625982",
+        "language": "Python",
+        "bugClass": "Column ref",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "groupby.mean() silently drops timedelta column from output. Column vanishes with no error.",
+        "raw": {
+          "ID": "SO#20625982",
+          "Language": "Python",
+          "Bug class": "Column ref",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "groupby.mean() silently drops timedelta column from output. Column vanishes with no error."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/20625982_groupby_drops_timedelta.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"A\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'string[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/21011777_isnan_on_mixed_list.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#21011777",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "NaN mixed into list prevents clean removal — math.isnan fails on non-float elements. Mixed types.",
+        "raw": {
+          "ID": "SO#21011777",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "NaN mixed into list prevents clean removal — math.isnan fails on non-float elements. Mixed types."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/21011777_isnan_on_mixed_list.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: must be real number, not str\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: must be real number, not str"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type '(string | null)[]' is not assignable to type 'number[]'"
+    },
+    {
+      "path": "RPython/TM/21472243_hist_on_tuples.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#21472243",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "plt.hist on object-dtype data fails reduce. Numeric operation on string/object data.",
+        "raw": {
+          "ID": "SO#21472243",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "plt.hist on object-dtype data fails reduce. Numeric operation on string/object data."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/21472243_hist_on_tuples.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ModuleNotFoundError: No module named 'matplotlib'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"whitefield\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ModuleNotFoundError: No module named 'matplotlib'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/21714867_ifelse_na_corrupts_integer.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#21714867",
+        "language": "R",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "ifelse with NA_integer_ reinterprets double bits as integer; silent corruption",
+        "raw": {
+          "ID": "SO#21714867",
+          "Language": "R",
+          "Bug class": "Nullable",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "ifelse with NA_integer_ reinterprets double bits as integer; silent corruption"
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/21714867_ifelse_na_corrupts_integer.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | intersect, setdiff, setequal, union\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "intersect, setdiff, setequal, union"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'number | null' is not assignable to parameter of type 'number'."
+    },
+    {
+      "path": "RPython/TM/22137723_commas_in_numbers.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#22137723",
+        "language": "Python",
+        "bugClass": "Data loading",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Number strings with commas fail conversion. Data format vs expected type at load.",
+        "raw": {
+          "ID": "SO#22137723",
+          "Language": "Python",
+          "Bug class": "Data loading",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Number strings with commas fail conversion. Data format vs expected type at load."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/22137723_commas_in_numbers.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: could not convert string to float: '1,200'\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: could not convert string to float: '1,200'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/22481271_corr_object_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#22481271",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "corr() returns empty matrix on object-dtype columns. Numeric operation on string-typed data silently produces wrong result.",
+        "raw": {
+          "ID": "SO#22481271",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "corr() returns empty matrix on object-dtype columns. Numeric operation on string-typed data silently produces wrong result."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/22481271_corr_object_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \" 0.006\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/22557322_savetxt_fmt_drops_zeros.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#22557322",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "numpy savetxt fmt='%i' on float array silently drops zeroes. Format/type mismatch produces wrong output.",
+        "raw": {
+          "ID": "SO#22557322",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "numpy savetxt fmt='%i' on float array silently drops zeroes. Format/type mismatch produces wrong output."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/22557322_savetxt_fmt_drops_zeros.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/22906804_matrix_multiply_dataframe.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#22906804",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Matrix multiply on data.frame requires as.matrix. Type not suitable for math operations.",
+        "raw": {
+          "ID": "SO#22906804",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Matrix multiply on data.frame requires as.matrix. Type not suitable for math operations."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/22906804_matrix_multiply_dataframe.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in t(da) %*% da : requires numeric/complex matrix/vector arguments\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: {\"v1\":0.46,\"v2\":2.36,\"v3\":-1.54} (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in t(da) %*% da : requires numeric/complex matrix/vector arguments"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'DataFrame<...>' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/23997475_geom_vline_date_scale.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#23997475",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Character date value for geom_vline position. Typed position spec requires numeric/temporal.",
+        "raw": {
+          "ID": "SO#23997475",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Character date value for geom_vline position. Typed position spec requires numeric/temporal."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/23997475_geom_vline_date_scale.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | Warning: In scale_x_date() : A <numeric> value was passed to a Date scale.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2014-06-02\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "Warning: In scale_x_date() : A <numeric> value was passed to a Date scale."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/24706677_sklearn_string_features.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#24706677",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "sklearn GradientBoosting doesn't handle string/categorical features. Numeric expected.",
+        "raw": {
+          "ID": "SO#24706677",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "sklearn GradientBoosting doesn't handle string/categorical features. Numeric expected."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/24706677_sklearn_string_features.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ModuleNotFoundError: No module named 'sklearn'\n",
+        "stderr": "[NAPI] Formula updated for categorical vars: feature1 ~ feature0versicolor + feature0virginica + feature2\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ModuleNotFoundError: No module named 'sklearn'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type 'DataFrame<{ feature0: string; ... }>' is not assignable to type 'DataFrame<Record<string, number>>'."
+    },
+    {
+      "path": "RPython/TM/25416955_string_dates_plot.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#25416955",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Matplotlib date axis from string column not parsed. String where date expected.",
+        "raw": {
+          "ID": "SO#25416955",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Matplotlib date axis from string column not parsed. String where date expected."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/25416955_string_dates_plot.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: unsupported operand type(s) for -: 'str' and 'str'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2014-07-10 11:49:14\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: unsupported operand type(s) for -: 'str' and 'str'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/25937000_geom_polygon_discrete_color.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#25937000",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "String/factor value on continuous scale. Same pattern as 29278153.",
+        "raw": {
+          "ID": "SO#25937000",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "String/factor value on continuous scale. Same pattern as 29278153."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/25937000_geom_polygon_discrete_color.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in scale_colour_continuous(): Discrete value supplied to a continuous scale.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"staccato\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in scale_colour_continuous(): Discrete value supplied to a continuous scale."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/26401116_median_inconsistent_types.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#26401116",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Same int/double inconsistency from median() in data.table groupby. Not verified with R runtime — .R file written from SO code.",
+        "raw": {
+          "ID": "SO#26401116",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Same int/double inconsistency from median() in data.table groupby. Not verified with R runtime — .R file written from SO code."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/26401116_median_inconsistent_types.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | %notin%\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "%notin%"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/26614465_notnull_on_list_column.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#26614465",
+        "language": "Python",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "pd.notnull on list returns array, breaks if-condition. Null-check returns unexpected type.",
+        "raw": {
+          "ID": "SO#26614465",
+          "Language": "Python",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "pd.notnull on list returns array, breaks if-condition. Null-check returns unexpected type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/26614465_notnull_on_list_column.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: [1,2,3] (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: The truth value of an array with more than one element is ambiguous. Use a.any() or a.all()"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type '(number[] | null)[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/26788854_date_string_arithmetic.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#26788854",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Date string \"03011979\" used in datetime arithmetic. String where temporal type expected.",
+        "raw": {
+          "ID": "SO#26788854",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Date string \"03011979\" used in datetime arithmetic. String where temporal type expected."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/26788854_date_string_arithmetic.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: operation 'rsub' not supported for dtype 'str' with object of type <class 'pandas.Timestamp'>\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"03011979\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: operation 'rsub' not supported for dtype 'str' with object of type <class 'pandas.Timestamp'>"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/27413843_read_table_wrong_sep.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#27413843",
+        "language": "Python",
+        "bugClass": "Data loading",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "read_table fails with wrong separator — loads as single column. Schema mismatch at load.",
+        "raw": {
+          "ID": "SO#27413843",
+          "Language": "Python",
+          "Bug class": "Data loading",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "read_table fails with wrong separator — loads as single column. Schema mismatch at load."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/27413843_read_table_wrong_sep.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: only single character unicode strings can be converted to Py_UCS4, got length 0\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"17.749000   0.66007000    0.15122000   0.33150000\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: only single character unicode strings can be converted to Py_UCS4, got length 0"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/27828850_dplyr_posixlt_groupby.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#27828850",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "POSIXlt column breaks dplyr group_by. Same temporal type consistency pattern.",
+        "raw": {
+          "ID": "SO#27828850",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "POSIXlt column breaks dplyr group_by. Same temporal type consistency pattern."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/27828850_dplyr_posixlt_groupby.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | intersect, setdiff, setequal, union\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"01/15/14 10:00\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "intersect, setdiff, setequal, union"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/28393103_reduce_flexible_type.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#28393103",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "\"cannot perform reduce with flexible type\" — numeric reduction on object-dtype array.",
+        "raw": {
+          "ID": "SO#28393103",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "\"cannot perform reduce with flexible type\" — numeric reduction on object-dtype array."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/28393103_reduce_flexible_type.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: the resolved dtypes are not compatible with add.reduce. Resolved (dtype('<U4'), dtype('<U4'), dtype('<U8'))\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"-214\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: the resolved dtypes are not compatible with add.reduce. Resolved (dtype('<U4'), dtype('<U4'), dtype('<U8'))"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/28730083_geom_area_categorical_x.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#28730083",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "geom_area fails with categorical x-axis. Wrong type for continuous operation.",
+        "raw": {
+          "ID": "SO#28730083",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "geom_area fails with categorical x-axis. Wrong type for continuous operation."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/28730083_geom_area_categorical_x.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"1984-1985\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/29224719_ifelse_na_type_conflict.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29224719",
+        "language": "R",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "All-NA group makes ifelse return logical instead of numeric; type conflict across groups",
+        "raw": {
+          "ID": "SO#29224719",
+          "Language": "R",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "All-NA group makes ifelse return logical instead of numeric; type conflict across groups"
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29224719_ifelse_na_type_conflict.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | intersect, setdiff, setequal, union\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "intersect, setdiff, setequal, union"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'number | null' is not assignable to parameter of type 'number'."
+    },
+    {
+      "path": "RPython/TM/29278153_discrete_y_continuous_scale.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29278153",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "String/factor column passed to continuous y-axis. Typed y mapping requires `number \\| null \\| undefined`.",
+        "raw": {
+          "ID": "SO#29278153",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "String/factor column passed to continuous y-axis. Typed y mapping requires `number \\| null \\| undefined`."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29278153_discrete_y_continuous_scale.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in scale_y_continuous(): Discrete value supplied to a continuous scale.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"10\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in scale_y_continuous(): Discrete value supplied to a continuous scale."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/29298577_string_nan_in_dates.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29298577",
+        "language": "Python",
+        "bugClass": "Data loading",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "String 'nan' in date column fails to_datetime. Mixed content at load boundary.",
+        "raw": {
+          "ID": "SO#29298577",
+          "Language": "Python",
+          "Bug class": "Data loading",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "String 'nan' in date column fails to_datetime. Mixed content at load boundary."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29298577_string_nan_in_dates.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: time data 'nan' does not match format '%Y-%m-%d %H:%M:%S'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2014-10-20 10:44:31\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: time data 'nan' does not match format '%Y-%m-%d %H:%M:%S'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/29643820_assign_double_to_int_col.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29643820",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Assigning mean() (double) to integer column in data.table fails. Type of aggregation result doesn't match column type. Not verified with R runtime — .R file written from SO code.",
+        "raw": {
+          "ID": "SO#29643820",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Assigning mean() (double) to integer column in data.table fails. Type of aggregation result doesn't match column type. Not verified with R runtime — .R file written from SO code."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29643820_assign_double_to_int_col.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | Warning: In `[.data.table`(db, , `:=`(x, mean(y)), by = id) :\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"1\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "Warning: In `[.data.table`(db, , `:=`(x, mean(y)), by = id) :"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/29953011_ggplot_numeric_data_arg.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29953011",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Numeric vector passed where DataFrame expected. Typed graph() requires `DataFrame<T>` input.",
+        "raw": {
+          "ID": "SO#29953011",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Numeric vector passed where DataFrame expected. Typed graph() requires `DataFrame<T>` input."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29953011_ggplot_numeric_data_arg.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in fortify(): `data` must be a <data.frame>, or an object coercible by `fortify()`,\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in fortify(): `data` must be a <data.frame>, or an object coercible by `fortify()`,"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "number[] is not assignable to DataFrame"
+    },
+    {
+      "path": "RPython/TM/29974535_scale_x_date_character.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#29974535",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Character date column on x-axis gives wrong ordering. Typed x-axis mapping expects temporal or numeric for ordered axes.",
+        "raw": {
+          "ID": "SO#29974535",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Character date column on x-axis gives wrong ordering. Typed x-axis mapping expects temporal or numeric for ordered axes."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/29974535_scale_x_date_character.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in transformation$transform(): `transform_date()` works with objects of class <Date> only\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"01-Jan\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in transformation$transform(): `transform_date()` works with objects of class <Date> only"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/30063190_dplyr_posixlt.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#30063190",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "POSIXlt date column incompatible with dplyr. Tidy-ts uses single consistent Temporal type.",
+        "raw": {
+          "ID": "SO#30063190",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "POSIXlt date column incompatible with dplyr. Tidy-ts uses single consistent Temporal type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/30063190_dplyr_posixlt.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | intersect, setdiff, setequal, union\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"01.01.2010\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "intersect, setdiff, setequal, union"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/30132282_str_on_datetime_series.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#30132282",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": ".str accessor on datetime Series. Wrong accessor for column type.",
+        "raw": {
+          "ID": "SO#30132282",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": ".str accessor on datetime Series. Wrong accessor for column type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/30132282_str_on_datetime_series.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | AttributeError: Can only use .str accessor with string values, not datetime64. Did you mean: 'std'?\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2001-01-01T00:00:00.000Z\" (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "AttributeError: Can only use .str accessor with string values, not datetime64. Did you mean: 'std'?"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Date[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/30519140_boolean_mask_mixed_types.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#30519140",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Boolean mask on mixed-dtype DataFrame fails. Type inconsistency across columns.",
+        "raw": {
+          "ID": "SO#30519140",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Boolean mask on mixed-dtype DataFrame fails. Type inconsistency across columns."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/30519140_boolean_mask_mixed_types.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: Invalid value '30' for dtype 'str'. Value should be a string or missing value, got 'int' instead.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"b\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: Invalid value '30' for dtype 'str'. Value should be a string or missing value, got 'int' instead."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(string | number)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/30857680_resample_wrong_index.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#30857680",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "resample() requires DatetimeIndex, got integer index. Wrong index type for operation.",
+        "raw": {
+          "ID": "SO#30857680",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "resample() requires DatetimeIndex, got integer index. Wrong index type for operation."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/30857680_resample_wrong_index.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: Only valid with DatetimeIndex, TimedeltaIndex or PeriodIndex, but got an instance of 'RangeIndex'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2023-01-01 09:00\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: Only valid with DatetimeIndex, TimedeltaIndex or PeriodIndex, but got an instance of 'RangeIndex'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/30944577_str_contains_series_as_bool.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#30944577",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "str.contains returns Series used as scalar bool. Typed filter operates on values, returns boolean.",
+        "raw": {
+          "ID": "SO#30944577",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "str.contains returns Series used as scalar bool. Typed filter operates on values, returns boolean."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/30944577_str_contains_series_as_bool.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"Bob\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all()."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/31162780_rectangle_datetime_axis.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#31162780",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "matplotlib Rectangle with datetime needs float conversion. Type mismatch at API boundary.",
+        "raw": {
+          "ID": "SO#31162780",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "matplotlib Rectangle with datetime needs float conversion. Type mismatch at API boundary."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/31162780_rectangle_datetime_axis.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ModuleNotFoundError: No module named 'matplotlib'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2024-01-15T10:00:00\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ModuleNotFoundError: No module named 'matplotlib'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/31269216_str_upper_on_mixed.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#31269216",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "str.upper() on mixed-type column fails. String method on non-string data.",
+        "raw": {
+          "ID": "SO#31269216",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "str.upper() on mixed-type column fails. String method on non-string data."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/31269216_str_upper_on_mixed.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: descriptor 'upper' for 'str' objects doesn't apply to a 'int' object\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"abc\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: descriptor 'upper' for 'str' objects doesn't apply to a 'int' object"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(string | number | null)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/31521526_currency_string_to_float.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#31521526",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Currency string \"(1,234.56)\" can't convert to float. String format vs numeric type.",
+        "raw": {
+          "ID": "SO#31521526",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Currency string \"(1,234.56)\" can't convert to float. String format vs numeric type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/31521526_currency_string_to_float.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: could not convert string to float: '(3000.00)'\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: could not convert string to float: '(3000.00)'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/31745509_str_contains_nullable.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#31745509",
+        "language": "Python",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "str.contains on nullable column returns NaN, bitwise NOT fails on NaN. Missing values break operations.",
+        "raw": {
+          "ID": "SO#31745509",
+          "Language": "Python",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "str.contains on nullable column returns NaN, bitwise NOT fails on NaN. Missing values break operations."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/31745509_str_contains_nullable.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"File corruption\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(string | null)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/33199193_nan_fill_with_list.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#33199193",
+        "language": "Python",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "NaN in list-type column can't be filled with empty list. Missing value handling type mismatch.",
+        "raw": {
+          "ID": "SO#33199193",
+          "Language": "Python",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "NaN in list-type column can't be filled with empty list. Missing value handling type mismatch."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/33199193_nan_fill_with_list.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: \"value\" parameter must be a scalar or dict, but you passed a \"list\"\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: [0,1,2,3] (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: \"value\" parameter must be a scalar or dict, but you passed a \"list\""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(number[] | null)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/33221655_set_list_in_float_col.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#33221655",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Setting list value in float64 column fails. Type mismatch on assignment.",
+        "raw": {
+          "ID": "SO#33221655",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Setting list value in float64 column fails. Type mismatch on assignment."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/33221655_set_list_in_float_col.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: setting an array element with a sequence.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: [400] (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: setting an array element with a sequence."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "number[][] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/33692532_str_accessor_nan.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#33692532",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": ".str accessor on column with NaN fails. Wrong accessor for column state (nullable).",
+        "raw": {
+          "ID": "SO#33692532",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": ".str accessor on column with NaN fails. Wrong accessor for column state (nullable)."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/33692532_str_accessor_nan.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"100M\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(string | null)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/35560433_geom_smooth_character_dates.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#35560433",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "geom_smooth fails silently on character dates. String column where temporal/numeric expected for regression.",
+        "raw": {
+          "ID": "SO#35560433",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "geom_smooth fails silently on character dates. String column where temporal/numeric expected for regression."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/35560433_geom_smooth_character_dates.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | `geom_smooth()` using formula = 'y ~ x'\n",
+        "stderr": "[NAPI] Formula updated for categorical vars: temp ~ day05/23 + day05/24 + day05/25 + day05/26 + day05/27 + day05/28 + day05/29 + day05/30 + day05/31 + day06/01 + day06/02\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "`geom_smooth()` using formula = 'y ~ x'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Type '{ day: string; temp: number; }' is not assignable to type 'Record<string, number>'"
+    },
+    {
+      "path": "RPython/TM/36115687_string_date_comparison.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#36115687",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "PySpark filtering dates stored as strings — comparison uses string ordering not date ordering. Silent wrong results.",
+        "raw": {
+          "ID": "SO#36115687",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "PySpark filtering dates stored as strings — comparison uses string ordering not date ordering. Silent wrong results."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/36115687_string_date_comparison.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"1/15/2015\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/36462257_empty_df_loses_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#36462257",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Empty DataFrame loses dtype specification. Schema lost through operation.",
+        "raw": {
+          "ID": "SO#36462257",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Empty DataFrame loses dtype specification. Schema lost through operation."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/36462257_empty_df_loses_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: Field elements must be 2- or 3-tuples, got ''str''\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"H1234\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: Field elements must be 2- or 3-tuples, got ''str''"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/37513355_spark_mixed_types.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#37513355",
+        "language": "Python",
+        "bugClass": "Data loading",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Spark schema inference fails on mixed types. Load-time type inference error.",
+        "raw": {
+          "ID": "SO#37513355",
+          "Language": "Python",
+          "Bug class": "Data loading",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Spark schema inference fails on mixed types. Load-time type inference error."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/37513355_spark_mixed_types.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ValueError: could not convert string to float: 'NA'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"NA\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ValueError: could not convert string to float: 'NA'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "(number | string)[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/38969267_select_columns_via_list.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#38969267",
+        "language": "Python",
+        "bugClass": "Column ref",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Selecting columns via list fails when column doesn't exist. Column reference error.",
+        "raw": {
+          "ID": "SO#38969267",
+          "Language": "Python",
+          "Bug class": "Column ref",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Selecting columns via list fails when column doesn't exist. Column reference error."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/38969267_select_columns_via_list.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | KeyError: \"['missing_col'] not in index\"\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "KeyError: \"['missing_col'] not in index\""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type '\"missing_col\"' is not assignable to parameter of type '\"a\" | \"b\" | \"c\"'."
+    },
+    {
+      "path": "RPython/TM/39180873_histogram_wrong_dtypes.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#39180873",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Histogram on DataFrame with wrong dtypes. Numeric operation on non-numeric.",
+        "raw": {
+          "ID": "SO#39180873",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Histogram on DataFrame with wrong dtypes. Numeric operation on non-numeric."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/39180873_histogram_wrong_dtypes.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"0\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: ufunc 'isfinite' not supported for the input types, and the inputs could not be safely coerced to any supported types according to the casting rule ''safe''"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/41286569_sum_object_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#41286569",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "df.sum() on object-dtype column concatenates strings instead of adding numbers. Numeric op on wrong type.",
+        "raw": {
+          "ID": "SO#41286569",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "df.sum() on object-dtype column concatenates strings instead of adding numbers. Numeric op on wrong type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/41286569_sum_object_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/41815365_geom_rect_string_dates.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#41815365",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "date_trans requires Date class, got character. String where date expected.",
+        "raw": {
+          "ID": "SO#41815365",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "date_trans requires Date class, got character. String where date expected."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/41815365_geom_rect_string_dates.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in transformation$transform(): `transform_date()` works with objects of class <Date> only\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"2002-05-23\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in transformation$transform(): `transform_date()` works with objects of class <Date> only"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/41859824_string_concat_numpy.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#41859824",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "String concatenation with numpy numeric types fails. Arithmetic on wrong type. Original 'add' bug fixed in modern numpy; reproduced with 'multiply' variant which still crashes.",
+        "raw": {
+          "ID": "SO#41859824",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "String concatenation with numpy numeric types fails. Arithmetic on wrong type. Original 'add' bug fixed in modern numpy; reproduced with 'multiply' variant which still crashes."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/41859824_string_concat_numpy.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | numpy._core._exceptions._UFuncNoLoopError: ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U3'), dtype('float64')) -> None\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"1.0\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "numpy._core._exceptions._UFuncNoLoopError: ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U3'), dtype('float64')) -> None"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/42013903_raw_input_string_multiply.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#42013903",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "raw_input returns string, used in numpy multiply. String where number expected.",
+        "raw": {
+          "ID": "SO#42013903",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "raw_input returns string, used in numpy multiply. String where number expected."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/42013903_raw_input_string_multiply.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | numpy._core._exceptions._UFuncNoLoopError: ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U3'), dtype('float64')) -> None\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"9.8\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "numpy._core._exceptions._UFuncNoLoopError: ufunc 'multiply' did not contain a loop with signature matching types (dtype('<U3'), dtype('float64')) -> None"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/4231190_svd_object_tuple_array.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#4231190",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "numpy array of tuples needs structured dtype. Type specification error.",
+        "raw": {
+          "ID": "SO#4231190",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "numpy array of tuples needs structured dtype. Type specification error."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/4231190_svd_object_tuple_array.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | numpy._core._exceptions._UFuncInputCastingError: Cannot cast ufunc 'svd_f' input from dtype('O') to dtype('float64') with casting rule 'same_kind'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"(0.0, 0.0, 1.0)\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "numpy._core._exceptions._UFuncInputCastingError: Cannot cast ufunc 'svd_f' input from dtype('O') to dtype('float64') with casting rule 'same_kind'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/44616546_timedelta_mean_no_numeric.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#44616546",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "timedelta column mean() fails \"no numeric types to aggregate\". On modern pandas, silently drops column instead of crashing (DC behavior).",
+        "raw": {
+          "ID": "SO#44616546",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "timedelta column mean() fails \"no numeric types to aggregate\". On modern pandas, silently drops column instead of crashing (DC behavior)."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/44616546_timedelta_mean_no_numeric.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"57s\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/44893933_case_when_na_type.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#44893933",
+        "language": "R",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "bare NA is logical type; case_when crashes on type mismatch across branches",
+        "raw": {
+          "ID": "SO#44893933",
+          "Language": "R",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "bare NA is logical type; case_when crashes on type mismatch across branches"
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/44893933_case_when_na_type.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | intersect, setdiff, setequal, union\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": "intersect, setdiff, setequal, union"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'number | null' is not assignable to parameter of type 'number'"
+    },
+    {
+      "path": "RPython/TM/45769987_duplicate_column_names.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#45769987",
+        "language": "R",
+        "bugClass": "Column ref",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Duplicate column names cause dplyr spread/join errors. Schema validation at column level.",
+        "raw": {
+          "ID": "SO#45769987",
+          "Language": "R",
+          "Bug class": "Column ref",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Duplicate column names cause dplyr spread/join errors. Schema validation at column level."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/45769987_duplicate_column_names.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Error in rename(): Names must be unique.\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"Full-time\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Error in rename(): Names must be unique."
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type '(string | undefined)[]' is not assignable to parameter of type 'NumbersWithNullable'."
+    },
+    {
+      "path": "RPython/TM/47333227_nan_prevents_astype_int.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#47333227",
+        "language": "Python",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "NaN in column prevents astype(int). Missing values block type conversion.",
+        "raw": {
+          "ID": "SO#47333227",
+          "Language": "Python",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "NaN in column prevents astype(int). Missing values block type conversion."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/47333227_nan_prevents_astype_int.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | pandas.errors.IntCastingNaNError: Cannot convert non-finite values (NA or inf) to integer.Replace or remove non-finite values or cast to an integer typethat supports these values (e.g. 'Int64')\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "pandas.errors.IntCastingNaNError: Cannot convert non-finite values (NA or inf) to integer.Replace or remove non-finite values or cast to an integer typethat supports these values (e.g. 'Int64')"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "'x' is possibly 'null'"
+    },
+    {
+      "path": "RPython/TM/48062499_string_as_numeric.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#48062499",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "IF",
+        "inStudy": "Yes",
+        "inclusionRationale": "Y-axis data plotted as strings, not sorted numerically. String where number expected. Data processing error visible in output.",
+        "raw": {
+          "ID": "SO#48062499",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "IF",
+          "In study": "Yes",
+          "Inclusion rationale": "Y-axis data plotted as strings, not sorted numerically. String where number expected. Data processing error visible in output."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/48062499_string_as_numeric.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"50.35\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/4856849_ggplot_loop_string_column.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#4856849",
+        "language": "R",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "A character variable holding a column name is passed to aes(); ggplot binds the literal symbol 'i' rather than its value. Originally reported as a crash; in current ggplot2 the literal string is silently treated as a constant value, producing a flat line rather than the intended y mapping. Typed column accessors in Tidy-TS require a literal key of T, not a bare string.",
+        "raw": {
+          "ID": "SO#4856849",
+          "Language": "R",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "A character variable holding a column name is passed to aes(); ggplot binds the literal symbol 'i' rather than its value. Originally reported as a crash; in current ggplot2 the literal string is silently treated as a constant value, producing a flat line rather than the intended y mapping. Typed column accessors in Tidy-TS require a literal key of T, not a bare string."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/4856849_ggplot_loop_string_column.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'string' is not assignable to parameter of type '\"w\" | \"x\" | \"y\" | \"z\"'."
+    },
+    {
+      "path": "RPython/TM/48719937_idxmax_object_dtype.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#48719937",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "idxmax() on object-dtype column fails. Numeric reduction on wrong type.",
+        "raw": {
+          "ID": "SO#48719937",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "idxmax() on object-dtype column fails. Numeric reduction on wrong type."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/48719937_idxmax_object_dtype.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/50916422_int64_not_json_serializable.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#50916422",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "numpy int64 extracted from DataFrame not JSON serializable. Tidy-ts values are native JS types.",
+        "raw": {
+          "ID": "SO#50916422",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "numpy int64 extracted from DataFrame not JSON serializable. Tidy-ts values are native JS types."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/50916422_int64_not_json_serializable.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | TypeError: Object of type int64 is not JSON serializable\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "TypeError: Object of type int64 is not JSON serializable"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/56079650_boolean_coercion.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#56079650",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "DC",
+        "inStudy": "Yes",
+        "inclusionRationale": "Boolean column silently coerced to object dtype. Bitwise NOT (~) then gives wrong results instead of error. Silent data corruption.",
+        "raw": {
+          "ID": "SO#56079650",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "DC",
+          "In study": "Yes",
+          "Inclusion rationale": "Boolean column silently coerced to object dtype. Bitwise NOT (~) then gives wrong results instead of error. Silent data corruption."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/56079650_boolean_coercion.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "column is string | boolean, not boolean"
+    },
+    {
+      "path": "RPython/TM/5957380_structured_array_view.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#5957380",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Structured array to regular ndarray conversion fails. Type conversion error.",
+        "raw": {
+          "ID": "SO#5957380",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Structured array to regular ndarray conversion fails. Type conversion error."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/5957380_structured_array_view.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=0 | \n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: {\"a_soil\":0.01479368,\"b_soil\":0.00668112,\"Ea_V\":0,\"Kcc\":0} (type: object). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 0,
+        "lastStderrLine": ""
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "No longer reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "object[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/6063876_scatter_colorbar_tuples.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#6063876",
+        "language": "Python",
+        "bugClass": "Value type",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "Scatter colorbar needs float array, got tuple list. Type mismatch.",
+        "raw": {
+          "ID": "SO#6063876",
+          "Language": "Python",
+          "Bug class": "Value type",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "Scatter colorbar needs float array, got tuple list. Type mismatch."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/6063876_scatter_colorbar_tuples.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[pandas] exit=1 | ModuleNotFoundError: No module named 'matplotlib'\n",
+        "stderr": "[tidy-ts] s.mean() received non-numeric value: \"rgba(0.8,0.2,0.1,1)\" (type: string). Returning null.\n"
+      },
+      "foreign": {
+        "language": "pandas",
+        "exitCode": 1,
+        "lastStderrLine": "ModuleNotFoundError: No module named 'matplotlib'"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/7920688_join_key_type_mismatch.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#7920688",
+        "language": "R",
+        "bugClass": "Join",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "data.table join key type mismatch (int vs double). Join key types must match.",
+        "raw": {
+          "ID": "SO#7920688",
+          "Language": "R",
+          "Bug class": "Join",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "data.table join key type mismatch (int vs double). Join key types must match."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/7920688_join_key_type_mismatch.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Execution halted\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Execution halted"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "string[] is not assignable to number[]"
+    },
+    {
+      "path": "RPython/TM/7960798_datatable_na_type.ts",
+      "subset": "TM",
+      "frontmatter": {
+        "id": "SO#7960798",
+        "language": "R",
+        "bugClass": "Nullable",
+        "runtimeConsequence": "Crash",
+        "inStudy": "Yes",
+        "inclusionRationale": "NA returns logical type instead of numeric across groups. NA type conflicts.",
+        "raw": {
+          "ID": "SO#7960798",
+          "Language": "R",
+          "Bug class": "Nullable",
+          "Runtime consequence": "Crash",
+          "In study": "Yes",
+          "Inclusion rationale": "NA returns logical type instead of numeric across groups. NA type conflicts."
+        }
+      },
+      "tsCheck": {
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": "\u001b[0m\u001b[32mCheck\u001b[0m docs/JAMIA/comparisons/RPython/TM/7960798_datatable_na_type.ts\n"
+      },
+      "tsCheckStatus": "passes",
+      "run": {
+        "exitCode": 0,
+        "stdout": "[tidyverse] exit=1 | Execution halted\n",
+        "stderr": ""
+      },
+      "foreign": {
+        "language": "R",
+        "exitCode": 1,
+        "lastStderrLine": "Execution halted"
+      },
+      "tidyTsRuntimeGuardFired": false,
+      "reproductionFileCrashed": false,
+      "reproductionStatusObserved": "Reproduces",
+      "tidyTsDetectionOutcomeObserved": "compile-time error",
+      "tidyTsDetectionMechanismObserved": "compiler",
+      "tidyTsCatchExplanation": "Argument of type 'number | null' is not assignable to parameter of type 'number'"
     }
   ],
   "summary": {
-    "totalFiles": 3,
-    "tmFiles": 3,
+    "totalFiles": 79,
+    "tmFiles": 79,
     "cdaFiles": 0,
     "tsCheckCounts": {
-      "passes": 3
+      "passes": 79
     },
     "reproductionStatusCounts": {
-      "Reproduces": 3
+      "Reproduces": 62,
+      "No longer reproduces": 17
     },
     "detectionOutcomeCounts": {
-      "compile-time error": 3
+      "compile-time error": 79
     },
     "detectionMechanismCounts": {
-      "compiler": 3
+      "compiler": 79
     }
   }
 }

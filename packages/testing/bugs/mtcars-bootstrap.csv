@@ -1,0 +1,6 @@
+quantity,value
+observed_mean,20.090624999999996
+observed_sd,6.026948052089105
+bootstrap_se_seed1,1.0669118087728902
+bootstrap_ci_low,18.0875
+bootstrap_ci_high,22.259531249999988

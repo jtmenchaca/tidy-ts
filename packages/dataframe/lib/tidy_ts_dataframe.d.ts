@@ -1564,92 +1564,152 @@ export function wasm_qzipf(
 ): number;
 
 /**
- * WASM export for beta random number generation
+ * Draw `n` samples from `Beta(shape1, shape2)`. See `wasm_rnorm` doc comment
+ * for seed semantics.
  */
-export function wasm_rbeta(shape1: number, shape2: number): number;
+export function wasm_rbeta(
+  shape1: number,
+  shape2: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rbinom(
+  size: number,
+  prob: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rchisq(
+  df: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rdirac(
+  location: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rev1(
+  location: number,
+  scale: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rexp(
+  rate: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rf(
+  df1: number,
+  df2: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rgamma(
+  shape: number,
+  rate: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rgeom(
+  prob: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rhyper(
+  m: number,
+  n: number,
+  k: number,
+  count: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rlnorm(
+  meanlog: number,
+  sdlog: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
+
+export function wasm_rnbinom(
+  r: number,
+  prob: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
 /**
- * WASM export for binomial random number generation
+ * Draw `n` samples from `Normal(mean, sd)` in a single call.
+ *
+ * With `seed = Some(s)` the sequence is fully reproducible (one RNG state
+ * advances across every draw — same contract as R's `set.seed(s); rnorm(n)`
+ * and numpy's `default_rng(s).normal(size=n)`). With `seed = None` uses
+ * `thread_rng()` for non-determinism. The caller passes `n = 1` for a
+ * single draw.
  */
-export function wasm_rbinom(size: number, prob: number): number;
+export function wasm_rnorm(
+  mean: number,
+  sd: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-/**
- * WASM export for chi-squared random number generation
- */
-export function wasm_rchisq(df: number): number;
+export function wasm_rpareto(
+  scale: number,
+  shape: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-export function wasm_rdirac(location: number): number;
+export function wasm_rpois(
+  lambda: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-export function wasm_rev1(location: number, scale: number): number;
+export function wasm_rt(
+  df: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-/**
- * WASM export for exponential random number generation
- */
-export function wasm_rexp(rate: number): number;
+export function wasm_runif(
+  min: number,
+  max: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-/**
- * WASM export for F distribution random number generation
- */
-export function wasm_rf(df1: number, df2: number): number;
+export function wasm_rweibull(
+  shape: number,
+  scale: number,
+  n: number,
+  seed?: number | null,
+): Float64Array;
 
-/**
- * WASM export for gamma random number generation
- */
-export function wasm_rgamma(shape: number, rate: number): number;
+export function wasm_rwilcox(
+  m: number,
+  n: number,
+  count: number,
+  seed?: number | null,
+): Float64Array;
 
-/**
- * WASM export for geometric random number generation
- */
-export function wasm_rgeom(prob: number): number;
-
-/**
- * WASM export for hypergeometric random number generation
- */
-export function wasm_rhyper(m: number, n: number, k: number): number;
-
-/**
- * WASM export for log-normal random number generation
- */
-export function wasm_rlnorm(meanlog: number, sdlog: number): number;
-
-/**
- * WASM export for negative binomial random number generation
- */
-export function wasm_rnbinom(r: number, prob: number): number;
-
-/**
- * WASM export for normal random number generation
- */
-export function wasm_rnorm(mean: number, sd: number): number;
-
-export function wasm_rpareto(scale: number, shape: number): number;
-
-/**
- * WASM export for Poisson random number generation
- */
-export function wasm_rpois(lambda: number): number;
-
-/**
- * WASM export for t distribution random number generation
- */
-export function wasm_rt(df: number): number;
-
-/**
- * WASM export for uniform random number generation
- */
-export function wasm_runif(min: number, max: number): number;
-
-/**
- * WASM export for Weibull random number generation
- */
-export function wasm_rweibull(shape: number, scale: number): number;
-
-/**
- * WASM export for Wilcoxon random number generation
- */
-export function wasm_rwilcox(m: number, n: number): number;
-
-export function wasm_rzipf(n: number, s: number): number;
+export function wasm_rzipf(
+  n: number,
+  s: number,
+  count: number,
+  seed?: number | null,
+): Float64Array;
 
 export function wasm_test(): number;
 

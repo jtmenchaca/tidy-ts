@@ -1,0 +1,99 @@
+/**
+ * ID: 4e
+ * Category: Join
+ * Label: arithmetic on join-introduced null
+ * Intent: Left-join encounters with stays, then divide length of stay in days by 7.
+ */
+import * as aq from "arquero";
+import {
+  printForeignResult,
+  printStaticCheckerResult,
+  runForeign,
+  runInProcess,
+  runStaticChecker,
+} from "../../../runners.ts";
+import { encounters17, patients17 } from "../data.ts";
+
+// pandas ────────────────────────────────────────────────────────────────────
+const pandasScript = `
+import pandas as pd
+patients = pd.DataFrame({
+    "patient_id": ["P1", "P2"],
+    "name": ["Alice", "Bob"],
+})
+encounters = pd.DataFrame({
+    "patient_id": ["P1"],
+    "department": ["ED"],
+    "los_days": [3],
+})
+joined = patients.merge(encounters, on="patient_id", how="left")
+joined["los_weeks"] = joined["los_days"] / 7
+`;
+printForeignResult("pandas", runForeign("python", pandasScript));
+
+// tidyverse ────────────────────────────────────────────────────────────────
+const rScript = `
+suppressPackageStartupMessages(library(dplyr))
+patients <- tibble(
+  patient_id = c("P1", "P2"),
+  name = c("Alice", "Bob")
+)
+encounters <- tibble(
+  patient_id = c("P1"),
+  department = c("ED"),
+  los_days = c(3)
+)
+joined <- patients %>% left_join(encounters, by = "patient_id")
+joined <- joined %>% mutate(los_weeks = los_days / 7)
+`;
+printForeignResult("tidyverse", runForeign("r", rScript));
+
+// Polars ────────────────────────────────────────────────────────────────────
+const polarsScript = `
+import polars as pl
+patients = pl.DataFrame({
+    "patient_id": ["P1", "P2"],
+    "name": ["Alice", "Bob"],
+})
+encounters = pl.DataFrame({
+    "patient_id": ["P1"],
+    "department": ["ED"],
+    "los_days": [3],
+})
+joined = patients.join(encounters, on="patient_id", how="left")
+joined = joined.with_columns((pl.col("los_days") / 7).alias("los_weeks"))
+`;
+printForeignResult("Polars", runForeign("python", polarsScript));
+
+// mypy / pyright ────────────────────────────────────────────────────────────
+printStaticCheckerResult("mypy", runStaticChecker("mypy", pandasScript));
+printStaticCheckerResult("pyright", runStaticChecker("pyright", pandasScript));
+
+// Arquero ────────────────────────────────────────────────────────────────────
+runInProcess(
+  "Arquero",
+  () => {
+    const patients = aq.table({
+      patient_id: ["P1", "P2"],
+      name: ["Alice", "Bob"],
+    });
+    const encounters = aq.table({
+      patient_id: ["P1"],
+      department: ["ED"],
+      los_days: [3],
+    });
+    const joined = patients.join_left(encounters, ["patient_id", "patient_id"]);
+    return joined.derive({ los_weeks: (d) => d.los_days / 7 });
+  },
+  (table) => `rows=${table.numRows()}`,
+);
+
+// Tidy-TS ────────────────────────────────────────────────────────────────────
+const joined17 = patients17.leftJoin(encounters17, "patient_id");
+runInProcess(
+  "Tidy-TS",
+  () =>
+    // @ts-expect-error — los_days is number | undefined
+    joined17.mutate({ weeks: (r) => r.los_days / 7 }),
+  (df) => `rows=${df.nrows()}`,
+);

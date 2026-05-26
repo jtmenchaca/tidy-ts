@@ -13,6 +13,16 @@ import {
 import { materializeIndex, type View } from "./columnar-view.ts";
 import { detectColumnTypes } from "./column-helpers.ts";
 import { tracer } from "../../telemetry/tracer.ts";
+import { isComparable } from "../../stats/helpers.ts";
+
+/**
+ * Temporal-like values (Temporal.PlainDate, PlainDateTime, Instant,
+ * ZonedDateTime, PlainTime, PlainYearMonth, PlainMonthDay, Duration) all
+ * have a static `constructor.compare`, so `isComparable` from stats/helpers
+ * catches them. JS `Date` does not satisfy `isComparable`. This name reads
+ * better in the print/toTable/writeCSV call sites.
+ */
+const isTemporalLike = isComparable;
 
 /** Read a value from a column, converting Uint8Array boolean masks to actual booleans. */
 function readCol(col: ColumnData, i: number): unknown {
@@ -316,6 +326,8 @@ export function createColumnarDataFrameFromStore<
           // Handle nested objects and long strings
           if (value instanceof Date) {
             // Keep Date objects as-is for proper display
+          } else if (isTemporalLike(value)) {
+            value = (value as { toString(): string }).toString();
           } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {
@@ -349,6 +361,12 @@ export function createColumnarDataFrameFromStore<
           // Handle nested objects and long strings
           if (value instanceof Date) {
             // Keep Date objects as-is for proper display
+          } else if (isTemporalLike(value)) {
+            // Temporal.PlainDate, PlainDateTime, Instant, ZonedDateTime, ... —
+            // render via their native toString (ISO 8601). They look like
+            // empty objects under Object.entries, which would otherwise show
+            // as "{}" in the fallback below.
+            value = (value as { toString(): string }).toString();
           } else if (
             typeof value === "object" && value !== null && !Array.isArray(value)
           ) {
@@ -395,7 +413,11 @@ export function createColumnarDataFrameFromStore<
       const row: object = {};
       for (const colName of currentStore.columnNames) {
         const value = readCol(currentStore.columns[colName], actualRowIndex);
-        if (
+        if (value instanceof Date) {
+          (row as any)[colName] = value;
+        } else if (isTemporalLike(value)) {
+          (row as any)[colName] = (value as { toString(): string }).toString();
+        } else if (
           typeof value === "object" && value !== null && !Array.isArray(value)
         ) {
           (row as any)[colName] = JSON.stringify(value, null, 2);

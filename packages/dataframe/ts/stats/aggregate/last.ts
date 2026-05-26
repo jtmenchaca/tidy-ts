@@ -36,17 +36,20 @@ export interface LastOptions {
  * ```
  */
 
-// Single value overloads
-export function last<T>(value: T): T;
-
-// Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
-export function last<T>(values: readonly T[], options?: LastOptions): T;
-export function last<T>(values: T[], options?: LastOptions): T;
+// Clean array overloads (no nulls/undefined). These MUST come before the
+// single-value generic overload — otherwise TS picks `last<T>(value: T): T`
+// for `last([1,2,3])` with `T = number[]` and the return type collapses to
+// the entire array.
 export function last(values: readonly Date[], options?: LastOptions): Date;
 export function last(values: Date[], options?: LastOptions): Date;
 export function last(values: readonly number[], options?: LastOptions): number;
 export function last(values: number[], options?: LastOptions): number;
 export function last(values: Iterable<number>, options?: LastOptions): number;
+export function last<T>(values: readonly T[], options?: LastOptions): T;
+export function last<T>(values: T[], options?: LastOptions): T;
+
+// Single-value overload — only triggers when nothing above matched.
+export function last<T>(value: T): T;
 
 // Arrays with nullables - when all removal flags are true, return non-nullable
 export function last<T>(

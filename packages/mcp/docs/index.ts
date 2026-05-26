@@ -3,7 +3,6 @@ import { dataframeDocs } from "./dataframe/index.ts";
 import { graphDocs } from "./graph/index.ts";
 import { ioDocs } from "./io/index.ts";
 import { shimsDocs } from "./shims/index.ts";
-import { stringDocs } from "./string/index.ts";
 import { statsDistributionsDocs } from "./stats-distributions/index.ts";
 import { statsTestsDocs } from "./stats-tests/index.ts";
 import { statsCompareDocs } from "./stats-compare/index.ts";
@@ -33,9 +32,6 @@ export const DOCS: Record<string, DocEntry> = {
 
   // Cross-runtime shims
   ...shimsDocs,
-
-  // String utilities
-  ...stringDocs,
 };
 
 // Derive category lists from doc entries (single source of truth)
@@ -58,7 +54,6 @@ export const CATEGORIES = {
   "stats-tests": getKeysByCategory(DOCS, "stats-tests"),
   "stats-compare": getKeysByCategory(DOCS, "stats-compare"),
   shims: getKeysByCategory(DOCS, "shims"),
-  string: getKeysByCategory(DOCS, "string"),
   all: Object.keys(DOCS),
 };
 
@@ -72,7 +67,6 @@ export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   "stats-compare": "Group Comparison API",
   io: "I/O Operations",
   shims: "Cross-Runtime Compatibility (Shims)",
-  string: "String Utilities",
 };
 
 export function getOperationsByCategory(category: string): DocEntry[] {

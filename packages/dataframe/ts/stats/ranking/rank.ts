@@ -1,55 +1,44 @@
 import { isNA } from "../../utilities/mod.ts";
 
 /**
- * Calculate ranks for an array of values
+ * Tie-handling methods for `rank`.
  *
- * @param values - Array of numbers
- * @param ties - How to handle ties: "average" (default), "min", "max", "dense"
- * @param descending - Whether to rank in descending order (default: false = ascending)
- * @returns Array of ranks (1-based by default)
- *
- * @example
- * ```ts
- * rank([3, 1, 4, 1, 5]) // [3, 1.5, 4, 1.5, 5]
- * rank([3, 1, 4, 1, 5], "average") // [3, 1.5, 4, 1.5, 5]
- * rank([3, 1, 4, 1, 5], "min") // [3, 1, 4, 1, 5]
- * rank([3, 1, 4, 1, 5], "max") // [3, 2, 4, 2, 5]
- * rank([3, 1, 4, 1, 5], "average", true) // descending order
- * ```
+ * - `"average"` (default) — fractional ranks for ties (R's classical rank).
+ * - `"min"` — competition rank: 1, 2, 2, 4 (skip after tie).
+ * - `"max"` — modified competition rank: 1, 3, 3, 4.
+ * - `"dense"` — no gap after ties: 1, 2, 2, 3. (Same as `denseRank`.)
+ * - `"first"` — strictly unique 1..n; ties broken by original encounter order.
  */
+export type RankTies = "average" | "min" | "max" | "dense" | "first";
 
 /**
- * Find the rank of a specific target value within an array
- *
- * @param values - Array of numbers
- * @param target - The value to find the rank for
- * @param ties - How to handle ties: "average" (default), "min", "max", "dense"
- * @param descending - Whether to rank in descending order (default: false = ascending)
- * @returns Rank of the target value (1-based)
+ * Calculate ranks for an array of values.
  *
  * @example
  * ```ts
- * rank([3, 1, 4, 1, 5], 3) // 3 (3 is the 3rd smallest value)
- * rank([3, 1, 4, 1, 5], 1) // 1 (1 is the smallest value)
- * rank([3, 1, 4, 1, 5], 5) // 5 (5 is the largest value)
+ * rank([3, 1, 4, 1, 5])                            // [3, 1.5, 4, 1.5, 5] (default: average)
+ * rank([3, 1, 4, 1, 5], { ties: "min" })           // [3, 1, 4, 1, 5]
+ * rank([3, 1, 4, 1, 5], { ties: "max" })           // [3, 2, 4, 2, 5]
+ * rank([3, 1, 4, 1, 5], { ties: "first" })         // [3, 1, 4, 2, 5] (strictly unique 1..n)
+ * rank([3, 1, 4, 1, 5], { ties: "average", desc: true }) // descending
+ *
+ * // Target lookup (single positional value):
+ * rank([3, 1, 4, 1, 5], 3) // 3  (3 is the 3rd smallest value)
  * ```
  */
-
 export function rank(value: number): number;
 export function rank(values: number[]): number[];
 export function rank(
   values: (number | null | undefined)[],
-  ties?: "average" | "min" | "max" | "dense",
-  descending?: boolean,
+  options: { ties?: RankTies; desc?: boolean },
 ): (number | null)[];
 export function rank(values: Iterable<number>): number[];
 export function rank(
   values: Iterable<number | null | undefined>,
-  ties?: "average" | "min" | "max" | "dense",
-  descending?: boolean,
+  options: { ties?: RankTies; desc?: boolean },
 ): (number | null)[];
 
-// Overload for finding rank of a specific target value
+// Target lookup (positional)
 export function rank(values: number[], target: number): number;
 export function rank(
   values: (number | null | undefined)[],
@@ -68,24 +57,21 @@ export function rank(
     | (number | null | undefined)[]
     | Iterable<number>
     | Iterable<number | null | undefined>,
-  tiesOrTarget?: "average" | "min" | "max" | "dense" | number,
-  descending?: boolean,
+  optionsOrTarget?: { ties?: RankTies; desc?: boolean } | number,
 ): number | number[] | (number | null)[] | null {
   // Handle single number case
   if (typeof values === "number") {
     return 1;
   }
 
-  // Check if second parameter is a target value (number) or ties method
-  const isTargetValue = typeof tiesOrTarget === "number";
-  const target = isTargetValue ? tiesOrTarget : undefined;
-  const ties = isTargetValue
-    ? (descending === true ? "average" : "average")
-    : (tiesOrTarget as "average" | "min" | "max" | "dense" | undefined) ||
-      "average";
-  const isDescending = isTargetValue
-    ? (descending || false)
-    : (descending || false);
+  // Disambiguate second argument: target value (number) vs options (object).
+  const isTargetValue = typeof optionsOrTarget === "number";
+  const target = isTargetValue ? optionsOrTarget : undefined;
+  const opts = (!isTargetValue && optionsOrTarget != null
+    ? optionsOrTarget
+    : {}) as { ties?: RankTies; desc?: boolean };
+  const ties: RankTies = opts.ties ?? "average";
+  const isDescending = opts.desc ?? false;
 
   // Handle iterables by materializing to array
   let processArray: (number | null | undefined)[];
@@ -113,10 +99,9 @@ export function rank(
     return comparison + 1;
   }
 
-  // Create array of { value, index, originalIndex } for ranking
+  // Create array of { value, originalIndex } for ranking
   const indexed = processArray.map((val, i) => ({
     value: val,
-    index: i,
     originalIndex: i,
   }));
 
@@ -132,7 +117,8 @@ export function rank(
     }
   });
 
-  // Sort valid values
+  // Sort valid values (Array.prototype.sort is stable as of ES2019, so tied
+  // entries stay in their original encounter order — needed for ties: "first").
   validValues.sort((a, b) => {
     const aVal = a.value as number;
     const bVal = b.value as number;
@@ -156,28 +142,36 @@ export function rank(
       tieCount++;
     }
 
-    // Assign ranks based on tie handling method
-    let rankValue: number;
-    switch (ties) {
-      case "average":
-        rankValue = currentRank + (tieCount - 1) / 2;
-        break;
-      case "min":
-        rankValue = currentRank;
-        break;
-      case "max":
-        rankValue = currentRank + tieCount - 1;
-        break;
-      case "dense":
-        rankValue = currentRank;
-        break;
-      default:
-        rankValue = currentRank + (tieCount - 1) / 2;
-    }
+    if (ties === "first") {
+      // Strictly unique 1..n ranks: ties broken by original encounter order.
+      // Stable sort ensures tied entries are already in ascending originalIndex,
+      // so we assign sequential ranks directly.
+      for (let j = 0; j < tieCount; j++) {
+        ranks[validValues[i + j].originalIndex] = currentRank + j;
+      }
+    } else {
+      // Assign a single shared rank to all tied values based on the method.
+      let rankValue: number;
+      switch (ties) {
+        case "average":
+          rankValue = currentRank + (tieCount - 1) / 2;
+          break;
+        case "min":
+          rankValue = currentRank;
+          break;
+        case "max":
+          rankValue = currentRank + tieCount - 1;
+          break;
+        case "dense":
+          rankValue = currentRank;
+          break;
+        default:
+          rankValue = currentRank + (tieCount - 1) / 2;
+      }
 
-    // Assign the rank to all tied values using originalIndex
-    for (let j = 0; j < tieCount; j++) {
-      ranks[validValues[i + j].originalIndex] = rankValue;
+      for (let j = 0; j < tieCount; j++) {
+        ranks[validValues[i + j].originalIndex] = rankValue;
+      }
     }
 
     i += tieCount;

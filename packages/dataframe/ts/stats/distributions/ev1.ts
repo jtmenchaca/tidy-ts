@@ -59,38 +59,32 @@ export function qev1({
   return wasm_qev1(probability, location, scale, lowerTail, probabilityIsLog);
 }
 
-export function rev1({
-  location,
-  scale,
-}: {
-  location?: number;
-  scale?: number;
-}): number;
-export function rev1({
-  location,
-  scale,
-  sampleSize,
-}: {
+export function rev1(args: {
   location?: number;
   scale?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rev1(args?: {
+  location?: number;
+  scale?: number;
+  seed?: number;
+}): number;
 export function rev1({
   location = 0,
   scale = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   location?: number;
   scale?: number;
   sampleSize?: number;
-}): number | number[] {
-  if (sampleSize === 1) return wasm_rev1(location, scale);
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rev1(location, scale));
+  seed?: number;
+} = {}): number | number[] {
+  if (sampleSize === undefined) {
+    return wasm_rev1(location, scale, 1, seed)[0];
   }
-  return results;
+  return wasm_rev1(location, scale, sampleSize, seed);
 }
 
 export function ev1Data({

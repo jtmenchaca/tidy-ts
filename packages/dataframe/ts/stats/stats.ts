@@ -21,6 +21,7 @@ import { uniqueCount } from "./descriptive/counts/unique-count.ts";
 import { cumsum } from "./cumulative/cumsum.ts";
 import { rank } from "./ranking/rank.ts";
 import { denseRank } from "./ranking/dense-rank.ts";
+import { rowNumber } from "./ranking/row-number.ts";
 import { normalize } from "./transformation/normalize.ts";
 import { cumprod } from "./cumulative/cumprod.ts";
 import { cummin } from "./cumulative/cummin.ts";
@@ -164,6 +165,8 @@ export const stats: {
   readonly rank: typeof rank;
   /** Assign dense ranks to values (consecutive integers) */
   readonly denseRank: typeof denseRank;
+  /** Generate 1-based row positions: [1, 2, ..., n]. Useful in `mutateOverGroup` for per-group running counts. */
+  readonly rowNumber: typeof rowNumber;
   /** Normalize values to 0-1 range or z-scores */
   readonly normalize: typeof normalize;
   /** Shift values forward (lag) */
@@ -500,6 +503,9 @@ export const stats: {
       /** One-sample Kolmogorov-Smirnov test vs uniform distribution */
       readonly kolmogorovSmirnovUniform:
         typeof statisticalTests.kolmogorovSmirnovUniformTest;
+      /** One-sample Kolmogorov-Smirnov test vs normal distribution (matches R `ks.test(x, "pnorm", mean, sd)`) */
+      readonly kolmogorovSmirnovNormal:
+        typeof statisticalTests.kolmogorovSmirnovNormalTest;
       /** Two-sample Kolmogorov-Smirnov test */
       readonly kolmogorovSmirnovTwoSample:
         typeof statisticalTests.kolmogorovSmirnovTest;
@@ -614,6 +620,7 @@ export const stats: {
   cummax,
   rank,
   denseRank,
+  rowNumber,
   normalize,
   lag,
   lead,
@@ -812,6 +819,7 @@ export const stats: {
       andersonDarling: statisticalTests.andersonDarlingTest,
       dagostinoPearson: statisticalTests.dagostinoPearsonTest,
       kolmogorovSmirnovUniform: statisticalTests.kolmogorovSmirnovUniformTest,
+      kolmogorovSmirnovNormal: statisticalTests.kolmogorovSmirnovNormalTest,
       kolmogorovSmirnovTwoSample: statisticalTests.kolmogorovSmirnovTest,
     },
   },

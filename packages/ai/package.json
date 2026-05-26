@@ -6,8 +6,12 @@
   "exports": "./mod.ts",
   "license": "MIT",
   "dependencies": {
-    "openai": "*",
+    "@tidy-ts/dataframe": "workspace:*",
+    "@tidy-ts/shims": "workspace:*",
     "@openai/agents": "*",
+    "@opentelemetry/api": "*",
+    "@opentelemetry/sdk-trace-base": "*",
+    "openai": "*",
     "zod": "*"
   }
 }

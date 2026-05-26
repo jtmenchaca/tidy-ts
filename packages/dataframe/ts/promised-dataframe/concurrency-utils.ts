@@ -400,7 +400,7 @@ async function processWithConcurrencyLimit<R>(
  */
 async function isPromiseResolved(promise: Promise<void>): Promise<boolean> {
   try {
-    let timeoutId: number | undefined;
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     await Promise.race([
       promise,
       new Promise<void>((_, reject) => {

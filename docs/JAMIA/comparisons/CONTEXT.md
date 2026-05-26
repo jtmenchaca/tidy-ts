@@ -47,55 +47,32 @@ The TypeScript compiler. Distinct from a static code checker because TypeScript 
 
 ### Detection
 
-**Detection outcome**:
-What a comparator does when run on a scenario. Enum: `compile-time error` / `runtime error` / `runtime warning` / `silent continuation` / `not applicable`. One value per (scenario × comparator).
+The unit of measurement is **(scenario × comparator)**. For each pair we record **three independent catch signals**, plus a derived **canonical single-valued outcome** for at-a-glance summaries.
+
+**Catch signals (independent booleans, not mutually exclusive)**:
+For each (scenario × comparator), three independent yes/no signals are recorded. The same scenario can fire more than one — a Tidy-TS scenario commonly fires *both* the compile-time catch and the runtime catch (defense in depth).
+
+- **Compile-time catch** — the compiler (TypeScript via `deno check`) or static checker (mypy / pyright) flagged the code without running it. Fires when an `@ts-expect-error` is honored, mypy/pyright exits non-zero with at least one reported error, etc.
+- **Runtime catch** — the program ran and stopped with an error (exit code ≠ 0 from the scenario's `[<comparator>] exit=N | ...` line, after warning lines are excluded).
+- **Runtime warning** — the program ran to completion but printed a structured warning header (Python `UserWarning:` / `DeprecationWarning:`, R `Warning message:` / `Warning:`).
+
+The manuscript's per-category tables tally these three booleans separately. Tidy-TS's "compile" and "runtime" columns are independent: the same scenario can contribute to both.
+
+**Canonical detection outcome (single-valued)**:
+A derived enum that collapses the three booleans into a single label, used for at-a-glance per-scenario summaries (e.g. one cell in a 65-row table). Enum: `compile-time error` / `runtime error` / `runtime warning` / `silent continuation` / `not applicable`. Priority order when multiple signals fire: compile > runtime-error > runtime-warning > silent > n/a. The headline tallies (Tidy-TS catches 62/65 at compile, 3/65 at runtime-only, etc.) read this enum. Per-category tables read the independent booleans.
 _Avoid_: result, outcome (bare).
 
 **Compile-time error**:
-A `detection outcome`. The compiler (TypeScript) or static code checker (mypy/pyright) rejects the code before it runs.
+A canonical detection outcome value. The compiler (TypeScript) or static code checker (mypy/pyright) rejects the code before it runs. As a catch signal: `compileCatchFired = true`.
 
 **Runtime error**:
-A `detection outcome`. The program runs and stops with an error message.
+A canonical detection outcome value. The program runs and stops with an error message. As a catch signal: `runtimeCatchFired = true`.
 
 **Runtime warning**:
-A `detection outcome`. The program prints a warning and continues, possibly producing an incorrect result.
+A canonical detection outcome value. The program prints a warning and continues, possibly producing an incorrect result. As a catch signal: `warningEmitted = true` (and `runtimeCatchFired = false`).
 
 **Silent continuation**:
-A `detection outcome`. The program continues without error or warning and produces incorrect output. The most consequential outcome.
-
-**Severity**:
-How consequential the error would be if it went undetected. Binary: `High` / `Low`. Assigned per scenario, independently of which comparator catches it.
-
-### Severity rubric
-
-The rubric matches the manuscript wording verbatim. Three High criteria, all required (conjunction); three Low signals, any one sufficient (disjunction).
-
-**AV (alters values)**:
-A High criterion. The error would change a numeric result, cohort membership, or clinical decision.
-
-**PS (propagates systematically)**:
-A High criterion. The error is systematic — affecting every patient or row that meets a certain condition in the same way, rather than introducing random noise.
-
-**PO (produces plausible output)**:
-A High criterion. The incorrect output looks plausible and would not be caught by routine inspection.
-
-**OI (obviously implausible output)**:
-A Low signal. The error produces obviously wrong output that an analyst would likely identify and fix (zero rows, an entirely missing column, a negative count).
-
-**NA (non-analytic only)**:
-A Low signal. The error affects only cosmetic properties such as display formatting or column ordering.
-
-**SC (self-correcting)**:
-A Low signal. The error is overwritten or discarded by a later step.
-
-**High severity**:
-AV ∧ PS ∧ PO all true.
-
-**Low severity**:
-Anything not High. Any one Low signal is sufficient explanation; not all three are required.
-
-**Rationale field guidance**:
-The rationale prose for each scenario in OVERVIEW.md should make the three High criteria visible with concrete observations: *what specifically* is altered, *which rows* are affected, *what the analyst would see* in the output. The aim is reader-verifiable classification — a reader can pick any scenario and check the verdict themselves — not a fixed sentence template.
+A canonical detection outcome value. The program continues without error or warning and produces incorrect output. The most consequential outcome. As catch signals: all three booleans `false`.
 
 ### RPython corroboration
 
@@ -236,8 +213,7 @@ Generated tables include this as a header block. The `corroboration-summary.json
 ## Relationships
 
 - A **scenario** belongs to exactly one **category**.
-- A **scenario** has one **severity** (assigned independently of detection).
-- A **scenario** × **comparator** produces one **detection outcome**.
+- A **scenario** × **comparator** produces three independent **catch signals** (compile-time catch, runtime catch, runtime warning — not mutually exclusive) and one derived **canonical detection outcome** (a single label that collapses the three signals by priority).
 - A **snippet** has one **mapping** (a category, or an exclusion reason).
 - An *included* **snippet** has exactly one **reproduction**.
 - A **reproduction** records both an **original-language consequence** (from the corpus) and a **Tidy-TS detection outcome** + **mechanism** + **catch explanation** (measured by the authors).
@@ -253,14 +229,14 @@ Generated tables include this as a header block. The `corroboration-summary.json
 
 ## Flagged ambiguities
 
-- **"outcome"** was used for both detection outcomes and original-language consequences. Resolved: **detection outcome** (the candidate library's behavior on a scenario or reproduction, 4-valued) is distinct from **original-language consequence** (DC/IF/Crash, from corpus metadata). Never use "outcome" bare.
+- **"outcome"** was used for both detection outcomes and original-language consequences. Resolved: **canonical detection outcome** (a candidate library's behavior on a scenario, single-valued, derived from three independent catch signals) is distinct from **original-language consequence** (DC/IF/Crash, from corpus metadata). Never use "outcome" bare.
+- **"detection outcome" as a single mutually-exclusive enum.** Earlier drafts said each (scenario × comparator) produces exactly one detection outcome. That framing hid the fact that Tidy-TS often catches both at compile time AND at runtime — defense in depth — and forced the manuscript's compile/runtime columns into an artificial mutual exclusion that did not match what the verifier observed. Resolved: the basis is three **independent catch signals** per (scenario × comparator) — `compileCatchFired`, `runtimeCatchFired`, `warningEmitted` — that can co-fire. The single-valued enum is kept as a derived collapse for at-a-glance summaries (priority: compile > runtime-error > runtime-warning > silent > n/a), but the manuscript's Table 2 reads the booleans.
 - **"probe" / "test" / "scenario"** were used interchangeably for the same unit. Resolved: **scenario** is canonical. "Test case" and "intentional error" from the manuscript draft also refer to a scenario.
 - **"framework" / "library" / "package" / "tool"** all appeared for the comparators. Resolved: **library**. Distinct from **static code checker**, which describes mypy/pyright specifically.
 - **Category 5** was named "Data loading" in the manuscript draft but covered both I/O-boundary errors and `bindRows`/`append` composition. Resolved: split into **Data loading** (3 scenarios, Zod at load) and **Schema composition** (7 scenarios, `bindRows`/`append`/duplicate keys). Total stays 65.
-- **Scenario 1p** description in `OVERVIEW.md` ("residual grouping after summarize") did not match the test, which exercises "access non-summarized column after summarize." Resolved: docs follow the test (column reference after summarize); 1p stays in cat 1. Residual-grouping behavior, if added later, would be a new cat 6 scenario.
+- **Scenario 1p** label ("residual grouping after summarize") originally did not match the test, which exercises "access non-summarized column after summarize." Resolved: the scenario's frontmatter label follows the test (column reference after summarize); 1p stays in cat 1. Residual-grouping behavior, if added later, would be a new cat 6 scenario.
 - **"Type system catch"** frontmatter field collapsed three distinct concepts (whether, how, narrative). Resolved: split into three fields — `Tidy-TS detection outcome` (whether), `Tidy-TS detection mechanism` (how), `Tidy-TS catch explanation` (one-phrase prose).
 - **"Structurally absent"** collapsed three distinct non-catches (language feature missing / library API design / partial-but-not-total absence). Resolved: split into `language structural absence`, `library API design`, and `bug still exists`. The first two have outcome `not applicable`; the third has outcome `silent continuation` or `runtime error` and counts as a non-catch.
-- **AV/PS/PO** — an earlier grilling pass proposed reframing AV as a gate and adding "operational tests" for PS and PO. Rolled back: the manuscript wording is plain English a clinical informaticist can read directly; my reformulations were vaguer and risked tightening the rubric beyond what the existing 65 scenarios were rated against. The leverage point is the rationale field's prose, not the rubric definitions.
 - **"test suite"** could mean either the [[comparison-suite]] or the [[framework-test-suite]] (the framework's ~1,700 correctness tests under `packages/`). A third artifact, the [[type-tracking-demonstration-file]] (Supplementary A), is also separate. Resolved: three distinct glossary terms; never use "test suite" bare.
 - **The two contributions' headline numbers** (A's 62/65, B's per-category rates) risk conflation. Resolved: disjoint sections, explicit non-comparability disclaimer at the top of section B, distribution-led reporting in B rather than a single aggregate percentage.
 
@@ -269,8 +245,7 @@ Generated tables include this as a header block. The `corroboration-summary.json
 - **No inter-rater check for RPython mappings.** No second clinical analyst available. Limitations section concedes this and leans on the corpus's independence (different research group, predates Tidy-TS) as the credibility argument.
 - **Reproductions are comprehensive, not sampled.** Every included snippet receives a reproduction. Justification: under reviewer pressure on selection bias, more verifiable evidence per included snippet is worth the cost.
 - **Arquero promoted to supplementary library.** Probe files already exist in the repo; the supplementary table gains a column and the prose gains a one-line introduction.
-- **Severity rubric stays as the manuscript draft has it.** Three High criteria (AV ∧ PS ∧ PO), three Low signals (any one sufficient). Rationale field is the leverage point: prose should make the three criteria visible with concrete observations, but no fixed template is imposed.
-- **Methods section adds one credibility sentence about severity rating.** The manuscript records that severity was assigned by the first author and reviewed against each criterion individually, with the per-scenario rationale recorded in the public table to allow re-rating by readers. This is the credibility move that replaces inter-rater agreement.
+- **Severity ratings removed.** Earlier drafts classified each scenario as High or Low using a three-axis AV/PS/PO rubric. The rubric depended on rater assumptions about downstream code that the verifier did not measure, and the three axes were verbal architecture for a fundamentally subjective binary judgment. Outcomes are now reported per error category instead. Future revisions should not reintroduce a severity scale.
 - **Equivalence-fair rule with six conditions** governs all comparator implementations. The most load-bearing condition is #4 (silent outcomes must programmatically assert what is corrupted, not merely the absence of error).
 - **Two-contributions framing with disjoint manuscript sections.** Section B (External Validation) opens with an explicit non-comparability disclaimer and reports distribution + per-category breakdown rather than a single headline percentage.
 - **Reproductions are single self-contained `.ts` files.** Originally each snippet had a paired `.py`/`.R` + `.ts`; sample audits found systematic drift where the catch explanation described an aspirational mechanism the `.ts` did not actually exercise (e.g., claiming `` `Temporal` rejects `string` `` when the file caught at `s.mean` on `string[]`). Resolved by collapsing to one self-contained `.ts` per snippet that inlines the original-language reproduction via `runForeign` from `RPython/run-foreign.ts`. The Tidy-TS detection fields are derived from observed file behavior, not hand-written, so drift between claimed and demonstrated catch is structurally impossible.

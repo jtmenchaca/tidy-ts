@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>NOTE_ANALYSIS_PARALLEL — topology</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #fafafa; color: #222; margin: 0; padding: 32px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px 0; }
+  .sub-title { font-size: 13px; color: #666; margin-bottom: 24px; }
+  svg { display: block; background: white; border: 1px solid #eee; border-radius: 8px; }
+
+  text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #1a1a1a; }
+
+  /* Card */
+  .node-body {
+    fill: white;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+  }
+  .node-body-BranchingNode { stroke: #e0a352; }
+  .node-body-StartNode, .node-body-EndNode { stroke: #94a3b8; }
+
+  /* Header band — colored only via fill, no separate clipping needed
+     since the path is hand-shaped to be flat-bottomed. */
+  .node-header { fill: #f8fafc; stroke: none; }
+  .node-header-LlmNode { fill: #f1f5f9; }
+  .node-header-BranchingNode { fill: #fff7ed; }
+  .node-header-StartNode, .node-header-EndNode { fill: #eef2ff; }
+
+  .header-divider { stroke: #e4e4e7; stroke-width: 1; }
+  .col-divider { stroke: #e4e4e7; stroke-width: 1; stroke-dasharray: 2 3; }
+
+  /* Container metadata (Map/ParallelMap/Catch/Flow/ParallelFlow strip) */
+  .container-meta {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+    font-style: italic;
+  }
+
+  /* Subflow panel + caption */
+  .subflow-panel {
+    fill: #fafafa;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .subflow-caption {
+    fill: #fff7ed;
+    stroke: #fed7aa;
+    stroke-width: 1;
+  }
+  .subflow-id {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+  }
+  .subflow-citation {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #b45309;
+    font-style: italic;
+  }
+
+  /* Tools panel (AgentNode) */
+  .tools-panel {
+    fill: #f5f3ff;
+    stroke: #c4b5fd;
+    stroke-width: 1;
+  }
+  .tools-header {
+    fill: #6d28d9;
+  }
+  .tool-sig {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #1e1b4b;
+  }
+  /* MCPToolBox row — slightly distinct so it doesn't look like a fake
+     ServerTool with an empty signature. */
+  .tool-box-sig {
+    font-style: italic;
+    fill: #4338ca;
+  }
+  .tool-desc {
+    font-size: 10px;
+    fill: #6b7280;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  /* Typography */
+  .node-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #18181b;
+  }
+  .node-sub {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+  .section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #a1a1aa;
+    font-weight: 600;
+  }
+
+  .field-name {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #27272a;
+  }
+  .field-type {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+
+  .port { fill: white; stroke: #64748b; stroke-width: 1.5; }
+  .port-in  { fill: #f8fafc; stroke: #94a3b8; }
+  .port-out { fill: #64748b; stroke: #475569; }
+
+  /* Edges */
+  .edge-control { stroke: #18181b; stroke-width: 1.5; }
+  .edge-data { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .edge-label {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .branch-label { fill: #b45309; font-weight: 600; }
+  .data-label { fill: #71717a; }
+</style>
+</head>
+<body>
+  <h1>NOTE_ANALYSIS_PARALLEL</h1>
+  <div class="sub-title">v1.0.0</div>
+
+  <svg viewBox="0 -40 1349 760" width="1349" height="760">
+    <defs>
+      <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+      </marker>
+      <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+      </marker>
+    </defs>
+    
+    <g>
+      <path class="edge edge-control" d="M 150 112 L 230 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 1056 152 L 1136 152" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+    
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="40" y="40" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 48 40 H 142 A 8 8 0 0 1 150 48 V 80 H 40 V 48 A 8 8 0 0 1 48 40 Z" />
+<text class="node-name" x="95" y="62" text-anchor="middle">start</text>
+<line class="header-divider" x1="40" y1="80" x2="150" y2="80" />
+      <text class="section-label" x="138" y="92" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="150" cy="112" r="4" />
+<text class="field-name" x="80" y="116" text-anchor="end">note</text>
+<text class="field-type" x="138" y="116" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-ParallelFlowNode" x="230" y="40" width="826" height="640" rx="8" ry="8" />
+      <path class="node-header node-header-ParallelFlowNode" d="M 238 40 H 1048 A 8 8 0 0 1 1056 48 V 80 H 230 V 48 A 8 8 0 0 1 238 40 Z" />
+<text class="node-name" x="643" y="62" text-anchor="middle">analyze_in_parallel</text>
+<line class="header-divider" x1="230" y1="80" x2="1056" y2="80" />
+      <text class="section-label" x="242" y="92">inputs</text>
+<text class="section-label" x="1044" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="615" y1="86" x2="615" y2="674" />
+      <circle class="port port-in" cx="230" cy="112" r="4" />
+<text class="field-name" x="242" y="116">note</text>
+<text class="field-type" x="328" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="1056" cy="112" r="4" />
+<text class="field-name" x="986" y="116" text-anchor="end">sentiment</text>
+<text class="field-type" x="1044" y="116" text-anchor="end">number</text>
+<circle class="port port-out" cx="1056" cy="132" r="4" />
+<text class="field-name" x="986" y="136" text-anchor="end">bp_systolic</text>
+<text class="field-type" x="1044" y="136" text-anchor="end">number</text>
+<circle class="port port-out" cx="1056" cy="152" r="4" />
+<text class="field-name" x="986" y="156" text-anchor="end">bp_diastolic</text>
+<text class="field-type" x="1044" y="156" text-anchor="end">number</text>
+<circle class="port port-out" cx="1056" cy="172" r="4" />
+<text class="field-name" x="986" y="176" text-anchor="end">heart_rate</text>
+<text class="field-type" x="1044" y="176" text-anchor="end">number</text>
+      <text class="container-meta" x="242" y="204">concurrency 2</text><rect class="subflow-caption" x="244" y="206" width="798" height="32" rx="4" ry="4" /><text class="subflow-id" x="252" y="219">NOTE_SENTIMENT  v1.0.0</text><rect class="subflow-panel" x="244" y="238" width="798" height="172" rx="6" ry="6" /><g class="subflow-region">
+    <g>
+      <path class="edge edge-control" d="M 422 350 L 502 350" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 749 350 L 829 350" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="312" y="278" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 320 278 H 414 A 8 8 0 0 1 422 286 V 318 H 312 V 286 A 8 8 0 0 1 320 278 Z" />
+<text class="node-name" x="367" y="300" text-anchor="middle">s_start</text>
+<line class="header-divider" x1="312" y1="318" x2="422" y2="318" />
+      <text class="section-label" x="410" y="330" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="422" cy="350" r="4" />
+<text class="field-name" x="352" y="354" text-anchor="end">note</text>
+<text class="field-type" x="410" y="354" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="502" y="278" width="247" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 510 278 H 741 A 8 8 0 0 1 749 286 V 318 H 502 V 286 A 8 8 0 0 1 510 278 Z" />
+<text class="node-name" x="625.5" y="294" text-anchor="middle">score_sentiment</text>
+<text class="node-sub" x="625.5" y="307" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="502" y1="318" x2="749" y2="318" />
+      <text class="section-label" x="514" y="330">inputs</text>
+<text class="section-label" x="737" y="330" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="608" y1="324" x2="608" y2="364" />
+      <circle class="port port-in" cx="502" cy="350" r="4" />
+<text class="field-name" x="514" y="354">note</text>
+<text class="field-type" x="600" y="354" text-anchor="end">string</text>
+<circle class="port port-out" cx="749" cy="350" r="4" />
+<text class="field-name" x="679" y="354" text-anchor="end">sentiment</text>
+<text class="field-type" x="737" y="354" text-anchor="end">number</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="829" y="278" width="145" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 837 278 H 966 A 8 8 0 0 1 974 286 V 318 H 829 V 286 A 8 8 0 0 1 837 278 Z" />
+<text class="node-name" x="901.5" y="300" text-anchor="middle">s_end</text>
+<line class="header-divider" x1="829" y1="318" x2="974" y2="318" />
+      <text class="section-label" x="841" y="330">inputs</text>
+      
+      <circle class="port port-in" cx="829" cy="350" r="4" />
+<text class="field-name" x="841" y="354">sentiment</text>
+<text class="field-type" x="962" y="354" text-anchor="end">number</text>
+      
+      
+    </g></g><rect class="subflow-caption" x="244" y="422" width="798" height="32" rx="4" ry="4" /><text class="subflow-id" x="252" y="435">EXTRACT_VITALS  v1.0.0</text><rect class="subflow-panel" x="244" y="454" width="798" height="212" rx="6" ry="6" /><g class="subflow-region">
+    <g>
+      <path class="edge edge-control" d="M 394 566 L 474 566" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 749 586 L 829 586" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="284" y="494" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 292 494 H 386 A 8 8 0 0 1 394 502 V 534 H 284 V 502 A 8 8 0 0 1 292 494 Z" />
+<text class="node-name" x="339" y="516" text-anchor="middle">v_start</text>
+<line class="header-divider" x1="284" y1="534" x2="394" y2="534" />
+      <text class="section-label" x="382" y="546" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="394" cy="566" r="4" />
+<text class="field-name" x="324" y="570" text-anchor="end">note</text>
+<text class="field-type" x="382" y="570" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="474" y="494" width="275" height="132" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 482 494 H 741 A 8 8 0 0 1 749 502 V 534 H 474 V 502 A 8 8 0 0 1 482 494 Z" />
+<text class="node-name" x="611.5" y="510" text-anchor="middle">extract_vitals</text>
+<text class="node-sub" x="611.5" y="523" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="474" y1="534" x2="749" y2="534" />
+      <text class="section-label" x="486" y="546">inputs</text>
+<text class="section-label" x="737" y="546" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="580" y1="540" x2="580" y2="620" />
+      <circle class="port port-in" cx="474" cy="566" r="4" />
+<text class="field-name" x="486" y="570">note</text>
+<text class="field-type" x="572" y="570" text-anchor="end">string</text>
+<circle class="port port-out" cx="749" cy="566" r="4" />
+<text class="field-name" x="672" y="570" text-anchor="end">bp_systolic</text>
+<text class="field-type" x="737" y="570" text-anchor="end">number?</text>
+<circle class="port port-out" cx="749" cy="586" r="4" />
+<text class="field-name" x="672" y="590" text-anchor="end">bp_diastolic</text>
+<text class="field-type" x="737" y="590" text-anchor="end">number?</text>
+<circle class="port port-out" cx="749" cy="606" r="4" />
+<text class="field-name" x="672" y="610" text-anchor="end">heart_rate</text>
+<text class="field-type" x="737" y="610" text-anchor="end">number?</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="829" y="494" width="173" height="132" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 837 494 H 994 A 8 8 0 0 1 1002 502 V 534 H 829 V 502 A 8 8 0 0 1 837 494 Z" />
+<text class="node-name" x="915.5" y="516" text-anchor="middle">v_end</text>
+<line class="header-divider" x1="829" y1="534" x2="1002" y2="534" />
+      <text class="section-label" x="841" y="546">inputs</text>
+      
+      <circle class="port port-in" cx="829" cy="566" r="4" />
+<text class="field-name" x="841" y="570">bp_systolic</text>
+<text class="field-type" x="990" y="570" text-anchor="end">number?</text>
+<circle class="port port-in" cx="829" cy="586" r="4" />
+<text class="field-name" x="841" y="590">bp_diastolic</text>
+<text class="field-type" x="990" y="590" text-anchor="end">number?</text>
+<circle class="port port-in" cx="829" cy="606" r="4" />
+<text class="field-name" x="841" y="610">heart_rate</text>
+<text class="field-type" x="990" y="610" text-anchor="end">number?</text>
+      
+      
+    </g></g>
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="1136" y="40" width="173" height="152" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 1144 40 H 1301 A 8 8 0 0 1 1309 48 V 80 H 1136 V 48 A 8 8 0 0 1 1144 40 Z" />
+<text class="node-name" x="1222.5" y="62" text-anchor="middle">end</text>
+<line class="header-divider" x1="1136" y1="80" x2="1309" y2="80" />
+      <text class="section-label" x="1148" y="92">inputs</text>
+      
+      <circle class="port port-in" cx="1136" cy="112" r="4" />
+<text class="field-name" x="1148" y="116">sentiment</text>
+<text class="field-type" x="1297" y="116" text-anchor="end">number</text>
+<circle class="port port-in" cx="1136" cy="132" r="4" />
+<text class="field-name" x="1148" y="136">bp_systolic</text>
+<text class="field-type" x="1297" y="136" text-anchor="end">number?</text>
+<circle class="port port-in" cx="1136" cy="152" r="4" />
+<text class="field-name" x="1148" y="156">bp_diastolic</text>
+<text class="field-type" x="1297" y="156" text-anchor="end">number?</text>
+<circle class="port port-in" cx="1136" cy="172" r="4" />
+<text class="field-name" x="1148" y="176">heart_rate</text>
+<text class="field-type" x="1297" y="176" text-anchor="end">number?</text>
+      
+      
+    </g>
+  </svg>
+</body>
+</html>

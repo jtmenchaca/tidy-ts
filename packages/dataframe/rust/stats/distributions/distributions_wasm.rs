@@ -9,7 +9,68 @@ use wasm_bindgen::prelude::*;
 use napi_derive::napi;
 
 #[cfg(any(feature = "wasm", feature = "napi-rs"))]
-use rand::thread_rng;
+use rand::{rngs::StdRng, thread_rng, Rng, SeedableRng};
+
+/// One RNG type for the WASM/NAPI surface: deterministic when the caller
+/// passes a seed, otherwise non-deterministic.
+///
+/// Why this enum (and not `Box<dyn RngCore>` or generic dispatch):
+/// - The downstream `r<dist>(..., rng: &mut R)` functions are generic over
+///   `R: Rng`, which is `Sized`. A trait object (`dyn RngCore`) isn't `Sized`,
+///   so it can't fulfil the bound directly without an extra layer.
+/// - Carrying both arms as concrete types avoids any vtable or boxing.
+///
+/// Why `Option<u32>` for the public seed parameter (not `u64`):
+/// - wasm-bindgen maps `Option<u32>` → JS `number | undefined` (clean).
+///   `Option<u64>` would force callers to pass `BigInt(seed)` — see
+///   <https://rustwasm.github.io/docs/wasm-bindgen/reference/types/numbers.html>.
+/// - napi-rs cannot receive `u64` directly as a Rust parameter (precision
+///   loss when converting BigInt) — it only takes `u64` through the `BigInt`
+///   wrapper, which is even uglier. `u32` is a regular JS Number. See
+///   <https://napi.rs/docs/concepts/values>.
+/// - 2^32 distinct seeds is plenty for reproducibility. We widen to `u64`
+///   internally when feeding `StdRng::seed_from_u64`.
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
+enum SamplerRng {
+    Seeded(StdRng),
+    Thread(rand::rngs::ThreadRng),
+}
+
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
+impl rand::RngCore for SamplerRng {
+    fn next_u32(&mut self) -> u32 {
+        match self {
+            SamplerRng::Seeded(r) => r.next_u32(),
+            SamplerRng::Thread(r) => r.next_u32(),
+        }
+    }
+    fn next_u64(&mut self) -> u64 {
+        match self {
+            SamplerRng::Seeded(r) => r.next_u64(),
+            SamplerRng::Thread(r) => r.next_u64(),
+        }
+    }
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        match self {
+            SamplerRng::Seeded(r) => r.fill_bytes(dest),
+            SamplerRng::Thread(r) => r.fill_bytes(dest),
+        }
+    }
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+        match self {
+            SamplerRng::Seeded(r) => r.try_fill_bytes(dest),
+            SamplerRng::Thread(r) => r.try_fill_bytes(dest),
+        }
+    }
+}
+
+#[cfg(any(feature = "wasm", feature = "napi-rs"))]
+fn rng_from_seed(seed: Option<u32>) -> SamplerRng {
+    match seed {
+        Some(s) => SamplerRng::Seeded(StdRng::seed_from_u64(s as u64)),
+        None => SamplerRng::Thread(thread_rng()),
+    }
+}
 
 // ============================================================================
 // BETA DISTRIBUTION
@@ -57,20 +118,30 @@ pub fn wasm_qbeta_napi(p: f64, shape1: f64, shape2: f64, lower_tail: bool, log_p
     qbeta(p, shape1, shape2, lower_tail, log_p)
 }
 
-/// WASM export for beta random number generation
+/// Draw `n` samples from `Beta(shape1, shape2)`. See `wasm_rnorm` doc comment
+/// for seed semantics.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rbeta(shape1: f64, shape2: f64) -> f64 {
-    let mut rng = thread_rng();
-    rbeta(shape1, shape2, &mut rng)
+pub fn wasm_rbeta(
+    shape1: f64,
+    shape2: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rbeta(shape1, shape2, &mut rng)).collect()
 }
 
-/// NAPI export for beta random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rbeta_napi(shape1: f64, shape2: f64) -> f64 {
-    let mut rng = thread_rng();
-    rbeta(shape1, shape2, &mut rng)
+pub fn wasm_rbeta_napi(
+    shape1: f64,
+    shape2: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rbeta(shape1, shape2, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -119,20 +190,25 @@ pub fn wasm_qnorm_napi(p: f64, mean: f64, sd: f64, lower_tail: bool, log_p: bool
     qnorm(p, mean, sd, lower_tail, log_p)
 }
 
-/// WASM export for normal random number generation
+/// Draw `n` samples from `Normal(mean, sd)` in a single call.
+///
+/// With `seed = Some(s)` the sequence is fully reproducible (one RNG state
+/// advances across every draw — same contract as R's `set.seed(s); rnorm(n)`
+/// and numpy's `default_rng(s).normal(size=n)`). With `seed = None` uses
+/// `thread_rng()` for non-determinism. The caller passes `n = 1` for a
+/// single draw.
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rnorm(mean: f64, sd: f64) -> f64 {
-    let mut rng = thread_rng();
-    rnorm(mean, sd, &mut rng)
+pub fn wasm_rnorm(mean: f64, sd: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rnorm(mean, sd, &mut rng)).collect()
 }
 
-/// NAPI export for normal random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rnorm_napi(mean: f64, sd: f64) -> f64 {
-    let mut rng = thread_rng();
-    rnorm(mean, sd, &mut rng)
+pub fn wasm_rnorm_napi(mean: f64, sd: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rnorm(mean, sd, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -181,20 +257,28 @@ pub fn wasm_qgamma_napi(p: f64, shape: f64, rate: f64, lower_tail: bool, log_p: 
     qgamma(p, shape, rate, lower_tail, log_p)
 }
 
-/// WASM export for gamma random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rgamma(shape: f64, rate: f64) -> f64 {
-    let mut rng = thread_rng();
-    rgamma(shape, rate, &mut rng)
+pub fn wasm_rgamma(
+    shape: f64,
+    rate: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rgamma(shape, rate, &mut rng)).collect()
 }
 
-/// NAPI export for gamma random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rgamma_napi(shape: f64, rate: f64) -> f64 {
-    let mut rng = thread_rng();
-    rgamma(shape, rate, &mut rng)
+pub fn wasm_rgamma_napi(
+    shape: f64,
+    rate: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rgamma(shape, rate, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -243,20 +327,18 @@ pub fn wasm_qexp_napi(p: f64, rate: f64, lower_tail: bool, log_p: bool) -> f64 {
     qexp(p, rate, lower_tail, log_p)
 }
 
-/// WASM export for exponential random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rexp(rate: f64) -> f64 {
-    let mut rng = thread_rng();
-    rexp(rate, &mut rng)
+pub fn wasm_rexp(rate: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rexp(rate, &mut rng)).collect()
 }
 
-/// NAPI export for exponential random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rexp_napi(rate: f64) -> f64 {
-    let mut rng = thread_rng();
-    rexp(rate, &mut rng)
+pub fn wasm_rexp_napi(rate: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rexp(rate, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -305,20 +387,18 @@ pub fn wasm_qchisq_napi(p: f64, df: f64, lower_tail: bool, log_p: bool) -> f64 {
     qchisq(p, df, lower_tail, log_p)
 }
 
-/// WASM export for chi-squared random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rchisq(df: f64) -> f64 {
-    let mut rng = thread_rng();
-    rchisq(df, &mut rng)
+pub fn wasm_rchisq(df: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rchisq(df, &mut rng)).collect()
 }
 
-/// NAPI export for chi-squared random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rchisq_napi(df: f64) -> f64 {
-    let mut rng = thread_rng();
-    rchisq(df, &mut rng)
+pub fn wasm_rchisq_napi(df: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rchisq(df, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -367,20 +447,18 @@ pub fn wasm_qf_napi(p: f64, df1: f64, df2: f64, lower_tail: bool, log_p: bool) -
     qf(p, df1, df2, lower_tail, log_p)
 }
 
-/// WASM export for F distribution random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rf(df1: f64, df2: f64) -> f64 {
-    let mut rng = thread_rng();
-    rf(df1, df2, &mut rng)
+pub fn wasm_rf(df1: f64, df2: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rf(df1, df2, &mut rng)).collect()
 }
 
-/// NAPI export for F distribution random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rf_napi(df1: f64, df2: f64) -> f64 {
-    let mut rng = thread_rng();
-    rf(df1, df2, &mut rng)
+pub fn wasm_rf_napi(df1: f64, df2: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rf(df1, df2, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -429,20 +507,18 @@ pub fn wasm_qt_napi(p: f64, df: f64, lower_tail: bool, log_p: bool) -> f64 {
     qt(p, df, lower_tail, log_p)
 }
 
-/// WASM export for t distribution random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rt(df: f64) -> f64 {
-    let mut rng = thread_rng();
-    rt(df, &mut rng)
+pub fn wasm_rt(df: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rt(df, &mut rng)).collect()
 }
 
-/// NAPI export for t distribution random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rt_napi(df: f64) -> f64 {
-    let mut rng = thread_rng();
-    rt(df, &mut rng)
+pub fn wasm_rt_napi(df: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rt(df, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -491,20 +567,18 @@ pub fn wasm_qpois_napi(p: f64, lambda: f64, lower_tail: bool, log_p: bool) -> f6
     qpois(p, lambda, lower_tail, log_p)
 }
 
-/// WASM export for Poisson random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rpois(lambda: f64) -> f64 {
-    let mut rng = thread_rng();
-    rpois(lambda, &mut rng)
+pub fn wasm_rpois(lambda: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rpois(lambda, &mut rng)).collect()
 }
 
-/// NAPI export for Poisson random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rpois_napi(lambda: f64) -> f64 {
-    let mut rng = thread_rng();
-    rpois(lambda, &mut rng)
+pub fn wasm_rpois_napi(lambda: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rpois(lambda, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -553,20 +627,28 @@ pub fn wasm_qbinom_napi(p: f64, size: f64, prob: f64, lower_tail: bool, log_p: b
     qbinom(p, size, prob, lower_tail, log_p)
 }
 
-/// WASM export for binomial random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rbinom(size: f64, prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rbinom(size, prob, &mut rng)
+pub fn wasm_rbinom(
+    size: f64,
+    prob: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rbinom(size, prob, &mut rng)).collect()
 }
 
-/// NAPI export for binomial random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rbinom_napi(size: f64, prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rbinom(size, prob, &mut rng)
+pub fn wasm_rbinom_napi(
+    size: f64,
+    prob: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rbinom(size, prob, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -615,20 +697,28 @@ pub fn wasm_qunif_napi(p: f64, min: f64, max: f64, lower_tail: bool, log_p: bool
     qunif(p, min, max, lower_tail, log_p)
 }
 
-/// WASM export for uniform random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_runif(min: f64, max: f64) -> f64 {
-    let mut rng = thread_rng();
-    runif(min, max, &mut rng)
+pub fn wasm_runif(
+    min: f64,
+    max: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| runif(min, max, &mut rng)).collect()
 }
 
-/// NAPI export for uniform random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_runif_napi(min: f64, max: f64) -> f64 {
-    let mut rng = thread_rng();
-    runif(min, max, &mut rng)
+pub fn wasm_runif_napi(
+    min: f64,
+    max: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| runif(min, max, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -677,20 +767,28 @@ pub fn wasm_qweibull_napi(p: f64, shape: f64, scale: f64, lower_tail: bool, log_
     qweibull(p, shape, scale, lower_tail, log_p)
 }
 
-/// WASM export for Weibull random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rweibull(shape: f64, scale: f64) -> f64 {
-    let mut rng = thread_rng();
-    rweibull(shape, scale, &mut rng)
+pub fn wasm_rweibull(
+    shape: f64,
+    scale: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rweibull(shape, scale, &mut rng)).collect()
 }
 
-/// NAPI export for Weibull random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rweibull_napi(shape: f64, scale: f64) -> f64 {
-    let mut rng = thread_rng();
-    rweibull(shape, scale, &mut rng)
+pub fn wasm_rweibull_napi(
+    shape: f64,
+    scale: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rweibull(shape, scale, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -739,20 +837,18 @@ pub fn wasm_qgeom_napi(p: f64, prob: f64, lower_tail: bool, log_p: bool) -> f64 
     qgeom(p, prob, lower_tail, log_p)
 }
 
-/// WASM export for geometric random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rgeom(prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rgeom(prob, &mut rng)
+pub fn wasm_rgeom(prob: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rgeom(prob, &mut rng)).collect()
 }
 
-/// NAPI export for geometric random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rgeom_napi(prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rgeom(prob, &mut rng)
+pub fn wasm_rgeom_napi(prob: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rgeom(prob, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -801,20 +897,30 @@ pub fn wasm_qhyper_napi(p: f64, m: f64, n: f64, k: f64, lower_tail: bool, log_p:
     qhyper(p, m, n, k, lower_tail, log_p)
 }
 
-/// WASM export for hypergeometric random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rhyper(m: f64, n: f64, k: f64) -> f64 {
-    let mut rng = thread_rng();
-    rhyper(m, n, k, &mut rng)
+pub fn wasm_rhyper(
+    m: f64,
+    n: f64,
+    k: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rhyper(m, n, k, &mut rng)).collect()
 }
 
-/// NAPI export for hypergeometric random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rhyper_napi(m: f64, n: f64, k: f64) -> f64 {
-    let mut rng = thread_rng();
-    rhyper(m, n, k, &mut rng)
+pub fn wasm_rhyper_napi(
+    m: f64,
+    n: f64,
+    k: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rhyper(m, n, k, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -863,20 +969,28 @@ pub fn wasm_qlnorm_napi(p: f64, meanlog: f64, sdlog: f64, lower_tail: bool, log_
     qlnorm(p, meanlog, sdlog, lower_tail, log_p)
 }
 
-/// WASM export for log-normal random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rlnorm(meanlog: f64, sdlog: f64) -> f64 {
-    let mut rng = thread_rng();
-    rlnorm(meanlog, sdlog, &mut rng)
+pub fn wasm_rlnorm(
+    meanlog: f64,
+    sdlog: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rlnorm(meanlog, sdlog, &mut rng)).collect()
 }
 
-/// NAPI export for log-normal random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rlnorm_napi(meanlog: f64, sdlog: f64) -> f64 {
-    let mut rng = thread_rng();
-    rlnorm(meanlog, sdlog, &mut rng)
+pub fn wasm_rlnorm_napi(
+    meanlog: f64,
+    sdlog: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rlnorm(meanlog, sdlog, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -925,20 +1039,28 @@ pub fn wasm_qnbinom_napi(p: f64, r: f64, prob: f64, lower_tail: bool, log_p: boo
     qnbinom(p, r, prob, lower_tail, log_p)
 }
 
-/// WASM export for negative binomial random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rnbinom(r: f64, prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rnbinom(r, prob, &mut rng)
+pub fn wasm_rnbinom(
+    r: f64,
+    prob: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rnbinom(r, prob, &mut rng)).collect()
 }
 
-/// NAPI export for negative binomial random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rnbinom_napi(r: f64, prob: f64) -> f64 {
-    let mut rng = thread_rng();
-    rnbinom(r, prob, &mut rng)
+pub fn wasm_rnbinom_napi(
+    r: f64,
+    prob: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rnbinom(r, prob, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -987,20 +1109,28 @@ pub fn wasm_qwilcox_napi(p: f64, m: f64, n: f64, lower_tail: bool, log_p: bool) 
     qwilcox(p, m, n, lower_tail, log_p)
 }
 
-/// WASM export for Wilcoxon random number generation
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rwilcox(m: f64, n: f64) -> f64 {
-    let mut rng = thread_rng();
-    rwilcox(m, n, &mut rng)
+pub fn wasm_rwilcox(
+    m: f64,
+    n: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rwilcox(m, n, &mut rng)).collect()
 }
 
-/// NAPI export for Wilcoxon random number generation
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rwilcox_napi(m: f64, n: f64) -> f64 {
-    let mut rng = thread_rng();
-    rwilcox(m, n, &mut rng)
+pub fn wasm_rwilcox_napi(
+    m: f64,
+    n: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rwilcox(m, n, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -1045,16 +1175,26 @@ pub fn wasm_qev1_napi(p: f64, location: f64, scale: f64, lower_tail: bool, log_p
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rev1(location: f64, scale: f64) -> f64 {
-    let mut rng = thread_rng();
-    rev1(location, scale, &mut rng)
+pub fn wasm_rev1(
+    location: f64,
+    scale: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rev1(location, scale, &mut rng)).collect()
 }
 
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rev1_napi(location: f64, scale: f64) -> f64 {
-    let mut rng = thread_rng();
-    rev1(location, scale, &mut rng)
+pub fn wasm_rev1_napi(
+    location: f64,
+    scale: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rev1(location, scale, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -1099,16 +1239,26 @@ pub fn wasm_qzipf_napi(p: f64, n: f64, s: f64, lower_tail: bool, log_p: bool) ->
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rzipf(n: f64, s: f64) -> f64 {
-    let mut rng = thread_rng();
-    rzipf(n, s, &mut rng)
+pub fn wasm_rzipf(
+    n: f64,
+    s: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rzipf(n, s, &mut rng)).collect()
 }
 
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rzipf_napi(n: f64, s: f64) -> f64 {
-    let mut rng = thread_rng();
-    rzipf(n, s, &mut rng)
+pub fn wasm_rzipf_napi(
+    n: f64,
+    s: f64,
+    count: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..count).map(|_| rzipf(n, s, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -1153,16 +1303,16 @@ pub fn wasm_qdirac_napi(p: f64, location: f64, lower_tail: bool, log_p: bool) ->
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rdirac(location: f64) -> f64 {
-    let mut rng = thread_rng();
-    rdirac(location, &mut rng)
+pub fn wasm_rdirac(location: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rdirac(location, &mut rng)).collect()
 }
 
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rdirac_napi(location: f64) -> f64 {
-    let mut rng = thread_rng();
-    rdirac(location, &mut rng)
+pub fn wasm_rdirac_napi(location: f64, n: u32, seed: Option<u32>) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rdirac(location, &mut rng)).collect()
 }
 
 // ============================================================================
@@ -1207,14 +1357,24 @@ pub fn wasm_qpareto_napi(p: f64, scale: f64, shape: f64, lower_tail: bool, log_p
 
 #[cfg(feature = "wasm")]
 #[wasm_bindgen]
-pub fn wasm_rpareto(scale: f64, shape: f64) -> f64 {
-    let mut rng = thread_rng();
-    rpareto(scale, shape, &mut rng)
+pub fn wasm_rpareto(
+    scale: f64,
+    shape: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rpareto(scale, shape, &mut rng)).collect()
 }
 
 #[cfg(feature = "napi-rs")]
 #[napi]
-pub fn wasm_rpareto_napi(scale: f64, shape: f64) -> f64 {
-    let mut rng = thread_rng();
-    rpareto(scale, shape, &mut rng)
+pub fn wasm_rpareto_napi(
+    scale: f64,
+    shape: f64,
+    n: u32,
+    seed: Option<u32>,
+) -> Vec<f64> {
+    let mut rng = rng_from_seed(seed);
+    (0..n).map(|_| rpareto(scale, shape, &mut rng)).collect()
 }

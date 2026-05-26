@@ -27,6 +27,10 @@ overrides:
   openai: $openai
   "@openai/agents": $@openai/agents
 
+  # Observability
+  "@opentelemetry/api": $@opentelemetry/api
+  "@opentelemetry/sdk-trace-base": $@opentelemetry/sdk-trace-base
+
   # React ecosystem
   react: $react
   react-dom: $react-dom

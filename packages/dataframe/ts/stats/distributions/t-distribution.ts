@@ -77,34 +77,28 @@ export function qt({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the t distribution
  */
-export function rt({
-  degreesOfFreedom,
-}: {
+export function rt(args: {
   degreesOfFreedom: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rt(args: {
+  degreesOfFreedom: number;
+  seed?: number;
 }): number;
 export function rt({
   degreesOfFreedom,
   sampleSize,
-}: {
-  degreesOfFreedom: number;
-  sampleSize: number;
-}): number[];
-export function rt({
-  degreesOfFreedom,
-  sampleSize = 1,
+  seed,
 }: {
   degreesOfFreedom: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rt(degreesOfFreedom);
+  if (sampleSize === undefined) {
+    return wasm_rt(degreesOfFreedom, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rt(degreesOfFreedom));
-  }
-  return results;
+  return wasm_rt(degreesOfFreedom, sampleSize, seed);
 }
 
 /**

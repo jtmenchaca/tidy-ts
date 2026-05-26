@@ -98,40 +98,32 @@ export function qbinom({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the binomial distribution (integers)
  */
-export function rbinom({
-  trials,
-  probabilityOfSuccess,
-}: {
+export function rbinom(args: {
   trials: number;
   probabilityOfSuccess: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rbinom(args: {
+  trials: number;
+  probabilityOfSuccess: number;
+  seed?: number;
 }): number;
 export function rbinom({
   trials,
   probabilityOfSuccess,
   sampleSize,
-}: {
-  trials: number;
-  probabilityOfSuccess: number;
-  sampleSize: number;
-}): number[];
-export function rbinom({
-  trials,
-  probabilityOfSuccess,
-  sampleSize = 1,
+  seed,
 }: {
   trials: number;
   probabilityOfSuccess: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rbinom(trials, probabilityOfSuccess);
+  if (sampleSize === undefined) {
+    return wasm_rbinom(trials, probabilityOfSuccess, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rbinom(trials, probabilityOfSuccess));
-  }
-  return results;
+  return wasm_rbinom(trials, probabilityOfSuccess, sampleSize, seed);
 }
 
 /**

@@ -102,40 +102,40 @@ export function qf({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the F distribution
  */
-export function rf({
-  numeratorDegreesOfFreedom,
-  denominatorDegreesOfFreedom,
-}: {
+export function rf(args: {
   numeratorDegreesOfFreedom: number;
   denominatorDegreesOfFreedom: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rf(args: {
+  numeratorDegreesOfFreedom: number;
+  denominatorDegreesOfFreedom: number;
+  seed?: number;
 }): number;
 export function rf({
   numeratorDegreesOfFreedom,
   denominatorDegreesOfFreedom,
   sampleSize,
-}: {
-  numeratorDegreesOfFreedom: number;
-  denominatorDegreesOfFreedom: number;
-  sampleSize: number;
-}): number[];
-export function rf({
-  numeratorDegreesOfFreedom,
-  denominatorDegreesOfFreedom,
-  sampleSize = 1,
+  seed,
 }: {
   numeratorDegreesOfFreedom: number;
   denominatorDegreesOfFreedom: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rf(numeratorDegreesOfFreedom, denominatorDegreesOfFreedom);
+  if (sampleSize === undefined) {
+    return wasm_rf(
+      numeratorDegreesOfFreedom,
+      denominatorDegreesOfFreedom,
+      1,
+      seed,
+    )[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(
-      wasm_rf(numeratorDegreesOfFreedom, denominatorDegreesOfFreedom),
-    );
-  }
-  return results;
+  return wasm_rf(
+    numeratorDegreesOfFreedom,
+    denominatorDegreesOfFreedom,
+    sampleSize,
+    seed,
+  );
 }

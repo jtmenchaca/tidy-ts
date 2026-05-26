@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>ONE_LINE_SUMMARY — topology</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #fafafa; color: #222; margin: 0; padding: 32px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px 0; }
+  .sub-title { font-size: 13px; color: #666; margin-bottom: 24px; }
+  svg { display: block; background: white; border: 1px solid #eee; border-radius: 8px; }
+
+  text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #1a1a1a; }
+
+  /* Card */
+  .node-body {
+    fill: white;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+  }
+  .node-body-BranchingNode { stroke: #e0a352; }
+  .node-body-StartNode, .node-body-EndNode { stroke: #94a3b8; }
+
+  /* Header band — colored only via fill, no separate clipping needed
+     since the path is hand-shaped to be flat-bottomed. */
+  .node-header { fill: #f8fafc; stroke: none; }
+  .node-header-LlmNode { fill: #f1f5f9; }
+  .node-header-BranchingNode { fill: #fff7ed; }
+  .node-header-StartNode, .node-header-EndNode { fill: #eef2ff; }
+
+  .header-divider { stroke: #e4e4e7; stroke-width: 1; }
+  .col-divider { stroke: #e4e4e7; stroke-width: 1; stroke-dasharray: 2 3; }
+
+  /* Container metadata (Map/ParallelMap/Catch/Flow/ParallelFlow strip) */
+  .container-meta {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+    font-style: italic;
+  }
+
+  /* Subflow panel + caption */
+  .subflow-panel {
+    fill: #fafafa;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .subflow-caption {
+    fill: #fff7ed;
+    stroke: #fed7aa;
+    stroke-width: 1;
+  }
+  .subflow-id {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+  }
+  .subflow-citation {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #b45309;
+    font-style: italic;
+  }
+
+  /* Tools panel (AgentNode) */
+  .tools-panel {
+    fill: #f5f3ff;
+    stroke: #c4b5fd;
+    stroke-width: 1;
+  }
+  .tools-header {
+    fill: #6d28d9;
+  }
+  .tool-sig {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #1e1b4b;
+  }
+  /* MCPToolBox row — slightly distinct so it doesn't look like a fake
+     ServerTool with an empty signature. */
+  .tool-box-sig {
+    font-style: italic;
+    fill: #4338ca;
+  }
+  .tool-desc {
+    font-size: 10px;
+    fill: #6b7280;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  /* Typography */
+  .node-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #18181b;
+  }
+  .node-sub {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+  .section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #a1a1aa;
+    font-weight: 600;
+  }
+
+  .field-name {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #27272a;
+  }
+  .field-type {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+
+  .port { fill: white; stroke: #64748b; stroke-width: 1.5; }
+  .port-in  { fill: #f8fafc; stroke: #94a3b8; }
+  .port-out { fill: #64748b; stroke: #475569; }
+
+  /* Edges */
+  .edge-control { stroke: #18181b; stroke-width: 1.5; }
+  .edge-data { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .edge-label {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .branch-label { fill: #b45309; font-weight: 600; }
+  .data-label { fill: #71717a; }
+</style>
+</head>
+<body>
+  <h1>ONE_LINE_SUMMARY</h1>
+  <div class="sub-title">v1.0.0</div>
+
+  <svg viewBox="0 -40 714 212" width="714" height="212">
+    <defs>
+      <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+      </marker>
+      <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+      </marker>
+    </defs>
+    
+    <g>
+      <path class="edge edge-control" d="M 150 112 L 230 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 463 112 L 543 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+    
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="40" y="40" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 48 40 H 142 A 8 8 0 0 1 150 48 V 80 H 40 V 48 A 8 8 0 0 1 48 40 Z" />
+<text class="node-name" x="95" y="62" text-anchor="middle">start</text>
+<line class="header-divider" x1="40" y1="80" x2="150" y2="80" />
+      <text class="section-label" x="138" y="92" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="150" cy="112" r="4" />
+<text class="field-name" x="80" y="116" text-anchor="end">note</text>
+<text class="field-type" x="138" y="116" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="230" y="40" width="233" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 238 40 H 455 A 8 8 0 0 1 463 48 V 80 H 230 V 48 A 8 8 0 0 1 238 40 Z" />
+<text class="node-name" x="346.5" y="56" text-anchor="middle">summarize</text>
+<text class="node-sub" x="346.5" y="69" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="230" y1="80" x2="463" y2="80" />
+      <text class="section-label" x="242" y="92">inputs</text>
+<text class="section-label" x="451" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="336" y1="86" x2="336" y2="126" />
+      <circle class="port port-in" cx="230" cy="112" r="4" />
+<text class="field-name" x="242" y="116">note</text>
+<text class="field-type" x="328" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="463" cy="112" r="4" />
+<text class="field-name" x="393" y="116" text-anchor="end">summary</text>
+<text class="field-type" x="451" y="116" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="543" y="40" width="131" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 551 40 H 666 A 8 8 0 0 1 674 48 V 80 H 543 V 48 A 8 8 0 0 1 551 40 Z" />
+<text class="node-name" x="608.5" y="62" text-anchor="middle">end</text>
+<line class="header-divider" x1="543" y1="80" x2="674" y2="80" />
+      <text class="section-label" x="555" y="92">inputs</text>
+      
+      <circle class="port port-in" cx="543" cy="112" r="4" />
+<text class="field-name" x="555" y="116">summary</text>
+<text class="field-type" x="662" y="116" text-anchor="end">string</text>
+      
+      
+    </g>
+  </svg>
+</body>
+</html>

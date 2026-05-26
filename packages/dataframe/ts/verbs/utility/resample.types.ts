@@ -9,36 +9,9 @@ import type {
   ValidateDateColumn,
 } from "../../dataframe/types/error-types.ts";
 
-/**
- * Frequency specification for resampling.
- *
- * Supports common time periods as strings (e.g., "1H", "6H", "15min")
- * or as objects (e.g., { value: 6, unit: "h" }) or as raw milliseconds (number).
- *
- * Pattern: `<number><unit>` where unit is:
- * - S: seconds
- * - min: minutes
- * - H: hours
- * - D: days
- * - W: weeks
- * - M: months (calendar-aware)
- * - Q: quarters (calendar-aware)
- * - Y: years (calendar-aware)
- */
-export type Frequency =
-  | `${number}S`
-  | `${number}min`
-  | `${number}H`
-  | `${number}D`
-  | `${number}W`
-  | `${number}M`
-  | `${number}Q`
-  | `${number}Y`
-  | number
-  | {
-    value: number;
-    unit: "ms" | "s" | "min" | "h" | "d" | "w" | "M" | "Q" | "Y";
-  };
+/** Frequency specification for resampling — see {@link ./downsample.types.ts}. */
+export type { Frequency } from "./downsample.types.ts";
+import type { Frequency } from "./downsample.types.ts";
 
 /**
  * Aggregation function for resampling.

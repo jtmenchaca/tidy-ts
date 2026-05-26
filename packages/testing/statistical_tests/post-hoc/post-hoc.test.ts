@@ -51,9 +51,8 @@ interface RefData {
 const rScriptPath = new URL("./post-hoc-ref.R", import.meta.url).pathname;
 const ref = getReferenceFromRScript<RefData>(rScriptPath);
 
-// Our impl: meanDifference = group1_mean - group2_mean
-// R TukeyHSD: B-A diff = mean(B) - mean(A) = -(group1_mean - group2_mean)
-// So our diff = -R_diff, and CI bounds are negated+swapped
+// Our impl matches R's TukeyHSD convention: pair label "higher-lower",
+// meanDifference = mean(higher) - mean(lower), CI bounds in the same order as R.
 
 Deno.test("Post-hoc: Tukey HSD", () => {
   const result = tukeyHSD(groups, 0.05);
@@ -61,56 +60,56 @@ Deno.test("Post-hoc: Tukey HSD", () => {
   const findComp = (g1: string, g2: string) =>
     result.comparisons.find((c) => c.group1 === g1 && c.group2 === g2)!;
 
-  // Group_1 vs Group_2 corresponds to R's B_A (negated)
-  const g1g2 = findComp("Group_1", "Group_2");
-  assertClose(g1g2.meanDifference, -ref.tukey.B_A.diff, TOL, "G2-G1 diff");
+  // Group_2 vs Group_1 corresponds to R's B-A.
+  const g2g1 = findComp("Group_2", "Group_1");
+  assertClose(g2g1.meanDifference, ref.tukey.B_A.diff, TOL, "B-A diff");
   assertClose(
-    g1g2.confidenceInterval.lower,
-    -ref.tukey.B_A.upr,
+    g2g1.confidenceInterval.lower,
+    ref.tukey.B_A.lwr,
     TOL,
-    "G2-G1 lwr",
+    "B-A lwr",
   );
   assertClose(
-    g1g2.confidenceInterval.upper,
-    -ref.tukey.B_A.lwr,
+    g2g1.confidenceInterval.upper,
+    ref.tukey.B_A.upr,
     TOL,
-    "G2-G1 upr",
+    "B-A upr",
   );
-  assertClose(g1g2.adjustedPValue, ref.tukey.B_A.p_adj, TOL, "G2-G1 p_adj");
+  assertClose(g2g1.adjustedPValue, ref.tukey.B_A.p_adj, TOL, "B-A p_adj");
 
-  // Group_1 vs Group_3 corresponds to R's C_A (negated)
-  const g1g3 = findComp("Group_1", "Group_3");
-  assertClose(g1g3.meanDifference, -ref.tukey.C_A.diff, TOL, "G3-G1 diff");
+  // Group_3 vs Group_1 corresponds to R's C-A.
+  const g3g1 = findComp("Group_3", "Group_1");
+  assertClose(g3g1.meanDifference, ref.tukey.C_A.diff, TOL, "C-A diff");
   assertClose(
-    g1g3.confidenceInterval.lower,
-    -ref.tukey.C_A.upr,
+    g3g1.confidenceInterval.lower,
+    ref.tukey.C_A.lwr,
     TOL,
-    "G3-G1 lwr",
+    "C-A lwr",
   );
   assertClose(
-    g1g3.confidenceInterval.upper,
-    -ref.tukey.C_A.lwr,
+    g3g1.confidenceInterval.upper,
+    ref.tukey.C_A.upr,
     TOL,
-    "G3-G1 upr",
+    "C-A upr",
   );
-  assertClose(g1g3.adjustedPValue, ref.tukey.C_A.p_adj, TOL, "G3-G1 p_adj");
+  assertClose(g3g1.adjustedPValue, ref.tukey.C_A.p_adj, TOL, "C-A p_adj");
 
-  // Group_2 vs Group_3 corresponds to R's C_B (negated)
-  const g2g3 = findComp("Group_2", "Group_3");
-  assertClose(g2g3.meanDifference, -ref.tukey.C_B.diff, TOL, "G3-G2 diff");
+  // Group_3 vs Group_2 corresponds to R's C-B.
+  const g3g2 = findComp("Group_3", "Group_2");
+  assertClose(g3g2.meanDifference, ref.tukey.C_B.diff, TOL, "C-B diff");
   assertClose(
-    g2g3.confidenceInterval.lower,
-    -ref.tukey.C_B.upr,
+    g3g2.confidenceInterval.lower,
+    ref.tukey.C_B.lwr,
     TOL,
-    "G3-G2 lwr",
+    "C-B lwr",
   );
   assertClose(
-    g2g3.confidenceInterval.upper,
-    -ref.tukey.C_B.lwr,
+    g3g2.confidenceInterval.upper,
+    ref.tukey.C_B.upr,
     TOL,
-    "G3-G2 upr",
+    "C-B upr",
   );
-  assertClose(g2g3.adjustedPValue, ref.tukey.C_B.p_adj, TOL, "G3-G2 p_adj");
+  assertClose(g3g2.adjustedPValue, ref.tukey.C_B.p_adj, TOL, "C-B p_adj");
 });
 
 Deno.test("Post-hoc: Games-Howell", () => {
@@ -119,47 +118,47 @@ Deno.test("Post-hoc: Games-Howell", () => {
   const findComp = (g1: string, g2: string) =>
     result.comparisons.find((c) => c.group1 === g1 && c.group2 === g2)!;
 
-  // Same negation as Tukey: our diff = group1_mean - group2_mean = -(R's higher-lower)
-  const g1g2 = findComp("Group_1", "Group_2");
+  // Same "higher-lower" convention as Tukey.
+  const g2g1 = findComp("Group_2", "Group_1");
   assertClose(
-    g1g2.meanDifference,
-    -ref.games_howell.B_A.mean_diff,
+    g2g1.meanDifference,
+    ref.games_howell.B_A.mean_diff,
     TOL,
-    "GH G2-G1 mean_diff",
+    "GH B-A mean_diff",
   );
   assertClose(
-    g1g2.pValue,
+    g2g1.pValue,
     ref.games_howell.B_A.p_value,
     TOL,
-    "GH G2-G1 p_value",
+    "GH B-A p_value",
   );
 
-  const g1g3 = findComp("Group_1", "Group_3");
+  const g3g1 = findComp("Group_3", "Group_1");
   assertClose(
-    g1g3.meanDifference,
-    -ref.games_howell.C_A.mean_diff,
+    g3g1.meanDifference,
+    ref.games_howell.C_A.mean_diff,
     TOL,
-    "GH G3-G1 mean_diff",
+    "GH C-A mean_diff",
   );
   assertClose(
-    g1g3.pValue,
+    g3g1.pValue,
     ref.games_howell.C_A.p_value,
     TOL,
-    "GH G3-G1 p_value",
+    "GH C-A p_value",
   );
 
-  const g2g3 = findComp("Group_2", "Group_3");
+  const g3g2 = findComp("Group_3", "Group_2");
   assertClose(
-    g2g3.meanDifference,
-    -ref.games_howell.C_B.mean_diff,
+    g3g2.meanDifference,
+    ref.games_howell.C_B.mean_diff,
     TOL,
-    "GH G3-G2 mean_diff",
+    "GH C-B mean_diff",
   );
   assertClose(
-    g2g3.pValue,
+    g3g2.pValue,
     ref.games_howell.C_B.p_value,
     TOL,
-    "GH G3-G2 p_value",
+    "GH C-B p_value",
   );
 });
 
@@ -169,8 +168,10 @@ Deno.test("Post-hoc: Dunn test (Bonferroni)", () => {
   const findComp = (g1: string, g2: string) =>
     result.comparisons.find((c) => c.group1 === g1 && c.group2 === g2)!;
 
-  // R dunn.test uses "A - B" format → key becomes "A_B"
-  // Map: A=Group_1, B=Group_2, C=Group_3
+  // tidy-ts matches R `dunn.test`'s native convention:
+  //   pair "A - B" (A=earlier factor level) → group1="Group_1", group2="Group_2"
+  //   Z = (mean_rank_A - mean_rank_B) / SE, signed (so Z < 0 when A < B in values)
+  //   adjusted p = pmin(1, P × m) where P = pnorm(|Z|, lower.tail=FALSE)
   const labelMap: Record<string, string> = {
     A: "Group_1",
     B: "Group_2",
@@ -185,12 +186,12 @@ Deno.test("Post-hoc: Dunn test (Bonferroni)", () => {
     const group2 = labelMap[second];
     const comp = findComp(group1, group2);
     expect(comp).toBeDefined();
-    // Dunn Z sign may differ based on ordering convention
+    // Z is signed and must match R exactly (sign + magnitude).
     assertClose(
-      Math.abs(comp.testStatistic.value),
-      Math.abs(ref.dunn[key].Z),
+      comp.testStatistic.value,
+      ref.dunn[key].Z,
       TOL,
-      `Dunn ${key} |Z|`,
+      `Dunn ${key} Z`,
     );
     assertClose(
       comp.adjustedPValue,

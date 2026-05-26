@@ -92,49 +92,45 @@ export function qnorm({
 }
 
 /**
- * Normal distribution random number generation
+ * Draw random samples from `Normal(mean, sd)`.
+ *
  * @param mean - Mean of the distribution (default: 0)
  * @param standardDeviation - Standard deviation (default: 1)
- * @param sampleSize - Number of random draws (default: 1)
- * @returns Random sample(s) from the normal distribution
+ * @param sampleSize - Number of draws. Omitted ⇒ single `number`;
+ *   provided ⇒ `number[]` of that length.
+ * @param seed - Optional `u32` seed for reproducibility. Same `seed`
+ *   (and same `sampleSize`) always produces the same sequence; one RNG
+ *   state advances across all draws within a single call.
  */
-export function rnorm(): number;
-export function rnorm({
-  mean,
-  standardDeviation,
-  sampleSize,
-}: {
-  mean?: number;
-  standardDeviation?: number;
-  sampleSize?: number;
-}): number;
-export function rnorm({
-  mean,
-  standardDeviation,
-  sampleSize,
-}: {
+// Overload order matters: the `sampleSize: number` (required) variant must
+// come first, otherwise TS picks the no-sampleSize overload for
+// `rnorm({ sampleSize: 100 })` and the return type collapses to `number`.
+export function rnorm(args: {
   mean?: number;
   standardDeviation?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rnorm(args?: {
+  mean?: number;
+  standardDeviation?: number;
+  seed?: number;
+}): number;
 export function rnorm({
   mean = 0,
   standardDeviation = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   mean?: number;
   standardDeviation?: number;
   sampleSize?: number;
+  seed?: number;
 } = {}): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rnorm(mean, standardDeviation);
+  if (sampleSize === undefined) {
+    return wasm_rnorm(mean, standardDeviation, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rnorm(mean, standardDeviation));
-  }
-  return results;
+  return wasm_rnorm(mean, standardDeviation, sampleSize, seed);
 }
 
 /**

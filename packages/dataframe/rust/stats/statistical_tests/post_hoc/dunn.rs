@@ -136,39 +136,47 @@ where
 
     let std_normal = Normal::new(0.0, 1.0).unwrap();
 
-    for i in 0..n_groups {
-        for j in (i + 1)..n_groups {
+    // Match R's `dunn.test` package (Dinno 2017, ported from
+    // survival-ref/dunn-test/R/dunn.test.R L414-430, L792, L434-466):
+    //   pair label  = "Group_{lower_index} - Group_{higher_index}"  (i.e. "Group_1 vs Group_2" with j<i)
+    //   Z statistic = (mean_rank_j - mean_rank_i) / SE, signed (default rmc=FALSE)
+    //   p-value     = 1 - pnorm(|Z|)            (one-sided, default altp=FALSE)
+    //   adjusted p  = pmin(1, p * m)            (Bonferroni)
+    // Rejection rule in `dunn.test` is `P.adjust <= alpha/2`, so the test is
+    // effectively two-sided at level alpha; we propagate `significant` against
+    // alpha/2 to match that convention.
+    for j in 0..n_groups {
+        for i in (j + 1)..n_groups {
             let n_i = group_sizes[i] as f64;
             let n_j = group_sizes[j] as f64;
             let r_i = rank_sums[i];
             let r_j = rank_sums[j];
 
-            // Mean rank difference
             let mean_rank_i = r_i / n_i;
             let mean_rank_j = r_j / n_j;
-            let mean_rank_diff = mean_rank_i - mean_rank_j;
+            // dunn.test default (rmc=FALSE): Z = mean_rank_j - mean_rank_i, where j < i.
+            let mean_rank_diff = mean_rank_j - mean_rank_i;
 
-            // Standard error for rank difference
+            // Standard error for rank difference (with tie correction baked into variance_factor).
             let se = (variance_factor * (1.0 / n_i + 1.0 / n_j)).sqrt();
 
-            // Z-statistic
-            let z_statistic = mean_rank_diff.abs() / se;
+            let z_statistic = mean_rank_diff / se;
 
-            // P-value (two-tailed)
-            let p_value = 2.0 * (1.0 - std_normal.cdf(z_statistic));
+            // One-sided p-value per dunn.test L435: pnorm(abs(Z), lower.tail=FALSE).
+            let p_value = 1.0 - std_normal.cdf(z_statistic.abs());
 
-            // Adjust p-value using Bonferroni correction
+            // Bonferroni-adjusted p per dunn.test L457: pmin(1, P * m).
             let adjusted_p = (p_value * n_comparisons as f64).min(1.0);
 
-            // Confidence interval for rank difference
+            // Two-sided CI on the rank-mean difference (CI is a separate convention).
             let critical_z = std_normal.inverse_cdf(1.0 - alpha / (2.0 * n_comparisons as f64));
             let ci_margin = critical_z * se;
             let ci_lower = mean_rank_diff - ci_margin;
             let ci_upper = mean_rank_diff + ci_margin;
 
             let comparison = PairwiseComparison {
-                group1: format!("Group_{}", i + 1),
-                group2: format!("Group_{}", j + 1),
+                group1: format!("Group_{}", j + 1),
+                group2: format!("Group_{}", i + 1),
                 mean_difference: mean_rank_diff,
                 standard_error: se,
                 test_statistic: crate::stats::core::types::TestStatistic {
@@ -182,7 +190,9 @@ where
                     upper: ci_upper,
                     confidence_level: 1.0 - alpha,
                 },
-                significant: adjusted_p < alpha,
+                // dunn.test rejects when P.adjust <= alpha/2 (the one-sided
+                // p-value path makes alpha/2 the two-sided level).
+                significant: adjusted_p <= alpha / 2.0,
             };
 
             comparisons.push(comparison);

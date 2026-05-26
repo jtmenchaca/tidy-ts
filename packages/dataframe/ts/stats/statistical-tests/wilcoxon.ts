@@ -13,11 +13,26 @@ export function wilcoxonSignedRankTest({
   y,
   alternative = "two-sided",
   alpha = 0.05,
+  exact,
+  correct = true,
 }: {
   x: readonly number[];
   y: readonly number[];
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
+  /**
+   * Force the exact (`true`) or asymptotic (`false`) p-value path. Omit to
+   * let the library choose R's default rule: exact when n < 50 AND there are
+   * no ties in |differences| AND no zero differences. Matches `wilcox.test`'s
+   * `exact` argument.
+   */
+  exact?: boolean;
+  /**
+   * Apply the continuity correction on the asymptotic path. Ignored when the
+   * exact path is used. Default `true`, matching `wilcox.test`'s `correct`
+   * default.
+   */
+  correct?: boolean;
 }): PrettifyDeep<WilcoxonSignedRankTestResult> {
   const cleanX = x.filter((x) => isFinite(x));
   const cleanY = y.filter((x) => isFinite(x));
@@ -35,6 +50,8 @@ export function wilcoxonSignedRankTest({
     new Float64Array(cleanY),
     alpha,
     alternative,
+    exact,
+    correct,
   );
   return result as WilcoxonSignedRankTestResult;
 }

@@ -36,12 +36,10 @@ export interface FirstOptions {
  * ```
  */
 
-// Single value overloads
-export function first<T>(value: T): T;
-
-// Clean array overloads (no nulls/undefined) - MUST come before nullable overloads
-export function first<T>(values: readonly T[], options?: FirstOptions): T;
-export function first<T>(values: T[], options?: FirstOptions): T;
+// Clean array overloads (no nulls/undefined). These MUST come before the
+// single-value generic overload — otherwise TS picks `first<T>(value: T): T`
+// for `first([1,2,3])` with `T = number[]` and the return type collapses to
+// the entire array.
 export function first(values: readonly Date[], options?: FirstOptions): Date;
 export function first(values: Date[], options?: FirstOptions): Date;
 export function first(
@@ -50,6 +48,12 @@ export function first(
 ): number;
 export function first(values: number[], options?: FirstOptions): number;
 export function first(values: Iterable<number>, options?: FirstOptions): number;
+export function first<T>(values: readonly T[], options?: FirstOptions): T;
+export function first<T>(values: T[], options?: FirstOptions): T;
+
+// Single-value overload — only triggers when nothing above matched (i.e.
+// the input is genuinely not an array/iterable).
+export function first<T>(value: T): T;
 
 // Arrays with nullables - when all removal flags are true, return non-nullable
 export function first<T>(

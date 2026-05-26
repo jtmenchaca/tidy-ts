@@ -92,40 +92,32 @@ export function qgamma({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the gamma distribution
  */
-export function rgamma({
-  shape,
-  rate,
-}: {
-  shape: number;
-  rate?: number;
-}): number;
-export function rgamma({
-  shape,
-  rate,
-  sampleSize,
-}: {
+export function rgamma(args: {
   shape: number;
   rate?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rgamma(args: {
+  shape: number;
+  rate?: number;
+  seed?: number;
+}): number;
 export function rgamma({
   shape,
   rate = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   shape: number;
   rate?: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rgamma(shape, rate);
+  if (sampleSize === undefined) {
+    return wasm_rgamma(shape, rate, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rgamma(shape, rate));
-  }
-  return results;
+  return wasm_rgamma(shape, rate, sampleSize, seed);
 }
 
 /**

@@ -160,6 +160,66 @@ function formatInfo(info: ts.QuickInfo): string {
   return info.displayParts?.map((p) => p.text).join("") ?? "";
 }
 
+// Walk to the deepest node whose span covers `offset`. Used to anchor a
+// checker call when bypassing QuickInfo's truncation.
+function findNodeAtOffset(sf: ts.SourceFile, offset: number): ts.Node | undefined {
+  function walk(n: ts.Node): ts.Node | undefined {
+    if (offset < n.getStart(sf) || offset >= n.getEnd()) return undefined;
+    let found: ts.Node | undefined = n;
+    n.forEachChild((c) => {
+      const inner = walk(c);
+      if (inner) found = inner;
+    });
+    return found;
+  }
+  return walk(sf);
+}
+
+// QuickInfo clips at ~160 chars and prints `...` / `N more`. The checker
+// itself can render the full type via `typeToString` with `NoTruncation`,
+// so we render the type alias / variable declaration that way and use
+// QuickInfo only for the leading "type Foo = " / "const foo:" header
+// (which carries JSDoc, modifiers, etc.).
+function getExpandedType(offset: number): string | undefined {
+  const program = service.getProgram();
+  if (!program) return undefined;
+  const checker = program.getTypeChecker();
+  const node = findNodeAtOffset(sourceFile!, offset);
+  if (!node) return undefined;
+
+  const symbol = checker.getSymbolAtLocation(node);
+  let type: ts.Type | undefined;
+  if (symbol) {
+    // Prefer the declared type for type aliases / interfaces; fall back to
+    // the contextual type for value identifiers.
+    const flags = symbol.flags;
+    const isTypeOnly =
+      (flags & ts.SymbolFlags.TypeAlias) !== 0 ||
+      (flags & ts.SymbolFlags.Interface) !== 0;
+    type = isTypeOnly
+      ? checker.getDeclaredTypeOfSymbol(symbol)
+      : checker.getTypeOfSymbolAtLocation(symbol, node);
+  } else {
+    type = checker.getTypeAtLocation(node);
+  }
+  if (!type) return undefined;
+
+  // Use typeToTypeNode + printer to get real newlines; `typeToString` emits
+  // indent runs without honouring line breaks.
+  const flags =
+    ts.NodeBuilderFlags.NoTruncation |
+    ts.NodeBuilderFlags.InTypeAlias |
+    ts.NodeBuilderFlags.WriteArrayAsGenericType |
+    ts.NodeBuilderFlags.UseFullyQualifiedType |
+    ts.NodeBuilderFlags.MultilineObjectLiterals;
+  const typeNode = checker.typeToTypeNode(type, node, flags);
+  if (!typeNode) {
+    return checker.typeToString(type, node, ts.TypeFormatFlags.NoTruncation);
+  }
+  const printer = ts.createPrinter({ newLine: ts.NewLineKind.LineFeed });
+  return printer.printNode(ts.EmitHint.Unspecified, typeNode, sourceFile!);
+}
+
 function getLineAndCol(offset: number): { line: number; col: number } {
   const { line, character } = sourceFile!.getLineAndCharacterOfPosition(offset);
   return { line: line + 1, col: character + 1 };
@@ -225,13 +285,14 @@ for (const query of queries) {
     }
 
     const offset = sourceFile.getPositionOfLineAndCharacter(line - 1, col - 1);
-    const info = getInfoAtOffset(offset);
+    const expanded = getExpandedType(offset);
 
     console.log(`\n=== ${file}:${line}:${col} ===`);
-    if (!info) {
-      console.log("(no type info)");
+    if (!expanded || expanded.length === 0) {
+      const info = getInfoAtOffset(offset);
+      console.log(info ? formatInfo(info) : "(no type info)");
     } else {
-      console.log(formatInfo(info));
+      console.log(expanded);
     }
   } else {
     // Name-based lookup
@@ -245,13 +306,14 @@ for (const query of queries) {
 
     for (const pos of positions) {
       const { line, col } = getLineAndCol(pos);
-      const info = getInfoAtOffset(pos);
+      const expanded = getExpandedType(pos);
 
       console.log(`\n=== ${query} (${file}:${line}:${col}) ===`);
-      if (!info) {
-        console.log("(no type info)");
+      if (!expanded || expanded.length === 0) {
+        const info = getInfoAtOffset(pos);
+        console.log(info ? formatInfo(info) : "(no type info)");
       } else {
-        console.log(formatInfo(info));
+        console.log(expanded);
       }
     }
   }

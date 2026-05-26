@@ -124,28 +124,26 @@ Excluded bugs (those with `In study: No`) carry only `ID`, `Language`, `Bug clas
 
 ## Summary
 
+Authoritative counts derive from the auto-generated section below (which reads the per-file frontmatter). The exclusion sub-counts in this summary are hand-maintained and approximate — the totals reconcile but the bins may shift by ±1 if individual classifications are revisited.
+
 | | Count | % |
 |---|---|---|
 | Total unique bugs | 164 | 100% |
-| **Included** | **78** | **48%** |
+| **Included** | **79** | **48%** |
 | — Column reference | 4 | 2% |
-| — Value type | 62 | 38% |
+| — Value type | 60 | 37% |
 | — Missing value | 9 | 5% |
 | — Join | 1 | 1% |
 | — Data loading | 5 | 3% |
-| **Excluded** | **86** | **52%** |
+| **Excluded** | **85** | **52%** |
 | — Visualization-specific | 12 | 7% |
 | — Language plumbing | 12 | 7% |
 | — External library interop | 11 | 7% |
 | — API syntax confusion | 17 | 10% |
 | — Environment/platform | 5 | 3% |
-| — Not data processing | 29 | 18% |
+| — Not data processing | 28 | 17% |
 
-Of the 78 included bugs, 11 (14%) had silent outcomes (DC or IF) and 67 (86%) crashed with an error in the original language. The 11 silent bugs are the most directly relevant to the paper's thesis — they produced incorrect output with no warning in the original language.
-
-Note: "Value type" dominates because these datasets were specifically curated as "Type Mismatch" root cause bugs. The other RPython subsets (APIC, CDA, IDAP_IB, SM) would yield different category distributions.
-
-Category sub-counts sum to 81 (> 78 unique IDs) because 3 bugs are classified in both value type and data loading (they involve type errors that manifest at the data loading boundary).
+Note: "Value type" dominates the included bugs because these datasets were specifically curated as "Type Mismatch" root cause bugs. The other RPython subsets (APIC, CDA, IDAP_IB, SM) would yield different category distributions.
 
 ---
 
@@ -158,53 +156,53 @@ Category sub-counts sum to 81 (> 78 unique IDs) because 3 bugs are classified in
 - Python: Python 3.14.5
 - R: R 4.6.0
 - Deno: deno 2.7.14 (stable, release, aarch64-apple-darwin)
-- Runner: docs/JAMIA/comparisons/RPython/verify.ts (commit 5079562a)
+- Runner: docs/JAMIA/comparisons/RPython/verify.ts (commit 2b4cd69c)
 
 ## Inclusion funnel
 
 | Stage | Count |
 |---|---:|
 | TM corpus | 164 |
-| Reproductions on disk (TM) | 3 |
-| Included (`In study: Yes`) | 3 |
-| Excluded (no reproduction file; see Evaluation table below) | 161 |
+| Reproductions on disk (TM) | 79 |
+| Included (`In study: Yes`) | 79 |
+| Excluded (no reproduction file; see Evaluation table below) | 85 |
 | CDA illustrative-only | 0 |
 
 ## Category distribution (included only)
 
 | Category | Count |
 |---|---:|
-| Column reference | 0 |
-| Value type | 3 |
-| Missing value | 0 |
-| Join | 0 |
-| Data loading | 0 |
+| Column reference | 4 |
+| Value type | 60 |
+| Missing value | 9 |
+| Join | 1 |
+| Data loading | 5 |
 | Schema composition | 0 |
 
 ## Per-category Tidy-TS detection mechanism
 
 | Category | compiler | zod schema validation | runtime API guard | none — language structural absence | none — library API design | none — bug still exists |
 | --- | --- | --- | --- | --- | --- | --- |
-| Column reference | 0 | 0 | 0 | 0 | 0 | 0 |
-| Value type | 3 | 0 | 0 | 0 | 0 | 0 |
-| Missing value | 0 | 0 | 0 | 0 | 0 | 0 |
-| Join | 0 | 0 | 0 | 0 | 0 | 0 |
-| Data loading | 0 | 0 | 0 | 0 | 0 | 0 |
+| Column reference | 4 | 0 | 0 | 0 | 0 | 0 |
+| Value type | 60 | 0 | 0 | 0 | 0 | 0 |
+| Missing value | 9 | 0 | 0 | 0 | 0 | 0 |
+| Join | 1 | 0 | 0 | 0 | 0 | 0 |
+| Data loading | 5 | 0 | 0 | 0 | 0 | 0 |
 | Schema composition | 0 | 0 | 0 | 0 | 0 | 0 |
 
 ## Reproduction status (included only)
 
 | Status | Count |
 |---|---:|
-| Reproduces | 3 |
-| No longer reproduces | 0 |
+| Reproduces | 62 |
+| No longer reproduces | 17 |
 | Variant | 0 |
 
 ## Tidy-TS detection outcome (included only)
 
 | Outcome | Count |
 |---|---:|
-| compile-time error | 3 |
+| compile-time error | 79 |
 | runtime error | 0 |
 | runtime warning | 0 |
 | silent continuation | 0 |

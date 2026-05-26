@@ -19,16 +19,16 @@ import type { PrettifyDeep } from "../../../../dataframe/types/utility-types.ts"
 
 // Extended result types that include post-hoc tests
 export interface OneWayAnovaWithPostHocResult extends OneWayAnovaTestResult {
-  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
+  postHoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
 }
 
 export interface WelchAnovaWithPostHocResult extends WelchAnovaTestResult {
-  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
+  postHoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
 }
 
 export interface KruskalWallisWithPostHocResult
   extends KruskalWallisTestResult {
-  post_hoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
+  postHoc?: TukeyHsdTestResult | GamesHowellTestResult | DunnTestResult;
 }
 
 /**
@@ -184,14 +184,14 @@ export function centralTendencyToEachOther({
       const result = anovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("anova", groups, result, alpha);
       return Object.assign(result, {
-        post_hoc: postHoc,
+        postHoc: postHoc,
       }) as OneWayAnovaWithPostHocResult;
     } else {
       const result = welchAnovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
       // Result is already serialized by welchAnovaOneWay, so it's safe to assign
       return Object.assign(result, {
-        post_hoc: postHoc,
+        postHoc: postHoc,
       }) as WelchAnovaWithPostHocResult;
     }
   } else if (parametric === "nonparametric") {
@@ -199,7 +199,7 @@ export function centralTendencyToEachOther({
     const result = kruskalWallisTest(groups, alpha);
     const postHoc = runPostHocTest("kruskal_wallis", groups, result, alpha);
     return Object.assign(result, {
-      post_hoc: postHoc,
+      postHoc: postHoc,
     }) as KruskalWallisWithPostHocResult;
   } else if (parametric === "auto") {
     // Evidence-based approach: Test normality on residuals from group means
@@ -212,14 +212,14 @@ export function centralTendencyToEachOther({
         const result = anovaOneWay(groups, alpha);
         const postHoc = runPostHocTest("anova", groups, result, alpha);
         return Object.assign(result, {
-          post_hoc: postHoc,
+          postHoc: postHoc,
         }) as OneWayAnovaWithPostHocResult;
       } else {
         const result = welchAnovaOneWay(groups, alpha);
         const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
         return {
           ...result,
-          post_hoc: postHoc,
+          postHoc: postHoc,
         } as WelchAnovaWithPostHocResult;
       }
     }
@@ -231,7 +231,7 @@ export function centralTendencyToEachOther({
       const result = kruskalWallisTest(groups, alpha);
       const postHoc = runPostHocTest("kruskal_wallis", groups, result, alpha);
       return Object.assign(result, {
-        post_hoc: postHoc,
+        postHoc: postHoc,
       }) as KruskalWallisWithPostHocResult;
     } else {
       // Use ANOVA or Welch ANOVA based on variance assumption
@@ -239,14 +239,14 @@ export function centralTendencyToEachOther({
         const result = anovaOneWay(groups, alpha);
         const postHoc = runPostHocTest("anova", groups, result, alpha);
         return Object.assign(result, {
-          post_hoc: postHoc,
+          postHoc: postHoc,
         }) as OneWayAnovaWithPostHocResult;
       } else {
         const result = welchAnovaOneWay(groups, alpha);
         const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
         return {
           ...result,
-          post_hoc: postHoc,
+          postHoc: postHoc,
         } as WelchAnovaWithPostHocResult;
       }
     }
@@ -256,14 +256,14 @@ export function centralTendencyToEachOther({
       const result = anovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("anova", groups, result, alpha);
       return Object.assign(result, {
-        post_hoc: postHoc,
+        postHoc: postHoc,
       }) as OneWayAnovaWithPostHocResult;
     } else {
       const result = welchAnovaOneWay(groups, alpha);
       const postHoc = runPostHocTest("welch_anova", groups, result, alpha);
       // Result is already serialized by welchAnovaOneWay, so it's safe to assign
       return Object.assign(result, {
-        post_hoc: postHoc,
+        postHoc: postHoc,
       }) as WelchAnovaWithPostHocResult;
     }
   }

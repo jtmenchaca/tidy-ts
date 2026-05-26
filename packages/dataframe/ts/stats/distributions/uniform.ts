@@ -92,34 +92,32 @@ export function qunif({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the uniform distribution
  */
-export function runif(): number;
-export function runif({
-  minimum,
-  maximum,
-  sampleSize,
-}: {
+export function runif(args: {
   minimum?: number;
   maximum?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function runif(args?: {
+  minimum?: number;
+  maximum?: number;
+  seed?: number;
+}): number;
 export function runif({
   minimum = 0,
   maximum = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   minimum?: number;
   maximum?: number;
   sampleSize?: number;
+  seed?: number;
 } = {}): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_runif(minimum, maximum);
+  if (sampleSize === undefined) {
+    return wasm_runif(minimum, maximum, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_runif(minimum, maximum));
-  }
-  return results;
+  return wasm_runif(minimum, maximum, sampleSize, seed);
 }
 
 /**

@@ -1,4 +1,5 @@
 import {
+  kolmogorov_smirnov_normal_wasm,
   kolmogorov_smirnov_test_wasm,
   kolmogorov_smirnov_uniform_wasm,
 } from "../../wasm/statistical-tests.ts";
@@ -97,6 +98,60 @@ export function kolmogorovSmirnovUniformTest({
   return result as KolmogorovSmirnovTestResult;
 }
 
+/**
+ * One-sample Kolmogorov-Smirnov test against a normal distribution.
+ *
+ * Tests whether a sample comes from a Normal(mean, sd) distribution. When
+ * `mean` and `sd` are omitted, defaults to the standard normal — same default
+ * R uses for `ks.test(x, "pnorm")`. To match R's common pattern of testing
+ * against the sample's own mean/sd, pass them explicitly:
+ *
+ * ```ts
+ * const m = s.mean(x)!;
+ * const sd = s.stdev(x)!;
+ * s.test.normality.kolmogorovSmirnovNormal({ x, mean: m, sd });
+ * ```
+ *
+ * @param x - Sample data
+ * @param mean - Mean of the reference normal (default: 0)
+ * @param sd - Standard deviation of the reference normal (default: 1)
+ * @param alternative - Type of alternative hypothesis
+ * @param alpha - Significance level (default: 0.05)
+ * @returns Test result with D statistic, p-value, and critical value
+ */
+export function kolmogorovSmirnovNormalTest({
+  x,
+  mean = 0,
+  sd = 1,
+  alternative = "two-sided",
+  alpha = 0.05,
+}: {
+  x: readonly number[];
+  mean?: number;
+  sd?: number;
+  alternative?: "two-sided" | "less" | "greater";
+  alpha?: number;
+}): PrettifyDeep<KolmogorovSmirnovTestResult> {
+  const cleanX = x.filter((v) => isFinite(v));
+
+  if (cleanX.length === 0) {
+    throw new Error("Sample must contain at least one finite value");
+  }
+  if (!(sd > 0)) {
+    throw new Error("sd must be positive");
+  }
+
+  const result = kolmogorov_smirnov_normal_wasm(
+    new Float64Array(cleanX),
+    mean,
+    sd,
+    alternative,
+    alpha,
+  );
+  return result as KolmogorovSmirnovTestResult;
+}
+
 // Alias for the main two-sample test
 const ksTest = kolmogorovSmirnovTest;
 export const ksTestUniform = kolmogorovSmirnovUniformTest;
+export const ksTestNormal = kolmogorovSmirnovNormalTest;

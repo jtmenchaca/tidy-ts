@@ -22,7 +22,6 @@ import type {
   ForEachRowAsyncMethod,
   ForEachRowMethod,
 } from "../../verbs/utility/for-each.types.ts";
-import type { ProfileMethod } from "../../verbs/utility/profile.types.ts";
 import type { SelectMethod } from "../../verbs/selection/select.types.ts";
 import type { DropMethod } from "../../verbs/selection/drop.types.ts";
 import type { ReorderMethod } from "../../verbs/transformation/reorder.types.ts";
@@ -189,8 +188,6 @@ export interface DataFrameBase<Row extends object = object>
       expand?: boolean;
     },
   ): this;
-
-  profile: ProfileMethod<Row>;
 
   // ---------- Transformations ----------
   /**

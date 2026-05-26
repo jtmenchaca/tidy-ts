@@ -85,17 +85,19 @@ invisible(capture.output(
   dunn_res <- dunn.test(all_values, all_groups, method = "bonferroni")
 ))
 
-# Our implementation uses two-sided p-values with Bonferroni correction
-# dunn.test default is one-sided; compute two-sided manually from Z
-n_comparisons <- length(dunn_res$Z)
+# tidy-ts matches R `dunn.test`'s native convention:
+#   - signed Z (R reports signed; comparison label is "first - second" where
+#     "first" is the group whose rank mean is being compared against "second");
+#   - one-sided p = 1 - pnorm(|Z|), then Bonferroni-multiplied by n_comparisons,
+#     capped at 1 (this is `P.adjusted` in dunn.test output).
 dunn_result <- list()
 for (i in seq_along(dunn_res$comparisons)) {
   comp_name <- gsub(" - ", "_", dunn_res$comparisons[i])
-  two_sided_p <- 2 * pnorm(-abs(dunn_res$Z[i]))
-  adjusted_p <- min(two_sided_p * n_comparisons, 1.0)
+  # dunn.test prints P/2 (one-sided / 2 of the adjusted) by default; the
+  # underlying adjusted p is in $P.adjusted.
   dunn_result[[comp_name]] <- list(
-    Z = abs(dunn_res$Z[i]),
-    p_value = adjusted_p
+    Z = dunn_res$Z[i],
+    p_value = dunn_res$P.adjusted[i]
   )
 }
 

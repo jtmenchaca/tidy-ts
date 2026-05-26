@@ -85,32 +85,26 @@ export function qgeom({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the geometric distribution (integers)
  */
-export function rgeom({
-  probabilityOfSuccess,
-}: {
+export function rgeom(args: {
   probabilityOfSuccess: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rgeom(args: {
+  probabilityOfSuccess: number;
+  seed?: number;
 }): number;
 export function rgeom({
   probabilityOfSuccess,
   sampleSize,
-}: {
-  probabilityOfSuccess: number;
-  sampleSize: number;
-}): number[];
-export function rgeom({
-  probabilityOfSuccess,
-  sampleSize = 1,
+  seed,
 }: {
   probabilityOfSuccess: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rgeom(probabilityOfSuccess);
+  if (sampleSize === undefined) {
+    return wasm_rgeom(probabilityOfSuccess, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rgeom(probabilityOfSuccess));
-  }
-  return results;
+  return wasm_rgeom(probabilityOfSuccess, sampleSize, seed);
 }

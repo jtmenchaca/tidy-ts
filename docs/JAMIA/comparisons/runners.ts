@@ -65,13 +65,104 @@ export function runForeign(runtime: ForeignRuntime, script: string): ForeignRunR
   const { code, stdout, stderr } = proc.outputSync();
   const decoder = new TextDecoder();
   const stderrText = decoder.decode(stderr);
-  const lastStderrLine = stderrText.trim().split("\n").at(-1) ?? "";
   return {
     exitCode: code,
-    lastStderrLine,
+    lastStderrLine: pickSignalLine(stderrText),
     stdout: decoder.decode(stdout),
     stderr: stderrText,
   };
+}
+
+/**
+ * Pick the most informative stderr line for the verifier's signal.
+ *
+ * Priority:
+ *   1. A structured warning header (Python `UserWarning:`/`DeprecationWarning:`,
+ *      R `Warning message:` or `Warning:`). These mark the runtime's official
+ *      warning surface and must propagate to the signal line for the verifier
+ *      to classify as `runtime warning` (Variant).
+ *   2. The actual error class line in a Python traceback
+ *      (`TypeError: ...`, `KeyError: ...`, `ValueError: ...` etc.).
+ *   3. R rlang error blocks: `Error in `<fn>`():` followed by a `! <cause>`
+ *      bullet line is the dplyr/tidyverse standard error surface. The bullet
+ *      line carries the actual cause (e.g. `object 'patientId' not found`).
+ *      Prefer that over the generic `Execution halted` trailer.
+ *   4. Bare `Error: <msg>` or `Error in <expr> : <msg>` (base R).
+ *   5. The R `Execution halted` line as a last-resort R signal.
+ *   6. Failing all of the above, the literal last non-empty stderr line.
+ *
+ * This replaces a naive `lastStderrLine` that broke whenever the actual error
+ * was followed by trailing whitespace, hint lines (R `problems(dat)`), or a
+ * decorative line.
+ */
+function pickSignalLine(stderr: string): string {
+  const lines = stderr.split("\n").map((l) => l.replace(/\s+$/, ""));
+
+  // 1. Structured warning headers — search the whole stderr.
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Python: `<file>:<line>: UserWarning: <msg>` or just `UserWarning: <msg>`
+    if (/^(?:[^:]+:\d+:\s+)?\w*Warning:\s+/i.test(trimmed)) return trimmed;
+    // R: `Warning message:` or `Warning messages:` block header
+    if (/^Warning(?:\s+message)?s?:\s*$/i.test(trimmed)) {
+      // The next non-empty line is the actual warning text — emit that
+      const idx = lines.indexOf(line);
+      for (let j = idx + 1; j < lines.length; j++) {
+        const next = lines[j].trim();
+        if (next) return `Warning: ${next}`;
+      }
+      return trimmed;
+    }
+    // R inline: `Warning: <msg>` on a single line
+    if (/^Warning:\s+/i.test(trimmed)) return trimmed;
+  }
+
+  // 2. Python error class lines.
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim();
+    if (/^[A-Z]\w*(?:Error|Exception|Warning):/.test(trimmed)) return trimmed;
+  }
+
+  // 3. R rlang error block: `Error in `<fn>()`:` header + `! <cause>` bullet.
+  // The header line ends with `:` (with optional trailing whitespace). The
+  // function name is wrapped in backticks and includes its parens.
+  // Find the *last* such header (innermost frame, closest to the failing
+  // call) and emit `Error in <fn>: <cause>` from the next `!` bullet.
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim();
+    const headerMatch = trimmed.match(/^Error in\s+`?([^`]+?)`?\s*:\s*$/);
+    if (!headerMatch) continue;
+    const fn = headerMatch[1].trim().replace(/\(\)$/, "");
+    // Walk forward for the `! <cause>` bullet, skipping `ℹ` info lines and
+    // the `Caused by error:` connector.
+    for (let j = i + 1; j < lines.length; j++) {
+      const next = lines[j].trim();
+      if (!next) continue;
+      const bullet = next.match(/^!\s*(.+)$/);
+      if (bullet) return `Error in ${fn}(): ${bullet[1].trim()}`;
+      // Stop scanning if we hit something that's clearly past the error block.
+      if (/^Backtrace:/.test(next) || /^Execution halted$/.test(next)) break;
+    }
+    // Header found but no `!` bullet — emit just the header.
+    return trimmed;
+  }
+
+  // 4. Base R error: `Error: <msg>` or `Error in <expr> : <msg>` on a single line.
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const trimmed = lines[i].trim();
+    if (/^Error(?:\s+in\b[^:]*)?:\s+\S/.test(trimmed)) return trimmed;
+  }
+
+  // 5. R "Execution halted" — last-resort R signal.
+  for (const line of lines) {
+    if (line.trim() === "Execution halted") return "Execution halted";
+  }
+
+  // 6. Fallback: last non-empty line.
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (lines[i].trim()) return lines[i].trim();
+  }
+  return "";
 }
 
 /**
@@ -207,8 +298,8 @@ export function printRuntimeOutcome(
 /**
  * Wrap a synchronous in-process operation. If it throws, `[label] exit=1 |
  * <error.message>` is emitted. If it returns, `[label] exit=0 | <messageFn
- * result>` is emitted. Used by scenario files for Arquero blocks so they
- * don't have to write the try/catch inline.
+ * result>` is emitted. Used by scenario files for Arquero blocks and the
+ * Tidy-TS catch block so they don't have to write the try/catch inline.
  */
 export function runInProcess<T>(
   label: ComparatorLabel,
@@ -219,9 +310,41 @@ export function runInProcess<T>(
     const value = fn();
     printRuntimeOutcome(label, true, messageFn(value));
   } catch (e) {
-    const msg = e instanceof Error ? e.message.split("\n")[0] : String(e);
-    printRuntimeOutcome(label, false, msg);
+    printRuntimeOutcome(label, false, formatError(e));
   }
+}
+
+/**
+ * Async sibling of `runInProcess`. Used for Tidy-TS blocks that need to
+ * `await` (e.g. `await readCSV(...)`) or Arquero blocks that go through async
+ * paths. Same contract: success → `exit=0`, throw → `exit=1`. Same message
+ * formatting via `formatError` so the signal line is grep-able by the verifier.
+ *
+ * Scenario authors: prefer `runInProcess` (sync) when possible. Use the async
+ * variant only when the comparator code is genuinely async. Either way, do
+ * NOT write your own try/catch — the helpers handle message truncation and
+ * the uniform `[label] exit=N | <message>` shape consistently.
+ */
+export async function runInProcessAsync<T>(
+  label: ComparatorLabel,
+  fn: () => Promise<T>,
+  messageFn: (value: T) => string,
+): Promise<void> {
+  try {
+    const value = await fn();
+    printRuntimeOutcome(label, true, messageFn(value));
+  } catch (e) {
+    printRuntimeOutcome(label, false, formatError(e));
+  }
+}
+
+function formatError(e: unknown): string {
+  if (!(e instanceof Error)) return String(e).replace(/\s+/g, " ").trim().slice(0, 200);
+  // Use the first line of the message, but collapse newlines/whitespace so
+  // multi-line JSON-style error bodies (e.g. Zod issues array) don't truncate
+  // mid-bracket. Cap at 200 chars to keep the signal line bounded.
+  const flattened = e.message.replace(/\s+/g, " ").trim();
+  return flattened.length > 200 ? flattened.slice(0, 197) + "..." : flattened;
 }
 
 // ────────────────────────────────────────────────────────────────────────────

@@ -94,11 +94,12 @@ Deno.test("upsample - PlainDate daily with forward fill (calendar path)", () => 
   });
 
   expect(result.nrows()).toBe(3); // Jan 1, 2, 3
-  expect(result[0].timestamp).toBe("2023-01-01");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDate");
   expect(result[0].value).toBe(100);
-  expect(result[1].timestamp).toBe("2023-01-02");
+  expect(result[1].timestamp.toString()).toBe("2023-01-02");
   expect(result[1].value).toBe(100); // forward filled
-  expect(result[2].timestamp).toBe("2023-01-03");
+  expect(result[2].timestamp.toString()).toBe("2023-01-03");
   expect(result[2].value).toBe(200);
 });
 
@@ -172,10 +173,11 @@ Deno.test("upsample - PlainDateTime hourly (calendar path)", () => {
   });
 
   expect(result.nrows()).toBe(3); // 10:00, 11:00, 12:00
-  expect(result[0].timestamp).toBe("2023-01-01T10:00:00");
-  expect(result[1].timestamp).toBe("2023-01-01T11:00:00");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDateTime");
+  expect(result[1].timestamp.toString()).toBe("2023-01-01T11:00:00");
   expect(result[1].value).toBe(100); // forward filled
-  expect(result[2].timestamp).toBe("2023-01-01T12:00:00");
+  expect(result[2].timestamp.toString()).toBe("2023-01-01T12:00:00");
   expect(result[2].value).toBe(200);
 });
 
@@ -198,10 +200,11 @@ Deno.test("upsample - PlainDateTime (polyfill)", () => {
   });
 
   expect(result.nrows()).toBe(3);
-  expect(result[0].timestamp).toBe("2023-01-01T10:00:00");
-  expect(result[1].timestamp).toBe("2023-01-01T11:00:00");
+  expect(result[0].timestamp.toString()).toBe("2023-01-01T10:00:00");
+  expect(result[0].timestamp.constructor.name).toBe("PlainDateTime");
+  expect(result[1].timestamp.toString()).toBe("2023-01-01T11:00:00");
   expect(result[1].value).toBe(100); // forward filled
-  expect(result[2].timestamp).toBe("2023-01-01T12:00:00");
+  expect(result[2].timestamp.toString()).toBe("2023-01-01T12:00:00");
   expect(result[2].value).toBe(200);
 });
 

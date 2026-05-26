@@ -82,30 +82,25 @@ export function qexp({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the exponential distribution
  */
-export function rexp(): number;
-export function rexp({
-  rate,
-  sampleSize,
-}: {
+export function rexp(args: {
   rate?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rexp(args?: { rate?: number; seed?: number }): number;
 export function rexp({
   rate = 1,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   rate?: number;
   sampleSize?: number;
+  seed?: number;
 } = {}): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rexp(rate);
+  if (sampleSize === undefined) {
+    return wasm_rexp(rate, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rexp(rate));
-  }
-  return results;
+  return wasm_rexp(rate, sampleSize, seed);
 }
 
 /**

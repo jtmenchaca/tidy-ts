@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>COHORT_EXTRACTION — topology</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: #fafafa; color: #222; margin: 0; padding: 32px;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px 0; }
+  .sub-title { font-size: 13px; color: #666; margin-bottom: 24px; }
+  svg { display: block; background: white; border: 1px solid #eee; border-radius: 8px; }
+
+  text { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; fill: #1a1a1a; }
+
+  /* Card */
+  .node-body {
+    fill: white;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+  }
+  .node-body-BranchingNode { stroke: #e0a352; }
+  .node-body-StartNode, .node-body-EndNode { stroke: #94a3b8; }
+
+  /* Header band — colored only via fill, no separate clipping needed
+     since the path is hand-shaped to be flat-bottomed. */
+  .node-header { fill: #f8fafc; stroke: none; }
+  .node-header-LlmNode { fill: #f1f5f9; }
+  .node-header-BranchingNode { fill: #fff7ed; }
+  .node-header-StartNode, .node-header-EndNode { fill: #eef2ff; }
+
+  .header-divider { stroke: #e4e4e7; stroke-width: 1; }
+  .col-divider { stroke: #e4e4e7; stroke-width: 1; stroke-dasharray: 2 3; }
+
+  /* Container metadata (Map/ParallelMap/Catch/Flow/ParallelFlow strip) */
+  .container-meta {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+    font-style: italic;
+  }
+
+  /* Subflow panel + caption */
+  .subflow-panel {
+    fill: #fafafa;
+    stroke: #d4d4d8;
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+  }
+  .subflow-caption {
+    fill: #fff7ed;
+    stroke: #fed7aa;
+    stroke-width: 1;
+  }
+  .subflow-id {
+    font-size: 11px;
+    font-weight: 600;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #9a3412;
+  }
+  .subflow-citation {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #b45309;
+    font-style: italic;
+  }
+
+  /* Tools panel (AgentNode) */
+  .tools-panel {
+    fill: #f5f3ff;
+    stroke: #c4b5fd;
+    stroke-width: 1;
+  }
+  .tools-header {
+    fill: #6d28d9;
+  }
+  .tool-sig {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #1e1b4b;
+  }
+  /* MCPToolBox row — slightly distinct so it doesn't look like a fake
+     ServerTool with an empty signature. */
+  .tool-box-sig {
+    font-style: italic;
+    fill: #4338ca;
+  }
+  .tool-desc {
+    font-size: 10px;
+    fill: #6b7280;
+    font-style: italic;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  }
+
+  /* Typography */
+  .node-name {
+    font-size: 13px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #18181b;
+  }
+  .node-sub {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+  .section-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    fill: #a1a1aa;
+    font-weight: 600;
+  }
+
+  .field-name {
+    font-size: 11px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #27272a;
+  }
+  .field-type {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    fill: #71717a;
+  }
+
+  .port { fill: white; stroke: #64748b; stroke-width: 1.5; }
+  .port-in  { fill: #f8fafc; stroke: #94a3b8; }
+  .port-out { fill: #64748b; stroke: #475569; }
+
+  /* Edges */
+  .edge-control { stroke: #18181b; stroke-width: 1.5; }
+  .edge-data { stroke: #a1a1aa; stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .edge-label {
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .branch-label { fill: #b45309; font-weight: 600; }
+  .data-label { fill: #71717a; }
+</style>
+</head>
+<body>
+  <h1>COHORT_EXTRACTION</h1>
+  <div class="sub-title">v1.0.0</div>
+
+  <svg viewBox="0 -40 2395 696" width="2395" height="696">
+    <defs>
+      <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155" />
+      </marker>
+      <marker id="arrow-data" viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+      </marker>
+    </defs>
+    
+    <g>
+      <path class="edge edge-control" d="M 171 112 L 251 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 2025 112 L 2105 112" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+    
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="40" y="40" width="131" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 48 40 H 163 A 8 8 0 0 1 171 48 V 80 H 40 V 48 A 8 8 0 0 1 48 40 Z" />
+<text class="node-name" x="105.5" y="62" text-anchor="middle">start</text>
+<line class="header-divider" x1="40" y1="80" x2="171" y2="80" />
+      <text class="section-label" x="159" y="92" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="171" cy="112" r="4" />
+<text class="field-name" x="87" y="116" text-anchor="end">notes</text>
+<text class="field-type" x="159" y="116" text-anchor="end">string[]</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-ParallelMapNode" x="251" y="40" width="1774" height="576" rx="8" ry="8" />
+      <path class="node-header node-header-ParallelMapNode" d="M 259 40 H 2017 A 8 8 0 0 1 2025 48 V 80 H 251 V 48 A 8 8 0 0 1 259 40 Z" />
+<text class="node-name" x="1138" y="62" text-anchor="middle">per_patient_extract</text>
+<line class="header-divider" x1="251" y1="80" x2="2025" y2="80" />
+      <text class="section-label" x="263" y="92">inputs</text>
+<text class="section-label" x="2013" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="1078.5" y1="86" x2="1078.5" y2="610" />
+      <circle class="port port-in" cx="251" cy="112" r="4" />
+<text class="field-name" x="263" y="116">notes</text>
+<text class="field-type" x="370" y="116" text-anchor="end">string[]</text>
+<circle class="port port-out" cx="2025" cy="112" r="4" />
+<text class="field-name" x="1927" y="116" text-anchor="end">problems_per_patient</text>
+<text class="field-type" x="2013" y="116" text-anchor="end">string[][]</text>
+      <text class="container-meta" x="263" y="144">parallel-map over notes · concurrency 8</text><rect class="subflow-caption" x="265" y="146" width="1746" height="32" rx="4" ry="4" /><text class="subflow-id" x="273" y="159">PER_PATIENT  v1.0.0</text><rect class="subflow-panel" x="265" y="178" width="1746" height="424" rx="6" ry="6" /><g class="subflow-region">
+    <g>
+      <path class="edge edge-control" d="M 415 290 L 455 290 L 455 274 L 495 274" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 1279 310 C 1339 188, 1759 188, 1819 290" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1549" y="204" text-anchor="middle">next</text>
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 1279 310 L 1319 310 L 1319 290 L 1359 290" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1339" y="212" text-anchor="middle">caught_exception_branch</text>
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 1739 290 L 1819 290" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="305" y="218" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 313 218 H 407 A 8 8 0 0 1 415 226 V 258 H 305 V 226 A 8 8 0 0 1 313 218 Z" />
+<text class="node-name" x="360" y="240" text-anchor="middle">pp_start</text>
+<line class="header-divider" x1="305" y1="258" x2="415" y2="258" />
+      <text class="section-label" x="403" y="270" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="415" cy="290" r="4" />
+<text class="field-name" x="345" y="294" text-anchor="end">note</text>
+<text class="field-type" x="403" y="294" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-CatchExceptionNode" x="495" y="218" width="784" height="344" rx="8" ry="8" />
+      <path class="node-header node-header-CatchExceptionNode" d="M 503 218 H 1271 A 8 8 0 0 1 1279 226 V 258 H 495 V 226 A 8 8 0 0 1 503 218 Z" />
+<text class="node-name" x="887" y="240" text-anchor="middle">try_extract</text>
+<line class="header-divider" x1="495" y1="258" x2="1279" y2="258" />
+      <text class="section-label" x="1267" y="270" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="1279" cy="290" r="4" />
+<text class="field-name" x="1195" y="294" text-anchor="end">problems</text>
+<text class="field-type" x="1267" y="294" text-anchor="end">string[]</text>
+<circle class="port port-out" cx="1279" cy="310" r="4" />
+<text class="field-name" x="1202" y="314" text-anchor="end">caught_exception_info</text>
+<text class="field-type" x="1267" y="314" text-anchor="end">string?</text>
+      <text class="container-meta" x="507" y="342">catch-exception</text><rect class="subflow-caption" x="509" y="344" width="756" height="32" rx="4" ry="4" /><text class="subflow-id" x="517" y="357">EXTRACT_PROBLEMS  v3.0.0</text><text class="subflow-citation" x="517" y="370">Menchaca et al., 2026 (tidy-ts/ai)</text><rect class="subflow-panel" x="509" y="376" width="756" height="172" rx="6" ry="6" /><g class="subflow-region">
+    <g>
+      <path class="edge edge-control" d="M 659 488 L 739 488" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g>
+      <path class="edge edge-control" d="M 993 488 L 1073 488" marker-end="url(#arrow-control)" fill="none" />
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-StartNode" x="549" y="416" width="110" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-StartNode" d="M 557 416 H 651 A 8 8 0 0 1 659 424 V 456 H 549 V 424 A 8 8 0 0 1 557 416 Z" />
+<text class="node-name" x="604" y="438" text-anchor="middle">ep_start</text>
+<line class="header-divider" x1="549" y1="456" x2="659" y2="456" />
+      <text class="section-label" x="647" y="468" text-anchor="end">outputs</text>
+      
+      <circle class="port port-out" cx="659" cy="488" r="4" />
+<text class="field-name" x="589" y="492" text-anchor="end">note</text>
+<text class="field-type" x="647" y="492" text-anchor="end">string</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="739" y="416" width="254" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 747 416 H 985 A 8 8 0 0 1 993 424 V 456 H 739 V 424 A 8 8 0 0 1 747 416 Z" />
+<text class="node-name" x="866" y="432" text-anchor="middle">extract_problems_llm</text>
+<text class="node-sub" x="866" y="445" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="739" y1="456" x2="993" y2="456" />
+      <text class="section-label" x="751" y="468">inputs</text>
+<text class="section-label" x="981" y="468" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="845" y1="462" x2="845" y2="502" />
+      <circle class="port port-in" cx="739" cy="488" r="4" />
+<text class="field-name" x="751" y="492">note</text>
+<text class="field-type" x="837" y="492" text-anchor="end">string</text>
+<circle class="port port-out" cx="993" cy="488" r="4" />
+<text class="field-name" x="909" y="492" text-anchor="end">problems</text>
+<text class="field-type" x="981" y="492" text-anchor="end">string[]</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="1073" y="416" width="152" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 1081 416 H 1217 A 8 8 0 0 1 1225 424 V 456 H 1073 V 424 A 8 8 0 0 1 1081 416 Z" />
+<text class="node-name" x="1149" y="438" text-anchor="middle">ep_end</text>
+<line class="header-divider" x1="1073" y1="456" x2="1225" y2="456" />
+      <text class="section-label" x="1085" y="468">inputs</text>
+      
+      <circle class="port port-in" cx="1073" cy="488" r="4" />
+<text class="field-name" x="1085" y="492">problems</text>
+<text class="field-type" x="1213" y="492" text-anchor="end">string[]</text>
+      
+      
+    </g></g>
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-AgentNode" x="1359" y="218" width="380" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-AgentNode" d="M 1367 218 H 1731 A 8 8 0 0 1 1739 226 V 258 H 1359 V 226 A 8 8 0 0 1 1367 218 Z" />
+<text class="node-name" x="1549" y="234" text-anchor="middle">fallback_problems</text>
+<text class="node-sub" x="1549" y="247" text-anchor="middle">gpt-5.4-nano</text>
+<line class="header-divider" x1="1359" y1="258" x2="1739" y2="258" />
+      <text class="section-label" x="1371" y="270">inputs</text>
+<text class="section-label" x="1727" y="270" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="1591" y1="264" x2="1591" y2="304" />
+      <circle class="port port-in" cx="1359" cy="290" r="4" />
+<text class="field-name" x="1371" y="294">caught_exception_info</text>
+<text class="field-type" x="1583" y="294" text-anchor="end">string?</text>
+<circle class="port port-out" cx="1739" cy="290" r="4" />
+<text class="field-name" x="1655" y="294" text-anchor="end">problems</text>
+<text class="field-type" x="1727" y="294" text-anchor="end">string[]</text>
+      
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="1819" y="218" width="152" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 1827 218 H 1963 A 8 8 0 0 1 1971 226 V 258 H 1819 V 226 A 8 8 0 0 1 1827 218 Z" />
+<text class="node-name" x="1895" y="240" text-anchor="middle">pp_end</text>
+<line class="header-divider" x1="1819" y1="258" x2="1971" y2="258" />
+      <text class="section-label" x="1831" y="270">inputs</text>
+      
+      <circle class="port port-in" cx="1819" cy="290" r="4" />
+<text class="field-name" x="1831" y="294">problems</text>
+<text class="field-type" x="1959" y="294" text-anchor="end">string[]</text>
+      
+      
+    </g></g>
+      
+    </g>
+
+    <g class="node">
+      <rect class="node-body node-body-EndNode" x="2105" y="40" width="250" height="92" rx="8" ry="8" />
+      <path class="node-header node-header-EndNode" d="M 2113 40 H 2347 A 8 8 0 0 1 2355 48 V 80 H 2105 V 48 A 8 8 0 0 1 2113 40 Z" />
+<text class="node-name" x="2230" y="62" text-anchor="middle">end</text>
+<line class="header-divider" x1="2105" y1="80" x2="2355" y2="80" />
+      <text class="section-label" x="2117" y="92">inputs</text>
+      
+      <circle class="port port-in" cx="2105" cy="112" r="4" />
+<text class="field-name" x="2117" y="116">problems_per_patient</text>
+<text class="field-type" x="2343" y="116" text-anchor="end">string[][]</text>
+      
+      
+    </g>
+  </svg>
+</body>
+</html>

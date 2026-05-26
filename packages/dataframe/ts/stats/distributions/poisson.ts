@@ -82,34 +82,28 @@ export function qpois({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the Poisson distribution (integers)
  */
-export function rpois({
-  rateLambda,
-}: {
+export function rpois(args: {
   rateLambda: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rpois(args: {
+  rateLambda: number;
+  seed?: number;
 }): number;
 export function rpois({
   rateLambda,
   sampleSize,
-}: {
-  rateLambda: number;
-  sampleSize: number;
-}): number[];
-export function rpois({
-  rateLambda,
-  sampleSize = 1,
+  seed,
 }: {
   rateLambda: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rpois(rateLambda);
+  if (sampleSize === undefined) {
+    return wasm_rpois(rateLambda, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rpois(rateLambda));
-  }
-  return results;
+  return wasm_rpois(rateLambda, sampleSize, seed);
 }
 
 /**

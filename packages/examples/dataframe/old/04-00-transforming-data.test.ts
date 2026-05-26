@@ -1,4 +1,4 @@
-import { createDataFrame, stats, str } from "@tidy-ts/dataframe";
+import { createDataFrame, stats } from "@tidy-ts/dataframe";
 import { expect } from "@std/expect";
 import { test } from "@tidy-ts/shims";
 
@@ -71,21 +71,17 @@ test("Transforming and Mutating Data - Progressive Examples", () => {
   // ============================================================================
   console.log("\n=== 4. String Operations ===");
 
-  // Use string functions for text analysis
+  // Use native string functions for text analysis
   const withStringOps = characters.mutate({
     name_uppercase: (row) => row.name.toUpperCase(),
     name_reversed: (row) => row.name.split("").reverse().join(""),
-    has_vowels: (row) => str.detect(row.name, "[aeiouAEIOU]"),
-    vowel_count: (row) => {
-      // Use str.extractAll to find all vowels and count them
-      const vowels = str.extractAll(row.name, "[aeiouAEIOU]");
-      return vowels.length;
-    },
+    has_vowels: (row) => /[aeiouAEIOU]/.test(row.name),
+    vowel_count: (row) => row.name.match(/[aeiouAEIOU]/g)?.length ?? 0,
     name_pattern: (row) => {
       // Check if name follows certain patterns
-      if (str.detect(row.name, "^[A-Z][a-z]+$")) return "Title Case";
-      if (str.detect(row.name, "\\d")) return "Contains Numbers";
-      if (str.detect(row.name, "-")) return "Contains Hyphen";
+      if (/^[A-Z][a-z]+$/.test(row.name)) return "Title Case";
+      if (/\d/.test(row.name)) return "Contains Numbers";
+      if (row.name.includes("-")) return "Contains Hyphen";
       return "Standard";
     },
   });
@@ -157,7 +153,7 @@ test("Transforming and Mutating Data - Progressive Examples", () => {
         // Analyze the character's name and characteristics
         const nameAnalysis = {
           length: row.name.length,
-          hasNumbers: str.detect(row.name, "\\d"),
+          hasNumbers: /\d/.test(row.name),
           isShort: row.name.length <= 4,
           isLong: row.name.length >= 8,
         };

@@ -1,5 +1,4 @@
 export { s, stats } from "./ts/stats/stats.ts";
-export { str } from "./ts/stats/strings/str.ts";
 export {
   createDataFrame,
   type DataFrame,

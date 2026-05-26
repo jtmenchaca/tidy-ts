@@ -4,6 +4,31 @@ import { initWasm, wasmInternal } from "./wasm-init.ts";
 import type { DataFrame } from "../dataframe/index.ts";
 
 /**
+ * Constrain a row type to numeric-only columns. For any non-numeric column,
+ * the field is rewritten to a structural marker carrying a per-column error
+ * message — TypeScript surfaces the marker in the assignment-incompatibility
+ * diagnostic, so the user sees the offending column name and the encoding
+ * suggestion.
+ *
+ * Auto-encoding categoricals is deliberately not provided: silently picking
+ * an alphabetical reference level is a foot-gun (the user thinks they're
+ * modeling "species effect" and ends up modeling "species effect relative to
+ * Adelie"). The user must encode reference levels explicitly.
+ *
+ * The marker is a non-`never` object literal because `never & X` collapses to
+ * `never` and the diagnostic loses the brand text. Using a structural object
+ * keeps the message in the printed error.
+ */
+export type RequireNumericGlmColumns<Row> = {
+  [K in keyof Row]: Row[K] extends number ? Row[K] : {
+    __tidyTsGlmError:
+      `Column "${K & string}" must be numeric. Encode categoricals explicitly via mutate({ ${K &
+        string}<LevelName>: r => r.${K &
+        string} === "<LevelName>" ? 1 : 0 }) and choose your reference level — tidy-ts will not pick one for you.`;
+  };
+};
+
+/**
  * GLM family information interface
  */
 export interface GlmFamilyInfo {
@@ -274,7 +299,7 @@ function nullsToNaN(arr: any[]): void {
   }
 }
 
-class GLM<Row extends Record<string, number>> {
+class GLM<Row extends Record<string, unknown>> {
   private result: GlmFitResult;
   private _wasmSafeResult: GlmFitResult | null = null;
   private formula: string;
@@ -754,7 +779,7 @@ class GLM<Row extends Record<string, number>> {
  * @param options - Optional GLM parameters
  * @returns GLM model instance with predict() and other methods
  */
-export function glm<Row extends Record<string, number>>({
+export function glm<Row extends Record<string, unknown>>({
   formula,
   family,
   link,
@@ -773,7 +798,7 @@ export function glm<Row extends Record<string, number>>({
     | "inverse"
     | "sqrt"
     | "inverse_squared";
-  data: DataFrame<Row>;
+  data: DataFrame<RequireNumericGlmColumns<Row>>;
   options?: {
     weights?: number[];
     naAction?: string;
@@ -785,7 +810,8 @@ export function glm<Row extends Record<string, number>>({
   const dataObject: Record<string, readonly number[]> = {};
 
   for (const col of data.columns()) {
-    dataObject[col] = data[col];
+    // Branded-error guard: by construction every column here is numeric.
+    dataObject[col] = data[col] as readonly number[];
   }
 
   const dataJson = JSON.stringify(dataObject);
@@ -829,13 +855,16 @@ export function glm<Row extends Record<string, number>>({
     throw new Error(`[BUG] ${e}`);
   }
 
-  // Return GLM class instance
-  return new GLM({
+  // Return GLM class instance. The cast is sound: `data` reached this point
+  // only after the branded `RequireNumericGlmColumns<Row>` check, so every
+  // column is numeric. The GLM class stores the frame for downstream methods
+  // (predict, etc.) that consume numeric data.
+  return new GLM<Row>({
     result,
     formula,
     family,
     link,
-    data,
+    data: data as unknown as DataFrame<Row>,
   });
 }
 

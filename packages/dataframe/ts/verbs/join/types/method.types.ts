@@ -648,15 +648,23 @@ export type AsofJoinMethod<Row extends object> = {
   <
     OtherRow extends object,
     K extends keyof Row & keyof OtherRow,
+    const G extends readonly (keyof Row & keyof OtherRow)[] = [],
   >(
     other: DataFrame<OtherRow>,
     by: RestrictEmptyDataFrame<Row, K, EmptyDataFrameJoin>,
     options?: {
       direction?: "backward" | "forward" | "nearest";
       tolerance?: number;
-      group_by?: (keyof Row & keyof OtherRow)[];
+      group_by?: G;
     },
-  ): DataFrame<Prettify<SuffixAwareAsofJoinResult<Row, OtherRow, K>>>;
+  ): DataFrame<
+    Prettify<
+      // K and every element of `group_by` are equi-join keys: the matched
+      // rows have identical values on both sides, so the result carries one
+      // copy (no `_x`/`_y` collision).
+      SuffixAwareAsofJoinResult<Row, OtherRow, K | (G[number] & keyof Row & keyof OtherRow)>
+    >
+  >;
 
   // Suffix-aware asof join with const assertions to preserve literal types
   /**
@@ -687,13 +695,14 @@ export type AsofJoinMethod<Row extends object> = {
     OtherRow extends object,
     K extends keyof Row & keyof OtherRow,
     const Suffixes extends { left?: string; right?: string },
+    const G extends readonly (keyof Row & keyof OtherRow)[] = [],
   >(
     other: DataFrame<OtherRow>,
     by: RestrictEmptyDataFrame<Row, K, EmptyDataFrameJoin>,
     options: {
       direction?: "backward" | "forward" | "nearest";
       tolerance?: number;
-      group_by?: (keyof Row & keyof OtherRow)[];
+      group_by?: G;
       suffixes: Suffixes;
     },
   ): DataFrame<
@@ -701,7 +710,7 @@ export type AsofJoinMethod<Row extends object> = {
       SuffixAwareAsofJoinResult<
         Row,
         OtherRow,
-        Extract<K, string>,
+        Extract<K | (G[number] & keyof Row & keyof OtherRow), string>,
         { suffixes: Suffixes }
       >
     >

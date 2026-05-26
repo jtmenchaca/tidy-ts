@@ -102,38 +102,30 @@ export function qwilcox({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the Wilcoxon rank-sum distribution
  */
-export function rwilcox({
-  sizeFirstSample,
-  sizeSecondSample,
-}: {
+export function rwilcox(args: {
   sizeFirstSample: number;
   sizeSecondSample: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rwilcox(args: {
+  sizeFirstSample: number;
+  sizeSecondSample: number;
+  seed?: number;
 }): number;
 export function rwilcox({
   sizeFirstSample,
   sizeSecondSample,
   sampleSize,
-}: {
-  sizeFirstSample: number;
-  sizeSecondSample: number;
-  sampleSize: number;
-}): number[];
-export function rwilcox({
-  sizeFirstSample,
-  sizeSecondSample,
-  sampleSize = 1,
+  seed,
 }: {
   sizeFirstSample: number;
   sizeSecondSample: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rwilcox(sizeFirstSample, sizeSecondSample);
+  if (sampleSize === undefined) {
+    return wasm_rwilcox(sizeFirstSample, sizeSecondSample, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rwilcox(sizeFirstSample, sizeSecondSample));
-  }
-  return results;
+  return wasm_rwilcox(sizeFirstSample, sizeSecondSample, sampleSize, seed);
 }

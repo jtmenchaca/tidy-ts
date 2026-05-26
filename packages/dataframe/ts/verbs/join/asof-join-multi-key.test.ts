@@ -167,49 +167,21 @@ Deno.test("asofJoin - with group_by", () => {
     group_by: ["symbol"],
   });
 
-  // Type check: asof join with grouping
+  // Type check: asof join with grouping. `symbol` is an equi-join key (via
+  // `group_by`), so it appears once on the result — no _x/_y suffixes.
   const _groupByTypeCheck: DataFrame<{
     time: number; // Key field (required)
-    symbol_x: string; // Left conflicting column with _x suffix
+    symbol: string; // group_by key — single column, not suffixed
     price: number; // Left column (required)
     bid: number | undefined; // Right column (optional)
     ask: number | undefined; // Right column (optional)
-    symbol_y: string | undefined; // Right conflicting column with _y suffix (optional)
   }> = result;
 
   expect(result.toArray()).toEqual([
-    {
-      time: 100,
-      symbol_x: "AAPL",
-      price: 150,
-      symbol_y: "AAPL",
-      bid: 149,
-      ask: 151,
-    }, // matches AAPL 90
-    {
-      time: 200,
-      symbol_x: "AAPL",
-      price: 155,
-      symbol_y: "AAPL",
-      bid: 154,
-      ask: 156,
-    }, // matches AAPL 180
-    {
-      time: 150,
-      symbol_x: "MSFT",
-      price: 250,
-      symbol_y: "MSFT",
-      bid: 249,
-      ask: 251,
-    }, // matches MSFT 140
-    {
-      time: 250,
-      symbol_x: "MSFT",
-      price: 255,
-      symbol_y: "MSFT",
-      bid: 254,
-      ask: 256,
-    }, // matches MSFT 240
+    { time: 100, symbol: "AAPL", price: 150, bid: 149, ask: 151 }, // matches AAPL 90
+    { time: 200, symbol: "AAPL", price: 155, bid: 154, ask: 156 }, // matches AAPL 180
+    { time: 150, symbol: "MSFT", price: 250, bid: 249, ask: 251 }, // matches MSFT 140
+    { time: 250, symbol: "MSFT", price: 255, bid: 254, ask: 256 }, // matches MSFT 240
   ]);
 });
 

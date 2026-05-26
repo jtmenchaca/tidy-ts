@@ -246,6 +246,7 @@ export function proportion_test_one_sample(
   p0: number,
   alpha: number,
   alternative: string,
+  correct: boolean,
 ): OneSampleProportionTestResult {
   initWasm();
   const result = wasmInternal.proportion_test_one_sample(
@@ -254,6 +255,7 @@ export function proportion_test_one_sample(
     p0,
     alpha,
     alternative,
+    correct,
   );
   return result;
 }
@@ -266,6 +268,7 @@ export function proportion_test_two_sample(
   alpha: number,
   alternative: string,
   pooled: boolean,
+  correct: boolean,
 ): TwoSampleProportionTestResult {
   initWasm();
   const result = wasmInternal.proportion_test_two_sample(
@@ -276,6 +279,7 @@ export function proportion_test_two_sample(
     alpha,
     alternative,
     pooled,
+    correct,
   );
   return result;
 }
@@ -317,9 +321,18 @@ export function wilcoxon_w_test(
   y: Float64Array,
   alpha: number,
   alternative: string,
+  exact: boolean | undefined,
+  correct: boolean,
 ): WilcoxonSignedRankTestResult {
   initWasm();
-  const result = wasmInternal.wilcoxon_w_test(x, y, alpha, alternative);
+  const result = wasmInternal.wilcoxon_w_test(
+    x,
+    y,
+    alpha,
+    alternative,
+    exact,
+    correct,
+  );
   return result;
 }
 
@@ -446,9 +459,15 @@ export function levene_test_wasm(
   data: Float64Array,
   group_sizes: Uint32Array,
   alpha: number,
+  center: "median" | "mean",
 ): OneWayAnovaTestResult {
   initWasm();
-  const result = wasmInternal.levene_test_wasm(data, group_sizes, alpha);
+  const result = wasmInternal.levene_test_wasm(
+    data,
+    group_sizes,
+    alpha,
+    center,
+  );
   return result;
 }
 
@@ -512,6 +531,24 @@ export function kolmogorov_smirnov_uniform_wasm(
     x,
     min,
     max,
+    alternative,
+    alpha,
+  );
+  return result;
+}
+
+export function kolmogorov_smirnov_normal_wasm(
+  x: Float64Array,
+  mean: number,
+  sd: number,
+  alternative: string,
+  alpha: number,
+): KolmogorovSmirnovTestResult {
+  initWasm();
+  const result = wasmInternal.kolmogorov_smirnov_normal_wasm(
+    x,
+    mean,
+    sd,
     alternative,
     alpha,
   );

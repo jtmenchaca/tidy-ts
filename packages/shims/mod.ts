@@ -50,6 +50,7 @@ export {
   ok,
   type Result,
   tryAsync,
+  trySync,
 } from "./result.ts";
 
 // Enhanced fetch API with Result-based error handling
@@ -102,6 +103,7 @@ export {
   type ExponentialBackoff,
   type LinearBackoff,
   parallel,
+  retry,
   type RetryConfig,
   type SettledResult,
 } from "./async.ts";

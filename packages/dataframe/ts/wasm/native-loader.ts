@@ -48,6 +48,7 @@ const JSON_RESULT_FUNCTIONS = new Set([
   "dunn_test_wasm",
   "kolmogorov_smirnov_test_wasm",
   "kolmogorov_smirnov_uniform_wasm",
+  "kolmogorov_smirnov_normal_wasm",
   "proportion_test_one_sample",
   "proportion_test_two_sample",
   // Sample size

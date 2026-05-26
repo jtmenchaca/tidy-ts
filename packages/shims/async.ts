@@ -227,6 +227,32 @@ async function executeWithRetry<R>(
 }
 
 /**
+ * Run a single async task with retry-on-error.
+ *
+ * Wraps the same retry engine used by `parallel` and `batch`. Use when you
+ * have a single flaky call (e.g., one HTTP request, one LLM call) and want
+ * exponential backoff without staging an array.
+ *
+ * @example
+ * ```ts
+ * import { retry } from "@tidy-ts/shims";
+ *
+ * const response = await retry(
+ *   () => fetch(url).then((r) => r.json()),
+ *   { backoff: "exponential", maxRetries: 3 },
+ * );
+ * ```
+ */
+export function retry<R>(
+  task: () => Promise<R>,
+  config?: RetryConfig,
+  options: { signal?: AbortSignal } = {},
+): Promise<R> {
+  const retryOptions = convertRetryConfig(config);
+  return executeWithRetry(task, 0, retryOptions, config, options.signal);
+}
+
+/**
  * Processes tasks with concurrency limiting using a semaphore pattern.
  * Fails fast on first error (like Promise.all) unless settled=true.
  *

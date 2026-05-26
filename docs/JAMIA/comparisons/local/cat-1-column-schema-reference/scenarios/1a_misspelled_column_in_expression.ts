@@ -3,9 +3,6 @@
  * Category: Column reference
  * Label: misspelled column name in expression
  * Intent: Filter encounters to those at a specific facility.
- * Severity: Low
- * Severity criteria: AV=Y PS=Y PO=N OI=Y
- * Rationale: If undetected, every row gets `undefined` for the misspelled column — but the resulting all-undefined/NaN column is obviously implausible. All three ecosystems error at runtime.
  */
 import * as aq from "arquero";
 import { createDataFrame } from "@tidy-ts/dataframe";

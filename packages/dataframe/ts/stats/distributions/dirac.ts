@@ -51,26 +51,26 @@ export function qdirac({
   return wasm_qdirac(probability, location, lowerTail, probabilityIsLog);
 }
 
-export function rdirac({
-  location,
-}: {
-  location?: number;
-}): number;
-export function rdirac({
-  location,
-  sampleSize,
-}: {
+export function rdirac(args: {
   location?: number;
   sampleSize: number;
+  seed?: number;
 }): number[];
+export function rdirac(args?: {
+  location?: number;
+  seed?: number;
+}): number;
 export function rdirac({
   location = 0,
-  sampleSize = 1,
+  sampleSize,
+  seed,
 }: {
   location?: number;
   sampleSize?: number;
-}): number | number[] {
-  if (sampleSize === 1) return wasm_rdirac(location);
-
-  return Array.from({ length: sampleSize }, () => wasm_rdirac(location));
+  seed?: number;
+} = {}): number | number[] {
+  if (sampleSize === undefined) {
+    return wasm_rdirac(location, 1, seed)[0];
+  }
+  return wasm_rdirac(location, sampleSize, seed);
 }

@@ -9,33 +9,40 @@ import type { Frequency } from "./resample.types.ts";
 import {
   floorCalendarTemporal,
   isCalendarTemporal,
+  isTemporalDuration,
   isWallClockTemporalWithoutCalendar,
   parseFrequencyForCalendar,
   toEpochMs,
 } from "../../stats/temporal-helpers.ts";
 
+const MS_PER_SECOND = 1000;
+const MS_PER_MINUTE = 60 * MS_PER_SECOND;
+const MS_PER_HOUR = 60 * MS_PER_MINUTE;
+const MS_PER_DAY = 24 * MS_PER_HOUR;
+const MS_PER_WEEK = 7 * MS_PER_DAY;
+const MS_PER_MONTH_APPROX = 30 * MS_PER_DAY;
+const MS_PER_YEAR_APPROX = 365 * MS_PER_DAY;
+
 /**
- * Convert frequency string to milliseconds.
+ * Convert a frequency to milliseconds.
  *
- * Supports multiple frequency formats:
- * - Number: milliseconds directly
- * - Object: { value: number, unit: "ms" | "s" | "min" | "h" | "d" | "w" | "M" | "Q" | "Y" }
- * - String: "1S", "5min", "1H", "1D", "1W", "1M", "1Q", "1Y"
+ * Accepts three shapes:
+ * - **Number** — milliseconds directly (passthrough).
+ * - **String** — `<number><unit>` where unit is `S`, `min`, `H`, `D`, `W`, `M`,
+ *   or `Y`. Month and Year use approximate fixed lengths (30 / 365 days);
+ *   calendar-aware bucketing happens upstream in the calendar path.
+ * - **`Temporal.Duration`** — the recommended form. Computed by summing each
+ *   unit's contribution. Month is approximated as 30 days and Year as 365
+ *   days on the epoch path; the calendar path uses real calendar arithmetic.
  *
- * Note: Month (M), Quarter (Q), and Year (Y) use approximate fixed durations:
- * - 1M = 30 days
- * - 1Q = 90 days
- * - 1Y = 365 days
- *
- * @param frequency - Frequency specification
- * @returns Frequency in milliseconds
- * @throws Error if frequency format is invalid or unit is unknown
+ * @throws Error if the string format is unparseable or its unit is unknown.
  *
  * @example
- * frequencyToMs("1D")           // 86400000 (24 * 60 * 60 * 1000)
- * frequencyToMs("15min")        // 900000 (15 * 60 * 1000)
- * frequencyToMs(5000)           // 5000
- * frequencyToMs({ value: 2, unit: "h" })  // 7200000
+ * frequencyToMs("1D")                                       // 86_400_000
+ * frequencyToMs("15min")                                    // 900_000
+ * frequencyToMs(5000)                                       // 5000
+ * frequencyToMs(Temporal.Duration.from({ hours: 2 }))       // 7_200_000
+ * frequencyToMs(Temporal.Duration.from({ minutes: 5 }))     // 300_000
  */
 export function frequencyToMs(frequency: Frequency): number {
   // Direct milliseconds
@@ -43,25 +50,36 @@ export function frequencyToMs(frequency: Frequency): number {
     return frequency;
   }
 
-  // Object format: { value, unit }
-  if (typeof frequency === "object") {
-    const { value, unit } = frequency;
-    const multipliers: Record<string, number> = {
-      ms: 1,
-      s: 1000,
-      min: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-      w: 7 * 24 * 60 * 60 * 1000,
-      M: 30 * 24 * 60 * 60 * 1000, // Approximate month
-      Q: 90 * 24 * 60 * 60 * 1000, // Approximate quarter
-      Y: 365 * 24 * 60 * 60 * 1000, // Approximate year
+  // Temporal.Duration — sum the units we know about
+  if (isTemporalDuration(frequency)) {
+    const d = frequency as unknown as {
+      years: number;
+      months: number;
+      weeks: number;
+      days: number;
+      hours: number;
+      minutes: number;
+      seconds: number;
+      milliseconds: number;
+      microseconds?: number;
+      nanoseconds?: number;
     };
-    return value * (multipliers[unit] || 1000);
+    return (
+      d.years * MS_PER_YEAR_APPROX +
+      d.months * MS_PER_MONTH_APPROX +
+      d.weeks * MS_PER_WEEK +
+      d.days * MS_PER_DAY +
+      d.hours * MS_PER_HOUR +
+      d.minutes * MS_PER_MINUTE +
+      d.seconds * MS_PER_SECOND +
+      d.milliseconds +
+      (d.microseconds ?? 0) / 1000 +
+      (d.nanoseconds ?? 0) / 1_000_000
+    );
   }
 
   // String format: parse "1D", "15min", etc.
-  const match = frequency.match(/^(\d+)([A-Za-z]+)$/);
+  const match = (frequency as string).match(/^(\d+)([A-Za-z]+)$/);
   if (!match) {
     throw new Error(`Invalid frequency format: ${frequency}`);
   }
@@ -70,14 +88,13 @@ export function frequencyToMs(frequency: Frequency): number {
   const unit = match[2];
 
   const multipliers: Record<string, number> = {
-    S: 1000,
-    min: 60 * 1000,
-    H: 60 * 60 * 1000,
-    D: 24 * 60 * 60 * 1000,
-    W: 7 * 24 * 60 * 60 * 1000,
-    M: 30 * 24 * 60 * 60 * 1000, // Approximate month
-    Q: 90 * 24 * 60 * 60 * 1000, // Approximate quarter
-    Y: 365 * 24 * 60 * 60 * 1000, // Approximate year
+    S: MS_PER_SECOND,
+    min: MS_PER_MINUTE,
+    H: MS_PER_HOUR,
+    D: MS_PER_DAY,
+    W: MS_PER_WEEK,
+    M: MS_PER_MONTH_APPROX,
+    Y: MS_PER_YEAR_APPROX,
   };
 
   const multiplier = multipliers[unit];
@@ -131,13 +148,13 @@ export function getTimeBucket(
  * Returns an ISO string bucket key using native Temporal `with()`/`subtract()`.
  *
  * @param timestamp - A CalendarTemporal value (PlainDate or PlainDateTime)
- * @param frequency - Frequency specification (string or object, NOT raw ms)
+ * @param frequency - Frequency specification (string or `Temporal.Duration`, NOT raw ms)
  * @returns ISO string bucket key
  * @throws Error if frequency can't be parsed or timestamp is PlainTime
  */
 export function getCalendarTemporalBucket(
   timestamp: unknown,
-  frequency: string | number | { value: number; unit: string },
+  frequency: Frequency,
 ): string {
   if (isWallClockTemporalWithoutCalendar(timestamp)) {
     throw new Error(

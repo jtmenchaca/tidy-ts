@@ -37,9 +37,8 @@
 //  *   - Days: "1D"
 //  *   - Weeks: "1W"
 //  *   - Months: "1M"
-//  *   - Quarters: "1Q"
 //  *   - Years: "1Y"
-//  *   - Custom: number (milliseconds) or { value: number, unit: "ms" | "s" | "min" | "h" | "d" | "w" | "M" | "Q" | "Y" }
+//  *   - Custom: number (milliseconds) or `Temporal.Duration` (e.g., `Temporal.Duration.from({ hours: 2 })`)
 //  * @param args.metrics - Resampling metrics
 //  *   - For downsampling: object mapping column names to aggregation functions (e.g., `{ price: stats.mean, volume: stats.sum }`)
 //  *   - For upsampling: object with `method` key (e.g., `{ method: stats.forwardFill }`) or per-column fill methods

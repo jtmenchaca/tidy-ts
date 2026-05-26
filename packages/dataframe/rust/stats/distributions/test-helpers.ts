@@ -341,39 +341,40 @@ function callRust(functionName: string, ...args: number[]): number {
         args[4] === 1,
       );
 
-    // Random functions
+    // Random functions — bulk samplers return a Vec<f64>; test harness
+    // pulls the first draw for comparison with R's single-call output.
     case "rbeta":
-      return wasm_rbeta(args[0], args[1]);
+      return wasm_rbeta(args[0], args[1], 1)[0];
     case "rnorm":
-      return wasm_rnorm(args[0], args[1]);
+      return wasm_rnorm(args[0], args[1], 1)[0];
     case "rgamma":
-      return wasm_rgamma(args[0], args[1]);
+      return wasm_rgamma(args[0], args[1], 1)[0];
     case "rexp":
-      return wasm_rexp(args[0]);
+      return wasm_rexp(args[0], 1)[0];
     case "rchisq":
-      return wasm_rchisq(args[0]);
+      return wasm_rchisq(args[0], 1)[0];
     case "rf":
-      return wasm_rf(args[0], args[1]);
+      return wasm_rf(args[0], args[1], 1)[0];
     case "rt":
-      return wasm_rt(args[0]);
+      return wasm_rt(args[0], 1)[0];
     case "rpois":
-      return wasm_rpois(args[0]);
+      return wasm_rpois(args[0], 1)[0];
     case "rbinom":
-      return wasm_rbinom(args[0], args[1]);
+      return wasm_rbinom(args[0], args[1], 1)[0];
     case "runif":
-      return wasm_runif(args[0], args[1]);
+      return wasm_runif(args[0], args[1], 1)[0];
     case "rweibull":
-      return wasm_rweibull(args[0], args[1]);
+      return wasm_rweibull(args[0], args[1], 1)[0];
     case "rgeom":
-      return wasm_rgeom(args[0]);
+      return wasm_rgeom(args[0], 1)[0];
     case "rhyper":
-      return wasm_rhyper(args[0], args[1], args[2]);
+      return wasm_rhyper(args[0], args[1], args[2], 1)[0];
     case "rlnorm":
-      return wasm_rlnorm(args[0], args[1]);
+      return wasm_rlnorm(args[0], args[1], 1)[0];
     case "rnbinom":
-      return wasm_rnbinom(args[0], args[1]);
+      return wasm_rnbinom(args[0], args[1], 1)[0];
     case "rwilcox":
-      return wasm_rwilcox(args[0], args[1]);
+      return wasm_rwilcox(args[0], args[1], 1)[0];
 
     default:
       throw new Error(`Unknown function: ${functionName}`);

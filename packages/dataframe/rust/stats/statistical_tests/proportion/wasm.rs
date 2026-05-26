@@ -19,9 +19,10 @@ pub fn proportion_test_one_sample(
     p0: f64,
     alpha: f64,
     alternative: &str,
+    correct: bool,
 ) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    let result = chi_square_test_one_sample(x, n, p0, alternative_type, alpha, true)
+    let result = chi_square_test_one_sample(x, n, p0, alternative_type, alpha, correct)
         .map_err(|e| JsValue::from_str(&format!("Test failed: {}", e)))?;
     serde_wasm_bindgen::to_value(&result)
         .map_err(|e| JsValue::from_str(&e.to_string()))
@@ -38,9 +39,10 @@ pub fn proportion_test_two_sample(
     alpha: f64,
     alternative: &str,
     _pooled: bool, // R's prop.test always uses pooled approach
+    correct: bool,
 ) -> Result<JsValue, JsValue> {
     let alternative_type = parse_alternative(alternative);
-    let result = chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, true)
+    let result = chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, correct)
         .map_err(|e| JsValue::from_str(&format!("Test failed: {}", e)))?;
     serde_wasm_bindgen::to_value(&result)
         .map_err(|e| JsValue::from_str(&e.to_string()))
@@ -66,9 +68,10 @@ pub fn proportion_test_one_sample_napi(
     p0: f64,
     alpha: f64,
     alternative: String,
+    correct: bool,
 ) -> Result<String, napi::Error> {
     let alternative_type = parse_alternative(&alternative);
-    let result = chi_square_test_one_sample(x, n, p0, alternative_type, alpha, true)
+    let result = chi_square_test_one_sample(x, n, p0, alternative_type, alpha, correct)
         .map_err(|e| napi::Error::from_reason(format!("Test failed: {}", e)))?;
     serde_json::to_string(&result)
         .map_err(|e| napi::Error::from_reason(e.to_string()))
@@ -84,9 +87,10 @@ pub fn proportion_test_two_sample_napi(
     alpha: f64,
     alternative: String,
     _pooled: bool,
+    correct: bool,
 ) -> Result<String, napi::Error> {
     let alternative_type = parse_alternative(&alternative);
-    let result = chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, true)
+    let result = chi_square_test_two_sample(x1, n1, x2, n2, alternative_type, alpha, correct)
         .map_err(|e| napi::Error::from_reason(format!("Test failed: {}", e)))?;
     serde_json::to_string(&result)
         .map_err(|e| napi::Error::from_reason(e.to_string()))

@@ -73,7 +73,7 @@ test("Stats - Window Functions with mutate", () => {
     next_sales: s.lead(timeSeries.extract("sales"), { defaultValue: 0 }),
     running_total: s.cumsum(timeSeries.extract("sales")),
     running_max: s.cummax(timeSeries.extract("sales")),
-    sales_rank: s.rank(timeSeries.extract("sales"), "average", true),
+    sales_rank: s.rank(timeSeries.extract("sales"), { ties: "average", desc: true }),
   });
 
   enriched.print("Time Series with Window Functions:");

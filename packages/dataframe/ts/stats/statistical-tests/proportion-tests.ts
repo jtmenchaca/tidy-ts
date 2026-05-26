@@ -27,11 +27,18 @@ export function proportionTestOneSample({
   hypothesizedProportion,
   alternative = "two-sided",
   alpha = 0.05,
+  correct = true,
 }: {
   data: readonly boolean[];
   hypothesizedProportion: number;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
+  /**
+   * Apply Yates' continuity correction. Default `true`, matching R's
+   * `prop.test()` default. Pass `false` to get the uncorrected chi-square
+   * (matches R `prop.test(..., correct=FALSE)`).
+   */
+  correct?: boolean;
 }): PrettifyDeep<OneSampleProportionTestResult> {
   const n = data.length;
 
@@ -53,6 +60,7 @@ export function proportionTestOneSample({
     hypothesizedProportion,
     alpha,
     alternative,
+    correct,
   );
   return result as OneSampleProportionTestResult;
 }
@@ -66,12 +74,18 @@ export function proportionTestTwoSample({
   pooled = true,
   alternative = "two-sided",
   alpha = 0.05,
+  correct = true,
 }: {
   data1: readonly boolean[];
   data2: readonly boolean[];
   pooled?: boolean;
   alternative?: "two-sided" | "less" | "greater";
   alpha?: number;
+  /**
+   * Apply Yates' continuity correction. Default `true`, matching R's
+   * `prop.test()` default. Pass `false` to get the uncorrected chi-square.
+   */
+  correct?: boolean;
 }): PrettifyDeep<TwoSampleProportionTestResult> {
   const n1 = data1.length;
   const n2 = data2.length;
@@ -93,6 +107,7 @@ export function proportionTestTwoSample({
     alpha,
     alternative,
     pooled,
+    correct,
   );
   return result as TwoSampleProportionTestResult;
 }

@@ -87,34 +87,28 @@ export function qchisq({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the chi-squared distribution
  */
-export function rchisq({
-  degreesOfFreedom,
-}: {
+export function rchisq(args: {
   degreesOfFreedom: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rchisq(args: {
+  degreesOfFreedom: number;
+  seed?: number;
 }): number;
 export function rchisq({
   degreesOfFreedom,
   sampleSize,
-}: {
-  degreesOfFreedom: number;
-  sampleSize: number;
-}): number[];
-export function rchisq({
-  degreesOfFreedom,
-  sampleSize = 1,
+  seed,
 }: {
   degreesOfFreedom: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rchisq(degreesOfFreedom);
+  if (sampleSize === undefined) {
+    return wasm_rchisq(degreesOfFreedom, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rchisq(degreesOfFreedom));
-  }
-  return results;
+  return wasm_rchisq(degreesOfFreedom, sampleSize, seed);
 }
 
 /**

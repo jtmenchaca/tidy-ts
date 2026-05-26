@@ -102,38 +102,35 @@ export function qnbinom({
  * @param sampleSize - Number of random draws (default: 1)
  * @returns Random sample(s) from the negative binomial distribution (integers)
  */
-export function rnbinom({
-  numberOfSuccesses,
-  probabilityOfSuccess,
-}: {
+export function rnbinom(args: {
   numberOfSuccesses: number;
   probabilityOfSuccess: number;
+  sampleSize: number;
+  seed?: number;
+}): number[];
+export function rnbinom(args: {
+  numberOfSuccesses: number;
+  probabilityOfSuccess: number;
+  seed?: number;
 }): number;
 export function rnbinom({
   numberOfSuccesses,
   probabilityOfSuccess,
   sampleSize,
-}: {
-  numberOfSuccesses: number;
-  probabilityOfSuccess: number;
-  sampleSize: number;
-}): number[];
-export function rnbinom({
-  numberOfSuccesses,
-  probabilityOfSuccess,
-  sampleSize = 1,
+  seed,
 }: {
   numberOfSuccesses: number;
   probabilityOfSuccess: number;
   sampleSize?: number;
+  seed?: number;
 }): number | number[] {
-  if (sampleSize === 1) {
-    return wasm_rnbinom(numberOfSuccesses, probabilityOfSuccess);
+  if (sampleSize === undefined) {
+    return wasm_rnbinom(numberOfSuccesses, probabilityOfSuccess, 1, seed)[0];
   }
-
-  const results: number[] = [];
-  for (let i = 0; i < sampleSize; i++) {
-    results.push(wasm_rnbinom(numberOfSuccesses, probabilityOfSuccess));
-  }
-  return results;
+  return wasm_rnbinom(
+    numberOfSuccesses,
+    probabilityOfSuccess,
+    sampleSize,
+    seed,
+  );
 }

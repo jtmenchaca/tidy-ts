@@ -226,3 +226,38 @@ export async function tryAsync<T, E>({
     return err(mapError(error));
   }
 }
+
+/**
+ * Synchronous companion to `tryAsync`. Wraps a sync operation that may
+ * throw, mapping the thrown value to a typed error. Use when you need
+ * the discipline of Result-typed error handling without forcing the
+ * caller into an `await`.
+ *
+ * @example JSON.parse with a typed error
+ * ```ts
+ * const ParseError = defineError(
+ *   "ParseError",
+ *   ({ raw }: { raw: string }) => `Failed to parse JSON: ${raw.slice(0, 80)}`,
+ * );
+ *
+ * const result = trySync({
+ *   fn: () => JSON.parse(payload),
+ *   mapError: () => new ParseError({ raw: payload }),
+ * });
+ * if (!result.ok) return result; // propagate
+ * use(result.value);
+ * ```
+ */
+export function trySync<T, E>({
+  fn,
+  mapError,
+}: {
+  fn: () => T;
+  mapError: (error: unknown) => E;
+}): Result<T, E> {
+  try {
+    return ok(fn());
+  } catch (error) {
+    return err(mapError(error));
+  }
+}
