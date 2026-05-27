@@ -48,6 +48,8 @@ tmp/
 .claude/settings.local.json
 .obsidian/
 
+docs/JAMIA/submission/cited-works/*
+
 # Python
 **/.venv
 **/__pycache__
