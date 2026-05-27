@@ -1,5 +1,7 @@
 # Citation handling
 
+This file is the **in-prose** citation guide — how citations should *read* in the body text. For the end-to-end references workflow (how references are tracked, formatted, verified, and emitted, including DOI handling, the verification buckets, and tooling), see the canonical "Preferred references approach" section in [verify-citations/SKILL.md](../../verify-citations/SKILL.md#preferred-references-approach). The two are complementary: this file owns prose style, verify-citations owns workflow.
+
 When a sentence cites a study, the beat is the finding the study supports. The citation is the contract that lets the reader verify the source. The prose does not have to re-narrate the source's design.
 
 ## Source scaffolding

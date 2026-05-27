@@ -487,9 +487,13 @@ export async function runSdkAgent({
   const runOpts = { maxTurns, ...(extraRunOptions ?? {}) };
   // Wrap in the SDK's `withTrace` with our OTel trace id so the SDK's
   // own trace gets the same id and the bridge can correlate spans.
+  // The first arg is a workflow NAME; the trace id is passed through
+  // the third-arg options bag as `traceId`. The SDK normalizes the
+  // id format internally — pass the bare 32-hex (no `trace_` prefix).
   const result: any = await sdkWithTrace(
-    `trace_${otelTraceId}`,
+    "tidy-ts.ai.evaluate",
     () => withRateLimit(() => runner.run(sdkAgent, inputArg, runOpts as any)),
+    { traceId: `trace_${otelTraceId}` },
   );
 
   // SDK 0.11 surfaces the run's accumulated usage on

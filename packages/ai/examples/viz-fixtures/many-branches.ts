@@ -103,9 +103,59 @@ export default build.create({
   ],
   dataFlowConnections: [
     build.dataFlowEdge({
+      name: "start.note->classify.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: classify, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
       name: "classify.doc_type->branch.doc_type",
       sourceNode: classify, sourceOutput: "doc_type",
       destinationNode: branch, destinationInput: "doc_type",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->prog.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: progress, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->disch.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: discharge, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->admit.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: admission, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->cons.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: consult, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "classify.doc_type->end.doc_type",
+      sourceNode: classify, sourceOutput: "doc_type",
+      destinationNode: end, destinationInput: "doc_type",
+    }),
+    build.dataFlowEdge({
+      name: "prog.summary->end.summary",
+      sourceNode: progress, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "disch.summary->end.summary",
+      sourceNode: discharge, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "admit.summary->end.summary",
+      sourceNode: admission, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "cons.summary->end.summary",
+      sourceNode: consult, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
     }),
   ],
 });

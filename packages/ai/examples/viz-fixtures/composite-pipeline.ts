@@ -47,6 +47,18 @@ const EXTRACT_PROBLEMS = build.create({
     build.controlFlowEdge({ name: "s->l", fromNode: ePStart, toNode: ePLlm }),
     build.controlFlowEdge({ name: "l->e", fromNode: ePLlm, toNode: ePEnd }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "ep_start.note->llm.note",
+      sourceNode: ePStart, sourceOutput: "note",
+      destinationNode: ePLlm, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "llm.problems->ep_end.problems",
+      sourceNode: ePLlm, sourceOutput: "problems",
+      destinationNode: ePEnd, destinationInput: "problems",
+    }),
+  ],
 });
 
 // ─── Per-patient subflow: try the concept, fall back on failure ─────────
@@ -88,6 +100,28 @@ const PER_PATIENT = build.create({
       name: "try->fb", fromNode: ppCatch, toNode: ppFallback, fromBranch: build.CAUGHT_EXCEPTION_BRANCH,
     }),
     build.controlFlowEdge({ name: "fb->end", fromNode: ppFallback, toNode: ppEnd }),
+  ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "pp_start.note->try.note",
+      sourceNode: ppStart, sourceOutput: "note",
+      destinationNode: ppCatch, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "try.caught_exception_info->fb.caught_exception_info",
+      sourceNode: ppCatch, sourceOutput: "caught_exception_info",
+      destinationNode: ppFallback, destinationInput: "caught_exception_info",
+    }),
+    build.dataFlowEdge({
+      name: "try.problems->pp_end.problems",
+      sourceNode: ppCatch, sourceOutput: "problems",
+      destinationNode: ppEnd, destinationInput: "problems",
+    }),
+    build.dataFlowEdge({
+      name: "fb.problems->pp_end.problems",
+      sourceNode: ppFallback, sourceOutput: "problems",
+      destinationNode: ppEnd, destinationInput: "problems",
+    }),
   ],
 });
 
@@ -141,6 +175,11 @@ export default build.create({
       name: "start.notes->pp.notes",
       sourceNode: outerStart, sourceOutput: "notes",
       destinationNode: perPatient, destinationInput: "notes",
+    }),
+    build.dataFlowEdge({
+      name: "pp.problems_per_patient->end.problems_per_patient",
+      sourceNode: perPatient, sourceOutput: "problems_per_patient",
+      destinationNode: outerEnd, destinationInput: "problems_per_patient",
     }),
   ],
 });

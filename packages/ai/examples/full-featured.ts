@@ -104,6 +104,11 @@ const CLASSIFY_NOTE_AUTHOR = build.create({
   ],
   dataFlowConnections: [
     build.dataFlowEdge({
+      name: "start.note->classify.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: classifyAuthor, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
       name: "classify.author->branch.author",
       sourceNode: classifyAuthor, sourceOutput: "author_type",
       destinationNode: branch, destinationInput: "author_type",
@@ -117,6 +122,26 @@ const CLASSIFY_NOTE_AUTHOR = build.create({
       name: "classify.author->report.author",
       sourceNode: classifyAuthor, sourceOutput: "author_type",
       destinationNode: reportOther, destinationInput: "author_type",
+    }),
+    build.dataFlowEdge({
+      name: "extract.author_type->end.author_type",
+      sourceNode: extractProblems, sourceOutput: "author_type",
+      destinationNode: end, destinationInput: "author_type",
+    }),
+    build.dataFlowEdge({
+      name: "extract.problems->end.problems",
+      sourceNode: extractProblems, sourceOutput: "problems",
+      destinationNode: end, destinationInput: "problems",
+    }),
+    build.dataFlowEdge({
+      name: "report.author_type->end.author_type",
+      sourceNode: reportOther, sourceOutput: "author_type",
+      destinationNode: end, destinationInput: "author_type",
+    }),
+    build.dataFlowEdge({
+      name: "report.problems->end.problems",
+      sourceNode: reportOther, sourceOutput: "problems",
+      destinationNode: end, destinationInput: "problems",
     }),
   ],
 });
@@ -132,6 +157,7 @@ if (import.meta.main) {
   ]);
 
   const classified = await notes.mutateAsync({
+    newCol: (r) => r.note.toLowerCase,
     result: (r) => ai.evaluate({ topology: CLASSIFY_NOTE_AUTHOR, input: { note: r.note } }),
   });
 

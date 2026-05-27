@@ -9,6 +9,26 @@ function formatDateUTC(date: Date): string {
 }
 
 /**
+ * Render a cell value as a string for tabular display.
+ *
+ * Objects + arrays are JSON-stringified instead of `String()`'d (which
+ * would yield `[object Object]` for plain objects). Single source of
+ * truth so width calculation + the rendered cell agree. */
+function formatCell(value: unknown): string {
+  if (value === null) return "(null)";
+  if (value === undefined) return "(undefined)";
+  if (value instanceof Date) return formatDateUTC(value);
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
+/**
  * Print DataFrame contents to console with optional formatting.
  *
  * Displays a formatted table representation of the DataFrame in the console.
@@ -81,13 +101,7 @@ function printTable(
   columns.forEach((col) => {
     widths[col] = Math.max(
       col.length,
-      ...data.map((row) => {
-        const value = (row as any)[col];
-        if (value === null) return "(null)".length;
-        if (value === undefined) return "(undefined)".length;
-        if (value instanceof Date) return formatDateUTC(value).length;
-        return String(value).length;
-      }),
+      ...data.map((row) => formatCell((row as any)[col]).length),
     );
   });
 
@@ -118,20 +132,7 @@ function printTable(
     }
 
     columns.forEach((col) => {
-      const value = (row as any)[col];
-      let displayValue: string;
-
-      if (value === null) {
-        displayValue = "(null)";
-      } else if (value === undefined) {
-        displayValue = "(undefined)";
-      } else if (value instanceof Date) {
-        // Format date in UTC time (ISO 8601 with Z suffix)
-        displayValue = formatDateUTC(value);
-      } else {
-        displayValue = String(value);
-      }
-
+      const displayValue = formatCell((row as any)[col]);
       rowData.push(displayValue.padEnd(widths[col]));
     });
 

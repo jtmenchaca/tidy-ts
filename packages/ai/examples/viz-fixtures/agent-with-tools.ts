@@ -92,5 +92,25 @@ export default build.create({
       sourceNode: start, sourceOutput: "drug_name",
       destinationNode: research, destinationInput: "drug_name",
     }),
+    build.dataFlowEdge({
+      name: "research.rxcui->end.rxcui",
+      sourceNode: research, sourceOutput: "rxcui",
+      destinationNode: end, destinationInput: "rxcui",
+    }),
+    build.dataFlowEdge({
+      name: "research.drug_classes->end.drug_classes",
+      sourceNode: research, sourceOutput: "drug_classes",
+      destinationNode: end, destinationInput: "drug_classes",
+    }),
+    build.dataFlowEdge({
+      name: "research.pmids->end.pmids",
+      sourceNode: research, sourceOutput: "pmids",
+      destinationNode: end, destinationInput: "pmids",
+    }),
+    build.dataFlowEdge({
+      name: "research.summary->end.summary",
+      sourceNode: research, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
   ],
 });

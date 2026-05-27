@@ -45,6 +45,18 @@ const SENTIMENT = build.create({
     build.controlFlowEdge({ name: "s->n", fromNode: sStart, toNode: sentiment }),
     build.controlFlowEdge({ name: "n->e", fromNode: sentiment, toNode: sEnd }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "s_start.note->sentiment.note",
+      sourceNode: sStart, sourceOutput: "note",
+      destinationNode: sentiment, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "sentiment.sentiment->s_end.sentiment",
+      sourceNode: sentiment, sourceOutput: "sentiment",
+      destinationNode: sEnd, destinationInput: "sentiment",
+    }),
+  ],
 });
 
 // ─── Subflow B: extract vitals ──────────────────────────────────────────
@@ -84,6 +96,28 @@ const VITALS = build.create({
   controlFlowConnections: [
     build.controlFlowEdge({ name: "s->v", fromNode: vStart, toNode: vitals }),
     build.controlFlowEdge({ name: "v->e", fromNode: vitals, toNode: vEnd }),
+  ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "v_start.note->vitals.note",
+      sourceNode: vStart, sourceOutput: "note",
+      destinationNode: vitals, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "vitals.bp_systolic->v_end.bp_systolic",
+      sourceNode: vitals, sourceOutput: "bp_systolic",
+      destinationNode: vEnd, destinationInput: "bp_systolic",
+    }),
+    build.dataFlowEdge({
+      name: "vitals.bp_diastolic->v_end.bp_diastolic",
+      sourceNode: vitals, sourceOutput: "bp_diastolic",
+      destinationNode: vEnd, destinationInput: "bp_diastolic",
+    }),
+    build.dataFlowEdge({
+      name: "vitals.heart_rate->v_end.heart_rate",
+      sourceNode: vitals, sourceOutput: "heart_rate",
+      destinationNode: vEnd, destinationInput: "heart_rate",
+    }),
   ],
 });
 
@@ -136,6 +170,26 @@ export default build.create({
       name: "start.note->fanOut.note",
       sourceNode: outerStart, sourceOutput: "note",
       destinationNode: fanOut, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "fanOut.sentiment->end.sentiment",
+      sourceNode: fanOut, sourceOutput: "sentiment",
+      destinationNode: outerEnd, destinationInput: "sentiment",
+    }),
+    build.dataFlowEdge({
+      name: "fanOut.bp_systolic->end.bp_systolic",
+      sourceNode: fanOut, sourceOutput: "bp_systolic",
+      destinationNode: outerEnd, destinationInput: "bp_systolic",
+    }),
+    build.dataFlowEdge({
+      name: "fanOut.bp_diastolic->end.bp_diastolic",
+      sourceNode: fanOut, sourceOutput: "bp_diastolic",
+      destinationNode: outerEnd, destinationInput: "bp_diastolic",
+    }),
+    build.dataFlowEdge({
+      name: "fanOut.heart_rate->end.heart_rate",
+      sourceNode: fanOut, sourceOutput: "heart_rate",
+      destinationNode: outerEnd, destinationInput: "heart_rate",
     }),
   ],
 });

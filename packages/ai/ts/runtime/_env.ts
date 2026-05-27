@@ -9,12 +9,13 @@ import { env } from "@tidy-ts/shims";
 
 env.loadFromFileSync(".env");
 
-// Belt-and-suspenders to the `setTracingDisabled(true)` call in the
-// SDK bridge: the Agents SDK reads `OPENAI_AGENTS_DISABLE_TRACING` at
-// module init. Setting it here (before any code path that touches
-// `@openai/agents`) guarantees the disable wins even if a future
-// import order change makes the bridge load after a runner is
-// constructed.
-if (!Deno.env.get("OPENAI_AGENTS_DISABLE_TRACING")) {
-  Deno.env.set("OPENAI_AGENTS_DISABLE_TRACING", "1");
-}
+// We do NOT set `OPENAI_AGENTS_DISABLE_TRACING=1` here, even though
+// our package's OTel pipeline is the source of truth for telemetry.
+// `OPENAI_AGENTS_DISABLE_TRACING=1` would cut off `addTraceProcessor`
+// callbacks entirely, which we rely on to receive the SDK's per-turn
+// generation / function / handoff spans for translation into OTel.
+//
+// To suppress the SDK's default exporter (which posts to OpenAI's
+// Traces backend), `runtime/tracing.ts` calls `setTraceProcessors([...])`
+// with our bridge processor only — replacing the default OpenAI
+// exporter rather than disabling tracing entirely.

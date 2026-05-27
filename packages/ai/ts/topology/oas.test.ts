@@ -38,6 +38,23 @@ function buildTopology() {
       build.controlFlowEdge({ name: "s->l", fromNode: start, toNode: llm }),
       build.controlFlowEdge({ name: "l->e", fromNode: llm, toNode: end }),
     ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "s.note->l.note",
+        sourceNode: start, sourceOutput: "note",
+        destinationNode: llm, destinationInput: "note",
+      }),
+      build.dataFlowEdge({
+        name: "l.severity->e.severity",
+        sourceNode: llm, sourceOutput: "severity",
+        destinationNode: end, destinationInput: "severity",
+      }),
+      build.dataFlowEdge({
+        name: "l.confidence->e.confidence",
+        sourceNode: llm, sourceOutput: "confidence",
+        destinationNode: end, destinationInput: "confidence",
+      }),
+    ],
   });
 }
 
@@ -192,7 +209,9 @@ Deno.test("oas — agent tool zoo round-trips (Server/Client/Remote/Builtin/Mcp 
     // BuiltinTool routing is handled by the SDK; no apiType field
     // needed.
     llmConfig: openai,
-    systemPromptTemplate: "Use any tool.",
+    systemPromptTemplate: "Answer the question. {{q}}",
+    inputSchema: z.object({ q: z.string() }),
+    outputSchema: z.object({ answer: z.string() }),
     tools: [
       tool.server({
         name: "calc",

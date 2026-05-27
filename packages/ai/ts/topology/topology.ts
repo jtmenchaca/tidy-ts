@@ -32,13 +32,28 @@ export const TopologySchema = ComponentWithIOSchema.extend({
 });
 
 // Phantom brand keys carry input/output types up from StartNode/EndNode so
-// `ai.evaluate({ topology, input })` can infer both sides. We use named
-// (non-symbol) keys so other files can reach them via `infer` (the file-local
-// `unique symbol` form is unreachable from outside this file).
-export type Topology<I = unknown, O = unknown> = z.infer<typeof TopologySchema> & {
-  readonly __input?: I;
-  readonly __output?: O;
-};
+// `ai.evaluate({ topology, input })` can infer both sides. The `Nodes` tuple
+// preserves each node's narrow type — so downstream consumers (notably the
+// trace dataframe) can reach per-agent inputSchema/outputSchema at compile
+// time. Existing call sites that don't capture nodes-as-tuple still work via
+// the default of `readonly NodeRef[]`.
+//
+// We use named (non-symbol) keys so other files can reach the I/O generics
+// via `infer` (the file-local `unique symbol` form is unreachable from
+// outside this file).
+export type NodeRef = Record<string, unknown>;
+
+export type Topology<
+  I = unknown,
+  O = unknown,
+  Nodes extends readonly NodeRef[] = readonly NodeRef[],
+> =
+  & z.infer<typeof TopologySchema>
+  & {
+    readonly __input?: I;
+    readonly __output?: O;
+    readonly __nodes?: Nodes;
+  };
 
 interface NodeShape {
   id: string;
@@ -159,7 +174,11 @@ function validateTopologyInvariants({
   }
 }
 
-export function createTopology<I = unknown, O = unknown>({
+export function createTopology<
+  I = unknown,
+  O = unknown,
+  const Nodes extends readonly NodeRef[] = readonly NodeRef[],
+>({
   id,
   name,
   startNode,
@@ -190,7 +209,7 @@ export function createTopology<I = unknown, O = unknown>({
    * Only used for type inference; runtime relies on `nodes` containing it.
    */
   endNode?: EndNode<O>;
-  nodes: Record<string, unknown>[];
+  nodes: Nodes;
   controlFlowConnections: ControlFlowEdge[];
   dataFlowConnections?: DataFlowEdge[];
   description?: string;
@@ -210,7 +229,7 @@ export function createTopology<I = unknown, O = unknown>({
    * deliberately construct invalid topologies).
    */
   validate?: "throw" | "warn" | false;
-}): Topology<I, O> {
+}): Topology<I, O, Nodes> {
   const startShape = asNode(startNode);
   const nodeShapes = nodes.map(asNode);
   validateTopologyInvariants({
@@ -237,7 +256,7 @@ export function createTopology<I = unknown, O = unknown>({
       citation,
       componentType: "Topology" as const,
     }),
-  ) as Topology<I, O>;
+  ) as Topology<I, O, Nodes>;
 
   if (validate !== false) {
     const issues = validateTopology(topology);

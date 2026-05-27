@@ -27,7 +27,11 @@ interface NodeShape {
   id: string;
   name: string;
   componentType: string;
-  inputs?: Array<{ title: string; jsonSchema?: Record<string, unknown> }>;
+  inputs?: Array<{
+    title: string;
+    jsonSchema?: Record<string, unknown>;
+    default?: unknown;
+  }>;
   outputs?: Array<{ title: string; jsonSchema?: Record<string, unknown> }>;
   systemPromptTemplate?: string;
   agent?: NodeShape;
@@ -212,6 +216,40 @@ function validateTopologyAt(topology: Topology, prefix: string): TopologyIssue[]
           edgeName: edge.name,
         });
       }
+    }
+  }
+
+  // 2b. Required inputs on non-Start nodes without an incoming data edge.
+  //     Every declared input must be wired by an explicit dataFlowEdge,
+  //     unless the property carries a `default`. There is no implicit
+  //     pass-through from the prior node.
+  const startId = (topology.startNode as { id: string }).id;
+  const incomingByDest = new Map<string, Set<string>>();
+  for (const edge of topology.dataFlowConnections ?? []) {
+    const dstId = (edge.destinationNode as { id: string }).id;
+    let titles = incomingByDest.get(dstId);
+    if (!titles) {
+      titles = new Set<string>();
+      incomingByDest.set(dstId, titles);
+    }
+    titles.add(edge.destinationInput);
+  }
+  for (const n of nodes) {
+    if (n.id === startId) continue;
+    const wired = incomingByDest.get(n.id) ?? new Set<string>();
+    for (const input of n.inputs ?? []) {
+      if (wired.has(input.title)) continue;
+      if (input.default !== undefined) continue;
+      const jsDefault = input.jsonSchema?.default;
+      if (jsDefault !== undefined) continue;
+      issues.push({
+        severity: "error",
+        code: "unwired-input",
+        message:
+          `Node '${n.name}' input '${input.title}' has no incoming dataFlowEdge. ` +
+          `Every required input must be wired explicitly (no implicit pass-through).`,
+        nodeName: n.name,
+      });
     }
   }
 

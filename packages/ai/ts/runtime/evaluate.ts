@@ -8,9 +8,9 @@
 //   1. Validate input against startNode.inputSchema (if provided).
 //   2. Walk control edges from StartNode forward. For BranchingNodes, the
 //      chosen branch determines which outgoing edge to follow.
-//   3. For each node, resolve inputs from incoming DataFlowEdges (or
-//      pass-through from the predecessor's outputs), execute, store
-//      outputs.
+//   3. For each node, resolve inputs from incoming DataFlowEdges (every
+//      required input must be wired with an explicit edge — there is no
+//      implicit pass-through), execute, store outputs.
 //   4. EndNode's resolved inputs are the topology output, validated
 //      against endNode.outputSchema if provided.
 //
@@ -57,7 +57,7 @@ import {
   type RunContext,
   type SandboxClient,
 } from "./run-context.ts";
-import { ATTR, createTraceContext } from "./tracing.ts";
+import { ATTR, createTraceContext, TIDY_ATTR } from "./tracing.ts";
 import { context as otelContext, SpanStatusCode, trace as otelTrace } from "@opentelemetry/api";
 
 // Errors, usage types, and GenerationOverride live in their own modules
@@ -144,7 +144,7 @@ function toShimsRetryConfig(c: AiEvalRetryConfig): RetryConfig {
 // `EvaluateOptions*` has four variants because two orthogonal flags
 // each drive the return type:
 //   onError: "throw" | "result"  — `O` vs `Result<O, AiEvalError>`
-//   includeUsage: true | false   — `WithUsage<O>` vs bare `O`
+//   includeUsage: true | false   — `WithUsage<I, O>` vs bare `O`
 // Each variant is one (onError, includeUsage) combination; the
 // overloaded `evaluate` and `evaluateColumn` signatures dispatch on
 // them. Default for both flags is the wider/safer choice (throw,
@@ -191,15 +191,6 @@ interface EvaluateOptionsCommon {
    *      await ai.evaluate({ topology, input, sandboxClient: client });
    */
   sandboxClient?: SandboxClient;
-  /** Capture the raw message bodies + tool-call payloads onto the OTel
-   *  trace spans (`gen_ai.input.messages`, `gen_ai.output.messages`,
-   *  `gen_ai.tool.call.arguments`, `gen_ai.tool.call.result`). Default
-   *  `true`: the trace lives in-process, the caller already has the
-   *  input + output, so there's no boundary to leak across. Set to
-   *  `false` to keep traces small on high-volume workloads or when
-   *  forwarding spans to an external observer where the data WOULD
-   *  cross a privacy boundary. */
-  captureMessageContent?: boolean;
 }
 
 export interface EvaluateOptionsThrow<I, O> extends EvaluateOptionsCommon {
@@ -235,10 +226,10 @@ export interface EvaluateOptionsResultWithUsage<I, O> extends EvaluateOptionsCom
 // Overloads (most-specific → least):
 export async function evaluate<I, O>(
   opts: EvaluateOptionsResultWithUsage<I, O>,
-): Promise<Result<WithUsage<O>, AiEvalError>>;
+): Promise<Result<WithUsage<I, O>, AiEvalError>>;
 export async function evaluate<I, O>(
   opts: EvaluateOptionsThrowWithUsage<I, O>,
-): Promise<WithUsage<O>>;
+): Promise<WithUsage<I, O>>;
 export async function evaluate<I, O>(
   opts: EvaluateOptionsResult<I, O>,
 ): Promise<Result<O, AiEvalError>>;
@@ -251,7 +242,7 @@ export async function evaluate<I, O>(
     | EvaluateOptionsThrowWithUsage<I, O>
     | EvaluateOptionsResult<I, O>
     | EvaluateOptionsResultWithUsage<I, O>,
-): Promise<O | Result<O, AiEvalError> | WithUsage<O> | Result<WithUsage<O>, AiEvalError>> {
+): Promise<O | Result<O, AiEvalError> | WithUsage<I, O> | Result<WithUsage<I, O>, AiEvalError>> {
   const onError = opts.onError ?? "throw";
   const wantUsage = opts.includeUsage !== false;
   const shimsRetry = opts.retry ? toShimsRetryConfig(opts.retry) : undefined;
@@ -262,15 +253,11 @@ export async function evaluate<I, O>(
   // in-memory exporter; registers the SDK→OTel bridge for the duration
   // of this evaluate (filtered to spans on our generated trace id so
   // sibling evaluates running concurrently don't cross-pollinate).
-  //
-  // captureMessageContent defaults to `true`: the trace lives in
-  // memory in the same process that called `ai.evaluate`, so there's
-  // no PII boundary to protect (the caller already has the input +
-  // output). Pass `false` to keep traces small for high-volume
-  // workloads or when shipping spans to an external observer.
-  const traceCtx = createTraceContext({
-    captureMessageContent: opts.captureMessageContent ?? true,
-  });
+  // Message content is always captured: the trace lives in-process,
+  // the caller already has the input + output, and the captured
+  // conversation is what makes `Trace.toConversation()` and the cache
+  // envelope work.
+  const traceCtx = createTraceContext();
 
   // Root `invoke_workflow` span. Everything node-level happens under
   // its context — agent-node wrapper spans, SDK-emitted chat/tool spans,
@@ -281,12 +268,18 @@ export async function evaluate<I, O>(
       attributes: {
         [ATTR.OPERATION_NAME]: "invoke_workflow",
         [ATTR.WORKFLOW_NAME]: opts.topology.name,
+        // Topology start input — known up front, set at span-start time.
+        [TIDY_ATTR.INPUT]: JSON.stringify(opts.input ?? null),
       },
     },
     traceCtx.activeContext,
   );
   traceCtx.activeContext = otelTrace.setSpan(traceCtx.activeContext, rootSpan);
   const rootSpanId = rootSpan.spanContext().spanId;
+  // Tell the SDK→OTel bridge to parent any unattached SDK span (chat /
+  // execute_tool / etc.) under the workflow span until an agent node
+  // pushes its own wrapper on top.
+  traceCtx.pushParent(traceCtx.activeContext);
 
   const ctx: RunContext = {
     retryConfig: shimsRetry,
@@ -323,12 +316,13 @@ export async function evaluate<I, O>(
       code: SpanStatusCode.ERROR,
       message: runResult.error.message,
     });
+    traceCtx.popParent();
     rootSpan.end();
     // Drain spans so the error path also has a complete trace —
     // attached directly to the error so both throw and result-mode
     // callers can inspect `error.trace.spans` for what the model did
     // before the failure.
-    const trace = await traceCtx.finalize(rootSpanId);
+    const trace = await traceCtx.finalize<I, O>(rootSpanId);
     // The error object's `extra` bag is the source of truth for our
     // `AppError` shape; mutate it in place to attach the trace, then
     // also set the top-level `trace` property so consumers can read
@@ -340,13 +334,17 @@ export async function evaluate<I, O>(
     throw runResult.error;
   }
 
-  rootSpan.end();
-  const trace = await traceCtx.finalize(rootSpanId);
-
   const out = runResult.value;
+  // Topology final output — set right before closing the root span so
+  // the workflow row's `output` column reflects what `ai.evaluate`
+  // actually returned.
+  rootSpan.setAttribute(TIDY_ATTR.OUTPUT, JSON.stringify(out ?? null));
+  traceCtx.popParent();
+  rootSpan.end();
+  const trace = await traceCtx.finalize<I, O>(rootSpanId);
   if (wantUsage) {
     const perNode = usageSink!;
-    const wrapped: WithUsage<O> = {
+    const wrapped: WithUsage<I, O> = {
       result: out,
       usage: buildUsageReport(perNode),
       provenance: {
@@ -401,10 +399,10 @@ export async function evaluateColumn<I, O>(
 ): Promise<Result<O, AiEvalError>[]>;
 export async function evaluateColumn<I, O>(
   opts: EvaluateColumnOptions<I, O>,
-): Promise<Result<WithUsage<O>, AiEvalError>[]>;
+): Promise<Result<WithUsage<I, O>, AiEvalError>[]>;
 export async function evaluateColumn<I, O>(
   opts: EvaluateColumnOptions<I, O>,
-): Promise<Result<O, AiEvalError>[] | Result<WithUsage<O>, AiEvalError>[]> {
+): Promise<Result<O, AiEvalError>[] | Result<WithUsage<I, O>, AiEvalError>[]> {
   const authorCap = opts.concurrency ?? opts.inputs.length;
   const concurrency = Math.max(effectiveInnerConcurrency(authorCap), 1);
   // The EvaluateOptions overloads force a runtime branch on
@@ -432,7 +430,7 @@ export async function evaluateColumn<I, O>(
   }
   return await batch(
     [...opts.inputs],
-    (input: I): Promise<Result<WithUsage<O>, AiEvalError>> =>
+    (input: I): Promise<Result<WithUsage<I, O>, AiEvalError>> =>
       evaluate({
         topology: opts.topology,
         input,

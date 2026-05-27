@@ -29,7 +29,7 @@ import { recordNodeUsage } from "../usage.ts";
 import type { AgentNode } from "../../topology/nodes/agent-node.ts";
 import { trySync } from "@tidy-ts/shims";
 
-import { lookupNodeCache } from "./_cache-lookup.ts";
+import { type CacheEnvelope, lookupNodeCache } from "./_cache-lookup.ts";
 import { renderTemplate } from "./_prompt-render.ts";
 import { withDefaultRetry } from "./_retry-policy.ts";
 import {
@@ -37,7 +37,12 @@ import {
   buildSdkAgent,
   runSdkAgent,
 } from "./_sdk-bridge.ts";
-import { ATTR as TRACE_ATTR } from "../tracing.ts";
+import {
+  ATTR as TRACE_ATTR,
+  type ConversationCapture,
+  replayCapturedConversation,
+  TIDY_ATTR,
+} from "../tracing.ts";
 import { context as otelContext, SpanStatusCode, trace as otelTrace } from "@opentelemetry/api";
 
 export async function executeAgentNode(
@@ -79,7 +84,47 @@ export async function executeAgentNode(
       validateAgentOutput,
       "Cached agent output did not match agent.outputSchema.",
     );
-    if (cacheSlot.value !== undefined) {
+    if (cacheSlot.output !== undefined) {
+      // The original render is what the model saw; recompute it so the
+      // synthetic span carries the same `systemPrompt` attribute a
+      // fresh run would. (The template + input that produced this
+      // cache entry are pinned by the fingerprint, so the render is
+      // deterministic across hits.)
+      const cachedSystemPrompt = renderTemplate(agent.systemPromptTemplate, input);
+      // Emit the `invoke_agent` wrapper span. Then, before ending it,
+      // replay the captured chat / tool spans under it so the trace
+      // tree shows the same shape as a fresh run — same model, same
+      // messages, same tool calls.
+      const cachedSpan = ctx.trace.tracer.startSpan(
+        `invoke_agent ${agent.name}`,
+        {
+          attributes: {
+            [TRACE_ATTR.OPERATION_NAME]: "invoke_agent",
+            [TRACE_ATTR.AGENT_NAME]: agent.name,
+            [TIDY_ATTR.INPUT]: JSON.stringify(input ?? null),
+            [TIDY_ATTR.OUTPUT]: JSON.stringify(cacheSlot.output ?? null),
+            [TIDY_ATTR.CACHED]: true,
+            [TIDY_ATTR.SYSTEM_PROMPT]: cachedSystemPrompt,
+          },
+        },
+        ctx.trace.activeContext,
+      );
+      if (cacheSlot.conversation) {
+        const wrapperContext = otelTrace.setSpan(
+          ctx.trace.activeContext,
+          cachedSpan,
+        );
+        replayCapturedConversation({
+          tracer: ctx.trace.tracer,
+          parent: wrapperContext,
+          conversation: cacheSlot.conversation,
+          // Anchor synthetic spans to "now" so they nest inside the
+          // wrapper span in the transcript instead of appearing as
+          // pre-workflow events at the original-call timestamp.
+          anchorTimeMs: performance.timeOrigin + performance.now(),
+        });
+      }
+      cachedSpan.end();
       recordNodeUsage(ctx.usageSink, {
         nodeName: qualifiedNodeName(ctx, node.name),
         componentType: "AgentNode",
@@ -87,7 +132,7 @@ export async function executeAgentNode(
         latencyMs: 0,
         cached: true,
       });
-      return cacheSlot.value;
+      return cacheSlot.output;
     }
     cacheKey = cacheSlot.key;
   }
@@ -105,11 +150,28 @@ export async function executeAgentNode(
       attributes: {
         [TRACE_ATTR.OPERATION_NAME]: "invoke_agent",
         [TRACE_ATTR.AGENT_NAME]: agent.name,
+        // Agent's resolved input — what the data-flow edges fed in.
+        [TIDY_ATTR.INPUT]: JSON.stringify(input ?? null),
+        [TIDY_ATTR.CACHED]: false,
+        // Rendered system prompt that goes to the model as
+        // `instructions` — the SDK's tracing payload doesn't expose
+        // this, so we attach it on the wrapper for full conversation
+        // reconstruction.
+        [TIDY_ATTR.SYSTEM_PROMPT]: effectiveSystemPrompt,
       },
     },
     ctx.trace.activeContext,
   );
   const wrapperContext = otelTrace.setSpan(ctx.trace.activeContext, wrapperSpan);
+  // Make this wrapper the parent for any SDK-emitted spans (chat /
+  // execute_tool / handoff) the bridge translates during this agent's
+  // run. Pop in the finally below so nested agents are paired correctly.
+  ctx.trace.pushParent(wrapperContext);
+  // Allocate a conversation buffer the SDK→OTel bridge writes into for
+  // every translated response / function span this agent emits. We
+  // read it back after `Runner.run` returns and store it in the cache
+  // envelope so a future cache hit can replay the same conversation.
+  const conversation: ConversationCapture = ctx.trace.beginCapture();
 
   const start = performance.now();
   try {
@@ -132,6 +194,10 @@ export async function executeAgentNode(
       (agent as Record<string, unknown>).outputSchemaJson !== undefined,
     );
 
+    // Attach the agent's resolved output to the wrapper span so the
+    // trace's `output` column reflects what the agent returned.
+    wrapperSpan.setAttribute(TIDY_ATTR.OUTPUT, JSON.stringify(finalOutput ?? null));
+
     recordNodeUsage(ctx.usageSink, {
       nodeName: qualifiedNodeName(ctx, node.name),
       componentType: "AgentNode",
@@ -145,7 +211,8 @@ export async function executeAgentNode(
     });
 
     if (cacheKey !== undefined) {
-      await writeNodeCache(cacheKey, finalOutput);
+      const envelope: CacheEnvelope = { output: finalOutput, conversation };
+      await writeNodeCache(cacheKey, envelope);
     }
     return finalOutput;
   } catch (e) {
@@ -159,6 +226,8 @@ export async function executeAgentNode(
     });
     throw e;
   } finally {
+    ctx.trace.endCapture();
+    ctx.trace.popParent();
     wrapperSpan.end();
     await built.cleanup();
   }

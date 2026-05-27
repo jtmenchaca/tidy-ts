@@ -78,4 +78,34 @@ export default build.create({
     build.controlFlowEdge({ name: "s->l", fromNode: start, toNode: lookup }),
     build.controlFlowEdge({ name: "l->e", fromNode: lookup, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.account->lookup.account",
+      sourceNode: start,
+      sourceOutput: "patient_account_number_with_check_digit",
+      destinationNode: lookup,
+      destinationInput: "patient_account_number_with_check_digit",
+    }),
+    build.dataFlowEdge({
+      name: "lookup.primary->end.primary",
+      sourceNode: lookup,
+      sourceOutput: "primary_insurance_carrier",
+      destinationNode: end,
+      destinationInput: "primary_insurance_carrier",
+    }),
+    build.dataFlowEdge({
+      name: "lookup.secondary->end.secondary",
+      sourceNode: lookup,
+      sourceOutput: "secondary_insurance_carrier",
+      destinationNode: end,
+      destinationInput: "secondary_insurance_carrier",
+    }),
+    build.dataFlowEdge({
+      name: "lookup.eligibility->end.eligibility",
+      sourceNode: lookup,
+      sourceOutput: "eligibility_verification_status",
+      destinationNode: end,
+      destinationInput: "eligibility_verification_status",
+    }),
+  ],
 });

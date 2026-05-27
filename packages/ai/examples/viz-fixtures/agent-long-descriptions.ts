@@ -73,4 +73,26 @@ export default build.create({
     build.controlFlowEdge({ name: "s->r", fromNode: start, toNode: research }),
     build.controlFlowEdge({ name: "r->e", fromNode: research, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.drug_name->r.drug_name",
+      sourceNode: start, sourceOutput: "drug_name",
+      destinationNode: research, destinationInput: "drug_name",
+    }),
+    build.dataFlowEdge({
+      name: "start.patient_id->r.patient_id",
+      sourceNode: start, sourceOutput: "patient_id",
+      destinationNode: research, destinationInput: "patient_id",
+    }),
+    build.dataFlowEdge({
+      name: "r.summary->end.summary",
+      sourceNode: research, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "r.written->end.written",
+      sourceNode: research, sourceOutput: "written",
+      destinationNode: end, destinationInput: "written",
+    }),
+  ],
 });

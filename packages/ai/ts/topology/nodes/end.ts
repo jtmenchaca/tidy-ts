@@ -1,6 +1,7 @@
 // EndNode — the exit point of a Topology. Receives the topology's declared
-// output via incoming data-flow edges (or via pass-through from the
-// immediate predecessor).
+// output via incoming data-flow edges. Every input the EndNode declares
+// (derived from its outputSchema) must be wired with an explicit
+// dataFlowEdge — there is no implicit pass-through from the prior node.
 
 import { z } from "zod";
 import { DEFAULT_NEXT_BRANCH, NodeBaseSchema } from "../component.ts";

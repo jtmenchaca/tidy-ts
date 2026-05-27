@@ -41,6 +41,23 @@ function buildSeverityTopology(model = MODEL) {
       build.controlFlowEdge({ name: "s->l", fromNode: startNode, toNode: llmNode }),
       build.controlFlowEdge({ name: "l->e", fromNode: llmNode, toNode: endNode }),
     ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "s.note->l.note",
+        sourceNode: startNode, sourceOutput: "note",
+        destinationNode: llmNode, destinationInput: "note",
+      }),
+      build.dataFlowEdge({
+        name: "l.severity->e.severity",
+        sourceNode: llmNode, sourceOutput: "severity",
+        destinationNode: endNode, destinationInput: "severity",
+      }),
+      build.dataFlowEdge({
+        name: "l.confidence->e.confidence",
+        sourceNode: llmNode, sourceOutput: "confidence",
+        destinationNode: endNode, destinationInput: "confidence",
+      }),
+    ],
   });
 }
 
@@ -144,6 +161,38 @@ aiTest({
         build.controlFlowEdge({ name: "a->c", fromNode: extractNode, toNode: critiqueNode }),
         build.controlFlowEdge({ name: "c->e", fromNode: critiqueNode, toNode: endNode }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "s.question->a.question",
+          sourceNode: startNode, sourceOutput: "question",
+          destinationNode: extractNode, destinationInput: "question",
+        }),
+        build.dataFlowEdge({
+          name: "a.question->c.question",
+          sourceNode: extractNode, sourceOutput: "question",
+          destinationNode: critiqueNode, destinationInput: "question",
+        }),
+        build.dataFlowEdge({
+          name: "a.answer->c.answer",
+          sourceNode: extractNode, sourceOutput: "answer",
+          destinationNode: critiqueNode, destinationInput: "answer",
+        }),
+        build.dataFlowEdge({
+          name: "c.question->e.question",
+          sourceNode: critiqueNode, sourceOutput: "question",
+          destinationNode: endNode, destinationInput: "question",
+        }),
+        build.dataFlowEdge({
+          name: "c.answer->e.answer",
+          sourceNode: critiqueNode, sourceOutput: "answer",
+          destinationNode: endNode, destinationInput: "answer",
+        }),
+        build.dataFlowEdge({
+          name: "c.confident->e.confident",
+          sourceNode: critiqueNode, sourceOutput: "confident",
+          destinationNode: endNode, destinationInput: "confident",
+        }),
+      ],
     });
 
     const out = await ai.evaluate({
@@ -217,6 +266,23 @@ aiTest({
       controlFlowConnections: [
         build.controlFlowEdge({ name: "s->a", fromNode: startNode, toNode: agentNode }),
         build.controlFlowEdge({ name: "a->e", fromNode: agentNode, toNode: endNode }),
+      ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "s.problem->a.problem",
+          sourceNode: startNode, sourceOutput: "problem",
+          destinationNode: agentNode, destinationInput: "problem",
+        }),
+        build.dataFlowEdge({
+          name: "a.problem->e.problem",
+          sourceNode: agentNode, sourceOutput: "problem",
+          destinationNode: endNode, destinationInput: "problem",
+        }),
+        build.dataFlowEdge({
+          name: "a.result->e.result",
+          sourceNode: agentNode, sourceOutput: "result",
+          destinationNode: endNode, destinationInput: "result",
+        }),
       ],
     });
 
@@ -344,6 +410,21 @@ aiTest({
           sourceOutput: "topic",
           destinationNode: combineNode,
           destinationInput: "topic",
+        }),
+        build.dataFlowEdge({
+          name: "comb.summary->end.summary",
+          sourceNode: combineNode, sourceOutput: "summary",
+          destinationNode: endNode, destinationInput: "summary",
+        }),
+        build.dataFlowEdge({
+          name: "comb.sentiment->end.sentiment",
+          sourceNode: combineNode, sourceOutput: "sentiment",
+          destinationNode: endNode, destinationInput: "sentiment",
+        }),
+        build.dataFlowEdge({
+          name: "comb.topic->end.topic",
+          sourceNode: combineNode, sourceOutput: "topic",
+          destinationNode: endNode, destinationInput: "topic",
         }),
       ],
     });
@@ -494,6 +575,26 @@ aiTest({
           destinationNode: routineNode,
           destinationInput: "kind",
         }),
+        build.dataFlowEdge({
+          name: "urgent.kind->end.kind",
+          sourceNode: urgentNode, sourceOutput: "kind",
+          destinationNode: endNode, destinationInput: "kind",
+        }),
+        build.dataFlowEdge({
+          name: "urgent.action->end.action",
+          sourceNode: urgentNode, sourceOutput: "action",
+          destinationNode: endNode, destinationInput: "action",
+        }),
+        build.dataFlowEdge({
+          name: "routine.kind->end.kind",
+          sourceNode: routineNode, sourceOutput: "kind",
+          destinationNode: endNode, destinationInput: "kind",
+        }),
+        build.dataFlowEdge({
+          name: "routine.action->end.action",
+          sourceNode: routineNode, sourceOutput: "action",
+          destinationNode: endNode, destinationInput: "action",
+        }),
       ],
     });
 
@@ -558,6 +659,18 @@ aiTest({
         build.controlFlowEdge({ name: "ss->sl", fromNode: subStart, toNode: subLlm }),
         build.controlFlowEdge({ name: "sl->se", fromNode: subLlm, toNode: subEnd }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "ss.note->sl.note",
+          sourceNode: subStart, sourceOutput: "note",
+          destinationNode: subLlm, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "sl.score->se.score",
+          sourceNode: subLlm, sourceOutput: "score",
+          destinationNode: subEnd, destinationInput: "score",
+        }),
+      ],
     });
 
     // Outer: pipe the list of notes through a MapNode, average the scores.
@@ -600,6 +713,11 @@ aiTest({
           sourceOutput: "notes",
           destinationNode: mapNode,
           destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "map.score->end.score",
+          sourceNode: mapNode, sourceOutput: "score",
+          destinationNode: outerEnd, destinationInput: "score",
         }),
       ],
     });
@@ -677,6 +795,18 @@ aiTest({
       controlFlowConnections: [
         build.controlFlowEdge({ name: "s->a", fromNode: startNode, toNode: agentNode }),
         build.controlFlowEdge({ name: "a->e", fromNode: agentNode, toNode: endNode }),
+      ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "s.q->a.q",
+          sourceNode: startNode, sourceOutput: "q",
+          destinationNode: agentNode, destinationInput: "q",
+        }),
+        build.dataFlowEdge({
+          name: "a.answer->e.answer",
+          sourceNode: agentNode, sourceOutput: "answer",
+          destinationNode: endNode, destinationInput: "answer",
+        }),
       ],
     });
 
@@ -773,6 +903,18 @@ aiTest({
         build.controlFlowEdge({ name: "ss->sl", fromNode: subStart, toNode: subLlm }),
         build.controlFlowEdge({ name: "sl->se", fromNode: subLlm, toNode: subEnd }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "ss.note->sl.note",
+          sourceNode: subStart, sourceOutput: "note",
+          destinationNode: subLlm, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "sl.score->se.score",
+          sourceNode: subLlm, sourceOutput: "score",
+          destinationNode: subEnd, destinationInput: "score",
+        }),
+      ],
     });
 
     const outerStart = build.start({ name: "start", inputSchema: OuterInputSchema });
@@ -811,6 +953,11 @@ aiTest({
           sourceOutput: "notes",
           destinationNode: pmap,
           destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "pmap.score->end.score",
+          sourceNode: pmap, sourceOutput: "score",
+          destinationNode: outerEnd, destinationInput: "score",
         }),
       ],
     });
@@ -885,6 +1032,18 @@ aiTest({
         build.controlFlowEdge({ name: "ss->sl", fromNode: sStart, toNode: sLlm }),
         build.controlFlowEdge({ name: "sl->se", fromNode: sLlm, toNode: sEnd }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "ss.text->sl.text",
+          sourceNode: sStart, sourceOutput: "text",
+          destinationNode: sLlm, destinationInput: "text",
+        }),
+        build.dataFlowEdge({
+          name: "sl.sentiment->se.sentiment",
+          sourceNode: sLlm, sourceOutput: "sentiment",
+          destinationNode: sEnd, destinationInput: "sentiment",
+        }),
+      ],
     });
 
     // Subflow B: topic.
@@ -909,6 +1068,18 @@ aiTest({
       controlFlowConnections: [
         build.controlFlowEdge({ name: "ts->tl", fromNode: tStart, toNode: tLlm }),
         build.controlFlowEdge({ name: "tl->te", fromNode: tLlm, toNode: tEnd }),
+      ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "ts.text->tl.text",
+          sourceNode: tStart, sourceOutput: "text",
+          destinationNode: tLlm, destinationInput: "text",
+        }),
+        build.dataFlowEdge({
+          name: "tl.topic->te.topic",
+          sourceNode: tLlm, sourceOutput: "topic",
+          destinationNode: tEnd, destinationInput: "topic",
+        }),
       ],
     });
 
@@ -950,6 +1121,16 @@ aiTest({
           destinationNode: pflow,
           destinationInput: "text",
         }),
+        build.dataFlowEdge({
+          name: "pflow.sentiment->end.sentiment",
+          sourceNode: pflow, sourceOutput: "sentiment",
+          destinationNode: outerEnd, destinationInput: "sentiment",
+        }),
+        build.dataFlowEdge({
+          name: "pflow.topic->end.topic",
+          sourceNode: pflow, sourceOutput: "topic",
+          destinationNode: outerEnd, destinationInput: "topic",
+        }),
       ],
     });
 
@@ -982,7 +1163,13 @@ aiTest({
       severity: z.literal("unknown"),
       reason: z.string(),
     });
-    const OutputSchema = z.union([SuccessShape, FallbackShape]);
+    // Merged shape so EndNode has one set of named inputs we can wire from
+    // both branches (catch's success path or the fallback LLM).
+    const OutputSchema = z.object({
+      severity: z.enum(["mild", "moderate", "severe", "unknown"]),
+      confidence: z.number().optional(),
+      reason: z.string().optional(),
+    });
 
     // Inner subflow that will fail: bad model name.
     const subStart = build.start({ name: "sub_start", inputSchema: InputSchema });
@@ -1006,6 +1193,23 @@ aiTest({
       controlFlowConnections: [
         build.controlFlowEdge({ name: "ss->sl", fromNode: subStart, toNode: subLlm }),
         build.controlFlowEdge({ name: "sl->se", fromNode: subLlm, toNode: subEnd }),
+      ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "ss.note->sl.note",
+          sourceNode: subStart, sourceOutput: "note",
+          destinationNode: subLlm, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "sl.severity->se.severity",
+          sourceNode: subLlm, sourceOutput: "severity",
+          destinationNode: subEnd, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "sl.confidence->se.confidence",
+          sourceNode: subLlm, sourceOutput: "confidence",
+          destinationNode: subEnd, destinationInput: "confidence",
+        }),
       ],
     });
 
@@ -1049,15 +1253,40 @@ aiTest({
         build.controlFlowEdge({ name: "fb_llm->end", fromNode: fbLlm, toNode: outerEnd }),
       ],
       dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "start.note->catch.note",
+          sourceNode: outerStart, sourceOutput: "note",
+          destinationNode: catchNode, destinationInput: "note",
+        }),
         // The catch node's caught_exception_info feeds the fallback LLM directly.
-        // (StartNodes expose their topology's inputs as outputs, not inputs —
-        // they don't receive data-flow edges.)
         build.dataFlowEdge({
           name: "catch.exinfo->fb_llm.exinfo",
           sourceNode: catchNode,
           sourceOutput: "caught_exception_info",
           destinationNode: fbLlm,
           destinationInput: "caught_exception_info",
+        }),
+        // Success path: catch surfaces the subflow's outputs.
+        build.dataFlowEdge({
+          name: "catch.severity->end.severity",
+          sourceNode: catchNode, sourceOutput: "severity",
+          destinationNode: outerEnd, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "catch.confidence->end.confidence",
+          sourceNode: catchNode, sourceOutput: "confidence",
+          destinationNode: outerEnd, destinationInput: "confidence",
+        }),
+        // Fallback path: fb_llm produces severity='unknown' + reason.
+        build.dataFlowEdge({
+          name: "fb_llm.severity->end.severity",
+          sourceNode: fbLlm, sourceOutput: "severity",
+          destinationNode: outerEnd, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "fb_llm.reason->end.reason",
+          sourceNode: fbLlm, sourceOutput: "reason",
+          destinationNode: outerEnd, destinationInput: "reason",
         }),
       ],
     });
@@ -1122,6 +1351,23 @@ aiTest({
         build.controlFlowEdge({ name: "is->il", fromNode: innerStart, toNode: innerLlm }),
         build.controlFlowEdge({ name: "il->ie", fromNode: innerLlm, toNode: innerEnd }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "is.note->il.note",
+          sourceNode: innerStart, sourceOutput: "note",
+          destinationNode: innerLlm, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "il.severity->ie.severity",
+          sourceNode: innerLlm, sourceOutput: "severity",
+          destinationNode: innerEnd, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "il.confidence->ie.confidence",
+          sourceNode: innerLlm, sourceOutput: "confidence",
+          destinationNode: innerEnd, destinationInput: "confidence",
+        }),
+      ],
     });
 
     // Confirm citable identity round-trips on the value.
@@ -1161,6 +1407,38 @@ aiTest({
         build.controlFlowEdge({ name: "s->i", fromNode: outerStart, toNode: inner }),
         build.controlFlowEdge({ name: "i->d", fromNode: inner, toNode: decide }),
         build.controlFlowEdge({ name: "d->e", fromNode: decide, toNode: outerEnd }),
+      ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "o_start.note->inner.note",
+          sourceNode: outerStart, sourceOutput: "note",
+          destinationNode: inner, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "inner.severity->decide.severity",
+          sourceNode: inner, sourceOutput: "severity",
+          destinationNode: decide, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "inner.confidence->decide.confidence",
+          sourceNode: inner, sourceOutput: "confidence",
+          destinationNode: decide, destinationInput: "confidence",
+        }),
+        build.dataFlowEdge({
+          name: "decide.severity->o_end.severity",
+          sourceNode: decide, sourceOutput: "severity",
+          destinationNode: outerEnd, destinationInput: "severity",
+        }),
+        build.dataFlowEdge({
+          name: "decide.confidence->o_end.confidence",
+          sourceNode: decide, sourceOutput: "confidence",
+          destinationNode: outerEnd, destinationInput: "confidence",
+        }),
+        build.dataFlowEdge({
+          name: "decide.flagged_urgent->o_end.flagged_urgent",
+          sourceNode: decide, sourceOutput: "flagged_urgent",
+          destinationNode: outerEnd, destinationInput: "flagged_urgent",
+        }),
       ],
     });
 

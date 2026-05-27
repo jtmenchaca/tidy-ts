@@ -42,6 +42,18 @@ const EXTRACT_ICD10 = build.create({
     build.controlFlowEdge({ name: "s->e", fromNode: innerStart, toNode: extract }),
     build.controlFlowEdge({ name: "e->end", fromNode: extract, toNode: innerEnd }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "icd_start.note->extract.note",
+      sourceNode: innerStart, sourceOutput: "note",
+      destinationNode: extract, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "extract.codes->icd_end.codes",
+      sourceNode: extract, sourceOutput: "codes",
+      destinationNode: innerEnd, destinationInput: "codes",
+    }),
+  ],
 });
 
 // ─── Outer: embed the concept as one node ────────────────────────────────
@@ -87,11 +99,25 @@ export default build.create({
     build.controlFlowEdge({ name: "sum->end", fromNode: summarize, toNode: outerEnd }),
   ],
   dataFlowConnections: [
-    // start.note → flow's subflow start is implicit.
+    build.dataFlowEdge({
+      name: "start.note->icd.note",
+      sourceNode: outerStart, sourceOutput: "note",
+      destinationNode: extractIcdNode, destinationInput: "note",
+    }),
     build.dataFlowEdge({
       name: "icd.codes->sum.codes",
       sourceNode: extractIcdNode, sourceOutput: "codes",
       destinationNode: summarize, destinationInput: "codes",
+    }),
+    build.dataFlowEdge({
+      name: "icd.codes->end.codes",
+      sourceNode: extractIcdNode, sourceOutput: "codes",
+      destinationNode: outerEnd, destinationInput: "codes",
+    }),
+    build.dataFlowEdge({
+      name: "sum.impression->end.impression",
+      sourceNode: summarize, sourceOutput: "impression",
+      destinationNode: outerEnd, destinationInput: "impression",
     }),
   ],
 });

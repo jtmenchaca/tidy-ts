@@ -47,6 +47,18 @@ const CLASSIFY_SENTENCE = build.create({
     build.controlFlowEdge({ name: "s->c", fromNode: classifyStart, toNode: classify }),
     build.controlFlowEdge({ name: "c->e", fromNode: classify, toNode: classifyEnd }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "cls_start.sentence->c.sentence",
+      sourceNode: classifyStart, sourceOutput: "sentence",
+      destinationNode: classify, destinationInput: "sentence",
+    }),
+    build.dataFlowEdge({
+      name: "c.kind->cls_end.kind",
+      sourceNode: classify, sourceOutput: "kind",
+      destinationNode: classifyEnd, destinationInput: "kind",
+    }),
+  ],
 });
 
 // ─── Inner subflow: extract entities from one sentence ───────────────────
@@ -79,6 +91,18 @@ const EXTRACT_ENTITIES = build.create({
   controlFlowConnections: [
     build.controlFlowEdge({ name: "s->e", fromNode: entStart, toNode: entExtract }),
     build.controlFlowEdge({ name: "e->end", fromNode: entExtract, toNode: entEnd }),
+  ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "ent_start.sentence->extract.sentence",
+      sourceNode: entStart, sourceOutput: "sentence",
+      destinationNode: entExtract, destinationInput: "sentence",
+    }),
+    build.dataFlowEdge({
+      name: "extract.entities->ent_end.entities",
+      sourceNode: entExtract, sourceOutput: "entities",
+      destinationNode: entEnd, destinationInput: "entities",
+    }),
   ],
 });
 
@@ -157,6 +181,16 @@ export default build.create({
       name: "start.sentences->m2.sentences",
       sourceNode: start, sourceOutput: "sentences",
       destinationNode: entitiesMap, destinationInput: "sentences",
+    }),
+    build.dataFlowEdge({
+      name: "m1.kinds->end.kinds",
+      sourceNode: classifyMap, sourceOutput: "kinds",
+      destinationNode: end, destinationInput: "kinds",
+    }),
+    build.dataFlowEdge({
+      name: "m2.entities_per_sentence->end.entities_per_sentence",
+      sourceNode: entitiesMap, sourceOutput: "entities_per_sentence",
+      destinationNode: end, destinationInput: "entities_per_sentence",
     }),
   ],
 });

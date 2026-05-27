@@ -81,16 +81,20 @@ export interface Provenance {
   cachedNodes: string[];
 }
 
-export interface WithUsage<T> {
-  result: T;
+export interface WithUsage<TInput, TOutput> {
+  result: TOutput;
   usage: UsageReport;
   provenance: Provenance;
   /** OTel trace of the run — a tree of `ReadableSpan`s following the
    *  GenAI semantic conventions. Root span is `invoke_workflow`; agent
    *  nodes contribute `invoke_agent` spans with `chat` / `execute_tool`
    *  children; control-flow nodes contribute spans under the
-   *  `tidy_ts.ai.*` attribute namespace. */
-  trace: Trace;
+   *  `tidy_ts.ai.*` attribute namespace.
+   *
+   *  Generics flow the topology's start input + end output types
+   *  through so `trace.toDataFrame()` returns a DataFrame whose
+   *  `input` / `output` columns are typed. */
+  trace: Trace<TInput, TOutput>;
 }
 
 /** Normalizes Responses API (input_tokens/output_tokens) and Chat

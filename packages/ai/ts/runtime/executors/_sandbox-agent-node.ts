@@ -22,7 +22,7 @@ import { recordNodeUsage } from "../usage.ts";
 import type { SandboxAgentNode } from "../../topology/nodes/sandbox-agent-node.ts";
 import { trySync } from "@tidy-ts/shims";
 
-import { lookupNodeCache } from "./_cache-lookup.ts";
+import { type CacheEnvelope, lookupNodeCache } from "./_cache-lookup.ts";
 import { renderTemplate } from "./_prompt-render.ts";
 import { withDefaultRetry } from "./_retry-policy.ts";
 import {
@@ -30,7 +30,12 @@ import {
   buildSdkSandboxAgent,
   runSdkSandboxAgent,
 } from "./_sdk-bridge.ts";
-import { ATTR as TRACE_ATTR } from "../tracing.ts";
+import {
+  ATTR as TRACE_ATTR,
+  type ConversationCapture,
+  replayCapturedConversation,
+  TIDY_ATTR,
+} from "../tracing.ts";
 import { context as otelContext, SpanStatusCode, trace as otelTrace } from "@opentelemetry/api";
 
 export async function executeSandboxAgentNode(
@@ -76,7 +81,35 @@ export async function executeSandboxAgentNode(
       validate,
       "Cached sandbox agent output did not match agent.outputSchema.",
     );
-    if (cacheSlot.value !== undefined) {
+    if (cacheSlot.output !== undefined) {
+      const cachedSystemPrompt = renderTemplate(agent.systemPromptTemplate, input);
+      const cachedSpan = ctx.trace.tracer.startSpan(
+        `invoke_agent ${agent.name}`,
+        {
+          attributes: {
+            [TRACE_ATTR.OPERATION_NAME]: "invoke_agent",
+            [TRACE_ATTR.AGENT_NAME]: agent.name,
+            [TIDY_ATTR.INPUT]: JSON.stringify(input ?? null),
+            [TIDY_ATTR.OUTPUT]: JSON.stringify(cacheSlot.output ?? null),
+            [TIDY_ATTR.CACHED]: true,
+            [TIDY_ATTR.SYSTEM_PROMPT]: cachedSystemPrompt,
+          },
+        },
+        ctx.trace.activeContext,
+      );
+      if (cacheSlot.conversation) {
+        const wrapperContext = otelTrace.setSpan(
+          ctx.trace.activeContext,
+          cachedSpan,
+        );
+        replayCapturedConversation({
+          tracer: ctx.trace.tracer,
+          parent: wrapperContext,
+          conversation: cacheSlot.conversation,
+          anchorTimeMs: performance.timeOrigin + performance.now(),
+        });
+      }
+      cachedSpan.end();
       recordNodeUsage(ctx.usageSink, {
         nodeName: qualifiedNodeName(ctx, node.name),
         componentType: "SandboxAgentNode",
@@ -84,7 +117,7 @@ export async function executeSandboxAgentNode(
         latencyMs: 0,
         cached: true,
       });
-      return cacheSlot.value;
+      return cacheSlot.output;
     }
     cacheKey = cacheSlot.key;
   }
@@ -104,11 +137,17 @@ export async function executeSandboxAgentNode(
       attributes: {
         [TRACE_ATTR.OPERATION_NAME]: "invoke_agent",
         [TRACE_ATTR.AGENT_NAME]: agent.name,
+        // Agent's resolved input — what the data-flow edges fed in.
+        [TIDY_ATTR.INPUT]: JSON.stringify(input ?? null),
+        [TIDY_ATTR.CACHED]: false,
+        [TIDY_ATTR.SYSTEM_PROMPT]: effectiveSystemPrompt,
       },
     },
     ctx.trace.activeContext,
   );
   const wrapperContext = otelTrace.setSpan(ctx.trace.activeContext, wrapperSpan);
+  ctx.trace.pushParent(wrapperContext);
+  const conversation: ConversationCapture = ctx.trace.beginCapture();
 
   const start = performance.now();
   try {
@@ -159,6 +198,10 @@ export async function executeSandboxAgentNode(
         : JSON.stringify(outcome.finalOutput ?? "");
     }
 
+    // Attach the agent's resolved output to the wrapper span so the
+    // trace's `output` column reflects what the agent returned.
+    wrapperSpan.setAttribute(TIDY_ATTR.OUTPUT, JSON.stringify(finalOutput ?? null));
+
     recordNodeUsage(ctx.usageSink, {
       nodeName: qualifiedNodeName(ctx, node.name),
       componentType: "SandboxAgentNode",
@@ -172,7 +215,8 @@ export async function executeSandboxAgentNode(
     });
 
     if (cacheKey !== undefined) {
-      await writeNodeCache(cacheKey, finalOutput);
+      const envelope: CacheEnvelope = { output: finalOutput, conversation };
+      await writeNodeCache(cacheKey, envelope);
     }
     return finalOutput;
   } catch (e) {
@@ -186,6 +230,8 @@ export async function executeSandboxAgentNode(
     });
     throw e;
   } finally {
+    ctx.trace.endCapture();
+    ctx.trace.popParent();
     wrapperSpan.end();
     await built.cleanup();
   }

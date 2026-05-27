@@ -22,7 +22,7 @@ function _mockAsyncApiCall(
 // Track concurrent operations
 let activeCalls = 0;
 let maxConcurrentCalls = 0;
-const activeTimers: number[] = [];
+const activeTimers: ReturnType<typeof setTimeout>[] = [];
 
 function trackingAsyncCall(value: number): Promise<number> {
   activeCalls++;

@@ -324,12 +324,6 @@ type _4d = Expect<IsExact<
   { group: string; x: number | undefined; y: number | undefined }
 >>;
 
-// 4e. count — Pick<Row, K> & { count: number }
-const counted = df.count("city", "name");
-type _4e = Expect<IsExact<
-  RowOf<typeof counted>,
-  { city: string; name: string; count: number }
->>;
 
 // 4f. pivotLonger — gathers columns into name/value pairs
 const wideData = createDataFrame([

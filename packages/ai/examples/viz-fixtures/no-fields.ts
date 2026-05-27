@@ -75,4 +75,21 @@ export default build.create({
     build.controlFlowEdge({ name: "cp->2", fromNode: checkpoint, toNode: step2 }),
     build.controlFlowEdge({ name: "2->e", fromNode: step2, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.note->step1.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: step1, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "step1.result->step2.result",
+      sourceNode: step1, sourceOutput: "result",
+      destinationNode: step2, destinationInput: "result",
+    }),
+    build.dataFlowEdge({
+      name: "step2.final->end.final",
+      sourceNode: step2, sourceOutput: "final",
+      destinationNode: end, destinationInput: "final",
+    }),
+  ],
 });

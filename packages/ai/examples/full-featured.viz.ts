@@ -1087,10 +1087,14 @@ function renderControlEdge(
   let lx: number;
   let ly: number;
   if (needsLoft) {
+    // Orthogonal loft: rise vertically off the source's right side, run
+    // horizontally above every node in the row band, descend vertically
+    // into the destination. Using a step-path instead of a Bézier means
+    // the curve never re-enters an intermediate column's vertical band.
     const topY = Math.min(...allNodes.map((n) => n.y)) - 30;
-    path = `M ${ax} ${ay} C ${ax + 60} ${topY}, ${bx - 60} ${topY}, ${bx} ${by}`;
+    path = `M ${ax} ${ay} L ${ax + 16} ${ay} L ${ax + 16} ${topY} L ${bx - 16} ${topY} L ${bx - 16} ${by} L ${bx} ${by}`;
     lx = (ax + bx) / 2;
-    ly = topY + 16;
+    ly = topY - 6;
   } else if (Math.abs(ay - by) > 8) {
     // Step.
     const mx = (ax + bx) / 2;

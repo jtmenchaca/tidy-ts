@@ -80,4 +80,19 @@ export default build.create({
     build.controlFlowEdge({ name: "s3a->s3b", fromNode: s3a, toNode: s3b }),
     build.controlFlowEdge({ name: "c4->s4a", fromNode: c4, toNode: s4a }),
   ],
+  dataFlowConnections: [
+    // Spine.
+    build.dataFlowEdge({ name: "s->c1.x", sourceNode: start, sourceOutput: "x", destinationNode: c1, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c1->c2.x", sourceNode: c1, sourceOutput: "x", destinationNode: c2, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c2->c3.x", sourceNode: c2, sourceOutput: "x", destinationNode: c3, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c3->c4.x", sourceNode: c3, sourceOutput: "x", destinationNode: c4, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c4->c5.x", sourceNode: c4, sourceOutput: "x", destinationNode: c5, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c5->c6.x", sourceNode: c5, sourceOutput: "x", destinationNode: c6, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c6->end.x", sourceNode: c6, sourceOutput: "x", destinationNode: end, destinationInput: "x" }),
+    // Off-spine.
+    build.dataFlowEdge({ name: "c2->s2a.x", sourceNode: c2, sourceOutput: "x", destinationNode: s2a, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c3->s3a.x", sourceNode: c3, sourceOutput: "x", destinationNode: s3a, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "s3a->s3b.x", sourceNode: s3a, sourceOutput: "x", destinationNode: s3b, destinationInput: "x" }),
+    build.dataFlowEdge({ name: "c4->s4a.x", sourceNode: c4, sourceOutput: "x", destinationNode: s4a, destinationInput: "x" }),
+  ],
 });

@@ -88,6 +88,21 @@ export default build.create({
   ],
   dataFlowConnections: [
     build.dataFlowEdge({
+      name: "start.note->tee.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: tee, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "tee.note->sym.note",
+      sourceNode: tee, sourceOutput: "note",
+      destinationNode: symptom, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "tee.note->med.note",
+      sourceNode: tee, sourceOutput: "note",
+      destinationNode: med, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
       name: "sym.symptom->syn.symptom",
       sourceNode: symptom, sourceOutput: "symptom",
       destinationNode: synthesize, destinationInput: "symptom",
@@ -96,6 +111,11 @@ export default build.create({
       name: "med.medication->syn.medication",
       sourceNode: med, sourceOutput: "medication",
       destinationNode: synthesize, destinationInput: "medication",
+    }),
+    build.dataFlowEdge({
+      name: "syn.impression->end.impression",
+      sourceNode: synthesize, sourceOutput: "impression",
+      destinationNode: end, destinationInput: "impression",
     }),
   ],
 });

@@ -43,4 +43,16 @@ export default build.create({
     build.controlFlowEdge({ name: "s->l", fromNode: start, toNode: summarize }),
     build.controlFlowEdge({ name: "l->e", fromNode: summarize, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.note->summarize.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: summarize, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "summarize.summary->end.summary",
+      sourceNode: summarize, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+  ],
 });

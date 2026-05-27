@@ -44,6 +44,18 @@ const RATE_SEVERITY = build.create({
     build.controlFlowEdge({ name: "s->r", fromNode: innerStart, toNode: rate }),
     build.controlFlowEdge({ name: "r->e", fromNode: rate, toNode: innerEnd }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "rate_start.note->rate.note",
+      sourceNode: innerStart, sourceOutput: "note",
+      destinationNode: rate, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "rate.severity->rate_end.severity",
+      sourceNode: rate, sourceOutput: "severity",
+      destinationNode: innerEnd, destinationInput: "severity",
+    }),
+  ],
 });
 
 // ─── Outer: wrap the concept in catch ────────────────────────────────────
@@ -92,6 +104,26 @@ export default build.create({
     }),
     build.controlFlowEdge({ name: "fallback->end", fromNode: fallback, toNode: outerEnd }),
   ],
-  // No explicit data flow from start to the catch wrapper: the runner
-  // threads the topology input into the subflow start automatically.
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.note->try.note",
+      sourceNode: outerStart, sourceOutput: "note",
+      destinationNode: tryRate, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "try.caught_exception_info->fallback.caught_exception_info",
+      sourceNode: tryRate, sourceOutput: "caught_exception_info",
+      destinationNode: fallback, destinationInput: "caught_exception_info",
+    }),
+    build.dataFlowEdge({
+      name: "try.severity->end.severity",
+      sourceNode: tryRate, sourceOutput: "severity",
+      destinationNode: outerEnd, destinationInput: "severity",
+    }),
+    build.dataFlowEdge({
+      name: "fallback.severity->end.severity",
+      sourceNode: fallback, sourceOutput: "severity",
+      destinationNode: outerEnd, destinationInput: "severity",
+    }),
+  ],
 });

@@ -1,9 +1,8 @@
-// Viz fixture: pure control flow, no data-flow edges.
+// Viz fixture: linear control flow with the minimum required data wiring.
 //
-// Stresses: a topology where every node passes data implicitly (the
-// runner auto-threads matching input/output names). No dashed data
-// arches should render. Useful baseline for "what does the diagram
-// look like when control flow is the entire story?"
+// Stresses: a topology where the spine carries data through fully
+// explicit edges (no auto-threading). The viz should show one control
+// arrow per hop AND one dashed data arrow per wired field.
 
 
 import { build } from "../../mod.ts";
@@ -56,6 +55,26 @@ export default build.create({
     build.controlFlowEdge({ name: "sum->sc", fromNode: summarize, toNode: score }),
     build.controlFlowEdge({ name: "sc->e", fromNode: score, toNode: end }),
   ],
-  // No dataFlowConnections — every hop's input is inferred from the
-  // preceding node's output by name.
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.note->summarize.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: summarize, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "summarize.summary->score.summary",
+      sourceNode: summarize, sourceOutput: "summary",
+      destinationNode: score, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "score.summary->end.summary",
+      sourceNode: score, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "score.quality->end.quality",
+      sourceNode: score, sourceOutput: "quality",
+      destinationNode: end, destinationInput: "quality",
+    }),
+  ],
 });

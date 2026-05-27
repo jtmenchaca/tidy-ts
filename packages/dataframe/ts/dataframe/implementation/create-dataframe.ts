@@ -328,8 +328,13 @@ export function createColumnarDataFrameFromStore<
             // Keep Date objects as-is for proper display
           } else if (isTemporalLike(value)) {
             value = (value as { toString(): string }).toString();
+          } else if (Array.isArray(value)) {
+            // Arrays get a JSON projection, then truncated by maxWidth
+            // below so long-form messages / nested arrays don't blow
+            // out the column.
+            value = JSON.stringify(value);
           } else if (
-            typeof value === "object" && value !== null && !Array.isArray(value)
+            typeof value === "object" && value !== null
           ) {
             const entries = Object.entries(value);
             const compact = entries.slice(0, 2).map(([k, v]) => `${k}:${v}`)
@@ -338,7 +343,8 @@ export function createColumnarDataFrameFromStore<
               ? `, +${entries.length - 2} more`
               : "";
             value = `{${compact}${suffix}}`;
-          } else if (typeof value === "string" && value.length > maxWidth) {
+          }
+          if (typeof value === "string" && value.length > maxWidth) {
             value = value.substring(0, maxWidth - 3) + "...";
           }
 
@@ -367,8 +373,10 @@ export function createColumnarDataFrameFromStore<
             // empty objects under Object.entries, which would otherwise show
             // as "{}" in the fallback below.
             value = (value as { toString(): string }).toString();
+          } else if (Array.isArray(value)) {
+            value = JSON.stringify(value);
           } else if (
-            typeof value === "object" && value !== null && !Array.isArray(value)
+            typeof value === "object" && value !== null
           ) {
             const entries = Object.entries(value);
             const compact = entries.slice(0, 2).map(([k, v]) => `${k}:${v}`)
@@ -377,7 +385,8 @@ export function createColumnarDataFrameFromStore<
               ? `, +${entries.length - 2} more`
               : "";
             value = `{${compact}${suffix}}`;
-          } else if (typeof value === "string" && value.length > maxWidth) {
+          }
+          if (typeof value === "string" && value.length > maxWidth) {
             value = value.substring(0, maxWidth - 3) + "...";
           }
 

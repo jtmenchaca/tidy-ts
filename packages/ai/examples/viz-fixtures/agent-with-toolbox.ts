@@ -77,4 +77,21 @@ export default build.create({
     build.controlFlowEdge({ name: "s->r", fromNode: start, toNode: researcher }),
     build.controlFlowEdge({ name: "r->e", fromNode: researcher, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.condition->r.condition",
+      sourceNode: start, sourceOutput: "condition",
+      destinationNode: researcher, destinationInput: "condition",
+    }),
+    build.dataFlowEdge({
+      name: "r.pmids->end.pmids",
+      sourceNode: researcher, sourceOutput: "pmids",
+      destinationNode: end, destinationInput: "pmids",
+    }),
+    build.dataFlowEdge({
+      name: "r.summary->end.summary",
+      sourceNode: researcher, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+  ],
 });

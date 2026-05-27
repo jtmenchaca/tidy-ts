@@ -66,4 +66,26 @@ export default build.create({
     build.controlFlowEdge({ name: "s->i", fromNode: start, toNode: investigator }),
     build.controlFlowEdge({ name: "i->e", fromNode: investigator, toNode: end }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.repo->i.repo",
+      sourceNode: start, sourceOutput: "repo",
+      destinationNode: investigator, destinationInput: "repo",
+    }),
+    build.dataFlowEdge({
+      name: "start.question->i.question",
+      sourceNode: start, sourceOutput: "question",
+      destinationNode: investigator, destinationInput: "question",
+    }),
+    build.dataFlowEdge({
+      name: "i.summary->end.summary",
+      sourceNode: investigator, sourceOutput: "summary",
+      destinationNode: end, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "i.files_consulted->end.files_consulted",
+      sourceNode: investigator, sourceOutput: "files_consulted",
+      destinationNode: end, destinationInput: "files_consulted",
+    }),
+  ],
 });

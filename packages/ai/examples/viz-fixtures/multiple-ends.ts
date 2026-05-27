@@ -111,9 +111,44 @@ export default build.create({
   ],
   dataFlowConnections: [
     build.dataFlowEdge({
+      name: "start.note->classify.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: classify, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
       name: "classify.kind->branch.kind",
       sourceNode: classify, sourceOutput: "kind",
       destinationNode: branch, destinationInput: "kind",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->handle_urgent.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: handleUrgent, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->handle_routine.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: handleRoutine, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "start.note->handle_followup.note",
+      sourceNode: start, sourceOutput: "note",
+      destinationNode: handleFollowup, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "handle_urgent.urgent_action->end_urgent.urgent_action",
+      sourceNode: handleUrgent, sourceOutput: "urgent_action",
+      destinationNode: endUrgent, destinationInput: "urgent_action",
+    }),
+    build.dataFlowEdge({
+      name: "handle_routine.routine_ack->end_routine.routine_ack",
+      sourceNode: handleRoutine, sourceOutput: "routine_ack",
+      destinationNode: endRoutine, destinationInput: "routine_ack",
+    }),
+    build.dataFlowEdge({
+      name: "handle_followup.followup_at->end_followup.followup_at",
+      sourceNode: handleFollowup, sourceOutput: "followup_at",
+      destinationNode: endFollowup, destinationInput: "followup_at",
     }),
   ],
 });

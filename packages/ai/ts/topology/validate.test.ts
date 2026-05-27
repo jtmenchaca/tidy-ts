@@ -45,6 +45,18 @@ function buildHealthyTopology() {
         build.controlFlowEdge({ name: "s->l", fromNode: start, toNode: llm }),
         build.controlFlowEdge({ name: "l->e", fromNode: llm, toNode: end }),
       ],
+      dataFlowConnections: [
+        build.dataFlowEdge({
+          name: "s.note->l.note",
+          sourceNode: start, sourceOutput: "note",
+          destinationNode: llm, destinationInput: "note",
+        }),
+        build.dataFlowEdge({
+          name: "l.severity->e.severity",
+          sourceNode: llm, sourceOutput: "severity",
+          destinationNode: end, destinationInput: "severity",
+        }),
+      ],
     }),
     start,
     llm,
@@ -170,6 +182,7 @@ Deno.test("build.validate — flags type mismatch across data-flow edge", () => 
         destinationInput: "value",
       }),
     ],
+    validate: false, // test deliberately mismatches a single edge's types
   });
 
   const issues = build.validate(topology);
@@ -200,6 +213,18 @@ Deno.test("build.validate — flags CatchExceptionNode missing required branches
     controlFlowConnections: [
       build.controlFlowEdge({ name: "a", fromNode: subStart, toNode: subLlm }),
       build.controlFlowEdge({ name: "b", fromNode: subLlm, toNode: subEnd }),
+    ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "ss.note->sl.note",
+        sourceNode: subStart, sourceOutput: "note",
+        destinationNode: subLlm, destinationInput: "note",
+      }),
+      build.dataFlowEdge({
+        name: "sl.severity->se.severity",
+        sourceNode: subLlm, sourceOutput: "severity",
+        destinationNode: subEnd, destinationInput: "severity",
+      }),
     ],
   });
 
@@ -271,6 +296,7 @@ Deno.test("build.validate — flags BranchingNode mapping value without matching
         destinationInput: "kind",
       }),
     ],
+    validate: false, // test deliberately omits the second branch mapping
   });
 
   const issues = build.validate(topology);
@@ -322,6 +348,41 @@ Deno.test("build.validate — flags duplicate node names", () => {
   expect(dup).toBeDefined();
   expect(dup?.nodeName).toBe("extract");
   expect(dup?.severity).toBe("error");
+});
+
+Deno.test("build.validate — flags required input with no incoming data edge", () => {
+  const start = build.start({ name: "start", inputSchema: InSchema });
+  const llm = build.agentNode({
+    name: "llm",
+    agent: build.agent({
+      name: "llm",
+      llmConfig: noApiCallExpected,
+      systemPromptTemplate: "{{note}}",
+      inputSchema: InSchema,
+      outputSchema: OutSchema,
+    }),
+  });
+  const end = build.end({ name: "end", outputSchema: OutSchema });
+  const topology = build.create({
+    id: "UNWIRED",
+    name: "UNWIRED",
+    startNode: start,
+    endNode: end,
+    nodes: [start, llm, end],
+    controlFlowConnections: [
+      build.controlFlowEdge({ name: "s->l", fromNode: start, toNode: llm }),
+      build.controlFlowEdge({ name: "l->e", fromNode: llm, toNode: end }),
+    ],
+    // No dataFlowConnections — llm.note and end.severity should both flag.
+    validate: false,
+  });
+
+  const issues = build.validate(topology);
+  const unwiredNames = issues
+    .filter((i) => i.code === "unwired-input")
+    .map((i) => `${i.nodeName}`);
+  expect(unwiredNames).toContain("llm");
+  expect(unwiredNames).toContain("end");
 });
 
 Deno.test("build.create — throws by default when validation surfaces an error issue", () => {

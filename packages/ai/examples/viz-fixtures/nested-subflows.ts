@@ -49,6 +49,18 @@ const ONE_LINE_SUMMARY = build.create({
     build.controlFlowEdge({ name: "s->l", fromNode: l2Start, toNode: l2Llm }),
     build.controlFlowEdge({ name: "l->e", fromNode: l2Llm, toNode: l2End }),
   ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "l2_start.note->summarize.note",
+      sourceNode: l2Start, sourceOutput: "note",
+      destinationNode: l2Llm, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "summarize.summary->l2_end.summary",
+      sourceNode: l2Llm, sourceOutput: "summary",
+      destinationNode: l2End, destinationInput: "summary",
+    }),
+  ],
 });
 
 // ─── Level 1: a topology that embeds the concept ────────────────────────
@@ -74,6 +86,18 @@ const SUMMARIZE_VIA_CITED_CONCEPT = build.create({
   controlFlowConnections: [
     build.controlFlowEdge({ name: "s->c", fromNode: l1Start, toNode: citedSummarize }),
     build.controlFlowEdge({ name: "c->e", fromNode: citedSummarize, toNode: l1End }),
+  ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "l1_start.note->cited_summarize.note",
+      sourceNode: l1Start, sourceOutput: "note",
+      destinationNode: citedSummarize, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "cited_summarize.summary->l1_end.summary",
+      sourceNode: citedSummarize, sourceOutput: "summary",
+      destinationNode: l1End, destinationInput: "summary",
+    }),
   ],
 });
 
@@ -117,5 +141,27 @@ export default build.create({
       name: "try->fb", fromNode: trySummarize, toNode: fallback, fromBranch: build.CAUGHT_EXCEPTION_BRANCH,
     }),
     build.controlFlowEdge({ name: "fb->end", fromNode: fallback, toNode: outerEnd }),
+  ],
+  dataFlowConnections: [
+    build.dataFlowEdge({
+      name: "start.note->try.note",
+      sourceNode: outerStart, sourceOutput: "note",
+      destinationNode: trySummarize, destinationInput: "note",
+    }),
+    build.dataFlowEdge({
+      name: "try.caught_exception_info->fb.caught_exception_info",
+      sourceNode: trySummarize, sourceOutput: "caught_exception_info",
+      destinationNode: fallback, destinationInput: "caught_exception_info",
+    }),
+    build.dataFlowEdge({
+      name: "try.summary->end.summary",
+      sourceNode: trySummarize, sourceOutput: "summary",
+      destinationNode: outerEnd, destinationInput: "summary",
+    }),
+    build.dataFlowEdge({
+      name: "fb.summary->end.summary",
+      sourceNode: fallback, sourceOutput: "summary",
+      destinationNode: outerEnd, destinationInput: "summary",
+    }),
   ],
 });
