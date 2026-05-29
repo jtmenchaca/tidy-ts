@@ -6,6 +6,9 @@
 		},
 		{
 			"path": "../grants"
+		},
+		{
+			"path": "../dbmi"
 		}
 	],
 	"extensions": {
