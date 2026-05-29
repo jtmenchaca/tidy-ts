@@ -1,0 +1,39 @@
+[
+  {
+    "id": "39832294",
+    "type": "article-journal",
+    "title": "Incorporating area-level social drivers of health in predictive algorithms using electronic health record data.",
+    "author": [
+      {
+        "family": "Foryciarz",
+        "given": "A"
+      },
+      {
+        "family": "Gladish",
+        "given": "N"
+      },
+      {
+        "family": "Rehkopf",
+        "given": "DH"
+      },
+      {
+        "family": "Rose",
+        "given": "S"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "595-601",
+    "DOI": "10.1093/jamia/ocaf009",
+    "PMID": "39832294",
+    "PMCID": "PMC11833466"
+  }
+]

@@ -6,15 +6,18 @@
 // Shape:
 //
 //   start → c1 → c2 → c3 → c4 → c5 → c6 → end       (spine)
-//                │     │     │
-//                ▼     ▼     ▼
-//               s2_a  s3_a  s4_a    (off-spine row 1)
-//                      │
-//                      ▼
-//                     s3_b           (off-spine row 2)
+//                │     │     │              ▲
+//                ▼     ▼     ▼              │
+//               s2_a  s3_a  s4_a ───────────┤
+//                ▲     │                    │
+//                │     ▼                    │
+//                │    s3_b ─────────────────┤
+//                │                          │
+//                └──────────────────────────┘
 //
-// All nodes are LlmNodes with trivial schemas — the focus is layout, not
-// content.
+// Every off-spine tip routes back to `end` so the runtime walker can
+// terminate from any branch. All nodes are LlmNodes with trivial
+// schemas — the focus is layout, not content.
 
 
 import { build } from "../../mod.ts";
@@ -79,6 +82,10 @@ export default build.create({
     build.controlFlowEdge({ name: "c3->s3a", fromNode: c3, toNode: s3a }),
     build.controlFlowEdge({ name: "s3a->s3b", fromNode: s3a, toNode: s3b }),
     build.controlFlowEdge({ name: "c4->s4a", fromNode: c4, toNode: s4a }),
+    // Off-spine tips rejoin `end` so no node is a runtime dead end.
+    build.controlFlowEdge({ name: "s2a->end", fromNode: s2a, toNode: end }),
+    build.controlFlowEdge({ name: "s3b->end", fromNode: s3b, toNode: end }),
+    build.controlFlowEdge({ name: "s4a->end", fromNode: s4a, toNode: end }),
   ],
   dataFlowConnections: [
     // Spine.

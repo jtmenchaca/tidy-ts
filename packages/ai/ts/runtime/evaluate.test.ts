@@ -679,7 +679,7 @@ aiTest({
       name: "map_over_notes",
       subflow,
       iterateOver: "note", // sub-input field name
-      reducers: { score: "average" },
+      reducers: { score: { from: "score", method: "average" } },
       // outer input has `notes: string[]`; map node treats `note` as the
       // iteration target. We re-map the outer input via a data-flow edge below.
       inputs: [{
@@ -922,7 +922,7 @@ aiTest({
       name: "pmap_over_notes",
       subflow,
       iterateOver: "note",
-      reducers: { score: "average" },
+      reducers: { score: { from: "score", method: "average" } },
       concurrency: 4,
       inputs: [{
         jsonSchema: { title: "note", type: "array" },
@@ -1300,7 +1300,7 @@ aiTest({
     const r = out.result;
     if (r.severity === "unknown") {
       expect(typeof r.reason).toBe("string");
-      expect(r.reason.length).toBeGreaterThan(0);
+      expect(r.reason!.length).toBeGreaterThan(0);
     } else {
       throw new Error(
         `Expected fallback path to fire (severity='unknown'); got: ${JSON.stringify(r)}`,

@@ -38,13 +38,13 @@ declare const __agentO: unique symbol;
 export type Agent<I = unknown, O = unknown> = z.infer<typeof AgentSchema> & {
   readonly [__agentI]?: I;
   readonly [__agentO]?: O;
-  inputSchema?: z.ZodType<I>;
-  outputSchema?: z.ZodType<O>;
+  inputSchema: z.ZodType<I>;
+  outputSchema: z.ZodType<O>;
   tools: Tool[];
   toolboxes: ToolBox[];
 };
 
-export function createAgent<I = unknown, O = unknown>({
+export function createAgent<I, O>({
   name,
   llmConfig,
   systemPromptTemplate,
@@ -62,8 +62,8 @@ export function createAgent<I = unknown, O = unknown>({
   name: string;
   llmConfig: LlmConfig;
   systemPromptTemplate: string;
-  inputSchema?: z.ZodType<I>;
-  outputSchema?: z.ZodType<O>;
+  inputSchema: z.ZodType<I>;
+  outputSchema: z.ZodType<O>;
   /** Tools the agent can call. Heterogeneous: any combination of
    *  ServerTool, ClientTool, RemoteTool, BuiltinTool, McpTool. */
   tools?: Tool[];
@@ -80,10 +80,8 @@ export function createAgent<I = unknown, O = unknown>({
   /** Override the default 8-turn LLM↔tool-call ceiling. */
   maxToolTurns?: number;
 }): Agent<I, O> {
-  const resolvedInputs = inputs ??
-    (inputSchema ? zodObjectToProperties(inputSchema) : []);
-  const resolvedOutputs = outputs ??
-    (outputSchema ? zodObjectToProperties(outputSchema) : []);
+  const resolvedInputs = inputs ?? zodObjectToProperties(inputSchema);
+  const resolvedOutputs = outputs ?? zodObjectToProperties(outputSchema);
 
   const parsed = AgentSchema.parse({
     name,

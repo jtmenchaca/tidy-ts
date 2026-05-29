@@ -1,0 +1,43 @@
+[
+  {
+    "id": "39836496",
+    "type": "article-journal",
+    "title": "Development of secure infrastructure for advancing generative artificial intelligence research in healthcare at an academic medical center.",
+    "author": [
+      {
+        "family": "Ng",
+        "given": "MY"
+      },
+      {
+        "family": "Helzer",
+        "given": "J"
+      },
+      {
+        "family": "Pfeffer",
+        "given": "MA"
+      },
+      {
+        "family": "Seto",
+        "given": "T"
+      },
+      {
+        "family": "Hernandez-Boussard",
+        "given": "T"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "586-588",
+    "DOI": "10.1093/jamia/ocaf005",
+    "PMID": "39836496",
+    "PMCID": "PMC11833461"
+  }
+]

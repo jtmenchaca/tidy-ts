@@ -6,6 +6,7 @@
 
 import { build, sandbox } from "../../../mod.ts";
 import { expect } from "@std/expect";
+import { z } from "zod";
 
 
 import { buildSdkSandboxAgent } from "./_sdk-bridge.ts";
@@ -49,6 +50,8 @@ Deno.test("buildSdkSandboxAgent — manifest + capabilities + runAs flow through
     name: "bridge-shape-check",
     llmConfig: llm,
     systemPromptTemplate: "Inspect repo/README.md",
+    inputSchema: z.object({}),
+    outputSchema: z.object({}),
     defaultManifest: manifest,
     capabilities: caps,
     runAs: "agent",
@@ -92,6 +95,8 @@ Deno.test("buildSdkSandboxAgent — minimal config (no manifest, no capabilities
     name: "minimal",
     llmConfig: llm,
     systemPromptTemplate: "Do work.",
+    inputSchema: z.object({}),
+    outputSchema: z.object({}),
   });
   const { sdkAgent, cleanup } = await buildSdkSandboxAgent({
     agent,

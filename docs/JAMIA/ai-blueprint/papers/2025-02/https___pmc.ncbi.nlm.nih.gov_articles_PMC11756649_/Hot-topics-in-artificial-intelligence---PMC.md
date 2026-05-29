@@ -1,0 +1,123 @@
+editorial
+
+J Am Med Inform Assoc
+
+. 2025 Jan 21;32(2):265–267. doi: [10.1093/jamia/ocae324](https://doi.org/10.1093/jamia/ocae324)
+
+# Hot topics in artificial intelligence
+
+[Suzanne Bakken](https://pubmed.ncbi.nlm.nih.gov/?term="Bakken%20S"[Author])
+
+### Suzanne Bakken, PhD
+
+1 School of Nursing, Department of Biomedical Informatics, Data Science Institute, Columbia University, New York, NY 10021, United States
+
+Find articles by [Suzanne Bakken](https://pubmed.ncbi.nlm.nih.gov/?term="Bakken%20S"[Author])
+
+1,✉, [Eric Poon](https://pubmed.ncbi.nlm.nih.gov/?term="Poon%20E"[Author])
+
+### Eric Poon, MD, MPH
+
+2 Department of Medicine, Duke University School of Medicine, Durham, NC 27705, United States
+
+3 Department of Biostatistics & Bioinformatics, Duke University School of Medicine, Durham, NC 27705, United States
+
+Find articles by [Eric Poon](https://pubmed.ncbi.nlm.nih.gov/?term="Poon%20E"[Author])
+
+2,3
+
+*   Author information
+*   Article notes
+*   Copyright and License information
+
+1 School of Nursing, Department of Biomedical Informatics, Data Science Institute, Columbia University, New York, NY 10021, United States
+
+2 Department of Medicine, Duke University School of Medicine, Durham, NC 27705, United States
+
+3 Department of Biostatistics & Bioinformatics, Duke University School of Medicine, Durham, NC 27705, United States
+
+✉
+
+Corresponding author: Suzanne Bakken, PhD, School of Nursing, Department of Biomedical Informatics, Data Science Institute, Columbia University, 630 W. 168th Street, New York, NY 10032, United States (sbh22@cumc.columbia.edu)
+
+Received 2024 Dec 23; Accepted 2024 Dec 23; Collection date 2025 Feb.
+
+© The Author(s) 2025. Published by Oxford University Press on behalf of the American Medical Informatics Association. All rights reserved. For permissions, please email: journals.permissions@oup.com
+
+This article is published and distributed under the terms of the Oxford University Press, Standard Journals Publication Model ([https://academic.oup.com/pages/standard-publication-reuse-rights](https://academic.oup.com/pages/standard-publication-reuse-rights))
+
+[PMC Copyright notice](/about/copyright/)
+
+PMCID: PMC11756649  PMID: [39836895](https://pubmed.ncbi.nlm.nih.gov/39836895/)
+
+* * *
+
+Since its first volume in 1994, the _Journal of the American Medical Informatics Association_ has published >1000 papers tagged as artificial intelligence (AI) in PubMed. Most of these papers do not include AI in their title but include methods and technologies long considered components of the broader term. The 9 AI papers in JAMIA’s first volume included the topics of natural language processing,[1–3](#ocae324-B1) machine learning,[4](#ocae324-B4) expert systems,[4](#ocae324-B4),[5](#ocae324-B5) computerized decision support,[6](#ocae324-B6) diagnostic reasoning,[7](#ocae324-B7) language schemas,[3](#ocae324-B3) concept modeling,[8](#ocae324-B8) and neural networks.[9](#ocae324-B9) In recent years, as computational power and volume, and types of data have increased, AI has become a ubiquitous term in our daily lives.
+
+In this editorial, we highlight 5 papers that include AI in their title and explicitly address a hot topic related to the application of AI in health. Two Brief Communications evaluate implementation of ambient scribe technology in an academic medical center.[10](#ocae324-B10),[11](#ocae324-B11) A Research and Applications paper summarizes use and impact health system-wide access to generative AI.[12](#ocae324-B12) Two Perspectives address important topics for scalability of AI in practice: using human factors methods to mitigate bias resulting from user interfaces, and regulation of AI.[13](#ocae324-B13),[14](#ocae324-B14)
+
+Two papers evaluate the 3-month pilot implementation of DAX Co-pilot AI scribe technology (Nuance Communications) as a quality improvement project at an academic medical center with physicians from 8 ambulatory care disciplines.[10](#ocae324-B10),[11](#ocae324-B11) The AI scribe technology was integrated into the clinical workflow through the Epic electronic health record (EHR), enabling clinicians to record conversations directly using Epic Haiku. Draft note content was parsed into 4 auto-populated, editable Epic SmartSections (history of present illness, physical exam, results, assessment and plan) which could be embedded in existing EHR note templates. Ma et al[10](#ocae324-B10) quantified the utilization and impact on documentation time of the AI scribe technology for 45 physicians. All measures were derived from EHR use data, primary outcome measures were utilization and documentation time per note. In terms of primary outcomes, the ambient AI scribe was utilized in 55% of 17 428 encounters with significant inter-user variation and median time per note reduced significantly by 0.57 min. There were also significant decreases in median daily documentation time (6.89 min), after-hours EHR time (5.17 min), and total EHR time (19.95 min). The complementary survey study assessed physician perspectives on usability of the ambient AI scribe and its influence on physician burden and burnout.[11](#ocae324-B11) Outcome measures included burden (ie, task load), burnout, usability, and perceived time savings. Pre-post survey responses of 38 physicians revealed significant reductions in task load and burnout scores, and significant improvement in usability scores. Post-survey responses (_n_ = 46) indicated that the majority of 46 physicians perceived the ambient AI scribe to be easy to use and that it increased documentation task efficiency and improved quality of clinical documentation. Notably, 78% reported that they could see themselves using the ambient AI scribe in their practice on long-term basis. While the median perceived time savings per half day of clinic was 20 min, the time perception range was large—from 90 min saved to 90 additional minutes spent. The findings of this pilot study contribute to the growing body of literature that demonstrates the ability of ambient AI scribe technology to enhance clinicians’ well-being and reduce their documentation burden.[15–18](#ocae324-B15) Collectively, these pilot studies do point toward modest improvements in time savings for clinicians who used early versions of Ambient AI scribe technology. Additionally, while overall user experiences have been positive, they remain heterogeneous. Considering the rapid advancement of generative AI and the increasing adoption of ambient AI scribe technology, future research is necessary to evaluate the impact of this evolving technology on organizational and clinical outcomes, and to develop best practices for its use.
+
+Malhotra et al[12](#ocae324-B12) assessed the usage and impact of a private and secure instance of a generative artificial intelligence (GenAI) application, Azure OpenAI service (GenAI Studio), in a large academic health center. To understand how employees interact with this technology and the influence on their perception of skill and work performance, they monitored use of Gen AI Studio and surveyed users after 4 weeks of access. Over 6 months, >1000 individuals applied for access. Substantial support was provided for onboarding and training. From a technological perspective, 111 960 167 tokens (the atomic unit of large language models) were used in the first 6 months of implementation, costing the institution about $4200. On average, there were 60 users/week submitting about 671 queries/week. Survey responses from about 150 users reflect the highest usage among research and clinical departments; almost 40% of respondents held managerial roles. Moreover, users felt prepared to use the GenAI studio, found it easy to use, would recommend it to a colleague, and employed it for diverse tasks such as writing, editing, summarizing, data analysis, and idea generation. Users also provided examples of challenges such as difficulties with constructing effective prompts, uncertainly about limitations of tokens and application programming interface, inadequate time to explore the GenAI Studio within their current work scope, and occasional hallucinations in generated responses. This study demonstrated successful use of the GenAI Studio and underscores the need for workforce training to enable widespread use.
+
+Militello et al[13](#ocae324-B13) argue that much discussion on bias in AI revolves around data quality and algorithm design with less attention given to how user interface design can exacerbate or mitigate limitations of AI-based applications. In a Perspective, they discuss the interdependency between AI-based algorithm development and user interface design and propose strategies for increasing the safety and efficacy of clinical decision support systems (CDS). They highlight 3 important considerations in designing user interfaces for AI applications: (1) Bias is not just about the algorithm; (2) It is possible to identify bias and interpretation errors _before_ an application is released; and (3) Risk communication strategies can influence bias in unexpected ways. The authors note that user interface design choices can exacerbate or reduce the bias inherent in an algorithm, for example, determining what to make salient and what to de-emphasize or what to make visible only via an additional click. Through examples from their research, they illustrate how interactions with users throughout the design process through techniques such individual user-feedback sessions, focus groups, and heuristic evaluations are critical to identify and mitigate potential biases, likely errors in interpreting recommendations, and potential unintended consequences before an AI-based CDS is released.
+
+Regulation of AI is a frequent topic of debate. In their Perspective, Jackson et al. suggest that Clinical Laboratory Improvement Amendments (CLIA) is a model for regulation of AI in health care.[14](#ocae324-B14) They propose adaptations of the 9 components of the CLIA model to meet the needs of clinical AI: unit of licensure, risk categorization, personnel requirements, validation and verification, proficiency testing (external comparison), calibration and calibration verification, quality control, test/application development, and accreditation. The authors conclude that “A CLIA-like approach to regulating clinical AI would be complementary to the more centralized schemes currently under consideration, and it would ensure institutional and professional accountability for the longitudinal quality management of clinical AI.”
+
+While AI has become of interest to many journals given the growing maturity of the technologies and their application in health care, JAMIA continues its commitment to publishing rigorous and innovative research that reflects the stages of the AI life cycle as well as systematic reviews and perspectives on related topics. Consistent with our recent JAMIA goal of exemplifying best practices in publishing to advance health equity and justice,[19](#ocae324-B19) we are particularly interested in human-centered AI studies which reflect innovative, rigorous, and transparent quantitative and qualitative research methods that address fairness and mitigate epistemic injustice.
+
+## Contributor Information
+
+Suzanne Bakken, School of Nursing, Department of Biomedical Informatics, Data Science Institute, Columbia University, New York, NY 10021, United States.
+
+Eric Poon, Department of Medicine, Duke University School of Medicine, Durham, NC 27705, United States; Department of Biostatistics & Bioinformatics, Duke University School of Medicine, Durham, NC 27705, United States.
+
+## Author contributions
+
+Both authors contributed to drafting the manuscript and approved the final version.
+
+## Funding
+
+None declared.
+
+## Conflicts of interest
+
+E.P. has previously received consulting fees from Triomics.
+
+## Data availability
+
+Not applicable.
+
+## References
+
+*   1. Sager N, Lyman M, Bucknall C, Nhan N, Tick LJ.. Natural language processing and the representation of clinical data. J Am Med Inform Assoc. 1994;1:142-160. 10.1136/jamia.1994.95236145 \[[DOI](https://doi.org/10.1136/jamia.1994.95236145)\] \[[PMC free article](/articles/PMC116193/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719796/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Natural%20language%20processing%20and%20the%20representation%20of%20clinical%20data&volume=1&publication_year=1994&pages=142-160&pmid=7719796&doi=10.1136/jamia.1994.95236145&)\]
+*   2. Friedman C, Alderson PO, Austin JH, Cimino JJ, Johnson SB.. A general natural-language text processor for clinical radiology. J Am Med Inform Assoc. 1994;1:161-174. 10.1136/jamia.1994.95236146 \[[DOI](https://doi.org/10.1136/jamia.1994.95236146)\] \[[PMC free article](/articles/PMC116194/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719797/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=A%20general%20natural-language%20text%20processor%20for%20clinical%20radiology&volume=1&publication_year=1994&pages=161-174&pmid=7719797&doi=10.1136/jamia.1994.95236146&)\]
+*   3. Friedman C, Cimino JJ, Johnson SB.. A schema for representing medical language applied to clinical radiology \[published correction appears in J Am Med Inform Assoc 1994 May-Jun;1(3):248\]. J Am Med Inform Assoc. 1994;1:233-248. 10.1136/jamia.1994.95236155 \[[DOI](https://doi.org/10.1136/jamia.1994.95236155)\] \[[PMC free article](/articles/PMC116202/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719806/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=A%20schema%20for%20representing%20medical%20language%20applied%20to%20clinical%20radiology%20[published%20correction%20appears%20in%20J%20Am%20Med%20Inform%20Assoc%201994%20May-Jun;1\(3\):248]&volume=1&publication_year=1994&pages=233-248&pmid=7719806&doi=10.1136/jamia.1994.95236155&)\]
+*   4. Woolery LK, Grzymala-Busse J.. Machine learning for an expert system to predict preterm birth risk. J Am Med Inform Assoc. 1994;1:439-446. 10.1136/jamia.1994.95153433 \[[DOI](https://doi.org/10.1136/jamia.1994.95153433)\] \[[PMC free article](/articles/PMC116227/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7850569/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Machine%20learning%20for%20an%20expert%20system%20to%20predict%20preterm%20birth%20risk&volume=1&publication_year=1994&pages=439-446&pmid=7850569&doi=10.1136/jamia.1994.95153433&)\]
+*   5. Gardner RM, Lundsgaarde HP.. Evaluation of user acceptance of a clinical expert system. J Am Med Inform Assoc. 1994;1:428-438. 10.1136/jamia.1994.95153432 \[[DOI](https://doi.org/10.1136/jamia.1994.95153432)\] \[[PMC free article](/articles/PMC116226/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7850568/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Evaluation%20of%20user%20acceptance%20of%20a%20clinical%20expert%20system&volume=1&publication_year=1994&pages=428-438&pmid=7850568&doi=10.1136/jamia.1994.95153432&)\]
+*   6. Nelson BD, Gardner RM, Hedrick G, Gould P.. Computerized decision support for concurrent utilization review using the HELP system. J Am Med Inform Assoc. 1994;1:339-352. 10.1136/jamia.1994.95236169 \[[DOI](https://doi.org/10.1136/jamia.1994.95236169)\] \[[PMC free article](/articles/PMC116216/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719820/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Computerized%20decision%20support%20for%20concurrent%20utilization%20review%20using%20the%20HELP%20system&volume=1&publication_year=1994&pages=339-352&pmid=7719820&doi=10.1136/jamia.1994.95236169&)\]
+*   7. Long WJ, Naimi S, Criscitiello MG.. Evaluation of a new method for cardiovascular reasoning. J Am Med Inform Assoc. 1994;1:127-141. 10.1136/jamia.1994.95236144 \[[DOI](https://doi.org/10.1136/jamia.1994.95236144)\] \[[PMC free article](/articles/PMC116192/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719795/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Evaluation%20of%20a%20new%20method%20for%20cardiovascular%20reasoning&volume=1&publication_year=1994&pages=127-141&pmid=7719795&doi=10.1136/jamia.1994.95236144&)\]
+*   8. Bell DS, Pattison-Gordon E, Greenes RA.. Experiments in concept modeling for radiographic image reports. J Am Med Inform Assoc. 1994;1:249-262. 10.1136/jamia.1994.95236156 \[[DOI](https://doi.org/10.1136/jamia.1994.95236156)\] \[[PMC free article](/articles/PMC116203/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7719807/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Experiments%20in%20concept%20modeling%20for%20radiographic%20image%20reports&volume=1&publication_year=1994&pages=249-262&pmid=7719807&doi=10.1136/jamia.1994.95236156&)\]
+*   9. Lowell WE, Davis GE.. Predicting length of stay for psychiatric diagnosis-related groups using neural networks. J Am Med Inform Assoc. 1994;1:459-466. 10.1136/jamia.1994.95153435 \[[DOI](https://doi.org/10.1136/jamia.1994.95153435)\] \[[PMC free article](/articles/PMC116229/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/7850571/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Predicting%20length%20of%20stay%20for%20psychiatric%20diagnosis-related%20groups%20using%20neural%20networks&volume=1&publication_year=1994&pages=459-466&pmid=7850571&doi=10.1136/jamia.1994.95153435&)\]
+*   10. Ma SP, Liang AS, Shah SJ, et al. Ambient AI scribes: utilization and impact on documentation time. J Am Med Inform Assoc. 2025;32. \[[DOI](https://doi.org/10.1093/jamia/ocae304)\] \[[PMC free article](/articles/PMC11756633/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39688515/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Ambient%20AI%20scribes:%20utilization%20and%20impact%20on%20documentation%20time&volume=32&publication_year=2025&pmid=39688515&doi=10.1093/jamia/ocae304&)\]
+*   11. Shah SJ, Devon-Sand A, Ma SP, et al. Ambient AI scribes: physician burnout and perspectives on usability and documentation burden. J Am Med Inform Assoc. 2025;32. \[[DOI](https://doi.org/10.1093/jamia/ocae295)\] \[[PMC free article](/articles/PMC11756571/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39657021/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Ambient%20AI%20scribes:%20physician%20burnout%20and%20perspectives%20on%20usability%20and%20documentation%20burden&volume=32&publication_year=2025&pmid=39657021&doi=10.1093/jamia/ocae295&)\]
+*   12. Malhotra K, Wiesenfeld B, Major VJ, et al. Health system-wide access to generative artificial intelligence: the New York University Langone Health experience. J Am Med Inform Assoc. 2025;32. \[[DOI](https://doi.org/10.1093/jamia/ocae285)\] \[[PMC free article](/articles/PMC11756645/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39584477/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Health%20system-wide%20access%20to%20generative%20artificial%20intelligence:%20the%20New%20York%20University%20Langone%20Health%20experience&volume=32&publication_year=2025&pmid=39584477&doi=10.1093/jamia/ocae285&)\]
+*   13. Militello LG, Diiulio J, Wilson DL, et al. Using human factors methods to mitigate bias in artificial intelligence-based clinical decision support. J Am Med Inform Assoc. 2025;32. \[[DOI](https://doi.org/10.1093/jamia/ocae291)\] \[[PMC free article](/articles/PMC11756570/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39569464/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Using%20human%20factors%20methods%20to%20mitigate%20bias%20in%20artificial%20intelligence-based%20clinical%20decision%20support&volume=32&publication_year=2025&pmid=39569464&doi=10.1093/jamia/ocae291&)\]
+*   14. Jackson BR, Sendak MP, Solomonides A, Balu S, Sittig DF.. Regulation of artificial intelligence in healthcare: Clinical Laboratory Improvement Amendments (CLIA) as a model. J Am Med Inform Assoc. 2025;32. \[[DOI](https://doi.org/10.1093/jamia/ocae296)\] \[[PMC free article](/articles/PMC11756634/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39657218/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=Regulation%20of%20artificial%20intelligence%20in%20healthcare:%20Clinical%20Laboratory%20Improvement%20Amendments%20\(CLIA\)%20as%20a%20model&volume=32&publication_year=2025&pmid=39657218&doi=10.1093/jamia/ocae296&)\]
+*   15. Tierney AGG, Hoberman B, Mattern B, et al. Ambient artificial intelligence scribes to alleviate the burden of clinical documentation. NEJM Catal Innov Care Deliv. 2024;5. 10.1056/CAT.23.0404 \[[DOI](https://doi.org/10.1056/CAT.23.0404)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=NEJM%20Catal%20Innov%20Care%20Deliv&title=Ambient%20artificial%20intelligence%20scribes%20to%20alleviate%20the%20burden%20of%20clinical%20documentation&volume=5&publication_year=2024&doi=10.1056/CAT.23.0404&)\]
+*   16. Liu TL, Hetherington TC, Stephens C, et al. AI-powered clinical documentation and clinicians’ electronic health record experience: a nonrandomized clinical trial. JAMA Netw Open. 2024;7:e2432460. 10.1001/jamanetworkopen.2024.32460 \[[DOI](https://doi.org/10.1001/jamanetworkopen.2024.32460)\] \[[PMC free article](/articles/PMC11380097/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/39240568/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=JAMA%20Netw%20Open&title=AI-powered%20clinical%20documentation%20and%20clinicians%E2%80%99%20electronic%20health%20record%20experience:%20a%20nonrandomized%20clinical%20trial&volume=7&publication_year=2024&pages=e2432460&pmid=39240568&doi=10.1001/jamanetworkopen.2024.32460&)\]
+*   17. Bundy H, Gerhart J, Baek S, et al. Can the administrative loads of physicians be alleviated by AI-facilitated clinical documentation? J Gen Intern Med. 2024;39:2995-3000. 10.1007/s11606-024-08870-z \[[DOI](https://doi.org/10.1007/s11606-024-08870-z)\] \[[PMC free article](/articles/PMC11576703/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/38937369/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Gen%20Intern%20Med&title=Can%20the%20administrative%20loads%20of%20physicians%20be%20alleviated%20by%20AI-facilitated%20clinical%20documentation?&volume=39&publication_year=2024&pages=2995-3000&pmid=38937369&doi=10.1007/s11606-024-08870-z&)\]
+*   18. Galloway JL, Munroe D, Vohra-Khullar PD, et al. Impact of an artificial intelligence-based solution on clinicians’ clinical documentation experience: initial findings using ambient listening technology. J Gen Intern Med. 2024;39:2625-2627. 10.1007/s11606-024-08924-2 \[[DOI](https://doi.org/10.1007/s11606-024-08924-2)\] \[[PMC free article](/articles/PMC11436573/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/38980463/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Gen%20Intern%20Med&title=Impact%20of%20an%20artificial%20intelligence-based%20solution%20on%20clinicians%E2%80%99%20clinical%20documentation%20experience:%20initial%20findings%20using%20ambient%20listening%20technology&volume=39&publication_year=2024&pages=2625-2627&pmid=38980463&doi=10.1007/s11606-024-08924-2&)\]
+*   19. Stead WW, Miller RA, Ohno-Machado L, Bakken S.. JAMIA at 30: looking back and forward. J Am Med Inform Assoc. 2023;31:1-9. 10.1093/jamia/ocad215 \[[DOI](https://doi.org/10.1093/jamia/ocad215)\] \[[PMC free article](/articles/PMC10746314/)\] \[[PubMed](https://pubmed.ncbi.nlm.nih.gov/38134400/)\] \[[Google Scholar](https://scholar.google.com/scholar_lookup?journal=J%20Am%20Med%20Inform%20Assoc&title=JAMIA%20at%2030:%20looking%20back%20and%20forward&volume=31&publication_year=2023&pages=1-9&pmid=38134400&doi=10.1093/jamia/ocad215&)\]
+
+## Associated Data
+
+_This section collects any data citations, data availability statements, or supplementary materials included in this article._
+
+### Data Availability Statement
+
+Not applicable.
+
+* * *
+
+Articles from Journal of the American Medical Informatics Association : JAMIA are provided here courtesy of **Oxford University Press**

@@ -5,13 +5,7 @@
 			"path": "."
 		},
 		{
-			"path": "../Downloads/glmmTMB-master"
-		},
-		{
-			"path": "../Downloads/polars-main"
-		},
-		{
-			"path": "../Downloads/temporal-polyfill-main"
+			"path": "../grants"
 		}
 	],
 	"extensions": {

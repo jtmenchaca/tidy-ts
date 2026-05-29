@@ -3,7 +3,7 @@
 // `reduceMapResults`. Sequential by design — concurrent variant is
 // `parallel-map-node.ts`.
 
-import type { MapNode, ReductionMethod } from "../../topology/nodes/map.ts";
+import type { MapNode, ReducerSpec } from "../../topology/nodes/map.ts";
 import type { Topology } from "../../topology/topology.ts";
 import { InputValidationError } from "../errors.ts";
 import { type RunContext, withSubflow } from "../run-context.ts";
@@ -33,7 +33,7 @@ export async function executeMapNode(
   }
   return reduceMapResults(
     perItem,
-    node.reducers as Record<string, ReductionMethod> | undefined,
+    node.reducers as Record<string, ReducerSpec> | undefined,
     node.outputs as { title: string }[] | undefined,
   );
 }

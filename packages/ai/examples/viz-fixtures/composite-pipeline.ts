@@ -136,6 +136,7 @@ const perPatient = build.parallelMap({
   subflow: PER_PATIENT,
   iterateOver: "notes",
   concurrency: 8,
+  reducers: { problems_per_patient: { from: "problems", method: "append" } },
   inputs: [{
     jsonSchema: { title: "notes", type: "array", items: { type: "string" } },
     title: "notes",

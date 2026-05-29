@@ -78,7 +78,12 @@ function getEndNodes(nodes: NodeShape[]): NodeShape[] {
 }
 
 function inferTopologyInputs(startNode: NodeShape): Property[] {
-  return startNode.inputs ?? [];
+  // StartNode is asymmetric: the topology's inputs are surfaced to
+  // downstream nodes as the StartNode's *outputs* (so data-flow edges
+  // can pull from startNode.outputs). The Topology's own .inputs field
+  // is what external callers wire INTO the topology, which is the same
+  // shape. Read from outputs since that's where StartNode stores them.
+  return startNode.outputs ?? [];
 }
 
 function inferTopologyOutputs(nodes: NodeShape[]): Property[] {

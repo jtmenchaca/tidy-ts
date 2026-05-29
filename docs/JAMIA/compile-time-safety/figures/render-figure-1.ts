@@ -1,0 +1,117 @@
+/**
+ * Generates Figure 1: Tidy-TS Clinical Data Workflow diagram.
+ * Run: deno run -A joss/figures/render-figure-1.ts
+ */
+import { resolve, dirname, fromFileUrl } from "jsr:@std/path";
+
+const DIR = dirname(fromFileUrl(import.meta.url));
+const OUT = resolve(DIR, "figure-1-workflow.html");
+
+const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Figure 1. Tidy-TS Clinical Data Workflow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #fff;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 10px 20px; color: #1a1a2e;
+  }
+  h1 { font-size: 16px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .subtitle { font-size: 12px; color: #555; margin-bottom: 32px; text-align: center; max-width: 700px; line-height: 1.5; }
+  .pipeline { display: flex; flex-direction: column; align-items: center; max-width: 820px; width: 100%; }
+  .stage { position: relative; width: 100%; border-radius: 8px; padding: 16px 24px; text-align: center; }
+  .stage-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .stage-desc { font-size: 11.5px; color: #444; line-height: 1.45; }
+  .zone-external { background: #f0f0f0; border: 1.5px solid #bbb; }
+  .zone-boundary { background: #fff3e0; border: 1.5px solid #e89a3c; }
+  .zone-typed { background: #e3f2fd; border: 1.5px solid #5b9bd5; }
+  .zone-output { background: #e8f5e9; border: 1.5px solid #66bb6a; }
+  .badge { position: absolute; top: -10px; right: 16px; font-size: 9.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; color: #fff; }
+  .badge-runtime { background: #e89a3c; }
+  .badge-compile { background: #5b9bd5; }
+  .badge-external { background: #999; }
+  .badge-output { background: #66bb6a; }
+  .arrow { display: flex; flex-direction: column; align-items: center; height: 36px; justify-content: center; }
+  .arrow-line { width: 2px; height: 20px; background: #888; }
+  .arrow-head { width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #888; }
+  .parallel { display: flex; gap: 16px; width: 100%; }
+  .parallel .stage { flex: 1; }
+  .fork { position: relative; width: 100%; height: 36px; }
+  .fork-center { position: absolute; left: 50%; top: 0; width: 2px; height: 12px; background: #888; transform: translateX(-50%); }
+  .fork-h { position: absolute; top: 12px; left: 25%; right: 25%; height: 2px; background: #888; }
+  .fork-vl, .fork-vr { position: absolute; top: 12px; width: 2px; height: 16px; background: #888; }
+  .fork-vl { left: 25%; transform: translateX(-50%); }
+  .fork-vr { right: 25%; transform: translateX(50%); }
+  .fork-al, .fork-ar { position: absolute; top: 28px; width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #888; }
+  .fork-al { left: 25%; transform: translateX(-50%); }
+  .fork-ar { right: 25%; transform: translateX(50%); }
+  .caption { margin-top: 28px; font-size: 11.5px; color: #555; max-width: 720px; text-align: center; line-height: 1.6; }
+  .caption strong { color: #333; }
+</style>
+</head>
+<body>
+<div style="height:10px"></div>
+<div class="pipeline">
+  <div class="stage zone-external">
+    <span class="badge badge-external">Unvalidated</span>
+    <div class="stage-label">Clinical Data Sources</div>
+    <div class="stage-desc">EHR exports, laboratory feeds, claims files, FHIR APIs, CSV/JSON/Parquet</div>
+  </div>
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+  <div class="stage zone-boundary">
+    <span class="badge badge-runtime">Runtime check</span>
+    <div class="stage-label">Input Validation</div>
+    <div class="stage-desc">Validates incoming data against the expected schema. Rejects type mismatches, missing required fields, and unexpected nulls at runtime.</div>
+  </div>
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+  <div class="stage zone-typed">
+    <span class="badge badge-compile">Compile-time check</span>
+    <div class="stage-label">Strictly Typed DataFrame</div>
+    <div class="stage-desc">Continuously monitors column names, data types, and potential missing values. The underlying schema updates automatically after every operation.</div>
+  </div>
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+  <div class="stage zone-typed">
+    <span class="badge badge-compile">Compile-time check</span>
+    <div class="stage-label">Type-Safe Transformations</div>
+    <div class="stage-desc">Reshapes and aggregates data while automatically tracking schema changes. Operations include filtering, joining, mutating, and pivoting.</div>
+  </div>
+  <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+  <div class="stage zone-typed">
+    <span class="badge badge-compile">Compile-time check</span>
+    <div class="stage-label">Statistical Analysis</div>
+    <div class="stage-desc">Hypothesis tests, regression (GLM), descriptive statistics</div>
+  </div>
+  <div class="fork">
+    <div class="fork-center"></div><div class="fork-h"></div>
+    <div class="fork-vl"></div><div class="fork-vr"></div>
+    <div class="fork-al"></div><div class="fork-ar"></div>
+  </div>
+  <div class="parallel">
+    <div class="stage zone-output">
+      <span class="badge badge-output">Output</span>
+      <div class="stage-label">Operational Output</div>
+      <div class="stage-desc">Dashboard, CDS rule, registry interface, FHIR endpoint</div>
+    </div>
+    <div class="stage zone-output">
+      <span class="badge badge-output">Output</span>
+      <div class="stage-label">Analytical Output</div>
+      <div class="stage-desc">Quality measure, cohort summary, analytic dataset, visualization</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+
+await Deno.writeTextFile(OUT, html);
+console.log(`Wrote ${OUT}`);
+
+const PNG = OUT.replace(".html", ".png");
+const SCREENSHOT = resolve(DIR, "html-to-png.ts");
+const p = new Deno.Command("deno", { args: ["run", "--no-config", "-A", SCREENSHOT, OUT, PNG, "900"], stdout: "inherit", stderr: "inherit" });
+const { code } = await p.output();
+if (code !== 0) console.error("PNG screenshot failed");

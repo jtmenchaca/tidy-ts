@@ -137,14 +137,13 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .branch-label { fill: #b45309; font-weight: 600; }
-  .data-label { fill: #71717a; }
 </style>
 </head>
 <body>
   <h1>SEVERITY_WITH_FALLBACK</h1>
   <div class="sub-title">v1.0.0</div>
 
-  <svg viewBox="0 -40 2075 464" width="2075" height="464">
+  <svg viewBox="0 -48 2075 472" width="2075" height="472">
     <defs>
       <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
               markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -157,23 +156,39 @@
     </defs>
     
     <g>
-      <path class="edge edge-control" d="M 150 112 L 190 112 L 190 96 L 230 96" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 150 60 L 230 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1196 132 C 1256 10, 1683 10, 1743 112" marker-end="url(#arrow-control)" fill="none" />
-      <text class="edge-label branch-label" x="1469.5" y="26" text-anchor="middle">next</text>
+      <path class="edge edge-control" d="M 1196 60 L 1212 60 L 1212 10 L 1727 10 L 1727 60 L 1743 60" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1469.5" y="4" text-anchor="middle">next</text>
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1196 132 L 1236 132 L 1236 112 L 1276 112" marker-end="url(#arrow-control)" fill="none" />
-      <text class="edge-label branch-label" x="1256" y="34" text-anchor="middle">caught_exception_branch</text>
+      <path class="edge edge-control" d="M 1196 60 L 1276 60" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1236" y="34" text-anchor="middle">caught_exception_branch</text>
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1663 112 L 1743 112" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1663 60 L 1743 60" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 154 112 C 194 112, 186 112, 226 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1200 132 C 1240 132, 1232 112, 1272 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1200 112 L 1212 112 L 1212 16 L 1727 16 L 1727 112 L 1739 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1667 112 C 1707 112, 1699 112, 1739 112" marker-end="url(#arrow-data)" fill="none" />
     </g>
     
     <g class="node">
@@ -195,9 +210,13 @@
       <path class="node-header node-header-CatchExceptionNode" d="M 238 40 H 1188 A 8 8 0 0 1 1196 48 V 80 H 230 V 48 A 8 8 0 0 1 238 40 Z" />
 <text class="node-name" x="713" y="62" text-anchor="middle">try_rate</text>
 <line class="header-divider" x1="230" y1="80" x2="1196" y2="80" />
-      <text class="section-label" x="1184" y="92" text-anchor="end">outputs</text>
-      
-      <circle class="port port-out" cx="1196" cy="112" r="4" />
+      <text class="section-label" x="242" y="92">inputs</text>
+<text class="section-label" x="1184" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="650" y1="86" x2="650" y2="378" />
+      <circle class="port port-in" cx="230" cy="112" r="4" />
+<text class="field-name" x="242" y="116">note</text>
+<text class="field-type" x="328" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="1196" cy="112" r="4" />
 <text class="field-name" x="1028" y="116" text-anchor="end">severity</text>
 <text class="field-type" x="1184" y="116" text-anchor="end">mild|moderate|severe</text>
 <circle class="port port-out" cx="1196" cy="132" r="4" />
@@ -205,13 +224,21 @@
 <text class="field-type" x="1184" y="136" text-anchor="end">string?</text>
       <text class="container-meta" x="242" y="164">catch-exception</text><rect class="subflow-caption" x="244" y="166" width="938" height="32" rx="4" ry="4" /><text class="subflow-id" x="252" y="179">RATE_SEVERITY  v1.0.0</text><text class="subflow-citation" x="252" y="192">Menchaca et al., 2026 (tidy-ts/ai)</text><rect class="subflow-panel" x="244" y="198" width="938" height="172" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 408 310 L 488 310" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 408 258 L 488 258" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 826 310 L 906 310" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 826 258 L 906 258" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 412 310 C 452 310, 444 310, 484 310" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 830 310 C 870 310, 862 310, 902 310" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">

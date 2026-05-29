@@ -1,0 +1,103 @@
+[
+  {
+    "id": "39775871",
+    "type": "article-journal",
+    "title": "AI as an intervention: improving clinical outcomes relies on a causal approach to AI development and validation.",
+    "author": [
+      {
+        "family": "Joshi",
+        "given": "S"
+      },
+      {
+        "family": "Urteaga",
+        "given": "I"
+      },
+      {
+        "family": "van",
+        "given": "Amsterdam WAC"
+      },
+      {
+        "family": "Hripcsak",
+        "given": "G"
+      },
+      {
+        "family": "Elias",
+        "given": "P"
+      },
+      {
+        "family": "Recht",
+        "given": "B"
+      },
+      {
+        "family": "Elhadad",
+        "given": "N"
+      },
+      {
+        "family": "Fackler",
+        "given": "J"
+      },
+      {
+        "family": "Sendak",
+        "given": "MP"
+      },
+      {
+        "family": "Wiens",
+        "given": "J"
+      },
+      {
+        "family": "Deshpande",
+        "given": "K"
+      },
+      {
+        "family": "Wald",
+        "given": "Y"
+      },
+      {
+        "family": "Fiterau",
+        "given": "M"
+      },
+      {
+        "family": "Lipton",
+        "given": "Z"
+      },
+      {
+        "family": "Malinsky",
+        "given": "D"
+      },
+      {
+        "family": "Nayan",
+        "given": "M"
+      },
+      {
+        "family": "Namkoong",
+        "given": "H"
+      },
+      {
+        "family": "Park",
+        "given": "S"
+      },
+      {
+        "family": "Vogt",
+        "given": "JE"
+      },
+      {
+        "family": "Ranganath",
+        "given": "R"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "589-594",
+    "DOI": "10.1093/jamia/ocae301",
+    "PMID": "39775871",
+    "PMCID": "PMC11833492"
+  }
+]

@@ -175,13 +175,18 @@ Deno.test("oas — data-flow edges round-trip", () => {
         destinationNode: llm,
         destinationInput: "text",
       }),
+      build.dataFlowEdge({
+        name: "llm.label->end.label",
+        sourceNode: llm, sourceOutput: "label",
+        destinationNode: end, destinationInput: "label",
+      }),
     ],
   });
 
   const json = JSON.parse(JSON.stringify(build.toOAS(topology)));
   const rebuilt = build.fromOAS(json);
 
-  expect(rebuilt.dataFlowConnections?.length).toBe(1);
+  expect(rebuilt.dataFlowConnections?.length).toBe(2);
   const e = rebuilt.dataFlowConnections![0];
   expect(e.sourceOutput).toBe("text");
   expect(e.destinationInput).toBe("text");
@@ -262,6 +267,18 @@ Deno.test("oas — agent tool zoo round-trips (Server/Client/Remote/Builtin/Mcp 
     controlFlowConnections: [
       build.controlFlowEdge({ name: "s->a", fromNode: start, toNode: agentNode }),
       build.controlFlowEdge({ name: "a->e", fromNode: agentNode, toNode: end }),
+    ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "s.q->a.q",
+        sourceNode: start, sourceOutput: "q",
+        destinationNode: agentNode, destinationInput: "q",
+      }),
+      build.dataFlowEdge({
+        name: "a.answer->e.answer",
+        sourceNode: agentNode, sourceOutput: "answer",
+        destinationNode: end, destinationInput: "answer",
+      }),
     ],
   });
 
@@ -367,6 +384,18 @@ Deno.test("oas — BranchingNode mapping round-trips", () => {
         fromBranch: "routine",
       }),
     ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "s.kind->b.kind",
+        sourceNode: start, sourceOutput: "kind",
+        destinationNode: branch, destinationInput: "kind",
+      }),
+      build.dataFlowEdge({
+        name: "s.kind->e.kind",
+        sourceNode: start, sourceOutput: "kind",
+        destinationNode: end, destinationInput: "kind",
+      }),
+    ],
   });
 
   const json = JSON.parse(JSON.stringify(build.toOAS(topology)));
@@ -396,6 +425,7 @@ Deno.test("oas — SandboxAgentNode round-trips manifest + runAs; capabilities d
     llmConfig: openai,
     systemPromptTemplate: "Inspect {{path}}",
     inputSchema: z.object({ path: z.string() }),
+    outputSchema: z.object({ summary: z.string() }),
     defaultManifest: manifest,
     capabilities: [
       sandbox.capability.filesystem(),
@@ -432,6 +462,18 @@ Deno.test("oas — SandboxAgentNode round-trips manifest + runAs; capabilities d
     controlFlowConnections: [
       build.controlFlowEdge({ name: "s->a", fromNode: start, toNode: sandboxNode }),
       build.controlFlowEdge({ name: "a->e", fromNode: sandboxNode, toNode: end }),
+    ],
+    dataFlowConnections: [
+      build.dataFlowEdge({
+        name: "s.path->a.path",
+        sourceNode: start, sourceOutput: "path",
+        destinationNode: sandboxNode, destinationInput: "path",
+      }),
+      build.dataFlowEdge({
+        name: "a.summary->e.summary",
+        sourceNode: sandboxNode, sourceOutput: "summary",
+        destinationNode: end, destinationInput: "summary",
+      }),
     ],
   });
 

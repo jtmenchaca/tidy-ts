@@ -137,14 +137,13 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .branch-label { fill: #b45309; font-weight: 600; }
-  .data-label { fill: #71717a; }
 </style>
 </head>
 <body>
   <h1>ICD10_WITH_IMPRESSION</h1>
   <div class="sub-title">v1.0.0</div>
 
-  <svg viewBox="0 -40 1605.4 444" width="1605.4" height="444">
+  <svg viewBox="0 -48 1605.4 452" width="1605.4" height="452">
     <defs>
       <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
               markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -157,18 +156,34 @@
     </defs>
     
     <g>
-      <path class="edge edge-control" d="M 150 112 L 190 112 L 190 86 L 230 86" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 150 60 L 230 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 978.4 112 L 1058.4 112" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 978.4 60 L 1058.4 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1333.4 112 L 1373.4 112 L 1373.4 132 L 1413.4 132" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1333.4 60 L 1413.4 60" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 154 112 C 194 112, 186 112, 226 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 982.4 112 C 1022.4 112, 1014.4000000000001 112, 1054.4 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 982.4 112 L 994.4 112 L 994.4 16 L 1397.4 16 L 1397.4 112 L 1409.4 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1337.4 112 C 1377.4 112, 1369.4 132, 1409.4 132" marker-end="url(#arrow-data)" fill="none" />
     </g>
     
     <g class="node">
@@ -190,20 +205,32 @@
       <path class="node-header node-header-FlowNode" d="M 238 40 H 970.4 A 8 8 0 0 1 978.4 48 V 80 H 230 V 48 A 8 8 0 0 1 238 40 Z" />
 <text class="node-name" x="604.2" y="62" text-anchor="middle">icd_extraction</text>
 <line class="header-divider" x1="230" y1="80" x2="978.4" y2="80" />
-      <text class="section-label" x="966.4" y="92" text-anchor="end">outputs</text>
-      
-      <circle class="port port-out" cx="978.4" cy="112" r="4" />
+      <text class="section-label" x="242" y="92">inputs</text>
+<text class="section-label" x="966.4" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="593.7" y1="86" x2="593.7" y2="358" />
+      <circle class="port port-in" cx="230" cy="112" r="4" />
+<text class="field-name" x="242" y="116">note</text>
+<text class="field-type" x="328" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="978.4" cy="112" r="4" />
 <text class="field-name" x="894.4" y="116" text-anchor="end">codes</text>
 <text class="field-type" x="966.4" y="116" text-anchor="end">string[]</text>
       <text class="container-meta" x="242" y="144">embedded concept</text><rect class="subflow-caption" x="244" y="146" width="720.4" height="32" rx="4" ry="4" /><text class="subflow-id" x="252" y="159">EXTRACT_ICD10  v2.1.0</text><text class="subflow-citation" x="252" y="172">Menchaca et al., 2026 (tidy-ts/ai)</text><rect class="subflow-panel" x="244" y="178" width="720.4" height="172" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 400.4 290 L 480.4 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 400.4 238 L 480.4 238" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 713.4 290 L 793.4 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 713.4 238 L 793.4 238" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 404.4 290 C 444.4 290, 436.4 290, 476.4 290" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 717.4 290 C 757.4 290, 749.4 290, 789.4 290" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">

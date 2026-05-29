@@ -234,10 +234,27 @@ try {
         viewBox = { x: p[0] || 0, y: p[1] || 0, w: p[2] || 0, h: p[3] || 0 };
       }
 
+      // Measure the page's actual rendered footprint so the PNG matches
+      // the figure exactly. We compute it from the SVG's screen-pixel
+      // rect plus the body's left/top padding — not from the body or
+      // documentElement, which can stretch to the viewport width (2400px)
+      // and produce an oversized canvas.
+      const bodyStyle = getComputedStyle(document.body);
+      const padTop = parseFloat(bodyStyle.paddingTop) || 0;
+      const padLeft = parseFloat(bodyStyle.paddingLeft) || 0;
+      const padRight = parseFloat(bodyStyle.paddingRight) || 0;
+      const padBottom = parseFloat(bodyStyle.paddingBottom) || 0;
+      const svgScreenRect = svg.getBoundingClientRect();
+      const pageSize = {
+        w: Math.ceil(svgScreenRect.right + padRight),
+        h: Math.ceil(svgScreenRect.bottom + padBottom),
+      };
+
       return JSON.stringify({
         nodes, catchContainers, subNodes, edgeLabels, fieldTexts,
         edges: edges.map((e, i) => ({ ...e, samples: edgeSamples[i] })),
         viewBox,
+        pageSize,
       });
     })()`,
     returnByValue: true,
@@ -251,11 +268,11 @@ try {
   }
 
   // ── Screenshot the page ────────────────────────────────────────────────
-  // Set viewport that matches the SVG plus some chrome padding.
-  // Size the viewport to fit the actual SVG so we capture the whole thing.
-  const svgPad = 80;
-  const captureW = Math.max(2000, Math.ceil(data.viewBox.w) + svgPad);
-  const captureH = Math.max(700, Math.ceil(data.viewBox.h) + 220);
+  // Size the viewport to the page's actual rendered footprint (measured
+  // above as `pageSize`). This includes body padding + heading + SVG,
+  // so the PNG visually matches the figure exactly — no oversized canvas.
+  const captureW = data.pageSize?.w ?? Math.ceil(data.viewBox.w) + 64;
+  const captureH = data.pageSize?.h ?? Math.ceil(data.viewBox.h) + 64;
   await send("Emulation.setDeviceMetricsOverride", {
     width: captureW,
     height: captureH,

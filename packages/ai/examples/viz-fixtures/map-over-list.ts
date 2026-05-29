@@ -116,7 +116,7 @@ const classifyMap = build.map({
   name: "classify_each",
   subflow: CLASSIFY_SENTENCE,
   iterateOver: "sentences",
-  reducers: { kinds: "append" },
+  reducers: { kinds: { from: "kind", method: "append" } },
   inputs: [{
     jsonSchema: { title: "sentences", type: "array", items: { type: "string" } },
     title: "sentences",
@@ -134,7 +134,7 @@ const entitiesMap = build.parallelMap({
   subflow: EXTRACT_ENTITIES,
   iterateOver: "sentences",
   concurrency: 6,
-  reducers: { entities_per_sentence: "append" },
+  reducers: { entities_per_sentence: { from: "entities", method: "append" } },
   inputs: [{
     jsonSchema: { title: "sentences", type: "array", items: { type: "string" } },
     title: "sentences",

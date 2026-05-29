@@ -640,6 +640,12 @@ function ioBandCenterY(node: Placed): number {
   const ioH = nodeHeight(node.inputs, node.outputs);
   return node.y + ioH / 2;
 }
+// Vertical centerline of the node's header band — used as the
+// control-flow anchor so control edges run header-to-header and don't
+// overlap any data edges threading between field rows below.
+function headerCenterY(node: Placed): number {
+  return node.y + HEADER_H / 2;
+}
 function nodeRightAnchorY(node: Placed): number {
   // If the node has outputs, anchor at the centerline of the outputs
   // column rows; otherwise at the I/O band centerline.
@@ -1010,9 +1016,14 @@ function renderDataEdge(
   allNodes: Placed[],
   rowTop: number,
 ): string {
-  const ax = from.x + from.w;
+  // Port circles sit at the node's edge with radius 4. End the path at
+  // the outer edge of each port circle so the arrowhead's tip touches
+  // the destination port (and the source line touches the out-port)
+  // without overlapping either circle.
+  const PORT_R = 4;
+  const ax = from.x + from.w + PORT_R;
   const ay = outputPortY(from, fromField);
-  const bx = to.x;
+  const bx = to.x - PORT_R;
   const by = inputPortY(to, toField);
 
   // Loft if any node sits in the corridor between source and dest columns.
@@ -1023,8 +1034,6 @@ function renderDataEdge(
   });
 
   let path: string;
-  let lx: number;
-  let ly: number;
   if (crossesNode) {
     const lane = dataLaneY(from.col, to.col, rowTop);
     path =
@@ -1034,19 +1043,14 @@ function renderDataEdge(
       `L ${bx - 12} ${lane} ` +
       `L ${bx - 12} ${by} ` +
       `L ${bx} ${by}`;
-    lx = (ax + bx) / 2;
-    ly = lane - 4;
   } else {
     const dx = Math.max(40, (bx - ax) / 2);
     path = `M ${ax} ${ay} C ${ax + dx} ${ay}, ${bx - dx} ${by}, ${bx} ${by}`;
-    lx = (ax + bx) / 2;
-    ly = (ay + by) / 2 - 4;
   }
 
   return `
     <g>
       <path class="edge edge-data" d="${path}" marker-end="url(#arrow-data)" fill="none" />
-      <text class="edge-label data-label" x="${lx}" y="${ly}" text-anchor="middle">${esc(toField)}</text>
     </g>`;
 }
 
@@ -1059,16 +1063,17 @@ function renderControlEdge(
   branchInputField: string | undefined,
   allNodes: Placed[],
 ): string {
-  // Anchor on right of "from", left of "to". If from is a BranchingNode,
-  // anchor at the input row that gates this branch. For container nodes
-  // (with subflow panels), anchor at the I/O row band, not the geometric
-  // centerline (which would land inside the inner panel).
+  // Anchor on right of "from", left of "to". Control edges run header-
+  // to-header so they don't overlap any data edges threading between
+  // field rows below. BranchingNodes are the exception: each outgoing
+  // branch anchors at the input row whose value gates it, so the
+  // reader can see which field drives which branch.
   const ax = from.x + from.w;
   const ay = branchInputField
     ? inputPortY(from, branchInputField)
-    : nodeRightAnchorY(from);
+    : headerCenterY(from);
   const bx = to.x;
-  const by = nodeLeftAnchorY(to);
+  const by = headerCenterY(to);
 
   // Detect cross-node interference: if there's a node strictly inside
   // the corridor (not just touching its edges) whose vertical band
@@ -1156,9 +1161,6 @@ function buildHtml(topo: Topology): string {
     const a = byId.get(e.sourceNode.$component_ref);
     const b = byId.get(e.destinationNode.$component_ref);
     if (!a || !b) continue;
-    // Skip data edges that duplicate an existing control hop. The
-    // implicit field threading is already obvious from the control arrow.
-    if (controlPairs.has(`${a.id}->${b.id}`)) continue;
     edges.push(renderDataEdge(a, e.sourceOutput, b, e.destinationInput, placed, rowTop));
   }
 
@@ -1312,7 +1314,6 @@ function buildHtml(topo: Topology): string {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .branch-label { fill: #b45309; font-weight: 600; }
-  .data-label { fill: #71717a; }
 </style>
 </head>
 <body>
@@ -1349,6 +1350,25 @@ const mod = await import(sourceUrl.href);
 const topology = mod.default as Topology | undefined;
 if (!topology) {
   console.error(`No default export found in ${sourceUrl.pathname} — expected a Topology.`);
+  Deno.exit(1);
+}
+
+// Validate the topology before drawing — the visualization should
+// reflect a runnable graph, not paper over structural bugs (dead-end
+// nodes, unwired inputs, missing branches, etc.). If you genuinely want
+// to render an in-progress topology, construct it with `validate: false`
+// and the build-time check is skipped, but the viz still runs its own
+// pass so authoring problems surface here too.
+const issues = build.validate(topology);
+const errors = issues.filter((i) => i.severity === "error");
+if (errors.length > 0) {
+  console.error(
+    `Topology '${topology.id ?? topology.name ?? "?"}' failed validation ` +
+      `with ${errors.length} error-severity issue${errors.length === 1 ? "" : "s"}:`,
+  );
+  for (const e of errors) {
+    console.error(`  - [${e.code}] ${e.message}`);
+  }
   Deno.exit(1);
 }
 

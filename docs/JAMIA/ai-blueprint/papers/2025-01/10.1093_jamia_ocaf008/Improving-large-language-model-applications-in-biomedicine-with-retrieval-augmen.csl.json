@@ -1,0 +1,35 @@
+[
+  {
+    "id": "39812777",
+    "type": "article-journal",
+    "title": "Improving large language model applications in biomedicine with retrieval-augmented generation: a systematic review, meta-analysis, and clinical development guidelines.",
+    "author": [
+      {
+        "family": "Liu",
+        "given": "S"
+      },
+      {
+        "family": "McCoy",
+        "given": "AB"
+      },
+      {
+        "family": "Wright",
+        "given": "A"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "4",
+    "page": "605-615",
+    "DOI": "10.1093/jamia/ocaf008",
+    "PMID": "39812777",
+    "PMCID": "PMC12005634"
+  }
+]

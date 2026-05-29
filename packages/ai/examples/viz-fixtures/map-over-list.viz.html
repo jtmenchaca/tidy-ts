@@ -137,14 +137,13 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .branch-label { fill: #b45309; font-weight: 600; }
-  .data-label { fill: #71717a; }
 </style>
 </head>
 <body>
   <h1>ANNOTATE_SENTENCES</h1>
   <div class="sub-title">v1.0.0</div>
 
-  <svg viewBox="0 -48 2542 452" width="2542" height="452">
+  <svg viewBox="0 -66 2542 470" width="2542" height="470">
     <defs>
       <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
               markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -157,23 +156,34 @@
     </defs>
     
     <g>
-      <path class="edge edge-control" d="M 199 112 L 279 112" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 199 60 L 279 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1245 112 L 1325 112" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1245 60 L 1325 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 2165 112 L 2205 112 L 2205 132 L 2245 132" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 2165 60 L 2245 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-data" d="M 199 112 L 211 112 L 211 16 L 1313 16 L 1313 112 L 1325 112" marker-end="url(#arrow-data)" fill="none" />
-      <text class="edge-label data-label" x="762" y="12" text-anchor="middle">sentences</text>
+      <path class="edge edge-data" d="M 203 112 C 243 112, 235 112, 275 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 203 112 L 215 112 L 215 16 L 1309 16 L 1309 112 L 1321 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1249 112 L 1261 112 L 1261 -2 L 2229 -2 L 2229 112 L 2241 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 2169 112 C 2209 112, 2201 132, 2241 132" marker-end="url(#arrow-data)" fill="none" />
     </g>
     
     <g class="node">
@@ -204,15 +214,23 @@
 <circle class="port port-out" cx="1245" cy="112" r="4" />
 <text class="field-name" x="1161" y="116" text-anchor="end">kinds</text>
 <text class="field-type" x="1233" y="116" text-anchor="end">string[]</text>
-      <text class="container-meta" x="291" y="144">map over sentences · reduce kinds=append</text><rect class="subflow-caption" x="293" y="146" width="938" height="32" rx="4" ry="4" /><text class="subflow-id" x="301" y="159">CLASSIFY_SENTENCE  v1.0.0</text><rect class="subflow-panel" x="293" y="178" width="938" height="172" rx="6" ry="6" /><g class="subflow-region">
+      <text class="container-meta" x="291" y="144">map over sentences · reduce kinds=[object Object]</text><rect class="subflow-caption" x="293" y="146" width="938" height="32" rx="4" ry="4" /><text class="subflow-id" x="301" y="159">CLASSIFY_SENTENCE  v1.0.0</text><rect class="subflow-panel" x="293" y="178" width="938" height="172" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 471 290 L 551 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 471 238 L 551 238" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 896 290 L 976 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 896 238 L 976 238" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 475 290 C 515 290, 507 290, 547 290" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 900 290 C 940 290, 932 290, 972 290" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">
@@ -278,15 +296,23 @@
 <circle class="port port-out" cx="2165" cy="112" r="4" />
 <text class="field-name" x="2067" y="116" text-anchor="end">entities_per_sentence</text>
 <text class="field-type" x="2153" y="116" text-anchor="end">string[][]</text>
-      <text class="container-meta" x="1337" y="144">parallel-map over sentences · concurrency 6 · reduce entities_per_sentence=append</text><rect class="subflow-caption" x="1339" y="146" width="812" height="32" rx="4" ry="4" /><text class="subflow-id" x="1347" y="159">EXTRACT_ENTITIES  v1.0.0</text><rect class="subflow-panel" x="1339" y="178" width="812" height="172" rx="6" ry="6" /><g class="subflow-region">
+      <text class="container-meta" x="1337" y="144">parallel-map over sentences · concurrency 6 · reduce entities_per_sentence=[object Object]</text><rect class="subflow-caption" x="1339" y="146" width="812" height="32" rx="4" ry="4" /><text class="subflow-id" x="1347" y="159">EXTRACT_ENTITIES  v1.0.0</text><rect class="subflow-panel" x="1339" y="178" width="812" height="172" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 1517 290 L 1597 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1517 238 L 1597 238" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1879 290 L 1959 290" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1879 238 L 1959 238" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1521 290 C 1561 290, 1553 290, 1593 290" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1883 290 C 1923 290, 1915 290, 1955 290" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">

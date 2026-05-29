@@ -1,0 +1,91 @@
+[
+  {
+    "id": "39847478",
+    "type": "article-journal",
+    "title": "VIEWER: an extensible visual analytics framework for enhancing mental healthcare.",
+    "author": [
+      {
+        "family": "Wang",
+        "given": "T"
+      },
+      {
+        "family": "Codling",
+        "given": "D"
+      },
+      {
+        "family": "Msosa",
+        "given": "YJ"
+      },
+      {
+        "family": "Broadbent",
+        "given": "M"
+      },
+      {
+        "family": "Kornblum",
+        "given": "D"
+      },
+      {
+        "family": "Polling",
+        "given": "C"
+      },
+      {
+        "family": "Searle",
+        "given": "T"
+      },
+      {
+        "family": "Delaney-Pope",
+        "given": "C"
+      },
+      {
+        "family": "Arroyo",
+        "given": "B"
+      },
+      {
+        "family": "MacLellan",
+        "given": "S"
+      },
+      {
+        "family": "Keddie",
+        "given": "Z"
+      },
+      {
+        "family": "Docherty",
+        "given": "M"
+      },
+      {
+        "family": "Roberts",
+        "given": "A"
+      },
+      {
+        "family": "Stewart",
+        "given": "R"
+      },
+      {
+        "family": "McGuire",
+        "given": "P"
+      },
+      {
+        "family": "Dobson",
+        "given": "R"
+      },
+      {
+        "family": "Harland",
+        "given": "R"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2026
+        ]
+      ]
+    },
+    "volume": "33",
+    "issue": "1",
+    "page": "144-158",
+    "DOI": "10.1093/jamia/ocaf010",
+    "PMID": "39847478",
+    "PMCID": "PMC12758470"
+  }
+]

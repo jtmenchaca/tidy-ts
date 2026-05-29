@@ -137,14 +137,13 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   }
   .branch-label { fill: #b45309; font-weight: 600; }
-  .data-label { fill: #71717a; }
 </style>
 </head>
 <body>
   <h1>NESTED_SUBFLOWS</h1>
   <div class="sub-title">v1.0.0</div>
 
-  <svg viewBox="0 -40 2171 696" width="2171" height="696">
+  <svg viewBox="0 -48 2171 704" width="2171" height="704">
     <defs>
       <marker id="arrow-control" viewBox="0 0 10 10" refX="9" refY="5"
               markerWidth="8" markerHeight="8" orient="auto-start-reverse">
@@ -157,23 +156,39 @@
     </defs>
     
     <g>
-      <path class="edge edge-control" d="M 150 112 L 190 112 L 190 96 L 230 96" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 150 60 L 230 60" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1481 132 C 1541 10, 1940 10, 2000 112" marker-end="url(#arrow-control)" fill="none" />
-      <text class="edge-label branch-label" x="1740.5" y="26" text-anchor="middle">next</text>
+      <path class="edge edge-control" d="M 1481 60 L 1497 60 L 1497 10 L 1984 10 L 1984 60 L 2000 60" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1740.5" y="4" text-anchor="middle">next</text>
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1481 132 L 1521 132 L 1521 112 L 1561 112" marker-end="url(#arrow-control)" fill="none" />
-      <text class="edge-label branch-label" x="1541" y="34" text-anchor="middle">caught_exception_branch</text>
+      <path class="edge edge-control" d="M 1481 60 L 1561 60" marker-end="url(#arrow-control)" fill="none" />
+      <text class="edge-label branch-label" x="1521" y="34" text-anchor="middle">caught_exception_branch</text>
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1920 112 L 2000 112" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1920 60 L 2000 60" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 154 112 C 194 112, 186 112, 226 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1485 132 C 1525 132, 1517 112, 1557 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1485 112 L 1497 112 L 1497 16 L 1984 16 L 1984 112 L 1996 112" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1924 112 C 1964 112, 1956 112, 1996 112" marker-end="url(#arrow-data)" fill="none" />
     </g>
     
     <g class="node">
@@ -195,9 +210,13 @@
       <path class="node-header node-header-CatchExceptionNode" d="M 238 40 H 1473 A 8 8 0 0 1 1481 48 V 80 H 230 V 48 A 8 8 0 0 1 238 40 Z" />
 <text class="node-name" x="855.5" y="62" text-anchor="middle">try_summarize</text>
 <line class="header-divider" x1="230" y1="80" x2="1481" y2="80" />
-      <text class="section-label" x="1469" y="92" text-anchor="end">outputs</text>
-      
-      <circle class="port port-out" cx="1481" cy="112" r="4" />
+      <text class="section-label" x="242" y="92">inputs</text>
+<text class="section-label" x="1469" y="92" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="792.5" y1="86" x2="792.5" y2="610" />
+      <circle class="port port-in" cx="230" cy="112" r="4" />
+<text class="field-name" x="242" y="116">note</text>
+<text class="field-type" x="328" y="116" text-anchor="end">string</text>
+<circle class="port port-out" cx="1481" cy="112" r="4" />
 <text class="field-name" x="1411" y="116" text-anchor="end">summary</text>
 <text class="field-type" x="1469" y="116" text-anchor="end">string</text>
 <circle class="port port-out" cx="1481" cy="132" r="4" />
@@ -205,13 +224,21 @@
 <text class="field-type" x="1469" y="136" text-anchor="end">string?</text>
       <text class="container-meta" x="242" y="164">catch-exception</text><rect class="subflow-caption" x="244" y="166" width="1223" height="32" rx="4" ry="4" /><text class="subflow-id" x="252" y="179">SUMMARIZE_VIA_CITED_CONCEPT  v1.0.0</text><rect class="subflow-panel" x="244" y="198" width="1223" height="404" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 394 310 L 434 310 L 434 284 L 474 284" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 394 258 L 474 258" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 1216 310 L 1296 310" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 1216 258 L 1296 258" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 398 310 C 438 310, 430 310, 470 310" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 1220 310 C 1260 310, 1252 310, 1292 310" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">
@@ -233,20 +260,32 @@
       <path class="node-header node-header-FlowNode" d="M 482 238 H 1208 A 8 8 0 0 1 1216 246 V 278 H 474 V 246 A 8 8 0 0 1 482 238 Z" />
 <text class="node-name" x="845" y="260" text-anchor="middle">cited_summarize</text>
 <line class="header-divider" x1="474" y1="278" x2="1216" y2="278" />
-      <text class="section-label" x="1204" y="290" text-anchor="end">outputs</text>
-      
-      <circle class="port port-out" cx="1216" cy="310" r="4" />
+      <text class="section-label" x="486" y="290">inputs</text>
+<text class="section-label" x="1204" y="290" text-anchor="end">outputs</text>
+      <line class="col-divider" x1="834.5" y1="284" x2="834.5" y2="556" />
+      <circle class="port port-in" cx="474" cy="310" r="4" />
+<text class="field-name" x="486" y="314">note</text>
+<text class="field-type" x="572" y="314" text-anchor="end">string</text>
+<circle class="port port-out" cx="1216" cy="310" r="4" />
 <text class="field-name" x="1146" y="314" text-anchor="end">summary</text>
 <text class="field-type" x="1204" y="314" text-anchor="end">string</text>
       <text class="container-meta" x="486" y="342">embedded concept</text><rect class="subflow-caption" x="488" y="344" width="714" height="32" rx="4" ry="4" /><text class="subflow-id" x="496" y="357">ONE_LINE_SUMMARY  v1.0.0</text><text class="subflow-citation" x="496" y="370">Menchaca et al., 2026</text><rect class="subflow-panel" x="488" y="376" width="714" height="172" rx="6" ry="6" /><g class="subflow-region">
     <g>
-      <path class="edge edge-control" d="M 638 488 L 718 488" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 638 436 L 718 436" marker-end="url(#arrow-control)" fill="none" />
       
     </g>
 
     <g>
-      <path class="edge edge-control" d="M 951 488 L 1031 488" marker-end="url(#arrow-control)" fill="none" />
+      <path class="edge edge-control" d="M 951 436 L 1031 436" marker-end="url(#arrow-control)" fill="none" />
       
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 642 488 C 682 488, 674 488, 714 488" marker-end="url(#arrow-data)" fill="none" />
+    </g>
+
+    <g>
+      <path class="edge edge-data" d="M 955 488 C 995 488, 987 488, 1027 488" marker-end="url(#arrow-data)" fill="none" />
     </g>
 
     <g class="node">

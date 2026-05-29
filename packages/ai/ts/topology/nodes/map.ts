@@ -19,14 +19,22 @@ export const ReductionMethod = {
 export type ReductionMethod =
   (typeof ReductionMethod)[keyof typeof ReductionMethod];
 
+/** One reducer entry. `from` is the per-iteration subflow output key to
+ *  pull values from; `method` is how to combine them. The key in the
+ *  surrounding `reducers` record is the OUTER output name the wrapper
+ *  exposes downstream. */
+export const ReducerSpecSchema = z.object({
+  from: z.string(),
+  method: z.enum(["append", "sum", "average", "max", "min"]),
+});
+export type ReducerSpec = z.infer<typeof ReducerSpecSchema>;
+
 export const MapNodeSchema = NodeBaseSchema.extend({
   componentType: z.literal("MapNode"),
   // subflow is preserved by reference; not structurally validated here.
   subflow: z.unknown(),
-  reducers: z.record(
-    z.string(),
-    z.enum(["append", "sum", "average", "max", "min"]),
-  ).optional(),
+  /** Map of OUTER output name → { from: inner subflow key, method }. */
+  reducers: z.record(z.string(), ReducerSpecSchema).optional(),
   /** Name of the input Property to iterate over. */
   iterateOver: z.string(),
 });
@@ -34,15 +42,27 @@ export const MapNodeSchema = NodeBaseSchema.extend({
 declare const __mapI: unique symbol;
 declare const __mapO: unique symbol;
 
-export type MapNode<SubI = unknown, SubO = unknown> =
+export type MapNode<
+  SubI = unknown,
+  SubO = unknown,
+  Reducers extends Record<string, ReducerSpec> | undefined = Record<
+    string,
+    ReducerSpec
+  > | undefined,
+> =
   & z.infer<typeof MapNodeSchema>
   & {
     readonly [__mapI]?: SubI;
     readonly [__mapO]?: SubO;
     subflow: Topology<SubI, SubO>;
+    reducers?: Reducers;
   };
 
-export function createMapNode<SubI, SubO>({
+export function createMapNode<
+  SubI,
+  SubO,
+  const Reducers extends Record<string, ReducerSpec> | undefined = undefined,
+>({
   name,
   subflow,
   iterateOver,
@@ -61,13 +81,16 @@ export function createMapNode<SubI, SubO>({
    * The subflow input shape must accept `{ [iterateOver]: <element> }`.
    */
   iterateOver: string;
-  reducers?: Record<string, ReductionMethod>;
+  /** Map of outer output name → `{ from, method }`. `from` is the subflow's
+   *  per-iteration output key whose values get combined; the outer key in
+   *  this record is the name the wrapper exposes downstream. */
+  reducers?: Reducers;
   inputs?: Property[];
   outputs?: Property[];
   id?: string;
   description?: string;
   metadata?: Record<string, unknown>;
-}): MapNode<SubI, SubO> {
+}): MapNode<SubI, SubO, Reducers> {
   const parsed = MapNodeSchema.parse({
     name,
     subflow,
@@ -81,5 +104,9 @@ export function createMapNode<SubI, SubO>({
     branches: [DEFAULT_NEXT_BRANCH],
     componentType: "MapNode" as const,
   });
-  return Object.freeze({ ...parsed, subflow }) as MapNode<SubI, SubO>;
+  return Object.freeze({ ...parsed, subflow }) as MapNode<
+    SubI,
+    SubO,
+    Reducers
+  >;
 }

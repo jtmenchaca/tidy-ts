@@ -43,8 +43,8 @@ export type SandboxAgent<I = unknown, O = unknown> =
   & {
     readonly [__sandboxI]?: I;
     readonly [__sandboxO]?: O;
-    inputSchema?: z.ZodType<I>;
-    outputSchema?: z.ZodType<O>;
+    inputSchema: z.ZodType<I>;
+    outputSchema: z.ZodType<O>;
     tools: Tool[];
     toolboxes: ToolBox[];
     /** SDK-shaped manifest input. See `@openai/agents/sandbox`. */
@@ -56,7 +56,7 @@ export type SandboxAgent<I = unknown, O = unknown> =
     capabilities?: Capability[];
   };
 
-export function createSandboxAgent<I = unknown, O = unknown>({
+export function createSandboxAgent<I, O>({
   name,
   llmConfig,
   systemPromptTemplate,
@@ -86,8 +86,8 @@ export function createSandboxAgent<I = unknown, O = unknown>({
   capabilities?: Capability[];
   /** Free-form OS-style username forwarded to the sandbox client. */
   runAs?: string;
-  inputSchema?: z.ZodType<I>;
-  outputSchema?: z.ZodType<O>;
+  inputSchema: z.ZodType<I>;
+  outputSchema: z.ZodType<O>;
   tools?: Tool[];
   toolboxes?: ToolBox[];
   inputs?: Property[];
@@ -97,10 +97,8 @@ export function createSandboxAgent<I = unknown, O = unknown>({
   metadata?: Record<string, unknown>;
   maxToolTurns?: number;
 }): SandboxAgent<I, O> {
-  const resolvedInputs = inputs ??
-    (inputSchema ? zodObjectToProperties(inputSchema) : []);
-  const resolvedOutputs = outputs ??
-    (outputSchema ? zodObjectToProperties(outputSchema) : []);
+  const resolvedInputs = inputs ?? zodObjectToProperties(inputSchema);
+  const resolvedOutputs = outputs ?? zodObjectToProperties(outputSchema);
 
   const parsed = SandboxAgentSchema.parse({
     componentType: "SandboxAgent" as const,

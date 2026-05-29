@@ -1,0 +1,83 @@
+[
+  {
+    "id": "39890454",
+    "type": "article-journal",
+    "title": "myAURA: a personalized health library for epilepsy management via knowledge graph sparsification and visualization.",
+    "author": [
+      {
+        "family": "Correia",
+        "given": "RB"
+      },
+      {
+        "family": "Rozum",
+        "given": "JC"
+      },
+      {
+        "family": "Cross",
+        "given": "L"
+      },
+      {
+        "family": "Felag",
+        "given": "J"
+      },
+      {
+        "family": "Gallant",
+        "given": "M"
+      },
+      {
+        "family": "Guo",
+        "given": "Z"
+      },
+      {
+        "family": "Herr",
+        "given": "BW 2nd"
+      },
+      {
+        "family": "Min",
+        "given": "A"
+      },
+      {
+        "family": "Sanchez-Valle",
+        "given": "J"
+      },
+      {
+        "family": "Stungis",
+        "given": "Rocha D"
+      },
+      {
+        "family": "Valencia",
+        "given": "A"
+      },
+      {
+        "family": "Wang",
+        "given": "X"
+      },
+      {
+        "family": "Börner",
+        "given": "K"
+      },
+      {
+        "family": "Miller",
+        "given": "W"
+      },
+      {
+        "family": "Rocha",
+        "given": "LM"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2026
+        ]
+      ]
+    },
+    "volume": "33",
+    "issue": "1",
+    "page": "167-181",
+    "DOI": "10.1093/jamia/ocaf012",
+    "PMID": "39890454",
+    "PMCID": "PMC12758476"
+  }
+]

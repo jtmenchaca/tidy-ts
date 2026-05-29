@@ -1,0 +1,51 @@
+[
+  {
+    "id": "39862440",
+    "type": "article-journal",
+    "title": "Machine learning-based risk prediction of outcomes in patients hospitalized with COVID-19 in Australia: the AUS-COVID Score.",
+    "author": [
+      {
+        "family": "Sritharan",
+        "given": "HP"
+      },
+      {
+        "family": "Nguyen",
+        "given": "H"
+      },
+      {
+        "family": "van",
+        "given": "Gaal W"
+      },
+      {
+        "family": "Kritharides",
+        "given": "L"
+      },
+      {
+        "family": "Chow",
+        "given": "CK"
+      },
+      {
+        "family": "Bhindi",
+        "given": "R"
+      },
+      {
+        "family": "AUS-COVID",
+        "given": "Investigators"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2026
+        ]
+      ]
+    },
+    "volume": "33",
+    "issue": "1",
+    "page": "210-219",
+    "DOI": "10.1093/jamia/ocaf016",
+    "PMID": "39862440",
+    "PMCID": "PMC12758480"
+  }
+]

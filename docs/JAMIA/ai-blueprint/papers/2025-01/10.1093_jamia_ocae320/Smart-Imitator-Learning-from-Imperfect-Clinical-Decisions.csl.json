@@ -1,0 +1,39 @@
+[
+  {
+    "id": "39792998",
+    "type": "article-journal",
+    "title": "Smart Imitator: Learning from Imperfect Clinical Decisions.",
+    "author": [
+      {
+        "family": "Perera",
+        "given": "D"
+      },
+      {
+        "family": "Liu",
+        "given": "S"
+      },
+      {
+        "family": "See",
+        "given": "KC"
+      },
+      {
+        "family": "Feng",
+        "given": "M"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2026
+        ]
+      ]
+    },
+    "volume": "33",
+    "issue": "1",
+    "page": "49-66",
+    "DOI": "10.1093/jamia/ocae320",
+    "PMID": "39792998",
+    "PMCID": "PMC12758472"
+  }
+]

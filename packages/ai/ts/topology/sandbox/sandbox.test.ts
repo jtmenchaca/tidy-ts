@@ -66,6 +66,8 @@ Deno.test("build.sandboxAgent — minimal config", () => {
     name: "minimal",
     llmConfig: llm,
     systemPromptTemplate: "Do work.",
+    inputSchema: z.object({}),
+    outputSchema: z.object({}),
   });
   expect(agent.componentType).toBe("SandboxAgent");
   expect(agent.name).toBe("minimal");
@@ -87,6 +89,8 @@ Deno.test("build.sandboxAgent — defaultManifest + capabilities + runAs flow th
     name: "workspace",
     llmConfig: llm,
     systemPromptTemplate: "Use the workspace.",
+    inputSchema: z.object({}),
+    outputSchema: z.object({}),
     defaultManifest: manifest,
     capabilities: [
       sandbox.capability.filesystem(),
@@ -115,6 +119,7 @@ Deno.test("build.sandboxAgent — outputSchema (Zod) is attached as overlay", ()
     name: "structured",
     llmConfig: llm,
     systemPromptTemplate: "Finish the task.",
+    inputSchema: z.object({}),
     outputSchema: OutSchema,
   });
   // outputSchema is a non-schema overlay carried on the runtime value.
@@ -148,6 +153,8 @@ Deno.test("build.sandboxAgent — capability.skills with lazyFrom flows through 
     name: "lazy-skill-agent",
     llmConfig: llm,
     systemPromptTemplate: "Use a skill when relevant.",
+    inputSchema: z.object({}),
+    outputSchema: z.object({}),
     defaultManifest: {
       entries: { repo: sandbox.localDir({ src: "./repo" }) },
     },
@@ -242,6 +249,8 @@ aiTest({
         "2. Read the magic number from the body.",
         "3. Reply with ONLY the digits — no prose, no quotes, no JSON.",
       ].join("\n"),
+      inputSchema: z.object({}),
+      outputSchema: z.object({}),
       capabilities: [
         sandbox.capability.filesystem(),
         sandbox.capability.shell(),
@@ -309,6 +318,8 @@ aiTest({
         "3. Read the magic number from the body.",
         "4. Reply with ONLY the digits — no prose, no quotes, no JSON.",
       ].join("\n"),
+      inputSchema: z.object({}),
+      outputSchema: z.object({}),
       defaultManifest: {
         entries: {},
         // lazyFrom resolves outside cwd; the SDK needs read access to

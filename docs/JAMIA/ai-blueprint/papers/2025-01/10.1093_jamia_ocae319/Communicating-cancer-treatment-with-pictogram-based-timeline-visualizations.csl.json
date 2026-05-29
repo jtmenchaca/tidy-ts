@@ -1,0 +1,67 @@
+[
+  {
+    "id": "39820364",
+    "type": "article-journal",
+    "title": "Communicating cancer treatment with pictogram-based timeline visualizations.",
+    "author": [
+      {
+        "family": "Jambor",
+        "given": "HK"
+      },
+      {
+        "family": "Ketges",
+        "given": "J"
+      },
+      {
+        "family": "Otto",
+        "given": "AL"
+      },
+      {
+        "family": "von",
+        "given": "Bonin M"
+      },
+      {
+        "family": "Trautmann-Grill",
+        "given": "K"
+      },
+      {
+        "family": "Teipel",
+        "given": "R"
+      },
+      {
+        "family": "Middeke",
+        "given": "JM"
+      },
+      {
+        "family": "Uhlig",
+        "given": "M"
+      },
+      {
+        "family": "Eichler",
+        "given": "M"
+      },
+      {
+        "family": "Pannasch",
+        "given": "S"
+      },
+      {
+        "family": "Bornhäuser",
+        "given": "M"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "480-491",
+    "DOI": "10.1093/jamia/ocae319",
+    "PMID": "39820364",
+    "PMCID": "PMC11833489"
+  }
+]

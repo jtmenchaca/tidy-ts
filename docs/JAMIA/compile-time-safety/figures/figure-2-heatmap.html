@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title></title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #fff; display: flex; flex-direction: column; align-items: center;
+    padding: 20px 0 0; color: #1a1a2e;
+  }
+  h1 { font-size: 16px; font-weight: 600; margin-bottom: 8px; text-align: center; }
+  .subtitle { font-size: 12px; color: #555; margin-bottom: 0; text-align: center; max-width: 760px; line-height: 1.5; }
+  .chart { display: block; max-width: 900px; width: 100%; }
+  .caption { margin-top: 20px; font-size: 11.5px; color: #555; max-width: 760px; text-align: center; line-height: 1.6; }
+  .caption strong { color: #333; }
+</style>
+</head>
+<body>
+<h1></h1>
+<p class="subtitle"></p>
+<svg class="chart" viewBox="0 0 880 410" xmlns="http://www.w3.org/2000/svg">
+<text x="291.6666666666667" y="38" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Tidy-TS (TypeScript)</text>
+<text x="515" y="38" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Pandas (Python)</text>
+<text x="738.3333333333334" y="38" text-anchor="middle" font-size="12" fill="#333" font-weight="600">Tidyverse (R)</text>
+<text x="170" y="85" text-anchor="end" font-size="11.5" fill="#333">Column reference</text>
+<text x="170" y="97" text-anchor="end" font-size="9" fill="#888">(n=16)</text>
+<rect x="181.5" y="51.5" width="220.33333333333334" height="59" rx="4" fill="#d7eed8" stroke="#88cc8a" stroke-width="1"/>
+<text x="291.6666666666667" y="82" text-anchor="middle" font-size="16" fill="#333" font-weight="700">16</text>
+<text x="291.6666666666667" y="96" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(100%)</text>
+<rect x="404.83333333333337" y="51.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="515" y="82" text-anchor="middle" font-size="16" fill="#333" font-weight="700">14</text>
+<text x="515" y="96" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(88%)</text>
+<rect x="628.1666666666667" y="51.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="738.3333333333334" y="82" text-anchor="middle" font-size="16" fill="#333" font-weight="700">14</text>
+<text x="738.3333333333334" y="96" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(88%)</text>
+<text x="170" y="147" text-anchor="end" font-size="11.5" fill="#333">Type errors</text>
+<text x="170" y="159" text-anchor="end" font-size="9" fill="#888">(n=14)</text>
+<rect x="181.5" y="113.5" width="220.33333333333334" height="59" rx="4" fill="#d7eed8" stroke="#88cc8a" stroke-width="1"/>
+<text x="291.6666666666667" y="144" text-anchor="middle" font-size="16" fill="#333" font-weight="700">14</text>
+<text x="291.6666666666667" y="158" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(100%)</text>
+<rect x="404.83333333333337" y="113.5" width="220.33333333333334" height="59" rx="4" fill="#f8d4d4" stroke="#d08080" stroke-width="1"/>
+<text x="515" y="144" text-anchor="middle" font-size="16" fill="#333" font-weight="700">5</text>
+<text x="515" y="158" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(36%)</text>
+<rect x="628.1666666666667" y="113.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="738.3333333333334" y="144" text-anchor="middle" font-size="16" fill="#333" font-weight="700">7</text>
+<text x="738.3333333333334" y="158" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(50%)</text>
+<text x="170" y="209" text-anchor="end" font-size="11.5" fill="#333">Null &amp; missing data</text>
+<text x="170" y="221" text-anchor="end" font-size="9" fill="#888">(n=17)</text>
+<rect x="181.5" y="175.5" width="220.33333333333334" height="59" rx="4" fill="#d7eed8" stroke="#88cc8a" stroke-width="1"/>
+<text x="291.6666666666667" y="206" text-anchor="middle" font-size="16" fill="#333" font-weight="700">17</text>
+<text x="291.6666666666667" y="220" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(100%)</text>
+<rect x="404.83333333333337" y="175.5" width="220.33333333333334" height="59" rx="4" fill="#f8d4d4" stroke="#d08080" stroke-width="1"/>
+<text x="515" y="206" text-anchor="middle" font-size="16" fill="#333" font-weight="700">0</text>
+<text x="515" y="220" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(0%)</text>
+<rect x="628.1666666666667" y="175.5" width="220.33333333333334" height="59" rx="4" fill="#f8d4d4" stroke="#d08080" stroke-width="1"/>
+<text x="738.3333333333334" y="206" text-anchor="middle" font-size="16" fill="#333" font-weight="700">2</text>
+<text x="738.3333333333334" y="220" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(12%)</text>
+<text x="170" y="271" text-anchor="end" font-size="11.5" fill="#333">Join errors</text>
+<text x="170" y="283" text-anchor="end" font-size="9" fill="#888">(n=8)</text>
+<rect x="181.5" y="237.5" width="220.33333333333334" height="59" rx="4" fill="#d7eed8" stroke="#88cc8a" stroke-width="1"/>
+<text x="291.6666666666667" y="268" text-anchor="middle" font-size="16" fill="#333" font-weight="700">8</text>
+<text x="291.6666666666667" y="282" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(100%)</text>
+<rect x="404.83333333333337" y="237.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="515" y="268" text-anchor="middle" font-size="16" fill="#333" font-weight="700">5</text>
+<text x="515" y="282" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(63%)</text>
+<rect x="628.1666666666667" y="237.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="738.3333333333334" y="268" text-anchor="middle" font-size="16" fill="#333" font-weight="700">5</text>
+<text x="738.3333333333334" y="282" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(63%)</text>
+<text x="170" y="333" text-anchor="end" font-size="11.5" fill="#333">Data loading</text>
+<text x="170" y="345" text-anchor="end" font-size="9" fill="#888">(n=10)</text>
+<rect x="181.5" y="299.5" width="220.33333333333334" height="59" rx="4" fill="#d7eed8" stroke="#88cc8a" stroke-width="1"/>
+<text x="291.6666666666667" y="330" text-anchor="middle" font-size="16" fill="#333" font-weight="700">10</text>
+<text x="291.6666666666667" y="344" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(100%)</text>
+<rect x="404.83333333333337" y="299.5" width="220.33333333333334" height="59" rx="4" fill="#f8d4d4" stroke="#d08080" stroke-width="1"/>
+<text x="515" y="330" text-anchor="middle" font-size="16" fill="#333" font-weight="700">2</text>
+<text x="515" y="344" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(20%)</text>
+<rect x="628.1666666666667" y="299.5" width="220.33333333333334" height="59" rx="4" fill="#fff5d0" stroke="#d0b850" stroke-width="1"/>
+<text x="738.3333333333334" y="330" text-anchor="middle" font-size="16" fill="#333" font-weight="700">5</text>
+<text x="738.3333333333334" y="344" text-anchor="middle" font-size="9" fill="#333" opacity="0.8">(50%)</text>
+<text x="170" y="386" text-anchor="end" font-size="11" fill="#333" font-weight="600">Total caught</text>
+<text x="291.6666666666667" y="386" text-anchor="middle" font-size="12" fill="#333" font-weight="700">65 / 65 (100%)</text>
+<text x="515" y="386" text-anchor="middle" font-size="12" fill="#333" font-weight="700">26 / 65 (40%)</text>
+<text x="738.3333333333334" y="386" text-anchor="middle" font-size="12" fill="#333" font-weight="700">33 / 65 (51%)</text>
+</svg>
+<p class="caption"></p>
+</body>
+</html>

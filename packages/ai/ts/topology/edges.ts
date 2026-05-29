@@ -100,12 +100,19 @@ export type OutputKeysOf<N> = N extends { componentType: "StartNode" }
   // (the phantom type that travels from the subflow's EndNode).
   : N extends { componentType: "FlowNode"; subflow: { __output?: infer O } }
     ? O extends Record<string, unknown> ? Extract<keyof O, string> : string
-  // MapNode / ParallelMapNode reduce subflow outputs into the wrapper —
-  // their downstream outputs are the subflow's __output keys.
+  // MapNode / ParallelMapNode reduce subflow outputs into the wrapper.
+  // When `reducers` is declared, the OUTER output keys are the keys of
+  // the reducers record (each entry renames an inner subflow key via
+  // `{ from, method }`). Otherwise fall back to the subflow's __output
+  // keys (same-name pass-through).
   : N extends {
     componentType: "MapNode" | "ParallelMapNode";
     subflow: { __output?: infer O };
-  } ? O extends Record<string, unknown> ? Extract<keyof O, string> : string
+    reducers?: infer R;
+  } ? [R] extends [Record<string, unknown>]
+      ? Extract<keyof R, string>
+    : O extends Record<string, unknown> ? Extract<keyof O, string>
+    : string
   // ParallelFlowNode merges multiple subflows; its outputs are the union of
   // each subflow's __output keys.
   : N extends {

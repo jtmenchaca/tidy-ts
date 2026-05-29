@@ -1,0 +1,47 @@
+[
+  {
+    "id": "39789670",
+    "type": "article-journal",
+    "title": "Objective study validity diagnostics: a framework requiring pre-specified, empirical verification to increase trust in the reliability of real-world evidence.",
+    "author": [
+      {
+        "family": "Conover",
+        "given": "MM"
+      },
+      {
+        "family": "Ryan",
+        "given": "PB"
+      },
+      {
+        "family": "Chen",
+        "given": "Y"
+      },
+      {
+        "family": "Suchard",
+        "given": "MA"
+      },
+      {
+        "family": "Hripcsak",
+        "given": "G"
+      },
+      {
+        "family": "Schuemie",
+        "given": "MJ"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "518-525",
+    "DOI": "10.1093/jamia/ocae317",
+    "PMID": "39789670",
+    "PMCID": "PMC11833483"
+  }
+]

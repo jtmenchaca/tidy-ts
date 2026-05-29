@@ -191,6 +191,27 @@ function validateTopologyAt(topology: Topology, prefix: string): TopologyIssue[]
     }
   }
 
+  // 1b. Dead-end nodes — every non-EndNode must have at least one
+  //     outgoing control-flow edge. A node without one would make the
+  //     runtime walker stop without reaching any EndNode.
+  const hasOutgoing = new Set<string>();
+  for (const e of topology.controlFlowConnections) {
+    hasOutgoing.add((e.fromNode as { id: string }).id);
+  }
+  for (const n of nodes) {
+    if (n.componentType === "EndNode") continue;
+    if (hasOutgoing.has(n.id)) continue;
+    issues.push({
+      severity: "error",
+      code: "dead-end-node",
+      message:
+        `Node '${n.name}' has no outgoing control-flow edge. ` +
+        `Every non-EndNode must route control somewhere — either back ` +
+        `to the spine, to a sibling, or to an EndNode.`,
+      nodeName: n.name,
+    });
+  }
+
   // 2. Dangling data-flow edges
   for (const edge of topology.dataFlowConnections ?? []) {
     const src = byId.get((edge.sourceNode as { id: string }).id);

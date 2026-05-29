@@ -1,0 +1,35 @@
+[
+  {
+    "id": "39812778",
+    "type": "article-journal",
+    "title": "Development and evaluation of a 4M taxonomy from nursing home staff text messages using a fine-tuned generative language model.",
+    "author": [
+      {
+        "family": "Farmer",
+        "given": "MS"
+      },
+      {
+        "family": "Popescu",
+        "given": "M"
+      },
+      {
+        "family": "Powell",
+        "given": "K"
+      }
+    ],
+    "container-title": "Journal of the American Medical Informatics Association : JAMIA",
+    "issued": {
+      "date-parts": [
+        [
+          2025
+        ]
+      ]
+    },
+    "volume": "32",
+    "issue": "3",
+    "page": "535-544",
+    "DOI": "10.1093/jamia/ocaf006",
+    "PMID": "39812778",
+    "PMCID": "PMC11833468"
+  }
+]

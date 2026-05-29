@@ -7,7 +7,7 @@
 import { batch } from "@tidy-ts/shims";
 
 import type { ParallelMapNode } from "../../topology/nodes/parallel-map.ts";
-import type { ReductionMethod } from "../../topology/nodes/map.ts";
+import type { ReducerSpec } from "../../topology/nodes/map.ts";
 import type { Topology } from "../../topology/topology.ts";
 import { InputValidationError } from "../errors.ts";
 import { effectiveInnerConcurrency } from "../param-resolution.ts";
@@ -42,7 +42,7 @@ export async function executeParallelMapNode(
   );
   return reduceMapResults(
     perItem,
-    node.reducers as Record<string, ReductionMethod> | undefined,
+    node.reducers as Record<string, ReducerSpec> | undefined,
     node.outputs as { title: string }[] | undefined,
   );
 }
